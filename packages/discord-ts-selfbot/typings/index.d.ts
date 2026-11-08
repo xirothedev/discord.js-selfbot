@@ -1520,6 +1520,7 @@ export class Recorder<Ready extends boolean = boolean, T = any> extends EventEmi
   public feed(payload: RtpPacket | BufferResolvable): void;
   public on(event: 'ready' | 'closed', listener: (recorder: Recorder<true, T>) => void): this;
   public once(event: 'ready' | 'closed', listener: (recorder: Recorder<true, T>) => void): this;
+  public stop(): void;
   public destroy(): void;
 }
 

@@ -1,12 +1,12 @@
 'use strict';
 
-const { spawn } = require('child_process');
+const { spawn: spawnProcess } = require('child_process');
 const { createSocket } = require('dgram');
 const { EventEmitter } = require('events');
 const { Buffer } = require('node:buffer');
 const { Writable } = require('stream');
-const find = require('find-process');
-const kill = require('tree-kill');
+const findProcessDefault = require('find-process');
+const killProcessDefault = require('tree-kill');
 const { RtpPacket } = require('werift-rtp');
 const Util = require('../../../util/Util');
 const { randomPorts } = require('../util/Function');
@@ -17,10 +17,28 @@ const { StreamOutput } = require('../util/Socket');
  * @extends {EventEmitter}
  */
 class Recorder extends EventEmitter {
-  constructor(receiver, { userId, portUdpH264, portUdpOpus, output } = {}) {
+  constructor(
+    receiver,
+    {
+      userId,
+      portUdpH264,
+      portUdpOpus,
+      output,
+      spawn = spawnProcess,
+      findProcess = findProcessDefault,
+      killProcess = killProcessDefault,
+      streamOutput = StreamOutput,
+    } = {},
+  ) {
     super();
 
     Object.defineProperty(this, 'receiver', { value: receiver });
+
+    // Process and filesystem boundaries are injectable so tests never spawn ffmpeg or touch the OS.
+    this.spawn = spawn;
+    this.findProcess = findProcess;
+    this.killProcess = killProcess;
+    this.streamOutput = streamOutput;
 
     /**
      * The user ID
@@ -63,9 +81,9 @@ class Recorder extends EventEmitter {
     const sdpData = Util.getSDPCodecName(this.portUdpH264, this.portUdpH265, this.portUdpOpus);
     const isStream = output instanceof Writable;
     if (isStream) {
-      this.outputStream = StreamOutput(output);
+      this.outputStream = this.streamOutput(output);
     }
-    const stream = spawn('ffmpeg', [
+    const stream = this.spawn('ffmpeg', [
       '-reorder_queue_size',
       '500',
       '-thread_queue_size',
@@ -146,13 +164,25 @@ class Recorder extends EventEmitter {
     this.socket.send(message, 0, message.length, port, '127.0.0.1', callback);
   }
 
+  /**
+   * Stops FFmpeg and flushes the recording output.
+   */
+  stop() {
+    if (!this.stream) return;
+    this.stream.stdin.end();
+    this.stream.kill();
+    if (this.output instanceof Writable) this.output.end();
+    this.receiver?.videoStreams?.delete(this.userId);
+    this.emit('closed');
+  }
+
   destroy() {
     const ffmpegPid = this.stream.pid; // But it is ppid ;-;
     const args = this.stream.spawnargs.slice(1).join(' '); // Skip ffmpeg
-    find('name', 'ffmpeg', true).then(list => {
+    this.findProcess('name', 'ffmpeg', true).then(list => {
       let process = list.find(o => o.pid === ffmpegPid || o.ppid === ffmpegPid || o.cmd.includes(args));
       if (process) {
-        kill(process.pid);
+        this.killProcess(process.pid);
         this.receiver?.videoStreams?.delete(this.userId);
         this.emit('closed');
       }

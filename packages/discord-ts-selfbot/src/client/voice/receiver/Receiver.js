@@ -81,6 +81,10 @@ class VoiceReceiver extends EventEmitter {
   createVideoStream(user, output) {
     user = this.connection.client.users.resolve(user);
     if (!user) throw new Error('VOICE_USER_MISSING');
+    const voiceState =
+      this.connection.channel?.guild?.voiceStates?.cache?.get(user.id) ||
+      this.connection.client?.voiceStates?.cache?.get(user.id);
+    if (!voiceState?.streaming) throw new Error('VOICE_USER_NOT_STREAMING');
     const stream = this.packets.makeVideoStream(user.id, output);
     return stream;
   }
