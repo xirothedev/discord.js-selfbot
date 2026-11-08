@@ -214,4 +214,4 @@ const Messages: Record<string, string | ((...args: any[]) => string)> = {
 
 for (const [name, message] of Object.entries(Messages)) register(name, message);
 
-module.exports = Messages;
+export = Messages;
