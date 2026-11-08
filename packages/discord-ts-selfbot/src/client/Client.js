@@ -802,7 +802,7 @@ class Client extends BaseClient {
    * @param {string} nitro Nitro url or code
    * @param {TextChannelResolvable} [channel] Channel that the code was sent in
    * @param {Snowflake} [paymentSourceId] Payment source id
-   * @returns {Promise<any>}
+   * @returns {Promise<any>|false}
    */
   redeemNitro(nitro, channel, paymentSourceId) {
     if (typeof nitro !== 'string') throw new Error('INVALID_NITRO');
@@ -869,7 +869,7 @@ class Client extends BaseClient {
   /**
    * Install User Apps
    * @param {Snowflake} applicationId  Discord Application id
-   * @returns {Promise<void>}
+   * @returns {Promise<{ location: string }|false>}
    */
   installUserApps(applicationId) {
     return this.api
@@ -1014,10 +1014,28 @@ class Client extends BaseClient {
       // Convert to base32 if not already
       options.TOTPKey = options.TOTPKey.replace(/ +/g, '').toUpperCase();
     }
-    // Hardcode
-    this.options.shardCount = 1;
-    this.options.shards = [0];
-    this.options.intents = Intents.ALL;
+    // Selfbot divergence: a selfbot can shard when configured, but defaults to one shard.
+    // discord.js also validates `intents` here. User accounts never send intents, so the
+    // option is accepted for type parity and ignored below.
+    if (typeof options.shardCount !== 'number' || !Number.isInteger(options.shardCount) || options.shardCount < 1) {
+      throw new TypeError('CLIENT_INVALID_OPTION', 'shardCount', 'a number greater than or equal to 1');
+    }
+    if (options.shards === 'auto') {
+      // The recommended shard count is resolved on gateway connect.
+    } else if (typeof options.shards === 'number') {
+      options.shards = [options.shards];
+    } else if (Array.isArray(options.shards)) {
+      options.shards = [...new Set(options.shards.filter(id => Number.isInteger(id) && id >= 0))];
+      if (!options.shards.length) throw new RangeError('CLIENT_INVALID_PROVIDED_SHARDS');
+      if (options.shardCount === 1) options.shardCount = options.shards.length;
+    } else if (typeof options.shards === 'undefined') {
+      options.shards = Array.from({ length: options.shardCount }, (_, id) => id);
+    } else {
+      throw new TypeError('CLIENT_INVALID_OPTION', 'shards', "'auto', a number or array of numbers");
+    }
+    // Selfbot divergence: user accounts do not use gateway intents. Keep the option for type
+    // parity and force full intents so guild-wait behaviour stays the same.
+    options.intents = Intents.ALL;
   }
 }
 
