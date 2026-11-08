@@ -35,8 +35,11 @@ const Application = require('../structures/interfaces/Application');
 const { Events, Status } = require('../util/Constants');
 const DataResolver = require('../util/DataResolver');
 const Intents = require('../util/Intents');
+const Permissions = require('../util/Permissions');
 const DiscordAuthWebsocket = require('../util/RemoteAuth');
 const Sweepers = require('../util/Sweepers');
+
+let deprecationEmitted = false;
 
 /**
  * The main hub for interacting with the Discord API, and the starting point for any bot.
@@ -460,6 +463,22 @@ class Client extends BaseClient {
   }
 
   /**
+   * Deletes a webhook from Discord.
+   * @param {Snowflake} id The webhook's id
+   * @param {WebhookDeleteOptions} [options={}] Options for deleting the webhook
+   * @returns {Promise<void>}
+   * @example
+   * client.deleteWebhook('id', { token: 'token' })
+   *   .then(() => console.log('Deleted the webhook'))
+   *   .catch(console.error);
+   */
+  async deleteWebhook(id: any, { reason, token }: any = {}) {
+    if (typeof id !== 'string') throw new TypeError('INVALID_TYPE', 'id', 'Snowflake');
+    if (typeof token !== 'string') throw new TypeError('WEBHOOK_TOKEN_UNAVAILABLE');
+    await this.api.webhooks(id, token).delete({ reason });
+  }
+
+  /**
    * Obtains the available voice regions from Discord.
    * @returns {Promise<Collection<string, VoiceRegion>>}
    * @example
@@ -489,16 +508,47 @@ class Client extends BaseClient {
   }
 
   /**
+   * Obtains the list of sticker packs available, or a single sticker pack when `packId` is given.
+   * @param {StickerPackFetchOptions} [options={}] Options for fetching sticker packs
+   * @returns {Promise<StickerPack|Collection<Snowflake, StickerPack>>}
+   * @example
+   * client.fetchStickerPacks()
+   *   .then(packs => console.log(`Available sticker packs are: ${packs.map(pack => pack.name).join(', ')}`))
+   *   .catch(console.error);
+   * @example
+   * client.fetchStickerPacks({ packId: '751604115435421716' })
+   *   .then(pack => console.log(`Sticker pack name: ${pack.name}`))
+   *   .catch(console.error);
+   */
+  async fetchStickerPacks({ packId }: any = {}) {
+    if (packId) {
+      const data = await this.api('sticker-packs', packId).get();
+      return new StickerPack(this, data);
+    }
+
+    const data = await this.api('sticker-packs').get();
+    return new Collection(data.sticker_packs.map((p: any) => [p.id, new StickerPack(this, p)]));
+  }
+
+  /**
    * Obtains the list of sticker packs available to Nitro subscribers from Discord.
    * @returns {Promise<Collection<Snowflake, StickerPack>>}
+   * @deprecated Use {@link Client#fetchStickerPacks} instead.
    * @example
    * client.fetchPremiumStickerPacks()
    *   .then(packs => console.log(`Available sticker packs are: ${packs.map(pack => pack.name).join(', ')}`))
    *   .catch(console.error);
    */
-  async fetchPremiumStickerPacks() {
-    const data = await this.api('sticker-packs').get();
-    return new Collection(data.sticker_packs.map((p: any) => [p.id, new StickerPack(this, p)]));
+  fetchPremiumStickerPacks() {
+    if (!deprecationEmitted) {
+      process.emitWarning(
+        'The Client#fetchPremiumStickerPacks() method is deprecated. Use Client#fetchStickerPacks() instead.',
+        'DeprecationWarning',
+      );
+      deprecationEmitted = true;
+    }
+
+    return this.fetchStickerPacks();
   }
   /**
    * A last ditch cleanup function for garbage collection.
@@ -606,6 +656,57 @@ class Client extends BaseClient {
    * @property {GuildResolvable} [guild] Guild to preselect
    * @property {boolean} [disableGuildSelect] Whether to disable the guild selection
    */
+
+  /**
+   * Generates an invite link for the client.
+   * @param {InviteGenerationOptions} [options={}] Options for the invite
+   * @returns {string}
+   * @example
+   * const link = client.generateInvite({
+   *   scopes: ['applications.commands', 'bot'],
+   *   permissions: ['MANAGE_GUILD'],
+   * });
+   * console.log(link);
+   */
+  generateInvite(options: any = {}) {
+    if (typeof options !== 'object' || options === null) {
+      throw new TypeError('INVALID_TYPE', 'options', 'object', true);
+    }
+    if (!this.application) throw new Error('CLIENT_NOT_READY', 'generate an invite link');
+
+    const { scopes } = options;
+    if (scopes === undefined || !Array.isArray(scopes)) {
+      throw new TypeError('INVALID_TYPE', 'scopes', 'Array of Invite Scopes', true);
+    }
+    if (!scopes.some((scope: string) => ['bot', 'applications.commands'].includes(scope))) {
+      throw new TypeError('INVALID_TYPE', 'scopes', 'Array of Invite Scopes', true);
+    }
+    if (!scopes.includes('bot') && options.permissions) {
+      throw new TypeError('INVALID_TYPE', 'permissions', 'null when scopes does not include bot');
+    }
+
+    const query = new URLSearchParams({
+      client_id: this.application.id,
+      scope: scopes.join(' '),
+    });
+
+    if (options.disableGuildSelect !== undefined) {
+      query.set('disable_guild_select', String(options.disableGuildSelect));
+    }
+
+    if (options.permissions) {
+      const permissions = Permissions.resolve(options.permissions);
+      if (permissions) query.set('permissions', permissions.toString());
+    }
+
+    if (options.guild) {
+      const guildId = this.guilds.resolveId(options.guild);
+      if (!guildId) throw new TypeError('INVALID_TYPE', 'options.guild', 'GuildResolvable');
+      query.set('guild_id', guildId);
+    }
+
+    return `${this.options.http.api}/oauth2/authorize?${query.toString()}`;
+  }
 
   /**
    * The sleep function in JavaScript returns a promise that resolves after a specified timeout.
