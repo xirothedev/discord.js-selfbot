@@ -46,7 +46,7 @@ const SUPPORTED_CODECS = ['VP8', 'H264'];
 class VoiceConnection extends EventEmitter {
   [key: string]: any;
 
-  constructor(voiceManager: any, channel: any) {
+  constructor(voiceManager: any, channel: any, options: any = {}) {
     super();
 
     /**
@@ -132,6 +132,13 @@ class VoiceConnection extends EventEmitter {
      * @private
      */
     this.sockets = {};
+
+    /**
+     * Factories used to create the voice networking sockets. Overridable so tests can inject fakes.
+     * @type {Object}
+     * @private
+     */
+    this.socketFactory = options.socketFactory ?? {};
 
     /**
      * The voice receiver of this connection
@@ -532,8 +539,8 @@ class VoiceConnection extends EventEmitter {
     if (this.sockets.ws) this.sockets.ws.shutdown();
     if (this.sockets.udp) this.sockets.udp.shutdown();
 
-    this.sockets.ws = new VoiceWebSocket(this);
-    this.sockets.udp = new VoiceUDP(this);
+    this.sockets.ws = this.socketFactory.ws ? this.socketFactory.ws(this) : new VoiceWebSocket(this);
+    this.sockets.udp = this.socketFactory.udp ? this.socketFactory.udp(this) : new VoiceUDP(this);
 
     const { ws, udp } = this.sockets;
 
