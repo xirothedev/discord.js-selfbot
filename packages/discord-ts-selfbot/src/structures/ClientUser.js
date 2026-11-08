@@ -350,12 +350,12 @@ class ClientUser extends User {
 
   /**
    * Create an invite [Friend Invites]
-   * maxAge: 604800 | maxUses: 1
+   * Discord fixes the invite to max age 604800 seconds and max uses 1.
    * @returns {Promise<Invite>}
    * @see {@link https://github.com/13-05/hidden-disc-docs#js-snippet-for-creating-friend-invites}
    * @example
-   * // Options not working
-   * client.user.createFriendInvite();
+   * // Create a friend invite
+   * client.user.createFriendInvite()
    *   .then(console.log)
    *   .catch(console.error);
    */

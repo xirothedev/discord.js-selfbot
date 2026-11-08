@@ -162,8 +162,13 @@ class RelationshipManager extends BaseManager {
 
   /**
    * Deletes a friend / blocked relationship with a client user or cancels a friend request.
+   * <info>This method is not implemented for safety. It always rejects and makes no REST request.</info>
+   * @deprecated Risky relationship mutation that can trigger Discord ToS enforcement; not implemented.
+   * @experimental Placeholder kept for a future opt-in design; do not use.
    * @param {UserResolvable} user Target
    * @returns {Promise<boolean>}
+   * @throws {Error} Always rejects with `Risky action, not finished yet.`
+   * @see {@link https://github.com/xirothedev/discord.js-selfbot/issues/11}
    */
   async deleteRelationship(user: any) {
     throw new Error('Risky action, not finished yet.');
@@ -185,8 +190,13 @@ class RelationshipManager extends BaseManager {
 
   /**
    * Sends a friend request.
+   * <info>This method is not implemented for safety. It always rejects and makes no REST request.</info>
+   * @deprecated Risky relationship mutation that can trigger Discord ToS enforcement; not implemented.
+   * @experimental Placeholder kept for a future opt-in design; do not use.
    * @param {UserResolvable} options Target (User Object, Username, User Id)
    * @returns {Promise<boolean>}
+   * @throws {Error} Always rejects with `Risky action, not finished yet.`
+   * @see {@link https://github.com/xirothedev/discord.js-selfbot/issues/11}
    */
   async sendFriendRequest(options: any) {
     throw new Error('Risky action, not finished yet.');
@@ -214,8 +224,13 @@ class RelationshipManager extends BaseManager {
 
   /**
    * Accepts a friend request.
+   * <info>This method is not implemented for safety. It always rejects and makes no REST request.</info>
+   * @deprecated Risky relationship mutation that can trigger Discord ToS enforcement; not implemented.
+   * @experimental Placeholder kept for a future opt-in design; do not use.
    * @param {UserResolvable} user The user to add as a friend
    * @returns {Promise<boolean>}
+   * @throws {Error} Always rejects with `Risky action, not finished yet.`
+   * @see {@link https://github.com/xirothedev/discord.js-selfbot/issues/11}
    */
   async addFriend(user: any) {
     throw new Error('Risky action, not finished yet.');
@@ -257,8 +272,13 @@ class RelationshipManager extends BaseManager {
 
   /**
    * Blocks a user.
+   * <info>This method is not implemented for safety. It always rejects and makes no REST request.</info>
+   * @deprecated Risky relationship mutation that can trigger Discord ToS enforcement; not implemented.
+   * @experimental Placeholder kept for a future opt-in design; do not use.
    * @param {UserResolvable} user User to block
    * @returns {Promise<boolean>}
+   * @throws {Error} Always rejects with `Risky action, not finished yet.`
+   * @see {@link https://github.com/xirothedev/discord.js-selfbot/issues/11}
    */
   async addBlocked(user: any) {
     throw new Error('Risky action, not finished yet.');

@@ -1250,8 +1250,11 @@ export class ClientUser extends User {
   ): Promise<void>;
   public setAccentColor(color?: ColorResolvable | null): Promise<this>;
   public setAboutMe(bio?: string | null): Promise<this>;
+  /** Creates a friend invite. Discord fixes max age to 604800 seconds and max uses to 1. */
   public createFriendInvite(): Promise<Invite>;
+  /** Fetches every active friend invite, keyed by invite code. */
   public getAllFriendInvites(): Promise<Collection<string, Invite>>;
+  /** Revokes every active friend invite. */
   public revokeAllFriendInvites(): Promise<void>;
   public setSamsungActivity(packageName: string, type?: 'START' | 'UPDATE' | 'STOP'): Promise<this>;
   public stopRinging(channel: ChannelResolvable): Promise<void>;
@@ -4841,10 +4844,30 @@ export class RelationshipManager extends BaseManager {
   public toJSON(): { type: RelationshipTypes; since: string; nickname: string | null | undefined; id: Snowflake }[];
   public resolveId(user: UserResolvable): Snowflake | undefined;
   public fetch(user?: UserResolvable, options?: BaseFetchOptions): Promise<RelationshipTypes | RelationshipManager>;
+  /**
+   * @deprecated Risky relationship mutation that can trigger Discord ToS enforcement. Always rejects with
+   * `Risky action, not finished yet.` and makes no REST request.
+   * @experimental Placeholder kept for a future opt-in design; do not use.
+   */
   public deleteRelationship(user: UserResolvable): Promise<boolean>;
+  /**
+   * @deprecated Risky relationship mutation that can trigger Discord ToS enforcement. Always rejects with
+   * `Risky action, not finished yet.` and makes no REST request.
+   * @experimental Placeholder kept for a future opt-in design; do not use.
+   */
   public sendFriendRequest(options: UserResolvable): Promise<boolean>;
+  /**
+   * @deprecated Risky relationship mutation that can trigger Discord ToS enforcement. Always rejects with
+   * `Risky action, not finished yet.` and makes no REST request.
+   * @experimental Placeholder kept for a future opt-in design; do not use.
+   */
   public addFriend(user: UserResolvable): Promise<boolean>;
   public setNickname(user: UserResolvable, nickname: string | null | undefined): Promise<boolean>;
+  /**
+   * @deprecated Risky relationship mutation that can trigger Discord ToS enforcement. Always rejects with
+   * `Risky action, not finished yet.` and makes no REST request.
+   * @experimental Placeholder kept for a future opt-in design; do not use.
+   */
   public addBlocked(user: UserResolvable): Promise<boolean>;
 }
 
