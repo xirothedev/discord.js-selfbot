@@ -1,0 +1,87 @@
+---
+title: Recording
+description: Record audio and video through ffmpeg without leaking processes.
+---
+
+## Requirements
+
+- `ffmpeg` is on `PATH`.
+- A voice connection with an active receiver.
+- Enough disk space for the output file.
+
+Recording is CPU and network intensive. A video recording needs a stable upload and a machine that can keep up with the selected codec.
+
+## Record audio
+
+```ts
+import { createWriteStream } from 'node:fs';
+
+const stream = connection.receiver.createStream(user, {
+  mode: 'pcm',
+  end: 'silence',
+});
+
+stream.pipe(createWriteStream('audio.pcm'));
+
+stream.once('end', () => {
+  console.log('Audio recording finished.');
+});
+```
+
+`createStream` accepts:
+
+- `mode: 'opus'` — raw Opus packets, no decoding.
+- `mode: 'pcm'` — decoded 48 kHz stereo PCM.
+- `end: 'silence'` — stop after a period of silence.
+- `end: 'manual'` — stop when you call `stream.destroy()`.
+- `paddingSilence` — pad missing packets with silence.
+
+## Record video
+
+```ts
+const recorder = connection.receiver.createVideoStream(user, 'video.mkv');
+
+recorder.once('ready', () => {
+  console.log('Recorder ready.');
+});
+
+recorder.once('closed', () => {
+  console.log('Recorder closed.');
+});
+
+// Stop after 30 seconds.
+setTimeout(() => {
+  recorder.stop();
+}, 30_000);
+```
+
+`createVideoStream` rejects with `VOICE_USER_NOT_STREAMING` when the user is not streaming. The recorder writes through ffmpeg to a Matroska container.
+
+## Stop cleanly
+
+```ts
+recorder.stop();
+```
+
+`Recorder#stop` ends stdin, kills the ffmpeg process, ends a writable output stream, and removes the recorder from the receiver. `Recorder#destroy` searches for the ffmpeg process and kills it, which is useful when `stop()` did not find the child process.
+
+## Test seam
+
+The recorder accepts injectable `spawn`, `findProcess`, and `killProcess` functions. The test suite uses these seams so tests never spawn ffmpeg or touch the OS.
+
+```ts
+const recorder = connection.receiver.createVideoStream(user, 'video.mkv');
+// Tests inject a fake spawn and assert the ffmpeg argument list.
+```
+
+## Limits
+
+- The recorder is a proof of concept. Very high resolutions or long recordings may drop frames.
+- ffmpeg must support the selected H.264/H.265 encoder.
+- Always stop the recorder before disconnecting the voice connection.
+
+## Next
+
+- [Voice](/docs/guides/voice)
+- [API: Recorder](/docs/api/voice/recorder)
+- [API: ClientVoiceManager](/docs/api/voice/client-voice-manager)

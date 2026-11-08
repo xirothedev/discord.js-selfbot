@@ -1,0 +1,38 @@
+---
+title: Examples
+description: Runnable TypeScript and JavaScript examples.
+---
+
+Each example has a TypeScript and a JavaScript version. Run them from the repository root with a user token in `DISCORD_TOKEN`.
+
+```sh
+DISCORD_TOKEN=your-token bun run --cwd apps/examples-ts basic
+DISCORD_TOKEN=your-token bun run --cwd apps/examples-js basic
+```
+
+<Callout type="warn" title="Use a test account">
+  These examples log in as a user account. Read [Token safety](/docs/getting-started/token-safety) first.
+</Callout>
+
+<Cards>
+  <Card
+    title="Basic client"
+    href="/docs/examples/basic-client"
+    description="Create a client and reply to a ping message."
+  />
+  <Card
+    title="Events and partials"
+    href="/docs/examples/events"
+    description="Enable partials and read the gateway status."
+  />
+  <Card
+    title="Presence"
+    href="/docs/examples/presence"
+    description="Set a custom status after login."
+  />
+  <Card
+    title="Slash commands"
+    href="/docs/examples/slash-commands"
+    description="Register application commands."
+  />
+</Cards>

@@ -1,0 +1,36 @@
+---
+title: Presence
+description: Set a custom status and a game activity after login.
+---
+
+This example creates a `CustomStatus` and sets it on the client user after the ready event.
+
+## Run it
+
+```sh
+DISCORD_TOKEN=your-token bun run --cwd apps/examples-ts presence
+```
+
+<Tabs items={['TypeScript', 'JavaScript']}>
+  <Tab value="TypeScript">
+    <include cwd lang="ts" meta='title="apps/examples-ts/presence.ts"'>
+      ../../apps/examples-ts/presence.ts
+    </include>
+  </Tab>
+  <Tab value="JavaScript">
+    <include cwd lang="js" meta='title="apps/examples-js/presence.js"'>
+      ../../apps/examples-js/presence.js
+    </include>
+  </Tab>
+</Tabs>
+
+## What it shows
+
+- `CustomStatus` with an emoji and state text.
+- `client.user.setPresence` with a status and activity list.
+- `Events.CLIENT_READY` as the safe point to touch the user cache.
+
+## Next
+
+- [Account and profile](/docs/guides/account-profile)
+- [Basic client](/docs/examples/basic-client)

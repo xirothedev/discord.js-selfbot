@@ -1,0 +1,38 @@
+---
+title: Basic client
+description: Connect with a user token and reply to a ping message.
+---
+
+This example creates a client, listens for `CLIENT_READY` and `MessageCreate`, and replies to `!ping`.
+
+## Run it
+
+```sh
+DISCORD_TOKEN=your-token bun run --cwd apps/examples-ts basic
+```
+
+<Tabs items={['TypeScript', 'JavaScript']}>
+  <Tab value="TypeScript">
+    <include cwd lang="ts" meta='title="apps/examples-ts/basic-client.ts"'>
+      ../../apps/examples-ts/basic-client.ts
+    </include>
+  </Tab>
+  <Tab value="JavaScript">
+    <include cwd lang="js" meta='title="apps/examples-js/basic-client.js"'>
+      ../../apps/examples-js/basic-client.js
+    </include>
+  </Tab>
+</Tabs>
+
+## What it shows
+
+- Creating a `Client` with no options.
+- Waiting for `Events.CLIENT_READY`.
+- Filtering out the account&apos;s own messages.
+- Replying in the same channel.
+- Logging client errors.
+
+## Next
+
+- [Events and partials](/docs/examples/events)
+- [First client](/docs/getting-started/first-client)

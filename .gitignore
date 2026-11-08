@@ -28,14 +28,11 @@ pids
 .env
 test/auth.json
 test/auth.js
-apps/doc/deploy/deploy_key
-apps/doc/deploy/deploy_key.pub
 deploy/deploy_key
 deploy/deploy_key.pub
 
 # Dist
 dist/
-apps/doc/docs.json
 
 # Next.js build output
 .next
@@ -68,8 +65,6 @@ dist
 # Env
 .env
 test/
-apps/doc/deploy/deploy_key
-apps/doc/deploy/deploy_key.pub
 deploy/deploy_key
 deploy/deploy_key.pub
 
@@ -84,3 +79,10 @@ update.mjs
 yarn.lock
 package-lock.json
 .turbo/
+
+# Docs site
+apps/docs/.source/
+apps/docs/.next/
+apps/docs/out/
+apps/docs/content/docs/api/
+apps/docs/next-env.d.ts
