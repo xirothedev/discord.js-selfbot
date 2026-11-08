@@ -15,8 +15,8 @@
     "test:typescript": "bun check",
     "lint:boundaries": "depcruise src/packages",
     "all": "bun run build && bun publish",
-    "docs": "docgen --source src --custom docs/index.yml --output docs/main.json",
-    "docs:test": "docgen --source src --custom docs/index.yml"
+    "docs": "docgen --source src --custom ../../docs/index.yml --output ../../docs/main.json",
+    "docs:test": "docgen --source src --custom ../../docs/index.yml"
   },
   "files": [
     "src",
