@@ -5156,25 +5156,25 @@ export class MessageManager extends CachedManager<Snowflake, Message, MessageRes
   public react(message: MessageResolvable, emoji: EmojiIdentifierResolvable, burst?: boolean): Promise<void>;
   public pin(message: MessageResolvable, reason?: string): Promise<void>;
   public unpin(message: MessageResolvable, reason?: string): Promise<void>;
-  public search(options: MessageSearchOptions): Promise<MessageSearchResult>;
+  public search(options?: MessageSearchOptions): Promise<MessageSearchResult>;
   public endPoll(messageId: Snowflake): Promise<Message>;
   public fetchPollAnswerVoters(options: FetchPollAnswerVotersOptions): Promise<Collection<Snowflake, User>>;
 }
 
 export interface MessageSearchOptions {
-  authors: UserResolvable[];
-  content: string;
-  mentions: UserResolvable[];
-  has: ('link' | 'embed' | 'file' | 'video' | 'image' | 'sound' | 'sticker')[];
-  maxId: Snowflake;
-  minId: Snowflake;
-  channels: TextChannelResolvable[];
-  pinned: boolean;
-  nsfw: boolean;
-  offset: number;
-  limit: number;
-  sortBy: 'relevant' | 'timestamp';
-  sortOrder: 'asc' | 'desc';
+  authors?: UserResolvable[];
+  content?: string;
+  mentions?: UserResolvable[];
+  has?: ('link' | 'embed' | 'file' | 'video' | 'image' | 'sound' | 'sticker')[];
+  maxId?: Snowflake;
+  minId?: Snowflake;
+  channels?: TextChannelResolvable[];
+  pinned?: boolean;
+  nsfw?: boolean;
+  offset?: number;
+  limit?: number;
+  sortBy?: 'relevance' | 'timestamp';
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface MessageSearchResult {

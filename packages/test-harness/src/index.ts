@@ -1,6 +1,14 @@
 // Fake Discord HTTP + WebSocket server for TDD seams (S1a / S1b).
 // Bun-only: uses Bun.serve for the HTTP + WebSocket transport.
 
+export interface FakeDiscordRequest {
+  method: string;
+  path: string;
+  /** Raw query string including the leading `?`, or an empty string. */
+  query: string;
+  url: URL;
+}
+
 export interface FakeDiscordOptions {
   /** Custom READY payload. Defaults to a minimal user with no guilds/channels. */
   readyPayload?: Record<string, unknown>;
@@ -8,6 +16,11 @@ export interface FakeDiscordOptions {
   apiVersion?: number;
   /** Called with the IDENTIFY payload (op 2) when received. */
   onIdentify?: (payload: Record<string, unknown>) => void;
+  /**
+   * Returns a JSON body or `Response` for an API request. Return `undefined` to use the default stub.
+   * Gateway requests are never passed to this handler.
+   */
+  respond?: (request: FakeDiscordRequest) => unknown | Response | undefined;
 }
 
 export interface FakeDiscord {
@@ -17,6 +30,7 @@ export interface FakeDiscord {
   getLastRequest(): {
     method: string;
     path: string;
+    query: string;
     headers: Record<string, string>;
   } | null;
   getIdentifyPayload(): Record<string, unknown> | null;
@@ -49,10 +63,12 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
   const apiVersion = options.apiVersion ?? 9;
   const readyPayload = options.readyPayload ?? DEFAULT_READY;
   const onIdentify = options.onIdentify;
+  const respond = options.respond;
 
   let lastRequest: {
     method: string;
     path: string;
+    query: string;
     headers: Record<string, string>;
   } | null = null;
 
@@ -86,8 +102,17 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
         lastRequest = {
           method: req.method,
           path: url.pathname,
+          query: url.search,
           headers: Object.fromEntries(req.headers.entries()),
         };
+        const custom = respond?.({
+          method: req.method,
+          path: url.pathname,
+          query: url.search,
+          url,
+        });
+        if (custom instanceof Response) return custom;
+        if (custom !== undefined) return Response.json(custom);
         return Response.json({
           id: '123',
           username: 'test',
