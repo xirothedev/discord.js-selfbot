@@ -11,6 +11,12 @@ export interface FakeDiscordRequest {
   bodyText: string | null;
 }
 
+export interface FakeRouteResponse {
+  status?: number;
+  body?: unknown;
+  headers?: Record<string, string>;
+}
+
 export interface FakeDiscordOptions {
   /** Custom READY payload. Defaults to a minimal user with no guilds/channels. */
   readyPayload?: Record<string, unknown>;
@@ -22,6 +28,8 @@ export interface FakeDiscordOptions {
   apiResponses?: Record<string, unknown>;
   /** Alias for apiResponses; keyed by request path. */
   responses?: Record<string, unknown>;
+  /** Response overrides keyed by `"METHOD /v9/path"`. Unmatched routes return the default user. */
+  routes?: Record<string, FakeRouteResponse>;
   /**
    * Returns a JSON body or `Response` for an API request. Return `undefined` to use the default stub.
    * Gateway requests are never passed to this handler.
@@ -76,6 +84,7 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
   const readyPayload = options.readyPayload ?? DEFAULT_READY;
   const onIdentify = options.onIdentify;
   const apiResponses = { ...options.responses, ...options.apiResponses };
+  const routes = options.routes ?? {};
   const respond = options.respond;
 
   let lastRequest: FakeRequest | null = null;
@@ -132,6 +141,14 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
         const custom = respond?.({ ...request, url });
         if (custom instanceof Response) return custom;
         if (custom !== undefined) return Response.json(custom);
+
+        const override = routes[`${req.method.toUpperCase()} ${url.pathname}`];
+        if (override) {
+          return Response.json(override.body ?? null, {
+            status: override.status ?? 200,
+            headers: override.headers,
+          });
+        }
 
         const methodKey = `${req.method} ${url.pathname}`;
         if (Object.hasOwn(apiResponses, methodKey)) return Response.json(apiResponses[methodKey]);

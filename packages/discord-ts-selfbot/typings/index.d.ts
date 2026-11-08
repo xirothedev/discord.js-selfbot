@@ -1933,13 +1933,13 @@ export class Guild extends AnonymousGuild {
   public toJSON(): unknown;
   public markAsRead(): Promise<void>;
   public setCommunity(
-    stats: boolean,
+    stats?: boolean,
     publicUpdatesChannel?: GuildTextChannelResolvable,
     rulesChannel?: GuildTextChannelResolvable,
     reason?: string,
   ): Promise<this>;
   public topEmojis(): Promise<Collection<number, GuildEmoji>>;
-  public setVanityCode(code?: string): Promise<this>;
+  public setVanityCode(code?: string): Promise<Vanity>;
 }
 
 export class GuildAuditLogs<T extends GuildAuditLogsResolvable = 'ALL'> {
