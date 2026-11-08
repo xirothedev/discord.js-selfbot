@@ -2953,14 +2953,70 @@ export class SessionManager extends CachedManager<string, Session, any> {
   public logoutAllDevices(): Promise<void>;
 }
 
+export interface BillingAddress {
+  name: string;
+  line_1: string;
+  line_2?: string | null;
+  city: string;
+  state?: string | null;
+  postal_code?: string;
+  country: string;
+}
+
+export interface BillingPaymentSource {
+  id: Snowflake;
+  type: number;
+  invalid: boolean;
+  flags: number;
+  default: boolean;
+  billing_address: BillingAddress;
+  payment_gateway: number;
+  deleted_at: string | null;
+  brand?: string;
+  country?: string;
+  last_4?: string;
+  expires_month?: number;
+  expires_year?: number;
+  payment_gateway_source_id?: string;
+  email?: string;
+  bank?: string;
+  username?: string;
+}
+
+export interface BillingSubscriptionItem {
+  id: Snowflake;
+  quantity: number;
+  plan_id: Snowflake;
+}
+
+export interface BillingSubscription {
+  id: Snowflake;
+  type: number;
+  payment_gateway: number | null;
+  currency: string;
+  items: BillingSubscriptionItem[];
+  payment_gateway_plan_id: string | null;
+  payment_gateway_subscription_id?: string | null;
+  current_period_start: string;
+  current_period_end: string;
+  streak_started_at?: string;
+  status: number;
+  payment_source_id: Snowflake | null;
+  created_at: string;
+  canceled_at?: string;
+  country_code: string | null;
+  trial_ends_at?: string;
+  use_storekit_resubscribe: boolean;
+}
+
 export class BillingManager extends BaseManager {
   constructor(client: Client);
-  public paymentSources: Collection<Snowflake, object>;
-  public fetchPaymentSources(): Promise<Collection<Snowflake, object>>;
+  public paymentSources: Collection<Snowflake, BillingPaymentSource>;
+  public fetchPaymentSources(): Promise<Collection<Snowflake, BillingPaymentSource>>;
   public guildBoosts: Collection<Snowflake, GuildBoost>;
   public fetchGuildBoosts(): Promise<Collection<Snowflake, GuildBoost>>;
-  public currentSubscription: Collection<Snowflake, object>;
-  public fetchCurrentSubscription(): Promise<Collection<Snowflake, object>>;
+  public currentSubscription: Collection<Snowflake, BillingSubscription>;
+  public fetchCurrentSubscription(): Promise<Collection<Snowflake, BillingSubscription>>;
 }
 
 export class Session extends Base {
