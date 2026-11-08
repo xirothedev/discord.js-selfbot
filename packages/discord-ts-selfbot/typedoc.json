@@ -1,0 +1,11 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.js"],
+  "entryPointStrategy": "expand",
+  "out": "../../docs/api",
+  "tsconfig": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Node10"
+  }
+}
