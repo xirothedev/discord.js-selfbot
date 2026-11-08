@@ -9,6 +9,20 @@
     "node": true
   },
   "ignorePatterns": ["**/src/util/Voice.js", "**/examples/**", "**/dist/**"],
+  "overrides": [
+    {
+      "files": ["**/*.test.js", "**/*.test.ts"],
+      "globals": {
+        "Bun": "readonly"
+      },
+      "rules": {
+        "consistent-return": "off"
+      },
+      "parserOptions": {
+        "sourceType": "module"
+      }
+    }
+  ],
   "rules": {
     "import/order": [
       "error",

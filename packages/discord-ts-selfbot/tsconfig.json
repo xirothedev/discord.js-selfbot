@@ -33,5 +33,5 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true
   },
-  "include": ["src/**/*.js", "typings/**/*.ts"]
+  "include": ["src/**/*.js", "src/**/*.ts", "typings/**/*.ts"]
 }

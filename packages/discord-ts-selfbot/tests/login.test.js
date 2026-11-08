@@ -39,7 +39,7 @@ test('Client.login connects through a fake Discord server and emits ready', asyn
             );
           }
         } catch {
-          // ignore non-JSON frames
+          // Ignore non-JSON frames
         }
       },
       close() {},
