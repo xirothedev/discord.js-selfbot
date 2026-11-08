@@ -2600,7 +2600,7 @@ export class Message<Cached extends boolean = boolean> extends Base {
   ): Promise<Message | Modal>;
   public markUnread(): Promise<void>;
   public markRead(): Promise<void>;
-  public report(breadcrumbs: number[], elements?: object): Promise<{ report_id: Snowflake }>;
+  public report(breadcrumbs: number[], elements?: Record<string, unknown>): Promise<{ report_id: Snowflake }>;
   public vote(...ids: number[]): Promise<void>;
 }
 

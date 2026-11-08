@@ -1236,7 +1236,7 @@ class Message extends Base {
    * @param {boolean} [suppress=true] If the embeds should be suppressed or not
    * @returns {Promise<Message>}
    */
-  suppressEmbeds(suppress: any = true) {
+  suppressEmbeds(suppress: boolean = true) {
     const flags = new MessageFlags(this.flags.bitfield);
 
     if (suppress) {
@@ -1455,7 +1455,7 @@ class Message extends Base {
    * Marks the message as unread.
    * @returns {Promise<void>}
    */
-  markUnread() {
+  markUnread(): Promise<void> {
     return this.client.api.channels[this.channelId].messages[this.id].ack.post({
       data: {
         manual: true,
@@ -1468,7 +1468,7 @@ class Message extends Base {
    * Marks the message as read.
    * @returns {Promise<void>}
    */
-  markRead() {
+  markRead(): Promise<void> {
     return this.client.api.channels[this.channelId].messages[this.id].ack.post({
       data: {
         token: null,
@@ -1478,7 +1478,7 @@ class Message extends Base {
 
   /**
    * Report Message
-   * @param {Arrray<number>} breadcrumbs Options for reporting
+   * @param {Array<number>} breadcrumbs Options for reporting
    * @param {Object} [elements={}] Metadata
    * @returns {Promise<{ report_id: Snowflake }>}
    * @example
@@ -1490,7 +1490,7 @@ class Message extends Base {
    * message.report([3, 28, 72]).then(console.log);
    * // { "report_id": "1199663489988440124" }
    */
-  report(breadcrumbs: any, elements: any = {}) {
+  report(breadcrumbs: number[], elements: Record<string, unknown> = {}): Promise<{ report_id: string }> {
     return this.client.api.reporting.message.post({
       data: {
         version: '1.0',
