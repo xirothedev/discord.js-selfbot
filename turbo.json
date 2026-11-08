@@ -1,0 +1,41 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["bunfig.toml", "tsconfig.json"],
+  "tasks": {
+    "build": {
+      "inputs": ["src/**", "typings/**", "package.json", "tsconfig.json"],
+      "outputs": ["dist/**"],
+      "outputLogs": "errors-only"
+    },
+    "check": {
+      "inputs": ["src/**", "typings/**", "tsconfig.json", "package.json"],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
+    "lint": {
+      "inputs": ["src/**", "typings/**", "package.json"],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
+    "fmt:check": {
+      "inputs": ["src/**", "typings/**"],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
+    "test": {
+      "inputs": ["src/**", "typings/**", "tests/**", "package.json"],
+      "outputs": ["coverage/**"],
+      "outputLogs": "new-only"
+    },
+    "docs": {
+      "inputs": ["src/**", "docs/**", "package.json"],
+      "outputs": ["docs/main.json"],
+      "outputLogs": "errors-only"
+    },
+    "lint:boundaries": {
+      "inputs": ["src/packages/**", ".dependency-cruiser.cjs"],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    }
+  }
+}
