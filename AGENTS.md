@@ -11,3 +11,5 @@ Default canonical triage labels (`needs-triage`, `needs-info`, `ready-for-agent`
 ### Domain docs
 
 Single-context layout (one `GLOSSARY.md` + `docs/adr/` at repo root). See `docs/agents/domain.md`.
+
+Packages are deep modules: see [src/packages/README.md](./src/packages/README.md) before adding or importing one.
