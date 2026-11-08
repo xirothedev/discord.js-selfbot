@@ -20,6 +20,10 @@ export interface FakeDiscord {
     headers: Record<string, string>;
   } | null;
   getIdentifyPayload(): Record<string, unknown> | null;
+  /** Sends a raw gateway packet (op 0 dispatch shape) to every connected shard. */
+  sendGatewayPacket(packet: Record<string, unknown>): void;
+  /** Resolves when at least one gateway shard is connected. */
+  waitForShard(timeoutMs?: number): Promise<void>;
   stop(): void;
 }
 
@@ -54,6 +58,22 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
 
   let lastIdentify: Record<string, unknown> | null = null;
 
+  type GatewaySocket = { send(data: string): unknown };
+
+  const sockets = new Set<GatewaySocket>();
+  const shardWaiters = new Set<{
+    resolve: () => void;
+    timer: ReturnType<typeof setTimeout>;
+  }>();
+
+  function notifyShardConnected() {
+    for (const waiter of shardWaiters) {
+      clearTimeout(waiter.timer);
+      waiter.resolve();
+    }
+    shardWaiters.clear();
+  }
+
   const server = Bun.serve({
     port: 0,
     fetch(req, srv) {
@@ -78,6 +98,8 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
     },
     websocket: {
       open(ws) {
+        sockets.add(ws);
+        notifyShardConnected();
         ws.send(JSON.stringify({ op: 10, d: { heartbeat_interval: 45000 } }));
       },
       message(ws, msg) {
@@ -93,7 +115,9 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
           // ignore non-JSON frames
         }
       },
-      close() {},
+      close(ws) {
+        sockets.delete(ws);
+      },
     },
   });
 
@@ -103,6 +127,24 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
     port: server.port as number,
     getLastRequest: () => lastRequest,
     getIdentifyPayload: () => lastIdentify,
+    sendGatewayPacket(packet) {
+      if (!sockets.size) throw new Error('No gateway shard is connected');
+      const payload = JSON.stringify(packet);
+      for (const socket of sockets) socket.send(payload);
+    },
+    waitForShard(timeoutMs = 10_000) {
+      if (sockets.size) return Promise.resolve();
+      return new Promise<void>((resolve, reject) => {
+        const waiter = {
+          resolve: () => resolve(),
+          timer: setTimeout(() => {
+            shardWaiters.delete(waiter);
+            reject(new Error('Timed out waiting for a gateway shard connection'));
+          }, timeoutMs),
+        };
+        shardWaiters.add(waiter);
+      });
+    },
     stop: () => server.stop(true),
   };
 }

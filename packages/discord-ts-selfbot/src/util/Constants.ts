@@ -378,6 +378,7 @@ Constants.VoiceOpcodes = {
  * * RELATIONSHIP_UPDATE: relationshipUpdate
  * * CHANNEL_RECIPIENT_ADD: channelRecipientAdd
  * * CHANNEL_RECIPIENT_REMOVE: channelRecipientRemove
+ * * INTERACTION_CREATE: interactionCreate
  * * INTERACTION_MODAL_CREATE: interactionModalCreate
  * * CALL_CREATE: callCreate
  * * CALL_UPDATE: callUpdate
@@ -473,6 +474,7 @@ Constants.Events = {
   RELATIONSHIP_REMOVE: 'relationshipRemove',
   CHANNEL_RECIPIENT_ADD: 'channelRecipientAdd',
   CHANNEL_RECIPIENT_REMOVE: 'channelRecipientRemove',
+  INTERACTION_CREATE: 'interactionCreate',
   INTERACTION_MODAL_CREATE: 'interactionModalCreate',
   CALL_CREATE: 'callCreate',
   CALL_UPDATE: 'callUpdate',
