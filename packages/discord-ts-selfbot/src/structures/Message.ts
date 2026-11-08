@@ -2,6 +2,7 @@ const process = require('node:process');
 const { Collection } = require('@discordjs/collection');
 const Base = require('./Base');
 const BaseMessageComponent = require('./BaseMessageComponent');
+const InteractionCollector = require('./InteractionCollector');
 const MessageAttachment = require('./MessageAttachment');
 const Embed = require('./MessageEmbed');
 const Mentions = require('./MessageMentions');
@@ -31,6 +32,110 @@ const Util = require('../util/Util');
  */
 const deletedMessages = new WeakSet();
 let deprecationEmittedForDeleted = false;
+
+/**
+ * Transforms an API authorizing integration owners map.
+ * @param {Client} client The client
+ * @param {Object} [data={}] The raw authorizing integration owners
+ * @returns {Object}
+ * @private
+ */
+function transformAuthorizingIntegrationOwners(client: any, data: any = {}) {
+  return {
+    ...data,
+    guildId: data[0] ?? null,
+    userId: data[1] ?? null,
+    get guild() {
+      return (this.guildId && client.guilds.cache.get(this.guildId)) ?? null;
+    },
+    get user() {
+      return (this.userId && client.users.cache.get(this.userId)) ?? null;
+    },
+    toJSON() {
+      return data;
+    },
+  };
+}
+
+/**
+ * Transforms an API message interaction metadata object.
+ * @param {Client} client The client
+ * @param {Object} data The interaction metadata to transform
+ * @returns {MessageInteractionMetadata}
+ * @private
+ */
+function transformInteractionMetadata(client: any, data: any): any {
+  return {
+    id: data.id,
+    type: InteractionTypes[data.type],
+    user: client.users._add(data.user),
+    authorizingIntegrationOwners: transformAuthorizingIntegrationOwners(client, data.authorizing_integration_owners),
+    originalResponseMessageId: data.original_response_message_id ?? null,
+    interactedMessageId: data.interacted_message_id ?? null,
+    triggeringInteractionMetadata: data.triggering_interaction_metadata
+      ? transformInteractionMetadata(client, data.triggering_interaction_metadata)
+      : null,
+  };
+}
+
+/**
+ * Transforms the resolved data received from the API.
+ * @param {Object} supportingData Data to support the transformation
+ * @param {Object} [data={}] The received resolved objects
+ * @returns {CommandInteractionResolvedData}
+ * @private
+ */
+function transformResolved(
+  { client, guild, channel }: any,
+  { members, users, channels, roles, messages, attachments }: any = {},
+): any {
+  const result: any = {};
+
+  if (members) {
+    result.members = new Collection();
+    for (const [id, member] of Object.entries(members)) {
+      const user = (users as any)[id];
+      result.members.set(id, guild?.members._add({ user, ...(member as any) }) ?? member);
+    }
+  }
+
+  if (users) {
+    result.users = new Collection();
+    for (const user of Object.values(users) as any[]) {
+      result.users.set(user.id, client.users._add(user));
+    }
+  }
+
+  if (roles) {
+    result.roles = new Collection();
+    for (const role of Object.values(roles) as any[]) {
+      result.roles.set(role.id, guild?.roles._add(role) ?? role);
+    }
+  }
+
+  if (channels) {
+    result.channels = new Collection();
+    for (const apiChannel of Object.values(channels) as any[]) {
+      result.channels.set(apiChannel.id, client.channels._add(apiChannel, guild) ?? apiChannel);
+    }
+  }
+
+  if (messages) {
+    result.messages = new Collection();
+    for (const message of Object.values(messages) as any[]) {
+      result.messages.set(message.id, channel?.messages?._add(message) ?? message);
+    }
+  }
+
+  if (attachments) {
+    result.attachments = new Collection();
+    for (const attachment of Object.values(attachments) as any[]) {
+      result.attachments.set(attachment.id, new MessageAttachment(attachment.url, attachment.filename, attachment));
+    }
+  }
+
+  return result;
+}
 
 /**
  * Represents a message on Discord.
@@ -71,6 +176,44 @@ class Message extends Base {
       this.position = data.position;
     } else {
       this.position ??= null;
+    }
+
+    if ('role_subscription_data' in data) {
+      /**
+       * Role subscription data found on role subscription purchase messages.
+       * @typedef {Object} RoleSubscriptionData
+       * @property {Snowflake} roleSubscriptionListingId The id of the SKU and listing the user is subscribed to
+       * @property {string} tierName The name of the tier the user is subscribed to
+       * @property {number} totalMonthsSubscribed The total number of months the user has been subscribed for
+       * @property {boolean} isRenewal Whether this notification is a renewal
+       */
+
+      /**
+       * The data of the role subscription purchase or renewal.
+       * <info>This is present on role subscription purchase messages.</info>
+       * @type {?RoleSubscriptionData}
+       */
+      this.roleSubscriptionData = {
+        roleSubscriptionListingId: data.role_subscription_data.role_subscription_listing_id,
+        tierName: data.role_subscription_data.tier_name,
+        totalMonthsSubscribed: data.role_subscription_data.total_months_subscribed,
+        isRenewal: data.role_subscription_data.is_renewal,
+      };
+    } else {
+      this.roleSubscriptionData ??= null;
+    }
+
+    if ('resolved' in data) {
+      /**
+       * Resolved data from auto-populated select menus.
+       * @typedef {Object} CommandInteractionResolvedData
+       */
+      this.resolved = transformResolved(
+        { client: this.client, guild: this.guild, channel: this.channel },
+        data.resolved,
+      );
+    } else {
+      this.resolved ??= null;
     }
 
     /**
@@ -357,6 +500,33 @@ class Message extends Base {
       this.channel?.messages._add({ guild_id: data.message_reference?.guild_id, ...data.referenced_message });
     }
 
+    if (data.interaction_metadata) {
+      /**
+       * Partial data of the interaction that a message is a result of
+       * @typedef {Object} MessageInteractionMetadata
+       * @property {Snowflake} id The interaction's id
+       * @property {InteractionType} type The type of the interaction
+       * @property {User} user The user that invoked the interaction
+       * @property {Object} authorizingIntegrationOwners
+       * Mapping of integration types that the application was authorized for the related user or guild ids
+       * @property {?Snowflake} originalResponseMessageId
+       * Id of the original response message. Present only on follow-up messages
+       * @property {?Snowflake} interactedMessageId
+       * Id of the message that contained interactive component.
+       * Present only on messages created from component interactions
+       * @property {?MessageInteractionMetadata} triggeringInteractionMetadata
+       * Metadata for the interaction that was used to open the modal. Present only on modal submit interactions
+       */
+
+      /**
+       * Partial data of the interaction that this message is a result of
+       * @type {?MessageInteractionMetadata}
+       */
+      this.interactionMetadata = transformInteractionMetadata(this.client, data.interaction_metadata);
+    } else {
+      this.interactionMetadata ??= null;
+    }
+
     /**
      * Partial data of the interaction that a message is a reply to
      * @typedef {Object} MessageInteraction
@@ -365,12 +535,14 @@ class Message extends Base {
      * @property {string} commandName The name of the interaction's application command,
      * as well as the subcommand and subcommand group, where applicable
      * @property {User} user The user that invoked the interaction
+     * @deprecated Use {@link Message#interactionMetadata} instead.
      */
 
     if (data.interaction) {
       /**
        * Partial data of the interaction that this message is a reply to
        * @type {?MessageInteraction}
+       * @deprecated Use {@link Message#interactionMetadata} instead.
        */
       this.interaction = {
         id: data.interaction.id,
@@ -427,6 +599,33 @@ class Message extends Base {
       };
     } else {
       this.call ??= null;
+    }
+
+    /**
+     * The shared client theme sent with this message
+     * @typedef {Object} SharedClientTheme
+     * @property {string[]} colors The hexadecimal-encoded colors of the theme (max of 5)
+     * @property {number} gradientAngle The direction of the theme's colors (0-360)
+     * @property {number} baseMix The intensity of the theme's colors (0-100)
+     * @property {?BaseThemeType} [baseTheme] The mode of the theme
+     */
+
+    if (data.shared_client_theme) {
+      /**
+       * The shared client theme sent with this message
+       * @type {?SharedClientTheme}
+       */
+      this.sharedClientTheme = {
+        colors: data.shared_client_theme.colors,
+        gradientAngle: data.shared_client_theme.gradient_angle,
+        baseMix: data.shared_client_theme.base_mix,
+      };
+
+      if ('base_theme' in data.shared_client_theme) {
+        this.sharedClientTheme.baseTheme = data.shared_client_theme.base_theme;
+      }
+    } else {
+      this.sharedClientTheme ??= null;
     }
   }
 
@@ -594,6 +793,67 @@ class Message extends Base {
       collector.once('end', (reactions: any, reason: any) => {
         if (options.errors?.includes(reason)) reject(reactions);
         else resolve(reactions);
+      });
+    });
+  }
+
+  /**
+   * @typedef {CollectorOptions} MessageComponentCollectorOptions
+   * @property {MessageComponentType} [componentType] The type of component to listen for
+   * @property {number} [max] The maximum total amount of interactions to collect
+   * @property {number} [maxComponents] The maximum number of components to collect
+   * @property {number} [maxUsers] The maximum number of users to interact
+   */
+
+  /**
+   * Creates a message component interaction collector.
+   * @param {MessageComponentCollectorOptions} [options={}] Options to send to the collector
+   * @returns {InteractionCollector}
+   * @example
+   * // Create a message component interaction collector
+   * const filter = (interaction) => interaction.customId === 'button' && interaction.user.id === 'someId';
+   * const collector = message.createMessageComponentCollector({ filter, time: 15_000 });
+   * collector.on('collect', i => console.log(`Collected ${i.customId}`));
+   * collector.on('end', collected => console.log(`Collected ${collected.size} items`));
+   */
+  createMessageComponentCollector(options: any = {}) {
+    return new InteractionCollector(this.client, {
+      ...options,
+      interactionType: InteractionTypes.MESSAGE_COMPONENT,
+      message: this,
+    });
+  }
+
+  /**
+   * An object containing the same properties as CollectorOptions, but a few more:
+   * @typedef {Object} AwaitMessageComponentOptions
+   * @property {CollectorFilter} [filter] The filter applied to this collector
+   * @property {number} [time] Time to wait for an interaction before rejecting
+   * @property {MessageComponentType} [componentType] The type of component interaction to collect
+   * @property {number} [idle] Time to wait without another message component interaction before ending the collector
+   * @property {boolean} [dispose] Whether to remove the message component interaction after collecting
+   */
+
+  /**
+   * Collects a single component interaction that passes the filter.
+   * The Promise will reject if the time expires.
+   * @param {AwaitMessageComponentOptions} [options={}] Options to pass to the internal collector
+   * @returns {Promise<MessageComponentInteraction>}
+   * @example
+   * // Collect a message component interaction
+   * const filter = (interaction) => interaction.customId === 'button' && interaction.user.id === 'someId';
+   * message.awaitMessageComponent({ filter, time: 15_000 })
+   *   .then(interaction => console.log(`${interaction.customId} was clicked!`))
+   *   .catch(console.error);
+   */
+  awaitMessageComponent(options: any = {}) {
+    const _options = { ...options, max: 1 };
+    return new Promise((resolve: any, reject: any) => {
+      const collector = this.createMessageComponentCollector(_options);
+      collector.once('end', (interactions: any, reason: any) => {
+        const interaction = interactions.first();
+        if (interaction) resolve(interaction);
+        else reject(new Error('INTERACTION_COLLECTOR_ERROR', reason));
       });
     });
   }

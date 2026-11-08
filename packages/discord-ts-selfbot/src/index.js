@@ -127,6 +127,7 @@ exports.GuildScheduledEvent = require('./structures/GuildScheduledEvent').GuildS
 exports.GuildTemplate = require('./structures/GuildTemplate');
 exports.Integration = require('./structures/Integration');
 exports.IntegrationApplication = require('./structures/IntegrationApplication');
+exports.InteractionCollector = require('./structures/InteractionCollector');
 exports.Invite = require('./structures/Invite');
 exports.InviteStageInstance = require('./structures/InviteStageInstance');
 exports.InviteGuild = require('./structures/InviteGuild');

@@ -45,6 +45,7 @@ class InteractionCollector extends Collector {
      */
     this.channelId =
       this.client.channels.resolveId(options.message?.channel) ??
+      options.message?.channelId ??
       options.message?.channel_id ??
       this.client.channels.resolveId(options.channel);
 
@@ -54,6 +55,7 @@ class InteractionCollector extends Collector {
      */
     this.guildId =
       this.client.guilds.resolveId(options.message?.guild) ??
+      options.message?.guildId ??
       options.message?.guild_id ??
       this.client.guilds.resolveId(options.channel?.guild) ??
       this.client.guilds.resolveId(options.guild);

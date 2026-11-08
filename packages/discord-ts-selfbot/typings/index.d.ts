@@ -57,6 +57,7 @@ import {
   TeamMemberRole,
   APIPoll,
   APIPollAnswer,
+  BaseThemeType,
   GuildScheduledEventRecurrenceRuleWeekday,
   GuildScheduledEventRecurrenceRuleMonth,
   GuildScheduledEventRecurrenceRuleFrequency,
@@ -2478,7 +2479,9 @@ export class Message<Cached extends boolean = boolean> extends Base {
   public readonly guild: If<Cached, Guild>;
   public readonly hasThread: boolean;
   public id: Snowflake;
+  /** @deprecated Use {@link Message.interactionMetadata} instead. */
   public interaction: MessageInteraction | null;
+  public interactionMetadata: MessageInteractionMetadata | null;
   public readonly member: GuildMember | null;
   public mentions: MessageMentions;
   public nonce: string | number | null;
@@ -2487,6 +2490,9 @@ export class Message<Cached extends boolean = boolean> extends Base {
   public pinned: boolean;
   public reactions: ReactionManager;
   public stickers: Collection<Snowflake, Sticker>;
+  public position: number | null;
+  public roleSubscriptionData: RoleSubscriptionData | null;
+  public resolved: CommandInteractionResolvedData | null;
   public system: boolean;
   public readonly thread: ThreadChannel | null;
   public tts: boolean;
@@ -2495,12 +2501,18 @@ export class Message<Cached extends boolean = boolean> extends Base {
   public webhookId: Snowflake | null;
   public poll: Poll | null;
   public call: MessageCall | null;
+  public sharedClientTheme: SharedClientTheme | null;
   public flags: Readonly<MessageFlags>;
   public reference: MessageReference | null;
   public messageSnapshots: Collection<Snowflake, MessageSnapshot>;
-  public position: number | null;
+  public awaitMessageComponent<T extends MessageComponentInteractableResolvable>(
+    options?: AwaitMessageCollectorOptionsParams<T, Cached>,
+  ): Promise<MappedInteractionTypes<Cached>[T]>;
   public awaitReactions(options?: AwaitReactionsOptions): Promise<Collection<Snowflake | string, MessageReaction>>;
   public createReactionCollector(options?: ReactionCollectorOptions): ReactionCollector;
+  public createMessageComponentCollector<T extends MessageComponentInteractableResolvable>(
+    options?: MessageCollectorOptionsParams<T, Cached>,
+  ): InteractionCollector<MappedInteractionTypes<Cached>[T]>;
   public delete(): Promise<Message>;
   public edit(content: string | MessageEditOptions | MessagePayload): Promise<Message>;
   public equals(message: Message, rawData: unknown): boolean;
@@ -7575,11 +7587,45 @@ export type MessageFlagsString =
   | 'HAS_SNAPSHOT'
   | 'IS_COMPONENTS_V2';
 
+export interface AuthorizingIntegrationOwners {
+  [integrationType: number]: Snowflake | undefined;
+  guildId: Snowflake | null;
+  userId: Snowflake | null;
+  readonly guild: Guild | null;
+  readonly user: User | null;
+  toJSON(): Record<string, Snowflake>;
+}
+
+export interface MessageInteractionMetadata {
+  id: Snowflake;
+  type: InteractionType;
+  user: User;
+  authorizingIntegrationOwners: AuthorizingIntegrationOwners;
+  originalResponseMessageId: Snowflake | null;
+  interactedMessageId: Snowflake | null;
+  triggeringInteractionMetadata: MessageInteractionMetadata | null;
+}
+
+/** @deprecated Use {@link MessageInteractionMetadata} instead. */
 export interface MessageInteraction {
   id: Snowflake;
   type: InteractionType;
   commandName: string;
   user: User;
+}
+
+export interface RoleSubscriptionData {
+  roleSubscriptionListingId: Snowflake;
+  tierName: string;
+  totalMonthsSubscribed: number;
+  isRenewal: boolean;
+}
+
+export interface SharedClientTheme {
+  baseMix: number;
+  baseTheme?: BaseThemeType | null;
+  colors: readonly string[];
+  gradientAngle: number;
 }
 
 export interface MessageMentionsHasOptions {
