@@ -1163,9 +1163,9 @@ export class Client<Ready extends boolean = boolean> extends BaseClient {
     invite: InviteResolvable,
     options?: AcceptInviteOptions,
   ): Promise<Guild | DMChannel | GroupDMChannel>;
-  public redeemNitro(nitro: string, channel?: TextChannelResolvable, paymentSourceId?: Snowflake): Promise<any>;
+  public redeemNitro(nitro: string, channel?: TextChannelResolvable, paymentSourceId?: Snowflake): Promise<any> | false;
   public authorizeURL(urlOAuth2: string, options?: OAuth2AuthorizeOptions): Promise<{ location: string }>;
-  public installUserApps(applicationId: Snowflake): Promise<void>;
+  public installUserApps(applicationId: Snowflake): Promise<{ location: string } | false>;
   public deauthorize(id: Snowflake, type?: 'application' | 'token'): Promise<void>;
   public authorizedApplications(): Promise<
     Collection<
@@ -6344,6 +6344,28 @@ export interface ClientOptions {
   allowedMentions?: MessageMentionOptions;
   invalidRequestWarningInterval?: number;
   partials?: PartialTypes[];
+  /**
+   * Amount of shards to spawn. Defaults to `1` for selfbot accounts.
+   * When `shards` is not provided, shard IDs are generated from `0` to `shardCount - 1`.
+   *
+   * <info>Selfbot divergence: discord.js derives the count from Discord's recommendation; this
+   * package keeps a single shard unless you opt in.</info>
+   */
+  shardCount?: number;
+  /**
+   * Shard IDs this client handles, a single shard ID, or `'auto'` to resolve the recommended
+   * count on gateway connect.
+   *
+   * <info>Selfbot divergence: defaults to `[0]` (one shard).</info>
+   */
+  shards?: number | number[] | 'auto';
+  /**
+   * Accepted for discord.js type parity and ignored. User accounts do not send gateway intents;
+   * the value is forced to {@link Intents.ALL}.
+   *
+   * <info>Selfbot divergence: intents have no effect on a selfbot connection.</info>
+   */
+  intents?: BitFieldResolvable<IntentsString, number>;
   restWsBridgeTimeout?: number;
   restTimeOffset?: number;
   restRequestTimeout?: number;

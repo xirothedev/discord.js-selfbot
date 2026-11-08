@@ -97,6 +97,14 @@ const Intents = require('./Intents');
  * @property {PresenceData} [presence={ status: 'online', since: 0, activities: [], afk: false }] Presence data to use upon login
  * @property {number} [waitGuildTimeout=15_000] Time in milliseconds that Clients with the GUILDS intent should wait for
  * missing guilds to be received before starting the bot. If not specified, the default is 15 seconds.
+ * @property {number} [shardCount=1] Amount of shards to spawn. Selfbot divergence: user accounts default to one
+ * shard. Set this option (or `shards`) to opt into sharding. When `shards` is not provided, IDs are generated
+ * from `0` to `shardCount - 1`.
+ * @property {number|number[]|'auto'} [shards=[0]] Shard IDs this client handles. `'auto'` resolves the
+ * recommended count on gateway connect. Selfbot divergence: the default is a single shard, not the recommended count.
+ * @property {IntentsResolvable} [intents=Intents.ALL] Accepted for discord.js type parity and ignored.
+ * Selfbot divergence: user accounts do not send gateway intents; the value is forced to {@link Intents.ALL}
+ * so guild-wait behaviour matches a full-intents bot account.
  * @property {SweeperOptions} [sweepers={}] Options for cache sweeping
  * @property {WebsocketOptions} [ws] Options for the WebSocket
  * @property {HTTPOptions} [http] HTTP options
@@ -173,8 +181,9 @@ class Options extends null {
       TOTPKey: null,
       closeTimeout: 5_000,
       waitGuildTimeout: 15_000,
+      // Selfbot divergence: shard defaults are resolved in Client#_validateOptions. `shards` is intentionally
+      // absent so an explicit `shardCount` is not overridden by the default single-shard list.
       shardCount: 1,
-      shards: [0],
       makeCache: this.cacheWithLimits(this.defaultMakeCacheSettings),
       messageCacheLifetime: 0,
       messageSweepInterval: 0,

@@ -56,7 +56,8 @@ class WebSocketManager extends EventEmitter {
      * @private
      * @type {number}
      */
-    this.totalShards = this.client.options.shards.length;
+    this.totalShards =
+      this.client.options.shards === 'auto' ? this.client.options.shardCount : this.client.options.shards.length;
 
     /**
      * A collection of all shards this manager handles
