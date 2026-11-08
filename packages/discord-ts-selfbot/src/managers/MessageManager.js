@@ -279,8 +279,8 @@ class MessageManager extends CachedManager {
    * @property {number} [offset=0] The number of messages to skip (for pagination, 25 results per page)
    * @property {number} [limit=25] The number of messages to fetch
    * <info>The maximum limit allowed is 25.</info>
-   * @property {string} [sortBy] The order to sort by (`timestamp` or `relevance`)
-   * @property {string} [sortOrder] The order to return results in (`asc` or `desc`)
+   * @property {'timestamp'|'relevance'} [sortBy] The order to sort by (`timestamp` or `relevance`)
+   * @property {'asc'|'desc'} [sortOrder] The order to return results in (`asc` or `desc`)
    * <info>The default sort is <code>timestamp</code> in descending order <code>desc</code> (newest first).</info>
    */
 
@@ -293,10 +293,9 @@ class MessageManager extends CachedManager {
   /**
    * Search Messages in the channel.
    * @param {MessageSearchOptions} options Performs a search within the channel.
-   * @returns {MessageSearchResult}
+   * @returns {Promise<MessageSearchResult>}
    */
   async search(options = {}) {
-    // eslint-disable-next-line no-unused-vars
     let { authors, content, mentions, has, maxId, minId, channels, pinned, nsfw, offset, limit, sortBy, sortOrder } =
       Object.assign(
         {
@@ -348,13 +347,13 @@ class MessageManager extends CachedManager {
     if (nsfw) stringQuery.push('include_nsfw=true');
     if (offset !== 0) stringQuery.push(`offset=${offset}`);
     if (limit !== 25) stringQuery.push(`limit=${limit}`);
-    if (['timestamp', 'relevance'].includes(options.sortBy)) {
-      stringQuery.push(`sort_by=${options.sortBy}`);
+    if (['timestamp', 'relevance'].includes(sortBy)) {
+      stringQuery.push(`sort_by=${sortBy}`);
     } else {
       stringQuery.push('sort_by=timestamp');
     }
-    if (['asc', 'desc'].includes(options.sortOrder)) {
-      stringQuery.push(`sort_order=${options.sortOrder}`);
+    if (['asc', 'desc'].includes(sortOrder)) {
+      stringQuery.push(`sort_order=${sortOrder}`);
     } else {
       stringQuery.push('sort_order=desc');
     }

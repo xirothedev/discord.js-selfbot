@@ -1,6 +1,16 @@
 // Fake Discord HTTP + WebSocket server for TDD seams (S1a / S1b).
 // Bun-only: uses Bun.serve for the HTTP + WebSocket transport.
 
+export interface FakeDiscordRequest {
+  method: string;
+  path: string;
+  query: string;
+  url: URL;
+  headers: Record<string, string>;
+  body: unknown;
+  bodyText: string | null;
+}
+
 export interface FakeDiscordOptions {
   /** Custom READY payload. Defaults to a minimal user with no guilds/channels. */
   readyPayload?: Record<string, unknown>;
@@ -12,11 +22,17 @@ export interface FakeDiscordOptions {
   apiResponses?: Record<string, unknown>;
   /** Alias for apiResponses; keyed by request path. */
   responses?: Record<string, unknown>;
+  /**
+   * Returns a JSON body or `Response` for an API request. Return `undefined` to use the default stub.
+   * Gateway requests are never passed to this handler.
+   */
+  respond?: (request: FakeDiscordRequest) => unknown | Response | undefined;
 }
 
 export interface FakeRequest {
   method: string;
   path: string;
+  query: string;
   headers: Record<string, string>;
   /** Parsed JSON body, raw text body, or null when the request has no body. */
   body: unknown;
@@ -60,6 +76,7 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
   const readyPayload = options.readyPayload ?? DEFAULT_READY;
   const onIdentify = options.onIdentify;
   const apiResponses = { ...options.responses, ...options.apiResponses };
+  const respond = options.respond;
 
   let lastRequest: FakeRequest | null = null;
   const requests: FakeRequest[] = [];
@@ -100,15 +117,21 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
             body = bodyText;
           }
         }
+        const headers = Object.fromEntries(req.headers.entries());
         const request: FakeRequest = {
           method: req.method,
           path: url.pathname,
-          headers: Object.fromEntries(req.headers.entries()),
+          query: url.search,
+          headers,
           body,
           bodyText,
         };
         lastRequest = request;
         requests.push(request);
+
+        const custom = respond?.({ ...request, url });
+        if (custom instanceof Response) return custom;
+        if (custom !== undefined) return Response.json(custom);
 
         const methodKey = `${req.method} ${url.pathname}`;
         if (Object.hasOwn(apiResponses, methodKey)) return Response.json(apiResponses[methodKey]);
