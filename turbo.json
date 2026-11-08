@@ -23,7 +23,7 @@
       "outputLogs": "errors-only"
     },
     "test": {
-      "inputs": ["src/**", "typings/**", "tests/**", "package.json"],
+      "inputs": ["src/**", "typings/**", "tests/**", "package.json", "$TURBO_ROOT$/packages/test-harness/src/**"],
       "outputs": ["coverage/**"],
       "outputLogs": "new-only"
     },
