@@ -1480,7 +1480,7 @@ class Message extends Base {
 
   /**
    * Report Message
-   * @param {Arrray<number>} breadcrumbs Options for reporting
+   * @param {Array<number>} breadcrumbs Options for reporting
    * @param {Object} [elements={}] Metadata
    * @returns {Promise<{ report_id: Snowflake }>}
    * @example

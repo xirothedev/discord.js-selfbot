@@ -10,15 +10,21 @@ export interface FakeDiscordOptions {
   onIdentify?: (payload: Record<string, unknown>) => void;
 }
 
+export interface FakeRequest {
+  method: string;
+  path: string;
+  headers: Record<string, string>;
+  /** Parsed JSON body, raw text body, or null when the request has no body. */
+  body: unknown;
+  bodyText: string | null;
+}
+
 export interface FakeDiscord {
   server: ReturnType<typeof Bun.serve>;
   url: string;
   port: number;
-  getLastRequest(): {
-    method: string;
-    path: string;
-    headers: Record<string, string>;
-  } | null;
+  getLastRequest(): FakeRequest | null;
+  getRequests(): FakeRequest[];
   getIdentifyPayload(): Record<string, unknown> | null;
   /** Sends a raw gateway packet (op 0 dispatch shape) to every connected shard. */
   sendGatewayPacket(packet: Record<string, unknown>): void;
@@ -50,11 +56,8 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
   const readyPayload = options.readyPayload ?? DEFAULT_READY;
   const onIdentify = options.onIdentify;
 
-  let lastRequest: {
-    method: string;
-    path: string;
-    headers: Record<string, string>;
-  } | null = null;
+  let lastRequest: FakeRequest | null = null;
+  const requests: FakeRequest[] = [];
 
   let lastIdentify: Record<string, unknown> | null = null;
 
@@ -76,18 +79,31 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
 
   const server = Bun.serve({
     port: 0,
-    fetch(req, srv) {
+    fetch: async (req, srv) => {
       if (srv.upgrade(req)) return;
       const url = new URL(req.url);
       if (url.pathname === `/v${apiVersion}/gateway`) {
         return Response.json({ url: `ws://localhost:${srv.port}` });
       }
       if (url.pathname.startsWith(`/v${apiVersion}/`)) {
-        lastRequest = {
+        const bodyText = req.method === 'GET' || req.method === 'HEAD' ? null : await req.text();
+        let body: unknown = null;
+        if (bodyText) {
+          try {
+            body = JSON.parse(bodyText);
+          } catch {
+            body = bodyText;
+          }
+        }
+        const request: FakeRequest = {
           method: req.method,
           path: url.pathname,
           headers: Object.fromEntries(req.headers.entries()),
+          body,
+          bodyText,
         };
+        lastRequest = request;
+        requests.push(request);
         return Response.json({
           id: '123',
           username: 'test',
@@ -126,6 +142,7 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
     url: `http://localhost:${server.port}`,
     port: server.port as number,
     getLastRequest: () => lastRequest,
+    getRequests: () => requests,
     getIdentifyPayload: () => lastIdentify,
     sendGatewayPacket(packet) {
       if (!sockets.size) throw new Error('No gateway shard is connected');
