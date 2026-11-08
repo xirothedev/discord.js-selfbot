@@ -14,6 +14,7 @@
     "test": "bun test --pass-with-no-tests"
   },
   "devDependencies": {
+    "@types/bun": "latest",
     "typescript": "^5.5.4"
   },
   "engines": {
