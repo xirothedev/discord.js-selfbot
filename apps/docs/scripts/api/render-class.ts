@@ -5,6 +5,7 @@ import {
   renderDeprecated,
   renderExamples,
   renderSummary,
+  stripJsdocSyntax,
 } from './comment';
 import { renderType, renderHeritage, renderTypeParameters } from './render-type';
 import { frontmatter, mergeMembers, mergeSignature, renderParameterList, signatureLine } from './render-shared';
@@ -70,11 +71,11 @@ function renderMethod(member: MergedMember): string {
 }
 
 function renderEvent(event: DocgenEvent): string {
-  const description = event.description ? escapeMdx(event.description) : '';
+  const description = event.description ? escapeMdx(stripJsdocSyntax(event.description)) : '';
   const params = (event.params ?? [])
     .map((parameter) => {
       const optional = parameter.optional ? '?' : '';
-      const details = parameter.description ? ` — ${escapeMdx(parameter.description)}` : '';
+      const details = parameter.description ? ` — ${escapeMdx(stripJsdocSyntax(parameter.description))}` : '';
       return `- ${inlineCode(`${parameter.name}${optional}`)}${details}`;
     })
     .join('\n');

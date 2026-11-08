@@ -89,6 +89,8 @@
         "scripts/**",
         "$TURBO_ROOT$/packages/discord-ts-selfbot/src/**",
         "$TURBO_ROOT$/packages/discord-ts-selfbot/typings/**",
+        "$TURBO_ROOT$/packages/discord-ts-selfbot/package.json",
+        "$TURBO_ROOT$/packages/discord-ts-selfbot/tsconfig.json",
         "docgen.yml",
         "package.json"
       ],

@@ -26,12 +26,9 @@ bun run test
 
 ## API generation
 
-The generator runs TypeDoc twice:
+The generator runs TypeDoc over `typings/index.d.ts` for signatures, classes, interfaces, and type aliases.
 
-1. Source directories for class and method descriptions.
-2. `typings/index.d.ts` for interfaces and type aliases.
-
-It also runs the legacy `@discordjs/docgen` parser (with a Node 26 `util` shim) for JSDoc descriptions, events, examples, and parameter docs. The merged output is written as MDX and `meta.json` sidebars.
+It also runs the legacy `@discordjs/docgen` parser (with a Node 26 `util` shim) for JSDoc descriptions, events, examples, and parameter docs. Docgen cannot read TypeScript, so the build compiles `src/**/*.ts` to a temporary JavaScript mirror in the system temp directory. Nothing is written into the repository. The merged output is written as MDX and `meta.json` sidebars.
 
 Do not edit `content/docs/api/` by hand. Edit the source JSDoc or the typings, then run `bun run api`.
 

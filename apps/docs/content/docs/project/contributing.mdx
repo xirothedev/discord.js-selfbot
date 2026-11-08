@@ -55,9 +55,11 @@ The test suite is organized around the boundaries where behavior is observable:
 
 Use the fake server instead of a real token. See `packages/test-harness/src/index.ts` for `apiResponses`, `responses`, `routes`, `respond`, and gateway dispatch helpers.
 
-## Source pairs
+## Source
 
-Every JavaScript module under `src/` has a TypeScript counterpart. Keep both files in sync when you change behavior. Bun resolves the `.ts` file first. The `.js` file stays as the runtime reference until the package ships from `dist/` only.
+Every module under `src/` is TypeScript. Bun runs the `.ts` source directly. There is no JavaScript mirror to keep in sync.
+
+The docs API generator compiles the source to a temporary JavaScript mirror only for the legacy docgen parser. That mirror lives in a temp directory and never enters the repository.
 
 ## Issues and pull requests
 

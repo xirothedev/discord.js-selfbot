@@ -15,7 +15,7 @@
 `discord-ts-selfbot@14` is a fork of `discord.js-selfbot-v13`, re-platformed as a Bun + Turborepo monorepo. It tracks the `discord.js@14.28.1` public surface and keeps the selfbot-only features: presence, account edits, friend invites, search, guild settings, billing, voice, calls, and recording.
 
 - **Runtime:** Bun 1.4.4 or newer. Node.js is not supported.
-- **Source:** every JavaScript module has a TypeScript counterpart. Bun resolves `.ts` first.
+- **Source:** TypeScript only. Bun runs the `.ts` source directly.
 - **Tests:** fake Discord HTTP and WebSocket server, no real token or network.
 - **Docs:** Fumadocs static site at <https://xirothedev.github.io/discord.js-selfbot/>.
 

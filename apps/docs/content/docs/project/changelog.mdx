@@ -10,7 +10,7 @@ The first release of the Bun + Turborepo monorepo.
 ### Added
 
 - Bun workspaces and Turborepo task graph.
-- TypeScript counterparts for every JavaScript module under `src/`.
+- TypeScript source for every module under `src/`.
 - `Events`, `Partials`, and `Status` enums.
 - 11 `*BitField` aliases.
 - v14 builder exports and v13 aliases.
@@ -32,7 +32,7 @@ The first release of the Bun + Turborepo monorepo.
 
 - Package name is `discord-ts-selfbot`, version `14.0.0`.
 - Runtime is Bun 1.4.4 or newer. Node.js is not supported.
-- The source tree keeps both `.js` and `.ts` files. Bun resolves `.ts` first.
+- The source tree is TypeScript-only. Bun runs the `.ts` source directly.
 - Docs moved to `apps/docs`. The legacy docgen and TypeDoc HTML artifacts are removed from the site.
 
 ### Deprecated

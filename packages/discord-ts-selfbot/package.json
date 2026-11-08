@@ -2,14 +2,14 @@
   "name": "discord-ts-selfbot",
   "version": "14.0.0",
   "description": "An unofficial discord.js fork for creating selfbots, migrated to TypeScript and ESM",
-  "main": "./src/index.js",
+  "main": "./src/index.ts",
   "types": "./typings/index.d.ts",
   "scripts": {
-    "build": "bun build src/index.js --target=bun --format=esm --outdir=dist --packages=external",
+    "build": "bun build src/index.ts --target=bun --format=esm --outdir=dist --packages=external",
     "check": "bun check",
     "lint": "bun lint",
-    "fmt": "bun fmt src typings",
-    "fmt:check": "bun fmt --check src typings",
+    "fmt": "bun fmt src typings tests",
+    "fmt:check": "bun fmt --check src typings tests",
     "test": "bun test",
     "test:types": "bun check",
     "test:typescript": "bun check",
@@ -23,7 +23,7 @@
   ],
   "directories": {
     "lib": "src",
-    "test": "test"
+    "test": "tests"
   },
   "repository": {
     "type": "git",

@@ -100,7 +100,7 @@ function enumMembers(reflection: Reflection | undefined): Reflection[] | undefin
 function docgenSourceUrl(entry: DocgenClass | DocgenType | undefined): string | undefined {
   const meta = entry?.meta;
   if (!meta?.file) return undefined;
-  const full = [meta.path, meta.file].filter(Boolean).join('/');
+  const full = [meta.path, meta.file].filter(Boolean).join('/').replace(/\.js$/, '.ts');
   return `https://github.com/xirothedev/discord.js-selfbot/blob/main/packages/discord-ts-selfbot/${full}#L${
     meta.line ?? 1
   }`;

@@ -31,8 +31,7 @@
     "useDefineForClassFields": true,
     "pretty": false,
     "skipLibCheck": true,
-    "skipDefaultLibCheck": true,
-    "allowJs": true
+    "skipDefaultLibCheck": true
   },
-  "include": ["src/**/*.js", "src/**/*.ts", "typings/**/*.ts"]
+  "include": ["src/**/*.ts", "typings/**/*.ts"]
 }

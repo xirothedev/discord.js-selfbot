@@ -1,8 +1,8 @@
 const { setInterval } = require('node:timers');
 const { Collection } = require('@discordjs/collection');
-const { _cleanupSymbol } = require('./Constants.js');
-const Sweepers = require('./Sweepers.js');
-const { TypeError } = require('../errors/DJSError.js');
+const { _cleanupSymbol } = require('./Constants');
+const Sweepers = require('./Sweepers');
+const { TypeError } = require('../errors/DJSError');
 
 /**
  * @typedef {Function} SweepFilter
