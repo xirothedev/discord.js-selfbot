@@ -9,7 +9,7 @@ const { Events } = require('../../util/Constants');
 class ClientVoiceManager {
   [key: string]: any;
 
-  constructor(client: any) {
+  constructor(client: any, options: any = {}) {
     /**
      * The client that instantiated this voice manager
      * @type {Client}
@@ -17,6 +17,14 @@ class ClientVoiceManager {
      * @name ClientVoiceManager#client
      */
     Object.defineProperty(this, 'client', { value: client });
+
+    /**
+     * Factory used to create new voice connections. Overridable so tests can inject fake sockets.
+     * @type {Function}
+     * @private
+     */
+    this.connectionFactory =
+      options.connectionFactory ?? ((voiceManager: any, channel: any) => new VoiceConnection(voiceManager, channel));
 
     /**
      * A current connection objects
@@ -115,7 +123,7 @@ class ClientVoiceManager {
         resolve(connection);
         return;
       } else {
-        connection = new VoiceConnection(this, channel);
+        connection = this.connectionFactory(this, channel);
         if (config?.videoCodec) connection.setVideoCodec(config.videoCodec);
         connection.on('debug', (msg: any) =>
           this.client.emit('debug', `[VOICE (${channel.guild?.id || channel.id}:${connection.status})]: ${msg}`),

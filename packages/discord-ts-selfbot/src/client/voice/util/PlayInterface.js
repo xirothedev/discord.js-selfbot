@@ -112,8 +112,18 @@ class PlayInterface {
     throw new Error('VOICE_PLAY_INTERFACE_BAD_TYPE');
   }
 
+  /**
+   * Play a video stream resource. Alias of {@link PlayInterface#playVideo}.
+   * @param {ReadableStream|string} resource The resource to play.
+   * @param {VideoOptions} [options] The options to play.
+   * @returns {VideoDispatcher}
+   */
+  playStream(resource, options = {}) {
+    return this.playVideo(resource, options);
+  }
+
   static applyToClass(structure) {
-    for (const prop of ['playAudio', 'playVideo']) {
+    for (const prop of ['playAudio', 'playVideo', 'playStream']) {
       Object.defineProperty(structure.prototype, prop, Object.getOwnPropertyDescriptor(PlayInterface.prototype, prop));
     }
   }

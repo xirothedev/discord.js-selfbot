@@ -1444,6 +1444,7 @@ export class VoiceConnection extends EventEmitter {
   public disconnect(): void;
   public playAudio(input: Readable | string, options?: StreamOptions): AudioDispatcher;
   public playVideo(input: Readable | string, options?: VideoOptions): VideoDispatcher;
+  public playStream(input: Readable | string, options?: VideoOptions): VideoDispatcher;
   public setSpeaking(value: BitFieldResolvable<SpeakingString, number>): void;
   public setVideoStatus(value: boolean): void;
   public setVideoCodec(value: VideoCodec): this;
