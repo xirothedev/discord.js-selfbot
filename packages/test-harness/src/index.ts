@@ -6,6 +6,8 @@ export interface FakeDiscordOptions {
   readyPayload?: Record<string, unknown>;
   /** API version segment (default 9). */
   apiVersion?: number;
+  /** Called with the IDENTIFY payload (op 2) when received. */
+  onIdentify?: (payload: Record<string, unknown>) => void;
 }
 
 export interface FakeDiscord {
@@ -17,6 +19,13 @@ export interface FakeDiscord {
     path: string;
     headers: Record<string, string>;
   } | null;
+  getLastIdentify(): Record<string, unknown> | null;
+  getLastIdentifyPayload(): Record<string, unknown> | null;
+  getIdentifyPayload(): Record<string, unknown> | null;
+  getIdentify(): Record<string, unknown> | null;
+  readonly lastIdentify: Record<string, unknown> | null;
+  readonly lastIdentifyPayload: Record<string, unknown> | null;
+  readonly identifyPayload: Record<string, unknown> | null;
   stop(): void;
 }
 
@@ -41,12 +50,15 @@ const DEFAULT_READY = {
 export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord {
   const apiVersion = options.apiVersion ?? 9;
   const readyPayload = options.readyPayload ?? DEFAULT_READY;
+  const onIdentify = options.onIdentify;
 
   let lastRequest: {
     method: string;
     path: string;
     headers: Record<string, string>;
   } | null = null;
+
+  let lastIdentify: Record<string, unknown> | null = null;
 
   const server = Bun.serve({
     port: 0,
@@ -79,6 +91,8 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
           const text = typeof msg === 'string' ? msg : new TextDecoder().decode(msg);
           const data = JSON.parse(text);
           if (data && data.op === 2) {
+            lastIdentify = (data.d ?? null) as Record<string, unknown> | null;
+            if (onIdentify && lastIdentify) onIdentify(lastIdentify);
             ws.send(JSON.stringify({ op: 0, t: 'READY', d: readyPayload }));
           }
         } catch {
@@ -94,6 +108,19 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
     url: `http://localhost:${server.port}`,
     port: server.port as number,
     getLastRequest: () => lastRequest,
+    getLastIdentify: () => lastIdentify,
+    getLastIdentifyPayload: () => lastIdentify,
+    getIdentifyPayload: () => lastIdentify,
+    getIdentify: () => lastIdentify,
+    get lastIdentify() {
+      return lastIdentify;
+    },
+    get lastIdentifyPayload() {
+      return lastIdentify;
+    },
+    get identifyPayload() {
+      return lastIdentify;
+    },
     stop: () => server.stop(true),
   };
 }
