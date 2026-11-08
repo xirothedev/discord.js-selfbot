@@ -28,8 +28,8 @@
       "outputLogs": "new-only"
     },
     "docs": {
-      "inputs": ["src/**", "docs/**", "package.json"],
-      "outputs": ["docs/main.json"],
+      "inputs": ["src/**", "../../apps/doc/**", "package.json"],
+      "outputs": ["../../apps/doc/main.json"],
       "outputLogs": "errors-only"
     },
     "lint:boundaries": {

@@ -28,14 +28,14 @@ pids
 .env
 test/auth.json
 test/auth.js
-docs/deploy/deploy_key
-docs/deploy/deploy_key.pub
+apps/doc/deploy/deploy_key
+apps/doc/deploy/deploy_key.pub
 deploy/deploy_key
 deploy/deploy_key.pub
 
 # Dist
 dist/
-docs/docs.json
+apps/doc/docs.json
 
 # Next.js build output
 .next
@@ -68,8 +68,8 @@ dist
 # Env
 .env
 test/
-docs/deploy/deploy_key
-docs/deploy/deploy_key.pub
+apps/doc/deploy/deploy_key
+apps/doc/deploy/deploy_key.pub
 deploy/deploy_key
 deploy/deploy_key.pub
 
