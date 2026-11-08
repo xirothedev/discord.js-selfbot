@@ -16,7 +16,8 @@
     "lint:boundaries": "depcruise src/packages",
     "all": "bun run build && bun publish",
     "docs": "docgen --source src --custom ../../docs/index.yml --output ../../docs/main.json",
-    "docs:test": "docgen --source src --custom ../../docs/index.yml"
+    "docs:test": "docgen --source src --custom ../../docs/index.yml",
+    "docs:typedoc": "typedoc --options typedoc.json"
   },
   "files": [
     "src",
@@ -77,6 +78,7 @@
     "prettier": "^2.8.8",
     "tsd": "^0.32.0",
     "tslib": "^2.9.1",
+    "typedoc": "^0.28.20",
     "typescript": "^5.5.4"
   },
   "engines": {
