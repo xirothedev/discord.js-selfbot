@@ -1,23 +1,36 @@
 import {
+  ActionRowBuilder,
   blockQuote,
   bold,
+  ButtonBuilder,
   channelMention,
+  ChannelSelectMenuBuilder,
   codeBlock,
   ContextMenuCommandBuilder,
+  EmbedBuilder,
   formatEmoji,
   hideLinkEmbed,
   hyperlink,
   inlineCode,
   italic,
+  MentionableSelectMenuBuilder,
+  ModalBuilder,
   quote,
   roleMention,
+  RoleSelectMenuBuilder,
+  SelectMenuBuilder,
+  SelectMenuOptionBuilder,
   SlashCommandBuilder,
   spoiler,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
   strikethrough,
+  TextInputBuilder,
   time,
   TimestampStyles,
   TimestampStylesString,
   underscore,
+  UserSelectMenuBuilder,
   userMention,
 } from '@discordjs/builders';
 import { Collection } from '@discordjs/collection';
@@ -196,6 +209,47 @@ import {
   APIMediaGalleryItem,
 } from './rawDataTypes';
 import { Socket } from 'node:dgram';
+
+export {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ChannelSelectMenuBuilder,
+  EmbedBuilder,
+  MentionableSelectMenuBuilder,
+  ModalBuilder,
+  RoleSelectMenuBuilder,
+  SelectMenuBuilder,
+  SelectMenuOptionBuilder,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
+  TextInputBuilder,
+  UserSelectMenuBuilder,
+};
+
+/** @deprecated Use {@link ActionRowBuilder} instead. */
+export const ActionRow: typeof ActionRowBuilder;
+/** @deprecated Use {@link ActionRowBuilder} instead. */
+export type ActionRow = ActionRowBuilder;
+/** @deprecated Use {@link ButtonBuilder} instead. */
+export const Button: typeof ButtonBuilder;
+/** @deprecated Use {@link ButtonBuilder} instead. */
+export type Button = ButtonBuilder;
+/** @deprecated Use {@link StringSelectMenuBuilder} instead. */
+export const SelectMenu: typeof StringSelectMenuBuilder;
+/** @deprecated Use {@link StringSelectMenuBuilder} instead. */
+export type SelectMenu = StringSelectMenuBuilder;
+/** @deprecated Use {@link EmbedBuilder} instead. */
+export const Embed: typeof EmbedBuilder;
+/** @deprecated Use {@link EmbedBuilder} instead. */
+export type Embed = EmbedBuilder;
+/** @deprecated Use {@link AttachmentBuilder} instead. */
+export const Attachment: typeof AttachmentBuilder;
+/** @deprecated Use {@link AttachmentBuilder} instead. */
+export type Attachment = AttachmentBuilder;
+/** @deprecated Use {@link TextInputBuilder} instead. */
+export const TextInput: typeof TextInputBuilder;
+/** @deprecated Use {@link TextInputBuilder} instead. */
+export type TextInput = TextInputBuilder;
 
 //#region Enums
 
@@ -1086,9 +1140,14 @@ export class Client<Ready extends boolean = boolean> extends BaseClient {
   public fetchGuildTemplate(template: GuildTemplateResolvable): Promise<GuildTemplate>;
   public fetchVoiceRegions(): Promise<Collection<string, VoiceRegion>>;
   public fetchSticker(id: Snowflake): Promise<Sticker>;
-  public fetchPremiumStickerPacks(): Promise<Collection<Snowflake, StickerPack>>;
+  public fetchStickerPacks(options: { packId: Snowflake }): Promise<StickerPack>;
+  public fetchStickerPacks(options?: StickerPackFetchOptions): Promise<Collection<Snowflake, StickerPack>>;
+  /** @deprecated Use {@link Client#fetchStickerPacks} instead. */
+  public fetchPremiumStickerPacks(): ReturnType<Client['fetchStickerPacks']>;
   public fetchWebhook(id: Snowflake, token?: string): Promise<Webhook>;
+  public deleteWebhook(id: Snowflake, options?: WebhookDeleteOptions): Promise<void>;
   public fetchGuildWidget(guild: GuildResolvable): Promise<Widget>;
+  public generateInvite(options?: InviteGenerationOptions): string;
   public refreshAttachmentURL(...urls: string[]): Promise<{ original: string; refreshed: string }[]>;
   public sleep(timeout: number): Promise<void>;
   public login(token?: string): Promise<string>;
@@ -2439,7 +2498,7 @@ export type MappedInteractionTypes<Cached extends boolean = boolean> = EnumValue
   typeof MessageComponentInteractables,
   {
     BUTTON: ButtonInteraction<WrapBooleanCache<Cached>>;
-    STRING_SELECT: StringSelectInteraction<WrapBooleanCache<Cached>>;
+    STRING_SELECT: StringSelectMenuInteraction<WrapBooleanCache<Cached>>;
     USER_SELECT: UserSelectInteraction<WrapBooleanCache<Cached>>;
     ROLE_SELECT: RoleSelectInteraction<WrapBooleanCache<Cached>>;
     MENTIONABLE_SELECT: MentionableSelectInteraction<WrapBooleanCache<Cached>>;
@@ -2570,6 +2629,43 @@ export class MessageActionRow<
   public setComponents(...components: U[] | U[][]): this;
   public spliceComponents(index: number, deleteCount: number, ...components: U[] | U[][]): this;
   public toJSON(): V;
+}
+
+export class AttachmentBuilder {
+  public constructor(attachment: BufferResolvable | Stream, data?: AttachmentData);
+  public attachment: BufferResolvable | Stream;
+  public name: string | null;
+  public description: string | null;
+  public title: string | null;
+  public waveform: string | null;
+  public duration: number | null;
+  public readonly spoiler: boolean;
+  public setDescription(description: string): this;
+  public setFile(attachment: BufferResolvable | Stream): this;
+  public setName(name: string): this;
+  public setTitle(title: string): this;
+  public setWaveform(waveform: string): this;
+  public setDuration(duration: number): this;
+  public setSpoiler(spoiler?: boolean): this;
+  public toJSON(): unknown;
+  public static from(other: AttachmentBuilder | MessageAttachment | AttachmentPayload): AttachmentBuilder;
+}
+
+export interface AttachmentData {
+  name?: string;
+  description?: string;
+  title?: string;
+  waveform?: string;
+  duration?: number;
+}
+
+export interface AttachmentPayload {
+  attachment: BufferResolvable | Stream;
+  name?: string;
+  description?: string;
+  title?: string;
+  waveform?: string;
+  duration?: number;
 }
 
 export class MessageAttachment {
@@ -3407,13 +3503,20 @@ export class RoleSelectInteraction<Cached extends CacheType = CacheType> extends
   public inRawGuild(): this is RoleSelectInteraction<'raw'>;
 }
 
-export class StringSelectInteraction<Cached extends CacheType = CacheType> extends BaseSelectMenuInteraction<Cached> {
+export class StringSelectMenuInteraction<
+  Cached extends CacheType = CacheType,
+> extends BaseSelectMenuInteraction<Cached> {
   public componentType: 'STRING_SELECT';
   public roles: Collection<Snowflake, CacheTypeReducer<Cached, Role, APIRole, Role | APIRole, Role | APIRole>>;
-  public inGuild(): this is StringSelectInteraction<'raw' | 'cached'>;
-  public inCachedGuild(): this is StringSelectInteraction<'cached'>;
-  public inRawGuild(): this is StringSelectInteraction<'raw'>;
+  public inGuild(): this is StringSelectMenuInteraction<'raw' | 'cached'>;
+  public inCachedGuild(): this is StringSelectMenuInteraction<'cached'>;
+  public inRawGuild(): this is StringSelectMenuInteraction<'raw'>;
 }
+
+/** @deprecated Use {@link StringSelectMenuInteraction} instead. */
+export class StringSelectInteraction<
+  Cached extends CacheType = CacheType,
+> extends StringSelectMenuInteraction<Cached> {}
 
 export class UserSelectInteraction<Cached extends CacheType = CacheType> extends BaseSelectMenuInteraction<Cached> {
   public componentType: 'USER_SELECT';
@@ -3427,12 +3530,8 @@ export class UserSelectInteraction<Cached extends CacheType = CacheType> extends
   public inRawGuild(): this is UserSelectInteraction<'raw'>;
 }
 
-export type SelectMenuInteraction<Cached extends CacheType = CacheType> =
-  | StringSelectInteraction<Cached>
-  | ChannelSelectInteraction<Cached>
-  | MentionableSelectInteraction<Cached>
-  | RoleSelectInteraction<Cached>
-  | UserSelectInteraction<Cached>;
+/** @deprecated Use {@link StringSelectMenuInteraction} instead. */
+export class SelectMenuInteraction<Cached extends CacheType = CacheType> extends StringSelectMenuInteraction<Cached> {}
 
 export interface ShardEventTypes {
   spawn: [process: ChildProcess | Worker];
@@ -6212,6 +6311,22 @@ export interface ClientEvents extends BaseClientEvents {
 
 export interface ClientFetchInviteOptions {
   guildScheduledEventId?: Snowflake;
+}
+
+export interface InviteGenerationOptions {
+  permissions?: PermissionResolvable;
+  guild?: GuildResolvable;
+  disableGuildSelect?: boolean;
+  scopes: InviteScope[];
+}
+
+export interface StickerPackFetchOptions {
+  packId?: Snowflake;
+}
+
+export interface WebhookDeleteOptions {
+  token?: string;
+  reason?: string;
 }
 
 export type CaptchaSolver = (captcha: Captcha, UserAgent: string) => Promise<string>;
