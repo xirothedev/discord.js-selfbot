@@ -3,12 +3,12 @@ name: Release
 on:
   push:
     tags:
-      - '3*' # Trigger on version 3.x.x tags
-  workflow_dispatch:
+      - '14*' # Trigger on version 14.x.x tags
 
 permissions:
-  id-token: write
   contents: read
+  # Bun 1.4.4 rejects --provenance (npm provenance is not supported yet),
+  # so id-token: write stays off until Bun can generate it.
 
 jobs:
   release:
@@ -20,30 +20,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Node.js v22
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 22
+          bun-version: 1.4.4
 
-      - name: Configure npm for publishing
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
 
-      - name: Get current published version (if any)
-        id: current_version
-        run: |
-          version=$(npm view discord.js-selfbot-v13 version || echo "none")
-          echo "version=$version" >> $GITHUB_OUTPUT
+      - name: Type check
+        run: bun run check
 
-      - name: Deprecate previous version
-        if: steps.current_version.outputs.version != 'none'
-        run: |
-          echo "Deprecating version ${{ steps.current_version.outputs.version }}"
-          npm deprecate discord.js-selfbot-v13@${{ steps.current_version.outputs.version }} "Deprecated: Please use the latest version."
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Lint
+        run: bun run lint
+
+      - name: Tests
+        run: bun run test
 
       - name: Publish to NPM
-        run: npm publish --provenance --access public
+        working-directory: packages/discord-ts-selfbot
+        run: bun publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
