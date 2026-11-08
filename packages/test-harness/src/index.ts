@@ -8,6 +8,8 @@ export interface FakeDiscordOptions {
   apiVersion?: number;
   /** Called with the IDENTIFY payload (op 2) when received. */
   onIdentify?: (payload: Record<string, unknown>) => void;
+  /** JSON response bodies keyed by request path, e.g. `/v9/users/@me/burst-credits`. */
+  responses?: Record<string, unknown>;
 }
 
 export interface FakeDiscord {
@@ -18,6 +20,8 @@ export interface FakeDiscord {
     method: string;
     path: string;
     headers: Record<string, string>;
+    /** Parsed JSON body, raw text body, or null when the request has no body. */
+    body: unknown;
   } | null;
   getIdentifyPayload(): Record<string, unknown> | null;
   /** Sends a raw gateway packet (op 0 dispatch shape) to every connected shard. */
@@ -54,6 +58,7 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
     method: string;
     path: string;
     headers: Record<string, string>;
+    body: unknown;
   } | null = null;
 
   let lastIdentify: Record<string, unknown> | null = null;
@@ -76,23 +81,35 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
 
   const server = Bun.serve({
     port: 0,
-    fetch(req, srv) {
+    fetch: async (req, srv) => {
       if (srv.upgrade(req)) return;
       const url = new URL(req.url);
       if (url.pathname === `/v${apiVersion}/gateway`) {
         return Response.json({ url: `ws://localhost:${srv.port}` });
       }
       if (url.pathname.startsWith(`/v${apiVersion}/`)) {
+        const text = await req.text();
+        let body: unknown = text || null;
+        if (text) {
+          try {
+            body = JSON.parse(text);
+          } catch {
+            // keep the raw text body
+          }
+        }
         lastRequest = {
           method: req.method,
           path: url.pathname,
           headers: Object.fromEntries(req.headers.entries()),
+          body,
         };
-        return Response.json({
-          id: '123',
-          username: 'test',
-          discriminator: '0',
-        });
+        return Response.json(
+          options.responses?.[url.pathname] ?? {
+            id: '123',
+            username: 'test',
+            discriminator: '0',
+          },
+        );
       }
       return new Response('Not found', { status: 404 });
     },
