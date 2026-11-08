@@ -10,6 +10,8 @@ export interface FakeDiscordOptions {
   onIdentify?: (payload: Record<string, unknown>) => void;
   /** JSON response body keyed by `METHOD /v9/path` or `/v9/path`. Defaults to a stub user. */
   apiResponses?: Record<string, unknown>;
+  /** Alias for apiResponses; keyed by request path. */
+  responses?: Record<string, unknown>;
 }
 
 export interface FakeRequest {
@@ -57,7 +59,7 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
   const apiVersion = options.apiVersion ?? 9;
   const readyPayload = options.readyPayload ?? DEFAULT_READY;
   const onIdentify = options.onIdentify;
-  const apiResponses = options.apiResponses ?? {};
+  const apiResponses = { ...options.responses, ...options.apiResponses };
 
   let lastRequest: FakeRequest | null = null;
   const requests: FakeRequest[] = [];

@@ -1248,12 +1248,12 @@ export class ClientUser extends User {
   public setHypeSquad(
     hypesquad: 0 | 1 | 2 | 3 | 'LEAVE' | 'HOUSE_BRAVERY' | 'HOUSE_BRILLIANCE' | 'HOUSE_BALANCE',
   ): Promise<void>;
-  public setAccentColor(color: ColorResolvable): Promise<this>;
-  public setAboutMe(bio: string | null): Promise<this>;
+  public setAccentColor(color?: ColorResolvable | null): Promise<this>;
+  public setAboutMe(bio?: string | null): Promise<this>;
   public createFriendInvite(): Promise<Invite>;
   public getAllFriendInvites(): Promise<Collection<string, Invite>>;
   public revokeAllFriendInvites(): Promise<void>;
-  public setSamsungActivity(packageName: string, type: 'START' | 'UPDATE' | 'STOP'): Promise<this>;
+  public setSamsungActivity(packageName: string, type?: 'START' | 'UPDATE' | 'STOP'): Promise<this>;
   public stopRinging(channel: ChannelResolvable): Promise<void>;
   public fetchBurstCredit(): Promise<number>;
   public setPronouns(pronouns?: string | null): Promise<this>;
@@ -6426,9 +6426,13 @@ export interface ClientPresenceStatusData {
 
 export interface ClientUserEditData {
   username?: string;
+  password?: string;
   avatar?: BufferResolvable | Base64Resolvable | null;
   banner?: BufferResolvable | Base64Resolvable | null;
-  bio?: string;
+  bio?: string | null;
+  accent_color?: number | null;
+  global_name?: string | null;
+  pronouns?: string | null;
 }
 
 export interface CloseEvent {

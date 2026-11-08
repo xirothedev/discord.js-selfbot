@@ -132,9 +132,13 @@ class ClientUser extends User {
    * Data used to edit the logged in client
    * @typedef {Object} ClientUserEditData
    * @property {string} [username] The new username
+   * @property {string} [password] The current password, required for some account edits
    * @property {?(BufferResolvable|Base64Resolvable)} [avatar] The new avatar
    * @property {?(BufferResolvable|Base64Resolvable)} [banner] The new banner
    * @property {?string} [bio] The new bio
+   * @property {?number} [accent_color] The new accent color
+   * @property {?string} [global_name] The new global display name
+   * @property {?string} [pronouns] The new pronouns
    */
 
   /**
