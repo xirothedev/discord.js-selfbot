@@ -1,4 +1,5 @@
 const USER_REQUIRED_ACTION = require('./USER_REQUIRED_ACTION_UPDATE');
+const Application = require('../../../structures/interfaces/Application');
 const { Opcodes } = require('../../../util/Constants');
 let ClientUser;
 export = (client: any, { d: data }: any, shard: any) => {
@@ -12,6 +13,13 @@ export = (client: any, { d: data }: any, shard: any) => {
     ClientUser ??= require('../../../structures/ClientUser');
     client.user = new ClientUser(client, data.user);
     client.users.cache.set(client.user.id, client.user);
+  }
+  if (data.application) {
+    if (client.application) {
+      client.application._patch(data.application);
+    } else {
+      client.application = new Application(client, data.application);
+    }
   }
   for (const private_channel of data.private_channels) {
     client.channels._add(private_channel);

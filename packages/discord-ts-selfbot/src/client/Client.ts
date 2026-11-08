@@ -63,6 +63,7 @@ class Client extends BaseClient {
   declare settings: any;
   declare token: any;
   declare user: any;
+  declare application: any;
   declare readyAt: any;
   declare authenticator: any;
   declare sweepMessageInterval: any;
@@ -212,6 +213,12 @@ class Client extends BaseClient {
      * @type {?ClientUser}
      */
     this.user = null;
+
+    /**
+     * The application of this client
+     * @type {?Application}
+     */
+    this.application = null;
 
     /**
      * Time at which the client was last regarded as being in the `READY` state
