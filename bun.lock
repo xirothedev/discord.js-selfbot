@@ -8,6 +8,27 @@
         "turbo": "^2.11.10",
       },
     },
+    "apps/examples-js": {
+      "name": "@discord-ts-selfbot/examples-js",
+      "version": "0.0.0",
+      "dependencies": {
+        "discord-ts-selfbot": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+      },
+    },
+    "apps/examples-ts": {
+      "name": "@discord-ts-selfbot/examples-ts",
+      "version": "0.0.0",
+      "dependencies": {
+        "discord-ts-selfbot": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "typescript": "^5.5.4",
+      },
+    },
     "packages/discord-ts-selfbot": {
       "name": "discord-ts-selfbot",
       "version": "14.0.0",
@@ -82,6 +103,10 @@
     "@definitelytyped/typescript-versions": ["@definitelytyped/typescript-versions@0.1.16", "", {}, "sha512-xgLUyZKl6Sv0VO6O1rzCCPYhkBLJKEVXoeoOZx7U2++FoZcgfCvHOcvMWpbkrDzQz9mR97h1wE2cyxcmkeO+Rw=="],
 
     "@definitelytyped/utils": ["@definitelytyped/utils@0.1.19", "", { "dependencies": { "@types/node": "^25.3.3", "cachedir": "^2.4.0", "charm": "^1.0.2", "libnpmpublish": "^11.1.3", "minimatch": "^10.2.4", "npm-registry-fetch": "^19.1.1", "semver": "^7.7.4", "tar": "^7.5.9", "tar-stream": "^3.1.8", "which": "^6.0.1" } }, "sha512-IE+gVXw0gNfRrp9v0ZfH726665Lzv9gHAzZFXcncdR+brA/HfKc8Fym02xEI7yk6wv4dwGsPih125jvDCoOuTg=="],
+
+    "@discord-ts-selfbot/examples-js": ["@discord-ts-selfbot/examples-js@workspace:apps/examples-js"],
+
+    "@discord-ts-selfbot/examples-ts": ["@discord-ts-selfbot/examples-ts@workspace:apps/examples-ts"],
 
     "@discord-ts-selfbot/parity": ["@discord-ts-selfbot/parity@workspace:tools/parity"],
 
