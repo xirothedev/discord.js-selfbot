@@ -21,6 +21,7 @@ exports.Collection = require('@discordjs/collection').Collection;
 exports.Constants = require('./util/Constants');
 exports.DataResolver = require('./util/DataResolver');
 exports.DiscordAPIError = require('./rest/DiscordAPIError');
+exports.Events = require('./util/Events');
 exports.Formatters = require('./util/Formatters');
 exports.GuildMemberFlags = require('./util/GuildMemberFlags');
 exports.HTTPError = require('./rest/HTTPError');
@@ -28,16 +29,31 @@ exports.Intents = require('./util/Intents');
 exports.LimitedCollection = require('./util/LimitedCollection');
 exports.MessageFlags = require('./util/MessageFlags');
 exports.Options = require('./util/Options');
+exports.Partials = require('./util/Partials');
 exports.Permissions = require('./util/Permissions');
 exports.RateLimitError = require('./rest/RateLimitError');
 exports.RoleFlags = require('./util/RoleFlags');
 exports.SnowflakeUtil = require('./util/SnowflakeUtil');
+exports.Status = require('./util/Status');
 exports.Sweepers = require('./util/Sweepers');
 exports.SystemChannelFlags = require('./util/SystemChannelFlags');
 exports.ThreadMemberFlags = require('./util/ThreadMemberFlags');
 exports.UserFlags = require('./util/UserFlags');
 exports.Util = require('./util/Util');
 exports.version = require('../package.json').version;
+
+// V14 aliases for the v13 flag classes above
+exports.ActivityFlagsBitField = require('./util/ActivityFlags');
+exports.ApplicationFlagsBitField = require('./util/ApplicationFlags');
+exports.AttachmentFlagsBitField = require('./util/AttachmentFlags');
+exports.GuildMemberFlagsBitField = require('./util/GuildMemberFlags');
+exports.IntentsBitField = require('./util/Intents');
+exports.MessageFlagsBitField = require('./util/MessageFlags');
+exports.PermissionsBitField = require('./util/Permissions');
+exports.RoleFlagsBitField = require('./util/RoleFlags');
+exports.SystemChannelFlagsBitField = require('./util/SystemChannelFlags');
+exports.ThreadMemberFlagsBitField = require('./util/ThreadMemberFlags');
+exports.UserFlagsBitField = require('./util/UserFlags');
 
 // Managers
 exports.ApplicationCommandManager = require('./managers/ApplicationCommandManager');
