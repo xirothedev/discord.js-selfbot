@@ -3,33 +3,113 @@
   "globalDependencies": ["bunfig.toml", "tsconfig.json"],
   "tasks": {
     "build": {
-      "inputs": ["src/**", "typings/**", "package.json", "tsconfig.json"],
-      "outputs": ["dist/**"],
+      "inputs": [
+        "src/**",
+        "typings/**",
+        "app/**",
+        "components/**",
+        "content/**",
+        "lib/**",
+        "scripts/**",
+        "next.config.*",
+        "postcss.config.*",
+        "tsconfig.json",
+        "package.json"
+      ],
+      "outputs": ["dist/**", "out/**"],
       "outputLogs": "errors-only"
     },
     "check": {
-      "inputs": ["src/**", "typings/**", "tsconfig.json", "package.json"],
+      "inputs": [
+        "src/**",
+        "typings/**",
+        "app/**",
+        "components/**",
+        "content/**",
+        "lib/**",
+        "scripts/**",
+        "next.config.*",
+        "tsconfig.json",
+        "package.json"
+      ],
       "outputs": [],
       "outputLogs": "errors-only"
     },
     "lint": {
-      "inputs": ["src/**", "typings/**", "package.json"],
+      "inputs": ["src/**", "typings/**", "app/**", "components/**", "lib/**", "scripts/**", "package.json"],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
+    "fmt": {
+      "inputs": [
+        "src/**",
+        "typings/**",
+        "app/**",
+        "components/**",
+        "lib/**",
+        "scripts/**",
+        "next.config.*",
+        "postcss.config.*",
+        "package.json",
+        "tsconfig.json"
+      ],
       "outputs": [],
       "outputLogs": "errors-only"
     },
     "fmt:check": {
-      "inputs": ["src/**", "typings/**"],
+      "inputs": [
+        "src/**",
+        "typings/**",
+        "app/**",
+        "components/**",
+        "lib/**",
+        "scripts/**",
+        "next.config.*",
+        "postcss.config.*",
+        "package.json",
+        "tsconfig.json"
+      ],
       "outputs": [],
       "outputLogs": "errors-only"
     },
     "test": {
-      "inputs": ["src/**", "typings/**", "tests/**", "package.json", "$TURBO_ROOT$/packages/test-harness/src/**"],
+      "inputs": [
+        "src/**",
+        "typings/**",
+        "tests/**",
+        "scripts/**",
+        "package.json",
+        "$TURBO_ROOT$/packages/test-harness/src/**"
+      ],
       "outputs": ["coverage/**"],
       "outputLogs": "new-only"
     },
+    "api": {
+      "inputs": [
+        "scripts/**",
+        "$TURBO_ROOT$/packages/discord-ts-selfbot/src/**",
+        "$TURBO_ROOT$/packages/discord-ts-selfbot/typings/**",
+        "docgen.yml",
+        "package.json"
+      ],
+      "outputs": ["content/docs/api/**"],
+      "outputLogs": "errors-only"
+    },
     "docs": {
-      "inputs": ["src/**", "../../apps/doc/**", "package.json"],
-      "outputs": ["../../apps/doc/main.json"],
+      "dependsOn": ["api"],
+      "inputs": [
+        "app/**",
+        "components/**",
+        "content/**",
+        "lib/**",
+        "next.config.*",
+        "postcss.config.*",
+        "tsconfig.json",
+        "package.json",
+        "$TURBO_ROOT$/packages/discord-ts-selfbot/src/**",
+        "$TURBO_ROOT$/packages/discord-ts-selfbot/typings/**"
+      ],
+      "outputs": ["out/**"],
       "outputLogs": "errors-only"
     },
     "lint:boundaries": {

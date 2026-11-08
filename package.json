@@ -12,11 +12,13 @@
     "build": "turbo run build",
     "check": "turbo run check",
     "lint": "turbo run lint",
-    "fmt": "bun run --cwd packages/discord-ts-selfbot fmt",
+    "fmt": "turbo run fmt",
     "fmt:check": "turbo run fmt:check",
     "test": "turbo run test",
     "docs": "turbo run docs",
-    "lint:boundaries": "bun run --cwd packages/discord-ts-selfbot lint:boundaries"
+    "lint:boundaries": "bun run --cwd packages/discord-ts-selfbot lint:boundaries",
+    "docs:dev": "bun run --cwd apps/docs dev",
+    "docs:api": "bun run --cwd apps/docs api"
   },
   "devDependencies": {
     "turbo": "^2.11.10"

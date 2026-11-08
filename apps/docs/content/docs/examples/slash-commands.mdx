@@ -1,0 +1,37 @@
+---
+title: Slash commands
+description: Register application commands from a selfbot client.
+---
+
+This example registers two global slash commands after the client is ready.
+
+## Run it
+
+```sh
+DISCORD_TOKEN=your-token bun run --cwd apps/examples-ts slash-commands
+```
+
+<Tabs items={['TypeScript', 'JavaScript']}>
+  <Tab value="TypeScript">
+    <include cwd lang="ts" meta='title="apps/examples-ts/slash-commands.ts"'>
+      ../../apps/examples-ts/slash-commands.ts
+    </include>
+  </Tab>
+  <Tab value="JavaScript">
+    <include cwd lang="js" meta='title="apps/examples-js/slash-commands.js"'>
+      ../../apps/examples-js/slash-commands.js
+    </include>
+  </Tab>
+</Tabs>
+
+## What it shows
+
+- `client.application.commands.set()`.
+- Typed `ApplicationCommandData` objects.
+- The ready event as the place to register commands.
+- A JS example that uses a JSDoc type annotation instead of TypeScript.
+
+## Next
+
+- [Interactions](/docs/guides/interactions)
+- [API: ApplicationCommandManager](/docs/api/managers/application-command-manager)

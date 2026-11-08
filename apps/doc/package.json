@@ -1,7 +1,0 @@
-{
-  "name": "@discord-ts-selfbot/doc",
-  "version": "0.0.0",
-  "private": true,
-  "description": "Documentation artifacts for discord-ts-selfbot (docgen output + TypeDoc API)",
-  "type": "module"
-}

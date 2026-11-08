@@ -1,0 +1,73 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
+
+  --color-fd-primary: #5865f2;
+  --color-fd-primary-foreground: #ffffff;
+  --color-fd-ring: #5865f2;
+
+  --color-fd-background: hsl(228 8% 97%);
+  --color-fd-foreground: hsl(228 10% 10%);
+  --color-fd-muted: hsl(228 8% 93%);
+  --color-fd-muted-foreground: hsl(228 6% 42%);
+  --color-fd-popover: hsl(0 0% 100%);
+  --color-fd-popover-foreground: hsl(228 10% 10%);
+  --color-fd-card: hsl(0 0% 100%);
+  --color-fd-card-foreground: hsl(228 10% 10%);
+  --color-fd-border: hsl(228 8% 86%);
+  --color-fd-secondary: hsl(228 8% 94%);
+  --color-fd-secondary-foreground: hsl(228 10% 10%);
+  --color-fd-accent: hsl(228 8% 90%);
+  --color-fd-accent-foreground: hsl(228 10% 10%);
+
+  --color-discord-blurple: #5865f2;
+  --color-discord-green: #57f287;
+}
+
+.dark {
+  --color-fd-background: hsl(228 8% 6.5%);
+  --color-fd-foreground: hsl(228 8% 94%);
+  --color-fd-muted: hsl(228 7% 11%);
+  --color-fd-muted-foreground: hsl(228 7% 65%);
+  --color-fd-popover: hsl(228 8% 9%);
+  --color-fd-popover-foreground: hsl(228 8% 94%);
+  --color-fd-card: hsl(228 7% 9.5%);
+  --color-fd-card-foreground: hsl(228 8% 94%);
+  --color-fd-border: hsl(228 7% 18%);
+  --color-fd-secondary: hsl(228 7% 12%);
+  --color-fd-secondary-foreground: hsl(228 8% 94%);
+  --color-fd-accent: hsl(228 7% 17%);
+  --color-fd-accent-foreground: hsl(228 8% 94%);
+  --color-fd-primary: #7983f5;
+  --color-fd-primary-foreground: #0b0d14;
+  --color-fd-ring: #7983f5;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0 !important;
+  --removed-body-scroll-bar-size: 0 !important;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-discord-blurple) 35%, transparent);
+}
+
+@layer components {
+  .prose :where(code):not(:where(pre code)) {
+    border: 1px solid var(--color-fd-border);
+    border-radius: 0.375rem;
+    background-color: var(--color-fd-muted);
+    padding: 0.125rem 0.375rem;
+    font-size: 0.875em;
+    font-weight: 500;
+    color: var(--color-fd-foreground);
+  }
+}

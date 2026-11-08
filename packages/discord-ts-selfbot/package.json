@@ -14,10 +14,7 @@
     "test:types": "bun check",
     "test:typescript": "bun check",
     "lint:boundaries": "depcruise src/packages",
-    "all": "bun run build && bun publish",
-    "docs": "docgen --source src --custom ../../apps/doc/index.yml --output ../../apps/doc/main.json",
-    "docs:test": "docgen --source src --custom ../../apps/doc/index.yml",
-    "docs:typedoc": "typedoc --options typedoc.json"
+    "all": "bun run build && bun publish"
   },
   "files": [
     "src",
@@ -65,7 +62,6 @@
   },
   "devDependencies": {
     "@discord-ts-selfbot/test-harness": "workspace:*",
-    "@discordjs/docgen": "^0.11.1",
     "@types/debug": "^4.1.12",
     "@types/node": "^22.10.7",
     "@types/ws": "^8.5.10",
@@ -78,10 +74,14 @@
     "prettier": "^2.8.8",
     "tsd": "^0.32.0",
     "tslib": "^2.9.1",
-    "typedoc": "^0.28.20",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "typedoc": "^0.28.20"
   },
   "engines": {
     "bun": ">=1.4.4"
+  },
+  "homepage": "https://xirothedev.github.io/discord.js-selfbot/",
+  "bugs": {
+    "url": "https://github.com/xirothedev/discord.js-selfbot/issues"
   }
 }

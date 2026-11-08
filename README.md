@@ -1,124 +1,113 @@
-> [!IMPORTANT]
-> ## Project Archival
-> 
-> **This project is no longer actively maintained and this repository has been archived.**
->
-> You can read the full announcement [here](https://github.com/aiko-chan-ai/discord.js-selfbot-v13/discussions/1743)
+# discord-ts-selfbot
 
-<div align="center">
-  <br />
-  <p>
-    <a href="https://discord.js.org"><img src="https://discord.js.org/static/logo.svg" width="546" alt="discord.js" /></a>
-  </p>
-</div>
+> A Bun-first, TypeScript selfbot library with a discord.js v14-compatible API.
 
-> [!CAUTION]
-> **The use of this module under a different name on NPM (or another source besides this Github) is not associated with this library.**
-> **When using these libraries, you accept the risk of exposing your Discord Token.**
+[![npm version](https://img.shields.io/npm/v/discord-ts-selfbot.svg)](https://www.npmjs.com/package/discord-ts-selfbot)
+[![CI](https://github.com/xirothedev/discord.js-selfbot/actions/workflows/lint.yml/badge.svg)](https://github.com/xirothedev/discord.js-selfbot/actions/workflows/lint.yml)
+[![docs](https://img.shields.io/badge/docs-xirothedev.github.io-5865F2)](https://xirothedev.github.io/discord.js-selfbot/)
+
+> [!WARNING]
+> **Selfbots carry account risk.** Using a user account with the Discord API is against Discord's Terms of Service.
+> The library is provided for educational use. Do not run it on an account you cannot afford to lose.
 
 ## About
 
-<strong>Welcome to `discord.js-selfbot-v13@v3.7`, based on `discord.js@13.17` and backport `discord.js@14.21.0`</strong>
+`discord-ts-selfbot@14` is a fork of `discord.js-selfbot-v13`, re-platformed as a Bun + Turborepo monorepo. It tracks the `discord.js@14.28.1` public surface and keeps the selfbot-only features: presence, account edits, friend invites, search, guild settings, billing, voice, calls, and recording.
 
-- discord.js-selfbot-v13 is a [Node.js](https://nodejs.org) module that allows user accounts to interact with the Discord API v9.
+- **Runtime:** Bun 1.4.4 or newer. Node.js is not supported.
+- **Source:** every JavaScript module has a TypeScript counterpart. Bun resolves `.ts` first.
+- **Tests:** fake Discord HTTP and WebSocket server, no real token or network.
+- **Docs:** Fumadocs static site at <https://xirothedev.github.io/discord.js-selfbot/>.
 
+## Install
 
-<div align="center">
-  <p>
-    <a href="https://www.npmjs.com/package/discord.js-selfbot-v13"><img src="https://img.shields.io/npm/v/discord.js-selfbot-v13.svg" alt="npm version" /></a>
-    <a href="https://www.npmjs.com/package/discord.js-selfbot-v13"><img src="https://img.shields.io/npm/dt/discord.js-selfbot-v13.svg" alt="npm downloads" /></a>
-    <a href="https://github.com/aiko-chan-ai/discord.js-selfbot-v13/actions"><img src="https://github.com/aiko-chan-ai/discord.js-selfbot-v13/actions/workflows/lint.yml/badge.svg" alt="Tests status" /></a>
-  </p>
-</div>
-
-> [!WARNING]
-> **I don't take any responsibility for blocked Discord accounts that used this module.**
-
-> [!CAUTION]
-> **Using this on a user account is prohibited by the [Discord TOS](https://discord.com/terms) and can lead to the account block.**
-
-### <strong>[Document Website](https://discordjs-self-v13.netlify.app/)</strong>
-
-### <strong>[Example Code](https://github.com/aiko-chan-ai/discord.js-selfbot-v13/tree/main/examples)</strong>
-
-## Features (User)
-- [x] Message
-- [x] ClientUser: Status, Activity, RemoteAuth, etc.
-- [X] Guild: Fetch Members, Join / Leave, Top emojis, etc.
-- [X] Interactions: Slash Commands, Buttons, Menu, Modal.
-- [X] Captcha & TOTP Handler
-- [X] Documentation
-- [x] Voice & Video
-- [ ] Everything
-
-## Installation
-
-> [!NOTE]
-> **Node.js 20.18.0 or newer is required**
-
-```sh-session
-npm install discord.js-selfbot-v13@latest
+```sh
+bun add discord-ts-selfbot
 ```
 
-## Example
+## Quickstart
 
-```js
-const { Client } = require('discord.js-selfbot-v13');
+```ts
+import { Client, Events } from 'discord-ts-selfbot';
+
 const client = new Client();
 
-client.on('ready', async () => {
-  console.log(`${client.user.username} is ready!`);
-})
+client.once(Events.CLIENT_READY, (readyClient) => {
+  console.log(`Logged in as ${readyClient.user.tag}.`);
+});
 
-client.login('token');
+client.on(Events.MessageCreate, async (message) => {
+  if (message.author.id === client.user?.id) return;
+
+  if (message.content === '!ping') {
+    await message.reply('Pong!');
+  }
+});
+
+await client.login(process.env.DISCORD_TOKEN);
 ```
 
-## Get Token ?
+Read [Token safety](https://xirothedev.github.io/discord.js-selfbot/docs/getting-started/token-safety) before you run a client with a real token.
 
-- Based: [findByProps](https://discord.com/channels/603970300668805120/1085682686607249478/1085682686607249478)
+## Features
 
-<strong>Run code (Discord Console - [Ctrl + Shift + I])</strong>
+- discord.js v14 surface: `Events`, `Partials`, `Status`, builders, interaction classes, collectors, and client methods.
+- Selfbot features: message extras, account profile edits, guild settings, search, billing, Nitro/OAuth, sharding, friend invites, voice, calls, and recording.
+- Bun-native toolchain: `bun install`, `bun test`, `bun check`, `bun lint`, `bun fmt`, `bun build`.
+- Fake Discord test harness in `packages/test-harness`.
+- Historical v14 parity audit in the docs.
 
-```js
-window.webpackChunkdiscord_app.push([
-	[Symbol()],
-	{},
-	req => {
-		if (!req.c) return;
-		for (let m of Object.values(req.c)) {
-			try {
-				if (!m.exports || m.exports === window) continue;
-				if (m.exports?.getToken) return copy(m.exports.getToken());
-				for (let ex in m.exports) {
-					if (m.exports?.[ex]?.getToken && m.exports[ex][Symbol.toStringTag] !== 'IntlMessagesProxy') return copy(m.exports[ex].getToken());
-				}
-			} catch {}
-		}
-	},
-]);
+## Repository layout
 
-window.webpackChunkdiscord_app.pop();
-console.log('%cWorked!', 'font-size: 50px');
-console.log(`%cYou now have your token in the clipboard!`, 'font-size: 16px');
+```text
+apps/
+├── docs/                # Fumadocs docs site
+├── examples-js/         # JavaScript examples
+└── examples-ts/         # TypeScript examples
+packages/
+├── discord-ts-selfbot/  # published library
+└── test-harness/        # fake Discord HTTP + WebSocket server
+tools/
+└── parity/              # differential harness vs discord.js v14
+docs/
+├── adr/                 # architecture decisions
+└── agents/              # issue tracker and triage conventions
 ```
+
+## Development
+
+```sh
+bun install
+bun run check
+bun run lint
+bun run fmt:check
+bun run test
+bun run lint:boundaries
+bun run docs
+```
+
+Run the docs site locally:
+
+```sh
+bun run docs:dev
+```
+
+## Documentation
+
+- [Getting started](https://xirothedev.github.io/discord.js-selfbot/docs/getting-started/installation)
+- [Guides](https://xirothedev.github.io/discord.js-selfbot/docs/guides/client-events)
+- [API reference](https://xirothedev.github.io/discord.js-selfbot/docs/api)
+- [v14 parity](https://xirothedev.github.io/discord.js-selfbot/docs/project/v14-parity)
+- [Safety](https://xirothedev.github.io/discord.js-selfbot/docs/project/safety)
 
 ## Contributing
 
-- Before creating an issue, please ensure that it hasn't already been reported/suggested, and double-check the
-[documentation](https://discordjs-self-v13.netlify.app/).  
-- See [the contribution guide](https://github.com/discordjs/discord.js/blob/main/.github/CONTRIBUTING.md) if you'd like to submit a PR.
+Read `AGENTS.md`, `docs/agents/issue-tracker.md`, and `DESIGN.md` before you open a pull request. Keep each pull request scoped to one slice and add tests for behavior changes.
 
-## Need help?
-Github Discussion: [Here](https://github.com/aiko-chan-ai/discord.js-selfbot-v13/discussions)
+## License
+
+GNU General Public License v3.0. See [LICENSE](LICENSE).
 
 ## Credits
-- [Discord.js](https://github.com/discordjs/discord.js)
 
-## <strong>Other project(s)
-
-- 📘 [***aiko-chan-ai/DiscordBotClient***](https://github.com/aiko-chan-ai/DiscordBotClient) <br/>
-  A patched version of discord, with bot login support
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=aiko-chan-ai/discord.js-selfbot-v13&type=Date)](https://star-history.com/#aiko-chan-ai/discord.js-selfbot-v13&Date)
+This fork is based on `discord.js-selfbot-v13` by the original authors, which is based on `discord.js`. Keep the upstream notices when you redistribute the code.

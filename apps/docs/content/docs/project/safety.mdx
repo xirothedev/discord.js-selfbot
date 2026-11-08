@@ -1,0 +1,48 @@
+---
+title: Safety
+description: Account risk, token handling, and the boundaries of this fork.
+---
+
+## Account risk
+
+A selfbot is automation on a user account. Discord&apos;s Terms of Service prohibit this. Discord can rate-limit, suspend, or terminate the account.
+
+- Assume the account can be lost.
+- Do not use an account that owns servers, payment methods, or Nitro credit.
+- Do not run destructive automation against a community you do not control.
+- Do not use a selfbot to harass, scrape, or evade moderation.
+
+## Token handling
+
+The token is a password. Store it in an environment variable or a secret manager. Never commit it. If it leaks, change the password and log out all sessions.
+
+Read [Token safety](/docs/getting-started/token-safety) for the full checklist.
+
+## Stubbed relationship mutations
+
+These methods exist in the typings but reject without a request:
+
+- `RelationshipManager#addFriend`
+- `RelationshipManager#deleteRelationship`
+- `RelationshipManager#sendFriendRequest`
+- `RelationshipManager#addBlocked`
+
+They are marked `@deprecated` and `@experimental`. They are not implemented because automated relationship changes can cause account harm and are hard to test safely. A separate safety review is required before they ship.
+
+## Voice and recording
+
+- Voice and video recording can capture other users without their knowledge. Check the law and the community rules in your jurisdiction.
+- Recording consumes CPU, bandwidth, and disk. Stop the recorder before you disconnect.
+- The voice engine is tested at the payload boundary. It does not guarantee every codec or container combination works.
+
+## Destructive guild methods
+
+`Guild#delete`, `Guild#leave`, `Guild#setOwner`, and the bulk channel/role position methods change public state. Add a confirmation step and test on a small guild first.
+
+## Reporting a security issue
+
+Do not open a public issue for a token leak, a remote code execution path, or a vulnerability that could harm users. Contact the maintainer through the repository&apos;s private security advisory flow.
+
+## License and warranty
+
+The project is licensed under GPL-3.0 and comes with no warranty. See [License](/docs/project/license).
