@@ -4,13 +4,14 @@ const { TypeError } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
 const { ChannelTypes } = _ConstantsModule;
 import _UtilModule from '../util/Util';
+import type { GuildTextThreadCreateOptions } from '../../typings';
 const { resolveAutoArchiveMaxLimit } = _UtilModule;
 
 /**
  * Manages API methods for {@link ThreadChannel} objects and stores their cache.
  * @extends {ThreadManager}
  */
-class GuildTextThreadManager extends ThreadManager {
+class GuildTextThreadManager<AllowedThreadType> extends ThreadManager {
   /**
    * The channel this Manager belongs to
    * @name GuildTextThreadManager#channel
@@ -64,7 +65,7 @@ class GuildTextThreadManager extends ThreadManager {
     invitable,
     reason,
     rateLimitPerUser,
-  }: any = {}) {
+  }: GuildTextThreadCreateOptions<AllowedThreadType>) {
     let path = this.client.api.channels(this.channel.id);
     if (type && typeof type !== 'string' && typeof type !== 'number') {
       throw new TypeError('INVALID_TYPE', 'type', 'ThreadChannelType or Number');
@@ -79,12 +80,13 @@ class GuildTextThreadManager extends ThreadManager {
       resolvedType = typeof type === 'string' ? ChannelTypes[type] : (type ?? resolvedType);
     }
 
-    if (autoArchiveDuration === 'MAX') autoArchiveDuration = resolveAutoArchiveMaxLimit(this.channel.guild);
+    const resolvedAutoArchiveDuration =
+      autoArchiveDuration === 'MAX' ? resolveAutoArchiveMaxLimit(this.channel.guild) : autoArchiveDuration;
 
     const data = await path.threads.post({
       data: {
         name,
-        auto_archive_duration: autoArchiveDuration,
+        auto_archive_duration: resolvedAutoArchiveDuration,
         type: resolvedType,
         invitable: resolvedType === ChannelTypes.GUILD_PRIVATE_THREAD ? invitable : undefined,
         rate_limit_per_user: rateLimitPerUser,

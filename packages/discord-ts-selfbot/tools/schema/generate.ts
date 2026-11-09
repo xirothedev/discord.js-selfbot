@@ -69,6 +69,63 @@ const CONFIG: Record<string, EntityConfig> = {
     generate: false,
     fieldTypes: { installParams: 'ClientApplicationInstallParams | null' },
   },
+  ApplicationCommand: {
+    imports: [],
+    fields: {},
+    generate: false,
+    fieldTypes: {
+      permissions:
+        'ApplicationCommandPermissionsManager<PermissionsFetchType, PermissionsFetchType, PermissionsFetchType, Guild | null, Snowflake>',
+    },
+  },
+  AutocompleteInteraction: {
+    imports: [],
+    fields: {},
+    generate: false,
+    fieldTypes: { options: "Omit<CommandInteractionOptionResolver<Cached>, 'getMessage'>" },
+  },
+  CommandInteraction: {
+    imports: [],
+    fields: {},
+    generate: false,
+    fieldTypes: {
+      options: "Omit<CommandInteractionOptionResolver<Cached>, 'getMessage' | 'getFocused'>",
+    },
+  },
+  ContextMenuInteraction: {
+    imports: [],
+    fields: {},
+    generate: false,
+    fieldTypes: {
+      options:
+        "Omit<CommandInteractionOptionResolver<Cached>, 'getFocused' | 'getMentionable' | 'getRole' | 'getNumber' | 'getInteger' | 'getString' | 'getChannel' | 'getBoolean' | 'getSubcommandGroup' | 'getSubcommand'>",
+    },
+  },
+  GuildAuditLogs: {
+    imports: [],
+    fields: {},
+    generate: false,
+    fieldTypes: { entries: 'Collection<Snowflake, GuildAuditLogsEntry<T>>' },
+  },
+  GuildAuditLogsEntry: {
+    imports: [],
+    fields: {},
+    generate: false,
+    fieldTypes: {
+      action: 'TAction',
+      actionType: 'TActionType',
+      extra: 'TAction extends keyof GuildAuditLogsEntryExtraField ? GuildAuditLogsEntryExtraField[TAction] : null',
+      target:
+        'TTargetType extends keyof GuildAuditLogsEntryTargetField<TActionType> ? GuildAuditLogsEntryTargetField<TActionType>[TTargetType] : Role | GuildEmoji | { id: Snowflake } | null',
+      targetType: 'TTargetType',
+    },
+  },
+  Interaction: {
+    imports: [],
+    fields: {},
+    generate: false,
+    fieldTypes: { memberPermissions: 'Readonly<Permissions> | null' },
+  },
   RichPresence: {
     imports: [],
     fields: {},
@@ -478,9 +535,27 @@ function safeTypeText(type: ts.Type): string {
   return text === 'any' ? 'unknown' : text;
 }
 
+function splitTopLevelUnion(text: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let current = '';
+  for (const char of text) {
+    if (char === '<' || char === '(' || char === '[' || char === '{') depth++;
+    else if (char === '>' || char === ')' || char === ']' || char === '}') depth--;
+    if (char === '|' && depth === 0) {
+      parts.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  parts.push(current);
+  return parts;
+}
+
 function formatUnion(texts: string[]): string {
   const parts = new Set<string>();
-  for (const text of texts) for (const part of text.split(' | ')) if (part.trim()) parts.add(part.trim());
+  for (const text of texts) for (const part of splitTopLevelUnion(text)) if (part.trim()) parts.add(part.trim());
   return [...parts]
     .sort((a, b) => {
       const rank = (value: string): number => (value === 'null' ? 1 : value === 'undefined' ? 2 : 0);

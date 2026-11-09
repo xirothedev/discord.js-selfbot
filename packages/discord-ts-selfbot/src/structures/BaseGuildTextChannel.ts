@@ -2,6 +2,7 @@ import GuildChannel from './GuildChannel';
 import TextBasedChannel from './interfaces/TextBasedChannel';
 import GuildTextThreadManager from '../managers/GuildTextThreadManager';
 import MessageManager from '../managers/MessageManager';
+import type { AllowedThreadTypeForNewsChannel, AllowedThreadTypeForTextChannel } from '../../typings';
 
 /**
  * Represents a text-based guild channel on Discord.
@@ -9,6 +10,7 @@ import MessageManager from '../managers/MessageManager';
  * @implements {TextBasedChannel}
  */
 class BaseGuildTextChannel extends GuildChannel {
+  declare threads: GuildTextThreadManager<AllowedThreadTypeForTextChannel | AllowedThreadTypeForNewsChannel>;
   constructor(guild: any, data: any, client: any) {
     super(guild, data, client, false);
 
@@ -22,7 +24,7 @@ class BaseGuildTextChannel extends GuildChannel {
      * A manager of the threads belonging to this channel
      * @type {GuildTextThreadManager}
      */
-    this.threads = new GuildTextThreadManager(this);
+    this.threads = new GuildTextThreadManager<AllowedThreadTypeForTextChannel | AllowedThreadTypeForNewsChannel>(this);
 
     /**
      * If the guild considers this channel NSFW
