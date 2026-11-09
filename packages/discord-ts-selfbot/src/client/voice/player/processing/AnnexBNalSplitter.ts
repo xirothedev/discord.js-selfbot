@@ -1,5 +1,6 @@
 import { Buffer } from 'buffer';
 import { Transform } from 'stream';
+import type { TransformCallback } from 'stream';
 /*
 Credit: https://github.com/dank074/Discord-video-stream
 The use of video streaming in this library is an incomplete implementation with many bugs, primarily aimed at lazy users.
@@ -104,25 +105,25 @@ const H265NalUnitTypes = {
 };
 
 const H264Helpers = {
-  getUnitType(frame: any) {
+  getUnitType(frame: Buffer) {
     return frame[0] & 0x1f;
   },
-  splitHeader(frame: any) {
+  splitHeader(frame: Buffer): [Buffer, Buffer] {
     return [frame.subarray(0, 1), frame.subarray(1)];
   },
-  isAUD(unitType: any) {
+  isAUD(unitType: number) {
     return unitType === H264NalUnitTypes.AccessUnitDelimiter;
   },
 };
 
 const H265Helpers = {
-  getUnitType(frame: any) {
+  getUnitType(frame: Buffer) {
     return (frame[0] >> 1) & 0x3f;
   },
-  splitHeader(frame: any) {
+  splitHeader(frame: Buffer): [Buffer, Buffer] {
     return [frame.subarray(0, 2), frame.subarray(2)];
   },
-  isAUD(unitType: any) {
+  isAUD(unitType: number) {
     return unitType === H265NalUnitTypes.AUD_NUT;
   },
 };
@@ -131,17 +132,28 @@ const emptyBuffer = Buffer.allocUnsafe(0);
 const epbPrefix = Buffer.from([0x00, 0x00, 0x03]);
 const nalSuffix = Buffer.from([0x00, 0x00, 0x01]);
 
-class AnnexBNalSplitter extends Transform {
-  [key: string]: any;
+type NalFunctions = {
+  getUnitType(frame: Buffer): number;
+  splitHeader(frame: Buffer): [Buffer, Buffer];
+  isAUD(unitType: number): boolean;
+};
 
-  constructor(nalFunctions: any) {
+class AnnexBNalSplitter extends Transform {
+  declare _buffer: Buffer | null;
+  declare _accessUnit: Buffer[];
+  declare _nalFunctions: NalFunctions;
+  removeEpbs(frame: Buffer, _unitType: number): Buffer {
+    return frame;
+  }
+
+  constructor(nalFunctions: NalFunctions) {
     super();
     this._buffer = null;
     this._accessUnit = [];
     this._nalFunctions = nalFunctions;
   }
 
-  rbsp(data: any) {
+  rbsp(data: Buffer) {
     const newData = Buffer.allocUnsafe(data.length);
     let newLength = 0;
 
@@ -162,22 +174,22 @@ class AnnexBNalSplitter extends Transform {
     return newData.subarray(0, newLength);
   }
 
-  findNalStart(buf: any) {
+  findNalStart(buf: Buffer) {
     const pos = buf.indexOf(nalSuffix);
     if (pos === -1) return null;
     return pos > 0 && buf[pos - 1] === 0 ? { index: pos - 1, length: 4 } : { index: pos, length: 3 };
   }
 
-  processFrame(frame: any) {
+  processFrame(frame: Buffer) {
     if (frame.length === 0) return;
 
     const unitType = this._nalFunctions.getUnitType(frame);
     if (this._nalFunctions.isAUD(unitType) && this._accessUnit.length > 0) {
-      const sizeOfAccessUnit = this._accessUnit.reduce((acc: any, nalu: any) => acc + nalu.length + 4, 0);
+      const sizeOfAccessUnit = this._accessUnit.reduce((acc, nalu) => acc + nalu.length + 4, 0);
       const accessUnitBuf = Buffer.allocUnsafe(sizeOfAccessUnit);
 
       let offset = 0;
-      this._accessUnit.forEach((nalu: any) => {
+      this._accessUnit.forEach(nalu => {
         accessUnitBuf.writeUint32BE(nalu.length, offset);
         offset += 4;
         nalu.copy(accessUnitBuf, offset);
@@ -191,7 +203,7 @@ class AnnexBNalSplitter extends Transform {
     }
   }
 
-  _transform(chunk: any, _encoding: any, callback: any) {
+  _transform(chunk: Buffer, _encoding: BufferEncoding, callback: TransformCallback) {
     let nalStart = this.findNalStart(chunk);
     if (!this._buffer) {
       if (!nalStart) {
@@ -218,7 +230,7 @@ class H264NalSplitter extends AnnexBNalSplitter {
     super(H264Helpers);
   }
 
-  removeEpbs(frame: any, unitType: any) {
+  removeEpbs(frame: Buffer, unitType: number) {
     return unitType === H264NalUnitTypes.SPS || unitType === H264NalUnitTypes.SEI ? this.rbsp(frame) : frame;
   }
 }

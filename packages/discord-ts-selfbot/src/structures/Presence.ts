@@ -1,8 +1,17 @@
 import { randomUUID } from 'node:crypto';
 import type { APIPartialEmoji, Snowflake } from 'discord-api-types/v10';
 import Base from './Base';
-import type { RawActivityData } from '../../typings/rawDataTypes';
-import type { ActivityOptions, ActivityPlatform, ActivityType, RichPresenceMetadata } from '../../typings';
+import type { RawActivityData, RawPresenceData } from '../../typings/rawDataTypes';
+import type {
+  ActivityOptions,
+  ActivityPlatform,
+  ActivityType,
+  ClientPresenceStatusData,
+  PresenceStatus,
+  RichPresenceMetadata,
+  StaticImageURLOptions,
+} from '../../typings';
+import type { Guild } from './Guild';
 import ActivityFlags from '../util/ActivityFlags';
 import _ConstantsModule from '../util/Constants';
 const { ActivityTypes } = _ConstantsModule;
@@ -37,8 +46,19 @@ import Util from '../util/Util';
  * @extends {Base}
  */
 class Presence extends Base {
-  [key: string]: any;
-  constructor(client: any, data: any = {}) {
+  declare userId: Snowflake;
+  declare guild: Guild | null;
+  declare status: PresenceStatus;
+  declare activities: (Activity | CustomStatus | RichPresence | SpotifyRPC)[];
+  declare clientStatus: ClientPresenceStatusData | null;
+  declare lastModified: number | null;
+  declare afk: boolean;
+  declare since: number;
+
+  constructor(
+    client: import('../client/Client').default,
+    data: RawPresenceData & { guild?: Guild | null } = { guild_id: '', user: { id: '' } },
+  ) {
     super(client);
 
     /**
@@ -71,7 +91,7 @@ class Presence extends Base {
    * @readonly
    */
   get member() {
-    return this.guild.members.resolve(this.userId);
+    return this.guild?.members.resolve(this.userId) ?? null;
   }
 
   _patch(data: any) {
@@ -473,8 +493,13 @@ class Activity {
  * Assets for a rich presence
  */
 class RichPresenceAssets {
-  [key: string]: any;
-  constructor(activity: any, assets: any) {
+  declare activity: Activity;
+  declare largeImage: Snowflake | null;
+  declare largeText: string | null;
+  declare smallImage: Snowflake | null;
+  declare smallText: string | null;
+
+  constructor(activity: Activity, assets: any) {
     /**
      * The activity of the RichPresenceAssets
      * @type {Activity}
@@ -533,7 +558,7 @@ class RichPresenceAssets {
    * @param {StaticImageURLOptions} [options] Options for the image URL
    * @returns {?string}
    */
-  smallImageURL({ format, size }: any = {}) {
+  smallImageURL({ format, size }: StaticImageURLOptions = {}) {
     if (!this.smallImage) return null;
     if (this.smallImage.includes(':')) {
       const [platform, id] = this.smallImage.split(':');
@@ -562,7 +587,7 @@ class RichPresenceAssets {
    * @param {StaticImageURLOptions} [options] Options for the image URL
    * @returns {?string}
    */
-  largeImageURL({ format, size }: any = {}) {
+  largeImageURL({ format, size }: StaticImageURLOptions = {}) {
     if (!this.largeImage) return null;
     if (this.largeImage.includes(':')) {
       const [platform, id] = this.largeImage.split(':');
@@ -586,10 +611,9 @@ class RichPresenceAssets {
     });
   }
 
-  static parseImage(image: any) {
-    if (typeof image != 'string') {
-      image = null;
-    } else if (URL.canParse(image) && ['http:', 'https:'].includes(new URL(image).protocol)) {
+  static parseImage(image: string | null) {
+    if (typeof image !== 'string') return null;
+    if (URL.canParse(image) && ['http:', 'https:'].includes(new URL(image).protocol)) {
       // Discord URL:
       image = image
         .replace('https://cdn.discordapp.com/', 'mp:')
@@ -602,7 +626,7 @@ class RichPresenceAssets {
       }
     } else if (/^[0-9]{17,19}$/.test(image)) {
       // ID Assets
-    } else if (['mp:', 'youtube:', 'spotify:', 'twitch:'].some((v: any) => image.startsWith(v))) {
+    } else if (['mp:', 'youtube:', 'spotify:', 'twitch:'].some((v: string) => image!.startsWith(v))) {
       // Image
     } else if (image.startsWith('external/')) {
       image = `mp:${image}`;
@@ -637,9 +661,8 @@ class RichPresenceAssets {
    * @param {?RichPresenceImage} image The large image asset's id
    * @returns {RichPresenceAssets}
    */
-  setLargeImage(image: any) {
-    image = RichPresenceAssets.parseImage(image);
-    this.largeImage = image;
+  setLargeImage(image?: string) {
+    this.largeImage = RichPresenceAssets.parseImage(image ?? null);
     return this;
   }
 
@@ -648,9 +671,8 @@ class RichPresenceAssets {
    * @param {?RichPresenceImage} image The small image asset's id
    * @returns {RichPresenceAssets}
    */
-  setSmallImage(image: any) {
-    image = RichPresenceAssets.parseImage(image);
-    this.smallImage = image;
+  setSmallImage(image?: string) {
+    this.smallImage = RichPresenceAssets.parseImage(image ?? null);
     return this;
   }
 
@@ -659,7 +681,7 @@ class RichPresenceAssets {
    * @param {string} text Assets text
    * @returns {RichPresenceAssets}
    */
-  setLargeText(text: any) {
+  setLargeText(text: string) {
     this.largeText = text;
     return this;
   }
@@ -669,14 +691,13 @@ class RichPresenceAssets {
    * @param {string} text Assets text
    * @returns {RichPresenceAssets}
    */
-  setSmallText(text: any) {
+  setSmallText(text: string) {
     this.smallText = text;
     return this;
   }
 }
 
 class CustomStatus extends Activity {
-  [key: string]: any;
   /**
    * @typedef {Object} CustomStatusOptions
    * @property {string} [state] The state to be displayed
@@ -732,7 +753,7 @@ class CustomStatus extends Activity {
 
 class RichPresence extends Activity {
   declare metadata: RichPresenceMetadata;
-  [key: string]: any;
+  declare secrets: Record<string, string>;
   /**
    * @param {Client} client Discord client
    * @param {RichPresence} [data={}] RichPresence to clone or raw data
@@ -1046,7 +1067,6 @@ class RichPresence extends Activity {
  * @extends {RichPresence}
  */
 class SpotifyRPC extends RichPresence {
-  [key: string]: any;
   /**
    * Create a new RichPresence (Spotify style)
    * @param {Client} client Discord Client
