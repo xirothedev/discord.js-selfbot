@@ -39,7 +39,7 @@ function routeStreamPacket(connection: any, packet: any) {
   const { t: event, d: data } = packet;
   const StreamKey = parseStreamKey(data.stream_key);
   if (
-    StreamKey.userId === connection.channel.client.user.id &&
+    StreamKey.userId === connection.channel.client.user!.id &&
     connection.channel.id == StreamKey.channelId &&
     connection.streamConnection
   ) {
@@ -345,7 +345,7 @@ class VoiceConnection extends EventEmitter {
    * @type {?VoiceState}
    */
   get voice() {
-    return this.client.user.voice;
+    return this.client.user!.voice;
   }
 
   /**
@@ -1030,7 +1030,7 @@ class StreamConnection extends VoiceConnection {
   get streamKey() {
     return `${['DM', 'GROUP_DM'].includes(this.channel.type) ? 'call' : `guild:${this.channel.guild.id}`}:${
       this.channel.id
-    }:${this.channel.client.user.id}`;
+    }:${this.channel.client.user!.id}`;
   }
 }
 

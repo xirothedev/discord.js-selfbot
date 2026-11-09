@@ -55,7 +55,7 @@ Current ratchet (2026-11-09): `any` 1,836; casts 551 (`bun tools/typesafety/coun
 - Pilot `Role`: `declare` fields from `RoleEntity`, `_patch(data: PatchOf<'Role'>)`, narrow with `data.x !== undefined`, remove per-field casts, `implements RoleEntity`.
 - Gate: `bun check` (including `schema:check` and the `any`/cast ratchet), `bun test`, `bun fmt:check`, `bun run lint:boundaries`.
 - Report: 116 candidates, 740 fields, 85 assigned-but-undeclared, 96 drift rows across 38 entities. Triage before the remaining structures: see `docs/plans/entity-schema-triage.md`.
-- Follow-ups (`User`, `ClientUser`, `GuildMember`, `VoiceState`, `GuildBoost`, `AutoModerationRule`, the small structures, `GuildScheduledEvent`, then `Message`, `MessageMentions`, `MessageEmbed`/`WebEmbed`, `Activity`, `MessageButton`, `MessagePayload`, `Webhook`, the interaction stack, `ApplicationCommandPermissionsManager`, `GuildAuditLogs`, and `GuildChannel`): 0 drift rows remain, 82 assigned-but-undeclared.
+- Follow-ups (`User`, `ClientUser`, `GuildMember`, `VoiceState`, `GuildBoost`, `AutoModerationRule`, the small structures, `GuildScheduledEvent`, then `Message`, `MessageMentions`, `MessageEmbed`/`WebEmbed`, `Activity`, `MessageButton`, `MessagePayload`, `Webhook`, the interaction stack, `ApplicationCommandPermissionsManager`, `GuildAuditLogs`, `GuildChannel`, `Guild`, and `Client`): 0 drift rows remain, 82 assigned-but-undeclared.
 
 ### Phase 1 — `util` (lowest dependency)
 

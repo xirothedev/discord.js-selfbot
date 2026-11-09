@@ -2612,7 +2612,7 @@ export class Message<Cached extends boolean = boolean> extends Base {
 }
 
 export class CallState extends Base {
-  private constructor(client: Client, data: any);
+  private constructor(client: Client, data: { channel_id: Snowflake; region?: string; ringing?: Snowflake[] });
   public channelId: Snowflake;
   public region: string;
   public readonly channel?: DMChannel | GroupDMChannel;
@@ -3603,14 +3603,14 @@ export interface ShardEventTypes {
   ready: [];
   reconnecting: [];
   error: [error: Error];
-  message: [message: any];
+  message: [message: unknown];
 }
 
 /** @deprecated This will be removed in the next major version */
 export class Shard extends EventEmitter {
   private constructor(manager: ShardingManager, id: number);
   private _evals: Map<string, Promise<unknown>>;
-  private _exitListener: (...args: any[]) => void;
+  private _exitListener: (...args: unknown[]) => void;
   private _fetches: Map<string, Promise<unknown>>;
   private _handleExit(respawn?: boolean, timeout?: number): void;
   private _handleMessage(message: unknown): void;
@@ -4401,8 +4401,8 @@ export class WebSocketManager extends EventEmitter {
   public status: Status;
   public readonly ping: number;
 
-  public on(event: WSEventType, listener: (data: any, shardId: number) => void): this;
-  public once(event: WSEventType, listener: (data: any, shardId: number) => void): this;
+  public on(event: WSEventType, listener: (data: unknown, shardId: number) => void): this;
+  public once(event: WSEventType, listener: (data: unknown, shardId: number) => void): this;
 
   private debug(message: string, shard?: WebSocketShard): void;
   private connect(): Promise<void>;
@@ -4970,7 +4970,7 @@ export interface RawUserSettingsData {
   native_phone_integration_enabled?: boolean;
   render_embeds?: boolean;
   render_reactions?: boolean;
-  restricted_guilds?: any[];
+  restricted_guilds?: Snowflake[];
   show_current_game?: boolean;
   status?: PresenceStatusData;
   stream_notifications_enabled?: boolean;
@@ -5436,7 +5436,7 @@ export interface TextBasedChannelFields extends PartialTextBasedChannelFields {
   setNSFW(nsfw?: boolean, reason?: string): Promise<this>;
   fetchWebhooks(): Promise<Collection<Snowflake, Webhook>>;
   sendTyping(): Promise<{ message_send_cooldown_ms: number; thread_create_cooldown_ms: number } | undefined>;
-  sendSlash(target: UserResolvable, commandName: string, ...args: any[]): Promise<Message | Modal>;
+  sendSlash(target: UserResolvable, commandName: string, ...args: unknown[]): Promise<Message | Modal>;
 }
 
 export function PartialWebhookMixin<T>(Base?: Constructable<T>): Constructable<T & PartialWebhookFields>;
@@ -6365,8 +6365,8 @@ export interface ClientEvents extends BaseClientEvents {
   guildScheduledEventUserAdd: [guildScheduledEvent: GuildScheduledEvent | PartialGuildScheduledEvent, user: User];
   guildScheduledEventUserRemove: [guildScheduledEvent: GuildScheduledEvent, PartialGuildScheduledEvent, user: User];
   guildAuditLogEntryCreate: [auditLogEntry: GuildAuditLogsEntry, guild: Guild];
-  raw: [packet: any, shard: number];
-  unhandledPacket: [packet: { t?: string; d: any }, shard: number];
+  raw: [packet: unknown, shard: number];
+  unhandledPacket: [packet: { t?: string; d: unknown }, shard: number];
   relationshipAdd: [userId: Snowflake, shouldNotify: boolean];
   relationshipRemove: [userId: Snowflake, type: RelationshipTypes, nickname: string | null];
   relationshipUpdate: [

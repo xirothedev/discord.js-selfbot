@@ -36,7 +36,7 @@ class VoiceChannel extends BaseGuildVoiceChannel {
    */
   get joinable() {
     if (!super.joinable) return false;
-    if (this.full && !(this.permissionsFor(this.client.user)?.has(Permissions.FLAGS.MOVE_MEMBERS, false) ?? false)) {
+    if (this.full && !(this.permissionsFor(this.client.user!)?.has(Permissions.FLAGS.MOVE_MEMBERS, false) ?? false)) {
       return false;
     }
     return true;
@@ -48,7 +48,7 @@ class VoiceChannel extends BaseGuildVoiceChannel {
    * @readonly
    */
   get speakable() {
-    const permissions = this.permissionsFor(this.client.user);
+    const permissions = this.permissionsFor(this.client.user!);
     if (!permissions) return false;
     // This flag allows speaking even if timed out
     if (permissions.has(Permissions.FLAGS.ADMINISTRATOR, false)) return true;

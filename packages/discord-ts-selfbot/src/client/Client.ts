@@ -39,45 +39,87 @@ import Intents from '../util/Intents';
 import Permissions from '../util/Permissions';
 import DiscordAuthWebsocket from '../util/RemoteAuth';
 import Sweepers from '../util/Sweepers';
+import type { Snowflake } from 'discord-api-types/v10';
+import type {
+  AcceptInviteOptions,
+  ClientFetchInviteOptions,
+  ClientOptions,
+  GuildResolvable,
+  GuildTemplateResolvable,
+  InviteGenerationOptions,
+  InviteResolvable,
+  OAuth2AuthorizeOptions,
+  StickerPackFetchOptions,
+  TextChannelResolvable,
+  WebhookDeleteOptions,
+} from '../../typings';
+import type ClientUser from '../structures/ClientUser';
+import type { Sticker as StickerType } from '../structures/Sticker';
 /* eslint-disable no-unreachable */
 
 let deprecationEmitted = false;
+
+interface OnboardingPromptOption {
+  id: Snowflake;
+}
+
+interface OnboardingPrompt {
+  id: Snowflake;
+  required: boolean;
+  in_onboarding: boolean;
+  options: OnboardingPromptOption[];
+}
+
+interface OnboardingData {
+  enabled: boolean;
+  prompts: OnboardingPrompt[];
+}
+
+interface AuthorizedToken {
+  id: Snowflake;
+  application: { id: Snowflake };
+  scopes: string[];
+}
+
+interface InstalledApplicationData {
+  integration_types_config: Record<string, { oauth2_install_params: { scopes: string[] } } | undefined>;
+}
 
 /**
  * The main hub for interacting with the Discord API, and the starting point for any bot.
  * @extends {BaseClient}
  */
 class Client extends BaseClient {
-  declare _cleanups: any;
-  declare _finalizers: any;
-  declare ws: any;
-  declare actions: any;
-  declare voice: any;
-  declare voiceStates: any;
-  declare shard: any;
-  declare users: any;
-  declare guilds: any;
-  declare channels: any;
-  declare sweepers: any;
-  declare presence: any;
-  declare presences: any;
-  declare notes: any;
-  declare relationships: any;
-  declare billing: any;
-  declare sessions: any;
-  declare settings: any;
-  declare token: any;
-  declare user: any;
-  declare application: any;
-  declare readyAt: any;
-  declare authenticator: any;
-  declare sweepMessageInterval: any;
-  declare code: any;
+  declare _cleanups: Set<() => void>;
+  declare _finalizers: FinalizationRegistry<{ cleanup: () => void; message?: string; name?: string }>;
+  declare ws: WebSocketManager;
+  declare actions: ActionsManager;
+  declare voice: ClientVoiceManager;
+  declare voiceStates: VoiceStateManager;
+  declare shard: ShardClientUtil | null;
+  declare users: UserManager;
+  declare guilds: GuildManager;
+  declare channels: ChannelManager;
+  declare sweepers: Sweepers;
+  declare presence: ClientPresence;
+  declare presences: PresenceManager;
+  declare notes: UserNoteManager;
+  declare relationships: RelationshipManager;
+  declare billing: BillingManager;
+  declare sessions: SessionManager;
+  declare settings: ClientUserSettingManager;
+  declare token: string | null;
+  declare user: ClientUser | null;
+  declare application: Application | null;
+  declare readyAt: Date | null;
+  declare authenticator: typeof authenticator;
+  declare sweepMessageInterval: NodeJS.Timeout | null;
+  declare code: string | null;
 
   /**
    * @param {ClientOptions} [options] Options for the client
    */
-  constructor(options?: any) {
+  constructor(options?: ClientOptions) {
     super(options);
 
     this._validateOptions();
@@ -208,7 +250,7 @@ class Client extends BaseClient {
        * <warn>This should be kept private at all times.</warn>
        * @type {?string}
        */
-      this.token = process.env.DISCORD_TOKEN;
+      this.token = process.env.DISCORD_TOKEN ?? null;
     } else {
       this.token = null;
     }
@@ -241,7 +283,6 @@ class Client extends BaseClient {
     this.authenticator.options = {
       step: 30,
       digits: 6,
-      algorithm: 'sha1',
     };
 
     if (this.options.messageSweepInterval > 0) {
@@ -253,6 +294,8 @@ class Client extends BaseClient {
         this.sweepMessages.bind(this),
         this.options.messageSweepInterval * 1_000,
       ).unref();
+    } else {
+      this.sweepMessageInterval = null;
     }
   }
 
@@ -284,7 +327,7 @@ class Client extends BaseClient {
    * @readonly
    */
   get uptime() {
-    return this.readyAt ? Date.now() - this.readyAt : null;
+    return this.readyAt ? Date.now() - this.readyAt.getTime() : null;
   }
 
   /**
@@ -294,7 +337,7 @@ class Client extends BaseClient {
    * @example
    * client.login('my token');
    */
-  async login(token: any = this.token) {
+  async login(token: string | null = this.token): Promise<string> {
     if (!token || typeof token !== 'string') throw new Error('TOKEN_INVALID');
     this.token = token = token.replace(/^(Bot|Bearer)\s*/i, '');
     this.emit(
@@ -309,7 +352,7 @@ class Client extends BaseClient {
       Events.DEBUG,
       `Provided token: ${token
         .split('.')
-        .map((val: any, i: any) => (i > 1 ? val.replace(/./g, '*') : val))
+        .map((val: string, i: number) => (i > 1 ? val.replace(/./g, '*') : val))
         .join('.')}`,
     );
 
@@ -321,7 +364,7 @@ class Client extends BaseClient {
 
     try {
       await this.ws.connect();
-      return this.token;
+      return token;
     } catch (error) {
       this.destroy();
       throw error;
@@ -344,7 +387,7 @@ class Client extends BaseClient {
    * client.passLogin("test@gmail.com", "SuperSecretPa$$word", 1234)
    * @deprecated This method will not be updated until I find the most convenient way to implement MFA.
    */
-  async passLogin(email: any, password: any) {
+  async passLogin(email: string, password: string): Promise<string | null> {
     const initial = await this.api.auth.login.post({
       auth: false,
       versioned: true,
@@ -426,7 +469,7 @@ class Client extends BaseClient {
    *   .then(invite => console.log(`Obtained invite with code: ${invite.code}`))
    *   .catch(console.error);
    */
-  async fetchInvite(invite: any, options?: any) {
+  async fetchInvite(invite: InviteResolvable, options?: ClientFetchInviteOptions) {
     const code = DataResolver.resolveInviteCode(invite);
     const data = await this.api.invites(code).get({
       query: { with_counts: true, guild_scheduled_event_id: options?.guildScheduledEventId },
@@ -443,7 +486,7 @@ class Client extends BaseClient {
    *   .then(template => console.log(`Obtained template with code: ${template.code}`))
    *   .catch(console.error);
    */
-  async fetchGuildTemplate(template: any) {
+  async fetchGuildTemplate(template: GuildTemplateResolvable) {
     const code = DataResolver.resolveGuildTemplateCode(template);
     const data = await this.api.guilds.templates(code).get();
     return new GuildTemplate(this, data);
@@ -459,7 +502,7 @@ class Client extends BaseClient {
    *   .then(webhook => console.log(`Obtained webhook with name: ${webhook.name}`))
    *   .catch(console.error);
    */
-  async fetchWebhook(id: any, token?: any) {
+  async fetchWebhook(id: Snowflake, token?: string) {
     const data = await this.api.webhooks(id, token).get();
     return new Webhook(this, { token, ...data });
   }
@@ -474,7 +517,7 @@ class Client extends BaseClient {
    *   .then(() => console.log('Deleted the webhook'))
    *   .catch(console.error);
    */
-  async deleteWebhook(id: any, { reason, token }: any = {}) {
+  async deleteWebhook(id: Snowflake, { reason, token }: WebhookDeleteOptions = {}) {
     if (typeof id !== 'string') throw new TypeError('INVALID_TYPE', 'id', 'Snowflake');
     if (typeof token !== 'string') throw new TypeError('WEBHOOK_TOKEN_UNAVAILABLE');
     await this.api.webhooks(id, token).delete({ reason });
@@ -490,7 +533,7 @@ class Client extends BaseClient {
    */
   async fetchVoiceRegions() {
     const apiRegions = await this.api.voice.regions.get();
-    const regions = new Collection();
+    const regions = new Collection<string, VoiceRegion>();
     for (const region of apiRegions) regions.set(region.id, new VoiceRegion(region));
     return regions;
   }
@@ -504,7 +547,7 @@ class Client extends BaseClient {
    *   .then(sticker => console.log(`Obtained sticker with name: ${sticker.name}`))
    *   .catch(console.error);
    */
-  async fetchSticker(id: any) {
+  async fetchSticker(id: Snowflake): Promise<StickerType> {
     const data = await this.api.stickers(id).get();
     return new Sticker(this, data);
   }
@@ -522,14 +565,19 @@ class Client extends BaseClient {
    *   .then(pack => console.log(`Sticker pack name: ${pack.name}`))
    *   .catch(console.error);
    */
-  async fetchStickerPacks({ packId }: any = {}) {
+  async fetchStickerPacks({ packId }: StickerPackFetchOptions = {}) {
     if (packId) {
       const data = await this.api('sticker-packs', packId).get();
       return new StickerPack(this, data);
     }
 
     const data = await this.api('sticker-packs').get();
-    return new Collection(data.sticker_packs.map((p: any) => [p.id, new StickerPack(this, p)]));
+    return new Collection<Snowflake, StickerPack>(
+      data.sticker_packs.map((p: import('../../typings/rawDataTypes').RawStickerPackData) => [
+        p.id,
+        new StickerPack(this, p),
+      ]),
+    );
   }
 
   /**
@@ -559,7 +607,7 @@ class Client extends BaseClient {
    * @param {string} [options.name] The name of the item being GCed
    * @private
    */
-  _finalize({ cleanup, message, name }: any) {
+  _finalize({ cleanup, message, name }: { cleanup: () => void; message?: string; name?: string }) {
     try {
       cleanup();
       this._cleanups.delete(cleanup);
@@ -583,7 +631,7 @@ class Client extends BaseClient {
    * const amount = client.sweepMessages(1800);
    * console.log(`Successfully removed ${amount} messages from the cache.`);
    */
-  sweepMessages(lifetime: any = this.options.messageCacheLifetime) {
+  sweepMessages(lifetime: number = this.options.messageCacheLifetime) {
     if (typeof lifetime !== 'number' || isNaN(lifetime)) {
       throw new TypeError('INVALID_TYPE', 'lifetime', 'number');
     }
@@ -592,7 +640,9 @@ class Client extends BaseClient {
       return -1;
     }
 
-    const messages = this.sweepers.sweepMessages(Sweepers.outdatedMessageSweepFilter(lifetime)());
+    const filter = Sweepers.outdatedMessageSweepFilter(lifetime)();
+    if (!filter) return -1;
+    const messages = this.sweepers.sweepMessages(filter);
     this.emit(Events.DEBUG, `Swept ${messages} messages older than ${lifetime} seconds`);
     return messages;
   }
@@ -602,7 +652,7 @@ class Client extends BaseClient {
    * @param {GuildResolvable} guild The guild to fetch the preview for
    * @returns {Promise<GuildPreview>}
    */
-  async fetchGuildPreview(guild: any) {
+  async fetchGuildPreview(guild: GuildResolvable) {
     const id = this.guilds.resolveId(guild);
     if (!id) throw new TypeError('INVALID_TYPE', 'guild', 'GuildResolvable');
     const data = await this.api.guilds(id).preview.get();
@@ -614,7 +664,7 @@ class Client extends BaseClient {
    * @param {GuildResolvable} guild The guild to fetch the widget data for
    * @returns {Promise<Widget>}
    */
-  async fetchGuildWidget(guild: any) {
+  async fetchGuildWidget(guild: GuildResolvable) {
     const id = this.guilds.resolveId(guild);
     if (!id) throw new TypeError('INVALID_TYPE', 'guild', 'GuildResolvable');
     const data = await this.api.guilds(id, 'widget.json').get();
@@ -626,7 +676,7 @@ class Client extends BaseClient {
    * @param {...string} urls Discord CDN URLs
    * @returns {Promise<Array<{ original: string, refreshed: string }>>}
    */
-  async refreshAttachmentURL(...urls: any[]) {
+  async refreshAttachmentURL(...urls: string[]) {
     // Clean up the URLs
     urls = urls.map(url => {
       const urlObject = new URL(url);
@@ -670,7 +720,7 @@ class Client extends BaseClient {
    * });
    * console.log(link);
    */
-  generateInvite(options: any = {}) {
+  generateInvite(options: Partial<InviteGenerationOptions> = {}): string {
     if (typeof options !== 'object' || options === null) {
       throw new TypeError('INVALID_TYPE', 'options', 'object', true);
     }
@@ -716,7 +766,7 @@ class Client extends BaseClient {
    * function will wait before resolving the promise and continuing execution.
    * @returns {void} The `sleep` function is returning a Promise.
    */
-  sleep(timeout: any) {
+  sleep(timeout: number): Promise<void> {
     return new Promise(r => setTimeout(r, timeout));
   }
 
@@ -749,7 +799,10 @@ class Client extends BaseClient {
    * @example
    * await client.acceptInvite('https://discord.gg/genshinimpact', { bypassOnboarding: true, bypassVerify: true })
    */
-  async acceptInvite(invite: any, options: any = { bypassOnboarding: true, bypassVerify: true }) {
+  async acceptInvite(
+    invite: InviteResolvable,
+    options: AcceptInviteOptions = { bypassOnboarding: true, bypassVerify: true },
+  ) {
     // ! throw new Error('METHOD_WARNING');
     const code = DataResolver.resolveInviteCode(invite);
     if (!code) throw new Error('INVITE_RESOLVE_CODE');
@@ -774,18 +827,18 @@ class Client extends BaseClient {
         const onboardingData = await this.api.guilds[i.guild?.id].onboarding.get();
         // Onboarding
         if (onboardingData.enabled) {
-          const prompts = onboardingData.prompts.filter((o: any) => o.in_onboarding);
+          const prompts = (onboardingData as OnboardingData).prompts.filter(o => o.in_onboarding);
           if (prompts.length) {
-            const onboarding_prompts_seen: any = {};
-            const onboarding_responses: any[] = [];
-            const onboarding_responses_seen: any = {};
+            const onboarding_prompts_seen: Record<string, number> = {};
+            const onboarding_responses: Snowflake[] = [];
+            const onboarding_responses_seen: Record<string, number> = {};
 
             const currentDate = Date.now();
 
-            prompts.forEach((prompt: any) => {
+            prompts.forEach((prompt: OnboardingPrompt) => {
               onboarding_prompts_seen[prompt.id] = currentDate;
               if (prompt.required) onboarding_responses.push(prompt.options[0].id);
-              prompt.options.forEach((option: any) => {
+              prompt.options.forEach((option: OnboardingPromptOption) => {
                 onboarding_responses_seen[option.id] = currentDate;
               });
             });
@@ -804,11 +857,11 @@ class Client extends BaseClient {
       // Read rule
       if (data.show_verification_form && options.bypassVerify) {
         // Check Guild
-        if (i.guild.verificationLevel == 'VERY_HIGH' && !this.user.phone) {
+        if (i.guild.verificationLevel == 'VERY_HIGH' && !this.user!.phone) {
           this.emit(Events.DEBUG, `[Invite > Guild ${i.guild?.id}] Cannot bypass verify (Phone required)`);
           return this.guilds.cache.get(i.guild?.id);
         }
-        if (i.guild.verificationLevel !== 'NONE' && !this.user.email) {
+        if (i.guild.verificationLevel !== 'NONE' && !this.user!.email) {
           this.emit(Events.DEBUG, `[Invite > Guild ${i.guild?.id}] Cannot bypass verify (Email required)`);
           return this.guilds.cache.get(i.guild?.id);
         }
@@ -837,7 +890,7 @@ class Client extends BaseClient {
    * @param {Snowflake} [paymentSourceId] Payment source id
    * @returns {Promise<any>|false}
    */
-  redeemNitro(nitro: any, channel: any, paymentSourceId: any) {
+  redeemNitro(nitro: string, channel?: TextChannelResolvable, paymentSourceId?: Snowflake): Promise<unknown> | false {
     if (typeof nitro !== 'string') throw new Error('INVALID_NITRO');
     const nitroCode =
       nitro.match(/(discord.gift|discord.com|discordapp.com\/gifts)\/(\w{16,25})/) ||
@@ -870,7 +923,7 @@ class Client extends BaseClient {
       guild_id: "guildID",
     })
    */
-  authorizeURL(urlOAuth2: any, options: any = {}) {
+  authorizeURL(urlOAuth2: string, options: OAuth2AuthorizeOptions = {}) {
     // ! throw new Error('METHOD_WARNING');
     const url = new URL(urlOAuth2);
     if (!/^https:\/\/(?:canary\.|ptb\.)?discord\.com(?:\/api(?:\/v\d{1,2})?)?\/oauth2\/authorize\?/.test(urlOAuth2)) {
@@ -904,7 +957,7 @@ class Client extends BaseClient {
    * @param {Snowflake} applicationId  Discord Application id
    * @returns {Promise<{ location: string }|false>}
    */
-  installUserApps(applicationId: any) {
+  installUserApps(applicationId: Snowflake) {
     return this.api
       .applications(applicationId)
       .public.get({
@@ -912,7 +965,7 @@ class Client extends BaseClient {
           with_guild: false,
         },
       })
-      .then((rawData: any) => {
+      .then((rawData: InstalledApplicationData) => {
         const installTypes = rawData.integration_types_config['1'];
         if (installTypes) {
           return this.api.oauth2.authorize.post({
@@ -938,12 +991,12 @@ class Client extends BaseClient {
    * @param {'application' | 'token'} [type='application'] - The type of the ID provided. Defaults to 'application'.
    * @returns {Promise<void>} A promise that resolves when the deauthorization is complete.
    */
-  deauthorize(id: any, type: any = 'application') {
+  deauthorize(id: Snowflake, type: 'application' | 'token' = 'application') {
     if (type === 'application') {
       return this.api.oauth2.tokens
         .get()
-        .then((data: any) => data.find((o: any) => o.application.id == id))
-        .then((o: any) => this.api.oauth2.tokens(o.id).delete());
+        .then((data: AuthorizedToken[]) => data.find(o => o.application.id === id))
+        .then((o: AuthorizedToken | undefined) => this.api.oauth2.tokens(o!.id).delete());
     } else {
       return this.api.oauth2.tokens(id).delete();
     }
@@ -962,8 +1015,16 @@ class Client extends BaseClient {
    * @returns {Promise<Collection<Snowflake, AuthorizedApplicationData>>}
    */
   authorizedApplications() {
-    return this.api.oauth2.tokens.get().then((data: any) => {
-      const results = new Collection();
+    return this.api.oauth2.tokens.get().then((data: AuthorizedToken[]) => {
+      const results = new Collection<
+        Snowflake,
+        {
+          application: Application;
+          authorizedApplicationId: Snowflake;
+          scopes: string[];
+          deauthorize: () => Promise<void>;
+        }
+      >();
       for (const o of data) {
         const application = new Application(this, o.application);
         const data = {
@@ -985,7 +1046,7 @@ class Client extends BaseClient {
    * @returns {*}
    * @private
    */
-  _eval(script: any) {
+  _eval(script: string) {
     return eval(script);
   }
 
@@ -994,7 +1055,7 @@ class Client extends BaseClient {
    * @param {ClientOptions} [options=this.options] Options to validate
    * @private
    */
-  _validateOptions(options: any = this.options) {
+  _validateOptions(options: ClientOptions = this.options) {
     if (typeof options.makeCache !== 'function') {
       throw new TypeError('CLIENT_INVALID_OPTION', 'makeCache', 'a function');
     }
@@ -1058,7 +1119,7 @@ class Client extends BaseClient {
     } else if (typeof options.shards === 'number') {
       options.shards = [options.shards];
     } else if (Array.isArray(options.shards)) {
-      options.shards = [...new Set(options.shards.filter((id: any) => Number.isInteger(id) && id >= 0))];
+      options.shards = [...new Set(options.shards.filter((id: number) => Number.isInteger(id) && id >= 0))];
       if (!options.shards.length) throw new RangeError('CLIENT_INVALID_PROVIDED_SHARDS');
       if (options.shardCount === 1) options.shardCount = options.shards.length;
     } else if (typeof options.shards === 'undefined') {
@@ -1068,7 +1129,7 @@ class Client extends BaseClient {
     }
     // Selfbot divergence: user accounts do not use gateway intents. Keep the option for type
     // parity and force full intents so guild-wait behaviour stays the same.
-    options.intents = (Intents as any).ALL;
+    options.intents = Intents.ALL;
   }
 }
 

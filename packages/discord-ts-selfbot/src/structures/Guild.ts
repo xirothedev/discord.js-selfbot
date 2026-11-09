@@ -35,6 +35,36 @@ const {
 import DataResolver from '../util/DataResolver';
 import SystemChannelFlags from '../util/SystemChannelFlags';
 import Util from '../util/Util';
+import type { APIGuildIntegration, GuildFeature, Snowflake } from 'discord-api-types/v10';
+import type {
+  Base64Resolvable,
+  BaseFetchOptions,
+  BufferResolvable,
+  ChannelPosition,
+  DefaultMessageNotificationLevel,
+  ExplicitContentFilterLevel,
+  GuildAuditLogsFetchOptions,
+  GuildAuditLogsResolvable,
+  GuildEditData,
+  GuildMemberResolvable,
+  GuildTextChannelResolvable,
+  GuildWidgetSettingsData,
+  IncidentActions,
+  IncidentActionsEditOptions,
+  InternalDiscordGatewayAdapterCreator,
+  InternalDiscordGatewayAdapterLibraryMethods,
+  RolePosition,
+  StaticImageURLOptions,
+  SystemChannelFlagsResolvable,
+  TextChannelResolvable,
+  Vanity,
+  VerificationLevel,
+  VoiceChannelResolvable,
+  WelcomeChannelData,
+  WelcomeScreenEditData,
+} from '../../typings';
+import type { GuildChannel } from './GuildChannel';
+import type { GuildEmoji } from './GuildEmoji';
 
 let deprecationEmittedForSetChannelPositions = false;
 let deprecationEmittedForSetRolePositions = false;
@@ -162,7 +192,7 @@ class Guild extends AnonymousGuild {
     return deletedGuilds.has(this);
   }
 
-  set deleted(value: any) {
+  set deleted(value: boolean) {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
@@ -587,7 +617,7 @@ class Guild extends AnonymousGuild {
    * @param {StaticImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  discoverySplashURL({ format, size }: any = {}) {
+  discoverySplashURL({ format, size }: StaticImageURLOptions = {}) {
     return this.discoverySplash && this.client.rest.cdn.DiscoverySplash(this.id, this.discoverySplash, format, size);
   }
 
@@ -597,7 +627,7 @@ class Guild extends AnonymousGuild {
    * @param {BaseFetchOptions} [options] The options for fetching the member
    * @returns {Promise<GuildMember>}
    */
-  fetchOwner(options: any) {
+  fetchOwner(options?: BaseFetchOptions) {
     return this.members.fetch({ ...options, user: this.ownerId });
   }
 
@@ -705,9 +735,9 @@ class Guild extends AnonymousGuild {
   async fetchIntegrations() {
     const data = await this.client.api.guilds(this.id).integrations.get();
     return data.reduce(
-      (collection: any, integration: any) =>
+      (collection: Collection<Snowflake | string, Integration>, integration: APIGuildIntegration) =>
         collection.set(integration.id, new Integration(this.client, integration, this)),
-      new Collection(),
+      new Collection<Snowflake | string, Integration>(),
     );
   }
 
@@ -719,8 +749,9 @@ class Guild extends AnonymousGuild {
   async fetchTemplates() {
     const templates = await this.client.api.guilds(this.id).templates.get();
     return templates.reduce(
-      (col: any, data: any) => col.set(data.code, new GuildTemplate(this.client, data)),
-      new Collection(),
+      (col: Collection<string, GuildTemplate>, data: { code: string }) =>
+        col.set(data.code, new GuildTemplate(this.client, data)),
+      new Collection<string, GuildTemplate>(),
     );
   }
 
@@ -739,7 +770,7 @@ class Guild extends AnonymousGuild {
    * @param {string} [description] The description for the template
    * @returns {Promise<GuildTemplate>}
    */
-  async createTemplate(name: any, description: any) {
+  async createTemplate(name: string, description?: string) {
     const data = await this.client.api.guilds(this.id).templates.post({ data: { name, description } });
     return new GuildTemplate(this.client, data);
   }
@@ -862,18 +893,24 @@ class Guild extends AnonymousGuild {
    *   .then(audit => console.log(audit.entries.first()))
    *   .catch(console.error);
    */
-  async fetchAuditLogs({ before, after, limit, user, type }: any = {}) {
+  async fetchAuditLogs<T extends GuildAuditLogsResolvable = 'ALL'>({
+    before,
+    after,
+    limit,
+    user,
+    type,
+  }: GuildAuditLogsFetchOptions<T> = {}): Promise<GuildAuditLogs<T>> {
     const data = await this.client.api.guilds(this.id)['audit-logs'].get({
       query: {
-        before: before?.id ?? before,
-        after: after?.id ?? after,
+        before: typeof before === 'string' ? before : before?.id,
+        after: typeof after === 'string' ? after : after?.id,
         limit,
         user_id: this.client.users.resolveId(user),
         action_type: typeof type === 'string' ? GuildAuditLogs.Actions[type] : type,
       },
     });
 
-    return GuildAuditLogs.build(this, data);
+    return GuildAuditLogs.build<T>(this, data);
   }
 
   /**
@@ -929,14 +966,16 @@ class Guild extends AnonymousGuild {
    *   .then(updated => console.log(`New guild name ${updated}`))
    *   .catch(console.error);
    */
-  async edit(data: any, reason?: any) {
-    const _data: any = {};
+  async edit(data: GuildEditData, reason?: string): Promise<this> {
+    const _data: Record<string, unknown> = {};
     if (data.name) _data.name = data.name;
     if (typeof data.verificationLevel !== 'undefined') {
       _data.verification_level =
         typeof data.verificationLevel === 'number'
           ? data.verificationLevel
-          : VerificationLevels[data.verificationLevel];
+          : data.verificationLevel === null
+            ? null
+            : VerificationLevels[data.verificationLevel];
     }
     if (typeof data.afkChannel !== 'undefined') {
       _data.afk_channel_id = this.client.channels.resolveId(data.afkChannel);
@@ -956,13 +995,17 @@ class Guild extends AnonymousGuild {
       _data.explicit_content_filter =
         typeof data.explicitContentFilter === 'number'
           ? data.explicitContentFilter
-          : ExplicitContentFilterLevels[data.explicitContentFilter];
+          : data.explicitContentFilter === null
+            ? null
+            : ExplicitContentFilterLevels[data.explicitContentFilter];
     }
     if (typeof data.defaultMessageNotifications !== 'undefined') {
       _data.default_message_notifications =
         typeof data.defaultMessageNotifications === 'number'
           ? data.defaultMessageNotifications
-          : DefaultMessageNotificationLevels[data.defaultMessageNotifications];
+          : data.defaultMessageNotifications === null
+            ? null
+            : DefaultMessageNotificationLevels[data.defaultMessageNotifications];
     }
     if (typeof data.systemChannelFlags !== 'undefined') {
       _data.system_channel_flags = SystemChannelFlags.resolve(data.systemChannelFlags);
@@ -1036,9 +1079,9 @@ class Guild extends AnonymousGuild {
    *   ],
    * })
    */
-  async editWelcomeScreen(data: any) {
+  async editWelcomeScreen(data: WelcomeScreenEditData) {
     const { enabled, description, welcomeChannels } = data;
-    const welcome_channels = welcomeChannels?.map((welcomeChannelData: any) => {
+    const welcome_channels = welcomeChannels?.map((welcomeChannelData: WelcomeChannelData) => {
       const emoji = this.emojis.resolve(welcomeChannelData.emoji);
       return {
         emoji_id: emoji?.id,
@@ -1064,7 +1107,10 @@ class Guild extends AnonymousGuild {
    * @param {string} [reason] Reason for changing the level of the guild's explicit content filter
    * @returns {Promise<Guild>}
    */
-  setExplicitContentFilter(explicitContentFilter: any, reason: any) {
+  setExplicitContentFilter(
+    explicitContentFilter: ExplicitContentFilterLevel | number | null,
+    reason?: string,
+  ): Promise<this> {
     return this.edit({ explicitContentFilter }, reason);
   }
 
@@ -1075,7 +1121,10 @@ class Guild extends AnonymousGuild {
    * @param {string} [reason] Reason for changing the setting of the default message notifications
    * @returns {Promise<Guild>}
    */
-  setDefaultMessageNotifications(defaultMessageNotifications: any, reason: any) {
+  setDefaultMessageNotifications(
+    defaultMessageNotifications: DefaultMessageNotificationLevel | number | null,
+    reason?: string,
+  ): Promise<this> {
     return this.edit({ defaultMessageNotifications }, reason);
   }
   /* eslint-enable max-len */
@@ -1086,7 +1135,7 @@ class Guild extends AnonymousGuild {
    * @param {string} [reason] Reason for changing the flags of the default message notifications
    * @returns {Promise<Guild>}
    */
-  setSystemChannelFlags(systemChannelFlags: any, reason: any) {
+  setSystemChannelFlags(systemChannelFlags: SystemChannelFlagsResolvable, reason?: string): Promise<this> {
     return this.edit({ systemChannelFlags }, reason);
   }
 
@@ -1101,7 +1150,7 @@ class Guild extends AnonymousGuild {
    *  .then(updated => console.log(`Updated guild name to ${updated.name}`))
    *  .catch(console.error);
    */
-  setName(name: any, reason: any) {
+  setName(name: string, reason?: string): Promise<this> {
     return this.edit({ name }, reason);
   }
 
@@ -1116,7 +1165,7 @@ class Guild extends AnonymousGuild {
    *  .then(updated => console.log(`Updated guild verification level to ${guild.verificationLevel}`))
    *  .catch(console.error);
    */
-  setVerificationLevel(verificationLevel: any, reason: any) {
+  setVerificationLevel(verificationLevel: VerificationLevel | number | null, reason?: string): Promise<this> {
     return this.edit({ verificationLevel }, reason);
   }
 
@@ -1131,7 +1180,7 @@ class Guild extends AnonymousGuild {
    *  .then(updated => console.log(`Updated guild AFK channel to ${guild.afkChannel.name}`))
    *  .catch(console.error);
    */
-  setAFKChannel(afkChannel: any, reason: any) {
+  setAFKChannel(afkChannel: VoiceChannelResolvable | null, reason?: string): Promise<this> {
     return this.edit({ afkChannel }, reason);
   }
 
@@ -1146,7 +1195,7 @@ class Guild extends AnonymousGuild {
    *  .then(updated => console.log(`Updated guild system channel to ${guild.systemChannel.name}`))
    *  .catch(console.error);
    */
-  setSystemChannel(systemChannel: any, reason: any) {
+  setSystemChannel(systemChannel: TextChannelResolvable | null, reason?: string): Promise<this> {
     return this.edit({ systemChannel }, reason);
   }
 
@@ -1161,7 +1210,7 @@ class Guild extends AnonymousGuild {
    *  .then(updated => console.log(`Updated guild AFK timeout to ${guild.afkTimeout}`))
    *  .catch(console.error);
    */
-  setAFKTimeout(afkTimeout: any, reason: any) {
+  setAFKTimeout(afkTimeout: number, reason?: string): Promise<this> {
     return this.edit({ afkTimeout }, reason);
   }
 
@@ -1176,7 +1225,7 @@ class Guild extends AnonymousGuild {
    *  .then(updated => console.log('Updated the guild icon'))
    *  .catch(console.error);
    */
-  setIcon(icon: any, reason: any) {
+  setIcon(icon: BufferResolvable | Base64Resolvable | null, reason?: string): Promise<this> {
     return this.edit({ icon }, reason);
   }
 
@@ -1192,7 +1241,7 @@ class Guild extends AnonymousGuild {
    *  .then(owner => console.log(`Updated the guild owner to ${owner.displayName}`))
    *  .catch(console.error);
    */
-  setOwner(owner: any, reason: any) {
+  setOwner(owner: GuildMemberResolvable, reason?: string): Promise<this> {
     return this.edit({ owner }, reason);
   }
 
@@ -1207,7 +1256,7 @@ class Guild extends AnonymousGuild {
    *  .then(updated => console.log('Updated the guild splash'))
    *  .catch(console.error);
    */
-  setSplash(splash: any, reason: any) {
+  setSplash(splash: BufferResolvable | Base64Resolvable | null, reason?: string): Promise<this> {
     return this.edit({ splash }, reason);
   }
 
@@ -1222,7 +1271,7 @@ class Guild extends AnonymousGuild {
    *   .then(updated => console.log('Updated the guild discovery splash'))
    *   .catch(console.error);
    */
-  setDiscoverySplash(discoverySplash: any, reason: any) {
+  setDiscoverySplash(discoverySplash: BufferResolvable | Base64Resolvable | null, reason?: string): Promise<this> {
     return this.edit({ discoverySplash }, reason);
   }
 
@@ -1236,7 +1285,7 @@ class Guild extends AnonymousGuild {
    *  .then(updated => console.log('Updated the guild banner'))
    *  .catch(console.error);
    */
-  setBanner(banner: any, reason: any) {
+  setBanner(banner: BufferResolvable | Base64Resolvable | null, reason?: string): Promise<this> {
     return this.edit({ banner }, reason);
   }
 
@@ -1251,7 +1300,7 @@ class Guild extends AnonymousGuild {
    *  .then(updated => console.log(`Updated guild rules channel to ${guild.rulesChannel.name}`))
    *  .catch(console.error);
    */
-  setRulesChannel(rulesChannel: any, reason: any) {
+  setRulesChannel(rulesChannel: TextChannelResolvable | null, reason?: string): Promise<this> {
     return this.edit({ rulesChannel }, reason);
   }
 
@@ -1266,7 +1315,7 @@ class Guild extends AnonymousGuild {
    *  .then(updated => console.log(`Updated guild community updates channel to ${guild.publicUpdatesChannel.name}`))
    *  .catch(console.error);
    */
-  setPublicUpdatesChannel(publicUpdatesChannel: any, reason: any) {
+  setPublicUpdatesChannel(publicUpdatesChannel: TextChannelResolvable | null, reason?: string): Promise<this> {
     return this.edit({ publicUpdatesChannel }, reason);
   }
 
@@ -1281,7 +1330,7 @@ class Guild extends AnonymousGuild {
    *  .then(updated => console.log(`Updated guild preferred locale to ${guild.preferredLocale}`))
    *  .catch(console.error);
    */
-  setPreferredLocale(preferredLocale: any, reason: any) {
+  setPreferredLocale(preferredLocale: string | null, reason?: string): Promise<this> {
     return this.edit({ preferredLocale }, reason);
   }
 
@@ -1296,7 +1345,7 @@ class Guild extends AnonymousGuild {
    *  .then(updated => console.log(`Updated guild safety alerts channel to ${updated.safetyAlertsChannel.name}`))
    *  .catch(console.error);
    */
-  setSafetyAlertsChannel(safetyAlertsChannel: any, reason: any) {
+  setSafetyAlertsChannel(safetyAlertsChannel: TextChannelResolvable | null, reason?: string): Promise<this> {
     return this.edit({ safetyAlertsChannel }, reason);
   }
 
@@ -1306,7 +1355,7 @@ class Guild extends AnonymousGuild {
    * @param {string} [reason] Reason for changing the state of the guild's premium progress bar
    * @returns {Promise<Guild>}
    */
-  setPremiumProgressBarEnabled(enabled: any = true, reason: any) {
+  setPremiumProgressBarEnabled(enabled = true, reason?: string): Promise<this> {
     return this.edit({ premiumProgressBarEnabled: enabled }, reason);
   }
 
@@ -1337,7 +1386,7 @@ class Guild extends AnonymousGuild {
    *   .then(guild => console.log(`Updated channel positions for ${guild}`))
    *   .catch(console.error);
    */
-  setChannelPositions(channelPositions: any) {
+  setChannelPositions(channelPositions: readonly ChannelPosition[]): Promise<this> {
     if (!deprecationEmittedForSetChannelPositions) {
       process.emitWarning(
         'The Guild#setChannelPositions method is deprecated. Use GuildChannelManager#setPositions instead.',
@@ -1367,7 +1416,7 @@ class Guild extends AnonymousGuild {
    *  .then(guild => console.log(`Role positions updated for ${guild}`))
    *  .catch(console.error);
    */
-  setRolePositions(rolePositions: any) {
+  setRolePositions(rolePositions: readonly RolePosition[]): Promise<this> {
     if (!deprecationEmittedForSetRolePositions) {
       process.emitWarning(
         'The Guild#setRolePositions method is deprecated. Use RoleManager#setPositions instead.',
@@ -1386,7 +1435,7 @@ class Guild extends AnonymousGuild {
    * @param {string} [reason] Reason for changing the guild's widget settings
    * @returns {Promise<Guild>}
    */
-  async setWidgetSettings(settings: any, reason: any) {
+  async setWidgetSettings(settings: GuildWidgetSettingsData, reason?: string): Promise<this> {
     await this.client.api.guilds(this.id).widget.patch({
       data: {
         enabled: settings.enabled,
@@ -1402,8 +1451,8 @@ class Guild extends AnonymousGuild {
    * @param {boolean} [disabled=true] Whether the invites are disabled
    * @returns {Promise<Guild>}
    */
-  disableInvites(disabled: any = true) {
-    const features = this.features.filter((feature: any) => feature !== 'INVITES_DISABLED');
+  disableInvites(disabled = true): Promise<this> {
+    const features = this.features.filter((feature: GuildFeature) => feature !== 'INVITES_DISABLED');
     if (disabled) features.push('INVITES_DISABLED');
     return this.edit({ features });
   }
@@ -1413,7 +1462,7 @@ class Guild extends AnonymousGuild {
    * @param {IncidentActionsEditOptions} incidentActions The incident actions to set
    * @returns {Promise<IncidentActions>}
    */
-  setIncidentActions(incidentActions: any) {
+  setIncidentActions(incidentActions: IncidentActionsEditOptions): Promise<IncidentActions> {
     return this.client.guilds.setIncidentActions(this.id, incidentActions);
   }
 
@@ -1427,7 +1476,7 @@ class Guild extends AnonymousGuild {
    *   .catch(console.error);
    */
   async leave() {
-    if (this.ownerId === this.client.user.id) throw new Error('GUILD_OWNED');
+    if (this.ownerId === this.client.user!.id) throw new Error('GUILD_OWNED');
     await this.client.api.users('@me').guilds(this.id).delete();
     return this.client.actions.GuildDelete.handle({ id: this.id }).guild;
   }
@@ -1453,10 +1502,10 @@ class Guild extends AnonymousGuild {
    * @param {Guild} guild The guild to compare with
    * @returns {boolean}
    */
-  equals(guild: any) {
+  equals(guild: Guild): boolean {
     return (
       guild &&
-      guild instanceof (this.constructor as any) &&
+      guild instanceof this.constructor &&
       this.id === guild.id &&
       this.available === guild.available &&
       this.splash === guild.splash &&
@@ -1469,7 +1518,7 @@ class Guild extends AnonymousGuild {
       this.verificationLevel === guild.verificationLevel &&
       (this.features === guild.features ||
         (this.features.length === guild.features.length &&
-          this.features.every((feat: any, i: any) => feat === guild.features[i])))
+          this.features.every((feat: GuildFeature, i: number) => feat === guild.features[i])))
     );
   }
 
@@ -1507,7 +1556,12 @@ class Guild extends AnonymousGuild {
    * @param {string} [reason] Reason for changing the community feature
    * @returns {Promise<Guild>}
    */
-  async setCommunity(stats: any = true, publicUpdatesChannel: any, rulesChannel: any, reason: any) {
+  async setCommunity(
+    stats = true,
+    publicUpdatesChannel?: GuildTextChannelResolvable,
+    rulesChannel?: GuildTextChannelResolvable,
+    reason?: string,
+  ): Promise<this> {
     if (stats) {
       // Check everyone role
       const everyoneRole = this.roles.everyone;
@@ -1531,7 +1585,7 @@ class Guild extends AnonymousGuild {
         {
           publicUpdatesChannel: null,
           rulesChannel: null,
-          features: this.features.filter((f: any) => f !== 'COMMUNITY'),
+          features: this.features.filter((f: GuildFeature) => f !== 'COMMUNITY'),
           preferredLocale: this.preferredLocale,
           description: this.description,
         },
@@ -1544,13 +1598,13 @@ class Guild extends AnonymousGuild {
    * Get the top emojis of this guild.
    * @returns {Promise<Collection<number, GuildEmoji>>}
    */
-  topEmojis() {
-    return new Promise((resolve: any, reject: any) => {
+  topEmojis(): Promise<Collection<number, GuildEmoji>> {
+    return new Promise<Collection<number, GuildEmoji>>((resolve, reject) => {
       this.client.api
         .guilds(this.id)
         ['top-emojis'].get()
-        .then((data: any) => {
-          const emojis = new Collection();
+        .then((data: { items: { emoji_rank: number; emoji_id: Snowflake }[] }) => {
+          const emojis = new Collection<number, GuildEmoji>();
           for (const emoji of data.items) {
             emojis.set(emoji.emoji_rank, this.emojis.cache.get(emoji.emoji_id));
           }
@@ -1573,7 +1627,7 @@ class Guild extends AnonymousGuild {
    *   })
    *   .catch(console.error);
    */
-  async setVanityCode(code: any = '') {
+  async setVanityCode(code = ''): Promise<Vanity> {
     if (typeof code !== 'string') throw new TypeError('INVALID_VANITY_URL_CODE');
     const data = await this.client.api.guilds(this.id, 'vanity-url').patch({
       data: { code },
@@ -1590,11 +1644,11 @@ class Guild extends AnonymousGuild {
    * @type {Function}
    * @readonly
    */
-  get voiceAdapterCreator() {
-    return (methods: any) => {
+  get voiceAdapterCreator(): InternalDiscordGatewayAdapterCreator {
+    return (methods: InternalDiscordGatewayAdapterLibraryMethods) => {
       this.client.voice.adapters.set(this.id, methods);
       return {
-        sendPayload: (data: any) => {
+        sendPayload: (data: unknown) => {
           if (this.shard.status !== Status.READY) return false;
           this.shard.send(data);
           return true;
@@ -1621,11 +1675,11 @@ class Guild extends AnonymousGuild {
    * @returns {Collection<Snowflake, GuildChannel>}
    * @private
    */
-  _sortedChannels(channel: any) {
+  _sortedChannels(channel: GuildChannel) {
     const category = channel.type === ChannelTypes.GUILD_CATEGORY;
     return Util.discordSort(
       this.channels.cache.filter(
-        (c: any) =>
+        (c: GuildChannel) =>
           (['GUILD_TEXT', 'GUILD_NEWS', 'GUILD_STORE'].includes(channel.type)
             ? ['GUILD_TEXT', 'GUILD_NEWS', 'GUILD_STORE'].includes(c.type)
             : c.type === channel.type) &&

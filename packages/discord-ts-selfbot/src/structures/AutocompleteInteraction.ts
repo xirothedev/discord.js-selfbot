@@ -64,7 +64,7 @@ class AutocompleteInteraction<Cached extends CacheType = CacheType> extends Inte
    */
   get command() {
     const id = this.commandId;
-    return this.guild?.commands.cache.get(id) ?? this.client.application.commands.cache.get(id) ?? null;
+    return this.guild?.commands.cache.get(id) ?? this.client.application!.commands.cache.get(id) ?? null;
   }
 
   /**

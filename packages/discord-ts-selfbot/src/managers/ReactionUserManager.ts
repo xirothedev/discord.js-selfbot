@@ -64,7 +64,7 @@ class ReactionUserManager extends CachedManager {
     if (!userId) throw new Error('REACTION_RESOLVE_USER');
     const message = this.reaction.message;
     await this.client.api.channels[message.channelId].messages[message.id].reactions[this.reaction.emoji.identifier][
-      userId === this.client.user.id ? '@me' : userId
+      userId === this.client.user!.id ? '@me' : userId
     ].delete();
     return this.reaction;
   }

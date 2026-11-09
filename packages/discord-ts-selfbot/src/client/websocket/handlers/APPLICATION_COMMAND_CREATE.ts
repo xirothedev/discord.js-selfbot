@@ -1,9 +1,11 @@
 import _ConstantsModule from '../../../util/Constants';
 const { Events } = _ConstantsModule;
 export default (client: any, { d: data }: any) => {
-  const commandManager = data.guild_id ? client.guilds.cache.get(data.guild_id)?.commands : client.application.commands;
+  const commandManager = data.guild_id
+    ? client.guilds.cache.get(data.guild_id)?.commands
+    : client.application!.commands;
   if (!commandManager) return;
-  const command = commandManager._add(data, data.application_id === client.application.id);
+  const command = commandManager._add(data, data.application_id === client.application!.id);
   /**
    * Emitted when a guild application command is created.
    * @event Client#applicationCommandCreate

@@ -9,14 +9,14 @@ export default (client: any, { d: data }: any, shard: any) => {
   // Overwrite ClientPresence
   client.presence.userId = data.user.id;
   if (client.user) {
-    client.user._patch(data.user);
+    client.user!._patch(data.user);
   } else {
     client.user = new ClientUser(client, data.user);
-    client.users.cache.set(client.user.id, client.user);
+    client.users.cache.set(client.user!.id, client.user);
   }
   if (data.application) {
     if (client.application) {
-      client.application._patch(data.application);
+      client.application!._patch(data.application);
     } else {
       client.application = new Application(client, data.application);
     }

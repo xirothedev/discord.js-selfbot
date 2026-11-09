@@ -39,7 +39,7 @@ class MessageReactionAdd extends Action {
     const reaction = message.reactions._add({
       emoji: data.emoji,
       count: message.partial ? null : 0,
-      me: user.id === this.client.user.id,
+      me: user.id === this.client.user!.id,
       ...data,
     });
     if (!reaction) return false;

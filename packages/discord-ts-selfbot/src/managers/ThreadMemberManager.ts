@@ -44,7 +44,7 @@ class ThreadMemberManager extends CachedManager {
    * @returns {Promise<ThreadMember>}
    */
   fetchMe(options: any) {
-    return this.fetch(this.client.user.id, options);
+    return this.fetch(this.client.user!.id, options);
   }
 
   /**
@@ -53,7 +53,7 @@ class ThreadMemberManager extends CachedManager {
    * @readonly
    */
   get me() {
-    return this.cache.get(this.client.user.id) ?? null;
+    return this.cache.get(this.client.user!.id) ?? null;
   }
 
   /**

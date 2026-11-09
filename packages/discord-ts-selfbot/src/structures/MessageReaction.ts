@@ -148,12 +148,12 @@ class MessageReaction {
   _add(user: any, burst: any) {
     if (this.partial) return;
     this.users.cache.set(user.id, user);
-    if (!this.me || user.id !== this.message.client.user.id || this.count === 0) {
+    if (!this.me || user.id !== this.message.client.user!.id || this.count === 0) {
       this.count++;
       if (burst) this.countDetails.burst++;
       else this.countDetails.normal++;
     }
-    if (user.id === this.message.client.user.id) {
+    if (user.id === this.message.client.user!.id) {
       if (burst) this.meBurst = true;
       else this.me = true;
     }
@@ -162,12 +162,12 @@ class MessageReaction {
   _remove(user: any, burst: any) {
     if (this.partial) return;
     this.users.cache.delete(user.id);
-    if (!this.me || user.id !== this.message.client.user.id) {
+    if (!this.me || user.id !== this.message.client.user!.id) {
       this.count--;
       if (burst) this.countDetails.burst--;
       else this.countDetails.normal--;
     }
-    if (user.id === this.message.client.user.id) {
+    if (user.id === this.message.client.user!.id) {
       if (burst) this.meBurst = false;
       else this.me = false;
     }

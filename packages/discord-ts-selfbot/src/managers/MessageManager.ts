@@ -414,7 +414,7 @@ class MessageManager extends CachedManager {
    * @returns {Promise<Collection<Snowflake, User>>}
    */
   async fetchPollAnswerVoters({ messageId, answerId, after, limit }: any) {
-    const voters = await this.client.channels(this.channel.id).polls(messageId).answers(answerId).get({
+    const voters = await this.client.api.channels(this.channel.id).polls(messageId).answers(answerId).get({
       query: { limit, after },
     });
 

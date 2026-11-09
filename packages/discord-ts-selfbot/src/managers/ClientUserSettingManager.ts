@@ -181,7 +181,7 @@ class ClientUserSettingManager extends BaseManager {
       this.client.presence.status = data.status;
       if (!('custom_status' in data)) {
         this.client.emit('debug', '[SETTING > ClientUser] Sync status');
-        this.client.user.setStatus(data.status);
+        this.client.user!.setStatus(data.status);
       }
     }
     if ('custom_status' in data) {
@@ -202,7 +202,7 @@ class ClientUserSettingManager extends BaseManager {
         activities.push(custom);
       }
       this.client.emit('debug', '[SETTING > ClientUser] Sync activities & status');
-      this.client.user.setPresence({ activities });
+      this.client.user!.setPresence({ activities });
     }
     if ('friend_source_flags' in data) {
       // Todo

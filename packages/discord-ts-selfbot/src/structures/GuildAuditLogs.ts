@@ -297,8 +297,8 @@ class GuildAuditLogs<T extends GuildAuditLogsResolvable = 'ALL'> {
   static Targets: typeof Targets;
   static Entry: typeof GuildAuditLogsEntry;
 
-  static async build(guild: Guild, data: RawGuildAuditLogData) {
-    const logs = new GuildAuditLogs(guild, data);
+  static async build<T extends GuildAuditLogsResolvable = 'ALL'>(guild: Guild, data: RawGuildAuditLogData) {
+    const logs = new GuildAuditLogs<T>(guild, data);
     await Promise.all(logs.entries.map(e => e.target));
     return logs;
   }

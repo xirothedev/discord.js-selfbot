@@ -46,7 +46,7 @@ class VoiceStateManager extends CachedManager {
     if (!this.guild?.id) throw new Error('Guild is not defined');
     const id = member === '@me' ? member : this.guild.members.resolveId(member);
     if (!force) {
-      const existing = this.cache.get(id === '@me' ? this.client.user.id : id);
+      const existing = this.cache.get(id === '@me' ? this.client.user!.id : id);
       if (existing) return existing;
     }
     const data = await this.client.api.guilds(this.guild.id)['voice-states'][id].get();

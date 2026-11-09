@@ -87,7 +87,7 @@ class DMChannel extends Channel {
       },
     });
     this.messageRequest = false;
-    return this.client.channels._add(c);
+    return this.client.channels._add(c, null);
   }
 
   /**

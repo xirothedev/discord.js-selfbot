@@ -107,7 +107,7 @@ class ApplicationCommandPermissionsManager<
    * @private
    */
   permissionsPath(guildId: Snowflake, commandId?: Snowflake) {
-    return this.client.api.applications(this.client.application.id).guilds(guildId).commands(commandId).permissions;
+    return this.client.api.applications(this.client.application!.id).guilds(guildId).commands(commandId).permissions;
   }
 
   /**
@@ -148,7 +148,7 @@ class ApplicationCommandPermissionsManager<
    *   .catch(console.error);
    * @example
    * // Fetch permissions for all commands in a guild
-   * client.application.commands.permissions.fetch({ guild: '123456789012345678' })
+   * client.application!.commands.permissions.fetch({ guild: '123456789012345678' })
    *   .then(perms => console.log(`Fetched permissions for ${perms.size} commands`))
    *   .catch(console.error);
    */
@@ -218,7 +218,7 @@ class ApplicationCommandPermissionsManager<
    * @returns {Promise<ApplicationCommandPermissions[]|Collection<Snowflake, ApplicationCommandPermissions[]>>}
    * @example
    * // Set the permissions for one command
-   * client.application.commands.permissions.set({ guild: '892455839386304532', command: '123456789012345678',
+   * client.application!.commands.permissions.set({ guild: '892455839386304532', command: '123456789012345678',
    *  permissions: [
    *    {
    *      id: '876543210987654321',

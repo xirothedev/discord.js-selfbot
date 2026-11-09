@@ -91,7 +91,7 @@ class Presence extends Base {
        * @type {CustomStatus[]|RichPresence[]|SpotifyRPC[]|Activity[]}
        */
       this.activities = data.activities.map((activity: any) => {
-        if (this.userId == this.client.user.id) {
+        if (this.userId == this.client.user!.id) {
           if ([ActivityTypes.CUSTOM, 'CUSTOM'].includes(activity.type)) {
             return new CustomStatus(this.client, activity);
           } else if (activity.id == 'spotify:1') {
@@ -1058,7 +1058,7 @@ class SpotifyRPC extends RichPresence {
       name: 'Spotify',
       type: ActivityTypes.LISTENING,
       party: {
-        id: `spotify:${client.user.id}`,
+        id: `spotify:${client.user!.id}`,
       },
       id: 'spotify:1',
       flags: 48, // Sync + Play (ActivityFlags)

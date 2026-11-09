@@ -39,7 +39,7 @@ class GenericAction {
     if (!('recipients' in data)) {
       // Try to resolve the recipient, but do not add the client user.
       const recipient = data.author ?? data.user ?? { id: data.user_id };
-      if (recipient.id !== this.client.user.id) payloadData.recipients = [recipient];
+      if (recipient.id !== this.client.user!.id) payloadData.recipients = [recipient];
     }
 
     if (id !== undefined) payloadData.id = id;
@@ -74,7 +74,7 @@ class GenericAction {
       {
         emoji: data.emoji,
         count: message.partial ? null : 0,
-        me: user?.id === this.client.user.id,
+        me: user?.id === this.client.user!.id,
       },
       message.reactions,
       id,

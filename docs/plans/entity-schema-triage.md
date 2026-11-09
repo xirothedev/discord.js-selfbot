@@ -42,7 +42,7 @@ Two public contracts stay as `fieldTypes` overrides because the runtime value is
 ## Next modules
 
 1. `Interaction.memberPermissions` / `CacheTypeReducer` and `ApplicationCommand` generic propagation.
-2. Final gate: remove the `Base` index signature, tighten tsconfig, finish the `typings/index.d.ts` `any` sweep.
+2. Final gate: convert the remaining `Base` subclasses (785 errors when the index signature is removed), then remove it and tighten tsconfig.
 3. Replace the last `Constants` boundary (`const Constants: any = {}`) with a named interface once consumers are typed.
 
 ## Closed in the follow-up pass
@@ -52,3 +52,5 @@ Two public contracts stay as `fieldTypes` overrides because the runtime value is
 - **Audit logs**: `GuildAuditLogs<T>` and `GuildAuditLogsEntry<...>` carry real parameters; entry targets and extras stay `unknown` until the target classes expose partial constructors.
 - **`GuildChannel`**: entity-backed with `PatchOf<'GuildChannel'>`, typed getters and resolvers, and `Permissions.ALL`/`FLAGS` used directly.
 - **`Constants`**: all `Endpoints` and image-URL helpers are typed; the module-level `Constants` bag is the single remaining boundary.
+- **`Guild`**: setters, audit-log fetch, community/template/widget helpers, and the voice adapter creator are typed; only the constructor and `_patch` remain untyped.
+- **`Client`**: manager, user, application, token, and shard fields are typed; login, invite, sticker, OAuth2, and option-validation methods use public types. The public typings `any[]` event-listener signatures stay because they mirror discord.js.

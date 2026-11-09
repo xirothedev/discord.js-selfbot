@@ -172,7 +172,7 @@ class ClientUser extends User implements ClientUserEntity {
    * @returns {Promise<ClientUser>}
    * @example
    * // Set username
-   * client.user.setUsername('discordjs', 'passw@rd')
+   * client.user!.setUsername('discordjs', 'passw@rd')
    *   .then(user => console.log(`My new username is ${user.username}`))
    *   .catch(console.error);
    */
@@ -186,7 +186,7 @@ class ClientUser extends User implements ClientUserEntity {
    * @returns {Promise<ClientUser>}
    * @example
    * // Set avatar
-   * client.user.setAvatar('./avatar.png')
+   * client.user!.setAvatar('./avatar.png')
    *   .then(user => console.log(`New avatar set!`))
    *   .catch(console.error);
    */
@@ -219,7 +219,7 @@ class ClientUser extends User implements ClientUserEntity {
    * @returns {ClientPresence}
    * @example
    * // Set the client user's presence
-   * client.user.setPresence({ activities: [{ name: 'with discord.js' }], status: 'idle' });
+   * client.user!.setPresence({ activities: [{ name: 'with discord.js' }], status: 'idle' });
    * @see {@link https://github.com/aiko-chan-ai/discord.js-selfbot-v13/blob/main/Document/RichPresence.md}
    */
   setPresence(data: Record<string, unknown>) {
@@ -242,9 +242,9 @@ class ClientUser extends User implements ClientUserEntity {
    * @returns {ClientPresence}
    * @example
    * // Set the client user's status
-   * client.user.setStatus('idle');
+   * client.user!.setStatus('idle');
    */
-  setStatus(status: unknown, shardId: unknown) {
+  setStatus(status: import('../../typings').PresenceStatusData, shardId?: number | number[]) {
     return this.setPresence({ status, shardId });
   }
 
@@ -264,7 +264,7 @@ class ClientUser extends User implements ClientUserEntity {
    * @returns {ClientPresence}
    * @example
    * // Set the client user's activity
-   * client.user.setActivity('discord.js', { type: 'WATCHING' });
+   * client.user!.setActivity('discord.js', { type: 'WATCHING' });
    * @see {@link https://github.com/aiko-chan-ai/discord.js-selfbot-v13/blob/main/Document/RichPresence.md}
    */
   setActivity(name: unknown, options: Record<string, unknown> = {}) {
@@ -290,7 +290,7 @@ class ClientUser extends User implements ClientUserEntity {
    * @returns {Promise<ClientUser>}
    * @example
    * // Set banner
-   * client.user.setBanner('./banner.png')
+   * client.user!.setBanner('./banner.png')
    *   .then(user => console.log(`New banner set!`))
    *   .catch(console.error);
    */
@@ -309,9 +309,9 @@ class ClientUser extends User implements ClientUserEntity {
    * @returns {Promise<void>}
    * @example
    * // Set HyperSquad HOUSE_BRAVERY
-   * client.user.setHypeSquad(1); || client.user.setHypeSquad('HOUSE_BRAVERY');
+   * client.user!.setHypeSquad(1); || client.user!.setHypeSquad('HOUSE_BRAVERY');
    * // Leave
-   * client.user.setHypeSquad(0);
+   * client.user!.setHypeSquad(0);
    */
   setHypeSquad(type: unknown) {
     switch (type) {
@@ -366,7 +366,7 @@ class ClientUser extends User implements ClientUserEntity {
    * @see {@link https://github.com/13-05/hidden-disc-docs#js-snippet-for-creating-friend-invites}
    * @example
    * // Create a friend invite
-   * client.user.createFriendInvite()
+   * client.user!.createFriendInvite()
    *   .then(console.log)
    *   .catch(console.error);
    */
@@ -405,11 +405,11 @@ class ClientUser extends User implements ClientUserEntity {
    * @returns {Promise<ClientUser>}
    * @example
    * // Set the client user's status
-   * client.user.setSamsungActivity('com.YostarJP.BlueArchive', 'START');
+   * client.user!.setSamsungActivity('com.YostarJP.BlueArchive', 'START');
    * // Update
-   * client.user.setSamsungActivity('com.miHoYo.bh3oversea', 'UPDATE');
+   * client.user!.setSamsungActivity('com.miHoYo.bh3oversea', 'UPDATE');
    * // Stop
-   * client.user.setSamsungActivity('com.miHoYo.GenshinImpact', 'STOP');
+   * client.user!.setSamsungActivity('com.miHoYo.GenshinImpact', 'STOP');
    */
   async setSamsungActivity(packageName: string, type: 'START' | 'UPDATE' | 'STOP' = 'START') {
     const t = type.toUpperCase();

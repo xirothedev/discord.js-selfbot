@@ -201,7 +201,7 @@ class ThreadChannel extends Channel {
       this.appliedTags ??= [];
     }
 
-    if (data.member && this.client.user) this.members._add({ user_id: this.client.user.id, ...data.member });
+    if (data.member && this.client.user) this.members._add({ user_id: this.client.user!.id, ...data.member });
     if (data.messages) for (const message of data.messages) this.messages._add(message);
   }
 
@@ -490,7 +490,8 @@ class ThreadChannel extends Channel {
    */
   get editable() {
     return (
-      (this.ownerId === this.client.user.id && (this.type !== 'GUILD_PRIVATE_THREAD' || this.joined)) || this.manageable
+      (this.ownerId === this.client.user!.id && (this.type !== 'GUILD_PRIVATE_THREAD' || this.joined)) ||
+      this.manageable
     );
   }
 
@@ -533,7 +534,7 @@ class ThreadChannel extends Channel {
    * @readonly
    */
   get viewable() {
-    if (this.client.user.id === this.guild.ownerId) return true;
+    if (this.client.user!.id === this.guild.ownerId) return true;
     const permissions = this.permissionsFor(this.client.user);
     if (!permissions) return false;
     return permissions.has(Permissions.FLAGS.VIEW_CHANNEL, false);

@@ -101,7 +101,7 @@ class GroupDMChannel extends Channel {
   get recipients() {
     const collect = new Collection();
     this._recipients.map((recipient: any) => collect.set(recipient.id, this.client.users.cache.get(recipient.id)));
-    collect.set(this.client.user.id, this.client.user);
+    collect.set(this.client.user!.id, this.client.user);
     return collect;
   }
 
@@ -158,7 +158,7 @@ class GroupDMChannel extends Channel {
     return (
       this.name ??
       this._recipients
-        .filter((user: any) => user.id !== this.client.user.id)
+        .filter((user: any) => user.id !== this.client.user!.id)
         .map((user: any) => user.username)
         .join(', ')
     );

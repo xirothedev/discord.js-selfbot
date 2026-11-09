@@ -131,9 +131,9 @@ class GuildMemberManager extends CachedManager {
    */
   get me() {
     return (
-      this.cache.get(this.client.user.id) ??
+      this.cache.get(this.client.user!.id) ??
       (this.client.options.partials.includes(PartialTypes.GUILD_MEMBER)
-        ? this._add({ user: { id: this.client.user.id } }, true)
+        ? this._add({ user: { id: this.client.user!.id } }, true)
         : null)
     );
   }
@@ -225,7 +225,7 @@ class GuildMemberManager extends CachedManager {
    * @returns {Promise<GuildMember>}
    */
   fetchMe(options: any) {
-    return this.fetch({ ...options, user: this.client.user.id });
+    return this.fetch({ ...options, user: this.client.user!.id });
   }
 
   /**
@@ -304,7 +304,7 @@ class GuildMemberManager extends CachedManager {
     }
 
     let endpoint = this.client.api.guilds(this.guild.id);
-    if (id === this.client.user.id) {
+    if (id === this.client.user!.id) {
       const keys = Object.keys(data);
       if (keys.length === 1 && ['nick', 'avatar', 'banner', 'bio'].includes(keys[0])) {
         endpoint = endpoint.members('@me');

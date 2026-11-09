@@ -264,7 +264,7 @@ class VoiceState extends Base implements VoiceStateEntity {
     if (this.channel?.type !== 'GUILD_STAGE_VOICE') throw new Error('VOICE_NOT_STAGE_CHANNEL');
     if (!this.guild) throw new Error('VOICE_GUILD_NOT_FOUND');
 
-    if (this.client.user.id !== this.id) throw new Error('VOICE_STATE_NOT_OWN');
+    if (this.client.user!.id !== this.id) throw new Error('VOICE_STATE_NOT_OWN');
 
     await this.client.api.guilds(this.guild.id, 'voice-states', '@me').patch({
       data: {
@@ -297,7 +297,7 @@ class VoiceState extends Base implements VoiceStateEntity {
 
     if (this.channel?.type !== 'GUILD_STAGE_VOICE') throw new Error('VOICE_NOT_STAGE_CHANNEL');
 
-    const target = this.client.user.id === this.id ? '@me' : this.id;
+    const target = this.client.user!.id === this.id ? '@me' : this.id;
 
     await this.client.api.guilds(this.guild.id, 'voice-states', target).patch({
       data: {
@@ -350,7 +350,7 @@ class VoiceState extends Base implements VoiceStateEntity {
    * @returns {Promise<void>}
    */
   postPreview(base64Image: string) {
-    if (this.client.user.id !== this.id || !this.streaming) throw new Error('USER_NOT_STREAMING');
+    if (this.client.user!.id !== this.id || !this.streaming) throw new Error('USER_NOT_STREAMING');
     // URL: https://discord.com/api/v9/streams/guild:guildid:voicechannelid:userid/preview
     // URL: https://discord.com/api/v9/streams/call:channelId:userId/preview
     const streamKey = this.guild?.id

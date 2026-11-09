@@ -42,7 +42,7 @@ class ApplicationCommandManager extends CachedManager {
    * @private
    */
   commandPath({ id, guildId }: any = {}) {
-    let path = this.client.api.applications(this.client.application.id);
+    let path = this.client.api.applications(this.client.application!.id);
     if (this.guild ?? guildId) path = path.guilds(this.guild?.id ?? guildId);
     return id ? path.commands(id) : path.commands;
   }
@@ -83,7 +83,7 @@ class ApplicationCommandManager extends CachedManager {
    * @returns {Promise<ApplicationCommand|Collection<Snowflake, ApplicationCommand>>}
    * @example
    * // Fetch a single command
-   * client.application.commands.fetch('123456789012345678')
+   * client.application!.commands.fetch('123456789012345678')
    *   .then(command => console.log(`Fetched command ${command.name}`))
    *   .catch(console.error);
    * @example
@@ -124,7 +124,7 @@ class ApplicationCommandManager extends CachedManager {
    * @returns {Promise<ApplicationCommand>}
    * @example
    * // Create a new command
-   * client.application.commands.create({
+   * client.application!.commands.create({
    *   name: 'test',
    *   description: 'A test command',
    * })
@@ -146,7 +146,7 @@ class ApplicationCommandManager extends CachedManager {
    * @returns {Promise<Collection<Snowflake, ApplicationCommand>>}
    * @example
    * // Set all commands to just this one
-   * client.application.commands.set([
+   * client.application!.commands.set([
    *   {
    *     name: 'test',
    *     description: 'A test command',
@@ -179,7 +179,7 @@ class ApplicationCommandManager extends CachedManager {
    * @returns {Promise<ApplicationCommand>}
    * @example
    * // Edit an existing command
-   * client.application.commands.edit('123456789012345678', {
+   * client.application!.commands.edit('123456789012345678', {
    *   description: 'New description',
    * })
    *   .then(console.log)

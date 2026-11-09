@@ -465,8 +465,8 @@ class GuildChannel extends Channel implements GuildChannelEntity {
    * @readonly
    */
   get manageable(): boolean {
-    if (this.client.user.id === this.guild.ownerId) return true;
-    const permissions = this.permissionsFor(this.client.user);
+    if (this.client.user!.id === this.guild.ownerId) return true;
+    const permissions = this.permissionsFor(this.client.user!);
     if (!permissions) return false;
 
     // This flag allows managing even if timed out
@@ -485,8 +485,8 @@ class GuildChannel extends Channel implements GuildChannelEntity {
    * @readonly
    */
   get viewable(): boolean {
-    if (this.client.user.id === this.guild.ownerId) return true;
-    const permissions = this.permissionsFor(this.client.user);
+    if (this.client.user!.id === this.guild.ownerId) return true;
+    const permissions = this.permissionsFor(this.client.user!);
     if (!permissions) return false;
     return permissions.has(Permissions.FLAGS.VIEW_CHANNEL, false);
   }

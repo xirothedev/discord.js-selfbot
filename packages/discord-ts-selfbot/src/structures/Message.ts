@@ -997,7 +997,7 @@ class Message extends Base {
    */
   get editable() {
     const precheck = Boolean(
-      this.author?.id === this.client.user.id &&
+      this.author?.id === this.client.user!.id &&
       !deletedMessages.has(this) &&
       (!this.guild || this.channel?.viewable) &&
       this.reference?.type !== MessageReferenceTypes.FORWARD,
@@ -1026,7 +1026,7 @@ class Message extends Base {
       return false;
     }
     if (!this.guild) {
-      return this.author?.id === this.client.user.id;
+      return this.author?.id === this.client.user!.id;
     }
     // DMChannel does not have viewable property, so check viewable after proved that message is on a guild.
     if (!this.channel?.viewable) {
@@ -1039,7 +1039,7 @@ class Message extends Base {
     if (permissions.has(Permissions.FLAGS.ADMINISTRATOR, false)) return true;
 
     return Boolean(
-      this.author?.id === this.client.user.id ||
+      this.author?.id === this.client.user!.id ||
       (permissions.has(Permissions.FLAGS.MANAGE_MESSAGES, false) &&
         this.guild.members.me.communicationDisabledUntilTimestamp < Date.now()),
     );
@@ -1095,7 +1095,7 @@ class Message extends Base {
   get crosspostable() {
     const bitfield =
       Number(Permissions.FLAGS.SEND_MESSAGES) |
-      Number(this.author?.id === this.client.user.id ? Permissions.defaultBit : Permissions.FLAGS.MANAGE_MESSAGES);
+      Number(this.author?.id === this.client.user!.id ? Permissions.defaultBit : Permissions.FLAGS.MANAGE_MESSAGES);
     const { channel } = this;
     return Boolean(
       channel?.type === 'GUILD_NEWS' &&
