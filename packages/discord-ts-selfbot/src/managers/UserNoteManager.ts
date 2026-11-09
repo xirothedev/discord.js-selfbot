@@ -6,6 +6,8 @@ import BaseManager from './BaseManager';
  * @extends {BaseManager}
  */
 class UserNoteManager extends BaseManager {
+  declare cache: Collection<string, string>;
+
   constructor(client: any, data: any = {}) {
     super(client);
     /**
@@ -20,9 +22,13 @@ class UserNoteManager extends BaseManager {
     return this;
   }
 
+  resolveId(user: any) {
+    return this.client.users.resolveId(user);
+  }
+
   async updateNote(id: any, note: any = null) {
     await this.client.api.users['@me'].notes(id).put({ data: { note } });
-    if (!note) this.cache.delete(id, note);
+    if (!note) this.cache.delete(id);
     else this.cache.set(id, note);
     return this;
   }
@@ -35,6 +41,7 @@ class UserNoteManager extends BaseManager {
    */
   async fetch(user: any, { cache = true, force = false }: any = {}) {
     const id = this.resolveId(user);
+    if (!id) return '';
     if (!force) {
       const existing = this.cache.get(id);
       if (existing) return existing;

@@ -604,7 +604,7 @@ class User extends Base implements UserEntity {
    */
   get relationship() {
     const i = this.client.relationships.cache.get(this.id) ?? 0;
-    return RelationshipTypes[parseInt(i)];
+    return RelationshipTypes[i];
   }
 
   /**

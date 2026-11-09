@@ -6,6 +6,19 @@ import BaseManager from './BaseManager';
  */
 class GuildSettingManager extends BaseManager {
   #rawSetting = {};
+  declare guildId: import('discord-api-types/v10').Snowflake;
+  declare suppressEveryone: boolean;
+  declare suppressRoles: boolean;
+  declare muteScheduledEvents: boolean;
+  declare messageNotifications: number;
+  declare flags: number;
+  declare mobilePush: boolean;
+  declare muted: boolean;
+  declare muteConfig: { endTime: Date; selectedTimeWindow: number } | null;
+  declare hideMutedChannels: boolean;
+  declare channelOverrides: object[];
+  declare notifyHighlights: number;
+  declare version: number;
   constructor(guild: any) {
     super(guild.client);
     /**

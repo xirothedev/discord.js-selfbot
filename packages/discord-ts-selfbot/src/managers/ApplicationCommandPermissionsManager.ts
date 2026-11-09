@@ -457,7 +457,7 @@ class ApplicationCommandPermissionsManager<
     if (!commandId) throw new TypeError('INVALID_TYPE', 'command', 'ApplicationCommandResolvable');
 
     if (!permissionId) throw new TypeError('INVALID_TYPE', 'permissionId', 'UserResolvable or RoleResolvable');
-    let resolvedId = permissionId;
+    let resolvedId: string | null = typeof permissionId === 'string' ? permissionId : null;
     if (typeof permissionId !== 'string') {
       resolvedId = this.client.users.resolveId(permissionId);
       if (!resolvedId) {
@@ -490,7 +490,7 @@ class ApplicationCommandPermissionsManager<
       if ('resolveId' in this.manager) {
         commandId = this.manager.resolveId(command);
       }
-      commandId ??= this.client.application?.commands.resolveId(command);
+      commandId = commandId ?? this.client.application?.commands.resolveId(command) ?? null;
       if (!commandId) {
         throw new TypeError('INVALID_TYPE', 'command', 'ApplicationCommandResolvable', true);
       }

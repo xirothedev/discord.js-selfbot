@@ -10,7 +10,10 @@ const { Role } = _RoleModule;
  * @extends {DataManager}
  */
 class GuildMemberRoleManager extends DataManager {
-  constructor(member: any) {
+  declare member: import('../structures/GuildMember').GuildMember;
+  declare guild: import('../structures/Guild').Guild;
+
+  constructor(member: import('../structures/GuildMember').GuildMember) {
     super(member.client, Role);
 
     /**

@@ -13,6 +13,10 @@ const { RelationshipTypes } = _ConstantsModule;
  * Manages API methods for Relationships and stores their cache.
  */
 class RelationshipManager extends BaseManager {
+  declare cache: Collection<string, number>;
+  declare friendNicknames: Collection<string, string | null>;
+  declare sinceCache: Collection<string, Date>;
+
   constructor(client: any, users?: any) {
     super(client);
     /**
@@ -39,7 +43,10 @@ class RelationshipManager extends BaseManager {
   get friendCache() {
     const users = this.cache
       .filter((value: any) => value === RelationshipTypes.FRIEND)
-      .map((_: any, key: any) => [key, this.client.users.cache.get(key)]);
+      .map((_, key): [string, import('../structures/User').default | undefined] => [
+        key,
+        this.client.users.cache.get(key),
+      ]);
     return new Collection(users);
   }
 
@@ -51,7 +58,10 @@ class RelationshipManager extends BaseManager {
   get blockedCache() {
     const users = this.cache
       .filter((value: any) => value === RelationshipTypes.BLOCKED)
-      .map((_: any, key: any) => [key, this.client.users.cache.get(key)]);
+      .map((_, key): [string, import('../structures/User').default | undefined] => [
+        key,
+        this.client.users.cache.get(key),
+      ]);
     return new Collection(users);
   }
 
@@ -63,7 +73,10 @@ class RelationshipManager extends BaseManager {
   get incomingCache() {
     const users = this.cache
       .filter((value: any) => value === RelationshipTypes.PENDING_INCOMING)
-      .map((_: any, key: any) => [key, this.client.users.cache.get(key)]);
+      .map((_, key): [string, import('../structures/User').default | undefined] => [
+        key,
+        this.client.users.cache.get(key),
+      ]);
     return new Collection(users);
   }
 
@@ -75,7 +88,10 @@ class RelationshipManager extends BaseManager {
   get outgoingCache() {
     const users = this.cache
       .filter((value: any) => value === RelationshipTypes.PENDING_OUTGOING)
-      .map((_: any, key: any) => [key, this.client.users.cache.get(key)]);
+      .map((_, key): [string, import('../structures/User').default | undefined] => [
+        key,
+        this.client.users.cache.get(key),
+      ]);
     return new Collection(users);
   }
 
@@ -96,7 +112,7 @@ class RelationshipManager extends BaseManager {
       id: key,
       type: RelationshipTypes[value],
       nickname: this.friendNicknames.get(key),
-      since: this.sinceCache.get(key).toISOString(),
+      since: this.sinceCache.get(key)?.toISOString() ?? '',
     }));
   }
 
@@ -151,7 +167,7 @@ class RelationshipManager extends BaseManager {
       const id = this.resolveId(user);
       if (!force) {
         const existing = this.cache.get(id);
-        if (existing && !existing.partial) return existing;
+        if (existing) return existing;
       }
       const data = await this.client.api.users['@me'].relationships.get();
       await this._setup(data);

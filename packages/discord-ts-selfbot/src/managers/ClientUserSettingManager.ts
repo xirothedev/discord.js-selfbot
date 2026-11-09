@@ -14,6 +14,27 @@ const { ActivityTypes } = _ConstantsModule;
  */
 class ClientUserSettingManager extends BaseManager {
   #rawSetting = {};
+  declare addFriendFrom: { all: boolean | null; mutual_friends: boolean | null; mutual_guilds: boolean | null };
+  declare locale: string;
+  declare activityDisplay: boolean;
+  declare allowDMsFromGuild: boolean;
+  declare displayImage: boolean;
+  declare linkedImageDisplay: boolean;
+  declare autoplayGIF: boolean;
+  declare previewLink: boolean;
+  declare animatedEmoji: boolean;
+  declare allowTTS: boolean;
+  declare compactMode: boolean;
+  declare convertEmoticons: boolean;
+  declare DMScanLevel: number;
+  declare theme: string;
+  declare developerMode: boolean;
+  declare afkTimeout: number;
+  declare stickerAnimationMode: number;
+  declare showEmojiReactions: boolean;
+  declare customStatus: Record<string, unknown> | null;
+  declare disableDMfromGuilds: Collection<string, import('../structures/Guild').Guild | undefined>;
+  declare disableDMfromServer: Collection<string, import('../structures/Guild').Guild | undefined>;
   constructor(client: any) {
     super(client);
     /**

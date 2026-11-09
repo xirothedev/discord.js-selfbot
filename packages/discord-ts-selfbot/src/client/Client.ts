@@ -899,10 +899,10 @@ class Client extends BaseClient {
       nitro.match(/(discord\.gift\/|discord\.com\/gifts\/|discordapp\.com\/gifts\/)(\w+)/);
     if (!nitroCode) return false;
     const code = nitroCode[2];
-    channel = this.channels.resolveId(channel);
+    const channelId = this.channels.resolveId(channel);
     return this.api.entitlements['gift-codes'](code).redeem.post({
       auth: true,
-      data: { channel_id: channel || null, payment_source_id: paymentSourceId || null },
+      data: { channel_id: channelId || null, payment_source_id: paymentSourceId || null },
     });
   }
 

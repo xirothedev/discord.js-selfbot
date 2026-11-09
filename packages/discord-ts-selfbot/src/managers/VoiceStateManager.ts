@@ -26,7 +26,7 @@ class VoiceStateManager extends CachedManager {
     const existing = this.cache.get(data.user_id);
     if (existing) return existing._patch(data);
 
-    const entry = new this.holds(this.guild, data);
+    const entry = Reflect.construct(this.holds, [this.client, this.guild, data]);
     if (cache) this.cache.set(data.user_id, entry);
     return entry;
   }

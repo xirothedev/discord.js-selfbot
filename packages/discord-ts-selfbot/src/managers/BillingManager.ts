@@ -7,6 +7,10 @@ import GuildBoost from '../structures/GuildBoost';
  * @extends {CachedManager}
  */
 class BillingManager extends BaseManager {
+  declare paymentSources: Collection<string, Record<string, unknown>>;
+  declare guildBoosts: Collection<string, GuildBoost>;
+  declare currentSubscription: Collection<string, Record<string, unknown>>;
+
   constructor(client: any) {
     super(client);
     /**

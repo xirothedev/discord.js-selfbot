@@ -10,7 +10,10 @@ const { Role } = _RoleModule;
  * @extends {DataManager}
  */
 class GuildEmojiRoleManager extends DataManager {
-  constructor(emoji: any) {
+  declare emoji: import('../structures/GuildEmoji').GuildEmoji;
+  declare guild: import('../structures/Guild').Guild;
+
+  constructor(emoji: import('../structures/GuildEmoji').GuildEmoji) {
     super(emoji.client, Role);
 
     /**

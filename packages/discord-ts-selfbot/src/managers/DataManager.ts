@@ -8,7 +8,9 @@ const { Error } = _errorsModule;
  * @abstract
  */
 class DataManager extends BaseManager {
-  constructor(client: any, holds: any) {
+  declare holds: new (...args: never[]) => { id?: string };
+
+  constructor(client: any, holds: new (...args: never[]) => { id?: string }) {
     super(client);
 
     /**
@@ -47,7 +49,7 @@ class DataManager extends BaseManager {
    * @returns {?Snowflake}
    */
   resolveId(idOrInstance: any) {
-    if (idOrInstance instanceof this.holds) return idOrInstance.id;
+    if (idOrInstance instanceof this.holds) return idOrInstance.id ?? null;
     if (typeof idOrInstance === 'string') return idOrInstance;
     return null;
   }

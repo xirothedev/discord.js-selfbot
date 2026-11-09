@@ -62,7 +62,7 @@ class CachedManager extends DataManager {
       return clone;
     }
 
-    const entry = this.holds ? new this.holds(this.client, data, ...extras) : data;
+    const entry = this.holds ? Reflect.construct(this.holds, [this.client, data, ...extras]) : data;
     if (cache) this.cache.set(id ?? entry.id, entry);
     return entry;
   }
