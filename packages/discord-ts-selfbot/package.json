@@ -14,7 +14,8 @@
     "test:types": "bun check",
     "test:typescript": "bun check",
     "lint:boundaries": "depcruise src/packages",
-    "all": "bun run build && bun publish"
+    "all": "bun run build && bun publish",
+    "test:manual": "bun test tests/manual"
   },
   "files": [
     "src",

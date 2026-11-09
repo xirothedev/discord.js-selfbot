@@ -118,17 +118,17 @@ class VoiceWebSocket extends EventEmitter {
    */
   onOpen() {
     this.emit('debug', `[WS] opened at gateway ${this.connection.authentication.endpoint}`);
-    this.sendPacket({
+    const packet: any = {
       op: Opcodes.DISPATCH,
       d: {
         server_id: this.connection.serverId || this.connection.channel.guild?.id || this.connection.channel.id,
         user_id: this.client.user.id,
         token: this.connection.authentication.token,
         session_id: this.connection.authentication.sessionId,
-        streams: [{ type: 'screen', rid: '100', quality: 100 }],
-        video: true,
+        video: false,
       },
-    }).catch(() => {
+    };
+    this.sendPacket(packet).catch(() => {
       this.emit('error', new Error('VOICE_JOIN_SOCKET_CLOSED'));
     });
   }
@@ -152,6 +152,16 @@ class VoiceWebSocket extends EventEmitter {
    */
   onClose(event: any) {
     this.emit('debug', `[WS] closed with code ${event.code} and reason: ${event.reason}`);
+    if (event.code === 4017) {
+      this.dead = true;
+      this.emit(
+        'error',
+        new Error(
+          'DAVE (E2EE) protocol required by Discord; voice connections are not supported until DAVE is implemented',
+        ),
+      );
+      return;
+    }
     if (!this.dead) setTimeout(this.connect.bind(this), this.attempts * 1000).unref();
   }
 

@@ -144,7 +144,10 @@ class MessagePayload {
       }
     }
 
-    const components = this.options.components?.map((c: any) => BaseMessageComponent.create(c)!.toJSON());
+    const components = this.options.components?.map((c: any) => {
+      const data = typeof c?.toJSON === 'function' ? c.toJSON() : c;
+      return BaseMessageComponent.create(data)!.toJSON();
+    });
 
     let username;
     let avatarURL;
@@ -256,7 +259,10 @@ class MessagePayload {
       content,
       tts,
       nonce,
-      embeds: this.options.embeds?.map((embed: any) => new MessageEmbed(embed).toJSON()),
+      embeds: this.options.embeds?.map((embed: any) => {
+        const data = typeof embed?.toJSON === 'function' ? embed.toJSON() : embed;
+        return new MessageEmbed(data).toJSON();
+      }),
       components,
       username,
       avatar_url: avatarURL,

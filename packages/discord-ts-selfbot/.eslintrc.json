@@ -8,7 +8,7 @@
     "es2021": true,
     "node": true
   },
-  "ignorePatterns": ["**/src/util/Voice.js", "**/examples/**", "**/dist/**"],
+  "ignorePatterns": ["**/src/util/Voice.js", "**/examples/**", "**/dist/**", "**/tests/manual/**"],
   "overrides": [
     {
       "files": ["**/*.test.js", "**/*.test.ts"],
