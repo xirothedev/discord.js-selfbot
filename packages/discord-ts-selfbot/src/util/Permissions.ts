@@ -7,9 +7,9 @@ import BitField, { BitFieldResolvable } from './BitField';
  * @extends {BitField}
  */
 class Permissions extends BitField {
-  static ALL: bigint = 0n;
-  static DEFAULT: bigint = 0n;
-  static STAGE_MODERATOR: bigint = 0n;
+  static ALL: bigint = BigInt(0);
+  static DEFAULT: bigint = BigInt(0);
+  static STAGE_MODERATOR: bigint = BigInt(0);
   /**
    * Bitfield of the packed bits
    * @type {bigint}
