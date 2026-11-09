@@ -1,4 +1,4 @@
-const ContextMenuInteraction = require('./ContextMenuInteraction');
+import ContextMenuInteraction from './ContextMenuInteraction';
 
 /**
  * Represents a message context menu interaction.
@@ -16,4 +16,5 @@ class MessageContextMenuInteraction extends ContextMenuInteraction {
   }
 }
 
-export = MessageContextMenuInteraction;
+export default MessageContextMenuInteraction;
+export { MessageContextMenuInteraction };

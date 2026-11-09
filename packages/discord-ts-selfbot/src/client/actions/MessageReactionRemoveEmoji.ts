@@ -1,5 +1,6 @@
-const Action = require('./Action');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class MessageReactionRemoveEmoji extends Action {
   handle(data: any) {
@@ -23,4 +24,5 @@ class MessageReactionRemoveEmoji extends Action {
   }
 }
 
-export = MessageReactionRemoveEmoji;
+export default MessageReactionRemoveEmoji;
+export { MessageReactionRemoveEmoji };

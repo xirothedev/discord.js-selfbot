@@ -1,10 +1,12 @@
-const udp = require('dgram');
-const EventEmitter = require('events');
-const { isIP } = require('net');
-const { Buffer } = require('node:buffer');
-const { Error } = require('../../../errors');
-const { VoiceOpcodes } = require('../../../util/Constants');
-const VoiceCodec = require('../util/VoiceCodec');
+import udp from 'dgram';
+import EventEmitter from 'events';
+import { isIP } from 'net';
+import { Buffer } from 'node:buffer';
+import _errorsModule from '../../../errors';
+const { Error } = _errorsModule;
+import _ConstantsModule from '../../../util/Constants';
+const { VoiceOpcodes } = _ConstantsModule;
+import VoiceCodec from '../util/VoiceCodec';
 
 /**
  * Represents a UDP client for a Voice Connection.
@@ -170,4 +172,5 @@ function parseLocalPacket(message: any) {
   }
 }
 
-export = VoiceConnectionUDPClient;
+export default VoiceConnectionUDPClient;
+export { VoiceConnectionUDPClient };

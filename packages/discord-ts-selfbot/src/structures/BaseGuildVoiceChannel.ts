@@ -1,9 +1,10 @@
-const { Collection } = require('@discordjs/collection');
-const GuildChannel = require('./GuildChannel');
-const TextBasedChannel = require('./interfaces/TextBasedChannel');
-const MessageManager = require('../managers/MessageManager');
-const { VideoQualityModes } = require('../util/Constants');
-const Permissions = require('../util/Permissions');
+import { Collection } from '@discordjs/collection';
+import GuildChannel from './GuildChannel';
+import TextBasedChannel from './interfaces/TextBasedChannel';
+import MessageManager from '../managers/MessageManager';
+import _ConstantsModule from '../util/Constants';
+const { VideoQualityModes } = _ConstantsModule;
+import Permissions from '../util/Permissions';
 
 /**
  * Represents a voice-based guild channel on Discord.
@@ -238,4 +239,5 @@ class BaseGuildVoiceChannel extends GuildChannel {
 
 TextBasedChannel.applyToClass(BaseGuildVoiceChannel, true, ['lastPinAt']);
 
-export = BaseGuildVoiceChannel;
+export default BaseGuildVoiceChannel;
+export { BaseGuildVoiceChannel };

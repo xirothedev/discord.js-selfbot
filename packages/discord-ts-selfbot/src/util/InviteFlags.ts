@@ -1,4 +1,4 @@
-import BitField = require('./BitField');
+import BitField from './BitField';
 
 /**
  * Data structure that makes it easy to interact with an {@link InviteFlags#flags} bitfield.
@@ -29,4 +29,5 @@ InviteFlags.FLAGS = {
   IS_APPLICATION_BYPASS: 1 << 3,
 };
 
-export = InviteFlags;
+export default InviteFlags;
+export { InviteFlags };

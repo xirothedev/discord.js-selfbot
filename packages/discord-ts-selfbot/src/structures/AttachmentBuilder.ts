@@ -1,4 +1,4 @@
-const Util = require('../util/Util');
+import Util from '../util/Util';
 
 /**
  * Represents an attachment builder.
@@ -156,7 +156,8 @@ class AttachmentBuilder {
   }
 }
 
-export = AttachmentBuilder;
+export default AttachmentBuilder;
+export { AttachmentBuilder };
 
 /**
  * @typedef {Object} AttachmentData

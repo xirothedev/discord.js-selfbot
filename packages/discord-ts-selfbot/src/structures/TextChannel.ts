@@ -1,4 +1,4 @@
-const BaseGuildTextChannel = require('./BaseGuildTextChannel');
+import BaseGuildTextChannel from './BaseGuildTextChannel';
 
 /**
  * Represents a guild text channel on Discord.
@@ -29,4 +29,5 @@ class TextChannel extends BaseGuildTextChannel {
   }
 }
 
-export = TextChannel;
+export default TextChannel;
+export { TextChannel };

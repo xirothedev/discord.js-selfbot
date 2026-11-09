@@ -1,8 +1,10 @@
-const EventEmitter = require('events');
-const prism = require('prism-media');
-const PacketHandler = require('./PacketHandler');
-const { Error } = require('../../../errors');
-const { PCMInsertSilence } = require('../player/processing/PCMInsertSilence');
+import EventEmitter from 'events';
+import prism from 'prism-media';
+import PacketHandler from './PacketHandler';
+import _errorsModule from '../../../errors';
+const { Error } = _errorsModule;
+import _PCMInsertSilenceModule from '../player/processing/PCMInsertSilence';
+const { PCMInsertSilence } = _PCMInsertSilenceModule;
 
 /**
  * Receives audio packets from a voice connection.
@@ -97,4 +99,5 @@ class VoiceReceiver extends EventEmitter {
    */
 }
 
-export = VoiceReceiver;
+export default VoiceReceiver;
+export { VoiceReceiver };

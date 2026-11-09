@@ -1,8 +1,10 @@
-const process = require('node:process');
-const Base = require('./Base');
-const { Error } = require('../errors');
-const { StickerFormatTypes, StickerTypes } = require('../util/Constants');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
+import process from 'node:process';
+import Base from './Base';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
+import _ConstantsModule from '../util/Constants';
+const { StickerFormatTypes, StickerTypes } = _ConstantsModule;
+import SnowflakeUtil from '../util/SnowflakeUtil';
 
 /**
  * @type {WeakSet<StageInstance>}
@@ -305,4 +307,5 @@ class Sticker extends Base {
  * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-object}
  */
 
-export = { Sticker, deletedStickers };
+export { Sticker, deletedStickers };
+export default { Sticker, deletedStickers };

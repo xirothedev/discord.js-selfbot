@@ -1,5 +1,6 @@
-const Action = require('./Action');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class UserUpdateAction extends Action {
   handle(data: any) {
@@ -30,4 +31,5 @@ class UserUpdateAction extends Action {
   }
 }
 
-export = UserUpdateAction;
+export default UserUpdateAction;
+export { UserUpdateAction };

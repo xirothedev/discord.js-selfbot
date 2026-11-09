@@ -1,43 +1,45 @@
+import process from 'node:process';
+import { setInterval } from 'node:timers';
+import { setTimeout } from 'node:timers';
+import { Collection } from '@discordjs/collection';
+import { authenticator } from 'otplib';
+import BaseClient from './BaseClient';
+import ActionsManager from './actions/ActionsManager';
+import ClientVoiceManager from './voice/ClientVoiceManager';
+import WebSocketManager from './websocket/WebSocketManager';
+import _errorsModule from '../errors';
+const { Error, TypeError } = _errorsModule;
+import BaseGuildEmojiManager from '../managers/BaseGuildEmojiManager';
+import BillingManager from '../managers/BillingManager';
+import ChannelManager from '../managers/ChannelManager';
+import ClientUserSettingManager from '../managers/ClientUserSettingManager';
+import GuildManager from '../managers/GuildManager';
+import PresenceManager from '../managers/PresenceManager';
+import RelationshipManager from '../managers/RelationshipManager';
+import SessionManager from '../managers/SessionManager';
+import UserManager from '../managers/UserManager';
+import UserNoteManager from '../managers/UserNoteManager';
+import VoiceStateManager from '../managers/VoiceStateManager';
+import ShardClientUtil from '../sharding/ShardClientUtil';
+import ClientPresence from '../structures/ClientPresence';
+import GuildPreview from '../structures/GuildPreview';
+import GuildTemplate from '../structures/GuildTemplate';
+import Invite from '../structures/Invite';
+import _StickerModule from '../structures/Sticker';
+const { Sticker } = _StickerModule;
+import StickerPack from '../structures/StickerPack';
+import VoiceRegion from '../structures/VoiceRegion';
+import Webhook from '../structures/Webhook';
+import Widget from '../structures/Widget';
+import Application from '../structures/interfaces/Application';
+import _ConstantsModule from '../util/Constants';
+const { Events, Status } = _ConstantsModule;
+import DataResolver from '../util/DataResolver';
+import Intents from '../util/Intents';
+import Permissions from '../util/Permissions';
+import DiscordAuthWebsocket from '../util/RemoteAuth';
+import Sweepers from '../util/Sweepers';
 /* eslint-disable no-unreachable */
-
-const process = require('node:process');
-const { setInterval } = require('node:timers');
-const { setTimeout } = require('node:timers');
-const { Collection } = require('@discordjs/collection');
-const { authenticator } = require('otplib');
-const BaseClient = require('./BaseClient');
-const ActionsManager = require('./actions/ActionsManager');
-const ClientVoiceManager = require('./voice/ClientVoiceManager');
-const WebSocketManager = require('./websocket/WebSocketManager');
-const { Error, TypeError } = require('../errors');
-const BaseGuildEmojiManager = require('../managers/BaseGuildEmojiManager');
-const BillingManager = require('../managers/BillingManager');
-const ChannelManager = require('../managers/ChannelManager');
-const ClientUserSettingManager = require('../managers/ClientUserSettingManager');
-const GuildManager = require('../managers/GuildManager');
-const PresenceManager = require('../managers/PresenceManager');
-const RelationshipManager = require('../managers/RelationshipManager');
-const SessionManager = require('../managers/SessionManager');
-const UserManager = require('../managers/UserManager');
-const UserNoteManager = require('../managers/UserNoteManager');
-const VoiceStateManager = require('../managers/VoiceStateManager');
-const ShardClientUtil = require('../sharding/ShardClientUtil');
-const ClientPresence = require('../structures/ClientPresence');
-const GuildPreview = require('../structures/GuildPreview');
-const GuildTemplate = require('../structures/GuildTemplate');
-const Invite = require('../structures/Invite');
-const { Sticker } = require('../structures/Sticker');
-const StickerPack = require('../structures/StickerPack');
-const VoiceRegion = require('../structures/VoiceRegion');
-const Webhook = require('../structures/Webhook');
-const Widget = require('../structures/Widget');
-const Application = require('../structures/interfaces/Application');
-const { Events, Status } = require('../util/Constants');
-const DataResolver = require('../util/DataResolver');
-const Intents = require('../util/Intents');
-const Permissions = require('../util/Permissions');
-const DiscordAuthWebsocket = require('../util/RemoteAuth');
-const Sweepers = require('../util/Sweepers');
 
 let deprecationEmitted = false;
 
@@ -1066,11 +1068,12 @@ class Client extends BaseClient {
     }
     // Selfbot divergence: user accounts do not use gateway intents. Keep the option for type
     // parity and force full intents so guild-wait behaviour stays the same.
-    options.intents = Intents.ALL;
+    options.intents = (Intents as any).ALL;
   }
 }
 
-export = Client;
+export default Client;
+export { Client };
 
 /**
  * Emitted for general warnings.

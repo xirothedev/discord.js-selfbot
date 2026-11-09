@@ -1,9 +1,9 @@
-const process = require('node:process');
-
-const { Collection } = require('@discordjs/collection');
-const CachedManager = require('./CachedManager');
-const { TypeError } = require('../errors');
-const ThreadMember = require('../structures/ThreadMember');
+import process from 'node:process';
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
+const { TypeError } = _errorsModule;
+import ThreadMember from '../structures/ThreadMember';
 
 let deprecationEmittedForPassingBoolean = false;
 
@@ -12,7 +12,7 @@ let deprecationEmittedForPassingBoolean = false;
  * @extends {CachedManager}
  */
 class ThreadMemberManager extends CachedManager {
-  constructor(thread: any, iterable: any) {
+  constructor(thread: any, iterable?: any) {
     super(thread.client, ThreadMember, iterable);
 
     /**
@@ -182,4 +182,5 @@ class ThreadMemberManager extends CachedManager {
   }
 }
 
-export = ThreadMemberManager;
+export default ThreadMemberManager;
+export { ThreadMemberManager };

@@ -1,6 +1,8 @@
-const VoiceConnection = require('./VoiceConnection');
-const { Error } = require('../../errors');
-const { Events } = require('../../util/Constants');
+import VoiceConnection from './VoiceConnection';
+import _errorsModule from '../../errors';
+const { Error } = _errorsModule;
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 /**
  * Manages voice connections for the client
@@ -156,4 +158,5 @@ class ClientVoiceManager {
   }
 }
 
-export = ClientVoiceManager;
+export default ClientVoiceManager;
+export { ClientVoiceManager };

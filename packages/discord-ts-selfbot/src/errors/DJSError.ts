@@ -44,4 +44,5 @@ const DiscordjsError = {
   RangeError: makeDiscordjsError(globalThis.RangeError),
 };
 
-export = DiscordjsError;
+export default DiscordjsError;
+export { DiscordjsError };

@@ -1,4 +1,5 @@
-const { ApplicationRoleConnectionMetadataTypes } = require('../util/Constants');
+import _ConstantsModule from '../util/Constants';
+const { ApplicationRoleConnectionMetadataTypes } = _ConstantsModule;
 
 /**
  * Role connection metadata object for an application.
@@ -45,4 +46,5 @@ class ApplicationRoleConnectionMetadata {
   }
 }
 
-export = { ApplicationRoleConnectionMetadata };
+export { ApplicationRoleConnectionMetadata };
+export default { ApplicationRoleConnectionMetadata };

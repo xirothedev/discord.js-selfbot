@@ -1,5 +1,6 @@
-const Action = require('./Action');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 /**
  * The data received in the {@link Client#event:applicationCommandPermissionsUpdate} event
@@ -29,4 +30,5 @@ class ApplicationCommandPermissionsUpdateAction extends Action {
   }
 }
 
-export = ApplicationCommandPermissionsUpdateAction;
+export default ApplicationCommandPermissionsUpdateAction;
+export { ApplicationCommandPermissionsUpdateAction };

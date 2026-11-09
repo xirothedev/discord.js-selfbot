@@ -1,6 +1,6 @@
-const { Collection } = require('@discordjs/collection');
-const Base = require('./Base');
-const WelcomeChannel = require('./WelcomeChannel');
+import { Collection } from '@discordjs/collection';
+import Base from './Base';
+import WelcomeChannel from './WelcomeChannel';
 
 /**
  * Represents a welcome screen.
@@ -44,4 +44,5 @@ class WelcomeScreen extends Base {
   }
 }
 
-export = WelcomeScreen;
+export default WelcomeScreen;
+export { WelcomeScreen };

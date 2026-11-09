@@ -1,4 +1,4 @@
-import BitField = require('./BitField');
+import BitField from './BitField';
 
 /**
  * Data structure that makes it easy to interact with an {@link PurchasedFlags#flags} bitfield.
@@ -28,4 +28,5 @@ PurchasedFlags.FLAGS = {
   NITRO_BASIC: 1 << 3,
 };
 
-export = PurchasedFlags;
+export default PurchasedFlags;
+export { PurchasedFlags };

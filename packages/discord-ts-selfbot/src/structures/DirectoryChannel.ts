@@ -1,4 +1,5 @@
-const { Channel } = require('./Channel');
+import _ChannelModule from './Channel';
+const { Channel } = _ChannelModule;
 
 /**
  * Represents a channel that displays a directory of guilds.
@@ -15,4 +16,5 @@ class DirectoryChannel extends Channel {
   }
 }
 
-export = DirectoryChannel;
+export default DirectoryChannel;
+export { DirectoryChannel };

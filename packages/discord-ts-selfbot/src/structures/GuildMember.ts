@@ -1,11 +1,13 @@
-const process = require('node:process');
-const Base = require('./Base');
-const VoiceState = require('./VoiceState');
-const TextBasedChannel = require('./interfaces/TextBasedChannel');
-const { Error } = require('../errors');
-const GuildMemberRoleManager = require('../managers/GuildMemberRoleManager');
-const GuildMemberFlags = require('../util/GuildMemberFlags');
-const Permissions = require('../util/Permissions');
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+import process from 'node:process';
+import Base from './Base';
+import VoiceState from './VoiceState';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
+import GuildMemberRoleManager from '../managers/GuildMemberRoleManager';
+import GuildMemberFlags from '../util/GuildMemberFlags';
+import Permissions from '../util/Permissions';
 
 /**
  * @type {WeakSet<GuildMember>}
@@ -333,7 +335,7 @@ class GuildMember extends Base {
    * @readonly
    */
   get permissions() {
-    if (this.user.id === this.guild.ownerId) return new Permissions(Permissions.ALL).freeze();
+    if (this.user.id === this.guild.ownerId) return new Permissions((Permissions as any).ALL).freeze();
     return new Permissions(this.roles.cache.map((role: any) => role.permissions)).freeze();
   }
 
@@ -624,11 +626,17 @@ class GuildMember extends Base {
  *   .catch(console.error);
  */
 
-TextBasedChannel.applyToClass(GuildMember);
-
 /**
  * @external APIGuildMember
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-member-object}
  */
 
-export = { GuildMember, deletedGuildMembers };
+export { GuildMember, deletedGuildMembers };
+export default { GuildMember, deletedGuildMembers };
+
+setTimeout(() => {
+  try {
+    const TextBasedChannel = require('./interfaces/TextBasedChannel');
+    TextBasedChannel.applyToClass(GuildMember);
+  } catch {}
+}, 0);

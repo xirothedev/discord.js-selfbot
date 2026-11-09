@@ -1,13 +1,25 @@
-const { Buffer } = require('node:buffer');
-const BaseMessageComponent = require('./BaseMessageComponent');
-const MessageEmbed = require('./MessageEmbed');
-const { RangeError, Error: DjsError } = require('../errors');
-const ActivityFlags = require('../util/ActivityFlags');
-const { PollLayoutTypes, MessageReferenceTypes } = require('../util/Constants');
-const DataResolver = require('../util/DataResolver');
-const MessageFlags = require('../util/MessageFlags');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
-const Util = require('../util/Util');
+import { Buffer } from 'node:buffer';
+import BaseMessageComponent from './BaseMessageComponent';
+import MessageEmbed from './MessageEmbed';
+import _errorsModule from '../errors';
+const { RangeError, Error: DjsError } = _errorsModule;
+import ActivityFlags from '../util/ActivityFlags';
+import _ConstantsModule from '../util/Constants';
+const { PollLayoutTypes, MessageReferenceTypes } = _ConstantsModule;
+import DataResolver from '../util/DataResolver';
+import MessageFlags from '../util/MessageFlags';
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import Util from '../util/Util';
+import Webhook from './Webhook';
+import WebhookClient from '../client/WebhookClient';
+import User from './User';
+import _GuildMemberModule from './GuildMember';
+const { GuildMember } = _GuildMemberModule;
+import _MessageModule from './Message';
+const { Message } = _MessageModule;
+import MessageManager from '../managers/MessageManager';
+import Interaction from './Interaction';
+import InteractionWebhook from './InteractionWebhook';
 
 /**
  * Represents a message to be sent to the API.
@@ -18,7 +30,7 @@ class MessagePayload {
    * @param {MessageTarget} target The target for this message to be sent to
    * @param {MessageOptions|WebhookMessageOptions} options Options passed in from send
    */
-  constructor(target: any, options: any) {
+  constructor(target: any, options: any = {}) {
     /**
      * The target for this message to be sent to
      * @type {MessageTarget}
@@ -57,8 +69,6 @@ class MessagePayload {
    * @readonly
    */
   get isWebhook() {
-    const Webhook = require('./Webhook');
-    const WebhookClient = require('../client/WebhookClient');
     return this.target instanceof Webhook || this.target instanceof WebhookClient;
   }
 
@@ -68,8 +78,6 @@ class MessagePayload {
    * @readonly
    */
   get isUser() {
-    const User = require('./User');
-    const { GuildMember } = require('./GuildMember');
     return this.target instanceof User || this.target instanceof GuildMember;
   }
 
@@ -79,7 +87,6 @@ class MessagePayload {
    * @readonly
    */
   get isMessage() {
-    const { Message } = require('./Message');
     return this.target instanceof Message;
   }
 
@@ -89,7 +96,6 @@ class MessagePayload {
    * @readonly
    */
   get isMessageManager() {
-    const MessageManager = require('../managers/MessageManager');
     return this.target instanceof MessageManager;
   }
 
@@ -99,8 +105,6 @@ class MessagePayload {
    * @readonly
    */
   get isInteraction() {
-    const Interaction = require('./Interaction');
-    const InteractionWebhook = require('./InteractionWebhook');
     return this.target instanceof Interaction || this.target instanceof InteractionWebhook;
   }
 
@@ -140,7 +144,7 @@ class MessagePayload {
       }
     }
 
-    const components = this.options.components?.map((c: any) => BaseMessageComponent.create(c).toJSON());
+    const components = this.options.components?.map((c: any) => BaseMessageComponent.create(c)!.toJSON());
 
     let username;
     let avatarURL;
@@ -159,7 +163,7 @@ class MessagePayload {
     }
 
     if (isInteraction && this.options.ephemeral) {
-      flags |= MessageFlags.FLAGS.EPHEMERAL;
+      flags = ((flags ?? 0) as any) | (MessageFlags.FLAGS.EPHEMERAL as any);
     }
 
     let allowedMentions =
@@ -352,4 +356,5 @@ class MessagePayload {
  * @see {@link https://discord.com/developers/docs/resources/channel#message-object}
  */
 
-export = MessagePayload;
+export default MessagePayload;
+export { MessagePayload };

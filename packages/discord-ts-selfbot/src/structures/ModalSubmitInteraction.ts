@@ -1,8 +1,9 @@
-const Interaction = require('./Interaction');
-const InteractionWebhook = require('./InteractionWebhook');
-const ModalSubmitFieldsResolver = require('./ModalSubmitFieldsResolver');
-const InteractionResponses = require('./interfaces/InteractionResponses');
-const { MessageComponentTypes } = require('../util/Constants');
+import Interaction from './Interaction';
+import InteractionWebhook from './InteractionWebhook';
+import ModalSubmitFieldsResolver from './ModalSubmitFieldsResolver';
+import InteractionResponses from './interfaces/InteractionResponses';
+import _ConstantsModule from '../util/Constants';
+const { MessageComponentTypes } = _ConstantsModule;
 
 /**
  * Represents a modal submit interaction.
@@ -115,4 +116,5 @@ class ModalSubmitInteraction extends Interaction {
 
 InteractionResponses.applyToClass(ModalSubmitInteraction, ['showModal', 'awaitModalSubmit']);
 
-export = ModalSubmitInteraction;
+export default ModalSubmitInteraction;
+export { ModalSubmitInteraction };

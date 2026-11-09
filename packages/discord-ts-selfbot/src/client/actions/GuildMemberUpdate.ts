@@ -1,5 +1,6 @@
-const Action = require('./Action');
-const { Status, Events } = require('../../util/Constants');
+import Action from './Action';
+import _ConstantsModule from '../../util/Constants';
+const { Status, Events } = _ConstantsModule;
 
 class GuildMemberUpdateAction extends Action {
   handle(data: any, shard: any) {
@@ -39,4 +40,5 @@ class GuildMemberUpdateAction extends Action {
   }
 }
 
-export = GuildMemberUpdateAction;
+export default GuildMemberUpdateAction;
+export { GuildMemberUpdateAction };

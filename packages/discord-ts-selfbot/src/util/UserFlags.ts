@@ -1,5 +1,5 @@
-'use strict';
-import BitField = require('./BitField');
+import BitField from './BitField';
+('use strict');
 
 /**
  * Data structure that makes it easy to interact with a {@link User#flags} bitfield.
@@ -101,4 +101,5 @@ UserFlags.FLAGS = {
   RESTRICTED_COLLABORATOR: Math.pow(2, 51), // [Undocumented] User is a restricted collaborator and has staff permissions.
 };
 
-export = UserFlags;
+export default UserFlags;
+export { UserFlags };

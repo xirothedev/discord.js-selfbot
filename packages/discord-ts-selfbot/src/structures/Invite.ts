@@ -1,11 +1,15 @@
-const Base = require('./Base');
-const { GuildScheduledEvent } = require('./GuildScheduledEvent');
-const IntegrationApplication = require('./IntegrationApplication');
-const InviteStageInstance = require('./InviteStageInstance');
-const { Error } = require('../errors');
-const { Endpoints } = require('../util/Constants');
-const InviteFlags = require('../util/InviteFlags');
-const Permissions = require('../util/Permissions');
+import Base from './Base';
+import _GuildScheduledEventModule from './GuildScheduledEvent';
+const { GuildScheduledEvent } = _GuildScheduledEventModule;
+import IntegrationApplication from './IntegrationApplication';
+import InviteStageInstance from './InviteStageInstance';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
+import _ConstantsModule from '../util/Constants';
+const { Endpoints } = _ConstantsModule;
+import InviteFlags from '../util/InviteFlags';
+import Permissions from '../util/Permissions';
+import InviteGuild from './InviteGuild';
 
 // TODO: Convert `inviter` and `channel` in this class to a getter.
 
@@ -20,7 +24,6 @@ class Invite extends Base {
   }
 
   _patch(data: any) {
-    const InviteGuild = require('./InviteGuild');
     /**
      * The guild the invite is for including welcome screen data if present
      * @type {?(Guild|InviteGuild)}
@@ -351,6 +354,7 @@ class Invite extends Base {
  * Regular expression that globally matches Discord invite links
  * @type {RegExp}
  */
-Invite.INVITES_PATTERN = /discord(?:(?:app)?\.com\/invite|\.gg(?:\/invite)?)\/([\w-]{2,255})/gi;
+(Invite as any).INVITES_PATTERN = /discord(?:(?:app)?\.com\/invite|\.gg(?:\/invite)?)\/([\w-]{2,255})/gi;
 
-export = Invite;
+export default Invite;
+export { Invite };

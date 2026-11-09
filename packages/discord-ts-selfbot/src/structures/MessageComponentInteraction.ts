@@ -1,7 +1,8 @@
-const Interaction = require('./Interaction');
-const InteractionWebhook = require('./InteractionWebhook');
-const InteractionResponses = require('./interfaces/InteractionResponses');
-const { MessageComponentTypes } = require('../util/Constants');
+import Interaction from './Interaction';
+import InteractionWebhook from './InteractionWebhook';
+import InteractionResponses from './interfaces/InteractionResponses';
+import _ConstantsModule from '../util/Constants';
+const { MessageComponentTypes } = _ConstantsModule;
 
 /**
  * Represents a message component interaction.
@@ -116,4 +117,5 @@ InteractionResponses.applyToClass(MessageComponentInteraction);
  * @see {@link https://discord.com/developers/docs/interactions/message-components#button-object}
  */
 
-export = MessageComponentInteraction;
+export default MessageComponentInteraction;
+export { MessageComponentInteraction };

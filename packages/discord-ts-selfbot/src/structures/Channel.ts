@@ -1,5 +1,11 @@
-const process = require('node:process');
-const Base = require('./Base');
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+import process from 'node:process';
+import Base from './Base';
+import ChannelFlags from '../util/ChannelFlags';
+import _ConstantsModule from '../util/Constants';
+const { ChannelTypes, ThreadChannelTypes, VoiceBasedChannelTypes } = _ConstantsModule;
+import SnowflakeUtil from '../util/SnowflakeUtil';
 let CategoryChannel;
 let DMChannel;
 let NewsChannel;
@@ -11,9 +17,6 @@ let VoiceChannel;
 let DirectoryChannel;
 let ForumChannel;
 let MediaChannel;
-const ChannelFlags = require('../util/ChannelFlags');
-const { ChannelTypes, ThreadChannelTypes, VoiceBasedChannelTypes } = require('../util/Constants');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
 
 /**
  * @type {WeakSet<Channel>}
@@ -138,7 +141,7 @@ class Channel extends Base {
    *   .then(console.log)
    *   .catch(console.error);
    */
-  async delete() {
+  async delete(_reason: any = null) {
     await this.client.api.channels(this.id).delete();
     return this;
   }
@@ -193,24 +196,24 @@ class Channel extends Base {
   }
 
   static create(client: any, data: any, guild: any, { allowUnknownGuild }: any = {}) {
-    CategoryChannel ??= require('./CategoryChannel');
-    DMChannel ??= require('./DMChannel');
-    NewsChannel ??= require('./NewsChannel');
-    StageChannel ??= require('./StageChannel');
-    StoreChannel ??= require('./StoreChannel');
-    TextChannel ??= require('./TextChannel');
-    ThreadChannel ??= require('./ThreadChannel');
-    VoiceChannel ??= require('./VoiceChannel');
-    DirectoryChannel ??= require('./DirectoryChannel');
-    ForumChannel ??= require('./ForumChannel');
-    MediaChannel ??= require('./MediaChannel');
+    CategoryChannel ??= require('./CategoryChannel').default;
+    DMChannel ??= require('./DMChannel').default;
+    NewsChannel ??= require('./NewsChannel').default;
+    StageChannel ??= require('./StageChannel').default;
+    StoreChannel ??= require('./StoreChannel').default;
+    TextChannel ??= require('./TextChannel').default;
+    ThreadChannel ??= require('./ThreadChannel').default;
+    VoiceChannel ??= require('./VoiceChannel').default;
+    DirectoryChannel ??= require('./DirectoryChannel').default;
+    ForumChannel ??= require('./ForumChannel').default;
+    MediaChannel ??= require('./MediaChannel').default;
 
     let channel;
     if (!data.guild_id && !guild) {
       if ((data.recipients && data.type !== ChannelTypes.GROUP_DM) || data.type === ChannelTypes.DM) {
         channel = new DMChannel(client, data);
       } else if (data.type === ChannelTypes.GROUP_DM) {
-        const GroupDMChannel = require('./GroupDMChannel');
+        const GroupDMChannel = require('./GroupDMChannel').default;
         channel = new GroupDMChannel(client, data);
       }
     } else {
@@ -278,4 +281,5 @@ class Channel extends Base {
  * @see {@link https://discord.com/developers/docs/resources/channel#channel-object}
  */
 
-export = { Channel, deletedChannels };
+export { Channel, deletedChannels };
+export default { Channel, deletedChannels };

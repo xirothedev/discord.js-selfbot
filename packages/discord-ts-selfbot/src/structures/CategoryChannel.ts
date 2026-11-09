@@ -1,4 +1,4 @@
-const GuildChannel = require('./GuildChannel');
+import GuildChannel from './GuildChannel';
 
 /**
  * Represents a guild category channel on Discord.
@@ -80,4 +80,5 @@ class CategoryChannel extends GuildChannel {
   }
 }
 
-export = CategoryChannel;
+export default CategoryChannel;
+export { CategoryChannel };

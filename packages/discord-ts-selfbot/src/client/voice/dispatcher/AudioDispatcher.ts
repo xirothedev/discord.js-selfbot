@@ -1,7 +1,7 @@
-const BaseDispatcher = require('./BaseDispatcher');
-const VoiceCodec = require('../util/VoiceCodec');
-const Silence = require('../util/Silence');
-const VolumeInterface = require('../util/VolumeInterface');
+import BaseDispatcher from './BaseDispatcher';
+import VoiceCodec from '../util/VoiceCodec';
+import Silence from '../util/Silence';
+import VolumeInterface from '../util/VolumeInterface';
 
 const CHANNELS = 2;
 
@@ -150,4 +150,5 @@ class AudioDispatcher extends BaseDispatcher {
 
 VolumeInterface.applyToClass(AudioDispatcher);
 
-export = AudioDispatcher;
+export default AudioDispatcher;
+export { AudioDispatcher };

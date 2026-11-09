@@ -1,4 +1,4 @@
-const Action = require('./Action');
+import Action from './Action';
 
 class MessageUpdateAction extends Action {
   handle(data: any) {
@@ -21,4 +21,5 @@ class MessageUpdateAction extends Action {
   }
 }
 
-export = MessageUpdateAction;
+export default MessageUpdateAction;
+export { MessageUpdateAction };

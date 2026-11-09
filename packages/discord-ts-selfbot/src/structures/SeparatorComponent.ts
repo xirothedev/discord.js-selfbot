@@ -1,5 +1,6 @@
-const BaseMessageComponent = require('./BaseMessageComponent');
-const { MessageComponentTypes, SeparatorSpacingSizes } = require('../util/Constants');
+import BaseMessageComponent from './BaseMessageComponent';
+import _ConstantsModule from '../util/Constants';
+const { MessageComponentTypes, SeparatorSpacingSizes } = _ConstantsModule;
 
 class SeparatorComponent extends BaseMessageComponent {
   [key: string]: any;
@@ -44,4 +45,5 @@ class SeparatorComponent extends BaseMessageComponent {
   }
 }
 
-export = SeparatorComponent;
+export default SeparatorComponent;
+export { SeparatorComponent };

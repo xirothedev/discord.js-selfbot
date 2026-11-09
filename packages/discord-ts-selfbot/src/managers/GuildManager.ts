@@ -1,14 +1,18 @@
-const process = require('node:process');
-const { setTimeout } = require('node:timers');
-const { Collection } = require('@discordjs/collection');
-const CachedManager = require('./CachedManager');
-const { Guild } = require('../structures/Guild');
-const GuildChannel = require('../structures/GuildChannel');
-const GuildEmoji = require('../structures/GuildEmoji');
-const { GuildMember } = require('../structures/GuildMember');
-const Invite = require('../structures/Invite');
-const OAuth2Guild = require('../structures/OAuth2Guild');
-const { Role } = require('../structures/Role');
+import process from 'node:process';
+import { setTimeout } from 'node:timers';
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _GuildModule from '../structures/Guild';
+const { Guild } = _GuildModule;
+import GuildChannel from '../structures/GuildChannel';
+import GuildEmoji from '../structures/GuildEmoji';
+import _GuildMemberModule from '../structures/GuildMember';
+const { GuildMember } = _GuildMemberModule;
+import Invite from '../structures/Invite';
+import OAuth2Guild from '../structures/OAuth2Guild';
+import _RoleModule from '../structures/Role';
+const { Role } = _RoleModule;
+import _ConstantsModule from '../util/Constants';
 const {
   ChannelTypes,
   Events,
@@ -17,12 +21,13 @@ const {
   DefaultMessageNotificationLevels,
   ExplicitContentFilterLevels,
   VideoQualityModes,
-} = require('../util/Constants');
-const DataResolver = require('../util/DataResolver');
-const Permissions = require('../util/Permissions');
-const SystemChannelFlags = require('../util/SystemChannelFlags');
-const { resolveColor } = require('../util/Util');
-const Util = require('../util/Util');
+} = _ConstantsModule;
+import DataResolver from '../util/DataResolver';
+import Permissions from '../util/Permissions';
+import SystemChannelFlags from '../util/SystemChannelFlags';
+import _UtilModule from '../util/Util';
+const { resolveColor } = _UtilModule;
+import Util from '../util/Util';
 
 let cacheWarningEmitted = false;
 
@@ -31,7 +36,7 @@ let cacheWarningEmitted = false;
  * @extends {CachedManager}
  */
 class GuildManager extends CachedManager {
-  constructor(client: any, iterable: any) {
+  constructor(client: any, iterable?: any) {
     super(client, Guild, iterable);
     if (!cacheWarningEmitted && this._cache.constructor.name !== 'Collection') {
       cacheWarningEmitted = true;
@@ -336,4 +341,5 @@ class GuildManager extends CachedManager {
   }
 }
 
-export = GuildManager;
+export default GuildManager;
+export { GuildManager };

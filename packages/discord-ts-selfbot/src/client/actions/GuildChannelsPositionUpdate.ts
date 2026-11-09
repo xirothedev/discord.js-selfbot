@@ -1,4 +1,4 @@
-const Action = require('./Action');
+import Action from './Action';
 
 class GuildChannelsPositionUpdate extends Action {
   handle(data: any) {
@@ -16,4 +16,5 @@ class GuildChannelsPositionUpdate extends Action {
   }
 }
 
-export = GuildChannelsPositionUpdate;
+export default GuildChannelsPositionUpdate;
+export { GuildChannelsPositionUpdate };

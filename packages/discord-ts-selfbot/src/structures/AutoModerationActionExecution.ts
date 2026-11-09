@@ -1,4 +1,5 @@
-const { AutoModerationRuleTriggerTypes } = require('../util/Constants');
+import _ConstantsModule from '../util/Constants';
+const { AutoModerationRuleTriggerTypes } = _ConstantsModule;
 
 /**
  * Represents the structure of an executed action when an {@link AutoModerationRule} is triggered.
@@ -86,4 +87,5 @@ class AutoModerationActionExecution {
   }
 }
 
-export = AutoModerationActionExecution;
+export default AutoModerationActionExecution;
+export { AutoModerationActionExecution };

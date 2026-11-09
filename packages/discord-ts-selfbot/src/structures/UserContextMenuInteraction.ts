@@ -1,4 +1,4 @@
-const ContextMenuInteraction = require('./ContextMenuInteraction');
+import ContextMenuInteraction from './ContextMenuInteraction';
 
 /**
  * Represents a user context menu interaction.
@@ -25,4 +25,5 @@ class UserContextMenuInteraction extends ContextMenuInteraction {
   }
 }
 
-export = UserContextMenuInteraction;
+export default UserContextMenuInteraction;
+export { UserContextMenuInteraction };

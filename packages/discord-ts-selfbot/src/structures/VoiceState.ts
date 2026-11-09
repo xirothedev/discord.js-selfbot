@@ -1,5 +1,6 @@
-const Base = require('./Base');
-const { Error, TypeError } = require('../errors');
+import Base from './Base';
+import _errorsModule from '../errors';
+const { Error, TypeError } = _errorsModule;
 
 /**
  * Represents the voice state for a Guild Member.
@@ -350,4 +351,5 @@ class VoiceState extends Base {
   }
 }
 
-export = VoiceState;
+export default VoiceState;
+export { VoiceState };

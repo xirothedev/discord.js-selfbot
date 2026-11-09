@@ -1,18 +1,21 @@
-const EventEmitter = require('events');
-const { getCiphers } = require('node:crypto');
-const { setTimeout } = require('node:timers');
-const { Collection } = require('@discordjs/collection');
-const VoiceUDP = require('./networking/VoiceUDPClient');
-const VoiceWebSocket = require('./networking/VoiceWebSocket');
-const MediaPlayer = require('./player/MediaPlayer');
-const VoiceReceiver = require('./receiver/Receiver');
-const { parseStreamKey } = require('./util/Function');
-const PlayInterface = require('./util/PlayInterface');
-const Silence = require('./util/Silence');
-const { Error } = require('../../errors');
-const { Opcodes, VoiceOpcodes, VoiceStatus, Events } = require('../../util/Constants');
-const Speaking = require('../../util/Speaking');
-const Util = require('../../util/Util');
+import EventEmitter from 'events';
+import { getCiphers } from 'node:crypto';
+import { setTimeout } from 'node:timers';
+import { Collection } from '@discordjs/collection';
+import VoiceUDP from './networking/VoiceUDPClient';
+import VoiceWebSocket from './networking/VoiceWebSocket';
+import MediaPlayer from './player/MediaPlayer';
+import VoiceReceiver from './receiver/Receiver';
+import _FunctionModule from './util/Function';
+const { parseStreamKey } = _FunctionModule;
+import PlayInterface from './util/PlayInterface';
+import Silence from './util/Silence';
+import _errorsModule from '../../errors';
+const { Error } = _errorsModule;
+import _ConstantsModule from '../../util/Constants';
+const { Opcodes, VoiceOpcodes, VoiceStatus, Events } = _ConstantsModule;
+import Speaking from '../../util/Speaking';
+import Util from '../../util/Util';
 
 // Workaround for Discord now requiring silence to be sent before being able to receive audio
 class SingleSilence extends Silence {
@@ -35,7 +38,11 @@ function routeStreamPacket(connection: any, packet: any) {
   if (typeof packet !== 'object' || !packet.t || !packet.d || !packet.d?.stream_key) return;
   const { t: event, d: data } = packet;
   const StreamKey = parseStreamKey(data.stream_key);
-  if (StreamKey.userId === connection.channel.client.user.id && connection.channel.id == StreamKey.channelId && connection.streamConnection) {
+  if (
+    StreamKey.userId === connection.channel.client.user.id &&
+    connection.channel.id == StreamKey.channelId &&
+    connection.streamConnection
+  ) {
     const sc = connection.streamConnection;
     switch (event) {
       case 'STREAM_CREATE':
@@ -1188,4 +1195,5 @@ class StreamConnectionReadonly extends VoiceConnection {
 PlayInterface.applyToClass(VoiceConnection);
 PlayInterface.applyToClass(StreamConnection);
 
-export = VoiceConnection;
+export default VoiceConnection;
+export { VoiceConnection };

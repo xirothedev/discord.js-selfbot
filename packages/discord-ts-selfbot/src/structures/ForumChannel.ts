@@ -1,5 +1,6 @@
-const ThreadOnlyChannel = require('./ThreadOnlyChannel');
-const { ForumLayoutTypes } = require('../util/Constants');
+import ThreadOnlyChannel from './ThreadOnlyChannel';
+import _ConstantsModule from '../util/Constants';
+const { ForumLayoutTypes } = _ConstantsModule;
 
 /**
  * Represents a forum channel.
@@ -26,4 +27,5 @@ class ForumChannel extends ThreadOnlyChannel {
   }
 }
 
-export = ForumChannel;
+export default ForumChannel;
+export { ForumChannel };

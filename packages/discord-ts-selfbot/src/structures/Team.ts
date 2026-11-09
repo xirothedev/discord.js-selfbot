@@ -1,7 +1,7 @@
-const { Collection } = require('@discordjs/collection');
-const Base = require('./Base');
-const TeamMember = require('./TeamMember');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
+import { Collection } from '@discordjs/collection';
+import Base from './Base';
+import TeamMember from './TeamMember';
+import SnowflakeUtil from '../util/SnowflakeUtil';
 
 /**
  * Represents a Client OAuth2 Application Team.
@@ -114,4 +114,5 @@ class Team extends Base {
   }
 }
 
-export = Team;
+export default Team;
+export { Team };

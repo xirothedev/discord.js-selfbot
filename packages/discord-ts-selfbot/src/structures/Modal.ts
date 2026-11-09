@@ -1,7 +1,8 @@
-const BaseMessageComponent = require('./BaseMessageComponent');
-const { InteractionTypes } = require('../util/Constants');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
-const Util = require('../util/Util');
+import BaseMessageComponent from './BaseMessageComponent';
+import _ConstantsModule from '../util/Constants';
+const { InteractionTypes } = _ConstantsModule;
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import Util from '../util/Util';
 
 /**
  * Represents a modal (form) to be shown in response to an interaction
@@ -157,4 +158,5 @@ class Modal {
   }
 }
 
-export = Modal;
+export default Modal;
+export { Modal };

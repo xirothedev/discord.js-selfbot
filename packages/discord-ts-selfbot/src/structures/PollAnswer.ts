@@ -1,5 +1,6 @@
-const Base = require('./Base');
-const { Emoji } = require('./Emoji');
+import Base from './Base';
+import _EmojiModule from './Emoji';
+const { Emoji } = _EmojiModule;
 
 /**
  * Represents an answer to a {@link Poll}
@@ -84,4 +85,5 @@ class PollAnswer extends Base {
   }
 }
 
-export = { PollAnswer };
+export { PollAnswer };
+export default { PollAnswer };

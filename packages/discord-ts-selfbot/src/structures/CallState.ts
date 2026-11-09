@@ -1,5 +1,5 @@
-const { Collection } = require('@discordjs/collection');
-const Base = require('./Base');
+import { Collection } from '@discordjs/collection';
+import Base from './Base';
 
 /**
  * Represents a call
@@ -58,4 +58,5 @@ class CallState extends Base {
   }
 }
 
-export = CallState;
+export default CallState;
+export { CallState };

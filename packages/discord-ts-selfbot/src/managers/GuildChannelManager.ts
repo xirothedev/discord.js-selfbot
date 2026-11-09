@@ -1,22 +1,19 @@
-const process = require('node:process');
-const { Collection } = require('@discordjs/collection');
-const CachedManager = require('./CachedManager');
-const { Error, TypeError } = require('../errors');
-const GuildChannel = require('../structures/GuildChannel');
-const PermissionOverwrites = require('../structures/PermissionOverwrites');
-const ThreadChannel = require('../structures/ThreadChannel');
-const Webhook = require('../structures/Webhook');
-const ChannelFlags = require('../util/ChannelFlags');
-const {
-  ThreadChannelTypes,
-  ChannelTypes,
-  VideoQualityModes,
-  SortOrderTypes,
-  ForumLayoutTypes,
-} = require('../util/Constants');
-const DataResolver = require('../util/DataResolver');
-const Util = require('../util/Util');
-const { resolveAutoArchiveMaxLimit, transformGuildForumTag, transformGuildDefaultReaction } = require('../util/Util');
+import process from 'node:process';
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
+const { Error, TypeError } = _errorsModule;
+import GuildChannel from '../structures/GuildChannel';
+import PermissionOverwrites from '../structures/PermissionOverwrites';
+import ThreadChannel from '../structures/ThreadChannel';
+import Webhook from '../structures/Webhook';
+import ChannelFlags from '../util/ChannelFlags';
+import _ConstantsModule from '../util/Constants';
+const { ThreadChannelTypes, ChannelTypes, VideoQualityModes, SortOrderTypes, ForumLayoutTypes } = _ConstantsModule;
+import DataResolver from '../util/DataResolver';
+import Util from '../util/Util';
+import _UtilModule from '../util/Util';
+const { resolveAutoArchiveMaxLimit, transformGuildForumTag, transformGuildDefaultReaction } = _UtilModule;
 
 let cacheWarningEmitted = false;
 let storeChannelDeprecationEmitted = false;
@@ -26,7 +23,7 @@ let storeChannelDeprecationEmitted = false;
  * @extends {CachedManager}
  */
 class GuildChannelManager extends CachedManager {
-  constructor(guild: any, iterable: any) {
+  constructor(guild: any, iterable?: any) {
     super(guild.client, GuildChannel, iterable);
     const defaultCaching =
       this._cache.constructor.name === 'Collection' ||
@@ -483,4 +480,5 @@ class GuildChannelManager extends CachedManager {
   }
 }
 
-export = GuildChannelManager;
+export default GuildChannelManager;
+export { GuildChannelManager };

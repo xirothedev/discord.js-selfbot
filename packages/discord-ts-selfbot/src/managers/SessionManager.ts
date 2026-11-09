@@ -1,12 +1,12 @@
-const CachedManager = require('./CachedManager');
-const Session = require('../structures/Session');
+import CachedManager from './CachedManager';
+import Session from '../structures/Session';
 
 /**
  * Manages API methods for users and stores their cache.
  * @extends {CachedManager}
  */
 class SessionManager extends CachedManager {
-  constructor(client: any, iterable: any) {
+  constructor(client: any, iterable?: any) {
     super(client, Session, iterable);
 
     /**
@@ -61,4 +61,5 @@ class SessionManager extends CachedManager {
   }
 }
 
-export = SessionManager;
+export default SessionManager;
+export { SessionManager };

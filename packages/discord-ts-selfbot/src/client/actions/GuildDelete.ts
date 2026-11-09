@@ -1,7 +1,9 @@
-const { setTimeout } = require('node:timers');
-const Action = require('./Action');
-const { deletedGuilds } = require('../../structures/Guild');
-const { Events } = require('../../util/Constants');
+import { setTimeout } from 'node:timers';
+import Action from './Action';
+import _GuildModule from '../../structures/Guild';
+const { deletedGuilds } = _GuildModule;
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class GuildDeleteAction extends Action {
   declare deleted: Map<any, any>;
@@ -62,4 +64,5 @@ class GuildDeleteAction extends Action {
   }
 }
 
-export = GuildDeleteAction;
+export default GuildDeleteAction;
+export { GuildDeleteAction };

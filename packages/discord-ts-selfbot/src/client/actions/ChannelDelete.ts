@@ -1,8 +1,11 @@
-const Action = require('./Action');
-const { deletedChannels } = require('../../structures/Channel');
-const DMChannel = require('../../structures/DMChannel');
-const { deletedMessages } = require('../../structures/Message');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import _ChannelModule from '../../structures/Channel';
+const { deletedChannels } = _ChannelModule;
+import DMChannel from '../../structures/DMChannel';
+import _MessageModule from '../../structures/Message';
+const { deletedMessages } = _MessageModule;
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class ChannelDeleteAction extends Action {
   declare deleted: Map<any, any>;
@@ -36,4 +39,5 @@ class ChannelDeleteAction extends Action {
   }
 }
 
-export = ChannelDeleteAction;
+export default ChannelDeleteAction;
+export { ChannelDeleteAction };

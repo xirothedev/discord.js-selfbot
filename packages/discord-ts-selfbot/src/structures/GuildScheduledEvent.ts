@@ -1,12 +1,10 @@
-const Base = require('./Base');
-const { Error } = require('../errors');
-const {
-  GuildScheduledEventEntityTypes,
-  GuildScheduledEventStatuses,
-  GuildScheduledEventPrivacyLevels,
-  Endpoints,
-} = require('../util/Constants');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
+import Base from './Base';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
+import _ConstantsModule from '../util/Constants';
+const { GuildScheduledEventEntityTypes, GuildScheduledEventStatuses, GuildScheduledEventPrivacyLevels, Endpoints } =
+  _ConstantsModule;
+import SnowflakeUtil from '../util/SnowflakeUtil';
 
 /**
  * Represents a scheduled event in a {@link Guild}.
@@ -531,4 +529,5 @@ class GuildScheduledEvent extends Base {
   }
 }
 
-export = { GuildScheduledEvent };
+export { GuildScheduledEvent };
+export default { GuildScheduledEvent };

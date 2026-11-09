@@ -1,9 +1,11 @@
-const process = require('node:process');
-const MessagePayload = require('./MessagePayload');
-const { Error } = require('../errors');
-const { WebhookTypes } = require('../util/Constants');
-const DataResolver = require('../util/DataResolver');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
+import process from 'node:process';
+import MessagePayload from './MessagePayload';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
+import _ConstantsModule from '../util/Constants';
+const { WebhookTypes } = _ConstantsModule;
+import DataResolver from '../util/DataResolver';
+import SnowflakeUtil from '../util/SnowflakeUtil';
 
 let deprecationEmittedForFetchMessage = false;
 
@@ -474,4 +476,5 @@ class Webhook {
   }
 }
 
-export = Webhook;
+export default Webhook;
+export { Webhook };

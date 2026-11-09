@@ -1,14 +1,18 @@
-'use strict';
-
-const { Buffer } = require('node:buffer');
-const crypto = require('node:crypto');
-const EventEmitter = require('node:events');
-const { StringDecoder } = require('node:string_decoder');
-const { setTimeout } = require('node:timers');
-const { fetch } = require('undici');
-const WebSocket = require('ws');
-const { UserAgent } = require('./Constants');
-const Options = require('./Options');
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const qrcode: any = require('qrcode');
+import { Buffer } from 'node:buffer';
+import crypto from 'node:crypto';
+import EventEmitter from 'node:events';
+import { StringDecoder } from 'node:string_decoder';
+import { setTimeout } from 'node:timers';
+import { fetch } from 'undici';
+import WebSocket from 'ws';
+import _ConstantsModule from './Constants';
+const { UserAgent } = _ConstantsModule;
+import Options from './Options';
+// @ts-ignore
+('use strict');
 
 const defaultClientOptions = Options.createDefault();
 
@@ -318,7 +322,7 @@ class DiscordAuthWebsocket extends EventEmitter {
    */
   generateQR() {
     if (!this.#fingerprint) return;
-    require('qrcode').toString(this.AuthURL, { type: 'utf8', errorCorrectionLevel: 'L' }, (err: any, url: any) => {
+    qrcode.toString(this.AuthURL, { type: 'utf8', errorCorrectionLevel: 'L' }, (err: any, url: any) => {
       if (err) {
         //
       }
@@ -381,4 +385,5 @@ class DiscordAuthWebsocket extends EventEmitter {
   }
 }
 
-export = DiscordAuthWebsocket;
+export default DiscordAuthWebsocket;
+export { DiscordAuthWebsocket };

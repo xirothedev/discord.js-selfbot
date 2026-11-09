@@ -1,5 +1,5 @@
-const Base = require('./Base');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
+import Base from './Base';
+import SnowflakeUtil from '../util/SnowflakeUtil';
 
 /**
  * The base class for {@link Guild}, {@link OAuth2Guild} and {@link InviteGuild}.
@@ -111,4 +111,5 @@ class BaseGuild extends Base {
   }
 }
 
-export = BaseGuild;
+export default BaseGuild;
+export { BaseGuild };

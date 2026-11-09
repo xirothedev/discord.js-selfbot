@@ -1,10 +1,12 @@
-const EventEmitter = require('events');
-const { setTimeout } = require('node:timers');
-const Recorder = require('./Recorder');
-const Speaking = require('../../../util/Speaking');
-const VoiceCodec = require('../util/VoiceCodec');
-const RtpDecryptor = require('../util/RtpDecryptor');
-const { SILENCE_FRAME } = require('../util/Silence');
+import { Readable as ReadableStream } from 'node:stream';
+import EventEmitter from 'events';
+import { setTimeout } from 'node:timers';
+import Recorder from './Recorder';
+import Speaking from '../../../util/Speaking';
+import VoiceCodec from '../util/VoiceCodec';
+import RtpDecryptor from '../util/RtpDecryptor';
+import _SilenceModule from '../util/Silence';
+const { SILENCE_FRAME } = _SilenceModule;
 
 // The delay between packets when a user is considered to have stopped speaking
 // https://github.com/discordjs/discord.js/issues/3524#issuecomment-540373200
@@ -12,7 +14,7 @@ const DISCORD_SPEAKING_DELAY = 250;
 
 // Unused: const HEADER_EXTENSION_BYTE = Buffer.from([0xbe, 0xde]);
 
-class Readable extends require('stream').Readable {
+class Readable extends ReadableStream {
   _read() {} // eslint-disable-line no-empty-function
 }
 
@@ -196,4 +198,5 @@ class PacketHandler extends EventEmitter {
   }
 }
 
-export = PacketHandler;
+export default PacketHandler;
+export { PacketHandler };

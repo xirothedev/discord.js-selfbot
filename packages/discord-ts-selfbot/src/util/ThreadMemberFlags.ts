@@ -1,4 +1,4 @@
-import BitField = require('./BitField');
+import BitField from './BitField';
 
 /**
  * Data structure that makes it easy to interact with a {@link ThreadMember#flags} bitfield.
@@ -25,4 +25,5 @@ class ThreadMemberFlags extends BitField {}
  */
 ThreadMemberFlags.FLAGS = {};
 
-export = ThreadMemberFlags;
+export default ThreadMemberFlags;
+export { ThreadMemberFlags };

@@ -1,6 +1,7 @@
-const Action = require('./Action');
-const VoiceState = require('../../structures/VoiceState');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import VoiceState from '../../structures/VoiceState';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class VoiceStateUpdate extends Action {
   handle(data: any) {
@@ -45,4 +46,5 @@ class VoiceStateUpdate extends Action {
   }
 }
 
-export = VoiceStateUpdate;
+export default VoiceStateUpdate;
+export { VoiceStateUpdate };

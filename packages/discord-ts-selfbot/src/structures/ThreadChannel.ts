@@ -1,11 +1,14 @@
-const { Channel } = require('./Channel');
-const TextBasedChannel = require('./interfaces/TextBasedChannel');
-const { RangeError } = require('../errors');
-const MessageManager = require('../managers/MessageManager');
-const ThreadMemberManager = require('../managers/ThreadMemberManager');
-const ChannelFlags = require('../util/ChannelFlags');
-const Permissions = require('../util/Permissions');
-const { resolveAutoArchiveMaxLimit } = require('../util/Util');
+import _ChannelModule from './Channel';
+const { Channel } = _ChannelModule;
+import TextBasedChannel from './interfaces/TextBasedChannel';
+import _errorsModule from '../errors';
+const { RangeError } = _errorsModule;
+import MessageManager from '../managers/MessageManager';
+import ThreadMemberManager from '../managers/ThreadMemberManager';
+import ChannelFlags from '../util/ChannelFlags';
+import Permissions from '../util/Permissions';
+import _UtilModule from '../util/Util';
+const { resolveAutoArchiveMaxLimit } = _UtilModule;
 
 /**
  * Represents a thread channel on Discord.
@@ -605,4 +608,5 @@ class ThreadChannel extends Channel {
 
 TextBasedChannel.applyToClass(ThreadChannel, true, ['fetchWebhooks', 'setRateLimitPerUser', 'setNSFW']);
 
-export = ThreadChannel;
+export default ThreadChannel;
+export { ThreadChannel };

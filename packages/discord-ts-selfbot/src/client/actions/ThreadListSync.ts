@@ -1,6 +1,7 @@
-const { Collection } = require('@discordjs/collection');
-const Action = require('./Action');
-const { Events } = require('../../util/Constants');
+import { Collection } from '@discordjs/collection';
+import Action from './Action';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class ThreadListSyncAction extends Action {
   handle(data: any) {
@@ -54,4 +55,5 @@ class ThreadListSyncAction extends Action {
   }
 }
 
-export = ThreadListSyncAction;
+export default ThreadListSyncAction;
+export { ThreadListSyncAction };

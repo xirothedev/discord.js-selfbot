@@ -1,8 +1,10 @@
-const { Collection } = require('@discordjs/collection');
-const { Channel } = require('./Channel');
-const TextBasedChannel = require('./interfaces/TextBasedChannel');
-const MessageManager = require('../managers/MessageManager');
-const { Opcodes, Status } = require('../util/Constants');
+import { Collection } from '@discordjs/collection';
+import _ChannelModule from './Channel';
+const { Channel } = _ChannelModule;
+import TextBasedChannel from './interfaces/TextBasedChannel';
+import MessageManager from '../managers/MessageManager';
+import _ConstantsModule from '../util/Constants';
+const { Opcodes, Status } = _ConstantsModule;
 
 /**
  * Represents a direct message channel between two users.
@@ -218,4 +220,5 @@ class DMChannel extends Channel {
 
 TextBasedChannel.applyToClass(DMChannel, true, ['fetchWebhooks', 'createWebhook', 'setRateLimitPerUser', 'setNSFW']);
 
-export = DMChannel;
+export default DMChannel;
+export { DMChannel };

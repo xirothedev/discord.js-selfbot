@@ -1,5 +1,5 @@
-const { Collection } = require('@discordjs/collection');
-const Base = require('./Base');
+import { Collection } from '@discordjs/collection';
+import Base from './Base';
 
 /**
  * Represents the data about a public {@link StageInstance} in an {@link Invite}.
@@ -81,4 +81,5 @@ class InviteStageInstance extends Base {
   }
 }
 
-export = InviteStageInstance;
+export default InviteStageInstance;
+export { InviteStageInstance };

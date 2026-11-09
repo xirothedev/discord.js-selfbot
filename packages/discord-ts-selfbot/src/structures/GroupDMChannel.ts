@@ -1,10 +1,13 @@
-const { Collection } = require('@discordjs/collection');
+import { Collection } from '@discordjs/collection';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
 const { Channel } = require('./Channel');
-const Invite = require('./Invite');
-const TextBasedChannel = require('./interfaces/TextBasedChannel');
-const MessageManager = require('../managers/MessageManager');
-const { Status, Opcodes } = require('../util/Constants');
-const DataResolver = require('../util/DataResolver');
+import Invite from './Invite';
+import TextBasedChannel from './interfaces/TextBasedChannel';
+import MessageManager from '../managers/MessageManager';
+import _ConstantsModule from '../util/Constants';
+const { Status, Opcodes } = _ConstantsModule;
+import DataResolver from '../util/DataResolver';
 
 /**
  * Represents a Group DM Channel on Discord.
@@ -395,4 +398,5 @@ TextBasedChannel.applyToClass(GroupDMChannel, true, [
   'setNSFW',
 ]);
 
-export = GroupDMChannel;
+export default GroupDMChannel;
+export { GroupDMChannel };

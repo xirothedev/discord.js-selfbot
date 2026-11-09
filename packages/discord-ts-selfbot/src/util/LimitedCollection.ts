@@ -1,8 +1,10 @@
-const { setInterval } = require('node:timers');
-const { Collection } = require('@discordjs/collection');
-const { _cleanupSymbol } = require('./Constants');
-const Sweepers = require('./Sweepers');
-const { TypeError } = require('../errors/DJSError');
+import { setInterval } from 'node:timers';
+import { Collection } from '@discordjs/collection';
+import _ConstantsModule from './Constants';
+const { _cleanupSymbol } = _ConstantsModule;
+import Sweepers from './Sweepers';
+import _DJSErrorModule from '../errors/DJSError';
+const { TypeError } = _DJSErrorModule;
 
 /**
  * @typedef {Function} SweepFilter
@@ -32,7 +34,8 @@ const { TypeError } = require('../errors/DJSError');
  * @param {LimitedCollectionOptions} [options={}] Options for constructing the Collection.
  * @param {Iterable} [iterable=null] Optional entries passed to the Map constructor.
  */
-class LimitedCollection extends Collection {
+class LimitedCollection extends Collection<any, any> {
+  [key: string]: any;
   constructor(options: any = {}, iterable?: any) {
     if (typeof options !== 'object' || options === null) {
       throw new TypeError('INVALID_TYPE', 'options', 'object', true);
@@ -126,4 +129,5 @@ class LimitedCollection extends Collection {
   }
 }
 
-export = LimitedCollection;
+export default LimitedCollection;
+export { LimitedCollection };

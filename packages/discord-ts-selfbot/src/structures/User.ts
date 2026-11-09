@@ -1,11 +1,13 @@
-const Base = require('./Base');
-const VoiceState = require('./VoiceState');
-const TextBasedChannel = require('./interfaces/TextBasedChannel');
-const { Error } = require('../errors');
-const { RelationshipTypes } = require('../util/Constants');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
-const UserFlags = require('../util/UserFlags');
-const Util = require('../util/Util');
+import Base from './Base';
+import VoiceState from './VoiceState';
+import TextBasedChannel from './interfaces/TextBasedChannel';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
+import _ConstantsModule from '../util/Constants';
+const { RelationshipTypes } = _ConstantsModule;
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import UserFlags from '../util/UserFlags';
+import Util from '../util/Util';
 
 /**
  * Represents a user on Discord.
@@ -620,4 +622,5 @@ TextBasedChannel.applyToClass(User);
  * @see {@link https://discord.com/developers/docs/resources/user#user-object}
  */
 
-export = User;
+export default User;
+export { User };

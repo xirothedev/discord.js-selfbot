@@ -1,6 +1,8 @@
-const Action = require('./Action');
-const { deletedRoles } = require('../../structures/Role');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import _RoleModule from '../../structures/Role';
+const { deletedRoles } = _RoleModule;
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class GuildRoleDeleteAction extends Action {
   handle(data: any) {
@@ -26,4 +28,5 @@ class GuildRoleDeleteAction extends Action {
   }
 }
 
-export = GuildRoleDeleteAction;
+export default GuildRoleDeleteAction;
+export { GuildRoleDeleteAction };

@@ -1,4 +1,4 @@
-const BaseDispatcher = require('./BaseDispatcher');
+import BaseDispatcher from './BaseDispatcher';
 
 /**
  * The class that sends video packet data to the voice connection.
@@ -60,9 +60,10 @@ class VideoDispatcher extends BaseDispatcher {
     this.fps = value;
   }
 
-  _codecCallback() {
+  _codecCallback(..._args: any[]) {
     throw new Error('The _codecCallback method must be implemented');
   }
 }
 
-export = VideoDispatcher;
+export default VideoDispatcher;
+export { VideoDispatcher };

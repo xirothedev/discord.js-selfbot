@@ -1,6 +1,7 @@
-const Modal = require('../../../structures/Modal');
-const { Events } = require('../../../util/Constants');
-export = (client: any, { d: data }: any) => {
+import Modal from '../../../structures/Modal';
+import _ConstantsModule from '../../../util/Constants';
+const { Events } = _ConstantsModule;
+export default (client: any, { d: data }: any) => {
   /**
    * Emitted whenever client user receive interaction.showModal()
    * @event Client#interactionModalCreate

@@ -1,12 +1,12 @@
-const CachedManager = require('./CachedManager');
-const InteractionResponse = require('../structures/InteractionResponse');
+import CachedManager from './CachedManager';
+import InteractionResponse from '../structures/interfaces/InteractionResponses';
 
 /**
  * Manages API methods for InteractionResponse and holds their cache.
  * @extends {CachedManager}
  */
 class InteractionManager extends CachedManager {
-  constructor(channel: any, iterable: any) {
+  constructor(channel: any, iterable?: any) {
     super(channel.client, InteractionResponse, iterable);
 
     /**
@@ -34,4 +34,5 @@ class InteractionManager extends CachedManager {
   }
 }
 
-export = InteractionManager;
+export default InteractionManager;
+export { InteractionManager };

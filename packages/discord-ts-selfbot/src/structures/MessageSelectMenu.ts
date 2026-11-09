@@ -1,6 +1,7 @@
-const BaseMessageComponent = require('./BaseMessageComponent');
-const { ChannelTypes, MessageComponentTypes } = require('../util/Constants');
-const Util = require('../util/Util');
+import BaseMessageComponent from './BaseMessageComponent';
+import _ConstantsModule from '../util/Constants';
+const { ChannelTypes, MessageComponentTypes } = _ConstantsModule;
+import Util from '../util/Util';
 
 /**
  * Represents a select menu message component
@@ -137,4 +138,5 @@ class MessageSelectMenu extends BaseMessageComponent {
   }
 }
 
-export = MessageSelectMenu;
+export default MessageSelectMenu;
+export { MessageSelectMenu };

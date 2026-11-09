@@ -1,6 +1,9 @@
-const { Presence } = require('./Presence');
-const { TypeError } = require('../errors');
-const { ActivityTypes, Opcodes } = require('../util/Constants');
+import _PresenceModule from './Presence';
+const { Presence } = _PresenceModule;
+import _errorsModule from '../errors';
+const { TypeError } = _errorsModule;
+import _ConstantsModule from '../util/Constants';
+const { ActivityTypes, Opcodes } = _ConstantsModule;
 
 const CustomStatusActivityTypes = [ActivityTypes.CUSTOM, ActivityTypes[ActivityTypes.CUSTOM]];
 
@@ -66,7 +69,8 @@ class ClientPresence extends Presence {
   }
 }
 
-export = ClientPresence;
+export default ClientPresence;
+export { ClientPresence };
 
 /* eslint-disable max-len */
 /**

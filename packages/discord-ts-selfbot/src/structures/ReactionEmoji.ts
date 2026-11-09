@@ -1,5 +1,6 @@
-const { Emoji } = require('./Emoji');
-const Util = require('../util/Util');
+import _EmojiModule from './Emoji';
+const { Emoji } = _EmojiModule;
+import Util from '../util/Util';
 
 /**
  * Represents a limited emoji set used for both custom and unicode emojis. Custom emojis
@@ -27,4 +28,5 @@ class ReactionEmoji extends Emoji {
   }
 }
 
-export = ReactionEmoji;
+export default ReactionEmoji;
+export { ReactionEmoji };

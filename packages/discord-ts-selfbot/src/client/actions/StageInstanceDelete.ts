@@ -1,6 +1,8 @@
-const Action = require('./Action');
-const { deletedStageInstances } = require('../../structures/StageInstance');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import _StageInstanceModule from '../../structures/StageInstance';
+const { deletedStageInstances } = _StageInstanceModule;
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class StageInstanceDeleteAction extends Action {
   handle(data: any) {
@@ -28,4 +30,5 @@ class StageInstanceDeleteAction extends Action {
   }
 }
 
-export = StageInstanceDeleteAction;
+export default StageInstanceDeleteAction;
+export { StageInstanceDeleteAction };

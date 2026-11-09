@@ -1,4 +1,5 @@
-const { Events, Opcodes, Status } = require('../../../util/Constants');
+import _ConstantsModule from '../../../util/Constants';
+const { Events, Opcodes, Status } = _ConstantsModule;
 const run = (client: any, guild: any) => {
   const subs: any = {};
   subs[guild.id] = {
@@ -17,7 +18,7 @@ const run = (client: any, guild: any) => {
     },
   });
 };
-export = (client: any, { d: data }: any, shard: any) => {
+export default (client: any, { d: data }: any, shard: any) => {
   let guild = client.guilds.cache.get(data.id);
   run(client, data);
   if (guild) {

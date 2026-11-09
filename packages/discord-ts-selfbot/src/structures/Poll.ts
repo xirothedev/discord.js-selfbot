@@ -1,8 +1,11 @@
-const { Collection } = require('@discordjs/collection');
-const Base = require('./Base');
-const { PollAnswer } = require('./PollAnswer');
-const { Error } = require('../errors');
-const { PollLayoutTypes } = require('../util/Constants');
+import { Collection } from '@discordjs/collection';
+import Base from './Base';
+import _PollAnswerModule from './PollAnswer';
+const { PollAnswer } = _PollAnswerModule;
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
+import _ConstantsModule from '../util/Constants';
+const { PollLayoutTypes } = _ConstantsModule;
 
 /**
  * Represents a Poll
@@ -104,4 +107,5 @@ class Poll extends Base {
   }
 }
 
-export = { Poll };
+export { Poll };
+export default { Poll };

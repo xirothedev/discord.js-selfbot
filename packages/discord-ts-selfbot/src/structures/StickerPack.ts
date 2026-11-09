@@ -1,7 +1,8 @@
-const { Collection } = require('@discordjs/collection');
-const Base = require('./Base');
-const { Sticker } = require('./Sticker');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
+import { Collection } from '@discordjs/collection';
+import Base from './Base';
+import _StickerModule from './Sticker';
+const { Sticker } = _StickerModule;
+import SnowflakeUtil from '../util/SnowflakeUtil';
 
 /**
  * Represents a pack of standard stickers.
@@ -91,4 +92,5 @@ class StickerPack extends Base {
   }
 }
 
-export = StickerPack;
+export default StickerPack;
+export { StickerPack };

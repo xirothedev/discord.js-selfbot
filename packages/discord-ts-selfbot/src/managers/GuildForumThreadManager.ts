@@ -1,7 +1,9 @@
-const ThreadManager = require('./ThreadManager');
-const { TypeError } = require('../errors');
-const MessagePayload = require('../structures/MessagePayload');
-const { resolveAutoArchiveMaxLimit, getUploadURL, uploadFile } = require('../util/Util');
+import ThreadManager from './ThreadManager';
+import _errorsModule from '../errors';
+const { TypeError } = _errorsModule;
+import MessagePayload from '../structures/MessagePayload';
+import _UtilModule from '../util/Util';
+const { resolveAutoArchiveMaxLimit, getUploadURL, uploadFile } = _UtilModule;
 
 /**
  * Manages API methods for threads in forum channels and stores their cache.
@@ -103,4 +105,5 @@ class GuildForumThreadManager extends ThreadManager {
   }
 }
 
-export = GuildForumThreadManager;
+export default GuildForumThreadManager;
+export { GuildForumThreadManager };

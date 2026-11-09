@@ -1,4 +1,4 @@
-const MessageComponentInteraction = require('./MessageComponentInteraction');
+import MessageComponentInteraction from './MessageComponentInteraction';
 
 /**
  * Represents a button interaction.
@@ -6,4 +6,5 @@ const MessageComponentInteraction = require('./MessageComponentInteraction');
  */
 class ButtonInteraction extends MessageComponentInteraction {}
 
-export = ButtonInteraction;
+export default ButtonInteraction;
+export { ButtonInteraction };

@@ -3,6 +3,7 @@
  * @abstract
  */
 class BaseManager {
+  [key: string]: any;
   constructor(client: any) {
     /**
      * The client that instantiated this Manager
@@ -14,4 +15,5 @@ class BaseManager {
   }
 }
 
-export = BaseManager;
+export default BaseManager;
+export { BaseManager };

@@ -1,4 +1,4 @@
-const ThreadOnlyChannel = require('./ThreadOnlyChannel');
+import ThreadOnlyChannel from './ThreadOnlyChannel';
 
 /**
  * Represents a media channel.
@@ -6,4 +6,5 @@ const ThreadOnlyChannel = require('./ThreadOnlyChannel');
  */
 class MediaChannel extends ThreadOnlyChannel {}
 
-export = MediaChannel;
+export default MediaChannel;
+export { MediaChannel };

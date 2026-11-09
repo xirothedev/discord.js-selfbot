@@ -1,16 +1,19 @@
-const { Collection } = require('@discordjs/collection');
-const BaseManager = require('./BaseManager');
-const { GuildMember } = require('../structures/GuildMember');
-const { Message } = require('../structures/Message');
-const ThreadMember = require('../structures/ThreadMember');
-const User = require('../structures/User');
-const { RelationshipTypes } = require('../util/Constants');
+import { Collection } from '@discordjs/collection';
+import BaseManager from './BaseManager';
+import _GuildMemberModule from '../structures/GuildMember';
+const { GuildMember } = _GuildMemberModule;
+import _MessageModule from '../structures/Message';
+const { Message } = _MessageModule;
+import ThreadMember from '../structures/ThreadMember';
+import User from '../structures/User';
+import _ConstantsModule from '../util/Constants';
+const { RelationshipTypes } = _ConstantsModule;
 
 /**
  * Manages API methods for Relationships and stores their cache.
  */
 class RelationshipManager extends BaseManager {
-  constructor(client: any, users: any) {
+  constructor(client: any, users?: any) {
     super(client);
     /**
      * A collection of users this manager is caching. (Type: Number)
@@ -297,4 +300,5 @@ class RelationshipManager extends BaseManager {
   }
 }
 
-export = RelationshipManager;
+export default RelationshipManager;
+export { RelationshipManager };

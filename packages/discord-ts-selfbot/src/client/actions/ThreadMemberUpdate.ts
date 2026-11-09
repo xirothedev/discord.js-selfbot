@@ -1,5 +1,6 @@
-const Action = require('./Action');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class ThreadMemberUpdateAction extends Action {
   handle(data: any) {
@@ -25,4 +26,5 @@ class ThreadMemberUpdateAction extends Action {
   }
 }
 
-export = ThreadMemberUpdateAction;
+export default ThreadMemberUpdateAction;
+export { ThreadMemberUpdateAction };

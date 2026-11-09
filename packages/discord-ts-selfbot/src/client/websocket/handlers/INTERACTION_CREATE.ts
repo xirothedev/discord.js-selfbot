@@ -1,11 +1,12 @@
-const AutocompleteInteraction = require('../../../structures/AutocompleteInteraction');
-const ButtonInteraction = require('../../../structures/ButtonInteraction');
-const CommandInteraction = require('../../../structures/CommandInteraction');
-const MessageContextMenuInteraction = require('../../../structures/MessageContextMenuInteraction');
-const ModalSubmitInteraction = require('../../../structures/ModalSubmitInteraction');
-const SelectMenuInteraction = require('../../../structures/SelectMenuInteraction');
-const UserContextMenuInteraction = require('../../../structures/UserContextMenuInteraction');
-const { ApplicationCommandTypes, Events, InteractionTypes, MessageComponentTypes } = require('../../../util/Constants');
+import AutocompleteInteraction from '../../../structures/AutocompleteInteraction';
+import ButtonInteraction from '../../../structures/ButtonInteraction';
+import CommandInteraction from '../../../structures/CommandInteraction';
+import MessageContextMenuInteraction from '../../../structures/MessageContextMenuInteraction';
+import ModalSubmitInteraction from '../../../structures/ModalSubmitInteraction';
+import SelectMenuInteraction from '../../../structures/SelectMenuInteraction';
+import UserContextMenuInteraction from '../../../structures/UserContextMenuInteraction';
+import _ConstantsModule from '../../../util/Constants';
+const { ApplicationCommandTypes, Events, InteractionTypes, MessageComponentTypes } = _ConstantsModule;
 
 function resolveInteractionType(data: any): any {
   switch (data.type) {
@@ -40,7 +41,7 @@ function resolveInteractionType(data: any): any {
   }
 }
 
-export = (client: any, { d: data }: any) => {
+export default (client: any, { d: data }: any) => {
   const InteractionType = resolveInteractionType(data);
   const interaction = InteractionType ? new InteractionType(client, data) : data;
 

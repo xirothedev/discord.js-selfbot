@@ -1,14 +1,17 @@
-const CachedManager = require('./CachedManager');
-const { TypeError, Error } = require('../errors');
-const { StageInstance } = require('../structures/StageInstance');
-const { PrivacyLevels } = require('../util/Constants');
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
+const { TypeError, Error } = _errorsModule;
+import _StageInstanceModule from '../structures/StageInstance';
+const { StageInstance } = _StageInstanceModule;
+import _ConstantsModule from '../util/Constants';
+const { PrivacyLevels } = _ConstantsModule;
 
 /**
  * Manages API methods for {@link StageInstance} objects and holds their cache.
  * @extends {CachedManager}
  */
 class StageInstanceManager extends CachedManager {
-  constructor(guild: any, iterable: any) {
+  constructor(guild: any, iterable?: any) {
     super(guild.client, StageInstance, iterable);
 
     /**
@@ -157,4 +160,5 @@ class StageInstanceManager extends CachedManager {
   }
 }
 
-export = StageInstanceManager;
+export default StageInstanceManager;
+export { StageInstanceManager };

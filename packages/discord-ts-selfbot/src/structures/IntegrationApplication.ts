@@ -1,4 +1,4 @@
-const Application = require('./interfaces/Application');
+import Application from './interfaces/Application';
 
 /**
  * Represents an Integration's OAuth2 Application.
@@ -91,4 +91,5 @@ class IntegrationApplication extends Application {
   }
 }
 
-export = IntegrationApplication;
+export default IntegrationApplication;
+export { IntegrationApplication };

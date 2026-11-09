@@ -1,6 +1,7 @@
-const BaseMessageComponent = require('./BaseMessageComponent');
-const UnfurledMediaItem = require('./UnfurledMediaItem');
-const { MessageComponentTypes } = require('../util/Constants');
+import BaseMessageComponent from './BaseMessageComponent';
+import UnfurledMediaItem from './UnfurledMediaItem';
+import _ConstantsModule from '../util/Constants';
+const { MessageComponentTypes } = _ConstantsModule;
 
 class ThumbnailComponent extends BaseMessageComponent {
   [key: string]: any;
@@ -53,4 +54,5 @@ class ThumbnailComponent extends BaseMessageComponent {
   }
 }
 
-export = ThumbnailComponent;
+export default ThumbnailComponent;
+export { ThumbnailComponent };

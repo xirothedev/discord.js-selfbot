@@ -1,4 +1,5 @@
-const { Emoji } = require('./Emoji');
+import _EmojiModule from './Emoji';
+const { Emoji } = _EmojiModule;
 
 /**
  * Parent class for {@link GuildEmoji} and {@link GuildPreviewEmoji}.
@@ -51,4 +52,5 @@ class BaseGuildEmoji extends Emoji {
   }
 }
 
-export = BaseGuildEmoji;
+export default BaseGuildEmoji;
+export { BaseGuildEmoji };

@@ -1,6 +1,7 @@
-const BaseCommandInteraction = require('./BaseCommandInteraction');
-const CommandInteractionOptionResolver = require('./CommandInteractionOptionResolver');
-const { ApplicationCommandOptionTypes, ApplicationCommandTypes } = require('../util/Constants');
+import BaseCommandInteraction from './BaseCommandInteraction';
+import CommandInteractionOptionResolver from './CommandInteractionOptionResolver';
+import _ConstantsModule from '../util/Constants';
+const { ApplicationCommandOptionTypes, ApplicationCommandTypes } = _ConstantsModule;
 
 /**
  * Represents a context menu interaction.
@@ -60,4 +61,5 @@ class ContextMenuInteraction extends BaseCommandInteraction {
   }
 }
 
-export = ContextMenuInteraction;
+export default ContextMenuInteraction;
+export { ContextMenuInteraction };

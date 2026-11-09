@@ -1,18 +1,19 @@
-const { isJSONEncodable } = require('@discordjs/builders');
-const { Collection } = require('@discordjs/collection');
-const ApplicationCommandPermissionsManager = require('./ApplicationCommandPermissionsManager');
-const CachedManager = require('./CachedManager');
-const { TypeError } = require('../errors');
-const ApplicationCommand = require('../structures/ApplicationCommand');
-const { ApplicationCommandTypes } = require('../util/Constants');
-const Permissions = require('../util/Permissions');
+import { Collection } from '@discordjs/collection';
+import ApplicationCommandPermissionsManager from './ApplicationCommandPermissionsManager';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
+const { TypeError } = _errorsModule;
+import ApplicationCommand from '../structures/ApplicationCommand';
+import _ConstantsModule from '../util/Constants';
+const { ApplicationCommandTypes } = _ConstantsModule;
+import Permissions from '../util/Permissions';
 
 /**
  * Manages API methods for application commands and stores their cache.
  * @extends {CachedManager}
  */
 class ApplicationCommandManager extends CachedManager {
-  constructor(client: any, iterable: any) {
+  constructor(client: any, iterable?: any) {
     super(client, ApplicationCommand, iterable);
 
     /**
@@ -224,7 +225,7 @@ class ApplicationCommandManager extends CachedManager {
    * @private
    */
   static transformCommand(command: any) {
-    if (isJSONEncodable(command)) return command.toJSON();
+    if (typeof command?.toJSON === 'function') return command.toJSON();
 
     let default_member_permissions;
 
@@ -255,7 +256,8 @@ class ApplicationCommandManager extends CachedManager {
   }
 }
 
-export = ApplicationCommandManager;
+export default ApplicationCommandManager;
+export { ApplicationCommandManager };
 
 /**
  * @external SlashCommandBuilder

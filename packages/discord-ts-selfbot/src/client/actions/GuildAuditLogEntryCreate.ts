@@ -1,6 +1,8 @@
-const Action = require('./Action');
-const GuildAuditLogsEntry = require('../../structures/GuildAuditLogs').Entry;
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import GuildAuditLogs from '../../structures/GuildAuditLogs';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
+const GuildAuditLogsEntry = GuildAuditLogs.Entry;
 
 class GuildAuditLogEntryCreateAction extends Action {
   handle(data: any) {
@@ -24,4 +26,5 @@ class GuildAuditLogEntryCreateAction extends Action {
   }
 }
 
-export = GuildAuditLogEntryCreateAction;
+export default GuildAuditLogEntryCreateAction;
+export { GuildAuditLogEntryCreateAction };

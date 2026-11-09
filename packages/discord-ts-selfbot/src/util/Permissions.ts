@@ -1,4 +1,4 @@
-import BitField = require('./BitField');
+import BitField from './BitField';
 
 /**
  * Data structure that makes it easy to interact with a permission bitfield. All {@link GuildMember}s have a set of
@@ -199,4 +199,5 @@ class Permissions extends BitField {
 
 (Permissions as any).defaultBit = BigInt(0);
 
-export = Permissions;
+export default Permissions;
+export { Permissions };

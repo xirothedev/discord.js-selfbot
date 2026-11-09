@@ -1,5 +1,5 @@
-const AttachmentFlags = require('../util/AttachmentFlags');
-const Util = require('../util/Util');
+import AttachmentFlags from '../util/AttachmentFlags';
+import Util from '../util/Util';
 
 /**
  * Represents an attachment in a message.
@@ -208,7 +208,8 @@ class MessageAttachment {
   }
 }
 
-export = MessageAttachment;
+export default MessageAttachment;
+export { MessageAttachment };
 
 /**
  * @external APIAttachment

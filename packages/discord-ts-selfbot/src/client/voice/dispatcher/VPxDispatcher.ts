@@ -1,3 +1,6 @@
+import { Buffer } from 'node:buffer';
+import VideoDispatcher from './VideoDispatcher';
+import VoiceCodec from '../util/VoiceCodec';
 /*
 Credit: https://github.com/dank074/Discord-video-stream
 The use of video streaming in this library is an incomplete implementation with many bugs, primarily aimed at lazy users.
@@ -14,10 +17,6 @@ Thanks to mrjvs for discovering how Discord transmits data and the VP8 codec.
 
 Please use the @dank074/discord-video-stream library for the best support.
 */
-
-const { Buffer } = require('node:buffer');
-const VideoDispatcher = require('./VideoDispatcher');
-const VoiceCodec = require('../util/VoiceCodec');
 
 class VP8Dispatcher extends VideoDispatcher {
   [key: string]: any;
@@ -49,6 +48,7 @@ class VP8Dispatcher extends VideoDispatcher {
   }
 }
 
-export = {
+export { VP8Dispatcher };
+export default {
   VP8Dispatcher,
 };

@@ -1,7 +1,9 @@
-const { Collection } = require('@discordjs/collection');
-const Action = require('./Action');
-const { deletedMessages } = require('../../structures/Message');
-const { Events } = require('../../util/Constants');
+import { Collection } from '@discordjs/collection';
+import Action from './Action';
+import _MessageModule from '../../structures/Message';
+const { deletedMessages } = _MessageModule;
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class MessageDeleteBulkAction extends Action {
   handle(data: any) {
@@ -41,4 +43,5 @@ class MessageDeleteBulkAction extends Action {
   }
 }
 
-export = MessageDeleteBulkAction;
+export default MessageDeleteBulkAction;
+export { MessageDeleteBulkAction };

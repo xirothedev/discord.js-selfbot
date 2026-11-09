@@ -87,4 +87,5 @@ class SnowflakeUtil extends null {
   }
 }
 
-export = SnowflakeUtil;
+export default SnowflakeUtil;
+export { SnowflakeUtil };

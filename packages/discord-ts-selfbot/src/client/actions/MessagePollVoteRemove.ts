@@ -1,5 +1,6 @@
-const Action = require('./Action');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class MessagePollVoteRemoveAction extends Action {
   handle(data: any) {
@@ -28,4 +29,5 @@ class MessagePollVoteRemoveAction extends Action {
   }
 }
 
-export = MessagePollVoteRemoveAction;
+export default MessagePollVoteRemoveAction;
+export { MessagePollVoteRemoveAction };

@@ -1,7 +1,9 @@
-const process = require('node:process');
-const CachedManager = require('./CachedManager');
-const { Channel } = require('../structures/Channel');
-const { Events, ThreadChannelTypes, RelationshipTypes } = require('../util/Constants');
+import process from 'node:process';
+import CachedManager from './CachedManager';
+import _ChannelModule from '../structures/Channel';
+const { Channel } = _ChannelModule;
+import _ConstantsModule from '../util/Constants';
+const { Events, ThreadChannelTypes, RelationshipTypes } = _ConstantsModule;
 
 let cacheWarningEmitted = false;
 
@@ -10,7 +12,7 @@ let cacheWarningEmitted = false;
  * @extends {CachedManager}
  */
 class ChannelManager extends CachedManager {
-  constructor(client: any, iterable: any) {
+  constructor(client: any, iterable?: any) {
     super(client, Channel, iterable);
     const defaultCaching =
       this._cache.constructor.name === 'Collection' ||
@@ -143,4 +145,5 @@ class ChannelManager extends CachedManager {
   }
 }
 
-export = ChannelManager;
+export default ChannelManager;
+export { ChannelManager };

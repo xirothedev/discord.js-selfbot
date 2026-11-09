@@ -1,5 +1,6 @@
-const Base = require('./Base');
-const { MembershipStates } = require('../util/Constants');
+import Base from './Base';
+import _ConstantsModule from '../util/Constants';
+const { MembershipStates } = _ConstantsModule;
 
 /**
  * Represents a Client OAuth2 Application Team Member.
@@ -76,4 +77,5 @@ class TeamMember extends Base {
   }
 }
 
-export = TeamMember;
+export default TeamMember;
+export { TeamMember };

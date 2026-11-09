@@ -1,5 +1,5 @@
-const Base = require('./Base');
-const IntegrationApplication = require('./IntegrationApplication');
+import Base from './Base';
+import IntegrationApplication from './IntegrationApplication';
 
 /**
  * The information account for an integration
@@ -183,4 +183,5 @@ class Integration extends Base {
   }
 }
 
-export = Integration;
+export default Integration;
+export { Integration };

@@ -1,5 +1,6 @@
-const BaseGuildTextChannel = require('./BaseGuildTextChannel');
-const { Error } = require('../errors');
+import BaseGuildTextChannel from './BaseGuildTextChannel';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
 
 /**
  * Represents a guild news channel on Discord.
@@ -28,4 +29,5 @@ class NewsChannel extends BaseGuildTextChannel {
   }
 }
 
-export = NewsChannel;
+export default NewsChannel;
+export { NewsChannel };

@@ -1,4 +1,4 @@
-const Base = require('./Base');
+import Base from './Base';
 
 /**
  * Represents a guild boost in a guild on Discord.
@@ -103,4 +103,5 @@ class GuildBoost extends Base {
   }
 }
 
-export = GuildBoost;
+export default GuildBoost;
+export { GuildBoost };

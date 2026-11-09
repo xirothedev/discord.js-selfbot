@@ -1,6 +1,7 @@
-const { Collection } = require('@discordjs/collection');
-const { ChannelTypes } = require('../util/Constants');
-const Util = require('../util/Util');
+import { Collection } from '@discordjs/collection';
+import _ConstantsModule from '../util/Constants';
+const { ChannelTypes } = _ConstantsModule;
+import Util from '../util/Util';
 
 /**
  * Keeps track of mentions in a {@link Message}.
@@ -276,4 +277,5 @@ MessageMentions.ROLES_PATTERN = /<@&(\d{17,19})>/g;
  */
 MessageMentions.CHANNELS_PATTERN = /<#(\d{17,19})>/g;
 
-export = MessageMentions;
+export default MessageMentions;
+export { MessageMentions };

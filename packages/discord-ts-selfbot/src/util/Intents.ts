@@ -1,5 +1,5 @@
-'use strict';
-import BitField = require('./BitField');
+import BitField from './BitField';
+('use strict');
 
 /**
  * Data structure that makes it easy to calculate intents.
@@ -71,4 +71,5 @@ class Intents extends BitField {}
 
 (Intents as any).ALL = Object.values(Intents.FLAGS).reduce((all: any, p: any) => all | p, 0);
 
-export = Intents;
+export default Intents;
+export { Intents };

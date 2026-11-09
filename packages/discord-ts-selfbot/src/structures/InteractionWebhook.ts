@@ -1,4 +1,5 @@
-const Webhook = require('./Webhook');
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
 
 /**
  * Represents a webhook for an Interaction
@@ -40,6 +41,12 @@ class InteractionWebhook {
   }
 }
 
-Webhook.applyToClass(InteractionWebhook, ['sendSlackMessage', 'edit', 'delete', 'createdTimestamp', 'createdAt']);
+export default InteractionWebhook;
+export { InteractionWebhook };
 
-export = InteractionWebhook;
+setTimeout(() => {
+  try {
+    const Webhook = require('./Webhook');
+    Webhook.applyToClass(InteractionWebhook, ['sendSlackMessage', 'edit', 'delete', 'createdTimestamp', 'createdAt']);
+  } catch {}
+}, 0);

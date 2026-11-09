@@ -1,4 +1,7 @@
-const { Buffer } = require('node:buffer');
+import { Buffer } from 'node:buffer';
+import { createRequire } from 'node:module';
+import WebSocket from 'ws';
+const require = createRequire(import.meta.url);
 
 let erlpack: any;
 
@@ -6,8 +9,6 @@ try {
   erlpack = require('erlpack');
   if (!erlpack.pack) erlpack = null;
 } catch {} // eslint-disable-line no-empty
-
-const WebSocket = require('ws');
 
 const ab = new TextDecoder();
 
@@ -39,4 +40,5 @@ websocket.create = (gateway: string, query: any = {}, ...args: any[]) => {
 
 for (const state of ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED']) websocket[state] = websocket.WebSocket[state];
 
-export = websocket;
+export default websocket;
+export { websocket };

@@ -1,6 +1,7 @@
-const CallState = require('../../../structures/CallState');
-const { Events } = require('../../../util/Constants');
-export = (client: any, packet: any) => {
+import CallState from '../../../structures/CallState';
+import _ConstantsModule from '../../../util/Constants';
+const { Events } = _ConstantsModule;
+export default (client: any, packet: any) => {
   for (const voice of packet.d.voice_states) {
     client.actions.VoiceStateUpdate.handle(voice);
   }

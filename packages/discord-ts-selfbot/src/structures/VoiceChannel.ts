@@ -1,6 +1,6 @@
-const process = require('node:process');
-const BaseGuildVoiceChannel = require('./BaseGuildVoiceChannel');
-const Permissions = require('../util/Permissions');
+import process from 'node:process';
+import BaseGuildVoiceChannel from './BaseGuildVoiceChannel';
+import Permissions from '../util/Permissions';
 
 let deprecationEmittedForEditable = false;
 
@@ -106,4 +106,5 @@ class VoiceChannel extends BaseGuildVoiceChannel {
    */
 }
 
-export = VoiceChannel;
+export default VoiceChannel;
+export { VoiceChannel };

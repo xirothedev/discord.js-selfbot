@@ -1,5 +1,5 @@
-const { Collection } = require('@discordjs/collection');
-const BaseManager = require('./BaseManager');
+import { Collection } from '@discordjs/collection';
+import BaseManager from './BaseManager';
 
 /**
  * Manages API methods for Client and stores their cache.
@@ -48,4 +48,5 @@ class UserNoteManager extends BaseManager {
   }
 }
 
-export = UserNoteManager;
+export default UserNoteManager;
+export { UserNoteManager };

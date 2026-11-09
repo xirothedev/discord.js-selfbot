@@ -1,13 +1,13 @@
-const { Collection } = require('@discordjs/collection');
-const CachedManager = require('./CachedManager');
-const ThreadChannel = require('../structures/ThreadChannel');
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import ThreadChannel from '../structures/ThreadChannel';
 
 /**
  * Manages API methods for {@link ThreadChannel} objects and stores their cache.
  * @extends {CachedManager}
  */
 class ThreadManager extends CachedManager {
-  constructor(channel: any, iterable: any) {
+  constructor(channel: any, iterable?: any) {
     super(channel.client, ThreadChannel, iterable);
 
     /**
@@ -170,4 +170,5 @@ class ThreadManager extends CachedManager {
   }
 }
 
-export = ThreadManager;
+export default ThreadManager;
+export { ThreadManager };

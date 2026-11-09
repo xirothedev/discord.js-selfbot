@@ -1,7 +1,9 @@
-const { Collection } = require('@discordjs/collection');
-const DataManager = require('./DataManager');
-const { TypeError } = require('../errors');
-const { Role } = require('../structures/Role');
+import { Collection } from '@discordjs/collection';
+import DataManager from './DataManager';
+import _errorsModule from '../errors';
+const { TypeError } = _errorsModule;
+import _RoleModule from '../structures/Role';
+const { Role } = _RoleModule;
 
 /**
  * Manages API methods for roles belonging to emojis and stores their cache.
@@ -113,4 +115,5 @@ class GuildEmojiRoleManager extends DataManager {
   }
 }
 
-export = GuildEmojiRoleManager;
+export default GuildEmojiRoleManager;
+export { GuildEmojiRoleManager };

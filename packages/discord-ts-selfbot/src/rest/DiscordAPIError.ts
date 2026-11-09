@@ -117,7 +117,8 @@ class DiscordAPIError extends Error {
   }
 }
 
-export = DiscordAPIError;
+export default DiscordAPIError;
+export { DiscordAPIError };
 
 /**
  * @external APIError

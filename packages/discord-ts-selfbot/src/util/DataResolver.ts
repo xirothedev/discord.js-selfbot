@@ -1,12 +1,13 @@
-'use strict';
-
-const { Buffer } = require('node:buffer');
-const fs = require('node:fs');
-const path = require('node:path');
-const stream = require('node:stream');
-const { fetch } = require('undici');
-const { Error: DiscordError, TypeError } = require('../errors');
-const Invite = require('../structures/Invite');
+import { Buffer } from 'node:buffer';
+import fs from 'node:fs';
+import path from 'node:path';
+import stream from 'node:stream';
+import { fetch } from 'undici';
+import _errorsModule from '../errors';
+const { Error: DiscordError, TypeError } = _errorsModule;
+import Invite from '../structures/Invite';
+import GuildTemplate from '../structures/GuildTemplate';
+('use strict');
 
 /**
  * The DataResolver identifies different objects and tries to resolve a specific piece of information from them.
@@ -43,7 +44,7 @@ class DataResolver extends null {
    * @returns {string}
    */
   static resolveInviteCode(data: any) {
-    return this.resolveCode(data, Invite.INVITES_PATTERN);
+    return this.resolveCode(data, (Invite as any).INVITES_PATTERN);
   }
 
   /**
@@ -52,8 +53,7 @@ class DataResolver extends null {
    * @returns {string}
    */
   static resolveGuildTemplateCode(data: any) {
-    const GuildTemplate = require('../structures/GuildTemplate');
-    return this.resolveCode(data, GuildTemplate.GUILD_TEMPLATES_PATTERN);
+    return this.resolveCode(data, (GuildTemplate as any).GUILD_TEMPLATES_PATTERN);
   }
 
   /**
@@ -115,7 +115,7 @@ class DataResolver extends null {
         else throw new DiscordError('FILE_NOT_FOUND', resource);
       }
 
-      return new Promise<Buffer>((resolve, reject) => {
+      return new Promise<any>((resolve, reject) => {
         const file = path.resolve(resource);
         fs.stat(file, (err: any, stats: any) => {
           if (err) return reject(err);
@@ -143,4 +143,5 @@ class DataResolver extends null {
   }
 }
 
-export = DataResolver;
+export default DataResolver;
+export { DataResolver };

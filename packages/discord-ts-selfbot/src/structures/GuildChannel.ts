@@ -1,9 +1,12 @@
-const { Channel } = require('./Channel');
-const { Error } = require('../errors');
-const PermissionOverwriteManager = require('../managers/PermissionOverwriteManager');
-const { VoiceBasedChannelTypes } = require('../util/Constants');
-const Permissions = require('../util/Permissions');
-const Util = require('../util/Util');
+import _ChannelModule from './Channel';
+const { Channel } = _ChannelModule;
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
+import PermissionOverwriteManager from '../managers/PermissionOverwriteManager';
+import _ConstantsModule from '../util/Constants';
+const { VoiceBasedChannelTypes } = _ConstantsModule;
+import Permissions from '../util/Permissions';
+import Util from '../util/Util';
 
 /**
  * Represents a guild channel from any of the following:
@@ -209,13 +212,13 @@ class GuildChannel extends Channel {
    * @private
    */
   memberPermissions(member: any, checkAdmin: any) {
-    if (checkAdmin && member.id === this.guild.ownerId) return new Permissions(Permissions.ALL).freeze();
+    if (checkAdmin && member.id === this.guild.ownerId) return new Permissions((Permissions as any).ALL).freeze();
 
     const roles = member.roles.cache;
     const permissions = new Permissions(roles.map((role: any) => role.permissions));
 
     if (checkAdmin && permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
-      return new Permissions(Permissions.ALL).freeze();
+      return new Permissions((Permissions as any).ALL).freeze();
     }
 
     const overwrites = this.overwritesFor(member, true, roles);
@@ -239,7 +242,7 @@ class GuildChannel extends Channel {
    */
   rolePermissions(role: any, checkAdmin: any) {
     if (checkAdmin && role.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
-      return new Permissions(Permissions.ALL).freeze();
+      return new Permissions((Permissions as any).ALL).freeze();
     }
 
     const basePermissions = new Permissions([role.permissions, role.guild.roles.everyone.permissions]);
@@ -434,8 +437,8 @@ class GuildChannel extends Channel {
     if (this.guild.members.me.communicationDisabledUntilTimestamp > Date.now()) return false;
 
     const bitfield = VoiceBasedChannelTypes.includes(this.type)
-      ? Permissions.FLAGS.MANAGE_CHANNELS | Permissions.FLAGS.CONNECT
-      : Permissions.FLAGS.VIEW_CHANNEL | Permissions.FLAGS.MANAGE_CHANNELS;
+      ? (Permissions as any).FLAGS.MANAGE_CHANNELS | (Permissions as any).FLAGS.CONNECT
+      : (Permissions as any).FLAGS.VIEW_CHANNEL | (Permissions as any).FLAGS.MANAGE_CHANNELS;
     return permissions.has(bitfield, false);
   }
 
@@ -467,4 +470,5 @@ class GuildChannel extends Channel {
   }
 }
 
-export = GuildChannel;
+export default GuildChannel;
+export { GuildChannel };

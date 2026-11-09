@@ -1,4 +1,5 @@
-const { TypeError } = require('../errors');
+import _errorsModule from '../errors';
+const { TypeError } = _errorsModule;
 
 /**
  * A resolver for command interaction options.
@@ -6,7 +7,7 @@ const { TypeError } = require('../errors');
 class CommandInteractionOptionResolver {
   [key: string]: any;
 
-  constructor(client: any, options: any, resolved: any) {
+  constructor(client: any, options: any, resolved: any = null) {
     /**
      * The client that instantiated this.
      * @name CommandInteractionOptionResolver#client
@@ -276,4 +277,5 @@ class CommandInteractionOptionResolver {
   }
 }
 
-export = CommandInteractionOptionResolver;
+export default CommandInteractionOptionResolver;
+export { CommandInteractionOptionResolver };

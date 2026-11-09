@@ -1,6 +1,7 @@
-const Action = require('./Action');
-const { Events } = require('../../util/Constants');
-const { PartialTypes } = require('../../util/Constants');
+import Action from './Action';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
+const { PartialTypes } = _ConstantsModule;
 
 class PresenceUpdateAction extends Action {
   handle(data: any) {
@@ -45,4 +46,5 @@ class PresenceUpdateAction extends Action {
   }
 }
 
-export = PresenceUpdateAction;
+export default PresenceUpdateAction;
+export { PresenceUpdateAction };

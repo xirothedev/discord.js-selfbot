@@ -1,6 +1,7 @@
-const process = require('node:process');
-const { RangeError } = require('../errors');
-const Util = require('../util/Util');
+import process from 'node:process';
+import _errorsModule from '../errors';
+const { RangeError } = _errorsModule;
+import Util from '../util/Util';
 
 let deprecationEmittedForSetAuthor = false;
 let deprecationEmittedForSetFooter = false;
@@ -594,4 +595,5 @@ class MessageEmbed {
  * @see {@link https://discord.com/developers/docs/resources/channel#embed-object}
  */
 
-export = MessageEmbed;
+export default MessageEmbed;
+export { MessageEmbed };

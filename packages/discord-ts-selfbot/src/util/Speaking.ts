@@ -1,4 +1,4 @@
-import BitField = require('./BitField');
+import BitField from './BitField';
 
 /**
  * Data structure that makes it easy to interact with a {@link VoiceConnection#speaking}
@@ -28,4 +28,5 @@ Speaking.FLAGS = {
   PRIORITY_SPEAKING: 1 << 2,
 };
 
-export = Speaking;
+export default Speaking;
+export { Speaking };

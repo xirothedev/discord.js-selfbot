@@ -1,15 +1,19 @@
-const { Collection } = require('@discordjs/collection');
-const ApplicationCommand = require('./ApplicationCommand');
-const AutoModerationRule = require('./AutoModerationRule');
-const { GuildScheduledEvent } = require('./GuildScheduledEvent');
-const Integration = require('./Integration');
-const Invite = require('./Invite');
-const { StageInstance } = require('./StageInstance');
-const { Sticker } = require('./Sticker');
-const Webhook = require('./Webhook');
-const { OverwriteTypes, PartialTypes, AutoModerationRuleTriggerTypes } = require('../util/Constants');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
-const Util = require('../util/Util');
+import { Collection } from '@discordjs/collection';
+import ApplicationCommand from './ApplicationCommand';
+import AutoModerationRule from './AutoModerationRule';
+import _GuildScheduledEventModule from './GuildScheduledEvent';
+const { GuildScheduledEvent } = _GuildScheduledEventModule;
+import Integration from './Integration';
+import Invite from './Invite';
+import _StageInstanceModule from './StageInstance';
+const { StageInstance } = _StageInstanceModule;
+import _StickerModule from './Sticker';
+const { Sticker } = _StickerModule;
+import Webhook from './Webhook';
+import _ConstantsModule from '../util/Constants';
+const { OverwriteTypes, PartialTypes, AutoModerationRuleTriggerTypes } = _ConstantsModule;
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import Util from '../util/Util';
 
 /**
  * The target type of an entry. Here are the available types:
@@ -224,7 +228,7 @@ class GuildAuditLogs {
     this.applicationCommands = new Collection();
     if (data.application_commands) {
       for (const command of data.application_commands) {
-        this.applicationCommands.set(command.id, new ApplicationCommand(guild.client, command, guild));
+        this.applicationCommands.set(command.id, new ApplicationCommand(guild.client, command, guild, null));
       }
     }
     /**
@@ -749,4 +753,5 @@ GuildAuditLogs.Actions = Actions;
 GuildAuditLogs.Targets = Targets;
 GuildAuditLogs.Entry = GuildAuditLogsEntry;
 
-export = GuildAuditLogs;
+export default GuildAuditLogs;
+export { GuildAuditLogs };

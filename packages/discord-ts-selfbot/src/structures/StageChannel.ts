@@ -1,4 +1,4 @@
-const BaseGuildVoiceChannel = require('./BaseGuildVoiceChannel');
+import BaseGuildVoiceChannel from './BaseGuildVoiceChannel';
 
 /**
  * Represents a guild stage channel on Discord.
@@ -100,4 +100,5 @@ class StageChannel extends BaseGuildVoiceChannel {
    */
 }
 
-export = StageChannel;
+export default StageChannel;
+export { StageChannel };

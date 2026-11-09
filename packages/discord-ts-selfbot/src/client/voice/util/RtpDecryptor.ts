@@ -1,7 +1,7 @@
-const { Buffer } = require('node:buffer');
-const crypto = require('node:crypto');
-const { RtpPacket } = require('werift-rtp');
-const secretbox = require('./Secretbox');
+import { Buffer } from 'node:buffer';
+import crypto from 'node:crypto';
+import { RtpPacket } from 'werift-rtp';
+import secretbox from './Secretbox';
 
 const UNPADDED_NONCE_LENGTH = 4;
 const AUTH_TAG_LENGTH = 16;
@@ -52,4 +52,5 @@ class RtpDecryptor {
   }
 }
 
-export = RtpDecryptor;
+export default RtpDecryptor;
+export { RtpDecryptor };

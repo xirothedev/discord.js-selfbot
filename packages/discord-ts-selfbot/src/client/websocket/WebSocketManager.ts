@@ -1,12 +1,14 @@
-const EventEmitter = require('node:events');
-const { setImmediate } = require('node:timers');
-const { setTimeout: sleep } = require('node:timers/promises');
-const { Collection } = require('@discordjs/collection');
-const { RPCErrorCodes } = require('discord-api-types/v10');
-const WebSocketShard = require('./WebSocketShard');
-const PacketHandlers = require('./handlers');
-const { Error } = require('../../errors');
-const { Events, ShardEvents, Status, WSCodes, WSEvents } = require('../../util/Constants');
+import EventEmitter from 'node:events';
+import { setImmediate } from 'node:timers';
+import { setTimeout as sleep } from 'node:timers/promises';
+import { Collection } from '@discordjs/collection';
+import { RPCErrorCodes } from 'discord-api-types/v10';
+import WebSocketShard from './WebSocketShard';
+import PacketHandlers from './handlers';
+import _errorsModule from '../../errors';
+const { Error } = _errorsModule;
+import _ConstantsModule from '../../util/Constants';
+const { Events, ShardEvents, Status, WSCodes, WSEvents } = _ConstantsModule;
 
 const BeforeReadyWhitelist = [
   WSEvents.READY,
@@ -398,4 +400,5 @@ class WebSocketManager extends EventEmitter {
   }
 }
 
-export = WebSocketManager;
+export default WebSocketManager;
+export { WebSocketManager };

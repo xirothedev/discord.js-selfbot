@@ -1,5 +1,5 @@
-const AnonymousGuild = require('./AnonymousGuild');
-const WelcomeScreen = require('./WelcomeScreen');
+import AnonymousGuild from './AnonymousGuild';
+import WelcomeScreen from './WelcomeScreen';
 
 /**
  * Represents a guild received from an invite, includes welcome screen data if available.
@@ -18,4 +18,5 @@ class InviteGuild extends AnonymousGuild {
   }
 }
 
-export = InviteGuild;
+export default InviteGuild;
+export { InviteGuild };

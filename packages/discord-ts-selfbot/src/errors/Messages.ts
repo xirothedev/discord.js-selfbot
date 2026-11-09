@@ -1,4 +1,5 @@
-const { register } = require('./DJSError');
+import _DJSErrorModule from './DJSError';
+const { register } = _DJSErrorModule;
 
 const Messages: Record<string, string | ((...args: any[]) => string)> = {
   CLIENT_INVALID_OPTION: (prop, must) => `The ${prop} option must be ${must}`,
@@ -214,4 +215,5 @@ const Messages: Record<string, string | ((...args: any[]) => string)> = {
 
 for (const [name, message] of Object.entries(Messages)) register(name, message);
 
-export = Messages;
+export default Messages;
+export { Messages };

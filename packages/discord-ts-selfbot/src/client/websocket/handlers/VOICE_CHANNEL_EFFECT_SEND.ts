@@ -1,6 +1,7 @@
-const VoiceChannelEffect = require('../../../structures/VoiceChannelEffect');
-const { Events } = require('../../../util/Constants');
-export = (client: any, { d: data }: any) => {
+import VoiceChannelEffect from '../../../structures/VoiceChannelEffect';
+import _ConstantsModule from '../../../util/Constants';
+const { Events } = _ConstantsModule;
+export default (client: any, { d: data }: any) => {
   const guild = client.guilds.cache.get(data.guild_id);
   if (!guild) return;
   /**

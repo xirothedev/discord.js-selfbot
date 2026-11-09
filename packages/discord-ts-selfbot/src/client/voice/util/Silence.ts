@@ -1,5 +1,5 @@
-const { Buffer } = require('node:buffer');
-const { Readable } = require('stream');
+import { Buffer } from 'node:buffer';
+import { Readable } from 'stream';
 
 const SILENCE_FRAME = Buffer.from([0xf8, 0xff, 0xfe]);
 
@@ -13,4 +13,5 @@ class Silence extends Readable {
 
 Silence.SILENCE_FRAME = SILENCE_FRAME;
 
-export = Silence;
+export default Silence;
+export { Silence };

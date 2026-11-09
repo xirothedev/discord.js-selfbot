@@ -1,15 +1,16 @@
-const Base = require('./Base');
-const ApplicationCommandPermissionsManager = require('../managers/ApplicationCommandPermissionsManager');
-const { ApplicationCommandOptionTypes, ApplicationCommandTypes, ChannelTypes } = require('../util/Constants');
-const Permissions = require('../util/Permissions');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
+import Base from './Base';
+import ApplicationCommandPermissionsManager from '../managers/ApplicationCommandPermissionsManager';
+import _ConstantsModule from '../util/Constants';
+const { ApplicationCommandOptionTypes, ApplicationCommandTypes, ChannelTypes } = _ConstantsModule;
+import Permissions from '../util/Permissions';
+import SnowflakeUtil from '../util/SnowflakeUtil';
 
 /**
  * Represents an application command.
  * @extends {Base}
  */
 class ApplicationCommand extends Base {
-  constructor(client: any, data: any, guild: any, guildId: any) {
+  constructor(client: any, data: any, guild: any, guildId: any = null) {
     super(client);
 
     /**
@@ -538,7 +539,7 @@ class ApplicationCommand extends Base {
    * @returns {APIApplicationCommandOption}
    * @private
    */
-  static transformOption(option: any, received: any) {
+  static transformOption(option: any, received: any = false) {
     const stringType = typeof option.type === 'string' ? option.type : ApplicationCommandOptionTypes[option.type];
     const channelTypesKey = received ? 'channelTypes' : 'channel_types';
     const minValueKey = received ? 'minValue' : 'min_value';
@@ -580,7 +581,8 @@ class ApplicationCommand extends Base {
   }
 }
 
-export = ApplicationCommand;
+export default ApplicationCommand;
+export { ApplicationCommand };
 
 /* eslint-disable max-len */
 /**

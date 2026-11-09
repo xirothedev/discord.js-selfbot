@@ -1,3 +1,7 @@
+import fs from 'fs';
+import net from 'net';
+import path from 'path';
+import process from 'process';
 /*
 Credit: https://github.com/dank074/Discord-video-stream
 The use of video streaming in this library is an incomplete implementation with many bugs, primarily aimed at lazy users.
@@ -14,11 +18,6 @@ Thanks to mrjvs for discovering how Discord transmits data and the VP8 codec.
 
 Please use the @dank074/discord-video-stream library for the best support.
 */
-
-const fs = require('fs');
-const net = require('net');
-const path = require('path');
-const process = require('process');
 
 let counter = 0;
 
@@ -59,4 +58,5 @@ function StreamOutput(stream: any) {
   return new UnixStream(stream, (socket: any) => socket.pipe(stream));
 }
 
-export = { StreamOutput, StreamInput, UnixStream };
+export { StreamOutput, StreamInput, UnixStream };
+export default { StreamOutput, StreamInput, UnixStream };

@@ -1,9 +1,10 @@
-const process = require('node:process');
-const Base = require('./Base');
-const { Error } = require('../errors');
-const Permissions = require('../util/Permissions');
-const RoleFlags = require('../util/RoleFlags');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
+import process from 'node:process';
+import Base from './Base';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
+import Permissions from '../util/Permissions';
+import RoleFlags from '../util/RoleFlags';
+import SnowflakeUtil from '../util/SnowflakeUtil';
 
 let deprecationEmittedForComparePositions = false;
 
@@ -585,4 +586,5 @@ class Role extends Base {
  * @see {@link https://discord.com/developers/docs/topics/permissions#role-object}
  */
 
-export = { Role, deletedRoles };
+export { Role, deletedRoles };
+export default { Role, deletedRoles };

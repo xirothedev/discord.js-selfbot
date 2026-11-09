@@ -1,11 +1,12 @@
-const { Collection } = require('@discordjs/collection');
-const Base = require('./Base');
+import { Collection } from '@discordjs/collection';
+import Base from './Base';
+import _ConstantsModule from '../util/Constants';
 const {
   AutoModerationRuleKeywordPresetTypes,
   AutoModerationRuleTriggerTypes,
   AutoModerationRuleEventTypes,
   AutoModerationActionTypes,
-} = require('../util/Constants');
+} = _ConstantsModule;
 
 /**
  * Represents an auto moderation rule.
@@ -290,4 +291,5 @@ class AutoModerationRule extends Base {
   }
 }
 
-export = AutoModerationRule;
+export default AutoModerationRule;
+export { AutoModerationRule };

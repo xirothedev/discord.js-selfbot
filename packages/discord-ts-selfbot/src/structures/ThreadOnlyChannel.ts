@@ -1,8 +1,10 @@
-const GuildChannel = require('./GuildChannel');
-const TextBasedChannel = require('./interfaces/TextBasedChannel');
-const GuildForumThreadManager = require('../managers/GuildForumThreadManager');
-const { SortOrderTypes } = require('../util/Constants');
-const { transformAPIGuildForumTag, transformAPIGuildDefaultReaction } = require('../util/Util');
+import GuildChannel from './GuildChannel';
+import TextBasedChannel from './interfaces/TextBasedChannel';
+import GuildForumThreadManager from '../managers/GuildForumThreadManager';
+import _ConstantsModule from '../util/Constants';
+const { SortOrderTypes } = _ConstantsModule;
+import _UtilModule from '../util/Util';
+const { transformAPIGuildForumTag, transformAPIGuildDefaultReaction } = _UtilModule;
 
 /**
  * @typedef {Object} GuildForumTagEmoji
@@ -245,4 +247,5 @@ TextBasedChannel.applyToClass(ThreadOnlyChannel, true, [
   'awaitMessageComponent',
 ]);
 
-export = ThreadOnlyChannel;
+export default ThreadOnlyChannel;
+export { ThreadOnlyChannel };

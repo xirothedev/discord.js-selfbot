@@ -1,10 +1,13 @@
-const process = require('node:process');
-const { Collection } = require('@discordjs/collection');
-const CachedManager = require('./CachedManager');
-const { TypeError } = require('../errors');
-const PermissionOverwrites = require('../structures/PermissionOverwrites');
-const { Role } = require('../structures/Role');
-const { OverwriteTypes } = require('../util/Constants');
+import process from 'node:process';
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
+const { TypeError } = _errorsModule;
+import PermissionOverwrites from '../structures/PermissionOverwrites';
+import _RoleModule from '../structures/Role';
+const { Role } = _RoleModule;
+import _ConstantsModule from '../util/Constants';
+const { OverwriteTypes } = _ConstantsModule;
 
 let cacheWarningEmitted = false;
 
@@ -13,7 +16,7 @@ let cacheWarningEmitted = false;
  * @extends {CachedManager}
  */
 class PermissionOverwriteManager extends CachedManager {
-  constructor(channel: any, iterable: any) {
+  constructor(channel: any, iterable?: any) {
     super(channel.client, PermissionOverwrites);
     if (!cacheWarningEmitted && this._cache.constructor.name !== 'Collection') {
       cacheWarningEmitted = true;
@@ -159,4 +162,5 @@ class PermissionOverwriteManager extends CachedManager {
   }
 }
 
-export = PermissionOverwriteManager;
+export default PermissionOverwriteManager;
+export { PermissionOverwriteManager };

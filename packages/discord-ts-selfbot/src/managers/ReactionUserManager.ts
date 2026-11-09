@@ -1,15 +1,17 @@
-const { Collection } = require('@discordjs/collection');
-const CachedManager = require('./CachedManager');
-const { Error } = require('../errors');
-const User = require('../structures/User');
-const { ReactionTypes } = require('../util/Constants');
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
+import User from '../structures/User';
+import _ConstantsModule from '../util/Constants';
+const { ReactionTypes } = _ConstantsModule;
 
 /**
  * Manages API methods for users who reacted to a reaction and stores their cache.
  * @extends {CachedManager}
  */
 class ReactionUserManager extends CachedManager {
-  constructor(reaction: any, iterable: any) {
+  constructor(reaction: any, iterable?: any) {
     super(reaction.client, User, iterable);
 
     /**
@@ -68,4 +70,5 @@ class ReactionUserManager extends CachedManager {
   }
 }
 
-export = ReactionUserManager;
+export default ReactionUserManager;
+export { ReactionUserManager };

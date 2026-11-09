@@ -1,8 +1,9 @@
-const { Collection } = require('@discordjs/collection');
-const Base = require('./Base');
-const GuildPreviewEmoji = require('./GuildPreviewEmoji');
-const { Sticker } = require('./Sticker');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
+import { Collection } from '@discordjs/collection';
+import Base from './Base';
+import GuildPreviewEmoji from './GuildPreviewEmoji';
+import _StickerModule from './Sticker';
+const { Sticker } = _StickerModule;
+import SnowflakeUtil from '../util/SnowflakeUtil';
 
 /**
  * Represents the data about the guild any bot can preview, connected to the specified guild.
@@ -186,4 +187,5 @@ class GuildPreview extends Base {
   }
 }
 
-export = GuildPreview;
+export default GuildPreview;
+export { GuildPreview };

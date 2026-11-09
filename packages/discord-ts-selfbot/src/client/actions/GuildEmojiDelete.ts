@@ -1,6 +1,8 @@
-const Action = require('./Action');
-const { deletedEmojis } = require('../../structures/Emoji');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import _EmojiModule from '../../structures/Emoji';
+const { deletedEmojis } = _EmojiModule;
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class GuildEmojiDeleteAction extends Action {
   handle(emoji: any) {
@@ -16,4 +18,5 @@ class GuildEmojiDeleteAction extends Action {
   }
 }
 
-export = GuildEmojiDeleteAction;
+export default GuildEmojiDeleteAction;
+export { GuildEmojiDeleteAction };

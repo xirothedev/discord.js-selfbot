@@ -1,4 +1,4 @@
-import BitField = require('./BitField');
+import BitField from './BitField';
 
 /**
  * Data structure that makes it easy to interact with a {@link Guild#systemChannelFlags} bitfield.
@@ -50,4 +50,5 @@ SystemChannelFlags.FLAGS = {
   SUPPRESS_ROLE_SUBSCRIPTION_PURCHASE_NOTIFICATION_REPLIES: 1 << 5,
 };
 
-export = SystemChannelFlags;
+export default SystemChannelFlags;
+export { SystemChannelFlags };

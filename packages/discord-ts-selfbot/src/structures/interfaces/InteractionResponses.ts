@@ -1,9 +1,11 @@
-const { Error } = require('../../errors');
-const { InteractionResponseTypes, InteractionTypes } = require('../../util/Constants');
-const MessageFlags = require('../../util/MessageFlags');
-const InteractionCollector = require('../InteractionCollector');
-const MessagePayload = require('../MessagePayload');
-const Modal = require('../Modal');
+import _errorsModule from '../../errors';
+const { Error } = _errorsModule;
+import _ConstantsModule from '../../util/Constants';
+const { InteractionResponseTypes, InteractionTypes } = _ConstantsModule;
+import MessageFlags from '../../util/MessageFlags';
+import InteractionCollector from '../InteractionCollector';
+import MessagePayload from '../MessagePayload';
+import Modal from '../Modal';
 
 /**
  * Interface for classes that support shared interaction response types.
@@ -309,4 +311,5 @@ class InteractionResponses {
   }
 }
 
-export = InteractionResponses;
+export default InteractionResponses;
+export { InteractionResponses };

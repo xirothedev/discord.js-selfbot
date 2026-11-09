@@ -1,12 +1,12 @@
-const CachedManager = require('./CachedManager');
-const MessageReaction = require('../structures/MessageReaction');
+import CachedManager from './CachedManager';
+import MessageReaction from '../structures/MessageReaction';
 
 /**
  * Manages API methods for reactions and holds their cache.
  * @extends {CachedManager}
  */
 class ReactionManager extends CachedManager {
-  constructor(message: any, iterable: any) {
+  constructor(message: any, iterable?: any) {
     super(message.client, MessageReaction, iterable);
 
     /**
@@ -62,4 +62,5 @@ class ReactionManager extends CachedManager {
   }
 }
 
-export = ReactionManager;
+export default ReactionManager;
+export { ReactionManager };

@@ -1,5 +1,6 @@
-const Action = require('./Action');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class AutoModerationRuleUpdateAction extends Action {
   handle(data: any) {
@@ -25,4 +26,5 @@ class AutoModerationRuleUpdateAction extends Action {
   }
 }
 
-export = AutoModerationRuleUpdateAction;
+export default AutoModerationRuleUpdateAction;
+export { AutoModerationRuleUpdateAction };

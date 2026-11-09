@@ -1,12 +1,12 @@
-const { setTimeout } = require('node:timers');
-const { setTimeout: sleep } = require('node:timers/promises');
-const { AsyncQueue } = require('@sapphire/async-queue');
-const DiscordAPIError = require('./DiscordAPIError');
-const HTTPError = require('./HTTPError');
-const RateLimitError = require('./RateLimitError');
-const {
-  Events: { DEBUG, RATE_LIMIT, INVALID_REQUEST_WARNING, API_RESPONSE, API_REQUEST },
-} = require('../util/Constants');
+import { setTimeout } from 'node:timers';
+import { setTimeout as sleep } from 'node:timers/promises';
+import { AsyncQueue } from '@sapphire/async-queue';
+import DiscordAPIError from './DiscordAPIError';
+import HTTPError from './HTTPError';
+import RateLimitError from './RateLimitError';
+import Constants from '../util/Constants';
+const { Events } = Constants;
+const { DEBUG, RATE_LIMIT, INVALID_REQUEST_WARNING, API_RESPONSE, API_REQUEST } = Events;
 
 const captchaMessage = [
   'incorrect-captcha',
@@ -457,7 +457,8 @@ class RequestHandler {
   }
 }
 
-export = RequestHandler;
+export default RequestHandler;
+export { RequestHandler };
 
 /**
  * @external HTTPMethod

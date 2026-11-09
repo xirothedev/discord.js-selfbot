@@ -1,6 +1,6 @@
+import _errorsModule from '../errors';
+const { RangeError } = _errorsModule;
 // Data structure that makes it easy to interact with a bitfield.
-
-const { RangeError } = require('../errors');
 
 type BitFieldResolvable = number | string | bigint | BitField | BitFieldResolvable[];
 
@@ -94,4 +94,5 @@ class BitField {
   }
 }
 
-export = BitField;
+export default BitField;
+export { BitField };

@@ -1,5 +1,5 @@
-const BaseGuild = require('./BaseGuild');
-const Permissions = require('../util/Permissions');
+import BaseGuild from './BaseGuild';
+import Permissions from '../util/Permissions';
 
 /**
  * A partial guild received when using {@link GuildManager#fetch} to fetch multiple guilds.
@@ -24,4 +24,5 @@ class OAuth2Guild extends BaseGuild {
   }
 }
 
-export = OAuth2Guild;
+export default OAuth2Guild;
+export { OAuth2Guild };

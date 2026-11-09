@@ -1,7 +1,7 @@
-const GuildEmoji = require('./GuildEmoji');
-const ReactionEmoji = require('./ReactionEmoji');
-const ReactionUserManager = require('../managers/ReactionUserManager');
-const Util = require('../util/Util');
+import GuildEmoji from './GuildEmoji';
+import ReactionEmoji from './ReactionEmoji';
+import ReactionUserManager from '../managers/ReactionUserManager';
+import Util from '../util/Util';
 
 /**
  * Represents a reaction to a message.
@@ -177,4 +177,5 @@ class MessageReaction {
   }
 }
 
-export = MessageReaction;
+export default MessageReaction;
+export { MessageReaction };

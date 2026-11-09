@@ -1,5 +1,5 @@
-const Base = require('./Base');
-const ThreadMemberFlags = require('../util/ThreadMemberFlags');
+import Base from './Base';
+import ThreadMemberFlags from '../util/ThreadMemberFlags';
 
 /**
  * Represents a Member for a Thread.
@@ -101,4 +101,5 @@ class ThreadMember extends Base {
   }
 }
 
-export = ThreadMember;
+export default ThreadMember;
+export { ThreadMember };

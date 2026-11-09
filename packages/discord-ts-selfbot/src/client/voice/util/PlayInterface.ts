@@ -1,6 +1,7 @@
-const { Readable } = require('stream');
-const prism = require('prism-media');
-const { Error } = require('../../../errors');
+import { Readable } from 'stream';
+import prism from 'prism-media';
+import _errorsModule from '../../../errors';
+const { Error } = _errorsModule;
 
 /**
  * Options that can be passed to stream-playing methods:
@@ -129,4 +130,5 @@ class PlayInterface {
   }
 }
 
-export = PlayInterface;
+export default PlayInterface;
+export { PlayInterface };

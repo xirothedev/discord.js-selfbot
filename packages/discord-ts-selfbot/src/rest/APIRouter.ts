@@ -48,4 +48,5 @@ function buildRoute(manager: any): any {
   return new Proxy(noop, handler);
 }
 
-export = buildRoute;
+export default buildRoute;
+export { buildRoute };

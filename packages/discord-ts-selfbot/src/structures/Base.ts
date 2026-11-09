@@ -1,4 +1,4 @@
-const Util = require('../util/Util');
+import Util from '../util/Util';
 
 /**
  * Represents a data model that is identifiable by a Snowflake (i.e. Discord API data models).
@@ -40,4 +40,5 @@ class Base {
   }
 }
 
-export = Base;
+export default Base;
+export { Base };

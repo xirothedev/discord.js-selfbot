@@ -1,7 +1,8 @@
-const process = require('node:process');
-const Base = require('./Base');
-const { PrivacyLevels } = require('../util/Constants');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
+import process from 'node:process';
+import Base from './Base';
+import _ConstantsModule from '../util/Constants';
+const { PrivacyLevels } = _ConstantsModule;
+import SnowflakeUtil from '../util/SnowflakeUtil';
 
 /**
  * @type {WeakSet<StageInstance>}
@@ -203,4 +204,5 @@ class StageInstance extends Base {
   }
 }
 
-export = { StageInstance, deletedStageInstances };
+export { StageInstance, deletedStageInstances };
+export default { StageInstance, deletedStageInstances };

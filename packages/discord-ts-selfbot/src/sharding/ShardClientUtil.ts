@@ -1,7 +1,10 @@
-const process = require('node:process');
-const { Error } = require('../errors');
-const { Events } = require('../util/Constants');
-const Util = require('../util/Util');
+import { parentPort } from 'node:worker_threads';
+import process from 'node:process';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
+import _ConstantsModule from '../util/Constants';
+const { Events } = _ConstantsModule;
+import Util from '../util/Util';
 
 /**
  * Helper class for sharded clients spawned as a child process/worker, such as from a {@link ShardingManager}.
@@ -35,18 +38,18 @@ class ShardClientUtil {
     this.parentPort = null;
 
     if (mode === 'process') {
-      process.on('message', this._handleMessage.bind(this));
+      (process as any).on('message', this._handleMessage.bind(this));
       client.on('ready', () => {
-        process.send({ _ready: true });
+        (process as any).send({ _ready: true });
       });
       client.on('disconnect', () => {
-        process.send({ _disconnect: true });
+        (process as any).send({ _disconnect: true });
       });
       client.on('reconnecting', () => {
-        process.send({ _reconnecting: true });
+        (process as any).send({ _reconnecting: true });
       });
     } else if (mode === 'worker') {
-      this.parentPort = require('node:worker_threads').parentPort;
+      this.parentPort = parentPort;
       this.parentPort.on('message', this._handleMessage.bind(this));
       client.on('ready', () => {
         this.parentPort.postMessage({ _ready: true });
@@ -87,7 +90,7 @@ class ShardClientUtil {
   send(message: any): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       if (this.mode === 'process') {
-        process.send(message, (err: any) => {
+        (process as any).send(message, (err: any) => {
           if (err) reject(err);
           else resolve();
         });
@@ -280,4 +283,5 @@ class ShardClientUtil {
   }
 }
 
-export = ShardClientUtil;
+export default ShardClientUtil;
+export { ShardClientUtil };

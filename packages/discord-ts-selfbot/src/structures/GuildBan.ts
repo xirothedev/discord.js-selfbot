@@ -1,4 +1,4 @@
-const Base = require('./Base');
+import Base from './Base';
 
 /**
  * Represents a ban in a guild on Discord.
@@ -54,4 +54,5 @@ class GuildBan extends Base {
   }
 }
 
-export = GuildBan;
+export default GuildBan;
+export { GuildBan };

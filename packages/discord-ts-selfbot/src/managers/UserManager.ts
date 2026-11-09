@@ -1,16 +1,19 @@
-const CachedManager = require('./CachedManager');
-const { Error } = require('../errors');
-const { GuildMember } = require('../structures/GuildMember');
-const { Message } = require('../structures/Message');
-const ThreadMember = require('../structures/ThreadMember');
-const User = require('../structures/User');
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
+import _GuildMemberModule from '../structures/GuildMember';
+const { GuildMember } = _GuildMemberModule;
+import _MessageModule from '../structures/Message';
+const { Message } = _MessageModule;
+import ThreadMember from '../structures/ThreadMember';
+import User from '../structures/User';
 
 /**
  * Manages API methods for users and stores their cache.
  * @extends {CachedManager}
  */
 class UserManager extends CachedManager {
-  constructor(client: any, iterable: any) {
+  constructor(client: any, iterable?: any) {
     super(client, User, iterable);
   }
 
@@ -131,4 +134,5 @@ class UserManager extends CachedManager {
   }
 }
 
-export = UserManager;
+export default UserManager;
+export { UserManager };

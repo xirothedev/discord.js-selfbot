@@ -1,26 +1,28 @@
-const process = require('node:process');
-const { Collection } = require('@discordjs/collection');
-const AnonymousGuild = require('./AnonymousGuild');
-const GuildAuditLogs = require('./GuildAuditLogs');
-const GuildPreview = require('./GuildPreview');
-const GuildTemplate = require('./GuildTemplate');
-const Integration = require('./Integration');
-const Webhook = require('./Webhook');
-const WelcomeScreen = require('./WelcomeScreen');
-const { Error } = require('../errors');
-const AutoModerationRuleManager = require('../managers/AutoModerationRuleManager');
-const GuildBanManager = require('../managers/GuildBanManager');
-const GuildChannelManager = require('../managers/GuildChannelManager');
-const GuildEmojiManager = require('../managers/GuildEmojiManager');
-const GuildInviteManager = require('../managers/GuildInviteManager');
-const GuildMemberManager = require('../managers/GuildMemberManager');
-const GuildScheduledEventManager = require('../managers/GuildScheduledEventManager');
-const GuildSettingManager = require('../managers/GuildSettingManager');
-const GuildStickerManager = require('../managers/GuildStickerManager');
-const PresenceManager = require('../managers/PresenceManager');
-const RoleManager = require('../managers/RoleManager');
-const StageInstanceManager = require('../managers/StageInstanceManager');
-const VoiceStateManager = require('../managers/VoiceStateManager');
+import process from 'node:process';
+import { Collection } from '@discordjs/collection';
+import AnonymousGuild from './AnonymousGuild';
+import GuildAuditLogs from './GuildAuditLogs';
+import GuildPreview from './GuildPreview';
+import GuildTemplate from './GuildTemplate';
+import Integration from './Integration';
+import Webhook from './Webhook';
+import WelcomeScreen from './WelcomeScreen';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
+import AutoModerationRuleManager from '../managers/AutoModerationRuleManager';
+import GuildBanManager from '../managers/GuildBanManager';
+import GuildChannelManager from '../managers/GuildChannelManager';
+import GuildEmojiManager from '../managers/GuildEmojiManager';
+import GuildInviteManager from '../managers/GuildInviteManager';
+import GuildMemberManager from '../managers/GuildMemberManager';
+import GuildScheduledEventManager from '../managers/GuildScheduledEventManager';
+import GuildSettingManager from '../managers/GuildSettingManager';
+import GuildStickerManager from '../managers/GuildStickerManager';
+import PresenceManager from '../managers/PresenceManager';
+import RoleManager from '../managers/RoleManager';
+import StageInstanceManager from '../managers/StageInstanceManager';
+import VoiceStateManager from '../managers/VoiceStateManager';
+import _ConstantsModule from '../util/Constants';
 const {
   ChannelTypes,
   DefaultMessageNotificationLevels,
@@ -29,10 +31,10 @@ const {
   Status,
   MFALevels,
   PremiumTiers,
-} = require('../util/Constants');
-const DataResolver = require('../util/DataResolver');
-const SystemChannelFlags = require('../util/SystemChannelFlags');
-const Util = require('../util/Util');
+} = _ConstantsModule;
+import DataResolver from '../util/DataResolver';
+import SystemChannelFlags from '../util/SystemChannelFlags';
+import Util from '../util/Util';
 
 let deprecationEmittedForSetChannelPositions = false;
 let deprecationEmittedForSetRolePositions = false;
@@ -1636,4 +1638,5 @@ class Guild extends AnonymousGuild {
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object}
  */
 
-export = { Guild, deletedGuilds };
+export { Guild, deletedGuilds };
+export default { Guild, deletedGuilds };

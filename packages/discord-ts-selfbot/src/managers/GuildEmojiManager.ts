@@ -1,15 +1,16 @@
-const { Collection } = require('@discordjs/collection');
-const BaseGuildEmojiManager = require('./BaseGuildEmojiManager');
-const { Error, TypeError } = require('../errors');
-const DataResolver = require('../util/DataResolver');
-const Permissions = require('../util/Permissions');
+import { Collection } from '@discordjs/collection';
+import BaseGuildEmojiManager from './BaseGuildEmojiManager';
+import _errorsModule from '../errors';
+const { Error, TypeError } = _errorsModule;
+import DataResolver from '../util/DataResolver';
+import Permissions from '../util/Permissions';
 
 /**
  * Manages API methods for GuildEmojis and stores their cache.
  * @extends {BaseGuildEmojiManager}
  */
 class GuildEmojiManager extends BaseGuildEmojiManager {
-  constructor(guild: any, iterable: any) {
+  constructor(guild: any, iterable?: any) {
     super(guild.client, iterable);
 
     /**
@@ -166,4 +167,5 @@ class GuildEmojiManager extends BaseGuildEmojiManager {
   }
 }
 
-export = GuildEmojiManager;
+export default GuildEmojiManager;
+export { GuildEmojiManager };

@@ -1,10 +1,13 @@
-const EventEmitter = require('node:events');
-const path = require('node:path');
-const process = require('node:process');
-const { setTimeout } = require('node:timers');
-const { setTimeout: sleep } = require('node:timers/promises');
-const { Error } = require('../errors');
-const Util = require('../util/Util');
+import * as childProcessModule from 'node:child_process';
+import { Worker as WorkerThread } from 'node:worker_threads';
+import EventEmitter from 'node:events';
+import path from 'node:path';
+import process from 'node:process';
+import { setTimeout } from 'node:timers';
+import { setTimeout as sleep } from 'node:timers/promises';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
+import Util from '../util/Util';
 let childProcess: any = null;
 let Worker: any = null;
 
@@ -31,8 +34,8 @@ class Shard extends EventEmitter {
   constructor(manager: any, id: any) {
     super();
 
-    if (manager.mode === 'process') childProcess = require('node:child_process');
-    else if (manager.mode === 'worker') Worker = require('node:worker_threads').Worker;
+    if (manager.mode === 'process') childProcess = childProcessModule;
+    else if (manager.mode === 'worker') Worker = WorkerThread;
 
     /**
      * Manager that created the shard
@@ -451,4 +454,5 @@ class Shard extends EventEmitter {
   }
 }
 
-export = Shard;
+export default Shard;
+export { Shard };

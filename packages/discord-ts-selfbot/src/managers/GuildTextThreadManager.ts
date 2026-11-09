@@ -1,7 +1,10 @@
-const ThreadManager = require('./ThreadManager');
-const { TypeError } = require('../errors');
-const { ChannelTypes } = require('../util/Constants');
-const { resolveAutoArchiveMaxLimit } = require('../util/Util');
+import ThreadManager from './ThreadManager';
+import _errorsModule from '../errors';
+const { TypeError } = _errorsModule;
+import _ConstantsModule from '../util/Constants';
+const { ChannelTypes } = _ConstantsModule;
+import _UtilModule from '../util/Util';
+const { resolveAutoArchiveMaxLimit } = _UtilModule;
 
 /**
  * Manages API methods for {@link ThreadChannel} objects and stores their cache.
@@ -93,4 +96,5 @@ class GuildTextThreadManager extends ThreadManager {
   }
 }
 
-export = GuildTextThreadManager;
+export default GuildTextThreadManager;
+export { GuildTextThreadManager };

@@ -1,7 +1,9 @@
-const BaseMessageComponent = require('./BaseMessageComponent');
-const { RangeError } = require('../errors');
-const { MessageButtonStyles, MessageComponentTypes } = require('../util/Constants');
-const Util = require('../util/Util');
+import BaseMessageComponent from './BaseMessageComponent';
+import _errorsModule from '../errors';
+const { RangeError } = _errorsModule;
+import _ConstantsModule from '../util/Constants';
+const { MessageButtonStyles, MessageComponentTypes } = _ConstantsModule;
+import Util from '../util/Util';
 
 /**
  * Represents a button message component.
@@ -162,4 +164,5 @@ class MessageButton extends BaseMessageComponent {
   }
 }
 
-export = MessageButton;
+export default MessageButton;
+export { MessageButton };

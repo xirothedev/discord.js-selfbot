@@ -1,5 +1,6 @@
-const BaseManager = require('./BaseManager');
-const { Error } = require('../errors');
+import BaseManager from './BaseManager';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
 
 /**
  * Manages the API methods of a data model along with a collection of instances.
@@ -56,4 +57,5 @@ class DataManager extends BaseManager {
   }
 }
 
-export = DataManager;
+export default DataManager;
+export { DataManager };

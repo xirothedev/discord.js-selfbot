@@ -1,11 +1,11 @@
-const { setInterval } = require('node:timers');
-const { Collection } = require('@discordjs/collection');
-const Invite = require('./Invite');
-const User = require('./User');
-const DataResolver = require('../util/DataResolver');
-const PremiumUsageFlags = require('../util/PremiumUsageFlags');
-const PurchasedFlags = require('../util/PurchasedFlags');
-const Util = require('../util/Util');
+import { setInterval } from 'node:timers';
+import { Collection } from '@discordjs/collection';
+import Invite from './Invite';
+import User from './User';
+import DataResolver from '../util/DataResolver';
+import PremiumUsageFlags from '../util/PremiumUsageFlags';
+import PurchasedFlags from '../util/PurchasedFlags';
+import Util from '../util/Util';
 
 /**
  * Represents the logged in client's Discord user.
@@ -15,7 +15,7 @@ class ClientUser extends User {
   #packageName: string | null = null;
 
   constructor(...args: any[]) {
-    super(...args);
+    super(args[0], args[1]);
     setInterval(
       () => {
         this.client.emit('debug', `[UPDATE] Samsung Presence: ${this.#packageName}`);
@@ -455,4 +455,5 @@ class ClientUser extends User {
   }
 }
 
-export = ClientUser;
+export default ClientUser;
+export { ClientUser };

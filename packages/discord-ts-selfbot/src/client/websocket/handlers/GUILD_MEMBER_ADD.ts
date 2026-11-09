@@ -1,5 +1,6 @@
-const { Events, Status } = require('../../../util/Constants');
-export = (client: any, { d: data }: any, shard: any) => {
+import _ConstantsModule from '../../../util/Constants';
+const { Events, Status } = _ConstantsModule;
+export default (client: any, { d: data }: any, shard: any) => {
   const guild = client.guilds.cache.get(data.guild_id);
   if (guild) {
     guild.memberCount++;

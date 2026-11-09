@@ -1,4 +1,4 @@
-const BaseManager = require('./BaseManager');
+import BaseManager from './BaseManager';
 /**
  * Manages API methods for users and stores their cache.
  * @extends {BaseManager}
@@ -150,4 +150,5 @@ class GuildSettingManager extends BaseManager {
   }
 }
 
-export = GuildSettingManager;
+export default GuildSettingManager;
+export { GuildSettingManager };

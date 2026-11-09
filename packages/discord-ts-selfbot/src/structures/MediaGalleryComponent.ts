@@ -1,6 +1,7 @@
-const BaseMessageComponent = require('./BaseMessageComponent');
-const MediaGalleryItem = require('./MediaGalleryItem');
-const { MessageComponentTypes } = require('../util/Constants');
+import BaseMessageComponent from './BaseMessageComponent';
+import MediaGalleryItem from './MediaGalleryItem';
+import _ConstantsModule from '../util/Constants';
+const { MessageComponentTypes } = _ConstantsModule;
 
 class MediaGalleryComponent extends BaseMessageComponent {
   /**
@@ -36,4 +37,5 @@ class MediaGalleryComponent extends BaseMessageComponent {
   }
 }
 
-export = MediaGalleryComponent;
+export default MediaGalleryComponent;
+export { MediaGalleryComponent };

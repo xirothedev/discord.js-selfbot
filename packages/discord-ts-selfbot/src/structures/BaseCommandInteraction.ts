@@ -1,9 +1,10 @@
-const { Collection } = require('@discordjs/collection');
-const Interaction = require('./Interaction');
-const InteractionWebhook = require('./InteractionWebhook');
-const MessageAttachment = require('./MessageAttachment');
-const InteractionResponses = require('./interfaces/InteractionResponses');
-const { ApplicationCommandOptionTypes } = require('../util/Constants');
+import { Collection } from '@discordjs/collection';
+import Interaction from './Interaction';
+import InteractionWebhook from './InteractionWebhook';
+import MessageAttachment from './MessageAttachment';
+import InteractionResponses from './interfaces/InteractionResponses';
+import _ConstantsModule from '../util/Constants';
+const { ApplicationCommandOptionTypes } = _ConstantsModule;
 
 /**
  * Represents a command interaction.
@@ -200,7 +201,8 @@ class BaseCommandInteraction extends Interaction {
 
 InteractionResponses.applyToClass(BaseCommandInteraction, ['deferUpdate', 'update']);
 
-export = BaseCommandInteraction;
+export default BaseCommandInteraction;
+export { BaseCommandInteraction };
 
 /* eslint-disable max-len */
 /**

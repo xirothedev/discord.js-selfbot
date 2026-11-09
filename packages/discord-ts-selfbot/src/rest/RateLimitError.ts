@@ -57,4 +57,5 @@ class RateLimitError extends Error {
   }
 }
 
-export = RateLimitError;
+export default RateLimitError;
+export { RateLimitError };

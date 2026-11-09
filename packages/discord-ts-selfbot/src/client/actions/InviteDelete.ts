@@ -1,6 +1,7 @@
-const Action = require('./Action');
-const Invite = require('../../structures/Invite');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import Invite from '../../structures/Invite';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class InviteDeleteAction extends Action {
   handle(data: any) {
@@ -25,4 +26,5 @@ class InviteDeleteAction extends Action {
   }
 }
 
-export = InviteDeleteAction;
+export default InviteDeleteAction;
+export { InviteDeleteAction };

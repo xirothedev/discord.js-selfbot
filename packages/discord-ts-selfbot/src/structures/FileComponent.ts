@@ -1,6 +1,7 @@
-const BaseMessageComponent = require('./BaseMessageComponent');
-const UnfurledMediaItem = require('./UnfurledMediaItem');
-const { MessageComponentTypes } = require('../util/Constants');
+import BaseMessageComponent from './BaseMessageComponent';
+import UnfurledMediaItem from './UnfurledMediaItem';
+import _ConstantsModule from '../util/Constants';
+const { MessageComponentTypes } = _ConstantsModule;
 
 class FileComponent extends BaseMessageComponent {
   /**
@@ -44,4 +45,5 @@ class FileComponent extends BaseMessageComponent {
   }
 }
 
-export = FileComponent;
+export default FileComponent;
+export { FileComponent };

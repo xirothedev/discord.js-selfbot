@@ -1,9 +1,10 @@
-const EventEmitter = require('node:events');
-const { setTimeout, setInterval, clearTimeout } = require('node:timers');
-const WebSocket = require('../../WebSocket');
-const { Status, Events, ShardEvents, Opcodes, WSEvents, WSCodes } = require('../../util/Constants');
-const Intents = require('../../util/Intents');
-const Util = require('../../util/Util');
+import EventEmitter from 'node:events';
+import { setTimeout, setInterval, clearTimeout } from 'node:timers';
+import WebSocket from '../../WebSocket';
+import _ConstantsModule from '../../util/Constants';
+const { Status, Events, ShardEvents, Opcodes, WSEvents, WSCodes } = _ConstantsModule;
+import Intents from '../../util/Intents';
+import Util from '../../util/Util';
 
 const STATUS_KEYS = Object.keys(Status);
 const CONNECTION_STATE = Object.keys(WebSocket.WebSocket);
@@ -11,7 +12,8 @@ const CONNECTION_STATE = Object.keys(WebSocket.WebSocket);
 let zlib: any;
 
 try {
-  zlib = require('zlib-sync');
+  const _zs = 'zlib-sync';
+  zlib = (await import(_zs)).default ?? (await import(_zs));
 } catch {} // eslint-disable-line no-empty
 
 /**
@@ -903,4 +905,5 @@ class WebSocketShard extends EventEmitter {
   }
 }
 
-export = WebSocketShard;
+export default WebSocketShard;
+export { WebSocketShard };

@@ -1,7 +1,7 @@
-const GuildChannel = require('./GuildChannel');
-const TextBasedChannel = require('./interfaces/TextBasedChannel');
-const GuildTextThreadManager = require('../managers/GuildTextThreadManager');
-const MessageManager = require('../managers/MessageManager');
+import GuildChannel from './GuildChannel';
+import TextBasedChannel from './interfaces/TextBasedChannel';
+import GuildTextThreadManager from '../managers/GuildTextThreadManager';
+import MessageManager from '../managers/MessageManager';
 
 /**
  * Represents a text-based guild channel on Discord.
@@ -184,10 +184,11 @@ class BaseGuildTextChannel extends GuildChannel {
   awaitMessages() {}
   fetchWebhooks() {}
   createWebhook() {}
-  setRateLimitPerUser() {}
+  setRateLimitPerUser(..._args: any[]) {}
   setNSFW() {}
 }
 
 TextBasedChannel.applyToClass(BaseGuildTextChannel, true);
 
-export = BaseGuildTextChannel;
+export default BaseGuildTextChannel;
+export { BaseGuildTextChannel };

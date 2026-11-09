@@ -1,5 +1,6 @@
-const BaseMessageComponent = require('./BaseMessageComponent');
-const { MessageComponentTypes } = require('../util/Constants');
+import BaseMessageComponent from './BaseMessageComponent';
+import _ConstantsModule from '../util/Constants';
+const { MessageComponentTypes } = _ConstantsModule;
 
 class ContainerComponent extends BaseMessageComponent {
   /**
@@ -63,4 +64,5 @@ class ContainerComponent extends BaseMessageComponent {
   }
 }
 
-export = ContainerComponent;
+export default ContainerComponent;
+export { ContainerComponent };

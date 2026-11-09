@@ -1,3 +1,15 @@
+import EventEmitter from 'events';
+import { Readable as ReadableStream } from 'stream';
+import prism from 'prism-media';
+import _AnnexBNalSplitterModule from './processing/AnnexBNalSplitter';
+const { H264NalSplitter, H265NalSplitter } = _AnnexBNalSplitterModule;
+import _IvfSplitterModule from './processing/IvfSplitter';
+const { IvfTransformer } = _IvfSplitterModule;
+import _AnnexBDispatcherModule from '../dispatcher/AnnexBDispatcher';
+const { H264Dispatcher } = _AnnexBDispatcherModule;
+import AudioDispatcher from '../dispatcher/AudioDispatcher';
+import _VPxDispatcherModule from '../dispatcher/VPxDispatcher';
+const { VP8Dispatcher } = _VPxDispatcherModule;
 /*
 Credit: https://github.com/dank074/Discord-video-stream
 The use of video streaming in this library is an incomplete implementation with many bugs, primarily aimed at lazy users.
@@ -14,15 +26,6 @@ Thanks to mrjvs for discovering how Discord transmits data and the VP8 codec.
 
 Please use the @dank074/discord-video-stream library for the best support.
 */
-
-const EventEmitter = require('events');
-const { Readable: ReadableStream } = require('stream');
-const prism = require('prism-media');
-const { H264NalSplitter, H265NalSplitter } = require('./processing/AnnexBNalSplitter');
-const { IvfTransformer } = require('./processing/IvfSplitter');
-const { H264Dispatcher } = require('../dispatcher/AnnexBDispatcher');
-const AudioDispatcher = require('../dispatcher/AudioDispatcher');
-const { VP8Dispatcher } = require('../dispatcher/VPxDispatcher');
 
 const FFMPEG_OUTPUT_PREFIX = ['-use_wallclock_as_timestamps', '1', '-copyts', '-analyzeduration', '0'];
 const FFMPEG_INPUT_PREFIX = [
@@ -129,7 +132,7 @@ class MediaPlayer extends EventEmitter {
     const ffmpeg = new prism.FFmpeg({ args });
     this.emit('debug', `[ffmpeg-audio_process] Spawn process with args:\n${args.join(' ')}`);
 
-    ffmpeg.process.stderr.on('data', (data: any) => {
+    ffmpeg.process.stderr?.on('data', (data: any) => {
       this.emit('debug', `[ffmpeg-audio_process]: ${data.toString()}`);
     });
 
@@ -234,7 +237,7 @@ class MediaPlayer extends EventEmitter {
 
     this.emit('debug', `[ffmpeg-video_process] Spawn process with args:\n${args.join(' ')}`);
 
-    ffmpeg.process.stderr.on('data', (data: any) => {
+    ffmpeg.process.stderr?.on('data', (data: any) => {
       this.emit('debug', `[ffmpeg-video_process]: ${data.toString()}`);
     });
 
@@ -257,7 +260,7 @@ class MediaPlayer extends EventEmitter {
     stream.pipe(videoStream);
     streams.video = videoStream;
     const dispatcher = this.createVideoDispatcher(options, streams);
-    videoStream.pipe(dispatcher);
+    videoStream?.pipe(dispatcher);
     return dispatcher;
   }
 
@@ -273,7 +276,7 @@ class MediaPlayer extends EventEmitter {
     stream.pipe(videoStream);
     streams.video = videoStream;
     const dispatcher = this.createVideoDispatcher(options, streams);
-    videoStream.pipe(dispatcher);
+    videoStream?.pipe(dispatcher);
     return dispatcher;
   }
 
@@ -318,4 +321,5 @@ class MediaPlayer extends EventEmitter {
   }
 }
 
-export = MediaPlayer;
+export default MediaPlayer;
+export { MediaPlayer };

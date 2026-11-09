@@ -1,14 +1,16 @@
-const { spawn: spawnProcess } = require('child_process');
-const { createSocket } = require('dgram');
-const { EventEmitter } = require('events');
-const { Buffer } = require('node:buffer');
-const { Writable } = require('stream');
-const findProcessDefault = require('find-process');
-const killProcessDefault = require('tree-kill');
-const { RtpPacket } = require('werift-rtp');
-const VoiceCodec = require('../util/VoiceCodec');
-const { randomPorts } = require('../util/Function');
-const { StreamOutput } = require('../util/Socket');
+import { spawn as spawnProcess } from 'child_process';
+import { createSocket } from 'dgram';
+import { EventEmitter } from 'events';
+import { Buffer } from 'node:buffer';
+import { Writable } from 'stream';
+import findProcessDefault from 'find-process';
+import killProcessDefault from 'tree-kill';
+import { RtpPacket } from 'werift-rtp';
+import VoiceCodec from '../util/VoiceCodec';
+import _FunctionModule from '../util/Function';
+const { randomPorts } = _FunctionModule;
+import _SocketModule from '../util/Socket';
+const { StreamOutput } = _SocketModule;
 
 /**
  * Represents a FFmpeg handler
@@ -200,4 +202,5 @@ class Recorder extends EventEmitter {
    */
 }
 
-export = Recorder;
+export default Recorder;
+export { Recorder };

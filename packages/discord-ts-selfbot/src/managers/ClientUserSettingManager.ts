@@ -1,8 +1,11 @@
-const { Collection } = require('@discordjs/collection');
-const BaseManager = require('./BaseManager');
-const { TypeError } = require('../errors/DJSError');
-const { CustomStatus } = require('../structures/Presence');
-const { ActivityTypes } = require('../util/Constants');
+import { Collection } from '@discordjs/collection';
+import BaseManager from './BaseManager';
+import _DJSErrorModule from '../errors/DJSError';
+const { TypeError } = _DJSErrorModule;
+import _PresenceModule from '../structures/Presence';
+const { CustomStatus } = _PresenceModule;
+import _ConstantsModule from '../util/Constants';
+const { ActivityTypes } = _ConstantsModule;
 
 /**
  * Manages API methods for users and stores their cache.
@@ -367,4 +370,5 @@ class ClientUserSettingManager extends BaseManager {
   }
 }
 
-export = ClientUserSettingManager;
+export default ClientUserSettingManager;
+export { ClientUserSettingManager };

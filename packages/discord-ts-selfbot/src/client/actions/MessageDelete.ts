@@ -1,6 +1,8 @@
-const Action = require('./Action');
-const { deletedMessages } = require('../../structures/Message');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import _MessageModule from '../../structures/Message';
+const { deletedMessages } = _MessageModule;
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class MessageDeleteAction extends Action {
   handle(data: any) {
@@ -27,4 +29,5 @@ class MessageDeleteAction extends Action {
   }
 }
 
-export = MessageDeleteAction;
+export default MessageDeleteAction;
+export { MessageDeleteAction };

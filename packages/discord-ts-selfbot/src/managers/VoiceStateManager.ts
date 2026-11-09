@@ -1,12 +1,12 @@
-const CachedManager = require('./CachedManager');
-const VoiceState = require('../structures/VoiceState');
+import CachedManager from './CachedManager';
+import VoiceState from '../structures/VoiceState';
 
 /**
  * Manages API methods for VoiceStates and stores their cache.
  * @extends {CachedManager}
  */
 class VoiceStateManager extends CachedManager {
-  constructor(guild: any, iterable: any) {
+  constructor(guild: any, iterable?: any) {
     super(guild.client, VoiceState, iterable);
 
     /**
@@ -54,4 +54,5 @@ class VoiceStateManager extends CachedManager {
   }
 }
 
-export = VoiceStateManager;
+export default VoiceStateManager;
+export { VoiceStateManager };

@@ -1,12 +1,18 @@
+import MessageCollector from '../MessageCollector';
+import MessagePayload from '../MessagePayload';
+import _ConstantsModule from '../../util/Constants';
+const { InteractionTypes, ApplicationCommandOptionTypes, Events } = _ConstantsModule;
+import _errorsModule from '../../errors';
+const { Error } = _errorsModule;
+import SnowflakeUtil from '../../util/SnowflakeUtil';
+import { setTimeout } from 'node:timers';
+import { s } from '@sapphire/shapeshift';
+import Util from '../../util/Util';
+import User from '../User';
+import _GuildMemberModule from '../GuildMember';
+const { GuildMember } = _GuildMemberModule;
+import MessageManager from '../../managers/MessageManager';
 /* eslint-disable import/order */
-const MessageCollector = require('../MessageCollector');
-const MessagePayload = require('../MessagePayload');
-const { InteractionTypes, ApplicationCommandOptionTypes, Events } = require('../../util/Constants');
-const { Error } = require('../../errors');
-const SnowflakeUtil = require('../../util/SnowflakeUtil');
-const { setTimeout } = require('node:timers');
-const { s } = require('@sapphire/shapeshift');
-const Util = require('../../util/Util');
 const validateName = (stringName: any) =>
   s
     .string()
@@ -178,9 +184,6 @@ class TextBasedChannel {
    *   .catch(console.error);
    */
   async send(options: any) {
-    const User = require('../User');
-    const { GuildMember } = require('../GuildMember');
-
     if (this instanceof User || this instanceof GuildMember) {
       const dm = await this.createDM();
       return dm.send(options);
@@ -534,10 +537,10 @@ class TextBasedChannel {
   }
 }
 
-export = TextBasedChannel;
+export default TextBasedChannel;
+export { TextBasedChannel };
 
 // Fixes Circular
-const MessageManager = require('../../managers/MessageManager');
 
 // Utils
 function parseChoices(parent: any, list_choices: any, value: any) {

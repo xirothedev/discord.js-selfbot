@@ -1,5 +1,6 @@
-const { Events } = require('../../../util/Constants');
-export = (client: any, packet: any) => {
+import _ConstantsModule from '../../../util/Constants';
+const { Events } = _ConstantsModule;
+export default (client: any, packet: any) => {
   const { old, updated } = client.actions.ChannelUpdate.handle(packet.d);
   if (old && updated) {
     /**

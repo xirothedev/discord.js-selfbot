@@ -1,4 +1,4 @@
-const Action = require('./Action');
+import Action from './Action';
 
 class GuildEmojisUpdateAction extends Action {
   handle(data: any) {
@@ -29,4 +29,5 @@ class GuildEmojisUpdateAction extends Action {
   }
 }
 
-export = GuildEmojisUpdateAction;
+export default GuildEmojisUpdateAction;
+export { GuildEmojisUpdateAction };

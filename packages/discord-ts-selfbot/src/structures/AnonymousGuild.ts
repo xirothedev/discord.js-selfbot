@@ -1,5 +1,6 @@
-const BaseGuild = require('./BaseGuild');
-const { VerificationLevels, NSFWLevels } = require('../util/Constants');
+import BaseGuild from './BaseGuild';
+import _ConstantsModule from '../util/Constants';
+const { VerificationLevels, NSFWLevels } = _ConstantsModule;
 
 /**
  * Bundles common attributes and methods between {@link Guild} and {@link InviteGuild}
@@ -93,4 +94,5 @@ class AnonymousGuild extends BaseGuild {
   }
 }
 
-export = AnonymousGuild;
+export default AnonymousGuild;
+export { AnonymousGuild };

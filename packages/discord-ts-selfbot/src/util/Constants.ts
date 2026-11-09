@@ -1,6 +1,6 @@
-'use strict';
-
-const { Error, RangeError, TypeError } = require('../errors');
+import _errorsModule from '../errors';
+const { Error, RangeError, TypeError } = _errorsModule;
+('use strict');
 
 const Constants: any = {};
 
@@ -1925,4 +1925,5 @@ function createEnum(keys: any) {
  * @property {HolographicStyle} HolographicStyles Holographic color values for role styling.
  */
 
-export = Constants;
+export default Constants;
+export { Constants };

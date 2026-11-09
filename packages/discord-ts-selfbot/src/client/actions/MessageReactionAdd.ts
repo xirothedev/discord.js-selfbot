@@ -1,6 +1,7 @@
-const Action = require('./Action');
-const { Events } = require('../../util/Constants');
-const { PartialTypes } = require('../../util/Constants');
+import Action from './Action';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
+const { PartialTypes } = _ConstantsModule;
 
 /*
 { user_id: 'id',
@@ -63,4 +64,5 @@ class MessageReactionAdd extends Action {
   }
 }
 
-export = MessageReactionAdd;
+export default MessageReactionAdd;
+export { MessageReactionAdd };

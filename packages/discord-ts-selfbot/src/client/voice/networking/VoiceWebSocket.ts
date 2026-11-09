@@ -1,8 +1,10 @@
-const EventEmitter = require('events');
-const { setTimeout, setInterval } = require('node:timers');
-const WebSocket = require('../../../WebSocket');
-const { Error } = require('../../../errors');
-const { Opcodes, VoiceOpcodes } = require('../../../util/Constants');
+import EventEmitter from 'events';
+import { setTimeout, setInterval } from 'node:timers';
+import WebSocket from '../../../WebSocket';
+import _errorsModule from '../../../errors';
+const { Error } = _errorsModule;
+import _ConstantsModule from '../../../util/Constants';
+const { Opcodes, VoiceOpcodes } = _ConstantsModule;
 
 /**
  * Represents a Voice Connection's WebSocket.
@@ -283,4 +285,5 @@ class VoiceWebSocket extends EventEmitter {
   }
 }
 
-export = VoiceWebSocket;
+export default VoiceWebSocket;
+export { VoiceWebSocket };

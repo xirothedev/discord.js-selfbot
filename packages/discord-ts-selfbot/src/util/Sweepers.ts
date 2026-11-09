@@ -1,8 +1,9 @@
-'use strict';
-
-const { setInterval } = require('node:timers');
-const { Events, ThreadChannelTypes, SweeperKeys } = require('./Constants');
-const { TypeError } = require('../errors/DJSError');
+import { setInterval } from 'node:timers';
+import _ConstantsModule from './Constants';
+const { Events, ThreadChannelTypes, SweeperKeys } = _ConstantsModule;
+import _DJSErrorModule from '../errors/DJSError';
+const { TypeError } = _DJSErrorModule;
+('use strict');
 
 /**
  * @typedef {Function} GlobalSweepFilter
@@ -467,4 +468,5 @@ class Sweepers {
   }
 }
 
-export = Sweepers;
+export default Sweepers;
+export { Sweepers };

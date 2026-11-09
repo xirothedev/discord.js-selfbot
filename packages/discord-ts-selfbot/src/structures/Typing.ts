@@ -1,4 +1,4 @@
-const Base = require('./Base');
+import Base from './Base';
 
 /**
  * Represents a typing state for a user in a channel.
@@ -70,4 +70,5 @@ class Typing extends Base {
   }
 }
 
-export = Typing;
+export default Typing;
+export { Typing };

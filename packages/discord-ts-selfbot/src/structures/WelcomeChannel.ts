@@ -1,5 +1,6 @@
-const Base = require('./Base');
-const { Emoji } = require('./Emoji');
+import Base from './Base';
+import _EmojiModule from './Emoji';
+const { Emoji } = _EmojiModule;
 
 /**
  * Represents a channel link in a guild's welcome screen.
@@ -56,4 +57,5 @@ class WelcomeChannel extends Base {
   }
 }
 
-export = WelcomeChannel;
+export default WelcomeChannel;
+export { WelcomeChannel };

@@ -1,11 +1,13 @@
-const process = require('node:process');
-const ApplicationFlags = require('../../util/ApplicationFlags');
-const { ClientApplicationAssetTypes, Endpoints } = require('../../util/Constants');
-const Permissions = require('../../util/Permissions');
-const SnowflakeUtil = require('../../util/SnowflakeUtil');
-const { ApplicationRoleConnectionMetadata } = require('../ApplicationRoleConnectionMetadata');
-const Base = require('../Base');
-const Team = require('../Team');
+import process from 'node:process';
+import ApplicationFlags from '../../util/ApplicationFlags';
+import _ConstantsModule from '../../util/Constants';
+const { ClientApplicationAssetTypes, Endpoints } = _ConstantsModule;
+import Permissions from '../../util/Permissions';
+import SnowflakeUtil from '../../util/SnowflakeUtil';
+import _ApplicationRoleConnectionMetadataModule from '../ApplicationRoleConnectionMetadata';
+const { ApplicationRoleConnectionMetadata } = _ApplicationRoleConnectionMetadataModule;
+import Base from '../Base';
+import Team from '../Team';
 
 const AssetTypes = Object.keys(ClientApplicationAssetTypes);
 
@@ -820,4 +822,5 @@ class Application extends Base {
   }
 }
 
-export = Application;
+export default Application;
+export { Application };

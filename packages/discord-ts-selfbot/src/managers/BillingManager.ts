@@ -1,6 +1,6 @@
-const { Collection } = require('@discordjs/collection');
-const BaseManager = require('./BaseManager');
-const GuildBoost = require('../structures/GuildBoost');
+import { Collection } from '@discordjs/collection';
+import BaseManager from './BaseManager';
+import GuildBoost from '../structures/GuildBoost';
 
 /**
  * Manages the API methods of a data model.
@@ -61,4 +61,5 @@ class BillingManager extends BaseManager {
   }
 }
 
-export = BillingManager;
+export default BillingManager;
+export { BillingManager };

@@ -1,5 +1,6 @@
-const BaseMessageComponent = require('./BaseMessageComponent');
-const { MessageComponentTypes } = require('../util/Constants');
+import BaseMessageComponent from './BaseMessageComponent';
+import _ConstantsModule from '../util/Constants';
+const { MessageComponentTypes } = _ConstantsModule;
 
 /**
  * Represents an action row containing message components.
@@ -99,7 +100,8 @@ class MessageActionRow extends BaseMessageComponent {
   }
 }
 
-export = MessageActionRow;
+export default MessageActionRow;
+export { MessageActionRow };
 
 /**
  * @external APIMessageComponent

@@ -1,8 +1,11 @@
-'use strict';
-
-const { randomUUID } = require('node:crypto');
-const { UserAgent } = require('./Constants');
-const Intents = require('./Intents');
+import Util from './Util';
+import { randomUUID } from 'node:crypto';
+import _ConstantsModule from './Constants';
+const { UserAgent } = _ConstantsModule;
+import Intents from './Intents';
+import { Collection } from '@discordjs/collection';
+import LimitedCollection from './LimitedCollection';
+('use strict');
 
 /**
  * Rate limit data
@@ -188,7 +191,7 @@ class Options extends null {
       messageCacheLifetime: 0,
       messageSweepInterval: 0,
       invalidRequestWarningInterval: 0,
-      intents: Intents.ALL,
+      intents: (Intents as any).ALL,
       partials: ['USER', 'CHANNEL', 'GUILD_MEMBER', 'MESSAGE', 'REACTION', 'GUILD_SCHEDULED_EVENT'], // Enable the partials
       restWsBridgeTimeout: 5_000,
       restRequestTimeout: 15_000,
@@ -280,9 +283,6 @@ class Options extends null {
    * });
    */
   static cacheWithLimits(settings: any = {}) {
-    const { Collection } = require('@discordjs/collection');
-    const LimitedCollection = require('./LimitedCollection');
-
     return (manager: any) => {
       const setting = settings[manager.name];
       /* eslint-disable-next-line eqeqeq */
@@ -315,7 +315,6 @@ class Options extends null {
    * @returns {CacheFactory}
    */
   static cacheEverything() {
-    const { Collection } = require('@discordjs/collection');
     return () => new Collection();
   }
 
@@ -335,15 +334,15 @@ class Options extends null {
       MessageManager: 200,
       ChannelManager: {
         sweepInterval: 3600,
-        sweepFilter: require('./Util').archivedThreadSweepFilter(),
+        sweepFilter: Util.archivedThreadSweepFilter(),
       },
       GuildChannelManager: {
         sweepInterval: 3600,
-        sweepFilter: require('./Util').archivedThreadSweepFilter(),
+        sweepFilter: Util.archivedThreadSweepFilter(),
       },
       ThreadManager: {
         sweepInterval: 3600,
-        sweepFilter: require('./Util').archivedThreadSweepFilter(),
+        sweepFilter: Util.archivedThreadSweepFilter(),
       },
     };
   }
@@ -364,4 +363,5 @@ class Options extends null {
   },
 };
 
-export = Options;
+export default Options;
+export { Options };

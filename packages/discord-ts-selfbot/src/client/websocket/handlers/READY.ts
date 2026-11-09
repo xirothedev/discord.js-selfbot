@@ -1,8 +1,9 @@
-const USER_REQUIRED_ACTION = require('./USER_REQUIRED_ACTION_UPDATE');
-const Application = require('../../../structures/interfaces/Application');
-const { Opcodes } = require('../../../util/Constants');
-let ClientUser;
-export = (client: any, { d: data }: any, shard: any) => {
+import USER_REQUIRED_ACTION from './USER_REQUIRED_ACTION_UPDATE';
+import Application from '../../../structures/interfaces/Application';
+import _ConstantsModule from '../../../util/Constants';
+const { Opcodes } = _ConstantsModule;
+import ClientUser from '../../../structures/ClientUser';
+export default (client: any, { d: data }: any, shard: any) => {
   // Check
   USER_REQUIRED_ACTION(client, { d: data });
   // Overwrite ClientPresence
@@ -10,7 +11,6 @@ export = (client: any, { d: data }: any, shard: any) => {
   if (client.user) {
     client.user._patch(data.user);
   } else {
-    ClientUser ??= require('../../../structures/ClientUser');
     client.user = new ClientUser(client, data.user);
     client.users.cache.set(client.user.id, client.user);
   }

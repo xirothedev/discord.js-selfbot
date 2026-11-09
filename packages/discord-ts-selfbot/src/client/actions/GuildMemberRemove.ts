@@ -1,6 +1,8 @@
-const Action = require('./Action');
-const { deletedGuildMembers } = require('../../structures/GuildMember');
-const { Events, Status } = require('../../util/Constants');
+import Action from './Action';
+import _GuildMemberModule from '../../structures/GuildMember';
+const { deletedGuildMembers } = _GuildMemberModule;
+import _ConstantsModule from '../../util/Constants';
+const { Events, Status } = _ConstantsModule;
 
 class GuildMemberRemoveAction extends Action {
   handle(data: any, shard: any) {
@@ -28,4 +30,5 @@ class GuildMemberRemoveAction extends Action {
   }
 }
 
-export = GuildMemberRemoveAction;
+export default GuildMemberRemoveAction;
+export { GuildMemberRemoveAction };

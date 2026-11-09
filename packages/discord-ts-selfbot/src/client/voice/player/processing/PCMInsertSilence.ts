@@ -1,10 +1,10 @@
-const { Buffer } = require('node:buffer');
-const { Transform } = require('node:stream');
+import { Buffer } from 'node:buffer';
+import { Transform } from 'node:stream';
 
 class PCMInsertSilence extends Transform {
   [key: string]: any;
 
-  constructor(options: any) {
+  constructor(options: any = {}) {
     super(options);
     // 48Khz, 2 channels, 16-bit (2 bytes per channel)
     this.sampleRate = 48000;
@@ -32,6 +32,7 @@ class PCMInsertSilence extends Transform {
   }
 }
 
-export = {
+export { PCMInsertSilence };
+export default {
   PCMInsertSilence,
 };

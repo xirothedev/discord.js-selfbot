@@ -186,4 +186,5 @@ enum Events {
   GuildSoundboardSoundsUpdate = 'guildSoundboardSoundsUpdate',
   SoundboardSounds = 'soundboardSounds',
 }
-export = Events;
+export default Events;
+export { Events };

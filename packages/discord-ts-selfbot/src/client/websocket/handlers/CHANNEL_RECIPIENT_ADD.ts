@@ -1,5 +1,6 @@
-const { Events, Status } = require('../../../util/Constants');
-export = (client: any, packet: any, shard: any) => {
+import _ConstantsModule from '../../../util/Constants';
+const { Events, Status } = _ConstantsModule;
+export default (client: any, packet: any, shard: any) => {
   const channel = client.channels.cache.get(packet.d.channel_id);
   if (channel) {
     if (!channel._recipients) channel._recipients = [];

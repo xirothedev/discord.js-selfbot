@@ -1,6 +1,8 @@
-const BaseClient = require('./BaseClient');
-const { Error } = require('../errors');
-const Webhook = require('../structures/Webhook');
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+import BaseClient from './BaseClient';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
 
 /**
  * The webhook client.
@@ -62,6 +64,12 @@ class WebhookClient extends BaseClient {
   }
 }
 
-Webhook.applyToClass(WebhookClient);
+export default WebhookClient;
+export { WebhookClient };
 
-export = WebhookClient;
+setTimeout(() => {
+  try {
+    const Webhook = require('../structures/Webhook');
+    Webhook.applyToClass(WebhookClient);
+  } catch {}
+}, 0);

@@ -1,12 +1,13 @@
-const EventEmitter = require('node:events');
-const fs = require('node:fs');
-const path = require('node:path');
-const process = require('node:process');
-const { setTimeout: sleep } = require('node:timers/promises');
-const { Collection } = require('@discordjs/collection');
-const Shard = require('./Shard');
-const { Error, TypeError, RangeError } = require('../errors');
-const Util = require('../util/Util');
+import EventEmitter from 'node:events';
+import fs from 'node:fs';
+import path from 'node:path';
+import process from 'node:process';
+import { setTimeout as sleep } from 'node:timers/promises';
+import { Collection } from '@discordjs/collection';
+import Shard from './Shard';
+import _errorsModule from '../errors';
+const { Error, TypeError, RangeError } = _errorsModule;
+import Util from '../util/Util';
 
 /**
  * This is a utility class that makes multi-process sharding of a bot an easy and painless experience.
@@ -152,7 +153,7 @@ class ShardingManager extends EventEmitter {
      */
     this.shards = new Collection();
 
-    process.env.SHARDING_MANAGER = true;
+    process.env.SHARDING_MANAGER = 'true';
     process.env.SHARDING_MANAGER_MODE = this.mode;
     process.env.DISCORD_TOKEN = this.token;
   }
@@ -324,4 +325,5 @@ class ShardingManager extends EventEmitter {
   }
 }
 
-export = ShardingManager;
+export default ShardingManager;
+export { ShardingManager };

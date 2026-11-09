@@ -1,13 +1,19 @@
-'use strict';
+import Sweepers from './Sweepers';
+import { Agent } from 'node:http';
+import { parse } from 'node:path';
+import process from 'node:process';
+import { setTimeout } from 'node:timers';
+import { Collection } from '@discordjs/collection';
+import { fetch } from 'undici';
+import _ConstantsModule from './Constants';
+const { Colors, Events } = _ConstantsModule;
+import _errorsModule from '../errors';
+const { Error: DiscordError, RangeError, TypeError } = _errorsModule;
+import VoiceCodec from '../client/voice/util/VoiceCodec';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+('use strict');
 
-const { Agent } = require('node:http');
-const { parse } = require('node:path');
-const process = require('node:process');
-const { setTimeout } = require('node:timers');
-const { Collection } = require('@discordjs/collection');
-const { fetch } = require('undici');
-const { Colors, Events } = require('./Constants');
-const { Error: DiscordError, RangeError, TypeError } = require('../errors');
 const has = (o: any, k: any) => Object.prototype.hasOwnProperty.call(o, k);
 const isObject = (d: any) => typeof d === 'object' && d !== null;
 
@@ -18,8 +24,6 @@ let deprecationEmittedForResolveAutoArchiveMaxLimit = false;
 const TextSortableGroupTypes = ['GUILD_TEXT', 'GUILD_ANNOUCMENT', 'GUILD_FORUM'];
 const VoiceSortableGroupTypes = ['GUILD_VOICE', 'GUILD_STAGE_VOICE'];
 const CategorySortableGroupTypes = ['GUILD_CATEGORY'];
-
-const VoiceCodec = require('../client/voice/util/VoiceCodec');
 
 /**
  * Contains various general-purpose utility methods.
@@ -529,6 +533,7 @@ class Util extends null {
    * @returns {Collection}
    */
   static discordSort(collection: any) {
+    const GuildChannel = require('../structures/GuildChannel');
     const isGuildChannel = collection.first() instanceof GuildChannel;
     return collection.toSorted(
       isGuildChannel
@@ -644,8 +649,8 @@ class Util extends null {
    * @returns {SweepFilter}
    */
   static archivedThreadSweepFilter(lifetime: any = 14400) {
-    const filter = require('./Sweepers').archivedThreadSweepFilter(lifetime);
-    filter.isDefault = true;
+    const filter = Sweepers.archivedThreadSweepFilter(lifetime);
+    (filter as any).isDefault = true;
     return filter;
   }
 
@@ -655,7 +660,7 @@ class Util extends null {
    * @deprecated This will be removed in the next major version.
    * @returns {number}
    */
-  static resolveAutoArchiveMaxLimit() {
+  static resolveAutoArchiveMaxLimit(_guild: any = null) {
     if (!deprecationEmittedForResolveAutoArchiveMaxLimit) {
       process.emitWarning(
         // eslint-disable-next-line max-len
@@ -956,7 +961,7 @@ class Util extends null {
   }
 }
 
-export = Util;
+export default Util;
+export { Util };
 
 // Fixes Circular
-const GuildChannel = require('../structures/GuildChannel');

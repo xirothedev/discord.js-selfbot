@@ -10,4 +10,5 @@ enum Status {
   Resuming,
 }
 
-export = Status;
+export default Status;
+export { Status };

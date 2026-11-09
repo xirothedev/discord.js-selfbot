@@ -1,7 +1,8 @@
-const Base = require('./Base');
-const { InteractionTypes, MessageComponentTypes, ApplicationCommandTypes } = require('../util/Constants');
-const Permissions = require('../util/Permissions');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
+import Base from './Base';
+import _ConstantsModule from '../util/Constants';
+const { InteractionTypes, MessageComponentTypes, ApplicationCommandTypes } = _ConstantsModule;
+import Permissions from '../util/Permissions';
+import SnowflakeUtil from '../util/SnowflakeUtil';
 
 /**
  * Represents an interaction.
@@ -285,4 +286,5 @@ class Interaction extends Base {
   }
 }
 
-export = Interaction;
+export default Interaction;
+export { Interaction };

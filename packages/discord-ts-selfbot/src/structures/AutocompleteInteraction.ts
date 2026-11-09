@@ -1,7 +1,9 @@
-const CommandInteractionOptionResolver = require('./CommandInteractionOptionResolver');
-const Interaction = require('./Interaction');
-const { Error } = require('../errors');
-const { InteractionResponseTypes, ApplicationCommandOptionTypes } = require('../util/Constants');
+import CommandInteractionOptionResolver from './CommandInteractionOptionResolver';
+import Interaction from './Interaction';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
+import _ConstantsModule from '../util/Constants';
+const { InteractionResponseTypes, ApplicationCommandOptionTypes } = _ConstantsModule;
 
 /**
  * Represents an autocomplete interaction.
@@ -102,4 +104,5 @@ class AutocompleteInteraction extends Interaction {
   }
 }
 
-export = AutocompleteInteraction;
+export default AutocompleteInteraction;
+export { AutocompleteInteraction };

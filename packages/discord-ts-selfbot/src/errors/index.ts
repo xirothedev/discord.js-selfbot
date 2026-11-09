@@ -1,8 +1,9 @@
+import DJSError from './DJSError';
+import Messages from './Messages';
 // Re-export DJSError and attach Messages for side-effect registration.
-const DJSError = require('./DJSError');
-const Messages = require('./Messages');
 
-const result = DJSError;
+const result: any = DJSError;
 result.Messages = Messages;
 
-export = result;
+export default result;
+export { result };

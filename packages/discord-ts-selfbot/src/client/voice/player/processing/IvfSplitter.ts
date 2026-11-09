@@ -1,3 +1,5 @@
+import { Buffer } from 'buffer';
+import { Transform } from 'stream';
 /*
 Credit: https://github.com/dank074/Discord-video-stream
 The use of video streaming in this library is an incomplete implementation with many bugs, primarily aimed at lazy users.
@@ -15,13 +17,10 @@ Thanks to mrjvs for discovering how Discord transmits data and the VP8 codec.
 Please use the @dank074/discord-video-stream library for the best support.
 */
 
-const { Buffer } = require('buffer');
-const { Transform } = require('stream');
-
 class IvfTransformer extends Transform {
   [key: string]: any;
 
-  constructor(options: any) {
+  constructor(options: any = {}) {
     super(options);
     this.headerSize = 32;
     this.frameHeaderSize = 12;
@@ -101,6 +100,7 @@ class IvfTransformer extends Transform {
   }
 }
 
-export = {
+export { IvfTransformer };
+export default {
   IvfTransformer,
 };

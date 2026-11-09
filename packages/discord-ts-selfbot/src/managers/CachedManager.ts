@@ -1,5 +1,6 @@
-const DataManager = require('./DataManager');
-const { _cleanupSymbol } = require('../util/Constants');
+import DataManager from './DataManager';
+import _ConstantsModule from '../util/Constants';
+const { _cleanupSymbol } = _ConstantsModule;
 
 /**
  * Manages the API methods of a data model with a mutable cache of instances.
@@ -7,7 +8,8 @@ const { _cleanupSymbol } = require('../util/Constants');
  * @abstract
  */
 class CachedManager extends DataManager {
-  constructor(client: any, holds: any, iterable: any) {
+  [key: string]: any;
+  constructor(client: any, holds: any, iterable?: any) {
     super(client, holds);
 
     /**
@@ -66,4 +68,5 @@ class CachedManager extends DataManager {
   }
 }
 
-export = CachedManager;
+export default CachedManager;
+export { CachedManager };

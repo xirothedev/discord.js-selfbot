@@ -7,4 +7,5 @@ enum Partials {
   User,
 }
 
-export = Partials;
+export default Partials;
+export { Partials };

@@ -1,4 +1,4 @@
-import BitField = require('./BitField');
+import BitField from './BitField';
 
 /**
  * Data structure that makes it easy to interact with a {@link Message#flags} bitfield.
@@ -58,4 +58,5 @@ MessageFlags.FLAGS = {
   IS_COMPONENTS_V2: 1 << 15,
 };
 
-export = MessageFlags;
+export default MessageFlags;
+export { MessageFlags };

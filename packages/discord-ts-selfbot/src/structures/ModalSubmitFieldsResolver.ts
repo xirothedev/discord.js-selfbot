@@ -1,5 +1,7 @@
-const { TypeError } = require('../errors');
-const { MessageComponentTypes } = require('../util/Constants');
+import _errorsModule from '../errors';
+const { TypeError } = _errorsModule;
+import _ConstantsModule from '../util/Constants';
+const { MessageComponentTypes } = _ConstantsModule;
 
 /**
  * A resolver for modal submit interaction text inputs.
@@ -49,4 +51,5 @@ class ModalSubmitFieldsResolver {
   }
 }
 
-export = ModalSubmitFieldsResolver;
+export default ModalSubmitFieldsResolver;
+export { ModalSubmitFieldsResolver };

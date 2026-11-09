@@ -1,8 +1,9 @@
-const Buffer = require('node:buffer').Buffer;
-const { setTimeout } = require('node:timers');
-const { FormData, buildConnector, Client, ProxyAgent } = require('undici');
-const { ciphers } = require('../util/Constants');
-const Util = require('../util/Util');
+import { Buffer } from 'node:buffer';
+import { setTimeout } from 'node:timers';
+import { FormData, buildConnector, Client, ProxyAgent } from 'undici';
+import _ConstantsModule from '../util/Constants';
+const { ciphers } = _ConstantsModule;
+import Util from '../util/Util';
 
 let agent: any = null;
 
@@ -158,4 +159,5 @@ class APIRequest {
   }
 }
 
-export = APIRequest;
+export default APIRequest;
+export { APIRequest };

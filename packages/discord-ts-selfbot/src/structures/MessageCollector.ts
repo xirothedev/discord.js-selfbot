@@ -1,5 +1,6 @@
-const Collector = require('./interfaces/Collector');
-const { Events } = require('../util/Constants');
+import Collector from './interfaces/Collector';
+import _ConstantsModule from '../util/Constants';
+const { Events } = _ConstantsModule;
 
 /**
  * @typedef {CollectorOptions} MessageCollectorOptions
@@ -142,4 +143,5 @@ class MessageCollector extends Collector {
   }
 }
 
-export = MessageCollector;
+export default MessageCollector;
+export { MessageCollector };

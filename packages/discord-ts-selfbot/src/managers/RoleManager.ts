@@ -1,12 +1,15 @@
-const process = require('node:process');
-const { Collection } = require('@discordjs/collection');
-const CachedManager = require('./CachedManager');
-const { TypeError } = require('../errors');
-const { Role } = require('../structures/Role');
-const DataResolver = require('../util/DataResolver');
-const Permissions = require('../util/Permissions');
-const { resolveColor } = require('../util/Util');
-const Util = require('../util/Util');
+import process from 'node:process';
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
+const { TypeError } = _errorsModule;
+import _RoleModule from '../structures/Role';
+const { Role } = _RoleModule;
+import DataResolver from '../util/DataResolver';
+import Permissions from '../util/Permissions';
+import _UtilModule from '../util/Util';
+const { resolveColor } = _UtilModule;
+import Util from '../util/Util';
 
 let cacheWarningEmitted = false;
 let deprecationEmittedForCreate = false;
@@ -17,7 +20,7 @@ let deprecationEmittedForEdit = false;
  * @extends {CachedManager}
  */
 class RoleManager extends CachedManager {
-  constructor(guild: any, iterable: any) {
+  constructor(guild: any, iterable?: any) {
     super(guild.client, Role, iterable);
     if (!cacheWarningEmitted && this._cache.constructor.name !== 'Collection') {
       cacheWarningEmitted = true;
@@ -446,4 +449,5 @@ class RoleManager extends CachedManager {
   }
 }
 
-export = RoleManager;
+export default RoleManager;
+export { RoleManager };

@@ -1,4 +1,4 @@
-const MessageComponentInteraction = require('./MessageComponentInteraction');
+import MessageComponentInteraction from './MessageComponentInteraction';
 
 /**
  * Represents a select menu interaction.
@@ -17,4 +17,5 @@ class SelectMenuInteraction extends MessageComponentInteraction {
   }
 }
 
-export = SelectMenuInteraction;
+export default SelectMenuInteraction;
+export { SelectMenuInteraction };

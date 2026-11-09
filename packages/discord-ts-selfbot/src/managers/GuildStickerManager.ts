@@ -1,15 +1,17 @@
-const { Collection } = require('@discordjs/collection');
-const CachedManager = require('./CachedManager');
-const { TypeError } = require('../errors');
-const MessagePayload = require('../structures/MessagePayload');
-const { Sticker } = require('../structures/Sticker');
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
+const { TypeError } = _errorsModule;
+import MessagePayload from '../structures/MessagePayload';
+import _StickerModule from '../structures/Sticker';
+const { Sticker } = _StickerModule;
 
 /**
  * Manages API methods for Guild Stickers and stores their cache.
  * @extends {CachedManager}
  */
 class GuildStickerManager extends CachedManager {
-  constructor(guild: any, iterable: any) {
+  constructor(guild: any, iterable?: any) {
     super(guild.client, Sticker, iterable);
 
     /**
@@ -174,4 +176,5 @@ class GuildStickerManager extends CachedManager {
   }
 }
 
-export = GuildStickerManager;
+export default GuildStickerManager;
+export { GuildStickerManager };

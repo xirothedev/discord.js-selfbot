@@ -1,17 +1,20 @@
-const { Collection } = require('@discordjs/collection');
-const CachedManager = require('./CachedManager');
-const { TypeError, Error } = require('../errors');
-const { GuildScheduledEvent } = require('../structures/GuildScheduledEvent');
-const { PrivacyLevels, GuildScheduledEventEntityTypes, GuildScheduledEventStatuses } = require('../util/Constants');
-const DataResolver = require('../util/DataResolver');
-const Util = require('../util/Util');
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
+const { TypeError, Error } = _errorsModule;
+import _GuildScheduledEventModule from '../structures/GuildScheduledEvent';
+const { GuildScheduledEvent } = _GuildScheduledEventModule;
+import _ConstantsModule from '../util/Constants';
+const { PrivacyLevels, GuildScheduledEventEntityTypes, GuildScheduledEventStatuses } = _ConstantsModule;
+import DataResolver from '../util/DataResolver';
+import Util from '../util/Util';
 
 /**
  * Manages API methods for GuildScheduledEvents and stores their cache.
  * @extends {CachedManager}
  */
 class GuildScheduledEventManager extends CachedManager {
-  constructor(guild: any, iterable: any) {
+  constructor(guild: any, iterable?: any) {
     super(guild.client, GuildScheduledEvent, iterable);
 
     /**
@@ -309,4 +312,5 @@ class GuildScheduledEventManager extends CachedManager {
   }
 }
 
-export = GuildScheduledEventManager;
+export default GuildScheduledEventManager;
+export { GuildScheduledEventManager };

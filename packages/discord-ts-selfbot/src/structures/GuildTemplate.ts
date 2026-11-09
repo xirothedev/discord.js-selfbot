@@ -1,7 +1,8 @@
-const { setTimeout } = require('node:timers');
-const Base = require('./Base');
-const { Events } = require('../util/Constants');
-const DataResolver = require('../util/DataResolver');
+import { setTimeout } from 'node:timers';
+import Base from './Base';
+import _ConstantsModule from '../util/Constants';
+const { Events } = _ConstantsModule;
+import DataResolver from '../util/DataResolver';
 
 /**
  * Represents the template for a guild.
@@ -229,6 +230,7 @@ class GuildTemplate extends Base {
  * Regular expression that globally matches guild template links
  * @type {RegExp}
  */
-GuildTemplate.GUILD_TEMPLATES_PATTERN = /discord(?:app)?\.(?:com\/template|new)\/([\w-]{2,255})/gi;
+(GuildTemplate as any).GUILD_TEMPLATES_PATTERN = /discord(?:app)?\.(?:com\/template|new)\/([\w-]{2,255})/gi;
 
-export = GuildTemplate;
+export default GuildTemplate;
+export { GuildTemplate };

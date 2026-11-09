@@ -1,5 +1,6 @@
-const BaseMessageComponent = require('./BaseMessageComponent');
-const { MessageComponentTypes } = require('../util/Constants');
+import BaseMessageComponent from './BaseMessageComponent';
+import _ConstantsModule from '../util/Constants';
+const { MessageComponentTypes } = _ConstantsModule;
 
 class TextDisplayComponent extends BaseMessageComponent {
   [key: string]: any;
@@ -36,4 +37,5 @@ class TextDisplayComponent extends BaseMessageComponent {
   }
 }
 
-export = TextDisplayComponent;
+export default TextDisplayComponent;
+export { TextDisplayComponent };

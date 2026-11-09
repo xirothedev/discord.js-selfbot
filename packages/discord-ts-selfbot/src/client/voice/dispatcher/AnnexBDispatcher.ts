@@ -1,3 +1,8 @@
+import { Buffer } from 'buffer';
+import VideoDispatcher from './VideoDispatcher';
+import VoiceCodec from '../util/VoiceCodec';
+import _AnnexBNalSplitterModule from '../player/processing/AnnexBNalSplitter';
+const { H264Helpers, H265Helpers } = _AnnexBNalSplitterModule;
 /*
 Credit: https://github.com/dank074/Discord-video-stream
 The use of video streaming in this library is an incomplete implementation with many bugs, primarily aimed at lazy users.
@@ -14,11 +19,6 @@ Thanks to mrjvs for discovering how Discord transmits data and the VP8 codec.
 
 Please use the @dank074/discord-video-stream library for the best support.
 */
-
-const { Buffer } = require('buffer');
-const VideoDispatcher = require('./VideoDispatcher');
-const VoiceCodec = require('../util/VoiceCodec');
-const { H264Helpers, H265Helpers } = require('../player/processing/AnnexBNalSplitter');
 
 class AnnexBDispatcher extends VideoDispatcher {
   [key: string]: any;
@@ -114,7 +114,8 @@ class H265Dispatcher extends AnnexBDispatcher {
   }
 }
 
-export = {
+export { H264Dispatcher, H265Dispatcher };
+export default {
   H264Dispatcher,
   H265Dispatcher,
 };

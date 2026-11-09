@@ -1,5 +1,6 @@
-const Action = require('./Action');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class MessageReactionRemoveAll extends Action {
   handle(data: any) {
@@ -28,4 +29,5 @@ class MessageReactionRemoveAll extends Action {
  * @param {Collection<string|Snowflake, MessageReaction>} reactions The cached message reactions that were removed.
  */
 
-export = MessageReactionRemoveAll;
+export default MessageReactionRemoveAll;
+export { MessageReactionRemoveAll };

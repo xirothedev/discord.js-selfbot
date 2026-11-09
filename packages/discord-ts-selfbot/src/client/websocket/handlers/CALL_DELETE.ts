@@ -1,6 +1,7 @@
-const CallState = require('../../../structures/CallState');
-const { Events } = require('../../../util/Constants');
-export = (client: any, packet: any) => {
+import CallState from '../../../structures/CallState';
+import _ConstantsModule from '../../../util/Constants';
+const { Events } = _ConstantsModule;
+export default (client: any, packet: any) => {
   /**
    * Emitted whenever delete a call
    * @event Client#callDelete

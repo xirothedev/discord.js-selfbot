@@ -1,5 +1,6 @@
-const { Events } = require('../../../util/Constants');
-export = (client: any, _packet: any, shard: any) => {
+import _ConstantsModule from '../../../util/Constants';
+const { Events } = _ConstantsModule;
+export default (client: any, _packet: any, shard: any) => {
   const replayed = shard.sequence - shard.closeSequence;
   /**
    * Emitted when a shard resumes successfully.

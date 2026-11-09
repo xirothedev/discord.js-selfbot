@@ -1,15 +1,43 @@
 const payloadTypes: any[] = [
   { name: 'opus', type: 'audio', priority: 1000, payload_type: 120 },
-  { name: 'AV1', type: 'video', priority: 1000, payload_type: 101, rtx_payload_type: 102, encode: false, decode: false },
-  { name: 'H265', type: 'video', priority: 2000, payload_type: 103, rtx_payload_type: 104, encode: false, decode: false },
+  {
+    name: 'AV1',
+    type: 'video',
+    priority: 1000,
+    payload_type: 101,
+    rtx_payload_type: 102,
+    encode: false,
+    decode: false,
+  },
+  {
+    name: 'H265',
+    type: 'video',
+    priority: 2000,
+    payload_type: 103,
+    rtx_payload_type: 104,
+    encode: false,
+    decode: false,
+  },
   { name: 'H264', type: 'video', priority: 3000, payload_type: 105, rtx_payload_type: 106, encode: true, decode: true },
   { name: 'VP8', type: 'video', priority: 4000, payload_type: 107, rtx_payload_type: 108, encode: true, decode: false },
-  { name: 'VP9', type: 'video', priority: 5000, payload_type: 109, rtx_payload_type: 110, encode: false, decode: false },
+  {
+    name: 'VP9',
+    type: 'video',
+    priority: 5000,
+    payload_type: 109,
+    rtx_payload_type: 110,
+    encode: false,
+    decode: false,
+  },
 ];
 
 class VoiceCodec {
-  static getAllPayloadType() { return payloadTypes; }
-  static getPayloadType(codecName: any) { return payloadTypes.find((p: any) => p.name === codecName).payload_type; }
+  static getAllPayloadType() {
+    return payloadTypes;
+  }
+  static getPayloadType(codecName: any) {
+    return payloadTypes.find((p: any) => p.name === codecName).payload_type;
+  }
   static getSDPCodecName(portUdpH264: any, portUdpH265: any, portUdpOpus: any) {
     const payloadTypeH264 = VoiceCodec.getPayloadType('H264');
     const payloadTypeH265 = VoiceCodec.getPayloadType('H265');
@@ -25,10 +53,14 @@ c=IN IP4 127.0.0.1
 b=AS:1000
 a=rtpmap:${payloadTypeH264} H264/90000
 a=fmtp:${payloadTypeH264} profile-level-id=42e01f;sprop-parameter-sets=Z0IAH6tAoAt2AtwEBAaQeJEV,aM4JyA==;packetization-mode=1
-${portUdpH265 ? `m=video ${portUdpH265} RTP/AVP ${payloadTypeH265}
+${
+  portUdpH265
+    ? `m=video ${portUdpH265} RTP/AVP ${payloadTypeH265}
 c=IN IP4 127.0.0.1
 b=AS:1000
-a=rtpmap:${payloadTypeH265} H265/90000` : ''}
+a=rtpmap:${payloadTypeH265} H265/90000`
+    : ''
+}
 m=audio ${portUdpOpus} RTP/AVP ${payloadTypeOpus}
 c=IN IP4 127.0.0.1
 b=AS:96
@@ -51,4 +83,5 @@ a=extmap:14 urn:ietf:params:rtp-hdrext:toffset
   }
 }
 
-export = VoiceCodec;
+export default VoiceCodec;
+export { VoiceCodec };

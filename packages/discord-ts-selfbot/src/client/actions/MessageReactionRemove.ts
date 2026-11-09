@@ -1,5 +1,6 @@
-const Action = require('./Action');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 /*
 { user_id: 'id',
@@ -45,4 +46,5 @@ class MessageReactionRemove extends Action {
   }
 }
 
-export = MessageReactionRemove;
+export default MessageReactionRemove;
+export { MessageReactionRemove };

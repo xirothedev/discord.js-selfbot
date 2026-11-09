@@ -1,8 +1,8 @@
-const EventEmitter = require('node:events');
-const process = require('node:process');
-const RESTManager = require('../rest/RESTManager');
-const Options = require('../util/Options');
-const Util = require('../util/Util');
+import EventEmitter from 'node:events';
+import process from 'node:process';
+import RESTManager from '../rest/RESTManager';
+import Options from '../util/Options';
+import Util from '../util/Util';
 
 /**
  * The base class for all clients.
@@ -78,7 +78,8 @@ class BaseClient extends EventEmitter {
   }
 }
 
-export = BaseClient;
+export default BaseClient;
+export { BaseClient };
 
 /**
  * Emitted for general debugging information.

@@ -1,4 +1,4 @@
-const Base = require('./Base');
+import Base from './Base';
 
 /**
  * Represents a WidgetMember.
@@ -95,4 +95,5 @@ class WidgetMember extends Base {
   }
 }
 
-export = WidgetMember;
+export default WidgetMember;
+export { WidgetMember };

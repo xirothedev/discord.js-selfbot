@@ -1,5 +1,5 @@
-const dgram = require('dgram');
-const { setImmediate } = require('node:timers');
+import dgram from 'dgram';
+import { setImmediate } from 'node:timers';
 
 /**
  * @typedef {Object} InterfaceAddresses
@@ -39,7 +39,7 @@ async function randomPort(protocol: any = 'udp4', interfaceAddresses: any) {
   });
 
   const port = socket.address()?.port;
-  await new Promise(resolve => socket.close(resolve));
+  await new Promise(resolve => socket.close(() => resolve(undefined)));
   return port;
 }
 
@@ -50,7 +50,7 @@ async function randomPort(protocol: any = 'udp4', interfaceAddresses: any) {
  * @param {InterfaceAddresses} [interfaceAddresses] - The interface addresses mapping.
  * @returns {Promise<number[]>} An array of assigned random ports.
  */
-async function randomPorts(num: any, protocol: any = 'udp4', interfaceAddresses: any) {
+async function randomPorts(num: any, protocol: any = 'udp4', interfaceAddresses: any = null) {
   return Promise.all(Array.from({ length: num }).map(() => randomPort(protocol, interfaceAddresses)));
 }
 
@@ -81,7 +81,7 @@ async function findPort(min: any, max: any, protocol: any = 'udp4', interfaceAdd
       socket.once('listening', () => resolve(null));
     });
 
-    await new Promise(resolve => socket.close(resolve));
+    await new Promise(resolve => socket.close(() => resolve(undefined)));
 
     if (error) continue;
 
@@ -105,7 +105,8 @@ function parseStreamKey(key: any) {
   return { type, guildId, channelId, userId };
 }
 
-export = {
+export { randomPort, randomPorts, findPort, interfaceAddress, parseStreamKey };
+export default {
   randomPort,
   randomPorts,
   findPort,

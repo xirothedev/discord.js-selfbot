@@ -1,5 +1,6 @@
-const { Events } = require('../../../util/Constants');
-export = (client: any, { d: data }: any) => {
+import _ConstantsModule from '../../../util/Constants';
+const { Events } = _ConstantsModule;
+export default (client: any, { d: data }: any) => {
   client.relationships.cache.delete(data.id);
   client.relationships.friendNicknames.delete(data.id);
   client.relationships.sinceCache.delete(data.id);

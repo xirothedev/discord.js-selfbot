@@ -1,15 +1,16 @@
-const { Collection } = require('@discordjs/collection');
-const CachedManager = require('./CachedManager');
-const { Error } = require('../errors');
-const Invite = require('../structures/Invite');
-const DataResolver = require('../util/DataResolver');
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
+import Invite from '../structures/Invite';
+import DataResolver from '../util/DataResolver';
 
 /**
  * Manages API methods for GuildInvites and stores their cache.
  * @extends {CachedManager}
  */
 class GuildInviteManager extends CachedManager {
-  constructor(guild: any, iterable: any) {
+  constructor(guild: any, iterable?: any) {
     super(guild.client, Invite, iterable);
 
     /**
@@ -217,4 +218,5 @@ class GuildInviteManager extends CachedManager {
   }
 }
 
-export = GuildInviteManager;
+export default GuildInviteManager;
+export { GuildInviteManager };

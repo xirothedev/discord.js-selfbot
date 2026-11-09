@@ -1,9 +1,11 @@
-const process = require('node:process');
-const { Collection } = require('@discordjs/collection');
-const CachedManager = require('./CachedManager');
-const { TypeError, Error } = require('../errors');
-const GuildBan = require('../structures/GuildBan');
-const { GuildMember } = require('../structures/GuildMember');
+import process from 'node:process';
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
+const { TypeError, Error } = _errorsModule;
+import GuildBan from '../structures/GuildBan';
+import _GuildMemberModule from '../structures/GuildMember';
+const { GuildMember } = _GuildMemberModule;
 
 let deprecationEmittedForDays = false;
 
@@ -12,7 +14,7 @@ let deprecationEmittedForDays = false;
  * @extends {CachedManager}
  */
 class GuildBanManager extends CachedManager {
-  constructor(guild: any, iterable: any) {
+  constructor(guild: any, iterable?: any) {
     super(guild.client, GuildBan, iterable);
 
     /**
@@ -234,7 +236,7 @@ class GuildBanManager extends CachedManager {
     }
     if (typeof options !== 'object') throw new TypeError('INVALID_TYPE', 'options', 'object', true);
 
-    const userIds = users.map((user: any) => this.client.users.resolveId(user));
+    const userIds = (users as any).map((user: any) => this.client.users.resolveId(user));
     if (userIds.length === 0) throw new Error('BULK_BAN_USERS_OPTION_EMPTY');
 
     const result = await this.client.api.guilds(this.guild.id)['bulk-ban'].post({
@@ -245,4 +247,5 @@ class GuildBanManager extends CachedManager {
   }
 }
 
-export = GuildBanManager;
+export default GuildBanManager;
+export { GuildBanManager };

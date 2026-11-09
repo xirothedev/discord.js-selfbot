@@ -1,6 +1,7 @@
-const process = require('node:process');
-const Action = require('./Action');
-const { Events } = require('../../util/Constants');
+import process from 'node:process';
+import Action from './Action';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 let deprecationEmitted = false;
 
@@ -45,4 +46,5 @@ class MessageCreateAction extends Action {
   }
 }
 
-export = MessageCreateAction;
+export default MessageCreateAction;
+export { MessageCreateAction };

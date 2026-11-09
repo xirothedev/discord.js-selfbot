@@ -1,4 +1,4 @@
-import BitField = require('./BitField');
+import BitField from './BitField';
 
 /**
  * Data structure that makes it easy to interact with an {@link Activity#flags} bitfield.
@@ -39,4 +39,5 @@ ActivityFlags.FLAGS = {
   EMBEDDED: 1 << 8,
 };
 
-export = ActivityFlags;
+export default ActivityFlags;
+export { ActivityFlags };

@@ -1,25 +1,28 @@
+import { Buffer } from 'node:buffer';
+import { setTimeout } from 'node:timers';
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
+const { Error, TypeError, RangeError } = _errorsModule;
+import BaseGuildVoiceChannel from '../structures/BaseGuildVoiceChannel';
+import _GuildMemberModule from '../structures/GuildMember';
+const { GuildMember } = _GuildMemberModule;
+import _RoleModule from '../structures/Role';
+const { Role } = _RoleModule;
+import _ConstantsModule from '../util/Constants';
+const { Events, Opcodes } = _ConstantsModule;
+const { PartialTypes } = _ConstantsModule;
+import DataResolver from '../util/DataResolver';
+import GuildMemberFlags from '../util/GuildMemberFlags';
+import SnowflakeUtil from '../util/SnowflakeUtil';
 /* eslint-disable newline-per-chained-call */
-
-const { Buffer } = require('node:buffer');
-const { setTimeout } = require('node:timers');
-const { Collection } = require('@discordjs/collection');
-const CachedManager = require('./CachedManager');
-const { Error, TypeError, RangeError } = require('../errors');
-const BaseGuildVoiceChannel = require('../structures/BaseGuildVoiceChannel');
-const { GuildMember } = require('../structures/GuildMember');
-const { Role } = require('../structures/Role');
-const { Events, Opcodes } = require('../util/Constants');
-const { PartialTypes } = require('../util/Constants');
-const DataResolver = require('../util/DataResolver');
-const GuildMemberFlags = require('../util/GuildMemberFlags');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
 
 /**
  * Manages API methods for GuildMembers and stores their cache.
  * @extends {CachedManager}
  */
 class GuildMemberManager extends CachedManager {
-  constructor(guild: any, iterable: any) {
+  constructor(guild: any, iterable?: any) {
     super(guild.client, GuildMember, iterable);
 
     /**
@@ -560,7 +563,7 @@ class GuildMemberManager extends CachedManager {
           this.client.removeListener(Events.GUILD_MEMBERS_CHUNK, handler);
           this.client.decrementMaxListeners();
           let fetched = fetchedMembers;
-          if (user_ids && !Array.isArray(user_ids) && fetched.size) fetched = fetched.first();
+          if (user_ids && !Array.isArray(user_ids) && fetched.size) fetched = (fetched as any).first();
           resolve(fetched);
         }
       };
@@ -595,4 +598,5 @@ class GuildMemberManager extends CachedManager {
   }
 }
 
-export = GuildMemberManager;
+export default GuildMemberManager;
+export { GuildMemberManager };

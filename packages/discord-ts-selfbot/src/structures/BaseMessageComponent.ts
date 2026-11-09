@@ -1,5 +1,9 @@
-const { TypeError } = require('../errors');
-const { MessageComponentTypes, Events } = require('../util/Constants');
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+import _errorsModule from '../errors';
+const { TypeError } = _errorsModule;
+import _ConstantsModule from '../util/Constants';
+const { MessageComponentTypes, Events } = _ConstantsModule;
 
 /**
  * Represents an interactive component of a Message or Modal. It should not be necessary to construct this directly.
@@ -76,20 +80,29 @@ class BaseMessageComponent {
    * @returns {?(MessageComponent|ModalComponent)}
    * @private
    */
-  static create(data: any, client: any) {
+  static create(data: any, client: any = null) {
     let component;
     let type = data.type;
+    const FileComponent = require('./FileComponent').default;
+    const SeparatorComponent = require('./SeparatorComponent').default;
+    const ContainerComponent = require('./ContainerComponent').default;
+    const MessageActionRow = require('./MessageActionRow').default;
+    const MessageButton = require('./MessageButton').default;
+    const MessageSelectMenu = require('./MessageSelectMenu').default;
+    const TextInputComponent = require('./TextInputComponent').default;
+    const SectionComponent = require('./SectionComponent').default;
+    const TextDisplayComponent = require('./TextDisplayComponent').default;
+    const ThumbnailComponent = require('./ThumbnailComponent').default;
+    const MediaGalleryComponent = require('./MediaGalleryComponent').default;
 
     if (typeof type === 'string') type = MessageComponentTypes[type];
 
     switch (type) {
       case MessageComponentTypes.ACTION_ROW: {
-        const MessageActionRow = require('./MessageActionRow');
         component = data instanceof MessageActionRow ? data : new MessageActionRow(data, client);
         break;
       }
       case MessageComponentTypes.BUTTON: {
-        const MessageButton = require('./MessageButton');
         component = data instanceof MessageButton ? data : new MessageButton(data);
         break;
       }
@@ -98,47 +111,38 @@ class BaseMessageComponent {
       case MessageComponentTypes.ROLE_SELECT:
       case MessageComponentTypes.MENTIONABLE_SELECT:
       case MessageComponentTypes.CHANNEL_SELECT: {
-        const MessageSelectMenu = require('./MessageSelectMenu');
         component = data instanceof MessageSelectMenu ? data : new MessageSelectMenu(data);
         break;
       }
       case MessageComponentTypes.TEXT_INPUT: {
-        const TextInputComponent = require('./TextInputComponent');
         component = data instanceof TextInputComponent ? data : new TextInputComponent(data);
         break;
       }
       case MessageComponentTypes.SECTION: {
-        const SectionComponent = require('./SectionComponent');
         component = data instanceof SectionComponent ? data : new SectionComponent(data);
         break;
       }
       case MessageComponentTypes.TEXT_DISPLAY: {
-        const TextDisplayComponent = require('./TextDisplayComponent');
         component = data instanceof TextDisplayComponent ? data : new TextDisplayComponent(data);
         break;
       }
       case MessageComponentTypes.THUMBNAIL: {
-        const ThumbnailComponent = require('./ThumbnailComponent');
         component = data instanceof ThumbnailComponent ? data : new ThumbnailComponent(data);
         break;
       }
       case MessageComponentTypes.MEDIA_GALLERY: {
-        const MediaGalleryComponent = require('./MediaGalleryComponent');
         component = data instanceof MediaGalleryComponent ? data : new MediaGalleryComponent(data);
         break;
       }
       case MessageComponentTypes.FILE: {
-        const FileComponent = require('./FileComponent');
         component = data instanceof FileComponent ? data : new FileComponent(data);
         break;
       }
       case MessageComponentTypes.SEPARATOR: {
-        const SeparatorComponent = require('./SeparatorComponent');
         component = data instanceof SeparatorComponent ? data : new SeparatorComponent(data);
         break;
       }
       case MessageComponentTypes.CONTAINER: {
-        const ContainerComponent = require('./ContainerComponent');
         component = data instanceof ContainerComponent ? data : new ContainerComponent(data);
         break;
       }
@@ -178,4 +182,5 @@ class BaseMessageComponent {
   }
 }
 
-export = BaseMessageComponent;
+export default BaseMessageComponent;
+export { BaseMessageComponent };

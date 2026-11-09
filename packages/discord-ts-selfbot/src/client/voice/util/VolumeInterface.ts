@@ -1,5 +1,5 @@
-const EventEmitter = require('events');
-const { Buffer } = require('node:buffer');
+import EventEmitter from 'events';
+import { Buffer } from 'node:buffer';
 
 /**
  * An interface class for volume transformation.
@@ -103,4 +103,5 @@ function applyToClass(structure: any) {
   }
 }
 
-export = { applyToClass };
+export { applyToClass };
+export default { applyToClass };

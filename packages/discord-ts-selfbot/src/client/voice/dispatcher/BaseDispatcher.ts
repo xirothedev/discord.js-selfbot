@@ -1,8 +1,8 @@
-const { Buffer } = require('node:buffer');
-const crypto = require('node:crypto');
-const { Writable } = require('node:stream');
-const { setTimeout } = require('node:timers');
-const secretbox = require('../util/Secretbox');
+import { Buffer } from 'node:buffer';
+import crypto from 'node:crypto';
+import { Writable } from 'node:stream';
+import { setTimeout } from 'node:timers';
+import secretbox from '../util/Secretbox';
 
 const MAX_UINT_16 = 2 ** 16 - 1;
 const MAX_UINT_32 = 2 ** 32 - 1;
@@ -456,4 +456,5 @@ class BaseDispatcher extends Writable {
   }
 }
 
-export = BaseDispatcher;
+export default BaseDispatcher;
+export { BaseDispatcher };

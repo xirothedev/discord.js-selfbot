@@ -1,14 +1,15 @@
-const CachedManager = require('./CachedManager');
-const GuildEmoji = require('../structures/GuildEmoji');
-const ReactionEmoji = require('../structures/ReactionEmoji');
-const { parseEmoji } = require('../util/Util');
+import CachedManager from './CachedManager';
+import GuildEmoji from '../structures/GuildEmoji';
+import ReactionEmoji from '../structures/ReactionEmoji';
+import _UtilModule from '../util/Util';
+const { parseEmoji } = _UtilModule;
 
 /**
  * Holds methods to resolve GuildEmojis and stores their cache.
  * @extends {CachedManager}
  */
 class BaseGuildEmojiManager extends CachedManager {
-  constructor(client: any, iterable: any) {
+  constructor(client: any, iterable?: any) {
     super(client, GuildEmoji, iterable);
   }
 
@@ -75,4 +76,5 @@ class BaseGuildEmojiManager extends CachedManager {
   }
 }
 
-export = BaseGuildEmojiManager;
+export default BaseGuildEmojiManager;
+export { BaseGuildEmojiManager };

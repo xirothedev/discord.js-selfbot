@@ -1,6 +1,6 @@
-const { Collection } = require('@discordjs/collection');
-const Base = require('./Base');
-const WidgetMember = require('./WidgetMember');
+import { Collection } from '@discordjs/collection';
+import Base from './Base';
+import WidgetMember from './WidgetMember';
 
 /**
  * Represents a Widget.
@@ -83,4 +83,5 @@ class Widget extends Base {
   }
 }
 
-export = Widget;
+export default Widget;
+export { Widget };

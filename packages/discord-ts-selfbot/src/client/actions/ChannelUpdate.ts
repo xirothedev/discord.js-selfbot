@@ -1,6 +1,8 @@
-const Action = require('./Action');
-const { Channel } = require('../../structures/Channel');
-const { ChannelTypes } = require('../../util/Constants');
+import Action from './Action';
+import _ChannelModule from '../../structures/Channel';
+const { Channel } = _ChannelModule;
+import _ConstantsModule from '../../util/Constants';
+const { ChannelTypes } = _ConstantsModule;
 
 class ChannelUpdateAction extends Action {
   handle(data: any) {
@@ -38,4 +40,5 @@ class ChannelUpdateAction extends Action {
   }
 }
 
-export = ChannelUpdateAction;
+export default ChannelUpdateAction;
+export { ChannelUpdateAction };

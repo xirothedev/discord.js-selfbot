@@ -1,8 +1,9 @@
-const { randomUUID } = require('node:crypto');
-const Base = require('./Base');
-const ActivityFlags = require('../util/ActivityFlags');
-const { ActivityTypes } = require('../util/Constants');
-const Util = require('../util/Util');
+import { randomUUID } from 'node:crypto';
+import Base from './Base';
+import ActivityFlags from '../util/ActivityFlags';
+import _ConstantsModule from '../util/Constants';
+const { ActivityTypes } = _ConstantsModule;
+import Util from '../util/Util';
 
 /**
  * Activity sent in a message.
@@ -1102,4 +1103,5 @@ class SpotifyRPC extends RichPresence {
   }
 }
 
-export = { Presence, Activity, RichPresenceAssets, CustomStatus, RichPresence, SpotifyRPC };
+export { Presence, Activity, RichPresenceAssets, CustomStatus, RichPresence, SpotifyRPC };
+export default { Presence, Activity, RichPresenceAssets, CustomStatus, RichPresence, SpotifyRPC };

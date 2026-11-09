@@ -1,7 +1,9 @@
-const BaseMessageComponent = require('./BaseMessageComponent');
-const { RangeError } = require('../errors');
-const { TextInputStyles, MessageComponentTypes } = require('../util/Constants');
-const Util = require('../util/Util');
+import BaseMessageComponent from './BaseMessageComponent';
+import _errorsModule from '../errors';
+const { RangeError } = _errorsModule;
+import _ConstantsModule from '../util/Constants';
+const { TextInputStyles, MessageComponentTypes } = _ConstantsModule;
+import Util from '../util/Util';
 
 /**
  * Represents a text input component in a modal
@@ -128,4 +130,5 @@ class TextInputComponent extends BaseMessageComponent {
   }
 }
 
-export = TextInputComponent;
+export default TextInputComponent;
+export { TextInputComponent };

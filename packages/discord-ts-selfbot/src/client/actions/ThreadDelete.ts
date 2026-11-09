@@ -1,7 +1,10 @@
-const Action = require('./Action');
-const { deletedChannels } = require('../../structures/Channel');
-const { deletedMessages } = require('../../structures/Message');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import _ChannelModule from '../../structures/Channel';
+const { deletedChannels } = _ChannelModule;
+import _MessageModule from '../../structures/Message';
+const { deletedMessages } = _MessageModule;
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class ThreadDeleteAction extends Action {
   handle(data: any) {
@@ -27,4 +30,5 @@ class ThreadDeleteAction extends Action {
   }
 }
 
-export = ThreadDeleteAction;
+export default ThreadDeleteAction;
+export { ThreadDeleteAction };

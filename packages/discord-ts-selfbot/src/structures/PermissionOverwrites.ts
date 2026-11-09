@@ -1,8 +1,11 @@
-const Base = require('./Base');
-const { Role } = require('./Role');
-const { TypeError } = require('../errors');
-const { OverwriteTypes } = require('../util/Constants');
-const Permissions = require('../util/Permissions');
+import Base from './Base';
+import _RoleModule from './Role';
+const { Role } = _RoleModule;
+import _errorsModule from '../errors';
+const { TypeError } = _errorsModule;
+import _ConstantsModule from '../util/Constants';
+const { OverwriteTypes } = _ConstantsModule;
+import Permissions from '../util/Permissions';
 
 /**
  * Represents a permission overwrite for a role or member in a guild channel.
@@ -194,4 +197,5 @@ class PermissionOverwrites extends Base {
   }
 }
 
-export = PermissionOverwrites;
+export default PermissionOverwrites;
+export { PermissionOverwrites };

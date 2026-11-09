@@ -1,4 +1,4 @@
-const Util = require('../util/Util');
+import Util from '../util/Util';
 
 /**
  * Represents a Discord voice region for guilds.
@@ -49,4 +49,5 @@ class VoiceRegion {
   }
 }
 
-export = VoiceRegion;
+export default VoiceRegion;
+export { VoiceRegion };

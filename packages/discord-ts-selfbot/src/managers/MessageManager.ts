@@ -1,16 +1,18 @@
-const { Collection } = require('@discordjs/collection');
-const CachedManager = require('./CachedManager');
-const { TypeError } = require('../errors');
-const { Message } = require('../structures/Message');
-const MessagePayload = require('../structures/MessagePayload');
-const Util = require('../util/Util');
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
+const { TypeError } = _errorsModule;
+import _MessageModule from '../structures/Message';
+const { Message } = _MessageModule;
+import MessagePayload from '../structures/MessagePayload';
+import Util from '../util/Util';
 
 /**
  * Manages API methods for Messages and holds their cache.
  * @extends {CachedManager}
  */
 class MessageManager extends CachedManager {
-  constructor(channel: any, iterable: any) {
+  constructor(channel: any, iterable?: any) {
     super(channel.client, Message, iterable);
 
     /**
@@ -421,4 +423,5 @@ class MessageManager extends CachedManager {
   }
 }
 
-export = MessageManager;
+export default MessageManager;
+export { MessageManager };

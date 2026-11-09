@@ -1,4 +1,5 @@
-const { PartialTypes } = require('../../util/Constants');
+import _ConstantsModule from '../../util/Constants';
+const { PartialTypes } = _ConstantsModule;
 
 /*
 
@@ -19,8 +20,8 @@ class GenericAction {
     this.client = client;
   }
 
-  handle(data: any) {
-    return data;
+  handle(..._args: any[]) {
+    return _args[0];
   }
 
   getPayload(data: any, manager: any, id: any, partialType: any, cache?: any) {
@@ -67,7 +68,7 @@ class GenericAction {
     );
   }
 
-  getReaction(data: any, message: any, user: any) {
+  getReaction(data: any, message: any, user: any = null) {
     const id = data.emoji.id ?? decodeURIComponent(data.emoji.name);
     return this.getPayload(
       {
@@ -113,4 +114,5 @@ class GenericAction {
   }
 }
 
-export = GenericAction;
+export default GenericAction;
+export { GenericAction };

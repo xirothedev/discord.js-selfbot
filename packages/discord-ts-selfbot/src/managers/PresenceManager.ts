@@ -1,12 +1,13 @@
-const CachedManager = require('./CachedManager');
-const { Presence } = require('../structures/Presence');
+import CachedManager from './CachedManager';
+import _PresenceModule from '../structures/Presence';
+const { Presence } = _PresenceModule;
 
 /**
  * Manages API methods for Presences and holds their cache.
  * @extends {CachedManager}
  */
 class PresenceManager extends CachedManager {
-  constructor(client: any, iterable: any) {
+  constructor(client: any, iterable?: any) {
     super(client, Presence, iterable);
   }
 
@@ -66,4 +67,5 @@ class PresenceManager extends CachedManager {
   }
 }
 
-export = PresenceManager;
+export default PresenceManager;
+export { PresenceManager };

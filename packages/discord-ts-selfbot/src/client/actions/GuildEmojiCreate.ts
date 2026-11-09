@@ -1,5 +1,6 @@
-const Action = require('./Action');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class GuildEmojiCreateAction extends Action {
   handle(guild: any, createdEmoji: any) {
@@ -15,4 +16,5 @@ class GuildEmojiCreateAction extends Action {
   }
 }
 
-export = GuildEmojiCreateAction;
+export default GuildEmojiCreateAction;
+export { GuildEmojiCreateAction };

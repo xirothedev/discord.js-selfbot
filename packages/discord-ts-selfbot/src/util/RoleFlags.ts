@@ -1,4 +1,4 @@
-import BitField = require('./BitField');
+import BitField from './BitField';
 
 /**
  * Data structure that makes it easy to interact with an {@link GuildMember#flags} bitfield.
@@ -32,4 +32,5 @@ RoleFlags.FLAGS = {
  * @typedef {string|number|RoleFlags|RoleFlagsResolvable[]} RoleFlagsResolvable
  */
 
-export = RoleFlags;
+export default RoleFlags;
+export { RoleFlags };

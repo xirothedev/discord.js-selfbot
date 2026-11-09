@@ -1,4 +1,4 @@
-import BitField = require('./BitField');
+import BitField from './BitField';
 
 /**
  * Data structure that makes it easy to interact with an {@link PremiumUsageFlags#flags} bitfield.
@@ -26,4 +26,5 @@ PremiumUsageFlags.FLAGS = {
   PROFILE_BANNER: 1 << 2,
 };
 
-export = PremiumUsageFlags;
+export default PremiumUsageFlags;
+export { PremiumUsageFlags };

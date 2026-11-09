@@ -1,8 +1,9 @@
-const EventEmitter = require('node:events');
-const { setTimeout } = require('node:timers');
-const { Collection } = require('@discordjs/collection');
-const { TypeError } = require('../../errors');
-const Util = require('../../util/Util');
+import EventEmitter from 'node:events';
+import { setTimeout } from 'node:timers';
+import { Collection } from '@discordjs/collection';
+import _errorsModule from '../../errors';
+const { TypeError } = _errorsModule;
+import Util from '../../util/Util';
 
 /**
  * Filter to be applied to the collector.
@@ -298,4 +299,5 @@ class Collector extends EventEmitter {
   /* eslint-enable no-empty-function */
 }
 
-export = Collector;
+export default Collector;
+export { Collector };

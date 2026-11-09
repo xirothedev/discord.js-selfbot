@@ -1,6 +1,7 @@
-const Action = require('./Action');
-const GuildBan = require('../../structures/GuildBan');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import GuildBan from '../../structures/GuildBan';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class GuildBanRemove extends Action {
   handle(data: any) {
@@ -20,4 +21,5 @@ class GuildBanRemove extends Action {
   }
 }
 
-export = GuildBanRemove;
+export default GuildBanRemove;
+export { GuildBanRemove };

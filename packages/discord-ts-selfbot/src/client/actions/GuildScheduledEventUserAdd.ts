@@ -1,5 +1,6 @@
-const Action = require('./Action');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class GuildScheduledEventUserAddAction extends Action {
   handle(data: any) {
@@ -27,4 +28,5 @@ class GuildScheduledEventUserAddAction extends Action {
   }
 }
 
-export = GuildScheduledEventUserAddAction;
+export default GuildScheduledEventUserAddAction;
+export { GuildScheduledEventUserAddAction };

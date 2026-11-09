@@ -1,5 +1,5 @@
-const BaseCommandInteraction = require('./BaseCommandInteraction');
-const CommandInteractionOptionResolver = require('./CommandInteractionOptionResolver');
+import BaseCommandInteraction from './BaseCommandInteraction';
+import CommandInteractionOptionResolver from './CommandInteractionOptionResolver';
 
 /**
  * Represents a command interaction.
@@ -36,4 +36,5 @@ class CommandInteraction extends BaseCommandInteraction {
   }
 }
 
-export = CommandInteraction;
+export default CommandInteraction;
+export { CommandInteraction };

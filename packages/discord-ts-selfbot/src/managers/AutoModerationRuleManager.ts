@@ -1,19 +1,20 @@
-const { Collection } = require('@discordjs/collection');
-const CachedManager = require('./CachedManager');
-const AutoModerationRule = require('../structures/AutoModerationRule');
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import AutoModerationRule from '../structures/AutoModerationRule';
+import _ConstantsModule from '../util/Constants';
 const {
   AutoModerationRuleEventTypes,
   AutoModerationRuleTriggerTypes,
   AutoModerationActionTypes,
   AutoModerationRuleKeywordPresetTypes,
-} = require('../util/Constants');
+} = _ConstantsModule;
 
 /**
  * Manages API methods for auto moderation rules and stores their cache.
  * @extends {CachedManager}
  */
 class AutoModerationRuleManager extends CachedManager {
-  constructor(guild: any, iterable: any) {
+  constructor(guild: any, iterable?: any) {
     super(guild.client, AutoModerationRule, iterable);
 
     /**
@@ -292,4 +293,5 @@ class AutoModerationRuleManager extends CachedManager {
   }
 }
 
-export = AutoModerationRuleManager;
+export default AutoModerationRuleManager;
+export { AutoModerationRuleManager };

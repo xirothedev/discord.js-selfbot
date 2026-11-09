@@ -1,4 +1,5 @@
-const { Emoji } = require('./Emoji');
+import _EmojiModule from './Emoji';
+const { Emoji } = _EmojiModule;
 
 /**
  * Represents an effect used in a {@link VoiceChannel}.
@@ -65,4 +66,5 @@ class VoiceChannelEffect {
   }
 }
 
-export = VoiceChannelEffect;
+export default VoiceChannelEffect;
+export { VoiceChannelEffect };

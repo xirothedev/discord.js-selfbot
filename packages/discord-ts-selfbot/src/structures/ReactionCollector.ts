@@ -1,6 +1,7 @@
-const { Collection } = require('@discordjs/collection');
-const Collector = require('./interfaces/Collector');
-const { Events } = require('../util/Constants');
+import { Collection } from '@discordjs/collection';
+import Collector from './interfaces/Collector';
+import _ConstantsModule from '../util/Constants';
+const { Events } = _ConstantsModule;
 
 /**
  * @typedef {CollectorOptions} ReactionCollectorOptions
@@ -225,4 +226,5 @@ class ReactionCollector extends Collector {
   }
 }
 
-export = ReactionCollector;
+export default ReactionCollector;
+export { ReactionCollector };

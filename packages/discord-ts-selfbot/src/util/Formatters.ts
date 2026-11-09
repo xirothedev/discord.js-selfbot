@@ -1,4 +1,4 @@
-const {
+import {
   blockQuote,
   bold,
   channelMention,
@@ -16,7 +16,7 @@ const {
   TimestampStyles,
   underscore,
   userMention,
-} = require('@discordjs/builders');
+} from '@discordjs/builders';
 
 /**
  * Contains various Discord-specific functions for formatting messages.
@@ -223,4 +223,5 @@ Formatters.underscore = underscore;
  */
 Formatters.userMention = userMention;
 
-export = Formatters;
+export default Formatters;
+export { Formatters };

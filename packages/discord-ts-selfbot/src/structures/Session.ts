@@ -1,4 +1,4 @@
-const Base = require('./Base');
+import Base from './Base';
 
 /**
  * @typedef {Object} SessionClientInfo
@@ -77,4 +77,5 @@ class Session extends Base {
   }
 }
 
-export = Session;
+export default Session;
+export { Session };

@@ -1,6 +1,7 @@
-const Action = require('./Action');
-const AutoModerationActionExecution = require('../../structures/AutoModerationActionExecution');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import AutoModerationActionExecution from '../../structures/AutoModerationActionExecution';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class AutoModerationActionExecutionAction extends Action {
   handle(data: any) {
@@ -22,4 +23,5 @@ class AutoModerationActionExecutionAction extends Action {
   }
 }
 
-export = AutoModerationActionExecutionAction;
+export default AutoModerationActionExecutionAction;
+export { AutoModerationActionExecutionAction };

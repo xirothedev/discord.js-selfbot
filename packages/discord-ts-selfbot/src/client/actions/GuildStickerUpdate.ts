@@ -1,5 +1,6 @@
-const Action = require('./Action');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class GuildStickerUpdateAction extends Action {
   handle(current: any, data: any) {
@@ -15,4 +16,5 @@ class GuildStickerUpdateAction extends Action {
   }
 }
 
-export = GuildStickerUpdateAction;
+export default GuildStickerUpdateAction;
+export { GuildStickerUpdateAction };

@@ -1,6 +1,7 @@
-const Action = require('./Action');
-const Typing = require('../../structures/Typing');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import Typing from '../../structures/Typing';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class TypingStart extends Action {
   handle(data: any) {
@@ -24,4 +25,5 @@ class TypingStart extends Action {
   }
 }
 
-export = TypingStart;
+export default TypingStart;
+export { TypingStart };

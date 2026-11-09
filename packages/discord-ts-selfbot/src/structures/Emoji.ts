@@ -1,6 +1,6 @@
-const process = require('node:process');
-const Base = require('./Base');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
+import process from 'node:process';
+import Base from './Base';
+import SnowflakeUtil from '../util/SnowflakeUtil';
 
 /**
  * @type {WeakSet<Emoji>}
@@ -142,4 +142,5 @@ class Emoji extends Base {
  * @see {@link https://discord.com/developers/docs/resources/emoji#emoji-object}
  */
 
-export = { Emoji, deletedEmojis };
+export { Emoji, deletedEmojis };
+export default { Emoji, deletedEmojis };

@@ -1,29 +1,28 @@
-const process = require('node:process');
-const { Collection } = require('@discordjs/collection');
-const Base = require('./Base');
-const BaseMessageComponent = require('./BaseMessageComponent');
-const InteractionCollector = require('./InteractionCollector');
-const MessageAttachment = require('./MessageAttachment');
-const Embed = require('./MessageEmbed');
-const Mentions = require('./MessageMentions');
-const MessagePayload = require('./MessagePayload');
-const { Poll } = require('./Poll');
-const ReactionCollector = require('./ReactionCollector');
-const { Sticker } = require('./Sticker');
-const Application = require('./interfaces/Application');
-const { Error } = require('../errors');
-const ReactionManager = require('../managers/ReactionManager');
-const {
-  InteractionTypes,
-  MessageTypes,
-  SystemMessageTypes,
-  MessageComponentTypes,
-  MessageReferenceTypes,
-} = require('../util/Constants');
-const MessageFlags = require('../util/MessageFlags');
-const Permissions = require('../util/Permissions');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
-const Util = require('../util/Util');
+import process from 'node:process';
+import { Collection } from '@discordjs/collection';
+import Base from './Base';
+import BaseMessageComponent from './BaseMessageComponent';
+import InteractionCollector from './InteractionCollector';
+import MessageAttachment from './MessageAttachment';
+import Embed from './MessageEmbed';
+import Mentions from './MessageMentions';
+import MessagePayload from './MessagePayload';
+import _PollModule from './Poll';
+const { Poll } = _PollModule;
+import ReactionCollector from './ReactionCollector';
+import _StickerModule from './Sticker';
+const { Sticker } = _StickerModule;
+import Application from './interfaces/Application';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
+import ReactionManager from '../managers/ReactionManager';
+import _ConstantsModule from '../util/Constants';
+const { InteractionTypes, MessageTypes, SystemMessageTypes, MessageComponentTypes, MessageReferenceTypes } =
+  _ConstantsModule;
+import MessageFlags from '../util/MessageFlags';
+import Permissions from '../util/Permissions';
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import Util from '../util/Util';
 
 /**
  * @type {WeakSet<Message>}
@@ -962,8 +961,8 @@ class Message extends Base {
    */
   get crosspostable() {
     const bitfield =
-      Permissions.FLAGS.SEND_MESSAGES |
-      (this.author.id === this.client.user.id ? Permissions.defaultBit : Permissions.FLAGS.MANAGE_MESSAGES);
+      (Permissions.FLAGS.SEND_MESSAGES as any) |
+      (this.author.id === this.client.user.id ? Permissions.defaultBit : (Permissions.FLAGS.MANAGE_MESSAGES as any));
     const { channel } = this;
     return Boolean(
       channel?.type === 'GUILD_NEWS' &&
@@ -1506,4 +1505,5 @@ class Message extends Base {
   }
 }
 
-export = { Message, deletedMessages };
+export { Message, deletedMessages };
+export default { Message, deletedMessages };

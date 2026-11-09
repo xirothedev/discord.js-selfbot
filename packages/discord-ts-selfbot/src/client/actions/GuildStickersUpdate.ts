@@ -1,4 +1,4 @@
-const Action = require('./Action');
+import Action from './Action';
 
 class GuildStickersUpdateAction extends Action {
   handle(data: any) {
@@ -29,4 +29,5 @@ class GuildStickersUpdateAction extends Action {
   }
 }
 
-export = GuildStickersUpdateAction;
+export default GuildStickersUpdateAction;
+export { GuildStickersUpdateAction };

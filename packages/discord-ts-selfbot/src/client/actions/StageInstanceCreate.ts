@@ -1,5 +1,6 @@
-const Action = require('./Action');
-const { Events } = require('../../util/Constants');
+import Action from './Action';
+import _ConstantsModule from '../../util/Constants';
+const { Events } = _ConstantsModule;
 
 class StageInstanceCreateAction extends Action {
   handle(data: any) {
@@ -23,4 +24,5 @@ class StageInstanceCreateAction extends Action {
   }
 }
 
-export = StageInstanceCreateAction;
+export default StageInstanceCreateAction;
+export { StageInstanceCreateAction };

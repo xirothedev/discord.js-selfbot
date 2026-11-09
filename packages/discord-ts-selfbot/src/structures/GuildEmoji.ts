@@ -1,7 +1,8 @@
-const BaseGuildEmoji = require('./BaseGuildEmoji');
-const { Error } = require('../errors');
-const GuildEmojiRoleManager = require('../managers/GuildEmojiRoleManager');
-const Permissions = require('../util/Permissions');
+import BaseGuildEmoji from './BaseGuildEmoji';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
+import GuildEmojiRoleManager from '../managers/GuildEmojiRoleManager';
+import Permissions from '../util/Permissions';
 
 /**
  * Represents a custom emoji.
@@ -156,4 +157,5 @@ class GuildEmoji extends BaseGuildEmoji {
   }
 }
 
-export = GuildEmoji;
+export default GuildEmoji;
+export { GuildEmoji };

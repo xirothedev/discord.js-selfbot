@@ -1,4 +1,4 @@
-export = (client: any, { d: data }: any) => {
+export default (client: any, { d: data }: any) => {
   let msg;
   switch (data.required_action) {
     case undefined:

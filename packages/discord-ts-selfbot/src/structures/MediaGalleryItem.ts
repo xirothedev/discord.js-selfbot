@@ -1,4 +1,4 @@
-const UnfurledMediaItem = require('./UnfurledMediaItem');
+import UnfurledMediaItem from './UnfurledMediaItem';
 
 class MediaGalleryItem {
   [key: string]: any;
@@ -44,4 +44,5 @@ class MediaGalleryItem {
   }
 }
 
-export = MediaGalleryItem;
+export default MediaGalleryItem;
+export { MediaGalleryItem };

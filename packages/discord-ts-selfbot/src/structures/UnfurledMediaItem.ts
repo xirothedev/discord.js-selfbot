@@ -25,4 +25,5 @@ class UnfurledMediaItem {
   }
 }
 
-export = UnfurledMediaItem;
+export default UnfurledMediaItem;
+export { UnfurledMediaItem };
