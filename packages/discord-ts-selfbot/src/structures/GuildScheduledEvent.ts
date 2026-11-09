@@ -5,13 +5,40 @@ import _ConstantsModule from '../util/Constants';
 const { GuildScheduledEventEntityTypes, GuildScheduledEventStatuses, GuildScheduledEventPrivacyLevels, Endpoints } =
   _ConstantsModule;
 import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { RawGuildScheduledEventData } from '../../typings/rawDataTypes';
+import type {
+  CreateGuildScheduledEventInviteURLOptions,
+  DateResolvable,
+  GuildScheduledEventStatus,
+  StaticImageURLOptions,
+} from '../../typings';
+import type { GuildScheduledEventEntity } from '../types/entities/guild-scheduled-event';
+import type { PatchOf } from '../types/schema';
 
 /**
  * Represents a scheduled event in a {@link Guild}.
  * @extends {Base}
  */
-class GuildScheduledEvent extends Base {
-  constructor(client: any, data: any) {
+class GuildScheduledEvent extends Base implements GuildScheduledEventEntity {
+  declare id: GuildScheduledEventEntity['id'];
+  declare guildId: GuildScheduledEventEntity['guildId'];
+  declare channelId: GuildScheduledEventEntity['channelId'];
+  declare creatorId: GuildScheduledEventEntity['creatorId'];
+  declare name: GuildScheduledEventEntity['name'];
+  declare description: GuildScheduledEventEntity['description'];
+  declare scheduledStartTimestamp: GuildScheduledEventEntity['scheduledStartTimestamp'];
+  declare scheduledEndTimestamp: GuildScheduledEventEntity['scheduledEndTimestamp'];
+  declare privacyLevel: GuildScheduledEventEntity['privacyLevel'];
+  declare status: GuildScheduledEventEntity['status'];
+  declare entityType: GuildScheduledEventEntity['entityType'];
+  declare entityId: GuildScheduledEventEntity['entityId'];
+  declare entityMetadata: GuildScheduledEventEntity['entityMetadata'];
+  declare userCount: GuildScheduledEventEntity['userCount'];
+  declare creator: GuildScheduledEventEntity['creator'];
+  declare recurrenceRule: GuildScheduledEventEntity['recurrenceRule'];
+  declare image: GuildScheduledEventEntity['image'];
+
+  constructor(client: import('../client/Client').default, data: RawGuildScheduledEventData) {
     super(client);
 
     /**
@@ -29,8 +56,8 @@ class GuildScheduledEvent extends Base {
     this._patch(data);
   }
 
-  _patch(data: any) {
-    if ('channel_id' in data) {
+  _patch(data: PatchOf<'GuildScheduledEvent'>) {
+    if (data.channel_id !== undefined) {
       /**
        * The channel id in which the scheduled event will be hosted, or `null` if entity type is `EXTERNAL`
        * @type {?Snowflake}
@@ -40,7 +67,7 @@ class GuildScheduledEvent extends Base {
       this.channelId ??= null;
     }
 
-    if ('creator_id' in data) {
+    if (data.creator_id !== undefined) {
       /**
        * The id of the user that created this guild scheduled event
        * @type {?Snowflake}
@@ -50,7 +77,7 @@ class GuildScheduledEvent extends Base {
       this.creatorId ??= null;
     }
 
-    if ('name' in data) {
+    if (data.name !== undefined) {
       /**
        * The name of the guild scheduled event
        * @type {?string}
@@ -61,7 +88,7 @@ class GuildScheduledEvent extends Base {
       this.name ??= null;
     }
 
-    if ('description' in data) {
+    if (data.description !== undefined) {
       /**
        * The description of the guild scheduled event
        * @type {?string}
@@ -71,7 +98,7 @@ class GuildScheduledEvent extends Base {
       this.description ??= null;
     }
 
-    if ('scheduled_start_time' in data) {
+    if (data.scheduled_start_time !== undefined) {
       /**
        * The timestamp the guild scheduled event will start at
        * <info>This can be potentially `null` only when it's an {@link AuditLogEntryTarget}</info>
@@ -82,7 +109,7 @@ class GuildScheduledEvent extends Base {
       this.scheduledStartTimestamp ??= null;
     }
 
-    if ('scheduled_end_time' in data) {
+    if (data.scheduled_end_time !== undefined) {
       /**
        * The timestamp the guild scheduled event will end at
        * or `null` if the event does not have a scheduled time to end
@@ -93,7 +120,7 @@ class GuildScheduledEvent extends Base {
       this.scheduledEndTimestamp ??= null;
     }
 
-    if ('privacy_level' in data) {
+    if (data.privacy_level !== undefined) {
       /**
        * The privacy level of the guild scheduled event
        * @type {PrivacyLevel}
@@ -104,7 +131,7 @@ class GuildScheduledEvent extends Base {
       this.privacyLevel ??= null;
     }
 
-    if ('status' in data) {
+    if (data.status !== undefined) {
       /**
        * The status of the guild scheduled event
        * @type {GuildScheduledEventStatus}
@@ -115,7 +142,7 @@ class GuildScheduledEvent extends Base {
       this.status ??= null;
     }
 
-    if ('entity_type' in data) {
+    if (data.entity_type !== undefined) {
       /**
        * The type of hosting entity associated with the scheduled event
        * @type {GuildScheduledEventEntityType}
@@ -126,7 +153,7 @@ class GuildScheduledEvent extends Base {
       this.entityType ??= null;
     }
 
-    if ('entity_id' in data) {
+    if (data.entity_id !== undefined) {
       /**
        * The id of the hosting entity associated with the scheduled event
        * @type {?Snowflake}
@@ -136,7 +163,7 @@ class GuildScheduledEvent extends Base {
       this.entityId ??= null;
     }
 
-    if ('user_count' in data) {
+    if (data.user_count !== undefined) {
       /**
        * The number of users who are subscribed to this guild scheduled event
        * @type {?number}
@@ -146,7 +173,7 @@ class GuildScheduledEvent extends Base {
       this.userCount ??= null;
     }
 
-    if ('creator' in data) {
+    if (data.creator !== undefined) {
       /**
        * The user that created this guild scheduled event
        * @type {?User}
@@ -165,7 +192,7 @@ class GuildScheduledEvent extends Base {
      */
     /* eslint-enable max-len */
 
-    if ('entity_metadata' in data) {
+    if (data.entity_metadata !== undefined) {
       if (data.entity_metadata) {
         /**
          * Additional metadata
@@ -181,7 +208,7 @@ class GuildScheduledEvent extends Base {
       this.entityMetadata ??= null;
     }
 
-    if ('image' in data) {
+    if (data.image !== undefined) {
       /**
        * The cover image hash for this scheduled event
        * @type {?string}
@@ -213,7 +240,7 @@ class GuildScheduledEvent extends Base {
      * @property {GuildScheduledEventRecurrenceRuleWeekday} day The day within the week to recur on
      */
 
-    if ('recurrence_rule' in data) {
+    if (data.recurrence_rule !== undefined) {
       /**
        * The recurrence rule for this scheduled event
        * @type {?GuildScheduledEventRecurrenceRule}
@@ -223,9 +250,9 @@ class GuildScheduledEvent extends Base {
         get startAt() {
           return new Date(this.startTimestamp);
         },
-        endTimestamp: data.recurrence_rule.end && Date.parse(data.recurrence_rule.end),
+        endTimestamp: data.recurrence_rule.end ? Date.parse(data.recurrence_rule.end) : null,
         get endAt() {
-          return this.endTimestamp && new Date(this.endTimestamp);
+          return this.endTimestamp ? new Date(this.endTimestamp) : null;
         },
         frequency: data.recurrence_rule.frequency,
         interval: data.recurrence_rule.interval,
@@ -246,7 +273,7 @@ class GuildScheduledEvent extends Base {
    * @param {StaticImageURLOptions} [options={}] Options for image URL
    * @returns {?string}
    */
-  coverImageURL({ format, size }: any = {}) {
+  coverImageURL({ format, size }: StaticImageURLOptions = {}) {
     return this.image && this.client.rest.cdn.GuildScheduledEventCover(this.id, this.image, format, size);
   }
 
@@ -283,7 +310,7 @@ class GuildScheduledEvent extends Base {
    * @readonly
    */
   get scheduledStartAt() {
-    return new Date(this.scheduledStartTimestamp);
+    return new Date(this.scheduledStartTimestamp ?? 0);
   }
 
   /**
@@ -328,8 +355,10 @@ class GuildScheduledEvent extends Base {
    * @param {boolean} [force=true] Whether to skip the cache check and request the API
    * @returns {Promise<GuildScheduledEvent>}
    */
-  fetch(force: any = true) {
-    return this.guild.scheduledEvents.fetch({ guildScheduledEvent: this.id, force });
+  fetch(force: boolean = true) {
+    const guild = this.guild;
+    if (!guild) throw new Error('GUILD_NOT_FOUND');
+    return guild.scheduledEvents.fetch({ guildScheduledEvent: this.id, force });
   }
 
   /**
@@ -344,14 +373,17 @@ class GuildScheduledEvent extends Base {
    * @param {CreateGuildScheduledEventInviteURLOptions} [options] The options to create the invite
    * @returns {Promise<string>}
    */
-  async createInviteURL(options: any) {
+  async createInviteURL(options?: CreateGuildScheduledEventInviteURLOptions) {
+    const guild = this.guild;
+    if (!guild) throw new Error('GUILD_NOT_FOUND');
     let channelId = this.channelId;
     if (this.entityType === 'EXTERNAL') {
       if (!options?.channel) throw new Error('INVITE_OPTIONS_MISSING_CHANNEL');
-      channelId = this.guild.channels.resolveId(options.channel);
+      channelId = guild.channels.resolveId(options.channel);
       if (!channelId) throw new Error('GUILD_CHANNEL_RESOLVE');
     }
-    const invite = await this.guild.invites.create(channelId, options);
+    if (!channelId) throw new Error('GUILD_CHANNEL_RESOLVE');
+    const invite = await guild.invites.create(channelId, options);
     return Endpoints.invite(this.client.options.http.invite, invite.code, this.id);
   }
 
@@ -365,8 +397,10 @@ class GuildScheduledEvent extends Base {
    *  .then(guildScheduledEvent => console.log(guildScheduledEvent))
    *  .catch(console.error);
    */
-  edit(options: any) {
-    return this.guild.scheduledEvents.edit(this.id, options);
+  edit(options: Record<string, unknown>) {
+    const guild = this.guild;
+    if (!guild) throw new Error('GUILD_NOT_FOUND');
+    return guild.scheduledEvents.edit(this.id, options);
   }
 
   /**
@@ -379,7 +413,9 @@ class GuildScheduledEvent extends Base {
    *  .catch(console.error);
    */
   async delete() {
-    await this.guild.scheduledEvents.delete(this.id);
+    const guild = this.guild;
+    if (!guild) throw new Error('GUILD_NOT_FOUND');
+    await guild.scheduledEvents.delete(this.id);
     return this;
   }
 
@@ -394,7 +430,7 @@ class GuildScheduledEvent extends Base {
    *  .then(guildScheduledEvent => console.log(`Set the name to: ${guildScheduledEvent.name}`))
    *  .catch(console.error);
    */
-  setName(name: any, reason: any) {
+  setName(name: string, reason?: string) {
     return this.edit({ name, reason });
   }
 
@@ -409,7 +445,7 @@ class GuildScheduledEvent extends Base {
    *  .then(guildScheduledEvent => console.log(`Set the start time to: ${guildScheduledEvent.scheduledStartTime}`))
    *  .catch(console.error);
    */
-  setScheduledStartTime(scheduledStartTime: any, reason: any) {
+  setScheduledStartTime(scheduledStartTime: DateResolvable, reason?: string) {
     return this.edit({ scheduledStartTime, reason });
   }
 
@@ -425,7 +461,7 @@ class GuildScheduledEvent extends Base {
    *  .then(guildScheduledEvent => console.log(`Set the end time to: ${guildScheduledEvent.scheduledEndTime}`))
    *  .catch(console.error);
    */
-  setScheduledEndTime(scheduledEndTime: any, reason: any) {
+  setScheduledEndTime(scheduledEndTime: DateResolvable, reason?: string) {
     return this.edit({ scheduledEndTime, reason });
   }
 
@@ -440,7 +476,7 @@ class GuildScheduledEvent extends Base {
    *  .then(guildScheduledEvent => console.log(`Set the description to: ${guildScheduledEvent.description}`))
    *  .catch(console.error);
    */
-  setDescription(description: any, reason: any) {
+  setDescription(description: string, reason?: string) {
     return this.edit({ description, reason });
   }
 
@@ -457,7 +493,7 @@ class GuildScheduledEvent extends Base {
    *  .then(guildScheduledEvent => console.log(`Set the status to: ${guildScheduledEvent.status}`))
    *  .catch(console.error);
    */
-  setStatus(status: any, reason: any) {
+  setStatus(status: GuildScheduledEventStatus, reason?: string) {
     return this.edit({ status, reason });
   }
 
@@ -472,7 +508,7 @@ class GuildScheduledEvent extends Base {
    *  .then(guildScheduledEvent => console.log(`Set the location to: ${guildScheduledEvent.entityMetadata.location}`))
    *  .catch(console.error);
    */
-  setLocation(location: any, reason: any) {
+  setLocation(location: string, reason?: string) {
     return this.edit({ entityMetadata: { location }, reason });
   }
 
@@ -481,8 +517,10 @@ class GuildScheduledEvent extends Base {
    * @param {FetchGuildScheduledEventSubscribersOptions} [options] Options for fetching the subscribers
    * @returns {Promise<Collection<Snowflake, GuildScheduledEventUser>>}
    */
-  fetchSubscribers(options: any) {
-    return this.guild.scheduledEvents.fetchSubscribers(this.id, options);
+  fetchSubscribers(options?: Record<string, unknown>) {
+    const guild = this.guild;
+    if (!guild) throw new Error('GUILD_NOT_FOUND');
+    return guild.scheduledEvents.fetchSubscribers(this.id, options);
   }
 
   /**
@@ -501,7 +539,7 @@ class GuildScheduledEvent extends Base {
    * @returns {boolean}
    */
   isActive() {
-    return GuildScheduledEventStatuses[this.status] === GuildScheduledEventStatuses.ACTIVE;
+    return this.status ? GuildScheduledEventStatuses[this.status] === GuildScheduledEventStatuses.ACTIVE : false;
   }
 
   /**
@@ -509,7 +547,7 @@ class GuildScheduledEvent extends Base {
    * @returns {boolean}
    */
   isCanceled() {
-    return GuildScheduledEventStatuses[this.status] === GuildScheduledEventStatuses.CANCELED;
+    return this.status ? GuildScheduledEventStatuses[this.status] === GuildScheduledEventStatuses.CANCELED : false;
   }
 
   /**
@@ -517,7 +555,7 @@ class GuildScheduledEvent extends Base {
    * @returns {boolean}
    */
   isCompleted() {
-    return GuildScheduledEventStatuses[this.status] === GuildScheduledEventStatuses.COMPLETED;
+    return this.status ? GuildScheduledEventStatuses[this.status] === GuildScheduledEventStatuses.COMPLETED : false;
   }
 
   /**
@@ -525,7 +563,7 @@ class GuildScheduledEvent extends Base {
    * @returns {boolean}
    */
   isScheduled() {
-    return GuildScheduledEventStatuses[this.status] === GuildScheduledEventStatuses.SCHEDULED;
+    return this.status ? GuildScheduledEventStatuses[this.status] === GuildScheduledEventStatuses.SCHEDULED : false;
   }
 }
 

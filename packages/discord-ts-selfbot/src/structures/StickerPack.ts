@@ -3,14 +3,24 @@ import Base from './Base';
 import _StickerModule from './Sticker';
 const { Sticker } = _StickerModule;
 import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { RawStickerPackData } from '../../typings/rawDataTypes';
+import type { StaticImageURLOptions } from '../../typings';
+import type { StickerPackEntity } from '../types/entities/sticker-pack';
 
 /**
  * Represents a pack of standard stickers.
  * @extends {Base}
  */
-class StickerPack extends Base {
-  [key: string]: any;
-  constructor(client: any, pack: any) {
+class StickerPack extends Base implements StickerPackEntity {
+  declare bannerId: StickerPackEntity['bannerId'];
+  declare coverStickerId: StickerPackEntity['coverStickerId'];
+  declare description: StickerPackEntity['description'];
+  declare id: StickerPackEntity['id'];
+  declare name: StickerPackEntity['name'];
+  declare skuId: StickerPackEntity['skuId'];
+  declare stickers: StickerPackEntity['stickers'];
+
+  constructor(client: import('../client/Client').default, pack: RawStickerPackData) {
     super(client);
     /**
      * The Sticker pack's id
@@ -22,7 +32,9 @@ class StickerPack extends Base {
      * The stickers in the pack
      * @type {Collection<Snowflake, Sticker>}
      */
-    this.stickers = new Collection(pack.stickers.map((s: any) => [s.id, new Sticker(client, s)]));
+    this.stickers = new Collection<string, InstanceType<typeof Sticker>>(
+      pack.stickers.map(s => [s.id, new Sticker(client, s)]),
+    );
 
     /**
      * The name of the sticker pack
@@ -79,7 +91,7 @@ class StickerPack extends Base {
    * @readonly
    */
   get coverSticker() {
-    return this.coverStickerId && this.stickers.get(this.coverStickerId);
+    return this.coverStickerId ? (this.stickers.get(this.coverStickerId) ?? null) : null;
   }
 
   /**
@@ -87,7 +99,7 @@ class StickerPack extends Base {
    * @param {StaticImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  bannerURL({ format, size }: any = {}) {
+  bannerURL({ format, size }: StaticImageURLOptions = {}) {
     return this.bannerId && this.client.rest.cdn.StickerPackBanner(this.bannerId, format, size);
   }
 }

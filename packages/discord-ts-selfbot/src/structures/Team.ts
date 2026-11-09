@@ -2,26 +2,35 @@ import { Collection } from '@discordjs/collection';
 import Base from './Base';
 import TeamMember from './TeamMember';
 import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { RawTeamData } from '../../typings/rawDataTypes';
+import type { StaticImageURLOptions } from '../../typings';
+import type { TeamEntity } from '../types/entities/team';
+import type { PatchOf } from '../types/schema';
 
 /**
  * Represents a Client OAuth2 Application Team.
  * @extends {Base}
  */
-class Team extends Base {
-  [key: string]: any;
-  constructor(client: any, data: any) {
+class Team extends Base implements TeamEntity {
+  declare id: TeamEntity['id'];
+  declare name: TeamEntity['name'];
+  declare icon: TeamEntity['icon'];
+  declare ownerId: TeamEntity['ownerId'];
+  declare members: TeamEntity['members'];
+
+  constructor(client: import('../client/Client').default, data: RawTeamData) {
     super(client);
     this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: PatchOf<'Team'>) {
     /**
      * The Team's id
      * @type {Snowflake}
      */
-    this.id = data.id;
+    if (data.id !== undefined) this.id = data.id;
 
-    if ('name' in data) {
+    if (data.name !== undefined) {
       /**
        * The name of the Team
        * @type {string}
@@ -29,7 +38,7 @@ class Team extends Base {
       this.name = data.name;
     }
 
-    if ('icon' in data) {
+    if (data.icon !== undefined) {
       /**
        * The Team's icon hash
        * @type {?string}
@@ -39,7 +48,7 @@ class Team extends Base {
       this.icon ??= null;
     }
 
-    if ('owner_user_id' in data) {
+    if (data.owner_user_id !== undefined) {
       /**
        * The Team's owner id
        * @type {?Snowflake}
@@ -52,9 +61,9 @@ class Team extends Base {
      * The Team's members
      * @type {Collection<Snowflake, TeamMember>}
      */
-    this.members = new Collection();
+    this.members = new Collection<string, TeamMember>();
 
-    for (const memberData of data.members) {
+    for (const memberData of data.members ?? []) {
       const member = new TeamMember(this, memberData);
       this.members.set(member.id, member);
     }
@@ -66,7 +75,7 @@ class Team extends Base {
    * @readonly
    */
   get owner() {
-    return this.members.get(this.ownerId) ?? null;
+    return this.ownerId ? (this.members.get(this.ownerId) ?? null) : null;
   }
 
   /**
@@ -92,7 +101,7 @@ class Team extends Base {
    * @param {StaticImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  iconURL({ format, size }: any = {}) {
+  iconURL({ format, size }: StaticImageURLOptions = {}) {
     if (!this.icon) return null;
     return this.client.rest.cdn.TeamIcon(this.id, this.icon, { format, size });
   }

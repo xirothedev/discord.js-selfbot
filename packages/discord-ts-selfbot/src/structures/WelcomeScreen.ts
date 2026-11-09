@@ -1,14 +1,21 @@
 import { Collection } from '@discordjs/collection';
 import Base from './Base';
 import WelcomeChannel from './WelcomeChannel';
+import type { RawWelcomeScreenData } from '../../typings/rawDataTypes';
+import type { Guild } from './Guild';
+import type { InviteGuild } from './InviteGuild';
+import type { WelcomeScreenEntity } from '../types/entities/welcome-screen';
 
 /**
  * Represents a welcome screen.
  * @extends {Base}
  */
-class WelcomeScreen extends Base {
-  [key: string]: any;
-  constructor(guild: any, data: any) {
+class WelcomeScreen extends Base implements WelcomeScreenEntity {
+  declare guild: WelcomeScreenEntity['guild'];
+  declare description: WelcomeScreenEntity['description'];
+  declare welcomeChannels: WelcomeScreenEntity['welcomeChannels'];
+
+  constructor(guild: Guild | InviteGuild, data: RawWelcomeScreenData) {
     super(guild.client);
 
     /**
@@ -27,7 +34,7 @@ class WelcomeScreen extends Base {
      * Collection of welcome channels belonging to this welcome screen
      * @type {Collection<Snowflake, WelcomeChannel>}
      */
-    this.welcomeChannels = new Collection();
+    this.welcomeChannels = new Collection<string, WelcomeChannel>();
 
     for (const channel of data.welcome_channels) {
       const welcomeChannel = new WelcomeChannel(this.guild, channel);

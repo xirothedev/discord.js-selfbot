@@ -3,6 +3,9 @@ import Base from './Base';
 import _ConstantsModule from '../util/Constants';
 const { PrivacyLevels } = _ConstantsModule;
 import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { RawStageInstanceData } from '../../typings/rawDataTypes';
+import type { StageInstanceEntity } from '../types/entities/stage-instance';
+import type { PatchOf } from '../types/schema';
 
 /**
  * @type {WeakSet<StageInstance>}
@@ -16,9 +19,16 @@ let deprecationEmittedForDeleted = false;
  * Represents a stage instance.
  * @extends {Base}
  */
-class StageInstance extends Base {
-  [key: string]: any;
-  constructor(client: any, data: any) {
+class StageInstance extends Base implements StageInstanceEntity {
+  declare id: StageInstanceEntity['id'];
+  declare guildId: StageInstanceEntity['guildId'];
+  declare channelId: StageInstanceEntity['channelId'];
+  declare topic: StageInstanceEntity['topic'];
+  declare privacyLevel: StageInstanceEntity['privacyLevel'];
+  declare discoverableDisabled: StageInstanceEntity['discoverableDisabled'];
+  declare guildScheduledEventId: StageInstanceEntity['guildScheduledEventId'];
+
+  constructor(client: import('../client/Client').default, data: RawStageInstanceData) {
     super(client);
 
     /**
@@ -30,8 +40,8 @@ class StageInstance extends Base {
     this._patch(data);
   }
 
-  _patch(data: any) {
-    if ('guild_id' in data) {
+  _patch(data: PatchOf<'StageInstance'>) {
+    if (data.guild_id !== undefined) {
       /**
        * The id of the guild associated with the stage channel
        * @type {Snowflake}
@@ -39,7 +49,7 @@ class StageInstance extends Base {
       this.guildId = data.guild_id;
     }
 
-    if ('channel_id' in data) {
+    if (data.channel_id !== undefined) {
       /**
        * The id of the channel associated with the stage channel
        * @type {Snowflake}
@@ -47,7 +57,7 @@ class StageInstance extends Base {
       this.channelId = data.channel_id;
     }
 
-    if ('topic' in data) {
+    if (data.topic !== undefined) {
       /**
        * The topic of the stage instance
        * @type {string}
@@ -55,7 +65,7 @@ class StageInstance extends Base {
       this.topic = data.topic;
     }
 
-    if ('privacy_level' in data) {
+    if (data.privacy_level !== undefined) {
       /**
        * The privacy level of the stage instance
        * @type {PrivacyLevel}
@@ -63,7 +73,7 @@ class StageInstance extends Base {
       this.privacyLevel = PrivacyLevels[data.privacy_level];
     }
 
-    if ('discoverable_disabled' in data) {
+    if (data.discoverable_disabled !== undefined) {
       /**
        * Whether or not stage discovery is disabled
        * @type {?boolean}
@@ -73,14 +83,12 @@ class StageInstance extends Base {
       this.discoverableDisabled ??= null;
     }
 
-    if ('guild_scheduled_event_id' in data) {
+    if (data.guild_scheduled_event_id !== undefined) {
       /**
        * The associated guild scheduled event id of this stage instance
        * @type {?Snowflake}
        */
       this.guildScheduledEventId = data.guild_scheduled_event_id;
-    } else {
-      this.guildScheduledEventId ??= null;
     }
   }
 
@@ -99,6 +107,7 @@ class StageInstance extends Base {
    * @readonly
    */
   get guildScheduledEvent() {
+    if (!this.guildScheduledEventId) return null;
     return this.guild?.scheduledEvents.resolve(this.guildScheduledEventId) ?? null;
   }
 
@@ -119,7 +128,7 @@ class StageInstance extends Base {
     return deletedStageInstances.has(this);
   }
 
-  set deleted(value: any) {
+  set deleted(value: boolean) {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
@@ -151,7 +160,7 @@ class StageInstance extends Base {
    *  .then(stageInstance => console.log(stageInstance))
    *  .catch(console.error)
    */
-  edit(options: any) {
+  edit(options: Record<string, unknown>) {
     return this.guild.stageInstances.edit(this.channelId, options);
   }
 
@@ -181,7 +190,7 @@ class StageInstance extends Base {
    *  .then(stageInstance => console.log(`Set the topic to: ${stageInstance.topic}`))
    *  .catch(console.error);
    */
-  setTopic(topic: any) {
+  setTopic(topic: string) {
     return this.guild.stageInstances.edit(this.channelId, { topic });
   }
 

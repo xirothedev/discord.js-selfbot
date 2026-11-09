@@ -4,13 +4,29 @@ import GuildPreviewEmoji from './GuildPreviewEmoji';
 import _StickerModule from './Sticker';
 const { Sticker } = _StickerModule;
 import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { RawGuildPreviewData } from '../../typings/rawDataTypes';
+import type { ImageURLOptions, StaticImageURLOptions } from '../../typings';
+import type { GuildPreviewEntity } from '../types/entities/guild-preview';
+import type { PatchOf } from '../types/schema';
 
 /**
  * Represents the data about the guild any bot can preview, connected to the specified guild.
  * @extends {Base}
  */
-class GuildPreview extends Base {
-  constructor(client: any, data: any) {
+class GuildPreview extends Base implements GuildPreviewEntity {
+  declare approximateMemberCount: GuildPreviewEntity['approximateMemberCount'];
+  declare approximatePresenceCount: GuildPreviewEntity['approximatePresenceCount'];
+  declare description: GuildPreviewEntity['description'];
+  declare discoverySplash: GuildPreviewEntity['discoverySplash'];
+  declare emojis: GuildPreviewEntity['emojis'];
+  declare stickers: GuildPreviewEntity['stickers'];
+  declare features: GuildPreviewEntity['features'];
+  declare icon: GuildPreviewEntity['icon'];
+  declare id: GuildPreviewEntity['id'];
+  declare name: GuildPreviewEntity['name'];
+  declare splash: GuildPreviewEntity['splash'];
+
+  constructor(client: import('../client/Client').default, data: RawGuildPreviewData) {
     super(client);
 
     if (!data) return;
@@ -18,14 +34,14 @@ class GuildPreview extends Base {
     this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: PatchOf<'GuildPreview'>) {
     /**
      * The id of this guild
      * @type {string}
      */
-    this.id = data.id;
+    if (data.id !== undefined) this.id = data.id;
 
-    if ('name' in data) {
+    if (data.name !== undefined) {
       /**
        * The name of this guild
        * @type {string}
@@ -33,7 +49,7 @@ class GuildPreview extends Base {
       this.name = data.name;
     }
 
-    if ('icon' in data) {
+    if (data.icon !== undefined) {
       /**
        * The icon of this guild
        * @type {?string}
@@ -41,7 +57,7 @@ class GuildPreview extends Base {
       this.icon = data.icon;
     }
 
-    if ('splash' in data) {
+    if (data.splash !== undefined) {
       /**
        * The splash icon of this guild
        * @type {?string}
@@ -49,7 +65,7 @@ class GuildPreview extends Base {
       this.splash = data.splash;
     }
 
-    if ('discovery_splash' in data) {
+    if (data.discovery_splash !== undefined) {
       /**
        * The discovery splash icon of this guild
        * @type {?string}
@@ -57,7 +73,7 @@ class GuildPreview extends Base {
       this.discoverySplash = data.discovery_splash;
     }
 
-    if ('features' in data) {
+    if (data.features !== undefined) {
       /**
        * An array of enabled guild features
        * @type {Features[]}
@@ -65,7 +81,7 @@ class GuildPreview extends Base {
       this.features = data.features;
     }
 
-    if ('approximate_member_count' in data) {
+    if (data.approximate_member_count !== undefined) {
       /**
        * The approximate count of members in this guild
        * @type {number}
@@ -73,7 +89,7 @@ class GuildPreview extends Base {
       this.approximateMemberCount = data.approximate_member_count;
     }
 
-    if ('approximate_presence_count' in data) {
+    if (data.approximate_presence_count !== undefined) {
       /**
        * The approximate count of online members in this guild
        * @type {number}
@@ -81,7 +97,7 @@ class GuildPreview extends Base {
       this.approximatePresenceCount = data.approximate_presence_count;
     }
 
-    if ('description' in data) {
+    if (data.description !== undefined) {
       /**
        * The description for this guild
        * @type {?string}
@@ -96,11 +112,12 @@ class GuildPreview extends Base {
        * Collection of emojis belonging to this guild
        * @type {Collection<Snowflake, GuildPreviewEmoji>}
        */
-      this.emojis = new Collection();
+      this.emojis = new Collection<string, GuildPreviewEmoji>();
     } else {
       this.emojis.clear();
     }
-    for (const emoji of data.emojis) {
+    for (const emoji of data.emojis ?? []) {
+      if (!emoji.id) continue;
       this.emojis.set(emoji.id, new GuildPreviewEmoji(this.client, emoji, this));
     }
 
@@ -108,9 +125,9 @@ class GuildPreview extends Base {
      * Collection of stickers belonging to this guild
      * @type {Collection<Snowflake, Sticker>}
      */
-    this.stickers = data.stickers.reduce(
-      (stickers: any, sticker: any) => stickers.set(sticker.id, new Sticker(this.client, sticker)),
-      new Collection(),
+    this.stickers = (data.stickers ?? []).reduce(
+      (stickers, sticker) => stickers.set(sticker.id, new Sticker(this.client, sticker)),
+      new Collection<string, InstanceType<typeof Sticker>>(),
     );
   }
   /**
@@ -136,7 +153,7 @@ class GuildPreview extends Base {
    * @param {StaticImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  splashURL({ format, size }: any = {}) {
+  splashURL({ format, size }: StaticImageURLOptions = {}) {
     return this.splash && this.client.rest.cdn.Splash(this.id, this.splash, format, size);
   }
 
@@ -145,7 +162,7 @@ class GuildPreview extends Base {
    * @param {StaticImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  discoverySplashURL({ format, size }: any = {}) {
+  discoverySplashURL({ format, size }: StaticImageURLOptions = {}) {
     return this.discoverySplash && this.client.rest.cdn.DiscoverySplash(this.id, this.discoverySplash, format, size);
   }
 
@@ -154,7 +171,7 @@ class GuildPreview extends Base {
    * @param {ImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  iconURL({ format, size, dynamic }: any = {}) {
+  iconURL({ format, size, dynamic }: ImageURLOptions = {}) {
     return this.icon && this.client.rest.cdn.Icon(this.id, this.icon, format, size, dynamic);
   }
 

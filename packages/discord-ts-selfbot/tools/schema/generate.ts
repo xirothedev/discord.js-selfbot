@@ -97,6 +97,105 @@ const CONFIG: Record<string, EntityConfig> = {
       premiumUsageFlags: 'selfbot',
     },
   },
+  GuildScheduledEvent: {
+    rawType: { name: 'RawGuildScheduledEventData', from: '../../typings/rawDataTypes' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      {
+        from: '../../../typings',
+        named: [
+          'GuildScheduledEventEntityMetadata',
+          'GuildScheduledEventEntityType',
+          'GuildScheduledEventPrivacyLevel',
+          'GuildScheduledEventRecurrenceRule',
+          'GuildScheduledEventStatus',
+        ],
+      },
+      { from: '../../structures/User', named: ['User'] },
+    ],
+    fields: {},
+    fieldTypes: {
+      status: 'GuildScheduledEventStatus | null',
+      privacyLevel: 'GuildScheduledEventPrivacyLevel | null',
+      entityType: 'GuildScheduledEventEntityType | null',
+      entityMetadata: 'GuildScheduledEventEntityMetadata | null',
+      name: 'string | null',
+    },
+  },
+  Team: {
+    rawType: { name: 'RawTeamData', from: '../../typings/rawDataTypes' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '@discordjs/collection', named: ['Collection'] },
+      { from: '../../structures/TeamMember', default: 'TeamMember' },
+    ],
+    fields: {},
+    fieldTypes: { members: 'Collection<Snowflake, TeamMember>' },
+  },
+  WelcomeScreen: {
+    rawType: { name: 'RawWelcomeScreenData', from: '../../typings/rawDataTypes' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '@discordjs/collection', named: ['Collection'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
+      { from: '../../structures/InviteGuild', named: ['InviteGuild'] },
+      { from: '../../structures/WelcomeChannel', default: 'WelcomeChannel' },
+    ],
+    fields: { guild: 'relation' },
+    fieldTypes: { welcomeChannels: 'Collection<Snowflake, WelcomeChannel>' },
+  },
+  StickerPack: {
+    rawType: { name: 'RawStickerPackData', from: '../../typings/rawDataTypes' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '@discordjs/collection', named: ['Collection'] },
+      { from: '../../structures/Sticker', named: ['Sticker'] },
+    ],
+    fields: {},
+    fieldTypes: { stickers: 'Collection<Snowflake, Sticker>' },
+  },
+  GuildPreview: {
+    rawType: { name: 'RawGuildPreviewData', from: '../../typings/rawDataTypes' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['GuildFeature', 'Snowflake'] },
+      { from: '@discordjs/collection', named: ['Collection'] },
+      { from: '../../structures/GuildPreviewEmoji', default: 'GuildPreviewEmoji' },
+      { from: '../../structures/Sticker', named: ['Sticker'] },
+    ],
+    fields: {},
+    fieldTypes: {
+      emojis: 'Collection<Snowflake, GuildPreviewEmoji>',
+      stickers: 'Collection<Snowflake, Sticker>',
+    },
+  },
+  InviteStageInstance: {
+    rawType: { name: 'RawInviteStageInstance', from: '../../typings/rawDataTypes' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '@discordjs/collection', named: ['Collection'] },
+      { from: '../../structures/GuildMember', named: ['GuildMember'] },
+    ],
+    fields: {},
+    fieldTypes: { members: 'Collection<Snowflake, GuildMember>' },
+  },
+  StageInstance: {
+    rawType: { name: 'RawStageInstanceData', from: '../../typings/rawDataTypes' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '../../../typings', named: ['PrivacyLevel'] },
+    ],
+    fields: {},
+  },
+  Widget: {
+    rawType: { name: 'RawWidgetData', from: '../../typings/rawDataTypes' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '@discordjs/collection', named: ['Collection'] },
+      { from: '../../../typings', named: ['WidgetChannel'] },
+      { from: '../../structures/WidgetMember', default: 'WidgetMember' },
+    ],
+    fields: {},
+  },
   AutoModerationRule: {
     rawType: { name: 'APIAutoModerationRule', from: 'discord-api-types/v10' },
     imports: [
