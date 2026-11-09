@@ -58,13 +58,71 @@ import UserUpdate from './UserUpdate';
 import VoiceStateUpdate from './VoiceStateUpdate';
 import WebhooksUpdate from './WebhooksUpdate';
 class ActionsManager {
-  [key: string]: any;
-  declare client: any;
+  declare client: import('../Client').default;
   declare injectedUser: symbol;
   declare injectedChannel: symbol;
   declare injectedMessage: symbol;
+  declare ApplicationCommandPermissionsUpdate: ApplicationCommandPermissionsUpdate;
+  declare AutoModerationActionExecution: AutoModerationActionExecution;
+  declare AutoModerationRuleCreate: AutoModerationRuleCreate;
+  declare AutoModerationRuleDelete: AutoModerationRuleDelete;
+  declare AutoModerationRuleUpdate: AutoModerationRuleUpdate;
+  declare ChannelCreate: ChannelCreate;
+  declare ChannelDelete: ChannelDelete;
+  declare ChannelUpdate: ChannelUpdate;
+  declare GuildAuditLogEntryCreate: GuildAuditLogEntryCreate;
+  declare GuildBanAdd: GuildBanAdd;
+  declare GuildBanRemove: GuildBanRemove;
+  declare GuildChannelsPositionUpdate: GuildChannelsPositionUpdate;
+  declare GuildDelete: GuildDelete;
+  declare GuildEmojiCreate: GuildEmojiCreate;
+  declare GuildEmojiDelete: GuildEmojiDelete;
+  declare GuildEmojiUpdate: GuildEmojiUpdate;
+  declare GuildEmojisUpdate: GuildEmojisUpdate;
+  declare GuildIntegrationsUpdate: GuildIntegrationsUpdate;
+  declare GuildMemberRemove: GuildMemberRemove;
+  declare GuildMemberUpdate: GuildMemberUpdate;
+  declare GuildRoleCreate: GuildRoleCreate;
+  declare GuildRoleDelete: GuildRoleDelete;
+  declare GuildRoleUpdate: GuildRoleUpdate;
+  declare GuildRolesPositionUpdate: GuildRolesPositionUpdate;
+  declare GuildScheduledEventCreate: GuildScheduledEventCreate;
+  declare GuildScheduledEventDelete: GuildScheduledEventDelete;
+  declare GuildScheduledEventUpdate: GuildScheduledEventUpdate;
+  declare GuildScheduledEventUserAdd: GuildScheduledEventUserAdd;
+  declare GuildScheduledEventUserRemove: GuildScheduledEventUserRemove;
+  declare GuildStickerCreate: GuildStickerCreate;
+  declare GuildStickerDelete: GuildStickerDelete;
+  declare GuildStickerUpdate: GuildStickerUpdate;
+  declare GuildStickersUpdate: GuildStickersUpdate;
+  declare GuildUpdate: GuildUpdate;
+  declare InviteCreate: InviteCreate;
+  declare InviteDelete: InviteDelete;
+  declare MessageCreate: MessageCreate;
+  declare MessageDelete: MessageDelete;
+  declare MessageDeleteBulk: MessageDeleteBulk;
+  declare MessagePollVoteAdd: MessagePollVoteAdd;
+  declare MessagePollVoteRemove: MessagePollVoteRemove;
+  declare MessageReactionAdd: MessageReactionAdd;
+  declare MessageReactionRemove: MessageReactionRemove;
+  declare MessageReactionRemoveAll: MessageReactionRemoveAll;
+  declare MessageReactionRemoveEmoji: MessageReactionRemoveEmoji;
+  declare MessageUpdate: MessageUpdate;
+  declare PresenceUpdate: PresenceUpdate;
+  declare StageInstanceCreate: StageInstanceCreate;
+  declare StageInstanceDelete: StageInstanceDelete;
+  declare StageInstanceUpdate: StageInstanceUpdate;
+  declare ThreadCreate: ThreadCreate;
+  declare ThreadDelete: ThreadDelete;
+  declare ThreadListSync: ThreadListSync;
+  declare ThreadMemberUpdate: ThreadMemberUpdate;
+  declare ThreadMembersUpdate: ThreadMembersUpdate;
+  declare TypingStart: TypingStart;
+  declare UserUpdate: UserUpdate;
+  declare VoiceStateUpdate: VoiceStateUpdate;
+  declare WebhooksUpdate: WebhooksUpdate;
 
-  constructor(client: any) {
+  constructor(client: import('../Client').default) {
     this.client = client;
 
     // These symbols represent fully built data that we inject at times when calling actions manually.
@@ -135,8 +193,8 @@ class ActionsManager {
     this.register(WebhooksUpdate);
   }
 
-  register(Action: any) {
-    this[Action.name.replace(/Action$/, '')] = new Action(this.client);
+  register(action: { name: string; new (client: import('../Client').default): unknown }) {
+    Reflect.set(this, action.name.replace(/Action$/, ''), new action(this.client));
   }
 }
 

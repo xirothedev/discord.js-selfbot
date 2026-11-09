@@ -361,9 +361,9 @@ class WebSocketManager extends EventEmitter {
         .split('_')
         .map((part: any) => part.charAt(0) + part.slice(1).toLowerCase())
         .join('');
-      const action = this.client.actions?.[actionName];
-      if (action && typeof action.handle === 'function') {
-        action.handle(packet.d, shard);
+      const action = Reflect.get(this.client.actions, actionName);
+      if (action && typeof action === 'object' && 'handle' in action && typeof action.handle === 'function') {
+        Reflect.apply(action.handle, action, [packet.d, shard]);
         return true;
       }
       /**

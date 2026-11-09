@@ -1207,7 +1207,7 @@ class Message extends Base {
     if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
     await this.channel.messages.react(this.id, emoji, burst);
 
-    return this.client.actions.MessageReactionAdd.handle(
+    const result = this.client.actions.MessageReactionAdd.handle(
       {
         [this.client.actions.injectedUser]: this.client.user,
         [this.client.actions.injectedChannel]: this.channel,
@@ -1216,7 +1216,8 @@ class Message extends Base {
         me_burst: burst,
       },
       true,
-    ).reaction;
+    );
+    return result ? result.reaction : null;
   }
 
   /**
