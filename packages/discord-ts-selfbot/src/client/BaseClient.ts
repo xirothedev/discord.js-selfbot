@@ -30,7 +30,7 @@ class BaseClient extends EventEmitter {
      * @type {RESTManager}
      * @private
      */
-    this.rest = new RESTManager(this);
+    this.rest = new RESTManager(this as unknown as import('../client/Client').default);
   }
 
   /**

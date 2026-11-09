@@ -5,41 +5,50 @@ import _ConstantsModule from '../util/Constants';
 const { ciphers } = _ConstantsModule;
 import Util from '../util/Util';
 
-let agent: any = null;
+let agent: unknown = null;
 
 class APIRequest {
-  rest: any;
-  client: any;
-  method: any;
-  route: any;
-  options: any;
+  rest: import('../rest/RESTManager').default;
+  client: import('../client/Client').default;
+  method: string;
+  route: string;
+  options: Record<string, unknown>;
   retries: number;
-  fullUserAgent: any;
+  fullUserAgent: string;
   path: string;
 
-  constructor(rest: any, method: any, path: any, options: any) {
+  constructor(
+    rest: import('../rest/RESTManager').default,
+    method: string,
+    path: string,
+    options: Record<string, unknown>,
+  ) {
     this.rest = rest;
     this.client = rest.client;
     this.method = method;
-    this.route = options.route;
+    this.route = (options.route as string) ?? '';
     this.options = options;
     this.retries = 0;
 
-    this.fullUserAgent = this.client.options.http.headers['User-Agent'];
+    this.fullUserAgent = (this.client.options as { http: { headers: Record<string, string> } }).http.headers[
+      'User-Agent'
+    ];
 
-    this.client.options.ws.properties.browser_user_agent = this.fullUserAgent;
+    (this.client.options as { ws: { properties: Record<string, string> } }).ws.properties.browser_user_agent =
+      this.fullUserAgent;
 
     let queryString = '';
     if (options.query) {
-      const query = Object.entries(options.query)
+      const q = options.query as Record<string, unknown>;
+      const query = Object.entries(q)
         .filter(([, value]) => value !== null && typeof value !== 'undefined')
         .flatMap(([key, value]) => (Array.isArray(value) ? value.map(v => [key, v]) : [[key, value]]));
-      queryString = new URLSearchParams(query as any).toString();
+      queryString = new URLSearchParams(query as string[][]).toString();
     }
     this.path = `${path}${queryString && `?${queryString}`}`;
   }
 
-  make(captchaKey?: any, captchaRqToken?: any): Promise<any> {
+  make(captchaKey?: unknown, captchaRqToken?: unknown): Promise<unknown> {
     if (!agent) {
       const r_ = Util.checkUndiciProxyAgent(this.client.options.http.agent);
       if (!r_) {
@@ -60,7 +69,7 @@ class APIRequest {
         : `${this.client.options.http.api}/v${this.client.options.http.version}`;
     const url = API + this.path;
 
-    let headers: Record<string, any> = {
+    let headers: Record<string, unknown> = {
       accept: '*/*',
       'accept-language': 'en-US',
       priority: 'u=1, i',
@@ -83,7 +92,7 @@ class APIRequest {
     };
 
     if (this.options.auth !== false) headers.Authorization = this.rest.getAuth();
-    if (this.options.reason) headers['X-Audit-Log-Reason'] = encodeURIComponent(this.options.reason);
+    if (this.options.reason) headers['X-Audit-Log-Reason'] = encodeURIComponent(String(this.options.reason));
     if (this.options.headers) headers = Object.assign(headers, this.options.headers);
 
     // Delete all headers if undefined
@@ -111,23 +120,26 @@ class APIRequest {
     if (captchaKey && typeof captchaKey == 'string') headers['X-Captcha-Key'] = captchaKey;
     if (captchaRqToken && typeof captchaRqToken == 'string') headers['X-Captcha-Rqtoken'] = captchaRqToken;
 
-    let body: any;
-    if (this.options.files?.length) {
+    let body: FormData | string | undefined;
+    const files = this.options.files as unknown[] | undefined;
+    if (files?.length) {
       body = new FormData();
-      for (const [index, file] of this.options.files.entries()) {
+      for (const [index, file] of files.entries()) {
         // Why undici#FormData doesn't support file stream?
         // Hacky way to support file stream
-        if (file?.file) {
-          body.set(file.key ?? `files[${index}]`, {
+        const f = file as { file?: unknown; key?: string; name?: string };
+        if (f.file) {
+          body.set(f.key ?? `files[${index}]`, {
             [Symbol.toStringTag]: 'File',
-            name: file.name,
-            stream: () => file.file,
+            name: f.name,
+            stream: () => f.file,
           });
         }
       }
       if (typeof this.options.data !== 'undefined') {
         if (this.options.dontUsePayloadJSON) {
-          for (const [key, value] of Object.entries(this.options.data)) body.append(key, value);
+          for (const [key, value] of Object.entries((this.options.data ?? {}) as Record<string, unknown>))
+            body.append(key, value);
         } else {
           body.append('payload_json', JSON.stringify(this.options.data));
         }
@@ -144,15 +156,18 @@ class APIRequest {
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.client.options.restRequestTimeout).unref();
+    const timeout = setTimeout(
+      () => controller.abort(),
+      (this.client.options as { restRequestTimeout: number }).restRequestTimeout,
+    ).unref();
     return this.rest
       .fetch(url, {
         method: this.method.toUpperCase(), // Undici doesn't normalize "patch" into "PATCH" (which surprisingly follows the spec).
-        headers,
+        headers: headers as never,
         body,
         signal: controller.signal,
         redirect: 'follow',
-        dispatcher: agent,
+        dispatcher: agent as never,
         credentials: 'include',
       })
       .finally(() => clearTimeout(timeout));

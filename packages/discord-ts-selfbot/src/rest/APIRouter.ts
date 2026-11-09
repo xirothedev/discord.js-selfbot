@@ -9,10 +9,15 @@ const reflectors: (string | symbol)[] = [
   Symbol.for('nodejs.util.inspect.custom'),
 ];
 
-function buildRoute(manager: any): any {
+export type ApiRouter = { [key: string]: ApiRouter | ((options?: unknown) => Promise<unknown>) };
+
+function buildRoute(manager: {
+  request: (name: string, route: string, options?: Record<string, unknown>) => unknown;
+  versioned: boolean;
+}): ApiRouter {
   const route: string[] = [''];
   const handler = {
-    get(_target: any, name: string | symbol) {
+    get(_target: unknown, name: string | symbol) {
       if (reflectors.includes(name)) return () => route.join('/');
       if (methods.includes(name as string)) {
         const routeBucket: string[] = [];
@@ -24,28 +29,28 @@ function buildRoute(manager: any): any {
           // All other parts of the route should be considered as part of the bucket identifier
           else routeBucket.push(route[i]);
         }
-        return (options: any) =>
+        return (options?: unknown) =>
           manager.request(
-            name,
+            name as string,
             route.join('/'),
             Object.assign(
               {
                 versioned: manager.versioned,
                 route: routeBucket.join('/'),
               },
-              options,
+              (options ?? {}) as Record<string, unknown>,
             ),
           );
       }
       route.push(name as string);
       return new Proxy(noop, handler);
     },
-    apply(_target: any, _thisArg: any, args: any[]) {
-      route.push(...args.filter(x => x != null)); // eslint-disable-line eqeqeq
+    apply(_target: unknown, _thisArg: unknown, args: unknown[]) {
+      route.push(...(args.filter(x => x != null) as string[])); // eslint-disable-line eqeqeq
       return new Proxy(noop, handler);
     },
   };
-  return new Proxy(noop, handler);
+  return new Proxy(noop, handler) as unknown as ApiRouter;
 }
 
 export default buildRoute;

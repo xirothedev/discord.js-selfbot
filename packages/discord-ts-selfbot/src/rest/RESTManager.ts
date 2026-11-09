@@ -4,26 +4,27 @@ import makeFetchCookie from 'fetch-cookie';
 import { CookieJar } from 'tough-cookie';
 import { fetch as fetchOriginal } from 'undici';
 import APIRequest from './APIRequest';
-import routeBuilder from './APIRouter';
+import routeBuilder, { ApiRouter } from './APIRouter';
 import RequestHandler from './RequestHandler';
 import _errorsModule from '../errors';
 const { Error } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
+import type { Client } from '../client/Client';
 const { Endpoints } = _ConstantsModule;
 
 class RESTManager {
-  client: any;
-  handlers: any;
+  client: Client;
+  handlers: Collection<string, RequestHandler>;
   versioned: boolean;
-  globalLimit: any;
-  globalRemaining: any;
-  globalReset: any;
-  globalDelay: any;
-  cookieJar: any;
-  fetch: any;
-  sweepInterval?: any;
+  globalLimit: number;
+  globalRemaining: number;
+  globalReset: number | null;
+  globalDelay: number | null;
+  cookieJar: CookieJar;
+  fetch: typeof fetchOriginal;
+  sweepInterval?: ReturnType<typeof setInterval>;
 
-  constructor(client: any) {
+  constructor(client: Client) {
     this.client = client;
     this.handlers = new Collection();
     this.versioned = true;
@@ -35,26 +36,27 @@ class RESTManager {
     this.fetch = makeFetchCookie(fetchOriginal, this.cookieJar);
     if (client.options.restSweepInterval > 0) {
       this.sweepInterval = setInterval(() => {
-        this.handlers.sweep((handler: any) => handler._inactive);
+        this.handlers.sweep((handler: RequestHandler) => handler._inactive);
       }, client.options.restSweepInterval * 1_000).unref();
     }
   }
 
-  get api(): any {
+  get api(): ApiRouter {
     return routeBuilder(this);
   }
 
-  getAuth(): any {
-    const token = this.client.token ?? this.client.accessToken;
+  getAuth(): string {
+    const c = this.client as { token?: string | null; accessToken?: string };
+    const token = c.token ?? c.accessToken;
     if (token) return token?.replace(/Bot /g, '');
     throw new Error('TOKEN_MISSING');
   }
 
-  get cdn(): any {
+  get cdn(): string {
     return Endpoints.CDN(this.client.options.http.cdn);
   }
 
-  request(method: any, url: any, options: any = {}): any {
+  request(method: string, url: string, options: Record<string, unknown> = {}): unknown {
     const apiRequest = new APIRequest(this, method, url, options);
     let handler = this.handlers.get(apiRequest.route);
 
@@ -66,11 +68,11 @@ class RESTManager {
     return handler.push(apiRequest);
   }
 
-  get endpoint(): any {
+  get endpoint(): string {
     return this.client.options.http.api;
   }
 
-  set endpoint(endpoint: any) {
+  set endpoint(endpoint: string) {
     this.client.options.http.api = endpoint;
   }
 }
