@@ -2,6 +2,7 @@ import { setTimeout } from 'node:timers';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { AsyncQueue } from '@sapphire/async-queue';
 import DiscordAPIError from './DiscordAPIError';
+import APIRequest from './APIRequest';
 import HTTPError from './HTTPError';
 import RateLimitError from './RateLimitError';
 import Constants from '../util/Constants';
@@ -20,16 +21,22 @@ const captchaMessage = [
   'sitekey-secret-mismatch',
 ];
 
-function parseResponse(res: any): any {
-  if (res.headers.get('content-type')?.startsWith('application/json')) return res.json();
-  return res.arrayBuffer();
+function parseResponse(res: unknown): Promise<Record<string, unknown>> {
+  const r = res as {
+    headers: { get: (k: string) => string | null };
+    json: () => Promise<unknown>;
+    arrayBuffer: () => Promise<unknown>;
+  };
+  if (r.headers.get('content-type')?.startsWith('application/json'))
+    return r.json() as Promise<Record<string, unknown>>;
+  return r.arrayBuffer() as Promise<Record<string, unknown>>;
 }
 
-function getAPIOffset(serverDate: any): number {
-  return new Date(serverDate).getTime() - Date.now();
+function getAPIOffset(serverDate: unknown): number {
+  return new Date(serverDate as string | number | Date).getTime() - Date.now();
 }
 
-function calculateReset(reset: any, resetAfter: any, serverDate: any): number {
+function calculateReset(reset: unknown, resetAfter: unknown, serverDate: unknown): number {
   // Use direct reset time when available, server date becomes irrelevant in this case
   if (resetAfter) {
     return Date.now() + Number(resetAfter) * 1_000;
@@ -47,13 +54,14 @@ let invalidCount = 0;
 let invalidCountResetTime: number | null = null;
 
 class RequestHandler {
-  manager: any;
-  queue: any;
+  manager: import('./RESTManager').default;
+  queue!: import('@sapphire/async-queue').AsyncQueue;
+  globalDelay: Promise<void> | null = null;
   reset: number;
   remaining: number;
   limit: number;
 
-  constructor(manager: any) {
+  constructor(manager: import('./RESTManager').default) {
     this.manager = manager;
     this.queue = new AsyncQueue();
     this.reset = -1;
@@ -61,7 +69,7 @@ class RequestHandler {
     this.limit = -1;
   }
 
-  async push(request: any): Promise<any> {
+  async push(request: APIRequest): Promise<unknown> {
     await this.queue.wait();
     try {
       return await this.execute(request);
@@ -71,7 +79,7 @@ class RequestHandler {
   }
 
   get globalLimited(): boolean {
-    return this.manager.globalRemaining <= 0 && Date.now() < this.manager.globalReset;
+    return this.manager.globalRemaining <= 0 && Date.now() < (this.manager.globalReset ?? 0);
   }
 
   get localLimited(): boolean {
@@ -86,7 +94,7 @@ class RequestHandler {
     return this.queue.remaining === 0 && !this.limited;
   }
 
-  globalDelayFor(ms: any): Promise<void> {
+  globalDelayFor(ms: number): Promise<void> {
     return new Promise<void>(resolve => {
       setTimeout(() => {
         this.manager.globalDelay = null;
@@ -98,7 +106,7 @@ class RequestHandler {
   /*
    * Determines whether the request should be queued or whether a RateLimitError should be thrown
    */
-  async onRateLimit(request: any, limit: any, timeout: any, isGlobal: any): Promise<void> {
+  async onRateLimit(request: APIRequest, limit: number, timeout: number, isGlobal: boolean): Promise<void> {
     const { options } = this.manager.client;
     if (!options.rejectOnRateLimit) return;
 
@@ -113,20 +121,22 @@ class RequestHandler {
     const shouldThrow =
       typeof options.rejectOnRateLimit === 'function'
         ? await options.rejectOnRateLimit(rateLimitData)
-        : options.rejectOnRateLimit.some((route: any) => rateLimitData.route.startsWith(route.toLowerCase()));
+        : (options.rejectOnRateLimit as string[]).some((route: string) =>
+            rateLimitData.route.startsWith(route.toLowerCase()),
+          );
     if (shouldThrow) {
       throw new RateLimitError(rateLimitData);
     }
   }
 
-  async execute(request: any, captchaKey?: any, captchaToken?: any): Promise<any> {
+  async execute(request: APIRequest, captchaKey?: unknown, captchaToken?: unknown): Promise<unknown> {
     /*
      * After calculations have been done, pre-emptively stop further requests
      * Potentially loop until this task can run if e.g. the global rate limit is hit twice
      */
     while (this.limited) {
       const isGlobal = this.globalLimited;
-      let limit: any, timeout: any, delayPromise: any;
+      let limit: number, timeout: number, delayPromise: Promise<void> | null;
 
       if (isGlobal) {
         // Set the variables based on the global rate limit
@@ -208,13 +218,23 @@ class RequestHandler {
     }
 
     // Perform the request
-    let res: any;
+    let res: {
+      ok: boolean;
+      status: number;
+      statusText: string;
+      headers: { get: (k: string) => string | null };
+      clone: () => unknown;
+      json: () => Promise<unknown>;
+      text: () => Promise<string>;
+      arrayBuffer: () => Promise<unknown>;
+    };
     try {
-      res = await request.make(captchaKey, captchaToken);
-    } catch (error: any) {
+      res = (await request.make(captchaKey, captchaToken)) as typeof res;
+    } catch (error: unknown) {
       // Retry the specified number of times for request abortions
+      const e = error as { message?: string; constructor?: { name?: string }; status?: number };
       if (request.retries === this.manager.client.options.retryLimit) {
-        throw new HTTPError(error.message, error.constructor.name, error.status, request);
+        throw new HTTPError(e.message ?? 'Unknown error', e.constructor?.name ?? 'Error', e.status, request);
       }
 
       request.retries++;
@@ -244,7 +264,7 @@ class RequestHandler {
       );
     }
 
-    let sublimitTimeout: any;
+    let sublimitTimeout: number | null = null;
     if (res.headers) {
       const serverDate = res.headers.get('date');
       const limit = res.headers.get('x-ratelimit-limit');
@@ -258,12 +278,12 @@ class RequestHandler {
 
       // https://github.com/discord/discord-api-docs/issues/182
       if (!resetAfter && request.route.includes('reactions')) {
-        this.reset = new Date(serverDate).getTime() - getAPIOffset(serverDate) + 250;
+        this.reset = new Date(serverDate as string).getTime() - getAPIOffset(serverDate) + 250;
       }
 
       // Handle retryAfter, which means we have actually hit a rate limit
-      let retryAfter = res.headers.get('retry-after');
-      retryAfter = retryAfter ? Number(retryAfter) * 1_000 : -1;
+      const retryAfterHeader = res.headers.get('retry-after');
+      let retryAfter: number = retryAfterHeader ? Number(retryAfterHeader) * 1_000 : -1;
       if (retryAfter > 0) {
         // If the global rate limit header is set, that means we hit the global rate limit
         if (res.headers.get('x-ratelimit-global')) {
@@ -323,7 +343,7 @@ class RequestHandler {
       // Handle ratelimited requests
       if (res.status === 429) {
         const isGlobal = this.globalLimited;
-        let limit: any, timeout: any;
+        let limit: number, timeout: number;
         if (isGlobal) {
           // Set the variables based on the global rate limit
           limit = this.manager.globalLimit;
@@ -356,24 +376,25 @@ class RequestHandler {
       }
 
       // Handle possible malformed requests
-      let data: any;
+      let data: Record<string, unknown>;
       try {
         data = await parseResponse(res);
         // Captcha
+        const d = data as { captcha_service?: unknown; captcha_key?: string[]; captcha_sitekey?: string };
         if (
-          data?.captcha_service &&
+          d.captcha_service &&
           typeof this.manager.client.options.captchaSolver == 'function' &&
           request.retries < this.manager.client.options.captchaRetryLimit &&
-          captchaMessage.some(s => data.captcha_key[0].includes(s))
+          captchaMessage.some(s => d.captcha_key?.[0]?.includes(s))
         ) {
           // Retry the request after a captcha is solved
           this.manager.client.emit(
             DEBUG,
-            `[Request Handler] Hit a captcha while executing a request (${data.captcha_key.join(', ')})
+            `[Request Handler] Hit a captcha while executing a request (${d.captcha_key?.join(', ')})
     Method  : ${request.method}
     Path    : ${request.path}
     Route   : ${request.route}
-    Sitekey : ${data.captcha_sitekey}
+    Sitekey : ${d.captcha_sitekey}
     rqToken : ${data.captcha_rqtoken}`,
           );
           const captcha = await this.manager.client.options.captchaSolver(data, request.fullUserAgent);
@@ -407,7 +428,9 @@ class RequestHandler {
            * };
            */
           if (
-            data.mfa.methods.find((o: any) => o.type === 'totp') &&
+            (data as { mfa?: { methods?: Array<{ type: string }> } }).mfa?.methods?.find(
+              (o: { type: string }) => o.type === 'totp',
+            ) &&
             typeof this.manager.client.options.TOTPKey === 'string'
           ) {
             // Get mfa code
@@ -421,21 +444,22 @@ class RequestHandler {
     mfaCode : ${otp}`,
             );
             // Get ticket
-            const mfaData = data.mfa;
-            const mfaPost = await this.manager.client.api.mfa.finish.post({
+            const mfaData = (data as { mfa?: { ticket?: string } }).mfa;
+            const mfaPost = (await this.manager.client.api.mfa.finish.post({
               data: {
-                ticket: mfaData.ticket,
+                ticket: mfaData?.ticket,
                 data: otp,
                 mfa_type: 'totp',
               },
-            });
+            })) as { token?: string };
             request.options.mfaToken = mfaPost.token;
             request.retries++;
             return this.execute(request);
           }
         }
-      } catch (err: any) {
-        throw new HTTPError(err.message, err.constructor.name, err.status, request);
+      } catch (err: unknown) {
+        const e = err as { message?: string; constructor?: { name?: string }; status?: number };
+        throw new HTTPError(e.message ?? 'Unknown error', e.constructor?.name ?? 'Error', e.status, request);
       }
 
       throw new DiscordAPIError(data, res.status, request);
@@ -445,7 +469,7 @@ class RequestHandler {
     if (res.status >= 500 && res.status < 600) {
       // Retry the specified number of times for possible serverside issues
       if (request.retries === this.manager.client.options.retryLimit) {
-        throw new HTTPError(res.statusText, res.constructor.name, res.status, request);
+        throw new HTTPError(res.statusText, 'HTTPError', res.status, request);
       }
 
       request.retries++;

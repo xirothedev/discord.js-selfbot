@@ -19,7 +19,7 @@ class RESTManager {
   globalLimit: number;
   globalRemaining: number;
   globalReset: number | null;
-  globalDelay: number | null;
+  globalDelay: Promise<void> | null;
   cookieJar: CookieJar;
   fetch: typeof fetchOriginal;
   sweepInterval?: ReturnType<typeof setInterval>;
