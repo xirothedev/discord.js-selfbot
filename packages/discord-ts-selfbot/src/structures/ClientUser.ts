@@ -14,8 +14,8 @@ import Util from '../util/Util';
 class ClientUser extends User {
   #packageName: string | null = null;
 
-  constructor(...args: any[]) {
-    super(args[0], args[1]);
+  constructor(...args: unknown[]) {
+    super(args[0] as import('../client/Client').default, args[1] as Record<string, unknown>);
     setInterval(
       () => {
         this.client.emit('debug', `[UPDATE] Samsung Presence: ${this.#packageName}`);
@@ -26,7 +26,7 @@ class ClientUser extends User {
     ).unref();
   }
 
-  _patch(data: any) {
+  _patch(data: Record<string, unknown>) {
     super._patch(data);
 
     if ('verified' in data) {
@@ -54,7 +54,7 @@ class ClientUser extends User {
        * Purchased state of the client user.
        * @type {Readonly<PurchasedFlags>}
        */
-      this.purchasedFlags = new PurchasedFlags(data.purchased_flags || 0).freeze();
+      this.purchasedFlags = new PurchasedFlags((data.purchased_flags as number) || 0).freeze();
     } else {
       this.purchasedFlags = new PurchasedFlags().freeze();
     }
@@ -64,7 +64,7 @@ class ClientUser extends User {
        * Premium usage state of the client user.
        * @type {Readonly<PremiumUsageFlags>}
        */
-      this.premiumUsageFlags = new PremiumUsageFlags(data.premium_usage_flags || 0);
+      this.premiumUsageFlags = new PremiumUsageFlags((data.premium_usage_flags as number) || 0);
     } else {
       this.premiumUsageFlags = new PremiumUsageFlags().freeze();
     }
@@ -148,7 +148,7 @@ class ClientUser extends User {
    * @param {ClientUserEditData} options The new data
    * @returns {Promise<ClientUser>}
    */
-  async edit(options: any = {}) {
+  async edit(options: Record<string, unknown> = {}) {
     const data = await this.client.api.users('@me').patch({ data: options });
     const { updated } = this.client.actions.UserUpdate.handle(data);
     return updated ?? this;
@@ -167,7 +167,7 @@ class ClientUser extends User {
    *   .then(user => console.log(`My new username is ${user.username}`))
    *   .catch(console.error);
    */
-  setUsername(username: any, password: any) {
+  setUsername(username: unknown, password: unknown) {
     return this.edit({ username, password });
   }
 
@@ -181,7 +181,7 @@ class ClientUser extends User {
    *   .then(user => console.log(`New avatar set!`))
    *   .catch(console.error);
    */
-  async setAvatar(avatar: any) {
+  async setAvatar(avatar: unknown) {
     avatar = avatar && (await DataResolver.resolveImage(avatar));
     return this.edit({ avatar });
   }
@@ -213,7 +213,7 @@ class ClientUser extends User {
    * client.user.setPresence({ activities: [{ name: 'with discord.js' }], status: 'idle' });
    * @see {@link https://github.com/aiko-chan-ai/discord.js-selfbot-v13/blob/main/Document/RichPresence.md}
    */
-  setPresence(data: any) {
+  setPresence(data: Record<string, unknown>) {
     return this.client.presence.set(data);
   }
 
@@ -235,7 +235,7 @@ class ClientUser extends User {
    * // Set the client user's status
    * client.user.setStatus('idle');
    */
-  setStatus(status: any, shardId: any) {
+  setStatus(status: unknown, shardId: unknown) {
     return this.setPresence({ status, shardId });
   }
 
@@ -258,7 +258,7 @@ class ClientUser extends User {
    * client.user.setActivity('discord.js', { type: 'WATCHING' });
    * @see {@link https://github.com/aiko-chan-ai/discord.js-selfbot-v13/blob/main/Document/RichPresence.md}
    */
-  setActivity(name: any, options: any = {}) {
+  setActivity(name: unknown, options: Record<string, unknown> = {}) {
     if (!name) return this.setPresence({ activities: [], shardId: options.shardId });
 
     const activity = Object.assign({}, options, typeof name === 'object' ? name : { name });
@@ -271,7 +271,7 @@ class ClientUser extends User {
    * @param {number|number[]} [shardId] Shard Id(s) to have the AFK flag set on
    * @returns {ClientPresence}
    */
-  setAFK(afk: any = true, shardId: any) {
+  setAFK(afk: unknown = true, shardId: unknown) {
     return this.setPresence({ afk, shardId });
   }
 
@@ -285,7 +285,7 @@ class ClientUser extends User {
    *   .then(user => console.log(`New banner set!`))
    *   .catch(console.error);
    */
-  async setBanner(banner: any) {
+  async setBanner(banner: unknown) {
     banner = banner && (await DataResolver.resolveImage(banner));
     return this.edit({ banner });
   }
@@ -304,7 +304,7 @@ class ClientUser extends User {
    * // Leave
    * client.user.setHypeSquad(0);
    */
-  setHypeSquad(type: any) {
+  setHypeSquad(type: unknown) {
     switch (type) {
       case 'LEAVE': {
         type = 0;
@@ -337,7 +337,7 @@ class ClientUser extends User {
    * @param {ColorResolvable} color Color to set
    * @returns {Promise<ClientUser>}
    */
-  setAccentColor(color: any = null) {
+  setAccentColor(color: unknown = null) {
     return this.edit({ accent_color: color ? Util.resolveColor(color) : null });
   }
 
@@ -346,7 +346,7 @@ class ClientUser extends User {
    * @param {string} [bio=null] Bio to set
    * @returns {Promise<ClientUser>}
    */
-  setAboutMe(bio: any = null) {
+  setAboutMe(bio: unknown = null) {
     return this.edit({ bio });
   }
 
@@ -402,10 +402,11 @@ class ClientUser extends User {
    * // Stop
    * client.user.setSamsungActivity('com.miHoYo.GenshinImpact', 'STOP');
    */
-  async setSamsungActivity(packageName: any, type: any = 'START') {
-    type = type.toUpperCase();
+  async setSamsungActivity(packageName: unknown, type: unknown = 'START') {
+    const t = String(type).toUpperCase();
+    type = t;
     if (!packageName || typeof packageName !== 'string') throw new Error('Package name is required.');
-    if (!['START', 'UPDATE', 'STOP'].includes(type)) throw new Error('Invalid type (Must be START, UPDATE, or STOP)');
+    if (!['START', 'UPDATE', 'STOP'].includes(t)) throw new Error('Invalid type (Must be START, UPDATE, or STOP)');
     await this.client.api.presences.post({
       data: {
         package_name: packageName,
@@ -422,7 +423,7 @@ class ClientUser extends User {
    * @param {ChannelResolvable} channel DMChannel | GroupDMChannel
    * @returns {Promise<void>}
    */
-  stopRinging(channel: any) {
+  stopRinging(channel: unknown) {
     return this.client.api.channels(this.client.channels.resolveId(channel)).call['stop-ringing'].post({
       data: {},
     });
@@ -433,7 +434,7 @@ class ClientUser extends User {
    * @returns {Promise<number>}
    */
   fetchBurstCredit() {
-    return this.client.api.users['@me']['burst-credits'].get().then((d: any) => d.amount);
+    return this.client.api.users['@me']['burst-credits'].get().then((d: unknown) => (d as { amount: unknown }).amount);
   }
 
   /**
@@ -441,7 +442,7 @@ class ClientUser extends User {
    * @param {string} globalName The new display name
    * @returns {Promise<ClientUser>}
    */
-  setGlobalName(globalName: any = '') {
+  setGlobalName(globalName: unknown = '') {
     return this.edit({ global_name: globalName });
   }
 
@@ -450,7 +451,7 @@ class ClientUser extends User {
    * @param {?string} pronouns Your pronouns
    * @returns {Promise<ClientUser>}
    */
-  setPronouns(pronouns: any = '') {
+  setPronouns(pronouns: unknown = '') {
     return this.edit({ pronouns });
   }
 }
