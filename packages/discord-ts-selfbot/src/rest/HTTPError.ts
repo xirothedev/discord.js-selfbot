@@ -5,11 +5,16 @@
 class HTTPError extends Error {
   override name: string;
   code: number;
-  method: any;
-  path: any;
-  requestData: any;
+  method: string;
+  path: string;
+  requestData: unknown;
 
-  constructor(message: any, name: any, code: any, request: any) {
+  constructor(
+    message: string,
+    name: string,
+    code: unknown,
+    request: { method: string; path: string; options?: { data?: unknown; files?: unknown[]; headers?: unknown } },
+  ) {
     super(message);
 
     /**
@@ -22,7 +27,7 @@ class HTTPError extends Error {
      * HTTP error code returned from the request
      * @type {number}
      */
-    this.code = code ?? 500;
+    this.code = (code as number) ?? 500;
 
     /**
      * The HTTP method used for the request
@@ -56,9 +61,9 @@ class HTTPError extends Error {
      * @type {HTTPErrorData}
      */
     this.requestData = {
-      json: request.options.data,
-      files: request.options.files ?? [],
-      headers: request.options.headers,
+      json: request.options?.data,
+      files: request.options?.files ?? [],
+      headers: request.options?.headers,
     };
   }
 }

@@ -5,17 +5,29 @@
 class DiscordAPIError extends Error {
   method: string;
   path: string;
-  code: any;
-  httpStatus: any;
-  requestData: any;
-  retries: any;
-  captcha: any;
+  code: number;
+  httpStatus: number;
+  requestData: unknown;
+  retries: number;
+  captcha: unknown;
 
-  constructor(error: any, status: any, request: any) {
+  constructor(
+    error: Record<string, unknown>,
+    status: number,
+    request: {
+      method: string;
+      path: string;
+      options?: { data?: unknown; files?: unknown[]; headers?: unknown };
+      retries?: number;
+    },
+  ) {
     super();
-    const flattened = (this.constructor as typeof DiscordAPIError).flattenErrors(error.errors ?? error).join('\n');
+    const errMsg = error.message as string | undefined;
+    const flattened = (this.constructor as typeof DiscordAPIError)
+      .flattenErrors((error.errors ?? error) as unknown)
+      .join('\n');
     this.name = 'DiscordAPIError';
-    this.message = error.message && flattened ? `${error.message}\n${flattened}` : (error.message ?? flattened);
+    this.message = errMsg && flattened ? `${errMsg}\n${flattened}` : (errMsg ?? flattened);
 
     /**
      * The HTTP method used for the request
@@ -33,7 +45,7 @@ class DiscordAPIError extends Error {
      * HTTP error code returned by Discord
      * @type {number}
      */
-    this.code = error.code;
+    this.code = error.code as number;
 
     /**
      * The HTTP status code
@@ -46,16 +58,16 @@ class DiscordAPIError extends Error {
      * @type {HTTPErrorData}
      */
     this.requestData = {
-      json: request.options.data,
-      files: request.options.files ?? [],
-      headers: request.options.headers,
+      json: request.options?.data,
+      files: request.options?.files ?? [],
+      headers: request.options?.headers,
     };
 
     /**
      * The number of times this request has been retried
      * @type {number}
      */
-    this.retries = request.retries;
+    this.retries = request.retries ?? 0;
 
     /**
      * @typedef {Object} Captcha
@@ -95,17 +107,18 @@ class DiscordAPIError extends Error {
    * @returns {string[]}
    * @private
    */
-  static flattenErrors(obj: any, key = ''): string[] {
+  static flattenErrors(obj: unknown, key = ''): string[] {
     let messages: string[] = [];
 
-    for (const [k, v] of Object.entries(obj as Record<string, any>)) {
+    for (const [k, v] of Object.entries((obj ?? {}) as Record<string, unknown>)) {
       if (k === 'message') continue;
-      const newKey = key ? (isNaN(k as any) ? `${key}.${k}` : `${key}[${k}]`) : k;
+      const newKey = key ? (isNaN(Number(k)) ? `${key}.${k}` : `${key}[${k}]`) : k;
 
-      if (v._errors) {
-        messages.push(`${newKey}: ${v._errors.map((e: any) => e.message).join(' ')}`);
-      } else if (v.code ?? v.message) {
-        messages.push(`${v.code ? `${v.code}: ` : ''}${v.message}`.trim());
+      const vo = v as Record<string, unknown> | null;
+      if (vo && Array.isArray(vo._errors)) {
+        messages.push(`${newKey}: ${(vo._errors as Array<{ message: string }>).map(e => e.message).join(' ')}`);
+      } else if (vo && (vo.code ?? vo.message)) {
+        messages.push(`${vo.code ? `${vo.code}: ` : ''}${vo.message}`.trim());
       } else if (typeof v === 'string') {
         messages.push(v);
       } else {

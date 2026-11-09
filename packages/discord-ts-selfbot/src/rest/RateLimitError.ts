@@ -3,14 +3,28 @@
  * @extends Error
  */
 class RateLimitError extends Error {
-  timeout: any;
-  method: any;
-  path: any;
-  route: any;
-  global: any;
-  limit: any;
+  timeout: number;
+  method: string;
+  path: string;
+  route: string;
+  global: boolean;
+  limit: number;
 
-  constructor({ timeout, limit, method, path, route, global }: any) {
+  constructor({
+    timeout,
+    limit,
+    method,
+    path,
+    route,
+    global,
+  }: {
+    timeout: number;
+    limit: number;
+    method: string;
+    path: string;
+    route: string;
+    global: boolean;
+  }) {
     super(`A ${global ? 'global ' : ''}rate limit was hit on route ${route}`);
 
     /**
