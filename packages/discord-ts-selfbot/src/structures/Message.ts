@@ -1,5 +1,16 @@
 import process from 'node:process';
 import { Collection } from '@discordjs/collection';
+import type {
+  APIAuthorizingIntegrationOwnersMap,
+  APIMessageInteractionMetadata,
+  APIMessageSnapshotFields,
+  APIInteractionDataResolved,
+  APIInteractionDataResolvedChannel,
+  APIInteractionDataResolvedGuildMember,
+  APIMessage,
+  APIRole,
+  Snowflake,
+} from 'discord-api-types/v10';
 import Base from './Base';
 import BaseMessageComponent from './BaseMessageComponent';
 import InteractionCollector from './InteractionCollector';
@@ -23,6 +34,40 @@ import MessageFlags from '../util/MessageFlags';
 import Permissions from '../util/Permissions';
 import SnowflakeUtil from '../util/SnowflakeUtil';
 import Util from '../util/Util';
+import type { Client } from '../client/Client';
+import type { RawMessageData, RawPartialMessageData } from '../../typings/rawDataTypes';
+import type {
+  AnyChannel,
+  AuthorizingIntegrationOwners,
+  AwaitReactionsOptions,
+  EmojiIdentifierResolvable,
+  MessageActionRowComponent,
+  MessageActivity,
+  MessageCall,
+  MessageComponentCollectorOptions,
+  MessageEditOptions,
+  MessageInteraction,
+  MessageComponentInteraction,
+  MessageInteractionMetadata,
+  MessageReference,
+  MessageReaction,
+  MessageSelectMenu,
+  MessageSnapshot,
+  MessageType,
+  ReactionCollectorOptions,
+  ReplyMessageOptions,
+  RoleSubscriptionData,
+  SharedClientTheme,
+  StartThreadOptions,
+  TextBasedChannelResolvable,
+  TopLevelComponent,
+  AwaitMessageComponentOptions,
+} from '../../typings';
+import type { Guild } from './Guild';
+import type { Modal } from './Modal';
+import type { GuildMember } from './GuildMember';
+import type { Role } from './Role';
+import type User from './User';
 
 /**
  * @type {WeakSet<Message>}
@@ -39,7 +84,10 @@ let deprecationEmittedForDeleted = false;
  * @returns {Object}
  * @private
  */
-function transformAuthorizingIntegrationOwners(client: any, data: any = {}) {
+function transformAuthorizingIntegrationOwners(
+  client: Client,
+  data: APIAuthorizingIntegrationOwnersMap = {},
+): AuthorizingIntegrationOwners {
   return {
     ...data,
     guildId: data[0] ?? null,
@@ -51,7 +99,9 @@ function transformAuthorizingIntegrationOwners(client: any, data: any = {}) {
       return (this.userId && client.users.cache.get(this.userId)) ?? null;
     },
     toJSON() {
-      return data;
+      const out: Record<string, Snowflake> = {};
+      for (const [key, value] of Object.entries(data)) if (value !== undefined) out[key] = value;
+      return out;
     },
   };
 }
@@ -63,17 +113,18 @@ function transformAuthorizingIntegrationOwners(client: any, data: any = {}) {
  * @returns {MessageInteractionMetadata}
  * @private
  */
-function transformInteractionMetadata(client: any, data: any): any {
+function transformInteractionMetadata(client: Client, data: APIMessageInteractionMetadata): MessageInteractionMetadata {
   return {
     id: data.id,
     type: InteractionTypes[data.type],
     user: client.users._add(data.user),
     authorizingIntegrationOwners: transformAuthorizingIntegrationOwners(client, data.authorizing_integration_owners),
     originalResponseMessageId: data.original_response_message_id ?? null,
-    interactedMessageId: data.interacted_message_id ?? null,
-    triggeringInteractionMetadata: data.triggering_interaction_metadata
-      ? transformInteractionMetadata(client, data.triggering_interaction_metadata)
-      : null,
+    interactedMessageId: 'interacted_message_id' in data ? (data.interacted_message_id ?? null) : null,
+    triggeringInteractionMetadata:
+      'triggering_interaction_metadata' in data && data.triggering_interaction_metadata
+        ? transformInteractionMetadata(client, data.triggering_interaction_metadata)
+        : null,
   };
 }
 
@@ -84,51 +135,64 @@ function transformInteractionMetadata(client: any, data: any): any {
  * @returns {CommandInteractionResolvedData}
  * @private
  */
+type ResolvedMessageData = APIInteractionDataResolved & { messages?: Record<Snowflake, APIMessage> };
+
+interface ResolvedData {
+  users?: Collection<Snowflake, User>;
+  members?: Collection<Snowflake, GuildMember | APIInteractionDataResolvedGuildMember>;
+  roles?: Collection<Snowflake, Role | APIRole>;
+  channels?: Collection<Snowflake, AnyChannel | APIInteractionDataResolvedChannel>;
+  messages?: Collection<Snowflake, Message | APIMessage>;
+  attachments?: Collection<Snowflake, MessageAttachment>;
+}
+
 function transformResolved(
-  { client, guild, channel }: any,
-  { members, users, channels, roles, messages, attachments }: any = {},
-): any {
-  const result: any = {};
+  { client, guild, channel }: { client: Client; guild: Guild | null; channel: AnyChannel | null },
+  { members, users, channels, roles, messages, attachments }: ResolvedMessageData = {},
+): ResolvedData {
+  const result: ResolvedData = {};
 
   if (members) {
-    result.members = new Collection();
+    result.members = new Collection<Snowflake, GuildMember | APIInteractionDataResolvedGuildMember>();
     for (const [id, member] of Object.entries(members)) {
-      const user = (users as any)[id];
-      result.members.set(id, guild?.members._add({ user, ...(member as any) }) ?? member);
+      const user = ('user' in member ? member.user : undefined) ?? users?.[id];
+      if (!user) continue;
+      result.members.set(id, guild?.members._add({ user, ...member }) ?? member);
     }
   }
 
   if (users) {
-    result.users = new Collection();
-    for (const user of Object.values(users) as any[]) {
+    result.users = new Collection<Snowflake, User>();
+    for (const user of Object.values(users)) {
       result.users.set(user.id, client.users._add(user));
     }
   }
 
   if (roles) {
-    result.roles = new Collection();
-    for (const role of Object.values(roles) as any[]) {
+    result.roles = new Collection<Snowflake, Role | APIRole>();
+    for (const role of Object.values(roles)) {
       result.roles.set(role.id, guild?.roles._add(role) ?? role);
     }
   }
 
   if (channels) {
-    result.channels = new Collection();
-    for (const apiChannel of Object.values(channels) as any[]) {
+    result.channels = new Collection<Snowflake, AnyChannel | APIInteractionDataResolvedChannel>();
+    for (const apiChannel of Object.values(channels)) {
       result.channels.set(apiChannel.id, client.channels._add(apiChannel, guild) ?? apiChannel);
     }
   }
 
   if (messages) {
-    result.messages = new Collection();
-    for (const message of Object.values(messages) as any[]) {
-      result.messages.set(message.id, channel?.messages?._add(message) ?? message);
+    result.messages = new Collection<Snowflake, Message | APIMessage>();
+    for (const message of Object.values(messages)) {
+      const added = channel && 'messages' in channel ? channel.messages.cache.get(message.id) : null;
+      result.messages.set(message.id, added instanceof Message ? added : new Message(client, message));
     }
   }
 
   if (attachments) {
-    result.attachments = new Collection();
-    for (const attachment of Object.values(attachments) as any[]) {
+    result.attachments = new Collection<Snowflake, MessageAttachment>();
+    for (const attachment of Object.values(attachments)) {
       result.attachments.set(attachment.id, new MessageAttachment(attachment.url, attachment.filename, attachment));
     }
   }
@@ -136,12 +200,67 @@ function transformResolved(
   return result;
 }
 
+function isSelectMenu(component: { type: string }): component is MessageSelectMenu {
+  return (
+    component.type === 'STRING_SELECT' ||
+    component.type === 'USER_SELECT' ||
+    component.type === 'ROLE_SELECT' ||
+    component.type === 'MENTIONABLE_SELECT' ||
+    component.type === 'CHANNEL_SELECT'
+  );
+}
+
+function resolveSelectValue(value: unknown): string | null {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object' && value !== null && 'id' in value && typeof value.id === 'string') return value.id;
+  return null;
+}
+
+type MessagePatchData =
+  | RawMessageData
+  | RawPartialMessageData
+  | (APIMessageSnapshotFields & { id: Snowflake; channel_id: Snowflake; guild_id?: Snowflake });
+
 /**
  * Represents a message on Discord.
  * @extends {Base}
  */
 class Message extends Base {
-  constructor(client: any, data: any) {
+  declare activity: MessageActivity | null;
+  declare applicationId: Snowflake | null;
+  declare attachments: Collection<Snowflake, MessageAttachment>;
+  declare author: User | null;
+  declare channelId: Snowflake;
+  declare components: TopLevelComponent[];
+  declare content: string | null;
+  declare createdTimestamp: number;
+  declare editedTimestamp: number | null;
+  declare embeds: Embed[];
+  declare groupActivityApplication: Application | null;
+  declare guildId: Snowflake | null;
+  declare id: Snowflake;
+  declare interaction: MessageInteraction | null;
+  declare interactionMetadata: MessageInteractionMetadata | null;
+  declare mentions: Mentions;
+  declare nonce: string | number | null;
+  declare pinned: boolean | null;
+  declare reactions: ReactionManager;
+  declare stickers: Collection<Snowflake, InstanceType<typeof Sticker>>;
+  declare position: number | null;
+  declare roleSubscriptionData: RoleSubscriptionData | null;
+  declare resolved: ResolvedData | null;
+  declare system: boolean | null;
+  declare tts: boolean | null;
+  declare type: MessageType | null;
+  declare webhookId: Snowflake | null;
+  declare poll: InstanceType<typeof Poll> | null;
+  declare call: MessageCall | null;
+  declare sharedClientTheme: SharedClientTheme | null;
+  declare flags: Readonly<MessageFlags>;
+  declare reference: MessageReference | null;
+  declare messageSnapshots: Collection<Snowflake, MessageSnapshot>;
+
+  constructor(client: Client, data: MessagePatchData) {
     super(client);
 
     /**
@@ -154,12 +273,14 @@ class Message extends Base {
      * The id of the guild the message was sent in, if any
      * @type {?Snowflake}
      */
-    this.guildId = data.guild_id ?? this.channel?.guild?.id ?? null;
+    const guildId = 'guild_id' in data ? data.guild_id : undefined;
+    const channelGuildId = this.channel && 'guild' in this.channel ? this.channel.guild?.id : undefined;
+    this.guildId = guildId ?? channelGuildId ?? null;
 
     this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: MessagePatchData) {
     /**
      * The message's id
      * @type {Snowflake}
@@ -172,12 +293,12 @@ class Message extends Base {
        * the approximate position of the message in a thread.
        * @type {?number}
        */
-      this.position = data.position;
+      this.position = data.position ?? null;
     } else {
       this.position ??= null;
     }
 
-    if ('role_subscription_data' in data) {
+    if ('role_subscription_data' in data && data.role_subscription_data) {
       /**
        * Role subscription data found on role subscription purchase messages.
        * @typedef {Object} RoleSubscriptionData
@@ -285,7 +406,7 @@ class Message extends Base {
        * lost if re-fetched</warn>
        * @type {?string}
        */
-      this.nonce = data.nonce;
+      this.nonce = data.nonce ?? null;
     } else {
       this.nonce ??= null;
     }
@@ -295,7 +416,7 @@ class Message extends Base {
        * A list of embeds in the message - e.g. YouTube Player
        * @type {MessageEmbed[]}
        */
-      this.embeds = data.embeds.map((e: any) => new Embed(e, true));
+      this.embeds = data.embeds.map(e => new Embed(e, true));
     } else {
       this.embeds = this.embeds?.slice() ?? [];
     }
@@ -304,12 +425,12 @@ class Message extends Base {
      * @typedef {MessageActionRow|ContainerComponent|FileComponent|MediaGalleryComponent|SectionComponent|SeparatorComponent|TextDisplayComponent} TopLevelComponent
      */
 
-    if ('components' in data) {
+    if ('components' in data && data.components) {
       /**
        * An array of components in the message
        * @type {TopLevelComponent[]}
        */
-      this.components = data.components.map((c: any) => BaseMessageComponent.create(c, this.client));
+      this.components = data.components.map(c => BaseMessageComponent.create(c, this.client));
     } else {
       this.components = this.components?.slice() ?? [];
     }
@@ -319,7 +440,7 @@ class Message extends Base {
        * A collection of attachments in the message - e.g. Pictures - mapped by their ids
        * @type {Collection<Snowflake, MessageAttachment>}
        */
-      this.attachments = new Collection();
+      this.attachments = new Collection<Snowflake, MessageAttachment>();
       if (data.attachments) {
         for (const attachment of data.attachments) {
           this.attachments.set(attachment.id, new MessageAttachment(attachment.url, attachment.filename, attachment));
@@ -334,11 +455,11 @@ class Message extends Base {
        * A collection of stickers in the message
        * @type {Collection<Snowflake, Sticker>}
        */
-      this.stickers = new Collection(
-        (data.sticker_items ?? data.stickers)?.map((s: any) => [s.id, new Sticker(this.client, s)]),
+      this.stickers = new Collection<Snowflake, InstanceType<typeof Sticker>>(
+        (data.sticker_items ?? data.stickers)?.map(s => [s.id, new Sticker(this.client, s)]),
       );
     } else {
-      this.stickers = new Collection(this.stickers);
+      this.stickers = new Collection<Snowflake, InstanceType<typeof Sticker>>(this.stickers);
     }
 
     // Discord sends null if the message has not been edited
@@ -358,7 +479,7 @@ class Message extends Base {
        * @type {ReactionManager}
        */
       this.reactions = new ReactionManager(this);
-      if (data.reactions?.length > 0) {
+      if (data.reactions && data.reactions.length > 0) {
         for (const reaction of data.reactions) {
           this.reactions._add(reaction);
         }
@@ -366,6 +487,10 @@ class Message extends Base {
     } else {
       this.reactions ??= new ReactionManager(this);
     }
+
+    const mentionEveryone = 'mention_everyone' in data ? data.mention_everyone : undefined;
+    const mentionChannels = 'mention_channels' in data ? data.mention_channels : undefined;
+    const referencedAuthor = 'referenced_message' in data ? data.referenced_message?.author : undefined;
 
     if (!this.mentions) {
       /**
@@ -376,22 +501,22 @@ class Message extends Base {
         this,
         data.mentions,
         data.mention_roles,
-        data.mention_everyone,
-        data.mention_channels,
-        data.referenced_message?.author,
+        mentionEveryone,
+        mentionChannels,
+        referencedAuthor,
       );
     } else {
       this.mentions = new Mentions(
         this,
         data.mentions ?? this.mentions.users,
         data.mention_roles ?? this.mentions.roles,
-        data.mention_everyone ?? this.mentions.everyone,
-        data.mention_channels ?? this.mentions.crosspostedChannels,
-        data.referenced_message?.author ?? this.mentions.repliedUser,
+        mentionEveryone ?? this.mentions.everyone,
+        mentionChannels ?? this.mentions.crosspostedChannels,
+        referencedAuthor ?? this.mentions.repliedUser,
       );
     }
 
-    if ('webhook_id' in data) {
+    if ('webhook_id' in data && data.webhook_id !== undefined) {
       /**
        * The id of the webhook that sent the message, if applicable
        * @type {?Snowflake}
@@ -401,7 +526,7 @@ class Message extends Base {
       this.webhookId ??= null;
     }
 
-    if (data.poll) {
+    if ('poll' in data && data.poll) {
       /**
        * The poll that was sent with the message
        * @type {?Poll}
@@ -426,31 +551,31 @@ class Message extends Base {
        * The id of the application of the interaction that sent this message, if any
        * @type {?Snowflake}
        */
-      this.applicationId = data.application_id;
+      this.applicationId = data.application_id ?? null;
     } else {
       this.applicationId ??= null;
     }
 
-    if ('activity' in data) {
+    if ('activity' in data && data.activity) {
       /**
        * Group activity
        * @type {?MessageActivity}
        */
       this.activity = {
-        partyId: data.activity.party_id,
+        partyId: data.activity.party_id ?? '',
         type: data.activity.type,
       };
     } else {
       this.activity ??= null;
     }
 
-    if ('thread' in data) {
+    if ('thread' in data && data.thread) {
       this.client.channels._add(data.thread, this.guild);
     }
 
-    if (this.member && data.member) {
+    if (this.member && 'member' in data && data.member) {
       this.member._patch(data.member);
-    } else if (data.member && this.guild && this.author) {
+    } else if ('member' in data && data.member && this.guild && this.author) {
       this.guild.members._add(Object.assign(data.member, { user: this.author }));
     }
 
@@ -480,7 +605,7 @@ class Message extends Base {
      * @property {MessageReferenceType} type The type of the message reference
      */
 
-    if ('message_reference' in data) {
+    if ('message_reference' in data && data.message_reference) {
       /**
        * Message reference data
        * @type {?MessageReference}
@@ -495,11 +620,11 @@ class Message extends Base {
       this.reference ??= null;
     }
 
-    if (data.referenced_message) {
+    if ('referenced_message' in data && data.referenced_message) {
       this.channel?.messages._add({ guild_id: data.message_reference?.guild_id, ...data.referenced_message });
     }
 
-    if (data.interaction_metadata) {
+    if ('interaction_metadata' in data && data.interaction_metadata) {
       /**
        * Partial data of the interaction that a message is a result of
        * @typedef {Object} MessageInteractionMetadata
@@ -537,7 +662,7 @@ class Message extends Base {
      * @deprecated Use {@link Message#interactionMetadata} instead.
      */
 
-    if (data.interaction) {
+    if ('interaction' in data && data.interaction) {
       /**
        * Partial data of the interaction that this message is a reply to
        * @type {?MessageInteraction}
@@ -553,27 +678,33 @@ class Message extends Base {
       this.interaction ??= null;
     }
 
-    if (data.message_snapshots) {
+    if ('message_snapshots' in data && data.message_snapshots && this.reference) {
+      const reference = this.reference;
       /**
        * The message snapshots associated with the message reference
        * @type {Collection<Snowflake, Message>}
        */
-      this.messageSnapshots = data.message_snapshots.reduce((coll: any, snapshot: any) => {
-        const channel = this.client.channels.cache.get(this.reference.channelId);
-        const snapshotData = {
-          ...snapshot.message,
-          id: this.reference.messageId,
-          channel_id: this.reference.channelId,
-          guild_id: this.reference.guildId,
-        };
+      this.messageSnapshots = data.message_snapshots.reduce(
+        (coll: Collection<Snowflake, MessageSnapshot>, snapshot) => {
+          if (!reference.messageId) return coll;
+          const snapshotId = reference.messageId;
+          const channel = this.client.channels.cache.get(reference.channelId);
+          const snapshotData: MessagePatchData = {
+            ...snapshot.message,
+            id: snapshotId,
+            channel_id: reference.channelId,
+            guild_id: reference.guildId ?? undefined,
+          };
 
-        return coll.set(
-          this.reference.messageId,
-          channel ? channel.messages._add(snapshotData) : new (this.constructor as any)(this.client, snapshotData),
-        );
-      }, new Collection());
+          return coll.set(
+            snapshotId,
+            channel ? channel.messages._add(snapshotData) : new Message(this.client, snapshotData),
+          );
+        },
+        new Collection<Snowflake, MessageSnapshot>(),
+      );
     } else {
-      this.messageSnapshots ??= new Collection();
+      this.messageSnapshots ??= new Collection<Snowflake, MessageSnapshot>();
     }
 
     /**
@@ -584,7 +715,7 @@ class Message extends Base {
      * @property {Snowflake[]} participants The ids of the users that participated in the call
      */
 
-    if (data.call) {
+    if ('call' in data && data.call) {
       /**
        * The call associated with the message
        * @type {?MessageCall}
@@ -593,7 +724,7 @@ class Message extends Base {
         endedTimestamp: data.call.ended_timestamp ? Date.parse(data.call.ended_timestamp) : null,
         participants: data.call.participants,
         get endedAt() {
-          return this.endedTimestamp && new Date(this.endedTimestamp);
+          return this.endedTimestamp ? new Date(this.endedTimestamp) : null;
         },
       };
     } else {
@@ -609,7 +740,7 @@ class Message extends Base {
      * @property {?BaseThemeType} [baseTheme] The mode of the theme
      */
 
-    if (data.shared_client_theme) {
+    if ('shared_client_theme' in data && data.shared_client_theme) {
       /**
        * The shared client theme sent with this message
        * @type {?SharedClientTheme}
@@ -645,7 +776,7 @@ class Message extends Base {
     return deletedMessages.has(this);
   }
 
-  set deleted(value: any) {
+  set deleted(value: boolean) {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
@@ -764,7 +895,7 @@ class Message extends Base {
    * collector.on('collect', r => console.log(`Collected ${r.emoji.name}`));
    * collector.on('end', collected => console.log(`Collected ${collected.size} items`));
    */
-  createReactionCollector(options: any = {}) {
+  createReactionCollector(options: ReactionCollectorOptions = {}) {
     return new ReactionCollector(this, options);
   }
 
@@ -786,10 +917,10 @@ class Message extends Base {
    *   .then(collected => console.log(`Collected ${collected.size} reactions`))
    *   .catch(console.error);
    */
-  awaitReactions(options: any = {}) {
-    return new Promise((resolve: any, reject: any) => {
+  awaitReactions(options: AwaitReactionsOptions = {}): Promise<Collection<Snowflake | string, MessageReaction>> {
+    return new Promise((resolve, reject) => {
       const collector = this.createReactionCollector(options);
-      collector.once('end', (reactions: any, reason: any) => {
+      collector.once('end', (reactions: Collection<Snowflake | string, MessageReaction>, reason: string) => {
         if (options.errors?.includes(reason)) reject(reactions);
         else resolve(reactions);
       });
@@ -815,7 +946,7 @@ class Message extends Base {
    * collector.on('collect', i => console.log(`Collected ${i.customId}`));
    * collector.on('end', collected => console.log(`Collected ${collected.size} items`));
    */
-  createMessageComponentCollector(options: any = {}) {
+  createMessageComponentCollector(options: MessageComponentCollectorOptions<MessageComponentInteraction> = {}) {
     return new InteractionCollector(this.client, {
       ...options,
       interactionType: InteractionTypes.MESSAGE_COMPONENT,
@@ -845,11 +976,13 @@ class Message extends Base {
    *   .then(interaction => console.log(`${interaction.customId} was clicked!`))
    *   .catch(console.error);
    */
-  awaitMessageComponent(options: any = {}) {
+  awaitMessageComponent(
+    options: AwaitMessageComponentOptions<MessageComponentInteraction> = {},
+  ): Promise<MessageComponentInteraction> {
     const _options = { ...options, max: 1 };
-    return new Promise((resolve: any, reject: any) => {
+    return new Promise((resolve, reject) => {
       const collector = this.createMessageComponentCollector(_options);
-      collector.once('end', (interactions: any, reason: any) => {
+      collector.once('end', (interactions: Collection<Snowflake, MessageComponentInteraction>, reason: string) => {
         const interaction = interactions.first();
         if (interaction) resolve(interaction);
         else reject(new Error('INTERACTION_COLLECTOR_ERROR', reason));
@@ -864,10 +997,10 @@ class Message extends Base {
    */
   get editable() {
     const precheck = Boolean(
-      this.author.id === this.client.user.id &&
+      this.author?.id === this.client.user.id &&
       !deletedMessages.has(this) &&
       (!this.guild || this.channel?.viewable) &&
-      this.reference?.type !== 'FORWARD',
+      this.reference?.type !== MessageReferenceTypes.FORWARD,
     );
 
     // Regardless of permissions thread messages cannot be edited if
@@ -893,7 +1026,7 @@ class Message extends Base {
       return false;
     }
     if (!this.guild) {
-      return this.author.id === this.client.user.id;
+      return this.author?.id === this.client.user.id;
     }
     // DMChannel does not have viewable property, so check viewable after proved that message is on a guild.
     if (!this.channel?.viewable) {
@@ -906,7 +1039,7 @@ class Message extends Base {
     if (permissions.has(Permissions.FLAGS.ADMINISTRATOR, false)) return true;
 
     return Boolean(
-      this.author.id === this.client.user.id ||
+      this.author?.id === this.client.user.id ||
       (permissions.has(Permissions.FLAGS.MANAGE_MESSAGES, false) &&
         this.guild.members.me.communicationDisabledUntilTimestamp < Date.now()),
     );
@@ -961,13 +1094,13 @@ class Message extends Base {
    */
   get crosspostable() {
     const bitfield =
-      (Permissions.FLAGS.SEND_MESSAGES as any) |
-      (this.author.id === this.client.user.id ? Permissions.defaultBit : (Permissions.FLAGS.MANAGE_MESSAGES as any));
+      Number(Permissions.FLAGS.SEND_MESSAGES) |
+      Number(this.author?.id === this.client.user.id ? Permissions.defaultBit : Permissions.FLAGS.MANAGE_MESSAGES);
     const { channel } = this;
     return Boolean(
       channel?.type === 'GUILD_NEWS' &&
       !this.flags.has(MessageFlags.FLAGS.CROSSPOSTED) &&
-      this.reference?.type !== 'FORWARD' &&
+      this.reference?.type !== MessageReferenceTypes.FORWARD &&
       this.type === 'DEFAULT' &&
       !this.poll &&
       channel.viewable &&
@@ -1000,7 +1133,7 @@ class Message extends Base {
    *   .then(msg => console.log(`Updated the content of a message to ${msg.content}`))
    *   .catch(console.error);
    */
-  async edit(options: any) {
+  async edit(options: string | MessageEditOptions | MessagePayload) {
     if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
     return this.channel.messages.edit(this, options);
   }
@@ -1031,7 +1164,7 @@ class Message extends Base {
    *   .then(console.log)
    *   .catch(console.error)
    */
-  async pin(reason: any) {
+  async pin(reason?: string) {
     if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
     await this.channel.messages.pin(this.id, reason);
     return this;
@@ -1047,7 +1180,7 @@ class Message extends Base {
    *   .then(console.log)
    *   .catch(console.error)
    */
-  async unpin(reason: any) {
+  async unpin(reason?: string) {
     if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
     await this.channel.messages.unpin(this.id, reason);
     return this;
@@ -1069,7 +1202,7 @@ class Message extends Base {
    *   .then(console.log)
    *   .catch(console.error);
    */
-  async react(emoji: any, burst: any = false) {
+  async react(emoji: EmojiIdentifierResolvable, burst = false) {
     if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
     await this.channel.messages.react(this.id, emoji, burst);
 
@@ -1118,7 +1251,7 @@ class Message extends Base {
    *   .then(() => console.log(`Replied to message "${message.content}"`))
    *   .catch(console.error);
    */
-  async reply(options: any) {
+  async reply(options: string | MessagePayload | ReplyMessageOptions) {
     if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
     let data;
 
@@ -1128,7 +1261,8 @@ class Message extends Base {
       data = MessagePayload.create(this, options, {
         reply: {
           messageReference: this,
-          failIfNotExists: options?.failIfNotExists ?? this.client.options.failIfNotExists,
+          failIfNotExists:
+            (typeof options === 'object' ? options.failIfNotExists : undefined) ?? this.client.options.failIfNotExists,
         },
       });
     }
@@ -1140,7 +1274,7 @@ class Message extends Base {
    * @param {TextBasedChannelResolvable} channel The channel to forward this message to.
    * @returns {Promise<Message>}
    */
-  forward(channel: any) {
+  forward(channel: TextBasedChannelResolvable) {
     const resolvedChannel = this.client.channels.resolve(channel);
     if (!resolvedChannel) throw new Error('INVALID_TYPE', 'channel', 'TextBasedChannelResolvable');
     return resolvedChannel.send({
@@ -1180,7 +1314,7 @@ class Message extends Base {
    * @param {StartThreadOptions} [options] Options for starting a thread on this message
    * @returns {Promise<ThreadChannel>}
    */
-  async startThread(options: any = {}) {
+  async startThread(options: StartThreadOptions) {
     if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
     if (!['GUILD_TEXT', 'GUILD_NEWS'].includes(this.channel.type)) {
       throw new Error('MESSAGE_THREAD_PARENT');
@@ -1199,13 +1333,13 @@ class Message extends Base {
    * // Remove vote
    * message.vote();
    */
-  vote(...ids: any[]) {
+  vote(...ids: number[]) {
     return this.client.api
       .channels(this.channel.id)
       .polls(this.id)
       .answers['@me'].put({
         data: {
-          answer_ids: ids.flat(1).map((value: any) => value.toString()),
+          answer_ids: ids.flat(1).map(value => value.toString()),
         },
       });
   }
@@ -1215,7 +1349,7 @@ class Message extends Base {
    * @param {boolean} [force=true] Whether to skip the cache check and request the API
    * @returns {Promise<Message>}
    */
-  async fetch(force: any = true) {
+  async fetch(force = true) {
     if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
     return this.channel.messages.fetch(this.id, { force });
   }
@@ -1244,7 +1378,7 @@ class Message extends Base {
       flags.remove(MessageFlags.FLAGS.SUPPRESS_EMBEDS);
     }
 
-    return this.edit({ flags });
+    return this.edit({ flags: Number(flags.bitfield) });
   }
 
   /**
@@ -1260,11 +1394,14 @@ class Message extends Base {
    * @param {string} customId The custom id to resolve against
    * @returns {?MessageActionRowComponent}
    */
-  resolveComponent(customId: any) {
+  resolveComponent(customId: string): MessageActionRowComponent | null {
     return (
       this.components
         .flatMap(BaseMessageComponent.extractInteractiveComponents)
-        .find((component: any) => (component.customId ?? component.custom_id) === customId) ?? null
+        .find(
+          (component: MessageActionRowComponent & { custom_id?: string }) =>
+            (component.customId ?? component.custom_id) === customId,
+        ) ?? null
     );
   }
 
@@ -1276,14 +1413,14 @@ class Message extends Base {
    * @param {APIMessage} rawData Raw data passed through the WebSocket about this message
    * @returns {boolean}
    */
-  equals(message: any, rawData: any) {
+  equals(message: Message, rawData?: RawMessageData | RawPartialMessageData) {
     if (!message) return false;
     const embedUpdate = !message.author && !message.attachments;
     if (embedUpdate) return this.id === message.id && this.embeds.length === message.embeds.length;
 
     let equal =
       this.id === message.id &&
-      this.author.id === message.author.id &&
+      this.author?.id === message.author?.id &&
       this.content === message.content &&
       this.tts === message.tts &&
       this.nonce === message.nonce &&
@@ -1296,7 +1433,7 @@ class Message extends Base {
       equal =
         this.mentions.everyone === message.mentions.everyone &&
         this.createdTimestamp === new Date(rawData.timestamp).getTime() &&
-        this.editedTimestamp === new Date(rawData.edited_timestamp).getTime();
+        this.editedTimestamp === (rawData.edited_timestamp ? new Date(rawData.edited_timestamp).getTime() : null);
     }
 
     return equal;
@@ -1317,8 +1454,8 @@ class Message extends Base {
    * // Logs: Message: This is a message!
    * console.log(`Message: ${message}`);
    */
-  toString() {
-    return this.content;
+  toString(): string {
+    return this.content ?? '';
   }
 
   toJSON() {
@@ -1354,7 +1491,7 @@ class Message extends Base {
    * Currently, only clicking by CustomID is supported.
    * @returns {Promise<Message|Modal>}
    */
-  clickButton(buttonid: any) {
+  clickButton(buttonid: string) {
     const button = this.resolveComponent(buttonid);
     if (!button || button.type !== 'BUTTON') throw new TypeError('BUTTON_NOT_FOUND');
     if (button.disabled) throw new TypeError('BUTTON_CANNOT_CLICK');
@@ -1365,7 +1502,7 @@ class Message extends Base {
       guild_id: this.guildId,
       channel_id: this.channelId,
       message_id: this.id,
-      application_id: this.applicationId ?? this.author.id,
+      application_id: this.applicationId ?? this.author?.id,
       session_id: this.client.sessionId,
       message_flags: this.flags.bitfield,
       data: {
@@ -1385,62 +1522,66 @@ class Message extends Base {
    * @param {Array<UserResolvable | RoleResolvable | ChannelResolvable | string>} values Any value
    * @returns {Promise<Message|Modal>}
    */
-  selectMenu(menu: any, values: any = []) {
-    let selectMenu = menu;
-    if (/[0-4]/.test(menu)) {
-      selectMenu = this.components[menu]?.components[0];
-    } else if (typeof menu == 'string') {
-      selectMenu = this.components
-        .flatMap((row: any) => row.components)
-        .find(
-          (b: any) =>
-            ['STRING_SELECT', 'USER_SELECT', 'ROLE_SELECT', 'MENTIONABLE_SELECT', 'CHANNEL_SELECT'].includes(b.type) &&
-            b.customId == menu &&
-            !b.disabled,
-        );
-    }
-    if (values.length < selectMenu.minValues) {
-      throw new RangeError(`[SELECT_MENU_MIN_VALUES] The minimum number of values is ${selectMenu.minValues}`);
-    }
-    if (values.length > selectMenu?.maxValues) {
-      throw new RangeError(`[SELECT_MENU_MAX_VALUES] The maximum number of values is ${selectMenu.maxValues}`);
-    }
-    values = values.map((value: any) => {
-      switch (selectMenu.type) {
-        case 'STRING_SELECT': {
-          return selectMenu.options.find((obj: any) => obj.value === value || obj.label === value).value;
-        }
-        case 'USER_SELECT': {
-          return this.client.users.resolveId(value);
-        }
-        case 'ROLE_SELECT': {
-          return this.guild.roles.resolveId(value);
-        }
-        case 'MENTIONABLE_SELECT': {
-          return this.client.users.resolveId(value) || this.guild.roles.resolveId(value);
-        }
-        case 'CHANNEL_SELECT': {
-          return this.client.channels.resolveId(value);
-        }
-        default: {
-          return value;
+  selectMenu(menu: number | string, values: unknown[] = []): Promise<Message | Modal> {
+    const components: Array<{ type: string; customId?: string | null; disabled?: boolean }> = [];
+    for (const row of this.components) {
+      if (!('components' in row)) continue;
+      for (const component of row.components) {
+        if ('type' in component && typeof component.type === 'string') {
+          components.push({
+            type: component.type,
+            customId: 'customId' in component ? component.customId : undefined,
+            disabled: 'disabled' in component ? component.disabled : undefined,
+          });
         }
       }
-    });
+    }
+    const index = typeof menu === 'number' ? menu : /^[0-4]$/.test(menu) ? Number(menu) : undefined;
+    let selectMenu: MessageSelectMenu | undefined;
+    if (index !== undefined) {
+      const component = components[index];
+      if (component && isSelectMenu(component)) selectMenu = component;
+    } else {
+      selectMenu = components.find(
+        (component): component is MessageSelectMenu =>
+          isSelectMenu(component) && component.customId === menu && !component.disabled,
+      );
+    }
+    if (!selectMenu) throw new RangeError('[SELECT_MENU_NOT_FOUND] The select menu could not be resolved');
+
+    const minValues = selectMenu.minValues ?? 0;
+    const maxValues = selectMenu.maxValues ?? 1;
+    if (values.length < minValues) {
+      throw new RangeError(`[SELECT_MENU_MIN_VALUES] The minimum number of values is ${minValues}`);
+    }
+    if (values.length > maxValues) {
+      throw new RangeError(`[SELECT_MENU_MAX_VALUES] The maximum number of values is ${maxValues}`);
+    }
+
+    const resolvedValues = values
+      .map(value => {
+        if (selectMenu.type === 'STRING_SELECT') {
+          const match = selectMenu.options.find(option => option.value === value || option.label === value);
+          return match?.value ?? null;
+        }
+        return resolveSelectValue(value);
+      })
+      .filter((value): value is string => value !== null);
+
     const nonce = SnowflakeUtil.generate();
     const data = {
       type: InteractionTypes.MESSAGE_COMPONENT,
       guild_id: this.guildId,
       channel_id: this.channelId,
       message_id: this.id,
-      application_id: this.applicationId ?? this.author.id,
+      application_id: this.applicationId ?? this.author?.id,
       session_id: this.client.sessionId,
       message_flags: this.flags.bitfield,
       data: {
         component_type: MessageComponentTypes[selectMenu.type],
         custom_id: selectMenu.customId,
         type: MessageComponentTypes[selectMenu.type],
-        values,
+        values: resolvedValues,
       },
       nonce,
     };

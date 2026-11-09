@@ -1,9 +1,11 @@
 import { Buffer } from 'node:buffer';
+import type { Stream } from 'node:stream';
+import { AllowedMentionsTypes } from 'discord-api-types/v10';
+import type { APIAllowedMentions } from 'discord-api-types/v10';
 import BaseMessageComponent from './BaseMessageComponent';
 import MessageEmbed from './MessageEmbed';
 import _errorsModule from '../errors';
 const { RangeError, Error: DjsError } = _errorsModule;
-import ActivityFlags from '../util/ActivityFlags';
 import _ConstantsModule from '../util/Constants';
 const { PollLayoutTypes, MessageReferenceTypes } = _ConstantsModule;
 import DataResolver from '../util/DataResolver';
@@ -20,17 +22,87 @@ const { Message } = _MessageModule;
 import MessageManager from '../managers/MessageManager';
 import Interaction from './Interaction';
 import InteractionWebhook from './InteractionWebhook';
+import type {
+  BitFieldResolvable,
+  BufferResolvable,
+  ChannelResolvable,
+  FileOptions,
+  GuildResolvable,
+  HTTPAttachmentData,
+  MessageAttachment,
+  MessageFlagsString,
+  MessageMentionOptions,
+  MessageOptions,
+  MessageResolvable,
+  Snowflake,
+} from '../../typings';
+import type { RawMessagePayloadData } from '../../typings/rawDataTypes';
+import type { Client } from '../client/Client';
+
+type MessageReferenceLike = MessageResolvable | { id: Snowflake; channelId?: Snowflake; guildId?: Snowflake | null };
+
+type MessagePayloadOptions = Omit<MessageOptions, 'reply' | 'forward' | 'flags'> & {
+  reply?: { messageReference: MessageReferenceLike; failIfNotExists?: boolean };
+  forward?: { message: MessageReferenceLike; channel?: ChannelResolvable; guild?: GuildResolvable };
+  flags?: BitFieldResolvable<MessageFlagsString, number> | MessageOptions['flags'];
+  username?: string;
+  avatarURL?: string;
+  threadName?: string;
+  threadId?: Snowflake;
+  appliedTags?: Snowflake[];
+  withComponents?: boolean;
+};
+
+interface MessagePayloadTarget {
+  client: Client;
+  messages?: MessageManager;
+  name?: string;
+  author?: User | null;
+  id?: Snowflake;
+}
+
+function resolveTargetMessageId(target: MessagePayloadTarget, reference: MessageReferenceLike): string | null {
+  if (typeof reference === 'object' && 'id' in reference) return reference.id;
+  if (target.messages) return target.messages.resolveId(reference);
+  if (target instanceof MessageManager) return target.resolveId(reference);
+  return null;
+}
+
+function isStream(value: unknown): value is Stream {
+  return typeof value === 'object' && value !== null && 'pipe' in value && typeof value.pipe === 'function';
+}
+
+function toAllowedMentions(mentions: MessageMentionOptions): APIAllowedMentions {
+  return {
+    parse: mentions.parse?.map(type => {
+      switch (type) {
+        case 'everyone':
+          return AllowedMentionsTypes.Everyone;
+        case 'roles':
+          return AllowedMentionsTypes.Role;
+        case 'users':
+          return AllowedMentionsTypes.User;
+      }
+    }),
+    roles: mentions.roles,
+    users: mentions.users,
+    replied_user: mentions.repliedUser,
+  };
+}
 
 /**
  * Represents a message to be sent to the API.
  */
 class MessagePayload {
-  [key: string]: any;
+  declare target: MessagePayloadTarget;
+  declare options: MessagePayloadOptions;
+  declare data: RawMessagePayloadData | null;
+  declare files: HTTPAttachmentData[] | null;
   /**
    * @param {MessageTarget} target The target for this message to be sent to
    * @param {MessageOptions|WebhookMessageOptions} options Options passed in from send
    */
-  constructor(target: any, options: any = {}) {
+  constructor(target: MessagePayloadTarget, options: MessagePayloadOptions = {}) {
     /**
      * The target for this message to be sent to
      * @type {MessageTarget}
@@ -112,8 +184,8 @@ class MessagePayload {
    * Makes the content of this message.
    * @returns {?string}
    */
-  makeContent() {
-    let content;
+  makeContent(): string | undefined {
+    let content: string | undefined;
     if (this.options.content === null) {
       content = '';
     } else if (typeof this.options.content !== 'undefined') {
@@ -135,7 +207,7 @@ class MessagePayload {
     const content = this.makeContent();
     const tts = Boolean(this.options.tts);
 
-    let nonce = SnowflakeUtil.generate();
+    let nonce: string | number = SnowflakeUtil.generate();
     if (typeof this.options.nonce !== 'undefined') {
       nonce = this.options.nonce;
       // eslint-disable-next-line max-len
@@ -144,8 +216,8 @@ class MessagePayload {
       }
     }
 
-    const components = this.options.components?.map((c: any) => {
-      const data = typeof c?.toJSON === 'function' ? c.toJSON() : c;
+    const components = this.options.components?.map(component => {
+      const data = 'toJSON' in component && typeof component.toJSON === 'function' ? component.toJSON() : component;
       return BaseMessageComponent.create(data)!.toJSON();
     });
 
@@ -160,30 +232,26 @@ class MessagePayload {
       if (this.options.appliedTags) appliedTags = this.options.appliedTags;
     }
 
-    let flags;
+    let flags: number | undefined;
     if (this.options.flags != null) {
-      flags = new MessageFlags(this.options.flags).bitfield;
+      flags = Number(new MessageFlags(this.options.flags).bitfield);
     }
 
     if (isInteraction && this.options.ephemeral) {
-      flags = ((flags ?? 0) as any) | (MessageFlags.FLAGS.EPHEMERAL as any);
+      flags = Number(flags ?? 0) | Number(MessageFlags.FLAGS.EPHEMERAL);
     }
 
-    let allowedMentions =
+    const allowedMentions: MessageMentionOptions | undefined =
       typeof this.options.allowedMentions === 'undefined'
         ? this.target.client.options.allowedMentions
         : this.options.allowedMentions;
-
-    if (allowedMentions) {
-      allowedMentions = Util.cloneObject(allowedMentions);
-      allowedMentions.replied_user = allowedMentions.repliedUser;
-      delete allowedMentions.repliedUser;
-    }
+    let allowed_mentions: APIAllowedMentions | undefined;
+    if (allowedMentions) allowed_mentions = toAllowedMentions(allowedMentions);
 
     let message_reference;
     if (typeof this.options.reply === 'object') {
       const reference = this.options.reply.messageReference;
-      const message_id = this.isMessage ? (reference.id ?? reference) : this.target.messages.resolveId(reference);
+      const message_id = resolveTargetMessageId(this.target, reference);
       if (message_id) {
         message_reference = {
           message_id,
@@ -195,9 +263,13 @@ class MessagePayload {
 
     if (typeof this.options.forward === 'object') {
       const reference = this.options.forward.message;
-      const channel_id = reference.channelId ?? this.target.client.channels.resolveId(this.options.forward.channel);
-      const guild_id = reference.guildId ?? this.target.client.guilds.resolveId(this.options.forward.guild);
-      const message_id = this.target.messages.resolveId(reference);
+      const channel_id =
+        (typeof reference === 'object' && 'channelId' in reference ? reference.channelId : undefined) ??
+        this.target.client.channels.resolveId(this.options.forward.channel);
+      const guild_id =
+        (typeof reference === 'object' && 'guildId' in reference ? reference.guildId : undefined) ??
+        this.target.client.guilds.resolveId(this.options.forward.guild);
+      const message_id = resolveTargetMessageId(this.target, reference);
       if (message_id) {
         if (!channel_id) throw new DjsError('INVALID_TYPE', 'channelId', 'TextBasedChannelResolvable');
         message_reference = {
@@ -209,9 +281,12 @@ class MessagePayload {
       }
     }
 
-    const attachments = this.options.files?.map((file: any, index: any) => ({
+    const attachments = this.options.files?.map((file, index) => ({
       id: index.toString(),
-      description: file.description,
+      description:
+        typeof file === 'object' && file !== null && 'description' in file && typeof file.description === 'string'
+          ? file.description
+          : undefined,
     }));
     if (Array.isArray(this.options.attachments)) {
       this.options.attachments.push(...(attachments ?? []));
@@ -219,22 +294,15 @@ class MessagePayload {
       this.options.attachments = attachments;
     }
 
-    // Activity
-    let activity;
-    if (
-      this.options.activity instanceof Object &&
-      typeof this.options.activity.partyId == 'string' &&
-      this.options.activity.type
-    ) {
-      const type = ActivityFlags.resolve(this.options.activity.type);
-      const sessionId = this.target.client.sessionId;
-      const partyId = this.options.activity.partyId;
-      activity = {
-        type,
-        party_id: partyId,
-        session_id: sessionId,
-      };
-    }
+    const stickerIds = this.options.stickers?.map(sticker => (typeof sticker === 'object' ? sticker.id : sticker));
+    const sticker_ids: [string] | [string, string] | [string, string, string] | undefined =
+      stickerIds && stickerIds.length >= 3
+        ? [stickerIds[0], stickerIds[1], stickerIds[2]]
+        : stickerIds && stickerIds.length === 2
+          ? [stickerIds[0], stickerIds[1]]
+          : stickerIds && stickerIds.length === 1
+            ? [stickerIds[0]]
+            : undefined;
 
     let poll;
     if (this.options.poll) {
@@ -242,38 +310,45 @@ class MessagePayload {
         question: {
           text: this.options.poll.question.text,
         },
-        answers: this.options.poll.answers.map((answer: any) => ({
-          poll_media: { text: answer.text, emoji: Util.resolvePartialEmoji(answer.emoji) },
+        answers: this.options.poll.answers.map(answer => ({
+          poll_media: { text: answer.text, emoji: Util.resolvePartialEmoji(answer.emoji) ?? undefined },
         })),
         duration: this.options.poll.duration,
         allow_multiselect: this.options.poll.allowMultiselect,
         layout_type:
           typeof this.options.poll.layoutType == 'number'
             ? this.options.poll.layoutType
-            : PollLayoutTypes[this.options.poll.layoutType],
+            : this.options.poll.layoutType
+              ? PollLayoutTypes[this.options.poll.layoutType]
+              : undefined,
       };
     }
 
     this.data = {
-      activity,
       content,
       tts,
       nonce,
-      embeds: this.options.embeds?.map((embed: any) => {
-        const data = typeof embed?.toJSON === 'function' ? embed.toJSON() : embed;
+      embeds: this.options.embeds?.map(embed => {
+        const data = 'toJSON' in embed && typeof embed.toJSON === 'function' ? embed.toJSON() : embed;
         return new MessageEmbed(data).toJSON();
       }),
       components,
       username,
       avatar_url: avatarURL,
       allowed_mentions:
-        this.isMessage && message_reference === undefined && this.target?.author?.id !== this.target?.client?.user?.id
+        this.isMessage &&
+        message_reference === undefined &&
+        'author' in this.target &&
+        this.target.author?.id !== this.target.client.user?.id
           ? undefined
-          : allowedMentions,
+          : allowed_mentions,
       flags,
       message_reference,
-      attachments: this.options.attachments,
-      sticker_ids: this.options.stickers?.map((sticker: any) => sticker.id ?? sticker),
+      attachments: this.options.attachments?.map(attachment => ({
+        id: attachment.id,
+        description: attachment.description ?? undefined,
+      })),
+      sticker_ids,
       thread_name: threadName,
       applied_tags: appliedTags,
       poll,
@@ -288,9 +363,7 @@ class MessagePayload {
   async resolveFiles() {
     if (this.files) return this;
 
-    this.files = await Promise.all(
-      this.options.files?.map((file: any) => (this.constructor as any).resolveFile(file)) ?? [],
-    );
+    this.files = await Promise.all(this.options.files?.map(file => MessagePayload.resolveFile(file)) ?? []);
     return this;
   }
 
@@ -299,40 +372,50 @@ class MessagePayload {
    * @param {BufferResolvable|Stream|FileOptions|MessageAttachment} fileLike Something that could be resolved to a file
    * @returns {Promise<MessageFile>}
    */
-  static async resolveFile(fileLike: any) {
-    let attachment;
-    let name;
+  static async resolveFile(
+    fileLike: BufferResolvable | Stream | FileOptions | MessageAttachment,
+  ): Promise<HTTPAttachmentData> {
+    let attachment: BufferResolvable | Stream;
+    let name: string;
 
-    const findName = (thing: any) => {
+    const findName = (thing: BufferResolvable | Stream | FileOptions | MessageAttachment) => {
       if (typeof thing === 'string') {
         return Util.basename(thing);
       }
 
-      if (thing.path) {
+      if (typeof thing === 'object' && thing !== null && 'path' in thing && typeof thing.path === 'string') {
         return Util.basename(thing.path);
       }
 
       return 'file.jpg';
     };
 
-    const ownAttachment =
-      typeof fileLike === 'string' || fileLike instanceof Buffer || typeof fileLike.pipe === 'function';
-    if (ownAttachment) {
+    if (typeof fileLike === 'string' || fileLike instanceof Buffer) {
       attachment = fileLike;
-      name = findName(attachment);
-    } else {
+      name = findName(fileLike);
+    } else if (isStream(fileLike)) {
+      attachment = fileLike;
+      name = findName(fileLike);
+    } else if ('attachment' in fileLike) {
       attachment = fileLike.attachment;
-      name = fileLike.name ?? findName(attachment);
+      name = fileLike.name ?? findName(fileLike);
+    } else {
+      throw new DjsError('INVALID_TYPE', 'fileLike', 'BufferResolvable|Stream|FileOptions|MessageAttachment');
     }
 
     const resource = await DataResolver.resolveFile(attachment);
+    if (!resource) throw new DjsError('INVALID_TYPE', 'fileLike', 'BufferResolvable|Stream');
+    const metadata = typeof fileLike === 'object' && fileLike !== null ? fileLike : {};
+    const description = 'description' in metadata ? metadata.description : undefined;
+    const duration = 'duration' in metadata ? metadata.duration : undefined;
+    const waveform = 'waveform' in metadata ? metadata.waveform : undefined;
     return {
       attachment,
       name,
       file: resource,
-      description: fileLike.description,
-      duration_secs: fileLike.duration,
-      waveform: fileLike.waveform,
+      description: typeof description === 'string' ? description : undefined,
+      duration_secs: typeof duration === 'number' ? duration : undefined,
+      waveform: typeof waveform === 'string' ? waveform : undefined,
     };
   }
 
@@ -343,7 +426,11 @@ class MessagePayload {
    * @param {MessageOptions|WebhookMessageOptions} [extra={}] Extra options to add onto specified options
    * @returns {MessagePayload}
    */
-  static create(target: any, options: any, extra: any = {}) {
+  static create(
+    target: MessagePayloadTarget,
+    options: string | MessagePayloadOptions,
+    extra: MessagePayloadOptions = {},
+  ) {
     return new this(
       target,
       typeof options !== 'object' || options === null ? { content: options, ...extra } : { ...options, ...extra },

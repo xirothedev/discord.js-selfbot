@@ -1,5 +1,7 @@
 import { Collection } from '@discordjs/collection';
+import type { Snowflake } from 'discord-api-types/v10';
 import Collector from './interfaces/Collector';
+import type { Interaction, InteractionCollectorOptions, User } from '../../typings';
 import _ConstantsModule from '../util/Constants';
 const { Events } = _ConstantsModule;
 const { InteractionTypes, MessageComponentTypes } = _ConstantsModule;
@@ -26,7 +28,9 @@ const { InteractionTypes, MessageComponentTypes } = _ConstantsModule;
  * Ensure your interaction collectors end via either of these options or manual cancellation.</info>
  * @extends {Collector}
  */
-class InteractionCollector extends Collector {
+class InteractionCollector<T extends Interaction = Interaction> extends Collector<Snowflake, T> {
+  declare users: Collection<Snowflake, User>;
+  declare options: InteractionCollectorOptions<T>;
   /**
    * @param {Client} client The client on which to collect interactions
    * @param {InteractionCollectorOptions} [options={}] The options to apply to this collector
@@ -83,7 +87,7 @@ class InteractionCollector extends Collector {
      * The users that have interacted with this collector
      * @type {Collection<Snowflake, User>}
      */
-    this.users = new Collection();
+    this.users = new Collection<Snowflake, User>();
 
     /**
      * The total number of interactions collected

@@ -42,7 +42,7 @@ class GroupDMChannel extends Channel {
        * The user id of the owner of this Group DM Channel
        * @type {?Snowflake}
        */
-      this.ownerId = data.owner_id;
+      this.ownerId = typeof data.owner_id === 'string' ? data.owner_id : null;
     } else {
       this.ownerId ??= null;
     }
@@ -111,7 +111,7 @@ class GroupDMChannel extends Channel {
    * @readonly
    */
   get owner() {
-    return this.client.users.cache.get(this.ownerId);
+    return this.ownerId ? (this.client.users.cache.get(this.ownerId) ?? null) : null;
   }
 
   /**

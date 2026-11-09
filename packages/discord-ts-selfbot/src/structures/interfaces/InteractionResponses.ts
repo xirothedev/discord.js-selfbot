@@ -12,6 +12,7 @@ import Modal from '../Modal';
  * @interface
  */
 class InteractionResponses {
+  declare client: import('../../client/Client').default;
   [key: string]: any;
   /**
    * Options for deferring the reply to an {@link Interaction}.

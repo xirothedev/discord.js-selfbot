@@ -1,5 +1,8 @@
 import { randomUUID } from 'node:crypto';
+import type { APIPartialEmoji, Snowflake } from 'discord-api-types/v10';
 import Base from './Base';
+import type { RawActivityData } from '../../typings/rawDataTypes';
+import type { ActivityOptions, ActivityPlatform, ActivityType, RichPresenceMetadata } from '../../typings';
 import ActivityFlags from '../util/ActivityFlags';
 import _ConstantsModule from '../util/Constants';
 const { ActivityTypes } = _ConstantsModule;
@@ -185,9 +188,46 @@ class Presence extends Base {
 /**
  * Represents an activity that is part of a user's presence.
  */
+type ActivityPatch = RawActivityData & {
+  createdTimestamp?: number;
+  applicationId?: Snowflake;
+  syncId?: string;
+};
+
+function isActivityPlatform(value: string | undefined): value is ActivityPlatform {
+  return (
+    value === 'desktop' ||
+    value === 'samsung' ||
+    value === 'xbox' ||
+    value === 'ios' ||
+    value === 'android' ||
+    value === 'embedded' ||
+    value === 'ps4' ||
+    value === 'ps5'
+  );
+}
+
 class Activity {
-  [key: string]: any;
-  constructor(presence: any, data: any) {
+  declare readonly presence: Presence;
+  declare applicationId: Snowflake | null;
+  declare assets: RichPresenceAssets;
+  declare buttons: string[];
+  declare createdTimestamp: number;
+  declare details: string | null;
+  declare emoji: APIPartialEmoji | null;
+  declare flags: Readonly<ActivityFlags>;
+  declare id: string;
+  declare name: string;
+  declare party: { id: string | null; size: [number, number] } | null;
+  declare platform: ActivityPlatform | null;
+  declare sessionId: string | null;
+  declare state: string | null;
+  declare syncId: string | null;
+  declare timestamps: { start: number | null; end: number | null } | null;
+  declare type: ActivityType;
+  declare url: string | null;
+
+  constructor(presence: Presence, data: RawActivityData) {
     if (!(presence instanceof Presence)) {
       throw new Error("Class constructor Activity cannot be invoked without 'presence'");
     }
@@ -202,7 +242,7 @@ class Activity {
     this._patch(data);
   }
 
-  _patch(data: any = {}) {
+  _patch(data: ActivityPatch) {
     if ('id' in data) {
       /**
        * The activity's id
@@ -232,17 +272,17 @@ class Activity {
        * If the activity is being streamed, a link to the stream
        * @type {?string}
        */
-      this.url = data.url;
+      this.url = data.url ?? null;
     } else {
       this.url = null;
     }
 
-    if ('created_at' in data || 'createdTimestamp' in data) {
+    if (data.created_at !== undefined || data.createdTimestamp !== undefined) {
       /**
        * Creation date of the activity
        * @type {number}
        */
-      this.createdTimestamp = data.created_at || data.createdTimestamp;
+      this.createdTimestamp = data.created_at ?? data.createdTimestamp ?? 0;
     }
 
     if ('session_id' in data) {
@@ -250,9 +290,9 @@ class Activity {
        * The game's or Spotify session's id
        * @type {?string}
        */
-      this.sessionId = data.session_id;
+      this.sessionId = data.session_id ?? null;
     } else {
-      this.sessionId = this.presence.client?.sessionId;
+      this.sessionId = this.presence.client?.sessionId ?? null;
     }
 
     if ('platform' in data) {
@@ -260,7 +300,7 @@ class Activity {
        * The platform the game is being played on
        * @type {?ActivityPlatform}
        */
-      this.platform = data.platform;
+      this.platform = isActivityPlatform(data.platform) ? data.platform : null;
     } else {
       this.platform = null;
     }
@@ -290,7 +330,7 @@ class Activity {
        * The id of the application associated with this activity
        * @type {?Snowflake}
        */
-      this.applicationId = data.application_id || data.applicationId;
+      this.applicationId = data.application_id ?? data.applicationId ?? null;
     } else {
       this.applicationId = null;
     }
@@ -300,7 +340,7 @@ class Activity {
        * Details about the activity
        * @type {?string}
        */
-      this.details = data.details;
+      this.details = data.details ?? null;
     } else {
       this.details = null;
     }
@@ -310,7 +350,7 @@ class Activity {
        * State of the activity
        * @type {?string}
        */
-      this.state = data.state;
+      this.state = data.state ?? null;
     } else {
       this.state = null;
     }
@@ -321,7 +361,7 @@ class Activity {
        * <info>This property is not documented by Discord and represents the track id in spotify activities.</info>
        * @type {?string}
        */
-      this.syncId = data.sync_id || data.syncId;
+      this.syncId = data.sync_id ?? data.syncId ?? null;
     } else {
       this.syncId = null;
     }
@@ -341,7 +381,7 @@ class Activity {
        * The labels of the buttons of this rich presence
        * @type {string[]}
        */
-      this.buttons = data.buttons;
+      this.buttons = data.buttons?.map(button => (typeof button === 'string' ? button : button.label)) ?? [];
     } else {
       this.buttons = [];
     }
@@ -368,7 +408,7 @@ class Activity {
        * Party of the activity
        * @type {?ActivityParty}
        */
-      this.party = data.party;
+      this.party = data.party ? { id: data.party.id ?? null, size: data.party.size ?? [0, 0] } : null;
     } else {
       this.party = null;
     }
@@ -385,7 +425,7 @@ class Activity {
    * @param {Activity} activity The activity to compare with
    * @returns {boolean}
    */
-  equals(activity: any) {
+  equals(activity: Activity) {
     return (
       this === activity ||
       (activity &&
@@ -420,11 +460,12 @@ class Activity {
     return Object.assign(Object.create(this), this);
   }
 
-  toJSON(...props: any[]) {
-    return Util.clearNullOrUndefinedObject({
+  toJSON(...props: unknown[]): ActivityOptions {
+    return {
       ...Util.flatten(this, ...props),
+      name: this.name,
       type: typeof this.type === 'number' ? this.type : ActivityTypes[this.type],
-    });
+    };
   }
 }
 
@@ -680,19 +721,17 @@ class CustomStatus extends Activity {
    * Returns an object that can be used to set the status
    * @returns {CustomStatus}
    */
-  override toJSON() {
-    if ((!this.emoji as any) & (!this.state as any))
-      throw new Error('CustomStatus must have at least one of emoji or state');
+  override toJSON(): ActivityOptions {
+    if (!this.emoji && !this.state) throw new Error('CustomStatus must have at least one of emoji or state');
     return {
-      name: this.name,
-      emoji: this.emoji,
-      type: ActivityTypes.CUSTOM,
-      state: this.state,
+      ...{ name: this.name, type: ActivityTypes.CUSTOM, state: this.state },
+      ...(this.emoji ? { emoji: this.emoji } : {}),
     };
   }
 }
 
 class RichPresence extends Activity {
+  declare metadata: RichPresenceMetadata;
   [key: string]: any;
   /**
    * @param {Client} client Discord client
@@ -711,7 +750,8 @@ class RichPresence extends Activity {
    */
   setup(data: any = {}) {
     this.secrets = 'secrets' in data ? data.secrets : {};
-    this.metadata = 'metadata' in data ? data.metadata : {};
+    const metadata: RichPresenceMetadata = 'metadata' in data ? data.metadata : {};
+    this.metadata = metadata;
   }
 
   /**
@@ -848,10 +888,9 @@ class RichPresence extends Activity {
    * @param {Date|number|null} timestamp The timestamp of the start of the activity
    * @returns {RichPresence}
    */
-  setStartTimestamp(timestamp: any) {
-    if (!this.timestamps) this.timestamps = {};
-    if (timestamp instanceof Date) timestamp = timestamp.getTime();
-    this.timestamps.start = timestamp;
+  setStartTimestamp(timestamp: Date | number | null) {
+    if (!this.timestamps) this.timestamps = { start: null, end: null };
+    this.timestamps.start = timestamp instanceof Date ? timestamp.getTime() : timestamp;
     return this;
   }
 
@@ -860,10 +899,9 @@ class RichPresence extends Activity {
    * @param {Date|number|null} timestamp The timestamp of the end of the activity
    * @returns {RichPresence}
    */
-  setEndTimestamp(timestamp: any) {
-    if (!this.timestamps) this.timestamps = {};
-    if (timestamp instanceof Date) timestamp = timestamp.getTime();
-    this.timestamps.end = timestamp;
+  setEndTimestamp(timestamp: Date | number | null) {
+    if (!this.timestamps) this.timestamps = { start: null, end: null };
+    this.timestamps.end = timestamp instanceof Date ? timestamp.getTime() : timestamp;
     return this;
   }
 
@@ -887,13 +925,14 @@ class RichPresence extends Activity {
     }
 
     this.buttons = [];
-    this.metadata.button_urls = [];
+    const buttonUrls: string[] = [];
+    this.metadata = { ...this.metadata, button_urls: buttonUrls };
 
     button.flat(2).forEach((b: any) => {
       if (b.name && b.url) {
         this.buttons.push(b.name);
         if (!URL.canParse(b.url)) throw new Error('Button url must be a valid url');
-        this.metadata.button_urls.push(b.url);
+        buttonUrls.push(b.url);
       } else {
         throw new Error('Button must have name and url');
       }
@@ -1044,11 +1083,12 @@ class SpotifyRPC extends RichPresence {
      * Spotify metadata
      * @type {SpotifyMetadata}
      */
-    this.metadata = {
-      album_id: options.metadata?.album_id || null,
+    const metadata: RichPresenceMetadata = {
+      album_id: options.metadata?.album_id || undefined,
       artist_ids: options.metadata?.artist_ids || [],
-      context_uri: options.metadata?.context_uri || null,
+      context_uri: options.metadata?.context_uri || undefined,
     };
+    this.metadata = metadata;
   }
 
   /**
@@ -1067,8 +1107,9 @@ class SpotifyRPC extends RichPresence {
    * @returns {SpotifyRPC}
    */
   addArtistId(id: any) {
-    if (!this.metadata.artist_ids) this.metadata.artist_ids = [];
-    this.metadata.artist_ids.push(id);
+    const artistIds = this.metadata.artist_ids ?? [];
+    artistIds.push(id);
+    this.metadata = { ...this.metadata, artist_ids: artistIds };
     return this;
   }
 
@@ -1078,12 +1119,9 @@ class SpotifyRPC extends RichPresence {
    * @returns {SpotifyRPC}
    */
   setArtistIds(...ids: any[]) {
-    if (!ids?.length) {
-      this.metadata.artist_ids = [];
-      return this;
-    }
-    if (!this.metadata.artist_ids) this.metadata.artist_ids = [];
-    ids.flat(2).forEach((id: any) => this.metadata.artist_ids.push(id));
+    const artistIds = ids?.length ? (this.metadata.artist_ids ?? []) : [];
+    ids.flat(2).forEach((id: any) => artistIds.push(id));
+    this.metadata = { ...this.metadata, artist_ids: artistIds };
     return this;
   }
 
@@ -1093,8 +1131,7 @@ class SpotifyRPC extends RichPresence {
    * @returns {SpotifyRPC}
    */
   setAlbumId(id: any) {
-    this.metadata.album_id = id;
-    this.metadata.context_uri = `spotify:album:${id}`;
+    this.metadata = { ...this.metadata, album_id: id, context_uri: `spotify:album:${id}` };
     return this;
   }
 

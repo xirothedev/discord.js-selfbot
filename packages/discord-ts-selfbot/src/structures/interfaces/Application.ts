@@ -112,10 +112,11 @@ class Application extends Base {
        * Settings for this application's default in-app authorization
        * @type {?ClientApplicationInstallParams}
        */
-      this.installParams = {
+      const installParams: { scopes: string[]; permissions: Readonly<Permissions> } = {
         scopes: data.install_params.scopes,
         permissions: new Permissions(data.install_params.permissions).freeze(),
       };
+      this.installParams = installParams;
     } else {
       this.installParams ??= null;
     }

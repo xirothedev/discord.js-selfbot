@@ -1,5 +1,7 @@
 import { Collection } from '@discordjs/collection';
+import type { Snowflake } from 'discord-api-types/v10';
 import Collector from './interfaces/Collector';
+import type { MessageReaction, ReactionCollectorOptions, User } from '../../typings';
 import _ConstantsModule from '../util/Constants';
 const { Events } = _ConstantsModule;
 
@@ -19,7 +21,9 @@ const { Events } = _ConstantsModule;
  * guild ({@link Client#event:guildDelete guildDelete}) is deleted.
  * @extends {Collector}
  */
-class ReactionCollector extends Collector {
+class ReactionCollector extends Collector<Snowflake | string, MessageReaction, [User]> {
+  declare users: Collection<Snowflake, User>;
+  declare options: ReactionCollectorOptions;
   [key: string]: any;
   /**
    * @param {Message} message The message upon which to collect reactions
@@ -38,7 +42,7 @@ class ReactionCollector extends Collector {
      * The users that have reacted to this message
      * @type {Collection}
      */
-    this.users = new Collection();
+    this.users = new Collection<Snowflake, User>();
 
     /**
      * The total number of reactions collected

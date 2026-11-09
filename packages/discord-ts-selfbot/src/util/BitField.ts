@@ -2,7 +2,11 @@ import _errorsModule from '../errors';
 const { RangeError } = _errorsModule;
 // Data structure that makes it easy to interact with a bitfield.
 
-export type BitFieldResolvable = number | string | bigint | BitField | BitFieldResolvable[];
+export interface BitFieldLike {
+  bitfield: number | bigint;
+}
+
+export type BitFieldResolvable = number | string | bigint | BitField | BitFieldLike | ReadonlyArray<BitFieldResolvable>;
 
 interface BitFieldStatic {
   defaultBit: number | bigint;
@@ -118,7 +122,6 @@ class BitField {
     const self = this as unknown as BitFieldStatic;
     const { defaultBit } = self;
     if (typeof defaultBit === typeof bit && (bit as number | bigint) >= defaultBit) return bit as number | bigint;
-    if (bit instanceof BitField) return bit.bitfield;
     if (Array.isArray(bit))
       return bit
         .map((p: BitFieldResolvable) => self.resolve(p))
@@ -126,6 +129,7 @@ class BitField {
           if (typeof prev === 'bigint' || typeof p === 'bigint') return (prev as bigint) | (p as bigint);
           return (prev as number) | (p as number);
         }, defaultBit);
+    if (typeof bit === 'object' && bit !== null && 'bitfield' in bit) return bit.bitfield;
     if (typeof bit === 'string') {
       if (!isNaN(Number(bit))) return typeof defaultBit === 'bigint' ? BigInt(bit) : Number(bit);
       if (self.FLAGS[bit] !== undefined) return self.FLAGS[bit];

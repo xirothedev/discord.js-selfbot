@@ -3,6 +3,7 @@
  * @abstract
  */
 class BaseManager {
+  declare client: import('../client/Client').default;
   [key: string]: any;
   constructor(client: any) {
     /**

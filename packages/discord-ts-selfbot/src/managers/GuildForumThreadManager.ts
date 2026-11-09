@@ -69,18 +69,19 @@ class GuildForumThreadManager extends ThreadManager {
     }
 
     const { data: body, files } = await messagePayload.resolveFiles();
+    const fileList = files ?? [];
 
     // New API
-    const attachments = await getUploadURL(this.client, this.channel.id, files);
+    const attachments = await getUploadURL(this.client, this.channel.id, fileList);
     const requestPromises = attachments.map(async (attachment: any) => {
-      await uploadFile(files[attachment.id].file, attachment.upload_url);
+      await uploadFile(fileList[attachment.id].file, attachment.upload_url);
       return {
         id: attachment.id,
-        filename: files[attachment.id].name,
+        filename: fileList[attachment.id].name,
         uploaded_filename: attachment.upload_filename,
-        description: files[attachment.id].description,
-        duration_secs: files[attachment.id].duration_secs,
-        waveform: files[attachment.id].waveform,
+        description: fileList[attachment.id].description,
+        duration_secs: fileList[attachment.id].duration_secs,
+        waveform: fileList[attachment.id].waveform,
       };
     });
     const attachmentsData = await Promise.all(requestPromises);

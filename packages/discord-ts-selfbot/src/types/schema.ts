@@ -6,6 +6,8 @@ import type {
   RawGuildPreviewData,
   RawGuildScheduledEventData,
   RawInviteStageInstance,
+  RawMessageData,
+  RawMessagePayloadData,
   RawRoleData,
   RawStageInstanceData,
   RawStickerPackData,
@@ -25,6 +27,8 @@ import type { GuildMemberEntity } from './entities/guild-member';
 import type { GuildPreviewEntity } from './entities/guild-preview';
 import type { GuildScheduledEventEntity } from './entities/guild-scheduled-event';
 import type { InviteStageInstanceEntity } from './entities/invite-stage-instance';
+import type { MessageEntity } from './entities/message';
+import type { MessagePayloadEntity } from './entities/message-payload';
 import type { RoleEntity } from './entities/role';
 import type { StageInstanceEntity } from './entities/stage-instance';
 import type { StickerPackEntity } from './entities/sticker-pack';
@@ -84,6 +88,8 @@ export type EntitySchema = {
   GuildPreview: EntityEntry<RawGuildPreviewData, GuildPreviewEntity, Record<never, never>>;
   GuildScheduledEvent: EntityEntry<RawGuildScheduledEventData, GuildScheduledEventEntity, Record<never, never>>;
   InviteStageInstance: EntityEntry<RawInviteStageInstance, InviteStageInstanceEntity, Record<never, never>>;
+  Message: EntityEntry<RawMessageData, MessageEntity, Record<never, never>>;
+  MessagePayload: EntityEntry<RawMessagePayloadData, MessagePayloadEntity, Record<never, never>>;
   Role: EntityEntry<RawRoleData, RoleEntity, { guild: 'relation' }>;
   StageInstance: EntityEntry<RawStageInstanceData, StageInstanceEntity, Record<never, never>>;
   StickerPack: EntityEntry<RawStickerPackData, StickerPackEntity, Record<never, never>>;

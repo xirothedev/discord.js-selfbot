@@ -6,6 +6,7 @@ const require = createRequire(import.meta.url);
  * @implements {Webhook}
  */
 class InteractionWebhook {
+  declare client: import('../client/Client').default;
   [key: string]: any;
 
   /**

@@ -1,18 +1,58 @@
 import { Collection } from '@discordjs/collection';
+import type { APIChannelMention, APIGuildMember, APIUser, Snowflake } from 'discord-api-types/v10';
 import _ConstantsModule from '../util/Constants';
 const { ChannelTypes } = _ConstantsModule;
 import Util from '../util/Util';
+import type {
+  AnyChannel,
+  ChannelResolvable,
+  CrosspostedChannel,
+  MessageMentionsHasOptions,
+  RoleResolvable,
+  UserResolvable,
+} from '../../typings';
+import type { Client } from '../client/Client';
+import type { Guild } from './Guild';
+import type { GuildMember } from './GuildMember';
+import type { Message } from './Message';
+import type { Role } from './Role';
+import type { User } from './User';
 
 /**
  * Keeps track of mentions in a {@link Message}.
  */
+type MentionUser = APIUser & { member?: Omit<APIGuildMember, 'user'> };
+
+function isChannelTypeName(value: string | undefined): value is CrosspostedChannel['type'] {
+  return typeof value === 'string' && value in ChannelTypes;
+}
+
 class MessageMentions {
-  [key: string]: any;
-  declare static EVERYONE_PATTERN: any;
-  declare static USERS_PATTERN: any;
-  declare static ROLES_PATTERN: any;
-  declare static CHANNELS_PATTERN: any;
-  constructor(message: any, users: any, roles: any, everyone: any, crosspostedChannels: any, repliedUser: any) {
+  declare readonly client: Client;
+  declare readonly guild: Guild | null;
+  declare readonly _content: string;
+  declare everyone: boolean;
+  declare users: Collection<Snowflake, User>;
+  declare roles: Collection<Snowflake, Role>;
+  declare crosspostedChannels: Collection<Snowflake, CrosspostedChannel>;
+  declare repliedUser: User | null;
+  declare _members: Collection<Snowflake, GuildMember> | null;
+  declare _channels: Collection<Snowflake, AnyChannel> | null;
+  declare _parsedUsers: Collection<Snowflake, User> | null;
+
+  declare static EVERYONE_PATTERN: RegExp;
+  declare static USERS_PATTERN: RegExp;
+  declare static ROLES_PATTERN: RegExp;
+  declare static CHANNELS_PATTERN: RegExp;
+
+  constructor(
+    message: Message,
+    users?: MentionUser[] | Collection<Snowflake, User>,
+    roles?: Snowflake[] | Collection<Snowflake, Role>,
+    everyone?: boolean,
+    crosspostedChannels?: APIChannelMention[] | Collection<Snowflake, CrosspostedChannel>,
+    repliedUser?: APIUser | User | null,
+  ) {
     /**
      * The client the message is from
      * @type {Client}
@@ -48,9 +88,9 @@ class MessageMentions {
          * <info>Order as received from the API, not as they appear in the message content</info>
          * @type {Collection<Snowflake, User>}
          */
-        this.users = new Collection(users);
+        this.users = new Collection<Snowflake, User>(users);
       } else {
-        this.users = new Collection();
+        this.users = new Collection<Snowflake, User>();
         for (const mention of users) {
           if (mention.member && message.guild) {
             message.guild.members._add(Object.assign(mention.member, { user: mention }));
@@ -60,7 +100,7 @@ class MessageMentions {
         }
       }
     } else {
-      this.users = new Collection();
+      this.users = new Collection<Snowflake, User>();
     }
 
     if (roles instanceof Collection) {
@@ -69,9 +109,9 @@ class MessageMentions {
        * <info>Order as received from the API, not as they appear in the message content</info>
        * @type {Collection<Snowflake, Role>}
        */
-      this.roles = new Collection(roles);
+      this.roles = new Collection<Snowflake, Role>(roles);
     } else if (roles) {
-      this.roles = new Collection();
+      this.roles = new Collection<Snowflake, Role>();
       const guild = message.guild;
       if (guild) {
         for (const mention of roles) {
@@ -80,7 +120,7 @@ class MessageMentions {
         }
       }
     } else {
-      this.roles = new Collection();
+      this.roles = new Collection<Snowflake, Role>();
     }
 
     /**
@@ -120,22 +160,22 @@ class MessageMentions {
          * <info>Order as received from the API, not as they appear in the message content</info>
          * @type {Collection<Snowflake, CrosspostedChannel>}
          */
-        this.crosspostedChannels = new Collection(crosspostedChannels);
+        this.crosspostedChannels = new Collection<Snowflake, CrosspostedChannel>(crosspostedChannels);
       } else {
-        this.crosspostedChannels = new Collection();
+        this.crosspostedChannels = new Collection<Snowflake, CrosspostedChannel>();
         const channelTypes = Object.keys(ChannelTypes);
         for (const d of crosspostedChannels) {
           const type = channelTypes[d.type];
           this.crosspostedChannels.set(d.id, {
             channelId: d.id,
             guildId: d.guild_id,
-            type: type ?? 'UNKNOWN',
+            type: isChannelTypeName(type) ? type : 'UNKNOWN',
             name: d.name,
           });
         }
       }
     } else {
-      this.crosspostedChannels = new Collection();
+      this.crosspostedChannels = new Collection<Snowflake, CrosspostedChannel>();
     }
 
     /**
@@ -153,13 +193,15 @@ class MessageMentions {
    */
   get members() {
     if (this._members) return this._members;
-    if (!this.guild) return null;
-    this._members = new Collection();
-    this.users.forEach((user: any) => {
-      const member = this.guild.members.resolve(user);
-      if (member) this._members.set(member.user.id, member);
+    const guild = this.guild;
+    if (!guild) return null;
+    const members = new Collection<Snowflake, GuildMember>();
+    this._members = members;
+    this.users.forEach(user => {
+      const member = guild.members.resolve(user);
+      if (member) members.set(member.user.id, member);
     });
-    return this._members;
+    return members;
   }
 
   /**
@@ -170,9 +212,9 @@ class MessageMentions {
    */
   get channels() {
     if (this._channels) return this._channels;
-    this._channels = new Collection();
+    this._channels = new Collection<Snowflake, AnyChannel>();
     let matches;
-    while ((matches = (this.constructor as any).CHANNELS_PATTERN.exec(this._content)) !== null) {
+    while ((matches = MessageMentions.CHANNELS_PATTERN.exec(this._content)) !== null) {
       const chan = this.client.channels.cache.get(matches[1]);
       if (chan) this._channels.set(chan.id, chan);
     }
@@ -187,9 +229,9 @@ class MessageMentions {
    */
   get parsedUsers() {
     if (this._parsedUsers) return this._parsedUsers;
-    this._parsedUsers = new Collection();
+    this._parsedUsers = new Collection<Snowflake, User>();
     let matches;
-    while ((matches = (this.constructor as any).USERS_PATTERN.exec(this._content)) !== null) {
+    while ((matches = MessageMentions.USERS_PATTERN.exec(this._content)) !== null) {
       const user = this.client.users.cache.get(matches[1]);
       if (user) this._parsedUsers.set(user.id, user);
     }
@@ -214,8 +256,13 @@ class MessageMentions {
    * @returns {boolean}
    */
   has(
-    data: any,
-    { ignoreDirect = false, ignoreRoles = false, ignoreRepliedUser = false, ignoreEveryone = false }: any = {},
+    data: UserResolvable | RoleResolvable | ChannelResolvable,
+    {
+      ignoreDirect = false,
+      ignoreRoles = false,
+      ignoreRepliedUser = false,
+      ignoreEveryone = false,
+    }: MessageMentionsHasOptions = {},
   ) {
     const user = this.client.users.resolve(data);
 

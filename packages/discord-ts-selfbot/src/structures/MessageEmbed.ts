@@ -1,7 +1,52 @@
 import process from 'node:process';
+import { EmbedType } from 'discord-api-types/v10';
+import type { APIEmbed } from 'discord-api-types/v10';
 import _errorsModule from '../errors';
 const { RangeError } = _errorsModule;
 import Util from '../util/Util';
+import type {
+  ColorResolvable,
+  EmbedAuthorData,
+  EmbedField,
+  EmbedFieldData,
+  EmbedFooterData,
+  MessageEmbedAuthor,
+  MessageEmbedFooter,
+  MessageEmbedImage,
+  MessageEmbedProvider,
+  MessageEmbedThumbnail,
+  MessageEmbedVideo,
+} from '../../typings';
+
+function isEmbedType(value: string): value is EmbedType {
+  return (
+    value === EmbedType.Rich ||
+    value === EmbedType.Image ||
+    value === EmbedType.Video ||
+    value === EmbedType.GIFV ||
+    value === EmbedType.Article ||
+    value === EmbedType.Link ||
+    value === EmbedType.AutoModerationMessage ||
+    value === EmbedType.PollResult ||
+    value === EmbedType.Components
+  );
+}
+
+type MessageEmbedInput = {
+  type?: string;
+  title?: string | null;
+  description?: string | null;
+  url?: string | null;
+  timestamp?: Date | number | string | null;
+  color?: ColorResolvable | null;
+  fields?: Array<EmbedFieldData | EmbedField>;
+  author?: (Partial<MessageEmbedAuthor> & { icon_url?: string; proxy_icon_url?: string }) | null;
+  thumbnail?: (Partial<MessageEmbedThumbnail> & { proxy_url?: string }) | null;
+  image?: (Partial<MessageEmbedImage> & { proxy_url?: string }) | null;
+  video?: (Partial<MessageEmbedVideo> & { proxy_url?: string }) | null;
+  footer?: (Partial<MessageEmbedFooter> & { icon_url?: string; proxy_icon_url?: string }) | null;
+  provider?: Partial<MessageEmbedProvider> | null;
+};
 
 let deprecationEmittedForSetAuthor = false;
 let deprecationEmittedForSetFooter = false;
@@ -13,7 +58,20 @@ let deprecationEmittedForAddField = false;
  * Represents an embed in a message (image/video preview, rich embed, etc.)
  */
 class MessageEmbed {
-  [key: string]: any;
+  declare type: string;
+  declare title: string | null;
+  declare description: string | null;
+  declare url: string | null;
+  declare color: number | null;
+  declare timestamp: number | null;
+  declare fields: EmbedField[];
+  declare thumbnail: MessageEmbedThumbnail | null;
+  declare image: MessageEmbedImage | null;
+  declare video: MessageEmbedVideo | null;
+  declare author: MessageEmbedAuthor | null;
+  declare provider: MessageEmbedProvider | null;
+  declare footer: MessageEmbedFooter | null;
+
   /**
    * A `Partial` object is a representation of any existing object.
    * This object contains between 0 and all of the original objects parameters.
@@ -41,11 +99,11 @@ class MessageEmbed {
   /**
    * @param {MessageEmbed|MessageEmbedOptions|APIEmbed} [data={}] MessageEmbed to clone or raw embed data
    */
-  constructor(data: any = {}, skipValidation: any = false) {
+  constructor(data: MessageEmbed | MessageEmbedInput = {}, skipValidation = false) {
     this.setup(data, skipValidation);
   }
 
-  setup(data: any, skipValidation: any) {
+  setup(data: MessageEmbedInput, skipValidation: boolean) {
     /**
      * The type of this embed, either:
      * * `rich` - a generic embed rendered from embed attributes
@@ -88,7 +146,7 @@ class MessageEmbed {
      * The timestamp of this embed
      * @type {?number}
      */
-    this.timestamp = 'timestamp' in data ? new Date(data.timestamp).getTime() : null;
+    this.timestamp = data.timestamp != null ? new Date(data.timestamp).getTime() : null;
 
     /**
      * Represents a field of a MessageEmbed
@@ -105,8 +163,8 @@ class MessageEmbed {
     this.fields = [];
     if (data.fields) {
       this.fields = skipValidation
-        ? data.fields.map(Util.cloneObject)
-        : (this.constructor as any).normalizeFields(data.fields);
+        ? data.fields.map(field => ({ ...field, inline: field.inline ?? false }))
+        : MessageEmbed.normalizeFields(data.fields);
     }
 
     /**
@@ -124,7 +182,7 @@ class MessageEmbed {
      */
     this.thumbnail = data.thumbnail
       ? {
-          url: data.thumbnail.url,
+          url: data.thumbnail.url ?? '',
           proxyURL: data.thumbnail.proxyURL ?? data.thumbnail.proxy_url,
           height: data.thumbnail.height,
           width: data.thumbnail.width,
@@ -146,7 +204,7 @@ class MessageEmbed {
      */
     this.image = data.image
       ? {
-          url: data.image.url,
+          url: data.image.url ?? '',
           proxyURL: data.image.proxyURL ?? data.image.proxy_url,
           height: data.image.height,
           width: data.image.width,
@@ -191,7 +249,7 @@ class MessageEmbed {
      */
     this.author = data.author
       ? {
-          name: data.author.name,
+          name: data.author.name ?? '',
           url: data.author.url,
           iconURL: data.author.iconURL ?? data.author.icon_url,
           proxyIconURL: data.author.proxyIconURL ?? data.author.proxy_icon_url,
@@ -211,8 +269,8 @@ class MessageEmbed {
      */
     this.provider = data.provider
       ? {
-          name: data.provider.name,
-          url: data.provider.url,
+          name: data.provider.name ?? '',
+          url: data.provider.url ?? '',
         }
       : null;
 
@@ -230,7 +288,7 @@ class MessageEmbed {
      */
     this.footer = data.footer
       ? {
-          text: data.footer.text,
+          text: data.footer.text ?? '',
           iconURL: data.footer.iconURL ?? data.footer.icon_url,
           proxyIconURL: data.footer.proxyIconURL ?? data.footer.proxy_icon_url,
         }
@@ -265,7 +323,7 @@ class MessageEmbed {
       (this.title?.length ?? 0) +
       (this.description?.length ?? 0) +
       (this.fields.length >= 1
-        ? this.fields.reduce((prev: any, curr: any) => prev + curr.name.length + curr.value.length, 0)
+        ? this.fields.reduce((prev, curr) => prev + curr.name.length + curr.value.length, 0)
         : 0) +
       (this.footer?.text.length ?? 0) +
       (this.author?.name.length ?? 0)
@@ -277,21 +335,27 @@ class MessageEmbed {
    * @param {MessageEmbed|APIEmbed} embed The embed to compare with
    * @returns {boolean}
    */
-  equals(embed: any) {
+  equals(embed: MessageEmbed | MessageEmbedInput) {
+    const authorIconURL = embed.author
+      ? (embed.author.iconURL ?? ('icon_url' in embed.author ? embed.author.icon_url : undefined))
+      : undefined;
+    const footerIconURL = embed.footer
+      ? (embed.footer.iconURL ?? ('icon_url' in embed.footer ? embed.footer.icon_url : undefined))
+      : undefined;
     return (
       this.type === embed.type &&
       this.author?.name === embed.author?.name &&
       this.author?.url === embed.author?.url &&
-      this.author?.iconURL === (embed.author?.iconURL ?? embed.author?.icon_url) &&
+      this.author?.iconURL === authorIconURL &&
       this.color === embed.color &&
       this.title === embed.title &&
       this.description === embed.description &&
       this.url === embed.url &&
       this.timestamp === embed.timestamp &&
-      this.fields.length === embed.fields.length &&
-      this.fields.every((field: any, i: any) => this._fieldEquals(field, embed.fields[i])) &&
+      this.fields.length === (embed.fields?.length ?? 0) &&
+      this.fields.every((field, i) => this._fieldEquals(field, embed.fields?.[i])) &&
       this.footer?.text === embed.footer?.text &&
-      this.footer?.iconURL === (embed.footer?.iconURL ?? embed.footer?.icon_url) &&
+      this.footer?.iconURL === footerIconURL &&
       this.image?.url === embed.image?.url &&
       this.thumbnail?.url === embed.thumbnail?.url &&
       this.video?.url === embed.video?.url &&
@@ -307,8 +371,8 @@ class MessageEmbed {
    * @returns {boolean}
    * @private
    */
-  _fieldEquals(field: any, other: any) {
-    return field.name === other.name && field.value === other.value && field.inline === other.inline;
+  _fieldEquals(field: EmbedField, other?: EmbedFieldData) {
+    return field.name === other?.name && field.value === other?.value && field.inline === other?.inline;
   }
 
   /**
@@ -319,7 +383,7 @@ class MessageEmbed {
    * @returns {MessageEmbed}
    * @deprecated This method is a wrapper for {@link MessageEmbed#addFields}. Use that instead.
    */
-  addField(name: any, value: any, inline: any) {
+  addField(name: string, value: string, inline?: boolean) {
     if (!deprecationEmittedForAddField) {
       process.emitWarning(
         // eslint-disable-next-line max-len
@@ -337,8 +401,8 @@ class MessageEmbed {
    * @param {...EmbedFieldData|EmbedFieldData[]} fields The fields to add
    * @returns {MessageEmbed}
    */
-  addFields(...fields: any[]) {
-    this.fields.push(...(this.constructor as any).normalizeFields(fields));
+  addFields(...fields: EmbedFieldData[] | EmbedFieldData[][]) {
+    this.fields.push(...MessageEmbed.normalizeFields(...fields));
     return this;
   }
 
@@ -349,8 +413,8 @@ class MessageEmbed {
    * @param {...EmbedFieldData|EmbedFieldData[]} [fields] The replacing field objects
    * @returns {MessageEmbed}
    */
-  spliceFields(index: any, deleteCount: any, ...fields: any[]) {
-    this.fields.splice(index, deleteCount, ...(this.constructor as any).normalizeFields(...fields));
+  spliceFields(index: number, deleteCount: number, ...fields: EmbedFieldData[] | EmbedFieldData[][]) {
+    this.fields.splice(index, deleteCount, ...MessageEmbed.normalizeFields(...fields));
     return this;
   }
 
@@ -359,8 +423,8 @@ class MessageEmbed {
    * @param {...EmbedFieldData|EmbedFieldData[]} fields The fields to set
    * @returns {MessageEmbed}
    */
-  setFields(...fields: any[]) {
-    this.spliceFields(0, this.fields.length, fields);
+  setFields(...fields: EmbedFieldData[] | EmbedFieldData[][]) {
+    this.spliceFields(0, this.fields.length, ...fields);
     return this;
   }
 
@@ -382,9 +446,9 @@ class MessageEmbed {
    * <warn>This parameter is **deprecated**. Use the `options` parameter instead.</warn>
    * @returns {MessageEmbed}
    */
-  setAuthor(options: any, deprecatedIconURL: any, deprecatedURL: any) {
+  setAuthor(options: EmbedAuthorData | string | null, deprecatedIconURL?: string, deprecatedURL?: string) {
     if (options === null) {
-      this.author = {};
+      this.author = null;
       return this;
     }
 
@@ -411,7 +475,7 @@ class MessageEmbed {
    * @param {ColorResolvable} color The color of the embed
    * @returns {MessageEmbed}
    */
-  setColor(color: any) {
+  setColor(color: ColorResolvable) {
     this.color = Util.resolveColor(color);
     return this;
   }
@@ -421,7 +485,7 @@ class MessageEmbed {
    * @param {string} description The description
    * @returns {MessageEmbed}
    */
-  setDescription(description: any) {
+  setDescription(description: string) {
     this.description = Util.verifyString(description, RangeError, 'EMBED_DESCRIPTION');
     return this;
   }
@@ -441,9 +505,9 @@ class MessageEmbed {
    * <warn>This parameter is **deprecated**. Use the `options` parameter instead.</warn>
    * @returns {MessageEmbed}
    */
-  setFooter(options: any, deprecatedIconURL: any) {
+  setFooter(options: EmbedFooterData | string | null, deprecatedIconURL?: string) {
     if (options === null) {
-      this.footer = undefined;
+      this.footer = null;
       return this;
     }
 
@@ -470,7 +534,7 @@ class MessageEmbed {
    * @param {string} url The URL of the image
    * @returns {MessageEmbed}
    */
-  setImage(url: any) {
+  setImage(url: string) {
     this.image = { url };
     return this;
   }
@@ -480,7 +544,7 @@ class MessageEmbed {
    * @param {string} url The URL of the thumbnail
    * @returns {MessageEmbed}
    */
-  setThumbnail(url: any) {
+  setThumbnail(url: string) {
     this.thumbnail = { url };
     return this;
   }
@@ -491,7 +555,7 @@ class MessageEmbed {
    * If `null` then the timestamp will be unset (i.e. when editing an existing {@link MessageEmbed})
    * @returns {MessageEmbed}
    */
-  setTimestamp(timestamp: any = Date.now()) {
+  setTimestamp(timestamp: Date | number | null = Date.now()) {
     if (timestamp instanceof Date) timestamp = timestamp.getTime();
     this.timestamp = timestamp;
     return this;
@@ -502,7 +566,7 @@ class MessageEmbed {
    * @param {string} title The title
    * @returns {MessageEmbed}
    */
-  setTitle(title: any) {
+  setTitle(title: string) {
     this.title = Util.verifyString(title, RangeError, 'EMBED_TITLE');
     return this;
   }
@@ -512,7 +576,7 @@ class MessageEmbed {
    * @param {string} url The URL
    * @returns {MessageEmbed}
    */
-  setURL(url: any) {
+  setURL(url: string) {
     this.url = url;
     return this;
   }
@@ -521,36 +585,58 @@ class MessageEmbed {
    * Transforms the embed to a plain object.
    * @returns {APIEmbed} The raw data of this embed
    */
-  toJSON() {
+  toJSON(): APIEmbed {
     return {
-      title: this.title,
-      type: this.type,
-      description: this.description,
-      url: this.url,
-      timestamp: this.timestamp && new Date(this.timestamp),
-      color: this.color,
+      title: this.title ?? undefined,
+      type: isEmbedType(this.type) ? this.type : EmbedType.Rich,
+      description: this.description ?? undefined,
+      url: this.url ?? undefined,
+      timestamp: this.timestamp ? new Date(this.timestamp).toISOString() : undefined,
+      color: this.color ?? undefined,
       fields: this.fields,
-      thumbnail: this.thumbnail,
-      image: this.image,
-      author: this.author && {
-        name: this.author.name,
-        url: this.author.url,
-        icon_url: this.author.iconURL,
-      },
-      video: this.video && {
-        url: this.video.url,
-        proxyURL: this.video.proxyURL,
-        height: this.video.height,
-        width: this.video.width,
-      },
-      provider: this.provider && {
-        name: this.provider.name,
-        url: this.provider.url,
-      },
-      footer: this.footer && {
-        text: this.footer.text,
-        icon_url: this.footer.iconURL,
-      },
+      thumbnail: this.thumbnail
+        ? {
+            url: this.thumbnail.url,
+            proxy_url: this.thumbnail.proxyURL,
+            height: this.thumbnail.height,
+            width: this.thumbnail.width,
+          }
+        : undefined,
+      image: this.image
+        ? {
+            url: this.image.url,
+            proxy_url: this.image.proxyURL,
+            height: this.image.height,
+            width: this.image.width,
+          }
+        : undefined,
+      author: this.author
+        ? {
+            name: this.author.name,
+            url: this.author.url,
+            icon_url: this.author.iconURL,
+          }
+        : undefined,
+      video: this.video
+        ? {
+            url: this.video.url,
+            proxy_url: this.video.proxyURL,
+            height: this.video.height,
+            width: this.video.width,
+          }
+        : undefined,
+      provider: this.provider
+        ? {
+            name: this.provider.name,
+            url: this.provider.url,
+          }
+        : undefined,
+      footer: this.footer
+        ? {
+            text: this.footer.text,
+            icon_url: this.footer.iconURL,
+          }
+        : undefined,
     };
   }
 
@@ -561,7 +647,7 @@ class MessageEmbed {
    * @param {boolean} [inline=false] Set the field to display inline
    * @returns {EmbedField}
    */
-  static normalizeField(name: any, value: any, inline: any = false) {
+  static normalizeField(name: string, value: string, inline = false): EmbedField {
     return {
       name: Util.verifyString(name, RangeError, 'EMBED_FIELD_NAME', false),
       value: Util.verifyString(value, RangeError, 'EMBED_FIELD_VALUE', false),
@@ -581,11 +667,11 @@ class MessageEmbed {
    * @param {...EmbedFieldData|EmbedFieldData[]} fields Fields to normalize
    * @returns {EmbedField[]}
    */
-  static normalizeFields(...fields: any[]) {
+  static normalizeFields(...fields: Array<EmbedFieldData | EmbedFieldData[]>): EmbedField[] {
     return fields
       .flat(2)
-      .map((field: any) =>
-        this.normalizeField(field.name, field.value, typeof field.inline === 'boolean' ? field.inline : false),
+      .map(field =>
+        MessageEmbed.normalizeField(field.name, field.value, typeof field.inline === 'boolean' ? field.inline : false),
       );
   }
 }

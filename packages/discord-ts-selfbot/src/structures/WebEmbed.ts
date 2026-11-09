@@ -1,6 +1,34 @@
 import _errorsModule from '../errors';
 const { RangeError } = _errorsModule;
 import Util from '../util/Util';
+import type {
+  ColorResolvable,
+  EmbedAuthorData,
+  EmbedFieldData,
+  MessageEmbedAuthor,
+  MessageEmbedFooter,
+  MessageEmbedImage,
+  MessageEmbedProvider,
+  MessageEmbedThumbnail,
+  MessageEmbedVideo,
+} from '../../typings';
+
+type WebEmbedInput = {
+  title?: string | null;
+  description?: string | null;
+  url?: string | null;
+  timestamp?: Date | number | string | null;
+  color?: ColorResolvable | null;
+  fields?: EmbedFieldData[];
+  author?: (Partial<MessageEmbedAuthor> & { icon_url?: string; proxy_icon_url?: string }) | null;
+  thumbnail?: (Partial<MessageEmbedThumbnail> & { proxy_url?: string }) | null;
+  image?: (Partial<MessageEmbedImage> & { proxy_url?: string }) | null;
+  video?: (Partial<MessageEmbedVideo> & { proxy_url?: string }) | null;
+  footer?: (Partial<MessageEmbedFooter> & { icon_url?: string; proxy_icon_url?: string }) | null;
+  provider?: Partial<MessageEmbedProvider> | null;
+  imageType?: 'thumbnail' | 'image';
+  redirect?: string;
+};
 const baseURL = 'https://webembed-sb.onrender.com/embed?';
 const hiddenCharter =
   '||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||';
@@ -14,12 +42,24 @@ const hiddenCharter =
  * - Description limit 350 characters
  */
 class WebEmbed {
-  [key: string]: any;
-  declare static hiddenEmbed: any;
+  declare author: MessageEmbedAuthor | null;
+  declare baseURL?: string;
+  declare color: number | null;
+  declare description: string | null;
+  declare image: MessageEmbedImage | null;
+  declare thumbnail: MessageEmbedThumbnail | null;
+  declare provider: MessageEmbedProvider | null;
+  declare title: string | null;
+  declare url: string | null;
+  declare video: MessageEmbedVideo | null;
+  declare imageType: 'thumbnail' | 'image';
+  declare redirect?: string;
+
+  declare static hiddenEmbed: string;
   /**
    * @param {WebEmbed} [data={}] Raw data
    */
-  constructor(data: any = {}) {
+  constructor(data: WebEmbed | WebEmbedInput = {}) {
     /**
      * A `Partial` object is a representation of any existing object.
      * This object contains between 0 and all of the original objects parameters.
@@ -53,7 +93,7 @@ class WebEmbed {
    * @private
    * @param {Object} data The data for the embed
    */
-  _setup(data: any) {
+  _setup(data: WebEmbedInput) {
     /**
      * Type image of this embed
      * @type {?thumbnail | image}
@@ -98,7 +138,7 @@ class WebEmbed {
      */
     this.image = data.image
       ? {
-          url: data.image.url,
+          url: data.image.url ?? '',
           proxyURL: data.image.proxyURL ?? data.image.proxy_url,
           height: data.image.height,
           width: data.image.width,
@@ -111,7 +151,7 @@ class WebEmbed {
      */
     this.thumbnail = data.thumbnail
       ? {
-          url: data.thumbnail.url,
+          url: data.thumbnail.url ?? '',
           proxyURL: data.thumbnail.proxyURL ?? data.thumbnail.proxy_url,
           height: data.thumbnail.height,
           width: data.thumbnail.width,
@@ -134,7 +174,7 @@ class WebEmbed {
      */
     this.video = data.video
       ? {
-          url: data.video.url,
+          url: data.video.url ?? '',
           proxyURL: data.video.proxyURL ?? data.video.proxy_url,
           height: data.video.height,
           width: data.video.width,
@@ -154,7 +194,7 @@ class WebEmbed {
      */
     this.author = data.author
       ? {
-          name: data.author.name,
+          name: data.author.name ?? '',
           url: data.author.url,
         }
       : null;
@@ -172,8 +212,8 @@ class WebEmbed {
      */
     this.provider = data.provider
       ? {
-          name: data.provider.name,
-          url: data.provider.name,
+          name: data.provider.name ?? '',
+          url: data.provider.url ?? '',
         }
       : null;
 
@@ -195,9 +235,9 @@ class WebEmbed {
    * Provide `null` to remove the author data.
    * @returns {WebEmbed}
    */
-  setAuthor(options: any) {
+  setAuthor(options: EmbedAuthorData | null) {
     if (options === null) {
-      this.author = {};
+      this.author = null;
       return this;
     }
     const { name, url } = options;
@@ -220,15 +260,15 @@ class WebEmbed {
    * Provide `null` to remove the provider data.
    * @returns {WebEmbed}
    */
-  setProvider(options: any) {
+  setProvider(options: Partial<MessageEmbedProvider> | null) {
     if (options === null) {
-      this.provider = {};
+      this.provider = null;
       return this;
     }
     const { name, url } = options;
     this.provider = {
-      name: Util.verifyString(name, RangeError, 'EMBED_PROVIDER_NAME'),
-      url,
+      name: Util.verifyString(name ?? '', RangeError, 'EMBED_PROVIDER_NAME'),
+      url: url ?? '',
     };
     return this;
   }
@@ -238,7 +278,7 @@ class WebEmbed {
    * @param {ColorResolvable} color The color of the embed
    * @returns {WebEmbed}
    */
-  setColor(color: any) {
+  setColor(color: ColorResolvable) {
     this.color = Util.resolveColor(color);
     return this;
   }
@@ -248,7 +288,7 @@ class WebEmbed {
    * @param {string} description The description (Limit 350 characters)
    * @returns {WebEmbed}
    */
-  setDescription(description: any) {
+  setDescription(description: string) {
     this.description = Util.verifyString(description, RangeError, 'EMBED_DESCRIPTION');
     return this;
   }
@@ -258,10 +298,10 @@ class WebEmbed {
    * @param {string} url The URL of the image
    * @returns {WebEmbed}
    */
-  setImage(url: any) {
+  setImage(url: string) {
     if (this.thumbnail && this.thumbnail.url) {
       console.warn('You can only set image or thumbnail per embed.');
-      this.thumbnail.url = null;
+      this.thumbnail = null;
     }
     this.imageType = 'image';
     this.image = { url };
@@ -273,10 +313,10 @@ class WebEmbed {
    * @param {string} url The URL of the image
    * @returns {WebEmbed}
    */
-  setThumbnail(url: any) {
+  setThumbnail(url: string) {
     if (this.image && this.image.url) {
       console.warn('You can only set image or thumbnail per embed.');
-      this.image.url = null;
+      this.image = null;
     }
     this.imageType = 'thumbnail';
     this.thumbnail = { url };
@@ -288,7 +328,7 @@ class WebEmbed {
    * @param {string} url The URL of the video
    * @returns {WebEmbed}
    */
-  setVideo(url: any) {
+  setVideo(url: string) {
     this.video = { url };
     return this;
   }
@@ -298,7 +338,7 @@ class WebEmbed {
    * @param {string} title The title
    * @returns {WebEmbed}
    */
-  setTitle(title: any) {
+  setTitle(title: string) {
     this.title = Util.verifyString(title, RangeError, 'EMBED_TITLE');
     return this;
   }
@@ -308,7 +348,7 @@ class WebEmbed {
    * @param {string} url The URL
    * @returns {WebEmbed}
    */
-  setURL(url: any) {
+  setURL(url: string) {
     this.url = url;
     return this;
   }
@@ -318,7 +358,7 @@ class WebEmbed {
    * @param {string} url The URL
    * @returns {WebEmbed}
    */
-  setRedirect(url: any) {
+  setRedirect(url: string) {
     this.redirect = url;
     return this;
   }
@@ -370,7 +410,7 @@ class WebEmbed {
   }
 }
 
-(WebEmbed as any).hiddenEmbed = hiddenCharter;
+WebEmbed.hiddenEmbed = hiddenCharter;
 
 export default WebEmbed;
 export { WebEmbed };

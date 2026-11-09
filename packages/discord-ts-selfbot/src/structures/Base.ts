@@ -5,6 +5,7 @@ import Util from '../util/Util';
  * @abstract
  */
 class Base {
+  declare client: import('../client/Client').default;
   [key: string]: any;
 
   constructor(client: any) {

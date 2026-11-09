@@ -27,6 +27,7 @@ const validateName = (stringName: any) =>
  * @interface
  */
 class TextBasedChannel {
+  declare client: import('../../client/Client').default;
   [key: string]: any;
   constructor() {
     /**
@@ -198,22 +199,23 @@ class TextBasedChannel {
     }
 
     const { data, files } = await messagePayload.resolveFiles();
+    const fileList = files ?? [];
     // New API
-    const attachments = await Util.getUploadURL(this.client, this.id, files);
+    const attachments = await Util.getUploadURL(this.client, this.id, fileList);
     const requestPromises = attachments.map(async (attachment: any) => {
-      await Util.uploadFile(files[attachment.id].file, attachment.upload_url);
+      await Util.uploadFile(fileList[attachment.id].file, attachment.upload_url);
       return {
         id: attachment.id,
-        filename: files[attachment.id].name,
+        filename: fileList[attachment.id].name,
         uploaded_filename: attachment.upload_filename,
-        description: files[attachment.id].description,
-        duration_secs: files[attachment.id].duration_secs,
-        waveform: files[attachment.id].waveform,
+        description: fileList[attachment.id].description,
+        duration_secs: fileList[attachment.id].duration_secs,
+        waveform: fileList[attachment.id].waveform,
       };
     });
     const attachmentsData = await Promise.all(requestPromises);
     attachmentsData.sort((a, b) => parseInt(a.id) - parseInt(b.id));
-    data.attachments = attachmentsData;
+    if (data) Object.assign(data, { attachments: attachmentsData });
     // Empty Files
     const d = await this.client.api.channels[this.id].messages.post({ data });
 

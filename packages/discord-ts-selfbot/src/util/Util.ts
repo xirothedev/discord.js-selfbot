@@ -5,6 +5,10 @@ import process from 'node:process';
 import { setTimeout } from 'node:timers';
 import { Collection } from '@discordjs/collection';
 import { fetch } from 'undici';
+import type { APIPartialEmoji } from 'discord-api-types/v10';
+import type Client from '../client/Client';
+import type { Message } from '../structures/Message';
+import type { Modal } from '../structures/Modal';
 import _ConstantsModule from './Constants';
 const { Colors, Events } = _ConstantsModule;
 import _errorsModule from '../errors';
@@ -420,12 +424,24 @@ class Util extends null {
    * @returns {?RawEmoji}
    * @private
    */
-  static resolvePartialEmoji(emoji: Record<string, unknown>) {
+  static resolvePartialEmoji(emoji: unknown): APIPartialEmoji | null {
     if (!emoji) return null;
-    if (typeof emoji === 'string') return /^\d{17,19}$/.test(emoji) ? { id: emoji } : Util.parseEmoji(emoji);
-    const { id, name, animated } = emoji as { id?: unknown; name?: unknown; animated?: unknown };
+    if (typeof emoji === 'string') {
+      if (/^\d{17,19}$/.test(emoji)) return { id: emoji, name: null };
+      const parsed = Util.parseEmoji(emoji);
+      if (!parsed) return null;
+      return { id: parsed.id ?? null, name: parsed.name, animated: parsed.animated };
+    }
+    if (typeof emoji !== 'object') return null;
+    const id = 'id' in emoji ? emoji.id : undefined;
+    const name = 'name' in emoji ? emoji.name : undefined;
+    const animated = 'animated' in emoji ? emoji.animated : undefined;
     if (!id && !name) return null;
-    return { id, name, animated: Boolean(animated) };
+    return {
+      id: typeof id === 'string' ? id : null,
+      name: typeof name === 'string' ? name : null,
+      animated: Boolean(animated),
+    };
   }
 
   /**
@@ -943,17 +959,26 @@ class Util extends null {
   }
 
   static createPromiseInteraction(
-    client: {
-      removeListener: (e: unknown, l: unknown) => void;
-      on: (e: unknown, l: unknown) => void;
-      incrementMaxListeners: () => void;
-      decrementMaxListeners: () => void;
-    },
+    client: Client,
+    nonce: unknown,
+    timeoutMs?: number,
+    isHandlerDeferUpdate?: boolean,
+    parent?: Message | Modal,
+  ): Promise<Message | Modal>;
+  static createPromiseInteraction(
+    client: Client,
+    nonce: unknown,
+    timeoutMs?: number,
+    isHandlerDeferUpdate?: boolean,
+    parent?: undefined,
+  ): Promise<Message>;
+  static createPromiseInteraction(
+    client: Client,
     nonce: unknown,
     timeoutMs = 5_000,
     isHandlerDeferUpdate = false,
-    parent?: unknown,
-  ) {
+    parent?: Message | Modal,
+  ): Promise<unknown> {
     return new Promise((resolve, reject) => {
       // Waiting for MsgCreate / ModalCreate
       let dataFromInteractionSuccess: unknown;

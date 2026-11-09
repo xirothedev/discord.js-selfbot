@@ -13,6 +13,7 @@ interface ImportSpec {
 
 interface EntityConfig {
   imports: ImportSpec[];
+  generate?: boolean;
   fields?: Record<string, FieldKind>;
   extends?: string;
   rawType?: { name: string; from: string };
@@ -62,6 +63,92 @@ const TSCONFIG = join(PKG, 'tsconfig.json');
  * cannot silently produce an unimported name.
  */
 const CONFIG: Record<string, EntityConfig> = {
+  Application: {
+    imports: [],
+    fields: {},
+    generate: false,
+    fieldTypes: { installParams: 'ClientApplicationInstallParams | null' },
+  },
+  RichPresence: {
+    imports: [],
+    fields: {},
+    generate: false,
+    fieldTypes: { metadata: 'RichPresenceMetadata' },
+  },
+  Message: {
+    rawType: { name: 'RawMessageData', from: '../../typings/rawDataTypes' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '@discordjs/collection', named: ['Collection'] },
+      { from: '../../structures/interfaces/Application', default: 'Application' },
+      { from: '../../structures/MessageAttachment', default: 'MessageAttachment' },
+      { from: '../../structures/MessageEmbed', default: 'MessageEmbed' },
+      { from: '../../structures/MessageMentions', default: 'MessageMentions' },
+      { from: '../../structures/Poll', named: ['Poll'] },
+      { from: '../../structures/Sticker', named: ['Sticker'] },
+      { from: '../../managers/ReactionManager', default: 'ReactionManager' },
+      { from: '../../util/MessageFlags', default: 'MessageFlags' },
+      {
+        from: '../../../typings',
+        named: [
+          'CommandInteractionResolvedData',
+          'MessageActivity',
+          'MessageCall',
+          'MessageInteraction',
+          'MessageInteractionMetadata',
+          'MessageReference',
+          'MessageSnapshot',
+          'MessageType',
+          'RoleSubscriptionData',
+          'SharedClientTheme',
+          'TopLevelComponent',
+          'User',
+        ],
+      },
+    ],
+    fields: {},
+    fieldTypes: {
+      attachments: 'Collection<Snowflake, MessageAttachment>',
+      author: 'User | null',
+      content: 'string | null',
+      guildId: 'Snowflake | null',
+      pinned: 'boolean | null',
+      resolved: 'CommandInteractionResolvedData | null',
+      sharedClientTheme: 'SharedClientTheme | null',
+      stickers: 'Collection<Snowflake, Sticker>',
+      system: 'boolean | null',
+      tts: 'boolean | null',
+      type: 'MessageType | null',
+    },
+  },
+  MessagePayload: {
+    rawType: { name: 'RawMessagePayloadData', from: '../../typings/rawDataTypes' },
+    imports: [
+      {
+        from: '../../../typings',
+        named: ['HTTPAttachmentData', 'MessageOptions', 'MessageTarget', 'WebhookMessageOptions'],
+      },
+      { from: '../../../typings/rawDataTypes', named: ['RawMessagePayloadData'] },
+    ],
+    fields: {},
+    fieldTypes: {
+      options: 'MessageOptions | WebhookMessageOptions',
+      target: 'MessageTarget',
+    },
+  },
+  MessageMentions: {
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '@discordjs/collection', named: ['Collection'] },
+      { from: '../../structures/Role', named: ['Role'] },
+      { from: '../../structures/User', named: ['User'] },
+    ],
+    fields: {},
+    fieldTypes: {
+      users: 'Collection<Snowflake, User>',
+      roles: 'Collection<Snowflake, Role>',
+    },
+  },
   Role: {
     imports: [
       { from: 'discord-api-types/v10', named: ['Snowflake'] },
@@ -558,7 +645,7 @@ ${body}
 
 function generateSchema(results: EntityResult[]): string {
   const generated = results
-    .filter(result => result.rawType && generatedNames.has(result.name))
+    .filter(result => result.rawType && generatedNames.has(result.name) && CONFIG[result.name]?.generate !== false)
     .sort((a, b) => a.name.localeCompare(b.name));
   const rawImports = new Map<string, string[]>();
   const patchImports = new Map<string, string[]>();
@@ -698,7 +785,7 @@ if (report) {
 if (check) {
   let ok = true;
   for (const result of results) {
-    if (!generatedNames.has(result.name) || !result.rawType) continue;
+    if (!generatedNames.has(result.name) || !result.rawType || CONFIG[result.name]?.generate === false) continue;
     ok = checkFile(join(ENTITIES, `${kebab(result.name)}.ts`), generateEntity(result)) && ok;
   }
   if (!filter) ok = checkFile(SCHEMA, generateSchema(results)) && ok;

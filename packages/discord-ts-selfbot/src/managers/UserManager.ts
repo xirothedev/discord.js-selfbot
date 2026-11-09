@@ -129,7 +129,7 @@ class UserManager extends CachedManager {
   resolveId(user: any) {
     if (user instanceof ThreadMember) return user.id;
     if (user instanceof GuildMember) return user.user.id;
-    if (user instanceof Message) return user.author.id;
+    if (user instanceof Message) return user.author?.id ?? null;
     return super.resolveId(user);
   }
 }

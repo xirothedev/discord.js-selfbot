@@ -4,6 +4,7 @@ import { Collection } from '@discordjs/collection';
 import _errorsModule from '../../errors';
 const { TypeError } = _errorsModule;
 import Util from '../../util/Util';
+import type { CollectorOptions } from '../../../typings';
 
 /**
  * Filter to be applied to the collector.
@@ -27,7 +28,9 @@ import Util from '../../util/Util';
  * @extends {EventEmitter}
  * @abstract
  */
-class Collector extends EventEmitter {
+class Collector<K = unknown, V = unknown, F extends unknown[] = []> extends EventEmitter {
+  declare collected: Collection<K, V>;
+  declare options: CollectorOptions<[V, ...F]>;
   [key: string]: any;
   constructor(client: any, options: any = {}) {
     super();
@@ -57,7 +60,7 @@ class Collector extends EventEmitter {
      * The items collected by this collector
      * @type {Collection}
      */
-    this.collected = new Collection();
+    this.collected = new Collection<K, V>();
 
     /**
      * Whether this collector has finished collecting

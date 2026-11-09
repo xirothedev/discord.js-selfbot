@@ -1,16 +1,41 @@
 import BaseMessageComponent from './BaseMessageComponent';
+import { ButtonStyle, ComponentType } from 'discord-api-types/v10';
+import type { APIButtonComponent, APIMessageComponentEmoji, APIPartialEmoji } from 'discord-api-types/v10';
 import _errorsModule from '../errors';
 const { RangeError } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
-const { MessageButtonStyles, MessageComponentTypes } = _ConstantsModule;
+const { MessageButtonStyles } = _ConstantsModule;
 import Util from '../util/Util';
+import type {
+  EmojiIdentifierResolvable,
+  MessageButtonOptions,
+  MessageButtonStyle,
+  MessageButtonStyleResolvable,
+} from '../../typings';
+
+type MessageButtonInput = {
+  label?: string | null;
+  customId?: string | null;
+  custom_id?: string | null;
+  style?: MessageButtonStyleResolvable | ButtonStyle | null;
+  emoji?: EmojiIdentifierResolvable | APIPartialEmoji | APIMessageComponentEmoji | null;
+  url?: string | null;
+  disabled?: boolean;
+};
 
 /**
  * Represents a button message component.
  * @extends {BaseMessageComponent}
  */
 class MessageButton extends BaseMessageComponent {
-  [key: string]: any;
+  declare customId: string | null;
+  declare disabled: boolean;
+  declare emoji: APIPartialEmoji | null;
+  declare label: string | null;
+  declare style: MessageButtonStyle | null;
+  declare type: 'BUTTON';
+  declare url: string | null;
+
   /**
    * @typedef {BaseMessageComponentOptions} MessageButtonOptions
    * @property {string} [label] The text to be displayed on this button
@@ -24,13 +49,13 @@ class MessageButton extends BaseMessageComponent {
   /**
    * @param {MessageButton|MessageButtonOptions} [data={}] MessageButton to clone or raw data
    */
-  constructor(data: any = {}) {
+  constructor(data: MessageButton | MessageButtonOptions | APIButtonComponent | MessageButtonInput = {}) {
     super({ type: 'BUTTON' });
 
     this.setup(data);
   }
 
-  setup(data: any) {
+  setup(data: MessageButtonInput) {
     super.setup(data);
     /**
      * The text to be displayed on this button
@@ -74,7 +99,7 @@ class MessageButton extends BaseMessageComponent {
    * @param {string} customId A unique string to be sent in the interaction when clicked
    * @returns {MessageButton}
    */
-  setCustomId(customId: any) {
+  setCustomId(customId: string) {
     this.customId = Util.verifyString(customId, RangeError, 'BUTTON_CUSTOM_ID');
     return this;
   }
@@ -84,7 +109,7 @@ class MessageButton extends BaseMessageComponent {
    * @param {boolean} [disabled=true] Whether this button should be disabled
    * @returns {MessageButton}
    */
-  setDisabled(disabled: any = true) {
+  setDisabled(disabled = true) {
     this.disabled = disabled;
     return this;
   }
@@ -94,7 +119,7 @@ class MessageButton extends BaseMessageComponent {
    * @param {EmojiIdentifierResolvable} emoji The emoji to be displayed on this button
    * @returns {MessageButton}
    */
-  setEmoji(emoji: any) {
+  setEmoji(emoji: EmojiIdentifierResolvable) {
     this.emoji = Util.resolvePartialEmoji(emoji);
     return this;
   }
@@ -104,7 +129,7 @@ class MessageButton extends BaseMessageComponent {
    * @param {string} label The text to be displayed on this button
    * @returns {MessageButton}
    */
-  setLabel(label: any) {
+  setLabel(label: string) {
     this.label = Util.verifyString(label, RangeError, 'BUTTON_LABEL');
     return this;
   }
@@ -114,7 +139,7 @@ class MessageButton extends BaseMessageComponent {
    * @param {MessageButtonStyleResolvable} style The style of this button
    * @returns {MessageButton}
    */
-  setStyle(style: any) {
+  setStyle(style: MessageButtonStyleResolvable) {
     this.style = MessageButton.resolveStyle(style);
     return this;
   }
@@ -125,7 +150,7 @@ class MessageButton extends BaseMessageComponent {
    * @param {string} url The URL of this button
    * @returns {MessageButton}
    */
-  setURL(url: any) {
+  setURL(url: string) {
     this.url = Util.verifyString(url, RangeError, 'BUTTON_URL');
     return this;
   }
@@ -134,15 +159,27 @@ class MessageButton extends BaseMessageComponent {
    * Transforms the button to a plain object.
    * @returns {APIMessageButton} The raw data of this button
    */
-  toJSON() {
-    return {
-      custom_id: this.customId,
+  toJSON(): APIButtonComponent {
+    const base: {
+      disabled: boolean;
+      emoji?: APIMessageComponentEmoji;
+      label?: string;
+      type: ComponentType.Button;
+    } = {
       disabled: this.disabled,
-      emoji: this.emoji,
-      label: this.label,
-      style: MessageButtonStyles[this.style],
-      type: MessageComponentTypes[this.type],
-      url: this.url,
+      emoji: this.emoji
+        ? { id: this.emoji.id ?? undefined, name: this.emoji.name ?? undefined, animated: this.emoji.animated }
+        : undefined,
+      label: this.label ?? undefined,
+      type: ComponentType.Button,
+    };
+    if (this.style === 'LINK') {
+      return { ...base, style: ButtonStyle.Link, url: this.url ?? '' };
+    }
+    return {
+      ...base,
+      style: this.style ? MessageButtonStyles[this.style] : ButtonStyle.Secondary,
+      custom_id: this.customId ?? '',
     };
   }
 
@@ -159,7 +196,7 @@ class MessageButton extends BaseMessageComponent {
    * @returns {MessageButtonStyle}
    * @private
    */
-  static resolveStyle(style: any) {
+  static resolveStyle(style: MessageButtonStyleResolvable | ButtonStyle): MessageButtonStyle {
     return typeof style === 'string' ? style : MessageButtonStyles[style];
   }
 }

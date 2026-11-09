@@ -2,73 +2,44 @@
 
 Status: working list
 Source: `bun tools/schema/generate.ts --report`
-Snapshot: 2026-11-09, after the `Role`, `User`, `ClientUser`, `GuildMember`, `VoiceState`, `GuildBoost`, `AutoModerationRule`, `Team`, `WelcomeScreen`, `StickerPack`, `GuildPreview`, `InviteStageInstance`, `StageInstance`, `Widget`, and `GuildScheduledEvent` passes.
+Snapshot: 2026-11-09, after the `Message`, `MessageMentions`, `MessageEmbed`, `WebEmbed`, `Activity`, `MessageButton`, and `MessagePayload` passes.
 
 ## Summary
 
 | Metric                  | First report | After current pass |
 | ----------------------- | ------------ | ------------------ |
-| Drift rows              | 96           | 42                 |
-| Entities with drift     | 38           | 26                 |
+| Drift rows              | 96           | 12                 |
+| Entities with drift     | 38           | 9                  |
 | Assigned but undeclared | 85           | 82                 |
 | Fields                  | 740          | 741                |
 
-The converted entities have zero drift except `GuildPreview.features` (public string union vs API enum) and `VoiceState.guild` (public `Guild` vs runtime `Guild | null` for the global voice-state cache). The remaining 42 rows fall into four groups.
+All converted entities have zero drift. The remaining 12 rows are all generic classes: their public types carry type parameters that the entity interface cannot express without a generic entity shape. They are deferred to the generic module phase.
 
-## 1. Untyped `_patch` leftovers (18)
+## Remaining drift
 
-The structure still takes `Record<string, unknown>`, so the runtime type is `unknown`/`any`. Applying the Phase 0.5 recipe removes these without a public change.
+| Entity                    | Rows | Fields                                                      |
+| ------------------------- | ---- | ----------------------------------------------------------- |
+| `GuildAuditLogsEntry`     | 5    | `action`, `actionType`, `extra`, `target`, `targetType`     |
+| `GuildAuditLogs`          | 1    | `entries`                                                   |
+| `AutocompleteInteraction` | 1    | `options`                                                   |
+| `CommandInteraction`      | 1    | `options`                                                   |
+| `ContextMenuInteraction`  | 1    | `options`                                                   |
+| `Interaction`             | 1    | `memberPermissions` (`CacheTypeReducer<Cached, ...>`)       |
+| `ApplicationCommand`      | 1    | `permissions` (`ApplicationCommandPermissionsManager<...>`) |
+| `BaseGuildTextChannel`    | 1    | `threads` (`GuildTextThreadManager<...>`)                   |
 
-| Entity                      | Rows | Fields                                                                                      |
-| --------------------------- | ---- | ------------------------------------------------------------------------------------------- |
-| `Message`                   | 8    | `author`, `content`, `system`, `tts`, `type`, `attachments`, `stickers`, `messageSnapshots` |
-| `MessageMentions`           | 3    | `roles`, `users`, `crosspostedChannels`                                                     |
-| `MessageEmbed` / `WebEmbed` | 4    | `author`, `footer`, `provider`                                                              |
-| `Activity`                  | 1    | `emoji`                                                                                     |
-| `MessageButton`             | 1    | `emoji`                                                                                     |
-| `MessagePayload`            | 1    | `data`                                                                                      |
+`Collector.collected`, `InteractionCollector.users`, and `ReactionCollector.users` were closed by adding type parameters to the collector classes.
 
-## 2. Generic classes (15)
+## Closed in this pass
 
-These need type parameters in their entities. Deferred to their module phase, because the entity interface must carry the generic parameters.
-
-- `Collector.collected` (`Collection<K, V>`)
-- `InteractionCollector.users`, `ReactionCollector.users`
-- `GuildAuditLogs.entries` and `GuildAuditLogsEntry.action`, `actionType`, `extra`, `target`, `targetType`
-- `AutocompleteInteraction.options`, `CommandInteraction.options`, `ContextMenuInteraction.options`
-- `Interaction.memberPermissions` (`CacheTypeReducer<Cached, ...>`)
-- `ApplicationCommand.permissions` (`ApplicationCommandPermissionsManager<...>`)
-- `BaseGuildTextChannel.threads` (`GuildTextThreadManager<...>`)
-
-## 3. Selfbot-specific (5)
-
-| Entity           | Field                     | Reason                                                     |
-| ---------------- | ------------------------- | ---------------------------------------------------------- |
-| `DMChannel`      | `messageRequestTimestamp` | `is_message_request_timestamp` is absent from `APIChannel` |
-| `GroupDMChannel` | `ownerId`                 | group-DM user-account shape                                |
-| `Application`    | `installParams`           | user-account application fields                            |
-| `RichPresence`   | `metadata`                | selfbot activity metadata                                  |
-| `VoiceState`     | `guild`                   | `null` for the global voice-state cache                    |
-
-These get local raw types under `src/types/selfbot/` and a `selfbot` tag in `EntitySchema`.
-
-## 4. Real public-typing fixes (4)
-
-| Entity         | Field      | Public                  | Runtime                       | Decision                                                              |
-| -------------- | ---------- | ----------------------- | ----------------------------- | --------------------------------------------------------------------- |
-| `Channel`      | `flags`    | `Readonly<ChannelFlags> | null`                         | `Readonly<ChannelFlags>`                                              | Confirm the constructor default; make the public type nullable only if the runtime can be null |
-| `GuildPreview` | `features` | `GuildFeatures[]`       | `GuildFeature[]`              | Map the API enum to the public string union, or widen the public type |
-| `Message`      | `pinned`   | `boolean`               | `boolean                      | null`                                                                 | Remove the null fallback or widen the public type                                              |
-| `ThreadMember` | `flags`    | `ThreadMemberFlags`     | `Readonly<ThreadMemberFlags>` | Align the public type to `Readonly`                                   |
-
-## Partial-event nullability
-
-`GuildScheduledEvent` records `string | null` for `name` and `... | null` for `privacyLevel`, `entityType`, and `entityMetadata`. The public typings keep the non-null shapes. This is deliberate: a partial event really has `null` fields, and the entity is the runtime truth.
+- **Untyped `_patch` leftovers (18)**: `Message`, `MessageMentions`, `MessageEmbed`/`WebEmbed`, `Activity`, `MessageButton`, `MessagePayload`.
+- **Selfbot-specific (5)**: `DMChannel.messageRequestTimestamp`, `GroupDMChannel.ownerId`, `Application.installParams`, `RichPresence.metadata`, `VoiceState.guild`. `Application` and `RichPresence` use `generate: false` config rows because their public types are nominal (`Permissions`, `RichPresenceMetadata`).
+- **Public-typing fixes (4)**: `Channel.flags` is non-null; `GuildPreview.features` is `GuildFeature[]`; `ThreadMember.flags` is `Readonly<ThreadMemberFlags>`; `Message.pinned` is `boolean | null`.
+- **Message partial nullability**: `author`, `content`, `pinned`, `system`, `tts`, `type`, `guildId`, `resolved`, and `sharedClientTheme` are recorded through `fieldTypes` because partial messages really hold `null`.
 
 ## Next modules
 
-1. `Message` — largest untyped cluster (8 rows) and the biggest `any` surface.
-2. `MessageMentions`, `MessageEmbed`, `WebEmbed` — finish the untyped cluster.
-3. `Activity`, `MessageButton`, `MessagePayload` — the remaining single rows.
-4. `GuildAuditLogs` — generic model, needs its own design pass.
-5. `Channel` / `ThreadMember` / `DMChannel` / `GuildPreview.features` — close the public-type and selfbot fixes.
+1. `GuildAuditLogs` / `GuildAuditLogsEntry` — generic entry model; needs a dedicated design pass.
+2. Interaction option resolvers (`AutocompleteInteraction`, `CommandInteraction`, `ContextMenuInteraction`) and `Interaction.memberPermissions` — generic `CacheTypeReducer` shape.
+3. `ApplicationCommand.permissions` and `BaseGuildTextChannel.threads` — generic managers.
+4. `Base` index signature removal and the final `typings/index.d.ts` `any` sweep.

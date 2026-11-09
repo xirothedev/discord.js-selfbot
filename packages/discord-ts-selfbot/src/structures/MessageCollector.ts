@@ -1,4 +1,6 @@
+import type { Snowflake } from 'discord-api-types/v10';
 import Collector from './interfaces/Collector';
+import type { Message, MessageCollectorOptions } from '../../typings';
 import _ConstantsModule from '../util/Constants';
 const { Events } = _ConstantsModule;
 
@@ -15,7 +17,8 @@ const { Events } = _ConstantsModule;
  * guild ({@link Client#event:guildDelete guildDelete}) is deleted.
  * @extends {Collector}
  */
-class MessageCollector extends Collector {
+class MessageCollector extends Collector<Snowflake, Message> {
+  declare options: MessageCollectorOptions;
   [key: string]: any;
   /**
    * @param {TextBasedChannels} channel The channel

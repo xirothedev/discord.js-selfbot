@@ -122,7 +122,7 @@ class RelationshipManager extends BaseManager {
   resolveId(user: any) {
     if (user instanceof ThreadMember) return user.id;
     if (user instanceof GuildMember) return user.user.id;
-    if (user instanceof Message) return user.author.id;
+    if (user instanceof Message) return user.author?.id ?? null;
     if (user instanceof User) return user.id;
     return user.match(/\d{17,19}/)?.[0] || null;
   }
@@ -135,7 +135,7 @@ class RelationshipManager extends BaseManager {
   resolveUsername(user: any) {
     if (user instanceof ThreadMember) return user.member.user.username;
     if (user instanceof GuildMember) return user.user.username;
-    if (user instanceof Message) return user.author.username;
+    if (user instanceof Message) return user.author?.username ?? null;
     if (user instanceof User) return user.username;
     return user;
   }

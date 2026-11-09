@@ -79,6 +79,7 @@ import {
   ReactionType,
   VoiceChannelEffectSendAnimationType,
   GatewayVoiceChannelEffectSendDispatchData,
+  GuildFeature,
 } from 'discord-api-types/v10';
 import { ChildProcess, ChildProcessWithoutNullStreams } from 'node:child_process';
 import { EventEmitter } from 'node:events';
@@ -554,7 +555,7 @@ export class Activity {
   public readonly createdAt: Date;
   public createdTimestamp: number;
   public details: string | null;
-  public emoji: EmojiIdentifierResolvable | null;
+  public emoji: APIPartialEmoji | null;
   public flags: Readonly<ActivityFlags>;
   public id: string;
   public name: string;
@@ -924,7 +925,7 @@ export abstract class BaseGuild extends Base {
   protected constructor(client: Client, data: RawBaseGuildData);
   public readonly createdAt: Date;
   public readonly createdTimestamp: number;
-  public features: GuildFeatures[];
+  public features: GuildFeature[];
   public icon: string | null;
   public id: Snowflake;
   public name: string;
@@ -1091,7 +1092,7 @@ export abstract class Channel extends Base {
   public id: Snowflake;
   public readonly partial: false;
   public type: keyof typeof ChannelTypes;
-  public flags: Readonly<ChannelFlags> | null;
+  public flags: Readonly<ChannelFlags>;
   public delete(): Promise<this>;
   public fetch(force?: boolean): Promise<this>;
   public isText(): this is TextBasedChannel;
@@ -1793,7 +1794,7 @@ export class DMChannel extends TextBasedChannelMixin(Channel, [
   public type: 'DM';
   public flags: Readonly<ChannelFlags>;
   public messageRequest?: boolean;
-  public messageRequestTimestamp?: number;
+  public messageRequestTimestamp?: number | null;
   public fetch(force?: boolean): Promise<this>;
   public acceptMessageRequest(): Promise<this>;
   public cancelMessageRequest(): Promise<this>;
@@ -2136,7 +2137,7 @@ export class GuildPreview extends Base {
   public discoverySplash: string | null;
   public emojis: Collection<Snowflake, GuildPreviewEmoji>;
   public stickers: Collection<Snowflake, Sticker>;
-  public features: GuildFeatures[];
+  public features: GuildFeature[];
   public icon: string | null;
   public id: Snowflake;
   public name: string;
@@ -2398,6 +2399,7 @@ export class InteractionCollector<T extends Interaction> extends Collector<Snowf
 
 export class InteractionWebhook extends PartialWebhookMixin() {
   public constructor(client: Client, id: Snowflake, token: string);
+  public client: Client;
   public token: string;
   public send(options: string | MessagePayload | InteractionReplyOptions): Promise<Message | APIMessage>;
 }
@@ -2551,7 +2553,7 @@ export class Message<Cached extends boolean = boolean> extends Base {
   public nonce: string | number | null;
   public readonly partial: false;
   public readonly pinnable: boolean;
-  public pinned: boolean;
+  public pinned: boolean | null;
   public reactions: ReactionManager;
   public stickers: Collection<Snowflake, Sticker>;
   public position: number | null;
@@ -3315,9 +3317,9 @@ export class GroupDMChannel extends TextBasedChannelMixin(Channel, [
   public flags: Readonly<ChannelFlags>;
   private _recipients: RawUserData[];
   public type: 'GROUP_DM';
-  public ownerId: Snowflake;
+  public ownerId: Snowflake | null;
   public readonly recipients: Collection<Snowflake, User>;
-  public readonly owner: User;
+  public readonly owner: User | null;
   public iconURL(options?: StaticImageURLOptions): string | null;
   public leave(slient?: boolean): Promise<this>;
   public edit(data: GroupDMChannelEditData): Promise<this>;
@@ -4053,7 +4055,7 @@ export class ThreadChannel extends TextBasedChannelMixin(Channel, ['fetchWebhook
 
 export class ThreadMember<HasMemberData extends boolean = boolean> extends Base {
   private constructor(thread: ThreadChannel, data?: RawThreadMemberData, extra?: unknown);
-  public flags: ThreadMemberFlags;
+  public flags: Readonly<ThreadMemberFlags>;
   public readonly guildMember: HasMemberData extends true ? GuildMember : GuildMember | null;
   public id: Snowflake;
   public readonly joinedAt: Date | null;
@@ -4320,7 +4322,7 @@ export class VoiceState extends Base {
   public readonly channel: VoiceBasedChannel | DMChannel | GroupDMChannel | null;
   public channelId: Snowflake | null;
   public readonly deaf: boolean | null;
-  public guild: Guild;
+  public guild: Guild | null;
   public id: Snowflake;
   public readonly member: GuildMember | null;
   public readonly user: User | null;
@@ -5489,7 +5491,7 @@ export type ActivitiesOptions = Omit<ActivityOptions, 'shardId'>;
 
 export interface ActivityOptions {
   name: string;
-  state?: string;
+  state?: string | null;
   url?: string;
   type?: ActivityType;
   shardId?: number | readonly number[];
@@ -7501,7 +7503,10 @@ export interface IncidentActionsEditOptions {
 export interface HTTPAttachmentData {
   attachment: string | Buffer | Stream;
   name: string;
-  file: Buffer | Stream;
+  file: Buffer | Stream | import('node:stream/web').ReadableStream;
+  description?: string;
+  duration_secs?: number;
+  waveform?: string;
 }
 
 export interface HTTPErrorData {
@@ -7723,6 +7728,11 @@ export type TopLevelComponent =
   | SeparatorComponent
   | TextDisplayComponent;
 
+export interface MessageEditAttachmentData {
+  id: Snowflake;
+  description?: string;
+}
+
 export interface MessageEditOptions {
   attachments?: MessageAttachment[];
   content?: string | null;
@@ -7887,6 +7897,7 @@ export interface MessageSnapshot extends Partialize<
 
 export interface MessageOptions {
   activity?: MessageActivity;
+  ephemeral?: boolean;
   tts?: boolean;
   nonce?: string | number;
   content?: string | null;
@@ -7897,9 +7908,9 @@ export interface MessageOptions {
   reply?: ReplyOptions;
   forward?: ForwardOptions;
   stickers?: StickerResolvable[];
-  attachments?: MessageAttachment[];
+  attachments?: (MessageAttachment | MessageEditAttachmentData)[];
   flags?: BitFieldResolvable<'SUPPRESS_EMBEDS' | 'SUPPRESS_NOTIFICATIONS' | 'IS_VOICE_MESSAGE', number>;
-  poll?: Poll;
+  poll?: PollData;
 }
 
 export type MessageReactionResolvable = MessageReaction | Snowflake | string;

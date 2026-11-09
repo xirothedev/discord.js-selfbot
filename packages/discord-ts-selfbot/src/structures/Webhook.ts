@@ -13,6 +13,7 @@ let deprecationEmittedForFetchMessage = false;
  * Represents a webhook.
  */
 class Webhook {
+  declare client: import('../client/Client').default;
   [key: string]: any;
   constructor(client: any, data: any) {
     /**
@@ -205,9 +206,9 @@ class Webhook {
       data,
       files,
       query: {
-        thread_id: messagePayload.options.threadId,
+        thread_id: 'threadId' in messagePayload.options ? messagePayload.options.threadId : undefined,
         wait: true,
-        with_components: messagePayload.options.withComponents,
+        with_components: 'withComponents' in messagePayload.options ? messagePayload.options.withComponents : undefined,
       },
       auth: false,
       webhook: true,
