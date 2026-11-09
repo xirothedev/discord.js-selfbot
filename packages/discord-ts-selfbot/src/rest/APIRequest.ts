@@ -59,7 +59,7 @@ class APIRequest {
         agent = new ProxyAgent({
           ...r_,
           ciphers: ciphers.join(':'),
-        });
+        } as never);
       }
     }
 

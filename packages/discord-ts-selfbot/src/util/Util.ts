@@ -14,8 +14,8 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 ('use strict');
 
-const has = (o: any, k: any) => Object.prototype.hasOwnProperty.call(o, k);
-const isObject = (d: any) => typeof d === 'object' && d !== null;
+const has = (o: unknown, k: unknown) => Object.prototype.hasOwnProperty.call(o as object, k as PropertyKey);
+const isObject = (d: unknown) => typeof d === 'object' && d !== null;
 
 let deprecationEmittedForSplitMessage = false;
 let deprecationEmittedForRemoveMentions = false;
@@ -35,40 +35,49 @@ class Util extends null {
    * @param {...Object<string, boolean|string>} [props] Specific properties to include/exclude.
    * @returns {Object}
    */
-  static flatten(obj: any, ...props: any[]) {
-    if (!isObject(obj)) return obj;
+  static flatten(obj: unknown, ...props: unknown[]): Record<string, unknown> {
+    if (!isObject(obj)) return obj as Record<string, unknown>;
 
-    const objProps = Object.keys(obj)
+    const objProps = Object.keys(obj as Record<string, unknown>)
       .filter(k => !k.startsWith('_'))
       .map(k => ({ [k]: true }));
 
-    props = objProps.length ? (Object as any).assign(...objProps, ...props) : (Object as any).assign({}, ...props);
+    props = (
+      objProps.length
+        ? (Object as { assign: (...a: unknown[]) => unknown }).assign(...objProps, ...props)
+        : (Object as { assign: (...a: unknown[]) => unknown }).assign({}, ...props)
+    ) as unknown[];
 
-    const out: any = {};
+    const out: Record<string, unknown> = {};
 
-    for (let [prop, newProp] of Object.entries(props)) {
+    for (let [prop, newProp] of Object.entries(props as unknown as Record<string, unknown>)) {
       if (!newProp) continue;
       newProp = newProp === true ? prop : newProp;
 
-      const element = obj[prop];
+      const element = (obj as Record<string, unknown>)[prop];
       const elemIsObj = isObject(element);
-      const valueOf = elemIsObj && typeof element.valueOf === 'function' ? element.valueOf() : null;
-      const hasToJSON = elemIsObj && typeof element.toJSON === 'function';
+      const valueOf =
+        elemIsObj && typeof (element as { valueOf?: () => unknown }).valueOf === 'function'
+          ? (element as { valueOf: () => unknown }).valueOf()
+          : null;
+      const hasToJSON = elemIsObj && typeof (element as { toJSON?: unknown }).toJSON === 'function';
 
       // If it's a Collection, make the array of keys
-      if (element instanceof Collection) out[newProp] = Array.from(element.keys());
+      const key = newProp as string;
+      if (element instanceof Collection) out[key] = Array.from(element.keys());
       // If the valueOf is a Collection, use its array of keys
-      else if (valueOf instanceof Collection) out[newProp] = Array.from(valueOf.keys());
+      else if (valueOf instanceof Collection) out[key] = Array.from(valueOf.keys());
       // If it's an array, call toJSON function on each element if present, otherwise flatten each element
-      else if (Array.isArray(element)) out[newProp] = element.map(e => e.toJSON?.() ?? Util.flatten(e));
+      else if (Array.isArray(element))
+        out[key] = element.map(e => (e as { toJSON?: () => unknown }).toJSON?.() ?? Util.flatten(e));
       // If it's an object with a primitive `valueOf`, use that value
-      else if (typeof valueOf !== 'object') out[newProp] = valueOf;
+      else if (typeof valueOf !== 'object') out[key] = valueOf;
       // If it's an object with a toJSON function, use the return value of it
-      else if (hasToJSON) out[newProp] = element.toJSON();
+      else if (hasToJSON) out[key] = (element as { toJSON: () => unknown }).toJSON();
       // If element is an object, use the flattened version of it
-      else if (typeof element === 'object') out[newProp] = Util.flatten(element);
+      else if (typeof element === 'object') out[key] = Util.flatten(element);
       // If it's a primitive
-      else if (!elemIsObj) out[newProp] = element;
+      else if (!elemIsObj) out[key] = element;
     }
 
     return out;
@@ -91,7 +100,15 @@ class Util extends null {
    * @deprecated This will be removed in the next major version.
    * @returns {string[]}
    */
-  static splitMessage(text: any, { maxLength = 2_000, char = '\n', prepend = '', append = '' }: any = {}) {
+  static splitMessage(
+    text: string,
+    {
+      maxLength = 2_000,
+      char = '\n',
+      prepend = '',
+      append = '',
+    }: { maxLength?: number; char?: string | string[] | RegExp | RegExp[]; prepend?: string; append?: string } = {},
+  ) {
     if (!deprecationEmittedForSplitMessage) {
       process.emitWarning(
         'The Util.splitMessage method is deprecated and will be removed in the next major version.',
@@ -108,13 +125,13 @@ class Util extends null {
       while (char.length > 0 && splitText.some(elem => elem.length > maxLength)) {
         const currentChar = char.shift();
         if (currentChar instanceof RegExp) {
-          splitText = splitText.flatMap(chunk => chunk.match(currentChar));
+          splitText = splitText.flatMap(chunk => chunk.match(currentChar) ?? []) as string[];
         } else {
-          splitText = splitText.flatMap(chunk => chunk.split(currentChar));
+          splitText = splitText.flatMap(chunk => chunk.split(currentChar as string));
         }
       }
     } else {
-      splitText = text.split(char);
+      splitText = text.split(char as string | RegExp);
     }
     if (splitText.some(elem => elem.length > maxLength)) throw new RangeError('SPLIT_MAX_LEN');
     const messages = [];
@@ -171,14 +188,29 @@ class Util extends null {
       bulletedList = false,
       numberedList = false,
       maskedLink = false,
-    }: any = {},
+    }: {
+      codeBlock?: boolean;
+      inlineCode?: boolean;
+      bold?: boolean;
+      italic?: boolean;
+      underline?: boolean;
+      strikethrough?: boolean;
+      spoiler?: boolean;
+      codeBlockContent?: boolean;
+      inlineCodeContent?: boolean;
+      escape?: boolean;
+      heading?: boolean;
+      bulletedList?: boolean;
+      numberedList?: boolean;
+      maskedLink?: boolean;
+    } = {},
   ): string {
     if (!codeBlockContent) {
       return text
         .split('```')
-        .map((subString: any, index: any, array: any): any => {
+        .map((subString: unknown, index: number, array: unknown[]): unknown => {
           if (index % 2 && index !== array.length - 1) return subString;
-          return Util.escapeMarkdown(subString, {
+          return Util.escapeMarkdown(subString as string, {
             inlineCode,
             bold,
             italic,
@@ -198,9 +230,9 @@ class Util extends null {
     if (!inlineCodeContent) {
       return text
         .split(/(?<=^|[^`])`(?=[^`]|$)/g)
-        .map((subString: any, index: any, array: any): any => {
+        .map((subString: unknown, index: number, array: unknown[]): unknown => {
           if (index % 2 && index !== array.length - 1) return subString;
-          return Util.escapeMarkdown(subString, {
+          return Util.escapeMarkdown(subString as string, {
             codeBlock,
             bold,
             italic,
@@ -375,7 +407,7 @@ class Util extends null {
    * @returns {APIEmoji} Object with `animated`, `name`, and `id` properties
    * @private
    */
-  static parseEmoji(text: any) {
+  static parseEmoji(text: string) {
     if (text.includes('%')) text = decodeURIComponent(text);
     if (!text.includes(':')) return { animated: false, name: text, id: null };
     const match = text.match(/<?(?:(a):)?(\w{2,32}):(\d{17,19})?>?/);
@@ -388,10 +420,10 @@ class Util extends null {
    * @returns {?RawEmoji}
    * @private
    */
-  static resolvePartialEmoji(emoji: any) {
+  static resolvePartialEmoji(emoji: Record<string, unknown>) {
     if (!emoji) return null;
     if (typeof emoji === 'string') return /^\d{17,19}$/.test(emoji) ? { id: emoji } : Util.parseEmoji(emoji);
-    const { id, name, animated } = emoji;
+    const { id, name, animated } = emoji as { id?: unknown; name?: unknown; animated?: unknown };
     if (!id && !name) return null;
     return { id, name, animated: Boolean(animated) };
   }
@@ -402,8 +434,8 @@ class Util extends null {
    * @returns {Object}
    * @private
    */
-  static cloneObject(obj: any) {
-    return Object.assign(Object.create(obj), obj);
+  static cloneObject(obj: unknown) {
+    return Object.assign(Object.create(obj as object), obj);
   }
 
   /**
@@ -413,13 +445,15 @@ class Util extends null {
    * @returns {Object}
    * @private
    */
-  static mergeDefault(def: any, given?: any) {
+  static mergeDefault(def: unknown, given?: unknown) {
     if (!given) return def;
-    for (const key in def) {
-      if (!has(given, key) || given[key] === undefined) {
-        given[key] = def[key];
-      } else if (given[key] === Object(given[key])) {
-        given[key] = Util.mergeDefault(def[key], given[key]);
+    const d = def as Record<string, unknown>;
+    const g = given as Record<string, unknown>;
+    for (const key in d) {
+      if (!has(g, key) || g[key] === undefined) {
+        g[key] = d[key];
+      } else if (g[key] === Object(g[key])) {
+        g[key] = Util.mergeDefault(d[key], g[key]);
       }
     }
 
@@ -440,10 +474,10 @@ class Util extends null {
    * @returns {Error}
    * @private
    */
-  static makeError(obj: any) {
-    const err = new Error(obj.message);
-    err.name = obj.name;
-    err.stack = obj.stack;
+  static makeError(obj: Record<string, unknown>) {
+    const err = new Error(String(obj.message));
+    err.name = String(obj.name);
+    err.stack = obj.stack as string;
     return err;
   }
 
@@ -453,11 +487,11 @@ class Util extends null {
    * @returns {MakeErrorOptions}
    * @private
    */
-  static makePlainError(err: any) {
+  static makePlainError(err: Record<string, unknown>) {
     return {
-      name: err.name,
-      message: err.message,
-      stack: err.stack,
+      name: err.name as string,
+      message: err.message as string,
+      stack: err.stack as string,
     };
   }
 
@@ -470,7 +504,7 @@ class Util extends null {
    * @returns {number}
    * @private
    */
-  static moveElementInArray(array: any[], element: any, newIndex: number, offset = false) {
+  static moveElementInArray(array: unknown[], element: unknown, newIndex: number, offset = false) {
     const index = array.indexOf(element);
     newIndex = (offset ? index : 0) + newIndex;
     if (newIndex > -1 && newIndex < array.length) {
@@ -489,8 +523,8 @@ class Util extends null {
    * @returns {string}
    */
   static verifyString(
-    data: any,
-    error: any = Error,
+    data: unknown,
+    error: ErrorConstructor = Error,
     errorMessage = `Expected a string, got ${data} instead.`,
     allowEmpty = true,
   ) {
@@ -512,19 +546,19 @@ class Util extends null {
    * @param {ColorResolvable} color Color to resolve
    * @returns {number} A color
    */
-  static resolveColor(color: any) {
+  static resolveColor(color: unknown) {
     if (typeof color === 'string') {
       if (color === 'RANDOM') return Math.floor(Math.random() * (0xffffff + 1));
       if (color === 'DEFAULT') return 0;
-      color = Colors[color] ?? parseInt(color.replace('#', ''), 16);
+      color = Colors[color as string] ?? parseInt((color as string).replace('#', ''), 16);
     } else if (Array.isArray(color)) {
       color = (color[0] << 16) + (color[1] << 8) + color[2];
     }
 
-    if (color < 0 || color > 0xffffff) throw new RangeError('COLOR_RANGE');
+    if ((color as number) < 0 || (color as number) > 0xffffff) throw new RangeError('COLOR_RANGE');
     else if (Number.isNaN(color)) throw new TypeError('COLOR_CONVERT');
 
-    return color;
+    return color as number;
   }
 
   /**
@@ -532,13 +566,20 @@ class Util extends null {
    * @param {Collection} collection Collection of objects to sort
    * @returns {Collection}
    */
-  static discordSort(collection: any) {
+  static discordSort(collection: unknown) {
     const GuildChannel = require('../structures/GuildChannel');
-    const isGuildChannel = collection.first() instanceof GuildChannel;
-    return collection.toSorted(
+    const c = collection as { first: () => unknown; toSorted: (fn: (a: unknown, b: unknown) => number) => unknown };
+    const isGuildChannel = c.first() instanceof GuildChannel;
+    return c.toSorted(
       isGuildChannel
-        ? (a: any, b: any) => a.rawPosition - b.rawPosition || Number(BigInt(a.id) - BigInt(b.id))
-        : (a: any, b: any) => a.rawPosition - b.rawPosition || Number(BigInt(b.id) - BigInt(a.id)),
+        ? (a: unknown, b: unknown) =>
+            (a as { rawPosition: number; id: string }).rawPosition -
+              (b as { rawPosition: number; id: string }).rawPosition ||
+            Number(BigInt((a as { id: string }).id) - BigInt((b as { id: string }).id))
+        : (a: unknown, b: unknown) =>
+            (a as { rawPosition: number; id: string }).rawPosition -
+              (b as { rawPosition: number; id: string }).rawPosition ||
+            Number(BigInt((b as { id: string }).id) - BigInt((a as { id: string }).id)),
     );
   }
 
@@ -553,10 +594,17 @@ class Util extends null {
    * @returns {Promise<Channel[]|Role[]>} Updated item list, with `id` and `position` properties
    * @private
    */
-  static async setPosition(item: any, position: any, relative: any, sorted: any, route: any, reason?: any) {
+  static async setPosition(
+    item: unknown,
+    position: number,
+    relative: boolean,
+    sorted: { values: () => Iterable<unknown> },
+    route: { patch: (o: unknown) => Promise<unknown> },
+    reason?: string,
+  ) {
     let updatedItems = [...sorted.values()];
     Util.moveElementInArray(updatedItems, item, position, relative);
-    updatedItems = updatedItems.map((r, i) => ({ id: r.id, position: i }));
+    updatedItems = updatedItems.map((r, i) => ({ id: (r as { id: unknown }).id, position: i }));
     await route.patch({ data: updatedItems, reason });
     return updatedItems;
   }
@@ -568,9 +616,9 @@ class Util extends null {
    * @returns {string} Basename of the path
    * @private
    */
-  static basename(path: any, ext?: any) {
-    const res = parse(path);
-    return ext && res.ext.startsWith(ext) ? res.name : res.base.split('?')[0];
+  static basename(path: unknown, ext?: unknown) {
+    const res = parse(path as string);
+    return ext && res.ext.startsWith(ext as string) ? res.name : res.base.split('?')[0];
   }
 
   /**
@@ -604,7 +652,20 @@ class Util extends null {
    * @param {TextBasedChannels} channel The channel the string was sent in
    * @returns {string}
    */
-  static cleanContent(str: string, channel: any) {
+  static cleanContent(
+    str: string,
+    channel: {
+      type?: string;
+      client: {
+        users: { cache: { get: (id: string) => { username: string } | undefined } };
+        channels: { cache: { get: (id: string) => { name: string } | undefined } };
+      };
+      guild: {
+        members: { cache: { get: (id: string) => { displayName: string } | undefined } };
+        roles: { cache: { get: (id: string) => { name: string } | undefined } };
+      } | null;
+    },
+  ) {
     str = str
       .replace(/<@!?[0-9]+>/g, input => {
         const id = input.replace(/<|!|>|@/g, '');
@@ -623,12 +684,12 @@ class Util extends null {
       })
       .replace(/<#[0-9]+>/g, input => {
         const mentionedChannel = channel.client.channels.cache.get(input.replace(/<|#|>/g, ''));
-        return mentionedChannel ? `#${mentionedChannel.name}` : input;
+        return mentionedChannel ? `#${(mentionedChannel as { name: string }).name}` : input;
       })
       .replace(/<@&[0-9]+>/g, input => {
-        if (channel.type === 'DM') return input;
+        if (channel.type === 'DM' || !channel.guild) return input;
         const role = channel.guild.roles.cache.get(input.replace(/<|@|>|&/g, ''));
-        return role ? `@${role.name}` : input;
+        return role ? `@${(role as { name: string }).name}` : input;
       });
     return str;
   }
@@ -648,9 +709,9 @@ class Util extends null {
    * @deprecated When not using with `makeCache` use `Sweepers.archivedThreadSweepFilter` instead
    * @returns {SweepFilter}
    */
-  static archivedThreadSweepFilter(lifetime: any = 14400) {
+  static archivedThreadSweepFilter(lifetime: number = 14400) {
     const filter = Sweepers.archivedThreadSweepFilter(lifetime);
-    (filter as any).isDefault = true;
+    (filter as { isDefault?: boolean }).isDefault = true;
     return filter;
   }
 
@@ -660,7 +721,7 @@ class Util extends null {
    * @deprecated This will be removed in the next major version.
    * @returns {number}
    */
-  static resolveAutoArchiveMaxLimit(_guild: any = null) {
+  static resolveAutoArchiveMaxLimit(_guild: unknown = null) {
     if (!deprecationEmittedForResolveAutoArchiveMaxLimit) {
       process.emitWarning(
         // eslint-disable-next-line max-len
@@ -678,7 +739,7 @@ class Util extends null {
    * @returns {GuildForumTag}
    * @ignore
    */
-  static transformAPIGuildForumTag(tag: any) {
+  static transformAPIGuildForumTag(tag: Record<string, unknown>) {
     return {
       id: tag.id,
       name: tag.name,
@@ -699,13 +760,13 @@ class Util extends null {
    * @returns {APIGuildForumTag}
    * @ignore
    */
-  static transformGuildForumTag(tag: any) {
+  static transformGuildForumTag(tag: Record<string, unknown>) {
     return {
       id: tag.id,
       name: tag.name,
       moderated: tag.moderated,
-      emoji_id: tag.emoji?.id ?? null,
-      emoji_name: tag.emoji?.name ?? null,
+      emoji_id: (tag.emoji as { id?: unknown } | null)?.id ?? null,
+      emoji_name: (tag.emoji as { name?: unknown } | null)?.name ?? null,
     };
   }
 
@@ -716,7 +777,7 @@ class Util extends null {
    * @returns {DefaultReactionEmoji}
    * @ignore
    */
-  static transformAPIGuildDefaultReaction(defaultReaction: any) {
+  static transformAPIGuildDefaultReaction(defaultReaction: Record<string, unknown>) {
     return {
       id: defaultReaction.emoji_id,
       name: defaultReaction.emoji_name,
@@ -730,7 +791,7 @@ class Util extends null {
    * @returns {APIGuildForumDefaultReactionEmoji}
    * @ignore
    */
-  static transformGuildDefaultReaction(defaultReaction: any) {
+  static transformGuildDefaultReaction(defaultReaction: Record<string, unknown>) {
     return {
       emoji_id: defaultReaction.id,
       emoji_name: defaultReaction.name,
@@ -743,9 +804,9 @@ class Util extends null {
    * @returns {APIGuildScheduledEventRecurrenceRule}
    * @ignore
    */
-  static transformGuildScheduledEventRecurrenceRule(recurrenceRule: any) {
+  static transformGuildScheduledEventRecurrenceRule(recurrenceRule: Record<string, unknown>) {
     return {
-      start: new Date(recurrenceRule.startAt).toISOString(),
+      start: new Date(recurrenceRule.startAt as string).toISOString(),
       frequency: recurrenceRule.frequency,
       interval: recurrenceRule.interval,
       by_weekday: recurrenceRule.byWeekday,
@@ -761,12 +822,12 @@ class Util extends null {
    * @returns {IncidentActions}
    * @ignore
    */
-  static transformAPIIncidentsData(data: any) {
+  static transformAPIIncidentsData(data: Record<string, unknown>) {
     return {
-      invitesDisabledUntil: data.invites_disabled_until ? new Date(data.invites_disabled_until) : null,
-      dmsDisabledUntil: data.dms_disabled_until ? new Date(data.dms_disabled_until) : null,
-      dmSpamDetectedAt: data.dm_spam_detected_at ? new Date(data.dm_spam_detected_at) : null,
-      raidDetectedAt: data.raid_detected_at ? new Date(data.raid_detected_at) : null,
+      invitesDisabledUntil: data.invites_disabled_until ? new Date(data.invites_disabled_until as string) : null,
+      dmsDisabledUntil: data.dms_disabled_until ? new Date(data.dms_disabled_until as string) : null,
+      dmSpamDetectedAt: data.dm_spam_detected_at ? new Date(data.dm_spam_detected_at as string) : null,
+      raidDetectedAt: data.raid_detected_at ? new Date(data.raid_detected_at as string) : null,
     };
   }
 
@@ -779,7 +840,7 @@ class Util extends null {
    * @returns {ChannelType[]}
    * @ignore
    */
-  static getSortableGroupTypes(type: any) {
+  static getSortableGroupTypes(type: unknown) {
     switch (type) {
       case 'GUILD_TEXT':
       case 'GUILD_ANNOUNCEMENT':
@@ -800,19 +861,22 @@ class Util extends null {
    * @param {Snowflake} userId - The user id to calculate the default avatar index for
    * @returns {number}
    */
-  static calculateUserDefaultAvatarIndex(userId: any) {
-    return Number(BigInt(userId) >> 22n) % 6;
+  static calculateUserDefaultAvatarIndex(userId: unknown) {
+    return Number(BigInt(userId as string | number | bigint) >> 22n) % 6;
   }
 
-  static async getUploadURL(client: any, channelId: any, files: any) {
-    if (!files.length) return [];
-    files = files.map((file: any, i: any) => ({
-      filename: file.name,
+  static async getUploadURL(client: unknown, channelId: unknown, files: unknown[]) {
+    if (!(files as unknown[]).length) return [];
+    files = files.map((file: unknown, i: number) => ({
+      filename: (file as { name?: string }).name,
       // 25MB = 26_214_400bytes
       file_size: Math.floor((26_214_400 / 10) * Math.random()),
       id: `${i}`,
     }));
-    const { attachments } = await client.api.channels[channelId].attachments.post({
+    const c = client as {
+      api: { channels: Record<string, { attachments: { post: (o: unknown) => Promise<{ attachments: unknown[] }> } }> };
+    };
+    const { attachments } = await c.api.channels[String(channelId)].attachments.post({
       data: {
         files,
       },
@@ -820,15 +884,16 @@ class Util extends null {
     return attachments;
   }
 
-  static uploadFile(data: any, url: any) {
+  static uploadFile(data: unknown, url: unknown) {
     return new Promise((resolve, reject) => {
-      fetch(url, {
+      fetch(url as string, {
         method: 'PUT',
-        body: data,
+        body: data as never,
         duplex: 'half', // Node.js v20
       })
-        .then((res: any) => {
-          if (res.ok) {
+        .then((res: unknown) => {
+          const r = res as { ok: boolean };
+          if (r.ok) {
             resolve(res);
           } else {
             reject(res);
@@ -846,9 +911,9 @@ class Util extends null {
    * const User = lazy(() => require('./User'));
    * const user = new (User())(client, data);
    */
-  static lazy(cb: any) {
-    let defaultValue;
-    return () => (defaultValue ??= cb());
+  static lazy(cb: unknown) {
+    let defaultValue: unknown;
+    return () => (defaultValue ??= (cb as () => unknown)());
   }
 
   /**
@@ -856,11 +921,12 @@ class Util extends null {
    * @param {Object} object any
    * @returns {boolean}
    */
-  static verifyProxyAgent(object: any) {
-    return typeof object == 'object' && object.httpAgent instanceof Agent && object.httpsAgent instanceof Agent;
+  static verifyProxyAgent(object: unknown) {
+    const o = object as { httpAgent?: unknown; httpsAgent?: unknown };
+    return typeof object == 'object' && o.httpAgent instanceof Agent && o.httpsAgent instanceof Agent;
   }
 
-  static checkUndiciProxyAgent(data: any) {
+  static checkUndiciProxyAgent(data: unknown) {
     if (typeof data === 'string') {
       return {
         uri: data,
@@ -871,31 +937,38 @@ class Util extends null {
         uri: data.toString(),
       };
     }
-    if (typeof data === 'object' && typeof data.uri === 'string') return data;
+    if (typeof data === 'object' && data !== null && typeof (data as { uri?: unknown }).uri === 'string')
+      return data as { uri: string };
     return false;
   }
 
   static createPromiseInteraction(
-    client: any,
-    nonce: any,
+    client: {
+      removeListener: (e: unknown, l: unknown) => void;
+      on: (e: unknown, l: unknown) => void;
+      incrementMaxListeners: () => void;
+      decrementMaxListeners: () => void;
+    },
+    nonce: unknown,
     timeoutMs = 5_000,
     isHandlerDeferUpdate = false,
-    parent?: any,
+    parent?: unknown,
   ) {
     return new Promise((resolve, reject) => {
       // Waiting for MsgCreate / ModalCreate
-      let dataFromInteractionSuccess: any;
-      let dataFromNormalEvent: any;
-      const handler = (data: any) => {
+      let dataFromInteractionSuccess: unknown;
+      let dataFromNormalEvent: unknown;
+      const handler = (data: unknown) => {
         // UnhandledPacket
-        if (isHandlerDeferUpdate && data.d?.nonce == nonce && data.t == 'INTERACTION_SUCCESS') {
+        const dd = data as { d?: { nonce?: unknown }; t?: string; nonce?: unknown };
+        if (isHandlerDeferUpdate && dd.d?.nonce == nonce && dd.t == 'INTERACTION_SUCCESS') {
           // Interaction#deferUpdate
           client.removeListener(Events.MESSAGE_CREATE, handler);
           client.removeListener(Events.UNHANDLED_PACKET, handler);
           client.removeListener(Events.INTERACTION_MODAL_CREATE, handler);
           dataFromInteractionSuccess = parent;
         }
-        if (data.nonce !== nonce) return;
+        if (dd.nonce !== nonce) return;
         clearTimeout(timeout);
         client.removeListener(Events.MESSAGE_CREATE, handler);
         client.removeListener(Events.INTERACTION_MODAL_CREATE, handler);
@@ -922,12 +995,12 @@ class Util extends null {
     });
   }
 
-  static clearNullOrUndefinedObject(object: any) {
-    const data: any = {};
-    const keys = Object.keys(object);
+  static clearNullOrUndefinedObject(object: unknown) {
+    const data: Record<string, unknown> = {};
+    const keys = Object.keys(object as Record<string, unknown>);
 
     for (const key of keys) {
-      const value = object[key];
+      const value = (object as Record<string, unknown>)[key];
       if (value === undefined || value === null || (Array.isArray(value) && value.length === 0)) {
         continue;
       } else if (!Array.isArray(value) && typeof value === 'object') {
@@ -952,11 +1025,11 @@ class Util extends null {
    * @param {'opus' | 'H264' | 'H265' | 'VP8' | 'VP9' | 'AV1'} codecName - Codec name
    * @returns {number}
    */
-  static getPayloadType(codecName: any) {
+  static getPayloadType(codecName: unknown) {
     return VoiceCodec.getPayloadType(codecName);
   }
 
-  static getSDPCodecName(portUdpH264: any, portUdpH265: any, portUdpOpus: any) {
+  static getSDPCodecName(portUdpH264: unknown, portUdpH265: unknown, portUdpOpus: unknown) {
     return VoiceCodec.getSDPCodecName(portUdpH264, portUdpH265, portUdpOpus);
   }
 }
