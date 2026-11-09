@@ -21,7 +21,12 @@
     "docs:api": "bun run --cwd apps/docs api"
   },
   "devDependencies": {
+    "lint-staged": "^15.2.0",
     "turbo": "^2.11.10"
+  },
+  "lint-staged": {
+    "packages/discord-ts-selfbot/**/*.{ts,tsx,js}": "cd packages/discord-ts-selfbot && bun lint",
+    "apps/docs/**/*.{ts,tsx,js,mjs}": "cd apps/docs && bun lint"
   },
   "packageManager": "bun@1.4.4"
 }

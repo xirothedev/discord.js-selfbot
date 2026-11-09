@@ -7,13 +7,27 @@ on:
 
 permissions:
   contents: read
-  # Bun 1.4.4 rejects --provenance (npm provenance is not supported yet),
-  # so id-token: write stays off until Bun can generate it.
+
+concurrency:
+  group: release-deploy
+  queue: max
+  cancel-in-progress: false
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
+  ci:
+    name: CI
+    uses: ./.github/workflows/_ci-reusable.yml
+    with:
+      run_check: true
+      run_lint: true
+      run_test: true
+      run_docs: false
 
+  release:
+    name: Publish to NPM
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -23,19 +37,10 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: 1.4.4
+          bun-version-file: package.json
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
-
-      - name: Type check
-        run: bun run check
-
-      - name: Lint
-        run: bun run lint
-
-      - name: Tests
-        run: bun run test
 
       - name: Publish to NPM
         working-directory: packages/discord-ts-selfbot
