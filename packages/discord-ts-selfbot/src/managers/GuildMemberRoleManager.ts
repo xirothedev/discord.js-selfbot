@@ -9,7 +9,7 @@ const { Role } = _RoleModule;
  * Manages API methods for roles of a GuildMember and stores their cache.
  * @extends {DataManager}
  */
-class GuildMemberRoleManager extends DataManager {
+class GuildMemberRoleManager extends DataManager<import('../structures/Role').Role> {
   declare member: import('../structures/GuildMember').GuildMember;
   declare guild: import('../structures/Guild').Guild;
 
@@ -36,9 +36,8 @@ class GuildMemberRoleManager extends DataManager {
    */
   get cache() {
     const everyone = this.guild.roles.everyone;
-    return this.guild.roles.cache
-      .filter((role: any) => this.member._roles.includes(role.id))
-      .set(everyone.id, everyone);
+    const cache = this.guild.roles.cache.filter((role: any) => this.member._roles.includes(role.id));
+    return everyone ? cache.set(everyone.id, everyone) : cache;
   }
 
   /**

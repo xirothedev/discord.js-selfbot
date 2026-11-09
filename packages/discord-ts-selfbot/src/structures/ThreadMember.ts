@@ -68,7 +68,7 @@ class ThreadMember extends Base {
    * @type {?GuildMember}
    * @readonly
    */
-  get guildMember() {
+  get guildMember(): import('./GuildMember').GuildMember | null {
     return this.member ?? this.thread.guild.members.cache.get(this.id) ?? null;
   }
 
@@ -86,7 +86,7 @@ class ThreadMember extends Base {
    * @type {?User}
    * @readonly
    */
-  get user() {
+  get user(): import('./User').default | null {
     return this.client.users.cache.get(this.id) ?? null;
   }
 

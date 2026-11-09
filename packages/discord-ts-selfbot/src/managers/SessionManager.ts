@@ -5,7 +5,7 @@ import Session from '../structures/Session';
  * Manages API methods for users and stores their cache.
  * @extends {CachedManager}
  */
-class SessionManager extends CachedManager {
+class SessionManager extends CachedManager<Session> {
   declare currentSessionIdHash: string | null;
   constructor(client: any, iterable?: any) {
     super(client, Session, iterable);

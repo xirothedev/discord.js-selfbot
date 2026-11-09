@@ -20,6 +20,7 @@ import type { PatchOf } from '../types/schema';
  * @extends {Base}
  */
 class User extends Base implements UserEntity {
+  declare send: (options: import('../types/channels').SendOptions) => import('../types/channels').SendResult;
   declare accentColor: UserEntity['accentColor'];
   declare avatar: UserEntity['avatar'];
   declare avatarDecorationData: UserEntity['avatarDecorationData'];
@@ -569,7 +570,7 @@ class User extends Base implements UserEntity {
    * @type {VoiceState}
    * @readonly
    */
-  get voice() {
+  get voice(): import('./VoiceState').VoiceState {
     return (
       this.client.voiceStates.cache.get(this.id) ??
       this.client.guilds.cache

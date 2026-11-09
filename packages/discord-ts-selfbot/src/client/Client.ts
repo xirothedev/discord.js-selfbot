@@ -307,7 +307,11 @@ class Client extends BaseClient {
   get emojis() {
     const emojis = new BaseGuildEmojiManager(this);
     for (const guild of this.guilds.cache.values()) {
-      if (guild.available) for (const emoji of guild.emojis.cache.values()) emojis.cache.set(emoji.id, emoji);
+      if (guild.available) {
+        for (const emoji of guild.emojis.cache.values()) {
+          if (emoji.id) emojis.cache.set(emoji.id, emoji);
+        }
+      }
     }
     return emojis;
   }

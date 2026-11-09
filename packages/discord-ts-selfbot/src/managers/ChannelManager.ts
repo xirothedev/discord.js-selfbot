@@ -1,9 +1,10 @@
 import process from 'node:process';
 import CachedManager from './CachedManager';
+import { isGuildBasedChannel, isThreadChannel, isThreadParentChannel } from '../types/channels';
 import _ChannelModule from '../structures/Channel';
 const { Channel } = _ChannelModule;
 import _ConstantsModule from '../util/Constants';
-const { Events, ThreadChannelTypes, RelationshipTypes } = _ConstantsModule;
+const { Events, RelationshipTypes } = _ConstantsModule;
 
 let cacheWarningEmitted = false;
 
@@ -11,7 +12,7 @@ let cacheWarningEmitted = false;
  * A manager of channels belonging to a client
  * @extends {CachedManager}
  */
-class ChannelManager extends CachedManager {
+class ChannelManager extends CachedManager<import('../structures/Channel').Channel> {
   constructor(client: any, iterable?: any) {
     super(client, Channel, iterable);
     const defaultCaching =
@@ -33,13 +34,18 @@ class ChannelManager extends CachedManager {
    * @name ChannelManager#cache
    */
 
-  _add(data: any, guild: any, { cache = true, allowUnknownGuild = false }: any = {}) {
+  _add(
+    data: any,
+    guild: any,
+    { cache = true, allowUnknownGuild = false }: any = {},
+  ): import('../structures/Channel').Channel | null {
     const existing = this.cache.get(data.id);
     if (existing) {
       if (cache) existing._patch(data);
       guild?.channels?._add(existing);
-      if (ThreadChannelTypes.includes(existing.type)) {
-        existing.parent?.threads?._add(existing);
+      if (isThreadChannel(existing)) {
+        const parent = existing.parent;
+        if (parent && isThreadParentChannel(parent)) parent.threads._add(existing);
       }
       return existing;
     }
@@ -56,18 +62,23 @@ class ChannelManager extends CachedManager {
     return channel;
   }
 
-  _remove(id: any) {
+  _remove(id: string) {
     const channel = this.cache.get(id);
-    channel?.guild?.channels.cache.delete(id);
-    for (const [code, invite] of channel?.guild?.invites.cache ?? []) {
-      if (invite.channelId === id) channel.guild.invites.cache.delete(code);
+    if (channel && isGuildBasedChannel(channel)) {
+      channel.guild.channels.cache.delete(id);
+      for (const [code, invite] of channel.guild.invites.cache) {
+        if (invite.channelId === id) channel.guild.invites.cache.delete(code);
+      }
     }
-    channel?.parent?.threads?.cache.delete(id);
+    if (channel && isThreadChannel(channel)) {
+      const parent = channel.parent;
+      if (parent && isThreadParentChannel(parent)) parent.threads.cache.delete(id);
+    }
     this.cache.delete(id);
-    if (channel?.threads) {
+    if (channel && isThreadParentChannel(channel)) {
       for (const threadId of channel.threads.cache.keys()) {
         this.cache.delete(threadId);
-        channel.guild?.channels.cache.delete(threadId);
+        channel.guild.channels.cache.delete(threadId);
       }
     }
   }
@@ -115,7 +126,10 @@ class ChannelManager extends CachedManager {
    *   .then(channel => console.log(channel.name))
    *   .catch(console.error);
    */
-  async fetch(id: any, { allowUnknownGuild = false, cache = true, force = false }: any = {}) {
+  async fetch(
+    id: any,
+    { allowUnknownGuild = false, cache = true, force = false }: any = {},
+  ): Promise<import('../structures/Channel').Channel | null> {
     if (!force) {
       const existing = this.cache.get(id);
       if (existing && !existing.partial) return existing;
@@ -143,6 +157,18 @@ class ChannelManager extends CachedManager {
     });
     return this._add(data, null, { cache: true, allowUnknownGuild: true });
   }
+}
+
+// `CachedManager#_add` takes `(data, cache, options)`, but this manager takes
+// `(data, guild, options)`. The merged overloads keep the class assignable to
+// its base while callers keep the real channel signature.
+interface ChannelManager {
+  _add(data: unknown, guild: unknown, options?: unknown): import('../structures/Channel').Channel | null;
+  _add(
+    data: unknown,
+    cache?: boolean,
+    options?: { id?: string; extras?: unknown[] },
+  ): import('../structures/Channel').Channel;
 }
 
 export default ChannelManager;

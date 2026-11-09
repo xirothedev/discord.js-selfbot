@@ -432,7 +432,7 @@ class Application extends Base implements ApplicationEntity {
        * The bot attached to this application
        * @type {?User}
        */
-      this.bot = data.bot ?? null;
+      this.bot = data.bot ? this.client.users._add(data.bot) : null;
     } else {
       this.bot ??= null;
     }
@@ -811,8 +811,7 @@ class Application extends Base implements ApplicationEntity {
         scope: 'bot applications.commands',
       },
     });
-    const user = this.client.users._add(app.bot);
-    user._partial = false;
+    this.client.users._add(app.bot);
     this._patch(app.application);
     return this;
   }

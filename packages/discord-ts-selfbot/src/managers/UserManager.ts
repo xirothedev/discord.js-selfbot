@@ -7,12 +7,13 @@ import _MessageModule from '../structures/Message';
 const { Message } = _MessageModule;
 import ThreadMember from '../structures/ThreadMember';
 import User from '../structures/User';
+import { isDMChannel } from '../types/channels';
 
 /**
  * Manages API methods for users and stores their cache.
  * @extends {CachedManager}
  */
-class UserManager extends CachedManager {
+class UserManager extends CachedManager<User> {
   constructor(client: any, iterable?: any) {
     super(client, User, iterable);
   }
@@ -39,8 +40,9 @@ class UserManager extends CachedManager {
    * @returns {?DMChannel}
    * @private
    */
-  dmChannel(userId: any) {
-    return this.client.channels.cache.find((c: any) => c.type === 'DM' && c.recipient.id === userId) ?? null;
+  dmChannel(userId: any): import('../structures/DMChannel').default | null {
+    const channel = this.client.channels.cache.find(c => isDMChannel(c) && c.recipient.id === userId);
+    return channel && isDMChannel(channel) ? channel : null;
   }
 
   /**
@@ -49,7 +51,10 @@ class UserManager extends CachedManager {
    * @param {BaseFetchOptions} [options] Additional options for this fetch
    * @returns {Promise<DMChannel>}
    */
-  async createDM(user: any, { cache = true, force = false }: any = {}) {
+  async createDM(
+    user: any,
+    { cache = true, force = false }: any = {},
+  ): Promise<import('../structures/DMChannel').default> {
     const id = this.resolveId(user);
 
     if (!force) {
@@ -65,6 +70,9 @@ class UserManager extends CachedManager {
     });
 
     const dm_channel = await this.client.channels._add(data, null, { cache });
+    if (!dm_channel || !isDMChannel(dm_channel)) {
+      throw new Error('INVALID_TYPE', 'channel', 'DMChannel');
+    }
     dm_channel.sync();
     return dm_channel;
   }
@@ -116,7 +124,7 @@ class UserManager extends CachedManager {
    * @param {UserResolvable} user The UserResolvable to identify
    * @returns {?User}
    */
-  resolve(user: any) {
+  resolve(user: any): import('../structures/User').default | null {
     if (user instanceof GuildMember || user instanceof ThreadMember) return user.user;
     if (user instanceof Message) return user.author;
     return super.resolve(user);

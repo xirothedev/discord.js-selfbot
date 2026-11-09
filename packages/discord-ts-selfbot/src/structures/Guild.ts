@@ -1613,7 +1613,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
     if (stats) {
       // Check everyone role
       const everyoneRole = this.roles.everyone;
-      if (everyoneRole.mentionable) {
+      if (everyoneRole?.mentionable) {
         await everyoneRole.setMentionable(false, reason);
       }
       // Setting
@@ -1658,7 +1658,8 @@ class Guild extends AnonymousGuild implements GuildEntity {
         .then((data: { items: { emoji_rank: number; emoji_id: Snowflake }[] }) => {
           const emojis = new Collection<number, GuildEmoji>();
           for (const emoji of data.items) {
-            emojis.set(emoji.emoji_rank, this.emojis.cache.get(emoji.emoji_id));
+            const resolved = this.emojis.cache.get(emoji.emoji_id);
+            if (resolved) emojis.set(emoji.emoji_rank, resolved);
           }
           resolve(emojis);
         })

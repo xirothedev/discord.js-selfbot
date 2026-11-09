@@ -1,7 +1,13 @@
 import _errorsModule from '../errors';
 const { TypeError } = _errorsModule;
 import type { Collection } from '@discordjs/collection';
-import type { Snowflake } from 'discord-api-types/v10';
+import type {
+  APIMessage,
+  APIRole,
+  APIInteractionDataResolvedChannel,
+  APIInteractionDataResolvedGuildMember,
+  Snowflake,
+} from 'discord-api-types/v10';
 import type Client from '../client/Client';
 import type MessageAttachment from './MessageAttachment';
 import type {
@@ -9,7 +15,6 @@ import type {
   AutocompleteFocusedOption,
   CacheType,
   CommandInteractionOption as PublicCommandInteractionOption,
-  CommandInteractionResolvedData as PublicCommandInteractionResolvedData,
 } from '../../typings';
 
 type OptionType = ApplicationCommandOptionType | '_MESSAGE';
@@ -21,16 +26,23 @@ type OptionType = ApplicationCommandOptionType | '_MESSAGE';
  */
 export type CommandInteractionOption<Cached extends CacheType = CacheType> = Omit<
   PublicCommandInteractionOption<Cached>,
-  'attachment' | 'options'
+  'attachment' | 'options' | 'user' | 'member' | 'channel' | 'role' | 'message'
 > & {
   options?: CommandInteractionOption<Cached>[];
   attachment?: MessageAttachment;
+  user?: import('./User').default;
+  member?: import('./GuildMember').GuildMember | APIInteractionDataResolvedGuildMember;
+  channel?: import('./Channel').Channel | APIInteractionDataResolvedChannel;
+  role?: import('./Role').Role | APIRole;
+  message?: import('./Message').Message | APIMessage;
 };
 
-export type CommandInteractionResolvedData<Cached extends CacheType = CacheType> = Omit<
-  PublicCommandInteractionResolvedData<Cached>,
-  'attachments'
-> & {
+export type CommandInteractionResolvedData<_Cached extends CacheType = CacheType> = {
+  users?: Collection<Snowflake, import('./User').default>;
+  members?: Collection<Snowflake, import('./GuildMember').GuildMember | APIInteractionDataResolvedGuildMember>;
+  roles?: Collection<Snowflake, import('./Role').Role | APIRole>;
+  channels?: Collection<Snowflake, import('./Channel').Channel | APIInteractionDataResolvedChannel>;
+  messages?: Collection<Snowflake, import('./Message').Message | APIMessage>;
   attachments?: Collection<Snowflake, MessageAttachment>;
 };
 

@@ -113,7 +113,9 @@ class Poll extends Base {
     if (Date.now() > this.expiresTimestamp) {
       throw new Error('POLL_ALREADY_EXPIRED');
     }
-    return this.message.channel.messages.endPoll(this.message.id);
+    const channel = this.message.channel;
+    if (!channel) throw new Error('CHANNEL_NOT_CACHED');
+    return channel.messages.endPoll(this.message.id);
   }
 }
 

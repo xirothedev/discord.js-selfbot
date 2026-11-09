@@ -8,10 +8,10 @@ import type {
   AutoModerationRuleEventType,
   AutoModerationRuleTriggerType,
   AutoModerationTriggerMetadata,
-  GuildBasedChannel,
 } from '../../../typings';
 import type { Guild } from '../../structures/Guild';
 import type { Role } from '../../structures/Role';
+import type { GuildChannel } from '../../structures/GuildChannel';
 
 /**
  * The object shape of a `AutoModerationRule`.
@@ -30,5 +30,5 @@ export interface AutoModerationRuleEntity {
   actions: AutoModerationAction[];
   enabled: boolean;
   exemptRoles: Collection<Snowflake, Role>;
-  exemptChannels: Collection<Snowflake, GuildBasedChannel>;
+  exemptChannels: Collection<Snowflake, GuildChannel>;
 }

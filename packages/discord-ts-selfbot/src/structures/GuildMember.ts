@@ -311,7 +311,7 @@ class GuildMember extends Base implements GuildMemberEntity {
    * @type {?Presence}
    * @readonly
    */
-  get presence() {
+  get presence(): import('./Presence').Presence | null {
     return this.guild.presences.cache.get(this.id) ?? null;
   }
 
@@ -320,7 +320,7 @@ class GuildMember extends Base implements GuildMemberEntity {
    * @type {number}
    * @readonly
    */
-  get displayColor() {
+  get displayColor(): number {
     return this.roles.color?.colors.primaryColor ?? 0;
   }
 
@@ -367,7 +367,7 @@ class GuildMember extends Base implements GuildMemberEntity {
    * @type {boolean}
    * @readonly
    */
-  get manageable() {
+  get manageable(): boolean {
     if (this.user.id === this.guild.ownerId) return false;
     if (this.user.id === this.client.user!.id) return false;
     if (this.client.user!.id === this.guild.ownerId) return true;
@@ -381,7 +381,8 @@ class GuildMember extends Base implements GuildMemberEntity {
    * @readonly
    */
   get kickable() {
-    return this.manageable && this.guild.members.me.permissions.has(Permissions.FLAGS.KICK_MEMBERS);
+    const me = this.guild.members.me;
+    return this.manageable && Boolean(me?.permissions.has(Permissions.FLAGS.KICK_MEMBERS));
   }
 
   /**
@@ -390,7 +391,8 @@ class GuildMember extends Base implements GuildMemberEntity {
    * @readonly
    */
   get bannable() {
-    return this.manageable && this.guild.members.me.permissions.has(Permissions.FLAGS.BAN_MEMBERS);
+    const me = this.guild.members.me;
+    return this.manageable && Boolean(me?.permissions.has(Permissions.FLAGS.BAN_MEMBERS));
   }
 
   /**

@@ -5,7 +5,7 @@ import VoiceState from '../structures/VoiceState';
  * Manages API methods for VoiceStates and stores their cache.
  * @extends {CachedManager}
  */
-class VoiceStateManager extends CachedManager {
+class VoiceStateManager extends CachedManager<VoiceState> {
   declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, VoiceState, iterable);

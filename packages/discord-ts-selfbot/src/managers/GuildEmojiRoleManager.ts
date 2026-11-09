@@ -9,7 +9,7 @@ const { Role } = _RoleModule;
  * Manages API methods for roles belonging to emojis and stores their cache.
  * @extends {DataManager}
  */
-class GuildEmojiRoleManager extends DataManager {
+class GuildEmojiRoleManager extends DataManager<import('../structures/Role').Role> {
   declare emoji: import('../structures/GuildEmoji').GuildEmoji;
   declare guild: import('../structures/Guild').Guild;
 

@@ -12,7 +12,7 @@ import Permissions from '../util/Permissions';
  * Manages API methods for application commands and stores their cache.
  * @extends {CachedManager}
  */
-class ApplicationCommandManager extends CachedManager {
+class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
   declare permissions: ApplicationCommandPermissionsManager;
   declare guild?: import('../structures/Guild').Guild;
   declare guildId?: import('discord-api-types/v10').Snowflake;

@@ -15,7 +15,7 @@ let cacheWarningEmitted = false;
  * Manages API methods for guild channel permission overwrites and stores their cache.
  * @extends {CachedManager}
  */
-class PermissionOverwriteManager extends CachedManager {
+class PermissionOverwriteManager extends CachedManager<PermissionOverwrites> {
   declare channel: import('../structures/GuildChannel').GuildChannel;
   constructor(channel: any, iterable?: any) {
     super(channel.client, PermissionOverwrites);

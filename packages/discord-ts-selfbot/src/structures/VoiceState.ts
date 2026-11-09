@@ -164,7 +164,7 @@ class VoiceState extends Base implements VoiceStateEntity {
    * @type {?GuildMember}
    * @readonly
    */
-  get member() {
+  get member(): import('./GuildMember').GuildMember | null {
     if (!this.guild) return null;
     return this.guild.members.cache.get(this.id) ?? null;
   }
@@ -174,7 +174,7 @@ class VoiceState extends Base implements VoiceStateEntity {
    * @type {?User}
    * @readonly
    */
-  get user() {
+  get user(): import('./User').default | null {
     return this.client.users.cache.get(this.id) ?? null;
   }
 

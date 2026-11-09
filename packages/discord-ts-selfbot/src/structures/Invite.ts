@@ -13,6 +13,7 @@ import InviteGuild from './InviteGuild';
 import type { RawInviteData } from '../../typings/rawDataTypes';
 import type { InviteEntity } from '../types/entities/invite';
 import type { PatchOf } from '../types/schema';
+import { isInviteChannel } from '../types/channels';
 
 // TODO: Convert `inviter` and `channel` in this class to a getter.
 
@@ -222,7 +223,8 @@ class Invite extends Base implements InviteEntity {
        * @type {?Snowflake}
        */
       this.channelId = data.channel_id;
-      this.channel = data.channel_id ? this.client.channels.cache.get(data.channel_id) : undefined;
+      const channel = data.channel_id ? this.client.channels.cache.get(data.channel_id) : undefined;
+      this.channel = channel && isInviteChannel(channel) ? channel : undefined;
     }
 
     if ('channel' in data && data.channel !== null) {
@@ -230,7 +232,8 @@ class Invite extends Base implements InviteEntity {
        * The channel this invite is for
        * @type {?Channel}
        */
-      this.channel ??= this.client.channels._add(data.channel, this.guild, { cache: false });
+      const channel = this.client.channels._add(data.channel, this.guild, { cache: false });
+      if (channel && isInviteChannel(channel)) this.channel ??= channel;
       this.channelId ??= data.channel!.id;
     }
 

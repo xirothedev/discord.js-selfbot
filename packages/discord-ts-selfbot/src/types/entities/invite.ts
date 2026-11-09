@@ -2,9 +2,10 @@
 // Run `bun run schema:generate` from the package to update.
 
 import type { Snowflake } from 'discord-api-types/v10';
-import type { GroupDMChannel, NonThreadGuildBasedChannel } from '../../../typings';
 import type { InviteTargetTypes, InviteTypes } from '../../../typings/enums';
 import type { InviteGuild } from '../../structures/InviteGuild';
+import type { GroupDMChannel } from '../../structures/GroupDMChannel';
+import type { GuildChannel } from '../../structures/GuildChannel';
 import type { Guild } from '../../structures/Guild';
 import type { User } from '../../structures/User';
 import type IntegrationApplication from '../../structures/IntegrationApplication';
@@ -19,11 +20,11 @@ import type InviteFlags from '../../util/InviteFlags';
  * assignments in `src/structures/Invite.ts`. The wire shape is `RawInviteData`.
  */
 export interface InviteEntity {
-  channel?: NonThreadGuildBasedChannel | GroupDMChannel | undefined;
+  channel?: GuildChannel | GroupDMChannel | undefined;
   channelId?: Snowflake;
   code: string;
   createdTimestamp: number | null;
-  guild: InviteGuild | Guild | null;
+  guild: Guild | InviteGuild | null;
   inviter: User | null;
   inviterId: Snowflake | null;
   maxAge: number | null;

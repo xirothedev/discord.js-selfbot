@@ -22,7 +22,7 @@ let storeChannelDeprecationEmitted = false;
  * Manages API methods for GuildChannels and stores their cache.
  * @extends {CachedManager}
  */
-class GuildChannelManager extends CachedManager {
+class GuildChannelManager extends CachedManager<GuildChannel> {
   declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, GuildChannel, iterable);

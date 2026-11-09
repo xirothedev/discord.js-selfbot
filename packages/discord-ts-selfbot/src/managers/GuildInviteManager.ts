@@ -9,7 +9,7 @@ import DataResolver from '../util/DataResolver';
  * Manages API methods for GuildInvites and stores their cache.
  * @extends {CachedManager}
  */
-class GuildInviteManager extends CachedManager {
+class GuildInviteManager extends CachedManager<Invite> {
   declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, Invite, iterable);

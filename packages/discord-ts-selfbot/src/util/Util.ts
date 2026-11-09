@@ -14,6 +14,7 @@ const { Colors, Events } = _ConstantsModule;
 import _errorsModule from '../errors';
 const { Error: DiscordError, RangeError, TypeError } = _errorsModule;
 import VoiceCodec from '../client/voice/util/VoiceCodec';
+import { isGuildBasedChannel } from '../types/channels';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 ('use strict');
@@ -675,20 +676,8 @@ class Util extends null {
    * @param {TextBasedChannels} channel The channel the string was sent in
    * @returns {string}
    */
-  static cleanContent(
-    str: string,
-    channel: {
-      type?: string;
-      client: {
-        users: { cache: { get: (id: string) => { username: string } | undefined } };
-        channels: { cache: { get: (id: string) => { name: string } | undefined } };
-      };
-      guild: {
-        members: { cache: { get: (id: string) => { displayName: string } | undefined } };
-        roles: { cache: { get: (id: string) => { name: string } | undefined } };
-      } | null;
-    },
-  ) {
+  static cleanContent(str: string, channel: import('../structures/Channel').Channel) {
+    const guild = isGuildBasedChannel(channel) ? channel.guild : null;
     str = str
       .replace(/<@!?[0-9]+>/g, input => {
         const id = input.replace(/<|!|>|@/g, '');
@@ -697,7 +686,7 @@ class Util extends null {
           return user ? Util._removeMentions(`@${user.username}`) : input;
         }
 
-        const member = channel.guild?.members.cache.get(id);
+        const member = guild?.members.cache.get(id);
         if (member) {
           return Util._removeMentions(`@${member.displayName}`);
         } else {
@@ -707,12 +696,15 @@ class Util extends null {
       })
       .replace(/<#[0-9]+>/g, input => {
         const mentionedChannel = channel.client.channels.cache.get(input.replace(/<|#|>/g, ''));
-        return mentionedChannel ? `#${(mentionedChannel as { name: string }).name}` : input;
+        if (!mentionedChannel || !('name' in mentionedChannel) || typeof mentionedChannel.name !== 'string') {
+          return input;
+        }
+        return `#${mentionedChannel.name}`;
       })
       .replace(/<@&[0-9]+>/g, input => {
-        if (channel.type === 'DM' || !channel.guild) return input;
-        const role = channel.guild.roles.cache.get(input.replace(/<|@|>|&/g, ''));
-        return role ? `@${(role as { name: string }).name}` : input;
+        if (channel.type === 'DM' || !guild) return input;
+        const role = guild.roles.cache.get(input.replace(/<|@|>|&/g, ''));
+        return role ? `@${role.name}` : input;
       });
     return str;
   }

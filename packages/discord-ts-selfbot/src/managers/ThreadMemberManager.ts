@@ -11,7 +11,7 @@ let deprecationEmittedForPassingBoolean = false;
  * Manages API methods for GuildMembers and stores their cache.
  * @extends {CachedManager}
  */
-class ThreadMemberManager extends CachedManager {
+class ThreadMemberManager extends CachedManager<ThreadMember> {
   declare thread: import('../structures/ThreadChannel').ThreadChannel;
   constructor(thread: any, iterable?: any) {
     super(thread.client, ThreadMember, iterable);

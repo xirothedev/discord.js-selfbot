@@ -4,7 +4,6 @@ import _ConstantsModule from '../util/Constants';
 const { ChannelTypes } = _ConstantsModule;
 import Util from '../util/Util';
 import type {
-  AnyChannel,
   ChannelResolvable,
   CrosspostedChannel,
   MessageMentionsHasOptions,
@@ -37,7 +36,7 @@ class MessageMentions {
   declare crosspostedChannels: Collection<Snowflake, CrosspostedChannel>;
   declare repliedUser: User | null;
   declare _members: Collection<Snowflake, GuildMember> | null;
-  declare _channels: Collection<Snowflake, AnyChannel> | null;
+  declare _channels: Collection<Snowflake, import('./Channel').Channel> | null;
   declare _parsedUsers: Collection<Snowflake, User> | null;
 
   declare static EVERYONE_PATTERN: RegExp;
@@ -212,7 +211,7 @@ class MessageMentions {
    */
   get channels() {
     if (this._channels) return this._channels;
-    this._channels = new Collection<Snowflake, AnyChannel>();
+    this._channels = new Collection<Snowflake, import('./Channel').Channel>();
     let matches;
     while ((matches = MessageMentions.CHANNELS_PATTERN.exec(this._content)) !== null) {
       const chan = this.client.channels.cache.get(matches[1]);

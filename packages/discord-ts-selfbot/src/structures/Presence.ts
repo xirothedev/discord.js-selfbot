@@ -81,7 +81,7 @@ class Presence extends Base {
    * @type {?User}
    * @readonly
    */
-  get user() {
+  get user(): import('./User').default | null {
     return this.client.users.resolve(this.userId);
   }
 
@@ -90,7 +90,7 @@ class Presence extends Base {
    * @type {?GuildMember}
    * @readonly
    */
-  get member() {
+  get member(): import('./GuildMember').GuildMember | null {
     return this.guild?.members.resolve(this.userId) ?? null;
   }
 

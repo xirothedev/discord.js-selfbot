@@ -13,7 +13,7 @@ let deprecationEmittedForDays = false;
  * Manages API methods for GuildBans and stores their cache.
  * @extends {CachedManager}
  */
-class GuildBanManager extends CachedManager {
+class GuildBanManager extends CachedManager<GuildBan> {
   declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, GuildBan, iterable);

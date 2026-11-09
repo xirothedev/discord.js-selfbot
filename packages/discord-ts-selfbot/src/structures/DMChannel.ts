@@ -218,7 +218,7 @@ class DMChannel extends Channel {
   get lastPinAt(): any {
     return undefined;
   }
-  send() {}
+  declare send: (options: import('../types/channels').SendOptions) => import('../types/channels').SendResult;
   sendTyping() {}
   createMessageCollector() {}
   awaitMessages() {}

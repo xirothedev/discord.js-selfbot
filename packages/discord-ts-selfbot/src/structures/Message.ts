@@ -38,21 +38,17 @@ import Util from '../util/Util';
 import type { Client } from '../client/Client';
 import type { RawMessageData, RawPartialMessageData } from '../../typings/rawDataTypes';
 import type {
-  AnyChannel,
-  AuthorizingIntegrationOwners,
   EmojiIdentifierResolvable,
   MessageActionRowComponent,
   MessageActivity,
   MessageCall,
   MessageComponentCollectorOptions,
   MessageEditOptions,
-  MessageInteraction,
   MessageComponentInteraction,
-  MessageInteractionMetadata,
+  InteractionType,
   MessageReference,
   MessageReaction,
   MessageSelectMenu,
-  MessageSnapshot,
   MessageType,
   ReplyMessageOptions,
   RoleSubscriptionData,
@@ -67,6 +63,15 @@ import type { Modal } from './Modal';
 import type { GuildMember } from './GuildMember';
 import type { Role } from './Role';
 import type User from './User';
+import type { Channel } from './Channel';
+import {
+  isGuildBasedChannel,
+  isNewsChannel,
+  isTextBasedChannel,
+  isThreadChannel,
+  isThreadParentChannel,
+  type TextBasedChannel,
+} from '../types/channels';
 
 /**
  * @type {WeakSet<Message>}
@@ -83,6 +88,32 @@ let deprecationEmittedForDeleted = false;
  * @returns {Object}
  * @private
  */
+interface AuthorizingIntegrationOwners {
+  [integrationType: number]: Snowflake | undefined;
+  guildId: Snowflake | null;
+  userId: Snowflake | null;
+  readonly guild: Guild | null;
+  readonly user: User | null;
+  toJSON(): Record<string, Snowflake>;
+}
+
+export interface MessageInteraction {
+  id: Snowflake;
+  type: InteractionType;
+  commandName: string;
+  user: User;
+}
+
+interface MessageInteractionMetadata {
+  id: Snowflake;
+  type: InteractionType;
+  user: User;
+  authorizingIntegrationOwners: AuthorizingIntegrationOwners;
+  originalResponseMessageId: Snowflake | null;
+  interactedMessageId: Snowflake | null;
+  triggeringInteractionMetadata: MessageInteractionMetadata | null;
+}
+
 function transformAuthorizingIntegrationOwners(
   client: Client,
   data: APIAuthorizingIntegrationOwnersMap = {},
@@ -92,10 +123,10 @@ function transformAuthorizingIntegrationOwners(
     guildId: data[0] ?? null,
     userId: data[1] ?? null,
     get guild() {
-      return (this.guildId && client.guilds.cache.get(this.guildId)) ?? null;
+      return (this.guildId ? client.guilds.cache.get(this.guildId) : null) ?? null;
     },
     get user() {
-      return (this.userId && client.users.cache.get(this.userId)) ?? null;
+      return (this.userId ? client.users.cache.get(this.userId) : null) ?? null;
     },
     toJSON() {
       const out: Record<string, Snowflake> = {};
@@ -140,13 +171,13 @@ interface ResolvedData {
   users?: Collection<Snowflake, User>;
   members?: Collection<Snowflake, GuildMember | APIInteractionDataResolvedGuildMember>;
   roles?: Collection<Snowflake, Role | APIRole>;
-  channels?: Collection<Snowflake, AnyChannel | APIInteractionDataResolvedChannel>;
+  channels?: Collection<Snowflake, Channel | APIInteractionDataResolvedChannel>;
   messages?: Collection<Snowflake, Message | APIMessage>;
   attachments?: Collection<Snowflake, MessageAttachment>;
 }
 
 function transformResolved(
-  { client, guild, channel }: { client: Client; guild: Guild | null; channel: AnyChannel | null },
+  { client, guild, channel }: { client: Client; guild: Guild | null; channel: Channel | null },
   { members, users, channels, roles, messages, attachments }: ResolvedMessageData = {},
 ): ResolvedData {
   const result: ResolvedData = {};
@@ -175,7 +206,7 @@ function transformResolved(
   }
 
   if (channels) {
-    result.channels = new Collection<Snowflake, AnyChannel | APIInteractionDataResolvedChannel>();
+    result.channels = new Collection<Snowflake, Channel | APIInteractionDataResolvedChannel>();
     for (const apiChannel of Object.values(channels)) {
       result.channels.set(apiChannel.id, client.channels._add(apiChannel, guild) ?? apiChannel);
     }
@@ -184,7 +215,7 @@ function transformResolved(
   if (messages) {
     result.messages = new Collection<Snowflake, Message | APIMessage>();
     for (const message of Object.values(messages)) {
-      const added = channel && 'messages' in channel ? channel.messages.cache.get(message.id) : null;
+      const added = channel && isTextBasedChannel(channel) ? channel.messages.cache.get(message.id) : null;
       result.messages.set(message.id, added instanceof Message ? added : new Message(client, message));
     }
   }
@@ -257,7 +288,7 @@ class Message extends Base {
   declare sharedClientTheme: SharedClientTheme | null;
   declare flags: Readonly<MessageFlags>;
   declare reference: MessageReference | null;
-  declare messageSnapshots: Collection<Snowflake, MessageSnapshot>;
+  declare messageSnapshots: Collection<Snowflake, Message>;
 
   constructor(client: Client, data: MessagePatchData) {
     super(client);
@@ -667,12 +698,13 @@ class Message extends Base {
        * @type {?MessageInteraction}
        * @deprecated Use {@link Message#interactionMetadata} instead.
        */
-      this.interaction = {
+      const interaction: MessageInteraction = {
         id: data.interaction.id,
         type: InteractionTypes[data.interaction.type],
         commandName: data.interaction.name,
         user: this.client.users._add(data.interaction.user),
       };
+      this.interaction = interaction;
     } else {
       this.interaction ??= null;
     }
@@ -683,27 +715,26 @@ class Message extends Base {
        * The message snapshots associated with the message reference
        * @type {Collection<Snowflake, Message>}
        */
-      this.messageSnapshots = data.message_snapshots.reduce(
-        (coll: Collection<Snowflake, MessageSnapshot>, snapshot) => {
-          if (!reference.messageId) return coll;
-          const snapshotId = reference.messageId;
-          const channel = this.client.channels.cache.get(reference.channelId);
-          const snapshotData: MessagePatchData = {
-            ...snapshot.message,
-            id: snapshotId,
-            channel_id: reference.channelId,
-            guild_id: reference.guildId ?? undefined,
-          };
+      this.messageSnapshots = data.message_snapshots.reduce((coll: Collection<Snowflake, Message>, snapshot) => {
+        if (!reference.messageId) return coll;
+        const snapshotId = reference.messageId;
+        const channel = this.client.channels.cache.get(reference.channelId);
+        const snapshotData: MessagePatchData = {
+          ...snapshot.message,
+          id: snapshotId,
+          channel_id: reference.channelId,
+          guild_id: reference.guildId ?? undefined,
+        };
 
-          return coll.set(
-            snapshotId,
-            channel ? channel.messages._add(snapshotData) : new Message(this.client, snapshotData),
-          );
-        },
-        new Collection<Snowflake, MessageSnapshot>(),
-      );
+        return coll.set(
+          snapshotId,
+          channel && isTextBasedChannel(channel)
+            ? channel.messages._add(snapshotData)
+            : new Message(this.client, snapshotData),
+        );
+      }, new Collection<Snowflake, Message>());
     } else {
-      this.messageSnapshots ??= new Collection<Snowflake, MessageSnapshot>();
+      this.messageSnapshots ??= new Collection<Snowflake, Message>();
     }
 
     /**
@@ -793,8 +824,9 @@ class Message extends Base {
    * @type {TextBasedChannels}
    * @readonly
    */
-  get channel() {
-    return this.client.channels.cache.get(this.channelId) ?? null;
+  get channel(): TextBasedChannel | null {
+    const channel = this.client.channels.cache.get(this.channelId);
+    return channel && isTextBasedChannel(channel) ? channel : null;
   }
 
   /**
@@ -840,7 +872,11 @@ class Message extends Base {
    * @readonly
    */
   get guild() {
-    return (this.guildId ? this.client.guilds.cache.get(this.guildId) : null) ?? this.channel?.guild ?? null;
+    const channel = this.channel;
+    return (
+      (this.guildId ? this.client.guilds.cache.get(this.guildId) : null) ??
+      (channel && isGuildBasedChannel(channel) ? channel.guild : null)
+    );
   }
 
   /**
@@ -860,7 +896,8 @@ class Message extends Base {
    * @readonly
    */
   get thread() {
-    return this.channel?.threads?.cache.get(this.id) ?? null;
+    const channel = this.channel;
+    return channel && isThreadParentChannel(channel) ? (channel.threads.cache.get(this.id) ?? null) : null;
   }
 
   /**
@@ -997,19 +1034,21 @@ class Message extends Base {
    * @readonly
    */
   get editable() {
+    const channel = this.channel;
+    const guildChannel = channel && isGuildBasedChannel(channel) ? channel : null;
     const precheck = Boolean(
       this.author?.id === this.client.user!.id &&
       !deletedMessages.has(this) &&
-      (!this.guild || this.channel?.viewable) &&
+      (!this.guild || guildChannel?.viewable) &&
       this.reference?.type !== MessageReferenceTypes.FORWARD,
     );
 
     // Regardless of permissions thread messages cannot be edited if
     // the thread is archived or the thread is locked and the bot does not have permission to manage threads.
-    if (this.channel?.isThread()) {
-      if (this.channel.archived) return false;
-      if (this.channel.locked) {
-        const permissions = this.channel.permissionsFor(this.client.user);
+    if (channel && isThreadChannel(channel)) {
+      if (channel.archived) return false;
+      if (channel.locked) {
+        const permissions = channel.permissionsFor(this.client.user!);
         if (!permissions?.has(Permissions.FLAGS.MANAGE_THREADS, true)) return false;
       }
     }
@@ -1030,19 +1069,21 @@ class Message extends Base {
       return this.author?.id === this.client.user!.id;
     }
     // DMChannel does not have viewable property, so check viewable after proved that message is on a guild.
-    if (!this.channel?.viewable) {
+    const channel = this.channel;
+    if (!channel || !isGuildBasedChannel(channel) || !channel.viewable) {
       return false;
     }
 
-    const permissions = this.channel?.permissionsFor(this.client.user);
+    const permissions = channel.permissionsFor(this.client.user!);
     if (!permissions) return false;
     // This flag allows deleting even if timed out
     if (permissions.has(Permissions.FLAGS.ADMINISTRATOR, false)) return true;
 
+    const me = this.guild.members.me;
+    const timedOut = me?.isCommunicationDisabled() ?? false;
     return Boolean(
       this.author?.id === this.client.user!.id ||
-      (permissions.has(Permissions.FLAGS.MANAGE_MESSAGES, false) &&
-        this.guild.members.me.communicationDisabledUntilTimestamp < Date.now()),
+      (permissions.has(Permissions.FLAGS.MANAGE_MESSAGES, false) && !timedOut),
     );
   }
 
@@ -1065,12 +1106,13 @@ class Message extends Base {
    */
   get pinnable() {
     const { channel } = this;
+    const guildChannel = channel && isGuildBasedChannel(channel) ? channel : null;
     return Boolean(
       !this.system &&
       !deletedMessages.has(this) &&
       (!this.guild ||
-        (channel?.viewable &&
-          channel?.permissionsFor(this.client.user)?.has(Permissions.FLAGS.MANAGE_MESSAGES, false))),
+        (guildChannel?.viewable &&
+          guildChannel?.permissionsFor(this.client.user!)?.has(Permissions.FLAGS.MANAGE_MESSAGES, false))),
     );
   }
 
@@ -1083,7 +1125,7 @@ class Message extends Base {
     const { channelId, messageId } = this.reference;
     if (!messageId) throw new Error('MESSAGE_REFERENCE_MISSING');
     const channel = this.client.channels.resolve(channelId);
-    if (!channel) throw new Error('GUILD_CHANNEL_RESOLVE');
+    if (!channel || !isTextBasedChannel(channel)) throw new Error('GUILD_CHANNEL_RESOLVE');
     const message = await channel.messages.fetch(messageId);
     return message;
   }
@@ -1099,13 +1141,14 @@ class Message extends Base {
       Number(this.author?.id === this.client.user!.id ? Permissions.defaultBit : Permissions.FLAGS.MANAGE_MESSAGES);
     const { channel } = this;
     return Boolean(
-      channel?.type === 'GUILD_NEWS' &&
+      channel &&
+      isNewsChannel(channel) &&
       !this.flags.has(MessageFlags.FLAGS.CROSSPOSTED) &&
       this.reference?.type !== MessageReferenceTypes.FORWARD &&
       this.type === 'DEFAULT' &&
       !this.poll &&
       channel.viewable &&
-      channel.permissionsFor(this.client.user)?.has(bitfield, false) &&
+      channel.permissionsFor(this.client.user!)?.has(bitfield, false) &&
       !deletedMessages.has(this),
     );
   }
@@ -1278,12 +1321,14 @@ class Message extends Base {
    */
   forward(channel: TextBasedChannelResolvable) {
     const resolvedChannel = this.client.channels.resolve(channel);
-    if (!resolvedChannel) throw new Error('INVALID_TYPE', 'channel', 'TextBasedChannelResolvable');
+    if (!resolvedChannel || !isTextBasedChannel(resolvedChannel)) {
+      throw new Error('INVALID_TYPE', 'channel', 'TextBasedChannelResolvable');
+    }
     return resolvedChannel.send({
       forward: {
         message: this.id,
-        channel: this.channelId,
-        guild: this.guildId,
+        channel: this.channelId ?? undefined,
+        guild: this.guildId ?? undefined,
       },
     });
   }
@@ -1318,11 +1363,12 @@ class Message extends Base {
    */
   async startThread(options: StartThreadOptions) {
     if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
-    if (!['GUILD_TEXT', 'GUILD_NEWS'].includes(this.channel.type)) {
+    const channel = this.channel;
+    if (!isThreadParentChannel(channel)) {
       throw new Error('MESSAGE_THREAD_PARENT');
     }
     if (this.hasThread) throw new Error('MESSAGE_EXISTING_THREAD');
-    return this.channel.threads.create({ ...options, startMessage: this });
+    return channel.threads.create({ ...options, startMessage: this });
   }
 
   /**
@@ -1337,7 +1383,7 @@ class Message extends Base {
    */
   vote(...ids: number[]) {
     return this.client.api
-      .channels(this.channel.id)
+      .channels(this.channelId)
       .polls(this.id)
       .answers['@me'].put({
         data: {
@@ -1351,7 +1397,7 @@ class Message extends Base {
    * @param {boolean} [force=true] Whether to skip the cache check and request the API
    * @returns {Promise<Message>}
    */
-  async fetch(force = true) {
+  async fetch(force = true): Promise<Message> {
     if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
     return this.channel.messages.fetch(this.id, { force });
   }

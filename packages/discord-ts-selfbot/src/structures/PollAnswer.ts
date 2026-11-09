@@ -5,6 +5,8 @@ import type { APIPartialEmoji } from 'discord-api-types/v10';
 import type { APIPollAnswer } from 'discord-api-types/v10';
 import type { BaseFetchPollAnswerVotersOptions } from '../../typings';
 import type { Poll } from './Poll';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
 
 /**
  * Represents an answer to a {@link Poll}
@@ -87,7 +89,9 @@ class PollAnswer extends Base {
    * @returns {Promise<Collection<Snowflake, User>>}
    */
   fetchVoters({ after, limit }: BaseFetchPollAnswerVotersOptions = {}) {
-    return this.poll.message.channel.messages.fetchPollAnswerVoters({
+    const channel = this.poll.message.channel;
+    if (!channel) throw new Error('CHANNEL_NOT_CACHED');
+    return channel.messages.fetchPollAnswerVoters({
       messageId: this.poll.message.id,
       answerId: this.id,
       after,

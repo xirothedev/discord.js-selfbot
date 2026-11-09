@@ -21,7 +21,7 @@ import SnowflakeUtil from '../util/SnowflakeUtil';
  * Manages API methods for GuildMembers and stores their cache.
  * @extends {CachedManager}
  */
-class GuildMemberManager extends CachedManager {
+class GuildMemberManager extends CachedManager<import('../structures/GuildMember').GuildMember> {
   declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, GuildMember, iterable);
@@ -55,7 +55,7 @@ class GuildMemberManager extends CachedManager {
    * @param {GuildMemberResolvable} member The user that is part of the guild
    * @returns {?GuildMember}
    */
-  resolve(member: any) {
+  resolve(member: any): import('../structures/GuildMember').GuildMember | null {
     const memberResolvable = super.resolve(member);
     if (memberResolvable) return memberResolvable;
     const userId = this.client.users.resolveId(member);
@@ -131,7 +131,7 @@ class GuildMemberManager extends CachedManager {
    * @type {?GuildMember}
    * @readonly
    */
-  get me() {
+  get me(): import('../structures/GuildMember').GuildMember | null {
     return (
       this.cache.get(this.client.user!.id) ??
       (this.client.options.partials.includes(PartialTypes.GUILD_MEMBER)
@@ -197,15 +197,14 @@ class GuildMemberManager extends CachedManager {
    */
   fetch(options: any) {
     if (!options) {
+      const me = this.me;
       if (
-        this.me.permissions.has('KICK_MEMBERS') ||
-        this.me.permissions.has('BAN_MEMBERS') ||
-        this.me.permissions.has('MANAGE_ROLES')
+        me &&
+        (me.permissions.has('KICK_MEMBERS') || me.permissions.has('BAN_MEMBERS') || me.permissions.has('MANAGE_ROLES'))
       ) {
         return this._fetchMany();
-      } else {
-        return this.fetchByMemberSafety();
       }
+      return this.fetchByMemberSafety();
     }
     const user = this.client.users.resolveId(options);
     if (user) return this._fetchSingle({ user, cache: true });

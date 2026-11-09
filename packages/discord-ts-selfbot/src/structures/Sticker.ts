@@ -245,7 +245,9 @@ class Sticker extends Base {
   async fetchUser() {
     if (this.partial) await this.fetch();
     if (!this.guildId) throw new Error('NOT_GUILD_STICKER');
-    return this.guild.stickers.fetchUser(this);
+    const guild = this.guild;
+    if (!guild) return null;
+    return guild.stickers.fetchUser(this);
   }
 
   /**
@@ -268,7 +270,9 @@ class Sticker extends Base {
    *   .catch(console.error);
    */
   edit(data: any, reason: any) {
-    return this.guild.stickers.edit(this, data, reason);
+    const guild = this.guild;
+    if (!guild) throw new Error('INVALID_TYPE', 'guildId', 'Guild');
+    return guild.stickers.edit(this, data, reason);
   }
 
   /**
@@ -282,7 +286,9 @@ class Sticker extends Base {
    *   .catch(console.error);
    */
   async delete(reason: any) {
-    await this.guild.stickers.delete(this, reason);
+    const guild = this.guild;
+    if (!guild) throw new Error('INVALID_TYPE', 'guildId', 'Guild');
+    await guild.stickers.delete(this, reason);
     return this;
   }
 

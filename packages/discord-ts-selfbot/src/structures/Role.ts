@@ -261,10 +261,10 @@ class Role extends Base implements RoleEntity {
    * @type {boolean}
    * @readonly
    */
-  get editable() {
+  get editable(): boolean {
     if (this.managed) return false;
-    const clientMember = this.guild.members.resolve(this.client.user);
-    if (!clientMember.permissions.has(Permissions.FLAGS.MANAGE_ROLES)) return false;
+    const clientMember: import('./GuildMember').GuildMember | null = this.guild.members.resolve(this.client.user);
+    if (!clientMember?.permissions.has(Permissions.FLAGS.MANAGE_ROLES)) return false;
     return clientMember.roles.highest.comparePositionTo(this) > 0;
   }
 

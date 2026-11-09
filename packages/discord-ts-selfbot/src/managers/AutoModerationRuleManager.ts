@@ -13,7 +13,7 @@ const {
  * Manages API methods for auto moderation rules and stores their cache.
  * @extends {CachedManager}
  */
-class AutoModerationRuleManager extends CachedManager {
+class AutoModerationRuleManager extends CachedManager<AutoModerationRule> {
   declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, AutoModerationRule, iterable);

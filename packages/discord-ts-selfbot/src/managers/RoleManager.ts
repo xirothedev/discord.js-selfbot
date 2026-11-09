@@ -19,7 +19,7 @@ let deprecationEmittedForEdit = false;
  * Manages API methods for roles and stores their cache.
  * @extends {CachedManager}
  */
-class RoleManager extends CachedManager {
+class RoleManager extends CachedManager<import('../structures/Role').Role> {
   declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, Role, iterable);

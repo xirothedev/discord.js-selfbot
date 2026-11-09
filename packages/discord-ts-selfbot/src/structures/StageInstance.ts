@@ -1,6 +1,8 @@
 import process from 'node:process';
 import Base from './Base';
 import _ConstantsModule from '../util/Constants';
+import _errorsModule from '../errors';
+const { Error } = _errorsModule;
 const { PrivacyLevels } = _ConstantsModule;
 import SnowflakeUtil from '../util/SnowflakeUtil';
 import type { RawStageInstanceData } from '../../typings/rawDataTypes';
@@ -161,7 +163,9 @@ class StageInstance extends Base implements StageInstanceEntity {
    *  .catch(console.error)
    */
   edit(options: Record<string, unknown>) {
-    return this.guild.stageInstances.edit(this.channelId, options);
+    const guild = this.guild;
+    if (!guild) throw new Error('INVALID_TYPE', 'guildId', 'Guild');
+    return guild.stageInstances.edit(this.channelId, options);
   }
 
   /**
@@ -174,7 +178,9 @@ class StageInstance extends Base implements StageInstanceEntity {
    *  .catch(console.error);
    */
   async delete() {
-    await this.guild.stageInstances.delete(this.channelId);
+    const guild = this.guild;
+    if (!guild) throw new Error('INVALID_TYPE', 'guildId', 'Guild');
+    await guild.stageInstances.delete(this.channelId);
     const clone = this._clone();
     deletedStageInstances.add(clone);
     return clone;
@@ -191,7 +197,9 @@ class StageInstance extends Base implements StageInstanceEntity {
    *  .catch(console.error);
    */
   setTopic(topic: string) {
-    return this.guild.stageInstances.edit(this.channelId, { topic });
+    const guild = this.guild;
+    if (!guild) throw new Error('INVALID_TYPE', 'guildId', 'Guild');
+    return guild.stageInstances.edit(this.channelId, { topic });
   }
 
   /**

@@ -7,6 +7,7 @@ import type Application from '../../structures/interfaces/Application';
 import type MessageAttachment from '../../structures/MessageAttachment';
 import type MessageEmbed from '../../structures/MessageEmbed';
 import type MessageMentions from '../../structures/MessageMentions';
+import type { Message, MessageInteraction } from '../../structures/Message';
 import type { Poll } from '../../structures/Poll';
 import type { Sticker } from '../../structures/Sticker';
 import type ReactionManager from '../../managers/ReactionManager';
@@ -15,10 +16,8 @@ import type {
   CommandInteractionResolvedData,
   MessageActivity,
   MessageCall,
-  MessageInteraction,
   MessageInteractionMetadata,
   MessageReference,
-  MessageSnapshot,
   MessageType,
   RoleSubscriptionData,
   SharedClientTheme,
@@ -65,5 +64,5 @@ export interface MessageEntity {
   sharedClientTheme: SharedClientTheme | null;
   flags: Readonly<MessageFlags>;
   reference: MessageReference | null;
-  messageSnapshots: Collection<Snowflake, MessageSnapshot>;
+  messageSnapshots: Collection<Snowflake, Message>;
 }

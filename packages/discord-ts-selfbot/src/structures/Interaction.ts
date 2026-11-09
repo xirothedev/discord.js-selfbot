@@ -9,7 +9,7 @@ import type { RawInteractionData } from '../../typings/rawDataTypes';
 import type { Guild } from './Guild';
 import type { GuildMember } from './GuildMember';
 import type { User } from './User';
-import type { TextBasedChannel } from './interfaces/TextBasedChannel';
+import { isTextBasedChannel, type TextBasedChannel } from '../types/channels';
 import type BaseCommandInteraction from './BaseCommandInteraction';
 import type ButtonInteraction from './ButtonInteraction';
 import type AutocompleteInteraction from './AutocompleteInteraction';
@@ -186,7 +186,8 @@ class Interaction<Cached extends CacheType = CacheType> extends Base {
    * @readonly
    */
   get channel(): TextBasedChannel | null {
-    return this.channelId ? (this.client.channels.cache.get(this.channelId) ?? null) : null;
+    const channel = this.channelId ? this.client.channels.cache.get(this.channelId) : null;
+    return channel && isTextBasedChannel(channel) ? channel : null;
   }
 
   /**

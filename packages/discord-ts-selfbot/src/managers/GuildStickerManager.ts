@@ -10,7 +10,7 @@ const { Sticker } = _StickerModule;
  * Manages API methods for Guild Stickers and stores their cache.
  * @extends {CachedManager}
  */
-class GuildStickerManager extends CachedManager {
+class GuildStickerManager extends CachedManager<import('../structures/Sticker').Sticker> {
   declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, Sticker, iterable);

@@ -9,6 +9,12 @@ type RawMessageReactionSource = RawMessageReactionData & {
   me?: boolean;
   me_burst?: boolean;
 };
+
+type RawMessageReactionPatch = {
+  burst_colors?: string[] | null;
+  count?: number;
+  count_details?: ReactionCountDetailsData;
+};
 import type { Message } from './Message';
 
 /**
@@ -65,7 +71,7 @@ class MessageReaction {
     this._patch(data);
   }
 
-  _patch(data: RawMessageReactionSource) {
+  _patch(data: RawMessageReactionPatch) {
     if (data.burst_colors) {
       /**
        * Hexadecimal colors used for this super reaction
@@ -74,7 +80,7 @@ class MessageReaction {
       this.burstColors = data.burst_colors;
     }
 
-    if ('count' in data) {
+    if (data.count !== undefined) {
       /**
        * The number of people that have given the same reaction
        * @type {?number}
@@ -82,7 +88,8 @@ class MessageReaction {
       this.count ??= data.count;
     }
 
-    if ('count_details' in data) {
+    const countDetails = data.count_details;
+    if (countDetails) {
       /**
        * The reaction count details object contains information about super and normal reaction counts.
        * @typedef {Object} ReactionCountDetailsData
@@ -95,8 +102,8 @@ class MessageReaction {
        * @type {ReactionCountDetailsData}
        */
       this.countDetails = {
-        burst: data.count_details.burst,
-        normal: data.count_details.normal,
+        burst: countDetails.burst,
+        normal: countDetails.normal,
       };
     } else {
       this.countDetails ??= { burst: 0, normal: 0 };
@@ -153,10 +160,19 @@ class MessageReaction {
    * @returns {Promise<MessageReaction>}
    */
   async fetch() {
-    const message = await this.message.fetch();
-    const existing = message.reactions.cache.get(this.emoji.id ?? this.emoji.name);
+    const message: import('./Message').Message = await this.message.fetch();
+    const key = this.emoji.id ?? this.emoji.name;
+    const existing = key === null ? undefined : message.reactions.cache.get(key);
     // The reaction won't get set when it has been completely removed
-    this._patch(existing ?? { count: 0 });
+    if (existing) {
+      this._patch({
+        burst_colors: existing.burstColors,
+        count: existing.count,
+        count_details: existing.countDetails,
+      });
+    } else {
+      this._patch({ count: 0 });
+    }
     return this;
   }
 
@@ -191,7 +207,8 @@ class MessageReaction {
       else this.me = false;
     }
     if (this.count <= 0 && this.users.cache.size === 0) {
-      this.message.reactions.cache.delete(this.emoji.id ?? this.emoji.name);
+      const key = this.emoji.id ?? this.emoji.name;
+      if (key !== null) this.message.reactions.cache.delete(key);
     }
   }
 }

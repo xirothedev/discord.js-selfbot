@@ -10,6 +10,7 @@ import type {
 } from '../../typings';
 import Base from './Base';
 import type { Role } from './Role';
+import type { GuildChannel } from './GuildChannel';
 import type { AutoModerationRuleEntity } from '../types/entities/auto-moderation-rule';
 import type { PatchOf } from '../types/schema';
 import _ConstantsModule from '../util/Constants';
@@ -168,11 +169,12 @@ class AutoModerationRule extends Base implements AutoModerationRuleEntity {
        * The channels exempt by this auto moderation rule.
        * @type {Collection<Snowflake, GuildChannel|ThreadChannel>}
        */
-      this.exemptChannels = new Collection<string, GuildBasedChannel>(
-        data.exempt_channels
-          .map(id => [id, this.guild.channels.cache.get(id)] as const)
-          .filter((entry): entry is readonly [string, GuildBasedChannel] => entry[1] !== undefined),
-      );
+      const exemptChannels = new Collection<string, GuildChannel>();
+      for (const id of data.exempt_channels) {
+        const channel = this.guild.channels.cache.get(id);
+        if (channel) exemptChannels.set(id, channel);
+      }
+      this.exemptChannels = exemptChannels;
     }
   }
 

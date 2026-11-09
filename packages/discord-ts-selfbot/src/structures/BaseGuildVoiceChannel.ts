@@ -148,9 +148,12 @@ class BaseGuildVoiceChannel extends GuildChannel {
     // This flag allows joining even if timed out
     if (permissions.has(Permissions.FLAGS.ADMINISTRATOR, false)) return true;
 
-    return (
-      this.guild.members.me.communicationDisabledUntilTimestamp < Date.now() &&
-      permissions.has(Permissions.FLAGS.CONNECT, false)
+    const me = this.guild.members.me;
+    return Boolean(
+      me &&
+      me.communicationDisabledUntilTimestamp !== null &&
+      me.communicationDisabledUntilTimestamp < Date.now() &&
+      permissions.has(Permissions.FLAGS.CONNECT, false),
     );
   }
 
@@ -239,7 +242,7 @@ class BaseGuildVoiceChannel extends GuildChannel {
   get lastMessage(): any {
     return undefined;
   }
-  send() {}
+  declare send: (options: import('../types/channels').SendOptions) => import('../types/channels').SendResult;
   sendTyping() {}
   createMessageCollector() {}
   awaitMessages() {}

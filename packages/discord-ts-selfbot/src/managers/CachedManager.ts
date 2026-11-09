@@ -1,16 +1,22 @@
 import { Collection } from '@discordjs/collection';
-import DataManager from './DataManager';
+import DataManager, { readId, type DataHold } from './DataManager';
 import _ConstantsModule from '../util/Constants';
 const { _cleanupSymbol } = _ConstantsModule;
+
+type ManagerCache<Holds> = Collection<string, Holds> & {
+  maxSize?: number;
+  sweepFilter?: { isDefault?: boolean };
+};
 
 /**
  * Manages the API methods of a data model with a mutable cache of instances.
  * @extends {DataManager}
  * @abstract
  */
-class CachedManager extends DataManager {
-  declare _cache: Collection<string, any> & { maxSize?: number; sweepFilter?: { isDefault?: boolean } };
-  constructor(client: any, holds: any, iterable?: any) {
+class CachedManager<Holds extends DataHold = DataHold> extends DataManager<Holds> {
+  declare _cache: ManagerCache<Holds>;
+
+  constructor(client: any, holds: new (...args: never[]) => Holds, iterable?: Iterable<Holds>) {
     super(client, holds);
 
     /**
@@ -49,26 +55,41 @@ class CachedManager extends DataManager {
    * @type {Collection}
    * @abstract
    */
-  get cache() {
+  get cache(): ManagerCache<Holds> {
     return this._cache;
   }
 
-  _add(data: any, cache: any = true, { id, extras = [] }: any = {}) {
-    const existing = this.cache.get(id ?? data.id);
+  _add(data: unknown, cache = true, { id, extras = [] }: { id?: string; extras?: unknown[] } = {}): Holds {
+    const key = id ?? (typeof data === 'object' && data !== null ? readId(data) : undefined);
+    const existing = key ? this.cache.get(key) : undefined;
     if (existing) {
       if (cache) {
-        existing._patch(data);
+        patch(existing, data);
         return existing;
       }
-      const clone = existing._clone();
-      clone._patch(data);
+      const clone = cloneOf(existing);
+      patch(clone, data);
       return clone;
     }
 
-    const entry = this.holds ? Reflect.construct(this.holds, [this.client, data, ...extras]) : data;
-    if (cache) this.cache.set(id ?? entry.id, entry);
+    const entry: Holds =
+      typeof this.holds === 'function'
+        ? Reflect.construct(this.holds, [this.client, data, ...extras])
+        : (data as Holds);
+    const entryId = key ?? readId(entry);
+    if (cache && entryId) this.cache.set(entryId, entry);
     return entry;
   }
+}
+
+function patch(hold: object, data: unknown): void {
+  const method = Reflect.get(hold, '_patch');
+  if (typeof method === 'function') Reflect.apply(method, hold, [data]);
+}
+
+function cloneOf<Holds extends DataHold>(hold: Holds): Holds {
+  const method = Reflect.get(hold, '_clone');
+  return typeof method === 'function' ? Reflect.apply(method, hold, []) : hold;
 }
 
 export default CachedManager;

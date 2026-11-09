@@ -11,7 +11,7 @@ import Util from '../util/Util';
  * Manages API methods for Messages and holds their cache.
  * @extends {CachedManager}
  */
-class MessageManager extends CachedManager {
+class MessageManager extends CachedManager<import('../structures/Message').Message> {
   declare channel: import('../structures/interfaces/TextBasedChannel').default;
   constructor(channel: any, iterable?: any) {
     super(channel.client, Message, iterable);
@@ -66,6 +66,14 @@ class MessageManager extends CachedManager {
    *   .then(messages => console.log(`${messages.filter(m => m.author.id === '84484653687267328').size} messages`))
    *   .catch(console.error);
    */
+  fetch(
+    message: import('discord-api-types/v10').Snowflake,
+    options?: import('../../typings').BaseFetchOptions,
+  ): Promise<import('../structures/Message').Message>;
+  fetch(
+    options?: import('../../typings').ChannelLogsQueryOptions,
+    cache?: import('../../typings').BaseFetchOptions,
+  ): Promise<Collection<import('discord-api-types/v10').Snowflake, import('../structures/Message').Message>>;
   fetch(message: any, { cache = true, force = false }: any = {}) {
     return typeof message === 'string' ? this._fetchId(message, cache, force) : this._fetchMany(message, cache);
   }
@@ -246,7 +254,11 @@ class MessageManager extends CachedManager {
     await this.client.api.channels(this.channel.id).messages(message).delete();
   }
 
-  _fetchId(messageId: any, cache: any, force: any) {
+  _fetchId(
+    messageId: any,
+    cache: any,
+    force: any,
+  ): import('../structures/Message').Message | Promise<import('../structures/Message').Message> {
     if (!force) {
       const existing = this.cache.get(messageId);
       if (existing && !existing.partial) return existing;
@@ -328,8 +340,10 @@ class MessageManager extends CachedManager {
           if (this.channel.guildId) {
             const c = this.channel.guild!.channels.cache.get(id);
             if (!c || !c.messages) return false;
-            const perm = c.permissionsFor(this.client.user);
-            if (!perm.has('READ_MESSAGE_HISTORY') || !perm.has('VIEW_CHANNEL')) return false;
+            const clientUser = this.client.user;
+            if (!clientUser) return false;
+            const perm = c.permissionsFor(clientUser);
+            if (!perm || !perm.has('READ_MESSAGE_HISTORY') || !perm.has('VIEW_CHANNEL')) return false;
             return true;
           } else {
             return true;

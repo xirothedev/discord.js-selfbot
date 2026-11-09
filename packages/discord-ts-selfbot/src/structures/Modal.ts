@@ -3,6 +3,7 @@ import _ConstantsModule from '../util/Constants';
 const { InteractionTypes } = _ConstantsModule;
 import SnowflakeUtil from '../util/SnowflakeUtil';
 import Util from '../util/Util';
+import { isGuildBasedChannel } from '../types/channels';
 
 /**
  * Represents a modal (form) to be shown in response to an interaction
@@ -82,7 +83,8 @@ class Modal {
    * @readonly
    */
   get guildId() {
-    return this.client.channels.cache.get(this.channelId)?.guildId || null;
+    const channel = this.client.channels.cache.get(this.channelId);
+    return (channel && 'guildId' in channel ? channel.guildId : null) || null;
   }
 
   /**
@@ -100,7 +102,8 @@ class Modal {
    * @readonly
    */
   get guild() {
-    return this.client.guilds.resolve(this.guildId) ?? this.channel?.guild ?? null;
+    const channel = this.channel;
+    return this.client.guilds.resolve(this.guildId) ?? (channel && isGuildBasedChannel(channel) ? channel.guild : null);
   }
 
   toJSON() {

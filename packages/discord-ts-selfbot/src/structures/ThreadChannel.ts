@@ -8,6 +8,7 @@ import ThreadMemberManager from '../managers/ThreadMemberManager';
 import ChannelFlags from '../util/ChannelFlags';
 import Permissions from '../util/Permissions';
 import _UtilModule from '../util/Util';
+import { isTextBasedChannel } from '../types/channels';
 const { resolveAutoArchiveMaxLimit } = _UtilModule;
 import type { Snowflake } from 'discord-api-types/v10';
 import type { ThreadAutoArchiveDuration } from '../../typings';
@@ -339,7 +340,7 @@ class ThreadChannel extends Channel {
   // eslint-disable-next-line require-await
   async fetchStarterMessage(options: any) {
     const channel = this.parent?.type === 'GUILD_FORUM' ? this : this.parent;
-    return channel?.messages.fetch(this.id, options) ?? null;
+    return channel && isTextBasedChannel(channel) ? (channel.messages.fetch(this.id, options) ?? null) : null;
   }
 
   /**
@@ -551,9 +552,12 @@ class ThreadChannel extends Channel {
     // This flag allows managing even if timed out
     if (permissions.has(Permissions.FLAGS.ADMINISTRATOR, false)) return true;
 
-    return (
-      this.guild.members.me.communicationDisabledUntilTimestamp < Date.now() &&
-      permissions.has(Permissions.FLAGS.MANAGE_THREADS, false)
+    const me = this.guild.members.me;
+    return Boolean(
+      me &&
+      me.communicationDisabledUntilTimestamp !== null &&
+      me.communicationDisabledUntilTimestamp < Date.now() &&
+      permissions.has(Permissions.FLAGS.MANAGE_THREADS, false),
     );
   }
 
@@ -584,7 +588,7 @@ class ThreadChannel extends Channel {
       !(this.archived && this.locked && !this.manageable) &&
       (this.type !== 'GUILD_PRIVATE_THREAD' || this.joined || this.manageable) &&
       permissions.has(Permissions.FLAGS.SEND_MESSAGES_IN_THREADS, false) &&
-      this.guild.members.me.communicationDisabledUntilTimestamp < Date.now()
+      Boolean(this.guild.members.me?.isCommunicationDisabled() !== true)
     );
   }
 
@@ -628,7 +632,7 @@ class ThreadChannel extends Channel {
   get lastPinAt() {
     return undefined;
   }
-  send() {}
+  declare send: (options: import('../types/channels').SendOptions) => import('../types/channels').SendResult;
   sendTyping() {}
   createMessageCollector() {}
   awaitMessages() {}

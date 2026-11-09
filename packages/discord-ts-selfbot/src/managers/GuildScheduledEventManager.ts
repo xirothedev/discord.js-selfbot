@@ -13,7 +13,9 @@ import Util from '../util/Util';
  * Manages API methods for GuildScheduledEvents and stores their cache.
  * @extends {CachedManager}
  */
-class GuildScheduledEventManager extends CachedManager {
+class GuildScheduledEventManager extends CachedManager<
+  import('../structures/GuildScheduledEvent').GuildScheduledEvent
+> {
   declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, GuildScheduledEvent, iterable);

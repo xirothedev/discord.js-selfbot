@@ -1,14 +1,12 @@
 import process from 'node:process';
-import type { APIPartialChannel, APIPartialGuild, Snowflake } from 'discord-api-types/v10';
+import type { APIWebhookSourceChannel, APIWebhookSourceGuild, Snowflake } from 'discord-api-types/v10';
 import MessagePayload from './MessagePayload';
 import { Message } from './Message';
 import type { RawWebhookData } from '../../typings/rawDataTypes';
 import type {
   BufferResolvable,
   MessageResolvable,
-  NewsChannel,
   StaticImageURLOptions,
-  User,
   WebhookEditData,
   WebhookEditMessageOptions,
   WebhookFetchMessageOptions,
@@ -16,6 +14,9 @@ import type {
   WebhookType,
 } from '../../typings';
 import type { Client } from '../client/Client';
+import type { Channel } from './Channel';
+import type User from './User';
+import { isTextBasedChannel } from '../types/channels';
 import _errorsModule from '../errors';
 const { Error } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
@@ -36,8 +37,8 @@ class Webhook {
   declare id: Snowflake;
   declare name: string | null;
   declare owner: User | import('discord-api-types/v10').APIUser | null;
-  declare sourceGuild: import('./Guild').Guild | APIPartialGuild | null;
-  declare sourceChannel: NewsChannel | APIPartialChannel | null;
+  declare sourceGuild: import('./Guild').Guild | APIWebhookSourceGuild | null;
+  declare sourceChannel: Channel | APIWebhookSourceChannel | null;
   declare token: string | null;
   declare type: WebhookType;
 
@@ -124,7 +125,7 @@ class Webhook {
        * The source guild of the webhook
        * @type {?(Guild|APIGuild)}
        */
-      const sourceGuild: import('./Guild').Guild | APIPartialGuild =
+      const sourceGuild: import('./Guild').Guild | APIWebhookSourceGuild =
         this.client.guilds?.cache.get(data.source_guild.id) ?? data.source_guild;
       this.sourceGuild = sourceGuild;
     } else {
@@ -136,9 +137,9 @@ class Webhook {
        * The source channel of the webhook
        * @type {?(NewsChannel|APIChannel)}
        */
-      const sourceChannel: NewsChannel | APIPartialChannel = data.source_channel?.id
+      const sourceChannel: Channel | APIWebhookSourceChannel | null = data.source_channel?.id
         ? (this.client.channels?.cache.get(data.source_channel.id) ?? data.source_channel)
-        : data.source_channel;
+        : (data.source_channel ?? null);
       this.sourceChannel = sourceChannel;
     } else {
       this.sourceChannel ??= null;
@@ -249,7 +250,9 @@ class Webhook {
       auth: false,
       webhook: true,
     });
-    return this.client.channels?.cache.get(d.channel_id)?.messages.cache.get(d.id) ?? new Message(this.client, d);
+    const channel = this.client.channels.cache.get(d.channel_id);
+    const existing = channel && isTextBasedChannel(channel) ? channel.messages.cache.get(d.id) : null;
+    return existing ?? new Message(this.client, d);
   }
 
   /**
@@ -365,9 +368,9 @@ class Webhook {
         auth: false,
         webhook: true,
       });
-    return (
-      this.client.channels?.cache.get(data.channel_id)?.messages.cache.get(data.id) ?? new Message(this.client, data)
-    );
+    const channel = this.client.channels.cache.get(data.channel_id);
+    const existing = channel && isTextBasedChannel(channel) ? channel.messages.cache.get(data.id) : null;
+    return existing ?? new Message(this.client, data);
   }
 
   /**
@@ -404,7 +407,8 @@ class Webhook {
         webhook: true,
       });
 
-    const messageManager = this.client.channels?.cache.get(d.channel_id)?.messages;
+    const channel = this.client.channels.cache.get(d.channel_id);
+    const messageManager = channel && isTextBasedChannel(channel) ? channel.messages : null;
     if (!messageManager) return d;
 
     const existing = messageManager.cache.get(d.id);
@@ -451,7 +455,8 @@ class Webhook {
    * @readonly
    */
   get channel() {
-    return this.client.channels.resolve(this.channelId);
+    const channel = this.client.channels.resolve(this.channelId);
+    return channel && isTextBasedChannel(channel) ? channel : null;
   }
 
   /**

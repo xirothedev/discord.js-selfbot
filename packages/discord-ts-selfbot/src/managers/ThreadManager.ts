@@ -6,7 +6,7 @@ import ThreadChannel from '../structures/ThreadChannel';
  * Manages API methods for {@link ThreadChannel} objects and stores their cache.
  * @extends {CachedManager}
  */
-class ThreadManager extends CachedManager {
+class ThreadManager extends CachedManager<ThreadChannel> {
   declare channel: import('../structures/GuildChannel').GuildChannel;
   constructor(channel: any, iterable?: any) {
     super(channel.client, ThreadChannel, iterable);

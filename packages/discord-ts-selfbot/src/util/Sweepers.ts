@@ -1,6 +1,8 @@
 import { setInterval } from 'node:timers';
+import { Collection } from '@discordjs/collection';
 import type { Client } from '../client/Client';
 import _ConstantsModule from './Constants';
+import { isTextBasedChannel, isThreadChannel } from '../types/channels';
 const { Events, ThreadChannelTypes, SweeperKeys } = _ConstantsModule;
 import _DJSErrorModule from '../errors/DJSError';
 const { TypeError } = _DJSErrorModule;
@@ -17,6 +19,24 @@ const { TypeError } = _DJSErrorModule;
  * A container for all cache sweeping intervals and their associated sweep methods.
  */
 type SweepFilterFn = (value: unknown, key: unknown, collection: unknown) => boolean;
+
+type SweepableManager = { cache: Collection<string, unknown> };
+
+function isSweepableManager(value: unknown): value is SweepableManager {
+  return typeof value === 'object' && value !== null && 'cache' in value && value.cache instanceof Collection;
+}
+
+type SweepableGuildKey =
+  | 'autoModerationRules'
+  | 'bans'
+  | 'commands'
+  | 'emojis'
+  | 'invites'
+  | 'members'
+  | 'presences'
+  | 'stageInstances'
+  | 'stickers'
+  | 'voiceStates';
 
 class Sweepers {
   client!: Client;
@@ -154,7 +174,7 @@ class Sweepers {
     let messages = 0;
 
     for (const channel of this.client.channels.cache.values()) {
-      if (!channel.isText()) continue;
+      if (!isTextBasedChannel(channel)) continue;
 
       channels++;
       messages += channel.messages.cache.sweep(filter);
@@ -186,7 +206,7 @@ class Sweepers {
     let reactions = 0;
 
     for (const channel of this.client.channels.cache.values()) {
-      if (!channel.isText()) continue;
+      if (!isTextBasedChannel(channel)) continue;
       channels++;
 
       for (const message of channel.messages.cache.values()) {
@@ -233,7 +253,7 @@ class Sweepers {
     let threads = 0;
     let members = 0;
     for (const channel of this.client.channels.cache.values()) {
-      if (!ThreadChannelTypes.includes(channel.type)) continue;
+      if (!isThreadChannel(channel)) continue;
       threads++;
       members += channel.members.cache.sweep(filter);
     }
@@ -409,7 +429,7 @@ class Sweepers {
    * @private
    */
   _sweepGuildDirectProp(
-    key: string,
+    key: SweepableGuildKey,
     filter: SweepFilterFn,
     { emit = true, outputName }: { emit?: boolean; outputName?: string } = {},
   ) {
@@ -421,10 +441,11 @@ class Sweepers {
     let items = 0;
 
     for (const guild of this.client.guilds.cache.values()) {
-      const { cache } = guild[key];
+      const manager: unknown = Reflect.get(guild, key);
+      if (!isSweepableManager(manager)) continue;
 
       guilds++;
-      items += cache.sweep(filter);
+      items += manager.cache.sweep(filter);
     }
 
     if (emit) {

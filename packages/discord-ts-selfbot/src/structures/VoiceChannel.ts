@@ -52,9 +52,12 @@ class VoiceChannel extends BaseGuildVoiceChannel {
     // This flag allows speaking even if timed out
     if (permissions.has(Permissions.FLAGS.ADMINISTRATOR, false)) return true;
 
-    return (
-      this.guild.members.me.communicationDisabledUntilTimestamp < Date.now() &&
-      permissions.has(Permissions.FLAGS.SPEAK, false)
+    const me = this.guild.members.me;
+    return Boolean(
+      me &&
+      me.communicationDisabledUntilTimestamp !== null &&
+      me.communicationDisabledUntilTimestamp < Date.now() &&
+      permissions.has(Permissions.FLAGS.SPEAK, false),
     );
   }
 

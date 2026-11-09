@@ -6,7 +6,7 @@ const { Presence } = _PresenceModule;
  * Manages API methods for Presences and holds their cache.
  * @extends {CachedManager}
  */
-class PresenceManager extends CachedManager {
+class PresenceManager extends CachedManager<import('../structures/Presence').Presence> {
   constructor(client: any, iterable?: any) {
     super(client, Presence, iterable);
   }

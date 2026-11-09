@@ -10,7 +10,7 @@ const { ReactionTypes } = _ConstantsModule;
  * Manages API methods for users who reacted to a reaction and stores their cache.
  * @extends {CachedManager}
  */
-class ReactionUserManager extends CachedManager {
+class ReactionUserManager extends CachedManager<User> {
   declare reaction: import('../structures/MessageReaction').MessageReaction;
   constructor(reaction: any, iterable?: any) {
     super(reaction.client, User, iterable);

@@ -5,7 +5,7 @@ import MessageReaction from '../structures/MessageReaction';
  * Manages API methods for reactions and holds their cache.
  * @extends {CachedManager}
  */
-class ReactionManager extends CachedManager {
+class ReactionManager extends CachedManager<MessageReaction> {
   declare message: import('../structures/Message').Message;
   constructor(message: any, iterable?: any) {
     super(message.client, MessageReaction, iterable);

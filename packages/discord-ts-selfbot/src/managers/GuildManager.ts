@@ -35,7 +35,7 @@ let cacheWarningEmitted = false;
  * Manages API methods for Guilds and stores their cache.
  * @extends {CachedManager}
  */
-class GuildManager extends CachedManager {
+class GuildManager extends CachedManager<import('../structures/Guild').Guild> {
   constructor(client: any, iterable?: any) {
     super(client, Guild, iterable);
     if (!cacheWarningEmitted && this._cache.constructor.name !== 'Collection') {

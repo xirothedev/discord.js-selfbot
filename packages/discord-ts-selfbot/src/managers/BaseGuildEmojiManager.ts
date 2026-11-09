@@ -8,7 +8,7 @@ const { parseEmoji } = _UtilModule;
  * Holds methods to resolve GuildEmojis and stores their cache.
  * @extends {CachedManager}
  */
-class BaseGuildEmojiManager extends CachedManager {
+class BaseGuildEmojiManager extends CachedManager<GuildEmoji> {
   constructor(client: any, iterable?: any) {
     super(client, GuildEmoji, iterable);
   }

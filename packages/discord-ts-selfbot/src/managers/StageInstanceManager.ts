@@ -10,7 +10,7 @@ const { PrivacyLevels } = _ConstantsModule;
  * Manages API methods for {@link StageInstance} objects and holds their cache.
  * @extends {CachedManager}
  */
-class StageInstanceManager extends CachedManager {
+class StageInstanceManager extends CachedManager<import('../structures/StageInstance').StageInstance> {
   declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, StageInstance, iterable);
@@ -139,8 +139,9 @@ class StageInstanceManager extends CachedManager {
       },
     });
 
-    if (this.cache.has(data.id)) {
-      const clone = this.cache.get(data.id)._clone();
+    const existing = this.cache.get(data.id);
+    if (existing) {
+      const clone = existing._clone();
       clone._patch(data);
       return clone;
     }

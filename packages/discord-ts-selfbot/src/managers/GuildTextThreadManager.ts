@@ -5,6 +5,14 @@ import _ConstantsModule from '../util/Constants';
 const { ChannelTypes } = _ConstantsModule;
 import _UtilModule from '../util/Util';
 import type { GuildTextThreadCreateOptions } from '../../typings';
+import type { Snowflake } from 'discord-api-types/v10';
+
+type SourceGuildTextThreadCreateOptions<AllowedThreadType> = Omit<
+  GuildTextThreadCreateOptions<AllowedThreadType>,
+  'startMessage'
+> & {
+  startMessage?: import('../structures/Message').Message | Snowflake;
+};
 const { resolveAutoArchiveMaxLimit } = _UtilModule;
 
 /**
@@ -65,7 +73,7 @@ class GuildTextThreadManager<AllowedThreadType> extends ThreadManager {
     invitable,
     reason,
     rateLimitPerUser,
-  }: GuildTextThreadCreateOptions<AllowedThreadType>) {
+  }: SourceGuildTextThreadCreateOptions<AllowedThreadType>) {
     let path = this.client.api.channels(this.channel.id);
     if (type && typeof type !== 'string' && typeof type !== 'number') {
       throw new TypeError('INVALID_TYPE', 'type', 'ThreadChannelType or Number');
