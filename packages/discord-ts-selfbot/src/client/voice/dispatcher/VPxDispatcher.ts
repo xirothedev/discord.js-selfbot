@@ -17,13 +17,13 @@ Please use the @dank074/discord-video-stream library for the best support.
 
 const { Buffer } = require('node:buffer');
 const VideoDispatcher = require('./VideoDispatcher');
-const Util = require('../../../util/Util');
+const VoiceCodec = require('../util/VoiceCodec');
 
 class VP8Dispatcher extends VideoDispatcher {
   [key: string]: any;
 
   constructor(player: any, highWaterMark = 12, streams: any, fps: any) {
-    super(player, highWaterMark, streams, fps, Util.getPayloadType('VP8'));
+    super(player, highWaterMark, streams, fps, VoiceCodec.getPayloadType('VP8'));
   }
 
   makeChunk(buffer: any, isFirstPacket: any) {

@@ -6,7 +6,7 @@ const { Writable } = require('stream');
 const findProcessDefault = require('find-process');
 const killProcessDefault = require('tree-kill');
 const { RtpPacket } = require('werift-rtp');
-const Util = require('../../../util/Util');
+const VoiceCodec = require('../util/VoiceCodec');
 const { randomPorts } = require('../util/Function');
 const { StreamOutput } = require('../util/Socket');
 
@@ -78,7 +78,7 @@ class Recorder extends EventEmitter {
   }
   async init(output: any) {
     await this.promise;
-    const sdpData = Util.getSDPCodecName(this.portUdpH264, this.portUdpH265, this.portUdpOpus);
+    const sdpData = VoiceCodec.getSDPCodecName(this.portUdpH264, this.portUdpH265, this.portUdpOpus);
     const isStream = output instanceof Writable;
     if (isStream) {
       this.outputStream = this.streamOutput(output);
@@ -152,11 +152,11 @@ class Recorder extends EventEmitter {
     const message = payload.serialize();
     // Get port from payloadType
     let port;
-    if (payload.header.payloadType === Util.getPayloadType('opus')) {
+    if (payload.header.payloadType === VoiceCodec.getPayloadType('opus')) {
       port = this.portUdpOpus;
-    } else if (payload.header.payloadType === Util.getPayloadType('H264')) {
+    } else if (payload.header.payloadType === VoiceCodec.getPayloadType('H264')) {
       port = this.portUdpH264;
-    } else if (payload.header.payloadType === Util.getPayloadType('H265')) {
+    } else if (payload.header.payloadType === VoiceCodec.getPayloadType('H265')) {
       port = this.portUdpH265;
     } else {
       return;

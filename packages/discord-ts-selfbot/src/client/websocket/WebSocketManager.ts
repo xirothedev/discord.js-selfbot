@@ -344,6 +344,15 @@ class WebSocketManager extends EventEmitter {
     if (packet && PacketHandlers[packet.t]) {
       PacketHandlers[packet.t](this.client, packet, shard);
     } else if (packet) {
+      const actionName = String(packet.t || '')
+        .split('_')
+        .map((part: any) => part.charAt(0) + part.slice(1).toLowerCase())
+        .join('');
+      const action = this.client.actions?.[actionName];
+      if (action && typeof action.handle === 'function') {
+        action.handle(packet.d, shard);
+        return true;
+      }
       /**
        * Emitted whenever a packet isn't handled.
        * @event Client#unhandledPacket

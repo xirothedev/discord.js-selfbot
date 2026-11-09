@@ -4,7 +4,7 @@ const { isIP } = require('net');
 const { Buffer } = require('node:buffer');
 const { Error } = require('../../../errors');
 const { VoiceOpcodes } = require('../../../util/Constants');
-const Util = require('../../../util/Util');
+const VoiceCodec = require('../util/VoiceCodec');
 
 /**
  * Represents a UDP client for a Voice Connection.
@@ -126,7 +126,7 @@ class VoiceConnectionUDPClient extends EventEmitter {
         op: VoiceOpcodes.SELECT_PROTOCOL,
         d: {
           protocol: 'udp',
-          codecs: Util.getAllPayloadType(),
+          codecs: VoiceCodec.getAllPayloadType(),
           data: {
             address: packet.address,
             port: packet.port,

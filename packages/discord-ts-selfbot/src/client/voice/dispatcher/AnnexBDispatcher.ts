@@ -17,7 +17,7 @@ Please use the @dank074/discord-video-stream library for the best support.
 
 const { Buffer } = require('buffer');
 const VideoDispatcher = require('./VideoDispatcher');
-const Util = require('../../../util/Util');
+const VoiceCodec = require('../util/VoiceCodec');
 const { H264Helpers, H265Helpers } = require('../player/processing/AnnexBNalSplitter');
 
 class AnnexBDispatcher extends VideoDispatcher {
@@ -67,7 +67,7 @@ class AnnexBDispatcher extends VideoDispatcher {
 
 class H264Dispatcher extends AnnexBDispatcher {
   constructor(player: any, highWaterMark = 12, streams: any, fps: any) {
-    super(player, highWaterMark, streams, fps, H264Helpers, Util.getPayloadType('H264'));
+    super(player, highWaterMark, streams, fps, H264Helpers, VoiceCodec.getPayloadType('H264'));
   }
 
   makeFragmentationUnitHeader(isFirstPacket: any, isLastPacket: any, naluHeader: any) {
@@ -92,7 +92,7 @@ class H264Dispatcher extends AnnexBDispatcher {
 
 class H265Dispatcher extends AnnexBDispatcher {
   constructor(player: any, highWaterMark = 12, streams: any, fps: any) {
-    super(player, highWaterMark, streams, fps, H265Helpers, Util.getPayloadType('H265'));
+    super(player, highWaterMark, streams, fps, H265Helpers, VoiceCodec.getPayloadType('H265'));
   }
 
   makeFragmentationUnitHeader(isFirstPacket: any, isLastPacket: any, naluHeader: any) {

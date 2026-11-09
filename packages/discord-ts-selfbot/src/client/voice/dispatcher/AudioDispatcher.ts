@@ -1,5 +1,5 @@
 const BaseDispatcher = require('./BaseDispatcher');
-const Util = require('../../../util/Util');
+const VoiceCodec = require('../util/VoiceCodec');
 const Silence = require('../util/Silence');
 const VolumeInterface = require('../util/VolumeInterface');
 
@@ -31,7 +31,7 @@ class AudioDispatcher extends BaseDispatcher {
     streams: any,
   ) {
     const streamOptions = { seek, volume, fec, plp, bitrate, highWaterMark };
-    super(player, highWaterMark, Util.getPayloadType('opus'), false, streams);
+    super(player, highWaterMark, VoiceCodec.getPayloadType('opus'), false, streams);
 
     this.streamOptions = streamOptions;
 
