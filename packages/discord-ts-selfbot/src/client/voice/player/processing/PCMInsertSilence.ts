@@ -1,8 +1,13 @@
 import { Buffer } from 'node:buffer';
 import { Transform } from 'node:stream';
+import type { TransformCallback } from 'node:stream';
 
 class PCMInsertSilence extends Transform {
-  [key: string]: any;
+  declare sampleRate: number;
+  declare channels: number;
+  declare bytesPerFrame: number;
+  declare lastChunkTime: number;
+  declare silenceThresholdMs: number;
 
   constructor(options: any = {}) {
     super(options);
@@ -15,7 +20,7 @@ class PCMInsertSilence extends Transform {
     this.silenceThresholdMs = 50;
   }
 
-  _transform(chunk: any, _encoding: any, callback: any) {
+  _transform(chunk: Buffer, _encoding: BufferEncoding, callback: TransformCallback) {
     const now = Date.now();
     const gap = now - this.lastChunkTime;
 

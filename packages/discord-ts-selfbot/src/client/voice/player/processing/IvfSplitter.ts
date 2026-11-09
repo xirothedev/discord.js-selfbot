@@ -1,5 +1,6 @@
 import { Buffer } from 'buffer';
 import { Transform } from 'stream';
+import type { TransformCallback } from 'stream';
 /*
 Credit: https://github.com/dank074/Discord-video-stream
 The use of video streaming in this library is an incomplete implementation with many bugs, primarily aimed at lazy users.
@@ -18,7 +19,21 @@ Please use the @dank074/discord-video-stream library for the best support.
 */
 
 class IvfTransformer extends Transform {
-  [key: string]: any;
+  declare headerSize: number;
+  declare frameHeaderSize: number;
+  declare header: {
+    signature: string;
+    version: number;
+    headerLength: number;
+    codec: string;
+    width: number;
+    height: number;
+    timeDenominator: number;
+    timeNumerator: number;
+    frameCount: number;
+  } | null;
+  declare buf: Buffer | null;
+  declare retFullFrame: boolean;
 
   constructor(options: any = {}) {
     super(options);
@@ -30,7 +45,7 @@ class IvfTransformer extends Transform {
     this.retFullFrame = options && options.fullframe ? options.fullframe : false;
   }
 
-  _parseHeader(header: any) {
+  _parseHeader(header: Buffer) {
     this.header = {
       signature: header.subarray(0, 4).toString(),
       version: header.readUIntLE(4, 2),
@@ -44,11 +59,11 @@ class IvfTransformer extends Transform {
     };
   }
 
-  _getFrameSize(buf: any) {
+  _getFrameSize(buf: Buffer) {
     return buf.readUIntLE(0, 4);
   }
 
-  _parseFrame(frame: any) {
+  _parseFrame(frame: Buffer) {
     const size = this._getFrameSize(frame);
 
     if (this.retFullFrame) return this.push(frame.subarray(0, 12 + size));
@@ -62,22 +77,23 @@ class IvfTransformer extends Transform {
     return this.push(out.data);
   }
 
-  _appendChunkToBuf(chunk: any) {
+  _appendChunkToBuf(chunk: Buffer) {
     if (this.buf) this.buf = Buffer.concat([this.buf, chunk]);
     else this.buf = chunk;
   }
 
-  _updateBufLen(size: any) {
+  _updateBufLen(size: number) {
+    if (!this.buf) return;
     if (this.buf.length > size) this.buf = this.buf.subarray(size, this.buf.length);
     else this.buf = null;
   }
 
-  _transform(chunk: any, _encoding: any, callback: any) {
+  _transform(chunk: Buffer, _encoding: BufferEncoding, callback: TransformCallback) {
     this._appendChunkToBuf(chunk);
 
     if (!this.header) {
-      if (this.buf.length >= this.headerSize) {
-        this._parseHeader(this.buf.subarray(0, this.headerSize));
+      if (this.buf!.length >= this.headerSize) {
+        this._parseHeader(this.buf!.subarray(0, this.headerSize));
         this._updateBufLen(this.headerSize);
       } else {
         callback();

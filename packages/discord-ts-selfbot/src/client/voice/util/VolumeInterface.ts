@@ -6,7 +6,7 @@ import { Buffer } from 'node:buffer';
  * @extends {EventEmitter}
  */
 class VolumeInterface extends EventEmitter {
-  [key: string]: any;
+  declare _volume: number;
 
   constructor({ volume = 1 }: any = {}) {
     super();
@@ -49,7 +49,7 @@ class VolumeInterface extends EventEmitter {
     return Math.pow(this.volume, 1 / 1.660964);
   }
 
-  applyVolume(buffer: any, volume: any) {
+  applyVolume(buffer: Buffer, volume?: number) {
     volume = volume || this._volume;
     if (volume === 1) return buffer;
 
@@ -67,7 +67,7 @@ class VolumeInterface extends EventEmitter {
    * Sets the volume relative to the input stream - i.e. 1 is normal, 0.5 is half, 2 is double.
    * @param {number} volume The volume that you want to set
    */
-  setVolume(volume: any) {
+  setVolume(volume: number) {
     /**
      * Emitted when the volume of this interface changes.
      * @event VolumeInterface#volumeChange
@@ -82,7 +82,7 @@ class VolumeInterface extends EventEmitter {
    * Sets the volume in decibels.
    * @param {number} db The decibels
    */
-  setVolumeDecibels(db: any) {
+  setVolumeDecibels(db: number) {
     this.setVolume(Math.pow(10, db / 20));
   }
 
@@ -90,7 +90,7 @@ class VolumeInterface extends EventEmitter {
    * Sets the volume so that a perceived value of 0.5 is half the perceived volume etc.
    * @param {number} value The value for the volume
    */
-  setVolumeLogarithmic(value: any) {
+  setVolumeLogarithmic(value: number) {
     this.setVolume(Math.pow(value, 1.660964));
   }
 }

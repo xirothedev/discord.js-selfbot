@@ -34,7 +34,7 @@ const { Error } = _errorsModule;
  * An interface class to allow you to play audio over VoiceConnections.
  */
 class PlayInterface {
-  [key: string]: any;
+  declare player: any;
 
   constructor(player: any) {
     this.player = player;

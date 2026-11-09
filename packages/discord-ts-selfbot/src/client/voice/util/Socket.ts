@@ -22,7 +22,8 @@ Please use the @dank074/discord-video-stream library for the best support.
 let counter = 0;
 
 class UnixStream {
-  [key: string]: any;
+  declare socketPath: string;
+  declare url: string;
 
   constructor(stream: any, onSocket: any) {
     if (process.platform === 'win32') {
