@@ -62,7 +62,7 @@ jobs:
               - 'turbo.json'
 
   ci:
-    name: CI
+    name: Checks
     needs: changes
     if: |
       github.event.pull_request.draft != true &&

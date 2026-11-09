@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   ci:
-    name: CI
+    name: Checks
     uses: ./.github/workflows/_ci-reusable.yml
     with:
       run_check: true
