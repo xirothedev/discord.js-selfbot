@@ -7,8 +7,10 @@ const { Error, TypeError } = _errorsModule;
  * @extends {Base}
  */
 class VoiceState extends Base {
-  [key: string]: any;
-  constructor(guild: any, data: any) {
+  constructor(
+    guild: { client: import('../client/Client').default } & Record<string, unknown>,
+    data: Record<string, unknown>,
+  ) {
     super(guild.client);
     /**
      * The guild of this voice state
@@ -23,7 +25,7 @@ class VoiceState extends Base {
     this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: Record<string, unknown>) {
     if ('deaf' in data) {
       /**
        * Whether this member is deafened server-wide
@@ -119,7 +121,8 @@ class VoiceState extends Base {
        * The time at which the member requested to speak. This property is specific to stage channels only.
        * @type {?number}
        */
-      this.requestToSpeakTimestamp = data.request_to_speak_timestamp && Date.parse(data.request_to_speak_timestamp);
+      this.requestToSpeakTimestamp =
+        data.request_to_speak_timestamp && Date.parse(data.request_to_speak_timestamp as string);
     } else {
       this.requestToSpeakTimestamp ??= null;
     }
@@ -179,7 +182,7 @@ class VoiceState extends Base {
    * @param {string} [reason] Reason for muting or unmuting
    * @returns {Promise<GuildMember>}
    */
-  setMute(mute: any = true, reason: any) {
+  setMute(mute: boolean = true, reason?: string) {
     if (!this.guild?.id) return null;
     return this.guild.members.edit(this.id, { mute }, reason);
   }
@@ -190,7 +193,7 @@ class VoiceState extends Base {
    * @param {string} [reason] Reason for deafening or undeafening
    * @returns {Promise<GuildMember>}
    */
-  setDeaf(deaf: any = true, reason: any) {
+  setDeaf(deaf: boolean = true, reason?: string) {
     if (!this.guild?.id) return null;
     return this.guild.members.edit(this.id, { deaf }, reason);
   }
@@ -200,7 +203,7 @@ class VoiceState extends Base {
    * @param {string} [reason] Reason for disconnecting the member from the channel
    * @returns {Promise<GuildMember>}
    */
-  disconnect(reason: any) {
+  disconnect(reason?: string) {
     return this.setChannel(null, reason);
   }
 
@@ -211,7 +214,7 @@ class VoiceState extends Base {
    * @param {string} [reason] Reason for moving member to another channel or disconnecting
    * @returns {Promise<GuildMember>}
    */
-  setChannel(channel: any, reason: any) {
+  setChannel(channel: unknown, reason?: string) {
     if (!this.guild?.id) return null;
     return this.guild.members.edit(this.id, { channel }, reason);
   }
@@ -228,7 +231,7 @@ class VoiceState extends Base {
    * guild.members.me.voice.setRequestToSpeak(false);
    * @returns {Promise<void>}
    */
-  async setRequestToSpeak(request: any = true) {
+  async setRequestToSpeak(request: boolean = true) {
     if (this.channel?.type !== 'GUILD_STAGE_VOICE') throw new Error('VOICE_NOT_STAGE_CHANNEL');
 
     if (this.client.user.id !== this.id) throw new Error('VOICE_STATE_NOT_OWN');
@@ -258,7 +261,7 @@ class VoiceState extends Base {
    * voiceState.setSuppressed(true);
    * @returns {Promise<void>}
    */
-  async setSuppressed(suppressed: any = true) {
+  async setSuppressed(suppressed: boolean = true) {
     if (typeof suppressed !== 'boolean') throw new TypeError('VOICE_STATE_INVALID_TYPE', 'suppressed');
 
     if (this.channel?.type !== 'GUILD_STAGE_VOICE') throw new Error('VOICE_NOT_STAGE_CHANNEL');
@@ -285,7 +288,7 @@ class VoiceState extends Base {
    * guild.members.me.voice.setStatus()
    * @returns {Promise<void>}
    */
-  setStatus(status: any = '') {
+  setStatus(status: unknown = '') {
     // PUT https://discord.com/api/v9/channels/:id/voice-status
     return this.client.api.channels(this.channel.id, 'voice-status').put({
       data: {
@@ -314,7 +317,7 @@ class VoiceState extends Base {
    * @param {string} base64Image Base64 URI (data:image/jpeg;base64,data)
    * @returns {Promise<void>}
    */
-  postPreview(base64Image: any) {
+  postPreview(base64Image: unknown) {
     if (!this.client.user.id === this.id || !this.streaming) throw new Error('USER_NOT_STREAMING');
     // URL: https://discord.com/api/v9/streams/guild:guildid:voicechannelid:userid/preview
     // URL: https://discord.com/api/v9/streams/call:channelId:userId/preview
@@ -333,7 +336,7 @@ class VoiceState extends Base {
    * @param {boolean} [force=true] Whether to skip the cache check and request the API
    * @returns {Promise<VoiceState>}
    */
-  fetch(force: any = true) {
+  fetch(force: boolean = true) {
     return this.guild?.voiceStates?.fetch(this.id, { force });
   }
 
