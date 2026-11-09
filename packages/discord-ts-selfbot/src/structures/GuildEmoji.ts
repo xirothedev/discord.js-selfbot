@@ -9,7 +9,11 @@ import Permissions from '../util/Permissions';
  * @extends {BaseGuildEmoji}
  */
 class GuildEmoji extends BaseGuildEmoji {
-  constructor(client: any, data: any, guild: any) {
+  constructor(
+    client: import('../client/Client').default,
+    data: Record<string, unknown>,
+    guild: import('./Guild').Guild,
+  ) {
     super(client, data, guild);
 
     /**
@@ -41,7 +45,7 @@ class GuildEmoji extends BaseGuildEmoji {
     return clone;
   }
 
-  _patch(data: any) {
+  _patch(data: Record<string, unknown>) {
     super._patch(data);
 
     if (data.user) this.author = this.client.users._add(data.user);
@@ -93,8 +97,8 @@ class GuildEmoji extends BaseGuildEmoji {
    *   .then(e => console.log(`Edited emoji ${e}`))
    *   .catch(console.error);
    */
-  async edit(data: any, reason: any) {
-    const roles = data.roles?.map((r: any) => r.id ?? r);
+  async edit(data: Record<string, unknown>, reason?: string) {
+    const roles = (data.roles as unknown[] | undefined)?.map((r: unknown) => (r as { id?: unknown }).id ?? r);
     const newData = await this.client.api
       .guilds(this.guild.id)
       .emojis(this.id)
@@ -116,7 +120,7 @@ class GuildEmoji extends BaseGuildEmoji {
    * @param {string} [reason] Reason for changing the emoji's name
    * @returns {Promise<GuildEmoji>}
    */
-  setName(name: any, reason: any) {
+  setName(name: unknown, reason?: string) {
     return this.edit({ name }, reason);
   }
 
@@ -125,7 +129,7 @@ class GuildEmoji extends BaseGuildEmoji {
    * @param {string} [reason] Reason for deleting the emoji
    * @returns {Promise<GuildEmoji>}
    */
-  async delete(reason: any) {
+  async delete(reason?: string) {
     await this.guild.emojis.delete(this, reason);
     return this;
   }
@@ -135,7 +139,7 @@ class GuildEmoji extends BaseGuildEmoji {
    * @param {GuildEmoji|APIEmoji} other The emoji to compare it to
    * @returns {boolean}
    */
-  equals(other: any) {
+  equals(other: GuildEmoji | Record<string, unknown> | null) {
     if (other instanceof GuildEmoji) {
       return (
         other.id === this.id &&
@@ -144,14 +148,15 @@ class GuildEmoji extends BaseGuildEmoji {
         other.available === this.available &&
         other.requiresColons === this.requiresColons &&
         other.roles.cache.size === this.roles.cache.size &&
-        other.roles.cache.every((role: any) => this.roles.cache.has(role.id))
+        other.roles.cache.every((role: unknown) => this.roles.cache.has((role as { id: string }).id))
       );
     } else {
+      const o = other as { id?: unknown; name?: unknown; roles?: unknown[] } | null;
       return (
-        other.id === this.id &&
-        other.name === this.name &&
-        other.roles.length === this.roles.cache.size &&
-        other.roles.every((role: any) => this.roles.cache.has(role))
+        o?.id === this.id &&
+        o?.name === this.name &&
+        (o?.roles?.length ?? 0) === this.roles.cache.size &&
+        (o?.roles ?? []).every((role: unknown) => this.roles.cache.has(role as string))
       );
     }
   }
