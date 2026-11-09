@@ -4351,13 +4351,13 @@ export class VoiceState extends Base {
 
 export class Webhook extends WebhookMixin() {
   private constructor(client: Client, data?: RawWebhookData);
-  public avatar: string;
+  public avatar: string | null;
   public avatarURL(options?: StaticImageURLOptions): string | null;
   public readonly channel: TextChannel | VoiceChannel | NewsChannel | ForumChannel | MediaChannel | null;
-  public channelId: Snowflake;
+  public channelId: Snowflake | null;
   public client: Client;
-  public guildId: Snowflake;
-  public name: string;
+  public guildId: Snowflake | null;
+  public name: string | null;
   public owner: User | APIUser | null;
   public sourceGuild: Guild | APIPartialGuild | null;
   public sourceChannel: NewsChannel | APIPartialChannel | null;

@@ -56,7 +56,7 @@ type MessagePayloadOptions = Omit<MessageOptions, 'reply' | 'forward' | 'flags'>
 interface MessagePayloadTarget {
   client: Client;
   messages?: MessageManager;
-  name?: string;
+  name?: string | null;
   author?: User | null;
   id?: Snowflake;
 }
@@ -226,7 +226,7 @@ class MessagePayload {
     let threadName;
     let appliedTags;
     if (isWebhook) {
-      username = this.options.username ?? this.target.name;
+      username = this.options.username ?? this.target.name ?? undefined;
       if (this.options.avatarURL) avatarURL = this.options.avatarURL;
       if (this.options.threadName) threadName = this.options.threadName;
       if (this.options.appliedTags) appliedTags = this.options.appliedTags;

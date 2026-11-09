@@ -75,6 +75,18 @@ const CONFIG: Record<string, EntityConfig> = {
     generate: false,
     fieldTypes: { metadata: 'RichPresenceMetadata' },
   },
+  Webhook: {
+    imports: [],
+    fields: {},
+    generate: false,
+    fieldTypes: {
+      avatar: 'string | null',
+      channelId: 'Snowflake | null',
+      guildId: 'Snowflake | null',
+      name: 'string | null',
+      sourceGuild: 'Guild | APIPartialGuild | null',
+    },
+  },
   Message: {
     rawType: { name: 'RawMessageData', from: '../../typings/rawDataTypes' },
     imports: [
