@@ -41,7 +41,7 @@ Two public contracts stay as `fieldTypes` overrides because the runtime value is
 
 ## Final gate: closed
 
-`Base` no longer has `[key: string]: any`. The structural gate now passes with 354 source files type-checking and 0 drift rows. The ratchet is **1,124 `any` / 440 casts**.
+`Base` no longer has `[key: string]: any`. The structural gate now passes with 354 source files type-checking and 0 drift rows. The ratchet is **1,118 `any` / 440 casts**.
 
 ## Index-signature wave
 
@@ -54,11 +54,13 @@ The shallow index signatures are closed. This wave removed the boundaries from:
 - Interaction classes: `MessageComponentInteraction`, `ModalSubmitInteraction`, `SelectMenuInteraction`, and both context-menu interactions.
 - Voice helpers: `PCMInsertSilence`, `UnixStream`, `VolumeInterface`, `PlayInterface`, `IvfTransformer`, `AnnexBNalSplitter`.
 
-**18 classes remain**, all on the deep runtime surfaces: the voice stack (`BaseDispatcher`, `AudioDispatcher`, `VideoDispatcher`, `VPxDispatcher`, `AnnexBDispatcher`, `MediaPlayer`, `VoiceConnection`, `ClientVoiceManager`, `VoiceWebSocket`, `VoiceUDPClient`, `Receiver`, `Recorder`, `PacketHandler`), the websocket stack (`WebSocketManager`, `WebSocketShard`), the manager bases (`BaseManager`, `CachedManager`), and `ActionsManager`.
+**17 classes remain**, all on the deep runtime surfaces: the voice stack (`BaseDispatcher`, `AudioDispatcher`, `VideoDispatcher`, `VPxDispatcher`, `AnnexBDispatcher`, `MediaPlayer`, `VoiceConnection`, `ClientVoiceManager`, `VoiceWebSocket`, `VoiceUDPClient`, `Receiver`, `Recorder`, `PacketHandler`), the websocket stack (`WebSocketManager`, `WebSocketShard`), `CachedManager`, and `ActionsManager`.
+
+`BaseManager` is closed. Its subclasses now declare their own settings, billing, relationship, note, and role-manager fields. `CachedManager` is the remaining manager boundary: typing it generically (`CachedManager<Holds>`) exposes 219 errors because the source structures and the public typings describe different class shapes (for example, source `User` lacks the public `send` surface and source `Message` lacks the private cache brand). That needs a dedicated generic-cache wave that also aligns the source structures with the public typings.
 
 ## Next modules
 
-1. Type `BaseManager` / `CachedManager` and the manager subclasses in one wave; removing both base boundaries reports 337 errors.
+1. Type `CachedManager<Holds>` and align the source structures with the public typings; the generic cache design reports 219 errors.
 2. Type the websocket stack, then the voice dispatcher/receiver stack.
 3. `Interaction.memberPermissions` / `CacheTypeReducer` and `ApplicationCommand` generic propagation.
 4. Replace the last `Constants` boundary (`const Constants: any = {}`) with a named interface once consumers are typed.
