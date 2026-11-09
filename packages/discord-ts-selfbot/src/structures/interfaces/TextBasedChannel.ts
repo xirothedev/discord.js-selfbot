@@ -566,12 +566,12 @@ async function addDataFromAttachment(value: any, client: any, channelId: any, at
     throw new TypeError('The attachment data must be a BufferResolvable or Stream or FileOptions of MessageAttachment');
   }
   const data = await Util.getUploadURL(client, channelId, [value]);
-  await Util.uploadFile(value.file, data[0].upload_url);
+  await Util.uploadFile(value.file, (data[0] as { upload_url: string }).upload_url);
   const id = attachments.length;
   attachments.push({
     id,
     filename: value.name,
-    uploaded_filename: data[0].upload_filename,
+    uploaded_filename: (data[0] as { upload_filename: string }).upload_filename,
   });
   return {
     id,
