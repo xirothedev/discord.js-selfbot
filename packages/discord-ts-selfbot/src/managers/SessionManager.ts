@@ -6,6 +6,7 @@ import Session from '../structures/Session';
  * @extends {CachedManager}
  */
 class SessionManager extends CachedManager {
+  declare currentSessionIdHash: string | null;
   constructor(client: any, iterable?: any) {
     super(client, Session, iterable);
 

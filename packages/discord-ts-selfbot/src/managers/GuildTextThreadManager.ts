@@ -59,7 +59,7 @@ class GuildTextThreadManager<AllowedThreadType> extends ThreadManager {
    */
   async create({
     name,
-    autoArchiveDuration = this.channel.defaultAutoArchiveDuration,
+    autoArchiveDuration = this.channel.defaultAutoArchiveDuration ?? undefined,
     startMessage,
     type,
     invitable,
@@ -73,7 +73,7 @@ class GuildTextThreadManager<AllowedThreadType> extends ThreadManager {
     let resolvedType =
       this.channel.type === 'GUILD_NEWS' ? ChannelTypes.GUILD_NEWS_THREAD : ChannelTypes.GUILD_PUBLIC_THREAD;
     if (startMessage) {
-      const startMessageId = this.channel.messages.resolveId(startMessage);
+      const startMessageId = this.channel.messages!.resolveId(startMessage);
       if (!startMessageId) throw new TypeError('INVALID_TYPE', 'startMessage', 'MessageResolvable');
       path = path.messages(startMessageId);
     } else if (this.channel.type !== 'GUILD_NEWS') {

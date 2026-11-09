@@ -11,6 +11,7 @@ const { ReactionTypes } = _ConstantsModule;
  * @extends {CachedManager}
  */
 class ReactionUserManager extends CachedManager {
+  declare reaction: import('../structures/MessageReaction').MessageReaction;
   constructor(reaction: any, iterable?: any) {
     super(reaction.client, User, iterable);
 

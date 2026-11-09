@@ -13,6 +13,9 @@ import Permissions from '../util/Permissions';
  * @extends {CachedManager}
  */
 class ApplicationCommandManager extends CachedManager {
+  declare permissions: ApplicationCommandPermissionsManager;
+  declare guild?: import('../structures/Guild').Guild;
+  declare guildId?: import('discord-api-types/v10').Snowflake;
   constructor(client: any, iterable?: any) {
     super(client, ApplicationCommand, iterable);
 

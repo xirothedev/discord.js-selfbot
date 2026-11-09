@@ -16,6 +16,7 @@ let cacheWarningEmitted = false;
  * @extends {CachedManager}
  */
 class PermissionOverwriteManager extends CachedManager {
+  declare channel: import('../structures/GuildChannel').GuildChannel;
   constructor(channel: any, iterable?: any) {
     super(channel.client, PermissionOverwrites);
     if (!cacheWarningEmitted && this._cache.constructor.name !== 'Collection') {
@@ -67,7 +68,7 @@ class PermissionOverwriteManager extends CachedManager {
     if (!Array.isArray(overwrites) && !(overwrites instanceof Collection)) {
       throw new TypeError('INVALID_TYPE', 'overwrites', 'Array or Collection of Permission Overwrites', true);
     }
-    return this.channel.edit({ permissionOverwrites: overwrites, reason });
+    return this.channel.edit({ permissionOverwrites: overwrites }, reason);
   }
 
   /**
@@ -141,9 +142,8 @@ class PermissionOverwriteManager extends CachedManager {
    *   .catch(console.error);
    */
   edit(userOrRole: any, options: any, overwriteOptions: any) {
-    const existing = this.cache.get(
-      this.channel.guild.roles.resolveId(userOrRole) ?? this.client.users.resolveId(userOrRole),
-    );
+    const id = this.channel.guild.roles.resolveId(userOrRole) ?? this.client.users.resolveId(userOrRole);
+    const existing = id ? this.cache.get(id) : undefined;
     return this.upsert(userOrRole, options, overwriteOptions, existing);
   }
 

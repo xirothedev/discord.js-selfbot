@@ -51,6 +51,8 @@ class GuildChannel extends Channel implements GuildChannelEntity {
   declare bitrate?: number;
   declare userLimit?: number;
   declare rateLimitPerUser?: number | null;
+  declare defaultAutoArchiveDuration?: import('../../typings').ThreadAutoArchiveDuration | null;
+  declare messages?: import('../managers/MessageManager').default;
 
   constructor(
     guild: Guild,
@@ -300,8 +302,13 @@ class GuildChannel extends Channel implements GuildChannelEntity {
    */
   async lockPermissions(): Promise<this> {
     if (!this.parent) throw new Error('GUILD_CHANNEL_ORPHAN');
-    const permissionOverwrites = this.parent.permissionOverwrites.cache.map((overwrite: PermissionOverwrites) =>
-      overwrite.toJSON(),
+    const permissionOverwrites: import('../../typings').OverwriteData[] = this.parent.permissionOverwrites.cache.map(
+      (overwrite: PermissionOverwrites) => ({
+        id: overwrite.id,
+        type: overwrite.type,
+        allow: BigInt(overwrite.allow.bitfield),
+        deny: BigInt(overwrite.deny.bitfield),
+      }),
     );
     return this.edit({ permissionOverwrites });
   }

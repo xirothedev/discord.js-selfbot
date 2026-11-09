@@ -810,7 +810,7 @@ class Client extends BaseClient {
     if (!code) throw new Error('INVITE_RESOLVE_CODE');
     const i = await this.fetchInvite(code);
     if (i.guild?.id && this.guilds.cache.has(i.guild?.id)) return this.guilds.cache.get(i.guild?.id);
-    if (this.channels.cache.has(i.channelId)) return this.channels.cache.get(i.channelId);
+    if (i.channelId && this.channels.cache.has(i.channelId)) return this.channels.cache.get(i.channelId);
     const data = await this.api.invites(code).post({
       DiscordContext: { location: 'Markdown Link' },
       data: {

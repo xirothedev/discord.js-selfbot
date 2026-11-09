@@ -136,8 +136,9 @@ class Webhook {
        * The source channel of the webhook
        * @type {?(NewsChannel|APIChannel)}
        */
-      const sourceChannel: NewsChannel | APIPartialChannel =
-        this.client.channels?.cache.get(data.source_channel?.id) ?? data.source_channel;
+      const sourceChannel: NewsChannel | APIPartialChannel = data.source_channel?.id
+        ? (this.client.channels?.cache.get(data.source_channel.id) ?? data.source_channel)
+        : data.source_channel;
       this.sourceChannel = sourceChannel;
     } else {
       this.sourceChannel ??= null;

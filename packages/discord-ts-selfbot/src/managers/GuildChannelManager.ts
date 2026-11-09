@@ -23,6 +23,7 @@ let storeChannelDeprecationEmitted = false;
  * @extends {CachedManager}
  */
 class GuildChannelManager extends CachedManager {
+  declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, GuildChannel, iterable);
     const defaultCaching =

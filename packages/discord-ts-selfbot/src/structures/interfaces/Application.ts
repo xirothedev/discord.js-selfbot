@@ -770,7 +770,7 @@ class Application extends Base implements ApplicationEntity {
    * @readonly
    */
   get guild() {
-    return this.client.guilds.cache.get(this.guildId) ?? null;
+    return this.guildId ? (this.client.guilds.cache.get(this.guildId) ?? null) : null;
   }
 
   /**

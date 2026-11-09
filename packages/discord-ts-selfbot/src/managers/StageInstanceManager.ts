@@ -11,6 +11,7 @@ const { PrivacyLevels } = _ConstantsModule;
  * @extends {CachedManager}
  */
 class StageInstanceManager extends CachedManager {
+  declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, StageInstance, iterable);
 

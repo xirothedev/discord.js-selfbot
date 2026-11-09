@@ -22,6 +22,7 @@ import SnowflakeUtil from '../util/SnowflakeUtil';
  * @extends {CachedManager}
  */
 class GuildMemberManager extends CachedManager {
+  declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, GuildMember, iterable);
 
@@ -71,6 +72,7 @@ class GuildMemberManager extends CachedManager {
     const memberResolvable = super.resolveId(member);
     if (memberResolvable) return memberResolvable;
     const userId = this.client.users.resolveId(member);
+    if (!userId) return null;
     return this.cache.has(userId) ? userId : null;
   }
 
@@ -538,7 +540,7 @@ class GuildMemberManager extends CachedManager {
     return new Promise((resolve: any, reject: any) => {
       if (!query && !user_ids) query = '';
       if (nonce.length > 32) throw new RangeError('MEMBER_FETCH_NONCE_LENGTH');
-      this.guild.shard.send({
+      this.guild.shard!.send({
         op: Opcodes.REQUEST_GUILD_MEMBERS,
         d: {
           guild_id: this.guild.id,

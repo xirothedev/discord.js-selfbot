@@ -222,7 +222,7 @@ class Invite extends Base implements InviteEntity {
        * @type {?Snowflake}
        */
       this.channelId = data.channel_id;
-      this.channel = this.client.channels.cache.get(data.channel_id);
+      this.channel = data.channel_id ? this.client.channels.cache.get(data.channel_id) : undefined;
     }
 
     if ('channel' in data && data.channel !== null) {

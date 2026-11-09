@@ -85,7 +85,7 @@ class Integration extends Base implements IntegrationEntity {
      * The role that this integration uses for subscribers
      * @type {?Role}
      */
-    this.role = this.guild.roles.cache.get(data.role_id);
+    this.role = data.role_id ? this.guild.roles.cache.get(data.role_id) : undefined;
 
     if ('enable_emoticons' in data) {
       /**

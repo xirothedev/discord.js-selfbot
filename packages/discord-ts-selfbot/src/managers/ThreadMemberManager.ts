@@ -12,6 +12,7 @@ let deprecationEmittedForPassingBoolean = false;
  * @extends {CachedManager}
  */
 class ThreadMemberManager extends CachedManager {
+  declare thread: import('../structures/ThreadChannel').ThreadChannel;
   constructor(thread: any, iterable?: any) {
     super(thread.client, ThreadMember, iterable);
 
@@ -85,6 +86,7 @@ class ThreadMemberManager extends CachedManager {
     const memberResolvable = super.resolveId(member);
     if (memberResolvable) return memberResolvable;
     const userResolvable = this.client.users.resolveId(member);
+    if (!userResolvable) return null;
     return this.cache.has(userResolvable) ? userResolvable : null;
   }
 

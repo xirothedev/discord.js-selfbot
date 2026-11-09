@@ -6,6 +6,7 @@ import InteractionResponse from '../structures/interfaces/InteractionResponses';
  * @extends {CachedManager}
  */
 class InteractionManager extends CachedManager {
+  declare channel: import('../structures/interfaces/TextBasedChannel').default;
   constructor(channel: any, iterable?: any) {
     super(channel.client, InteractionResponse, iterable);
 

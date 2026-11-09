@@ -6,6 +6,7 @@ import VoiceState from '../structures/VoiceState';
  * @extends {CachedManager}
  */
 class VoiceStateManager extends CachedManager {
+  declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, VoiceState, iterable);
 

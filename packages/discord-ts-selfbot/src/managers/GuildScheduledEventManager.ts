@@ -14,6 +14,7 @@ import Util from '../util/Util';
  * @extends {CachedManager}
  */
 class GuildScheduledEventManager extends CachedManager {
+  declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, GuildScheduledEvent, iterable);
 

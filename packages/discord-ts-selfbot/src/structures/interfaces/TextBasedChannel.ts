@@ -31,6 +31,7 @@ class TextBasedChannel {
   declare id: import('discord-api-types/v10').Snowflake;
   declare parentId?: import('discord-api-types/v10').Snowflake | null;
   declare guild?: import('../Guild').Guild | null;
+  declare guildId?: import('discord-api-types/v10').Snowflake | null;
   declare messages: MessageManager;
   declare lastMessageId: import('discord-api-types/v10').Snowflake | null;
   declare lastPinTimestamp: number | null;

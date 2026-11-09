@@ -1,3 +1,4 @@
+import { Collection } from '@discordjs/collection';
 import DataManager from './DataManager';
 import _ConstantsModule from '../util/Constants';
 const { _cleanupSymbol } = _ConstantsModule;
@@ -8,7 +9,7 @@ const { _cleanupSymbol } = _ConstantsModule;
  * @abstract
  */
 class CachedManager extends DataManager {
-  [key: string]: any;
+  declare _cache: Collection<string, any> & { maxSize?: number; sweepFilter?: { isDefault?: boolean } };
   constructor(client: any, holds: any, iterable?: any) {
     super(client, holds);
 
@@ -21,7 +22,9 @@ class CachedManager extends DataManager {
      */
     Object.defineProperty(this, '_cache', { value: this.client.options.makeCache(this.constructor, this.holds) });
 
-    let cleanup = this._cache[_cleanupSymbol]?.();
+    const cleanupFactory = Reflect.get(this._cache, _cleanupSymbol, this._cache) as
+      (() => (() => void) | undefined) | undefined;
+    let cleanup = cleanupFactory?.call(this._cache);
     if (cleanup) {
       cleanup = cleanup.bind(this._cache);
       client._cleanups.add(cleanup);

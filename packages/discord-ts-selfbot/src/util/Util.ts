@@ -582,9 +582,16 @@ class Util extends null {
    * @param {Collection} collection Collection of objects to sort
    * @returns {Collection}
    */
-  static discordSort(collection: unknown) {
+  static discordSort(
+    collection: unknown,
+  ): import('@discordjs/collection').Collection<string, { id: string; rawPosition: number }> {
     const GuildChannel = require('../structures/GuildChannel');
-    const c = collection as { first: () => unknown; toSorted: (fn: (a: unknown, b: unknown) => number) => unknown };
+    const c = collection as {
+      first: () => unknown;
+      toSorted: (
+        fn: (a: unknown, b: unknown) => number,
+      ) => import('@discordjs/collection').Collection<string, { id: string; rawPosition: number }>;
+    };
     const isGuildChannel = c.first() instanceof GuildChannel;
     return c.toSorted(
       isGuildChannel

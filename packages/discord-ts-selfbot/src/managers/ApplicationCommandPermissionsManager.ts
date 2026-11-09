@@ -96,7 +96,8 @@ class ApplicationCommandPermissionsManager<
      * The id of the command this manager acts on
      * @type {?Snowflake}
      */
-    this.commandId = (manager.id ?? null) as CommandIdType;
+    const managerId = 'id' in manager ? manager.id : null;
+    this.commandId = (managerId ? String(managerId) : null) as CommandIdType;
   }
 
   /**
@@ -487,7 +488,10 @@ class ApplicationCommandPermissionsManager<
     if (!guildId) throw new Error('GLOBAL_COMMAND_PERMISSIONS');
     let commandId: Snowflake | null = this.commandId;
     if (command && !commandId) {
-      if ('resolveId' in this.manager) {
+      if ('id' in this.manager) {
+        const id = this.manager.id;
+        commandId = typeof id === 'string' ? id : null;
+      } else if ('resolveId' in this.manager) {
         commandId = this.manager.resolveId(command);
       }
       commandId = commandId ?? this.client.application?.commands.resolveId(command) ?? null;

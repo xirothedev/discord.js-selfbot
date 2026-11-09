@@ -12,6 +12,7 @@ import Util from '../util/Util';
  * @extends {CachedManager}
  */
 class MessageManager extends CachedManager {
+  declare channel: import('../structures/interfaces/TextBasedChannel').default;
   constructor(channel: any, iterable?: any) {
     super(channel.client, Message, iterable);
 
@@ -325,7 +326,7 @@ class MessageManager extends CachedManager {
         .map((c: any) => this.client.channels.resolveId(c))
         .filter((id: any) => {
           if (this.channel.guildId) {
-            const c = this.channel.guild.channels.cache.get(id);
+            const c = this.channel.guild!.channels.cache.get(id);
             if (!c || !c.messages) return false;
             const perm = c.permissionsFor(this.client.user);
             if (!perm.has('READ_MESSAGE_HISTORY') || !perm.has('VIEW_CHANNEL')) return false;

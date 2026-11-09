@@ -91,6 +91,7 @@ class UserManager extends CachedManager {
    */
   async fetch(user: any, { cache = true, force = false }: any = {}) {
     const id = this.resolveId(user);
+    if (!id) return null;
     if (!force) {
       const existing = this.cache.get(id);
       if (existing && !existing.partial) return existing;

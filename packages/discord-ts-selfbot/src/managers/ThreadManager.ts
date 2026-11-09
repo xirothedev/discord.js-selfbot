@@ -7,6 +7,7 @@ import ThreadChannel from '../structures/ThreadChannel';
  * @extends {CachedManager}
  */
 class ThreadManager extends CachedManager {
+  declare channel: import('../structures/GuildChannel').GuildChannel;
   constructor(channel: any, iterable?: any) {
     super(channel.client, ThreadChannel, iterable);
 

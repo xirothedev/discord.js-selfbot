@@ -14,6 +14,7 @@ const {
  * @extends {CachedManager}
  */
 class AutoModerationRuleManager extends CachedManager {
+  declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, AutoModerationRule, iterable);
 

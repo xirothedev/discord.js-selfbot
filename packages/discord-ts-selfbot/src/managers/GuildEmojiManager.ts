@@ -10,6 +10,7 @@ import Permissions from '../util/Permissions';
  * @extends {BaseGuildEmojiManager}
  */
 class GuildEmojiManager extends BaseGuildEmojiManager {
+  declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, iterable);
 

@@ -20,6 +20,7 @@ let deprecationEmittedForEdit = false;
  * @extends {CachedManager}
  */
 class RoleManager extends CachedManager {
+  declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, Role, iterable);
     if (!cacheWarningEmitted && this._cache.constructor.name !== 'Collection') {

@@ -14,6 +14,7 @@ let deprecationEmittedForDays = false;
  * @extends {CachedManager}
  */
 class GuildBanManager extends CachedManager {
+  declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, GuildBan, iterable);
 

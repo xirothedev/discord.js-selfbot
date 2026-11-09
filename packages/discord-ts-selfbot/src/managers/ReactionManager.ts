@@ -6,6 +6,7 @@ import MessageReaction from '../structures/MessageReaction';
  * @extends {CachedManager}
  */
 class ReactionManager extends CachedManager {
+  declare message: import('../structures/Message').Message;
   constructor(message: any, iterable?: any) {
     super(message.client, MessageReaction, iterable);
 

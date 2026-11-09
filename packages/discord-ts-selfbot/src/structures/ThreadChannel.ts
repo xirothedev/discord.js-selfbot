@@ -509,7 +509,7 @@ class ThreadChannel extends Channel {
    * @readonly
    */
   get joined() {
-    return this.members.cache.has(this.client.user?.id);
+    return this.client.user?.id ? this.members.cache.has(this.client.user.id) : false;
   }
 
   /**

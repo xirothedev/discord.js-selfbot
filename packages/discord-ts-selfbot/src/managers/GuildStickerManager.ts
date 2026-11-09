@@ -11,6 +11,7 @@ const { Sticker } = _StickerModule;
  * @extends {CachedManager}
  */
 class GuildStickerManager extends CachedManager {
+  declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, Sticker, iterable);
 

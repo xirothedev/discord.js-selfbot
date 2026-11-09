@@ -840,7 +840,7 @@ class Message extends Base {
    * @readonly
    */
   get guild() {
-    return this.client.guilds.cache.get(this.guildId) ?? this.channel?.guild ?? null;
+    return (this.guildId ? this.client.guilds.cache.get(this.guildId) : null) ?? this.channel?.guild ?? null;
   }
 
   /**

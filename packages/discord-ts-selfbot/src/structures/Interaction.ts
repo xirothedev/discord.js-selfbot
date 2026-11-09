@@ -186,7 +186,7 @@ class Interaction<Cached extends CacheType = CacheType> extends Base {
    * @readonly
    */
   get channel(): TextBasedChannel | null {
-    return this.client.channels.cache.get(this.channelId) ?? null;
+    return this.channelId ? (this.client.channels.cache.get(this.channelId) ?? null) : null;
   }
 
   /**
@@ -195,7 +195,7 @@ class Interaction<Cached extends CacheType = CacheType> extends Base {
    * @readonly
    */
   get guild(): Guild | null {
-    return this.client.guilds.cache.get(this.guildId) ?? null;
+    return this.guildId ? (this.client.guilds.cache.get(this.guildId) ?? null) : null;
   }
 
   /**

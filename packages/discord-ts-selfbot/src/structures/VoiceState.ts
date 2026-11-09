@@ -184,7 +184,7 @@ class VoiceState extends Base implements VoiceStateEntity {
    * @readonly
    */
   get channel() {
-    return (this.guild ?? this.client).channels.cache.get(this.channelId) ?? null;
+    return this.channelId ? ((this.guild ?? this.client).channels.cache.get(this.channelId) ?? null) : null;
   }
 
   /**

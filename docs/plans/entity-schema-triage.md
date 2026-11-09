@@ -41,7 +41,7 @@ Two public contracts stay as `fieldTypes` overrides because the runtime value is
 
 ## Final gate: closed
 
-`Base` no longer has `[key: string]: any`. The structural gate now passes with 354 source files type-checking and 0 drift rows. The ratchet is **1,118 `any` / 440 casts**.
+`Base` no longer has `[key: string]: any`. The structural gate now passes with 354 source files type-checking and 0 drift rows. The ratchet is **1,089 `any` / 440 casts**. All `[key: string]: any` class boundaries are gone.
 
 ## Index-signature wave
 
@@ -54,14 +54,14 @@ The shallow index signatures are closed. This wave removed the boundaries from:
 - Interaction classes: `MessageComponentInteraction`, `ModalSubmitInteraction`, `SelectMenuInteraction`, and both context-menu interactions.
 - Voice helpers: `PCMInsertSilence`, `UnixStream`, `VolumeInterface`, `PlayInterface`, `IvfTransformer`, `AnnexBNalSplitter`.
 
-**17 classes remain**, all on the deep runtime surfaces: the voice stack (`BaseDispatcher`, `AudioDispatcher`, `VideoDispatcher`, `VPxDispatcher`, `AnnexBDispatcher`, `MediaPlayer`, `VoiceConnection`, `ClientVoiceManager`, `VoiceWebSocket`, `VoiceUDPClient`, `Receiver`, `Recorder`, `PacketHandler`), the websocket stack (`WebSocketManager`, `WebSocketShard`), `CachedManager`, and `ActionsManager`.
+**No class index signatures remain.** The voice stack, websocket stack, actions manager, manager bases, and `CachedManager` are all closed. `CachedManager` still keeps its cache value typed as `Collection<string, any>` so the heterogeneous manager caches keep compiling; replacing that last collection-level boundary with `CachedManager<Holds>` is the separate generic-cache wave.
 
-`BaseManager` is closed. Its subclasses now declare their own settings, billing, relationship, note, and role-manager fields. `CachedManager` is the remaining manager boundary: typing it generically (`CachedManager<Holds>`) exposes 219 errors because the source structures and the public typings describe different class shapes (for example, source `User` lacks the public `send` surface and source `Message` lacks the private cache brand). That needs a dedicated generic-cache wave that also aligns the source structures with the public typings.
+`BaseManager` is closed. Its subclasses now declare their own settings, billing, relationship, note, role, channel, message, reaction, presence, and voice-state fields. The generic `CachedManager<Holds>` design is still the right end state, but it requires aligning source structures with the public typings first (source `User` lacks the public `send` surface, source `Message` lacks the private cache brand, and several `resolveId` results are wider than the public contract).
 
 ## Next modules
 
-1. Type `CachedManager<Holds>` and align the source structures with the public typings; the generic cache design reports 219 errors.
-2. Type the websocket stack, then the voice dispatcher/receiver stack.
+1. Replace the `CachedManager` cache `any` with `CachedManager<Holds>` after aligning source structures with the public typings; the generic design reports 219 errors today.
+2. Continue the remaining method-parameter `any` sweep outside the closed index-signature surface.
 3. `Interaction.memberPermissions` / `CacheTypeReducer` and `ApplicationCommand` generic propagation.
 4. Replace the last `Constants` boundary (`const Constants: any = {}`) with a named interface once consumers are typed.
 

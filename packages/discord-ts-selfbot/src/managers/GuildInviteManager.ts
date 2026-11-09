@@ -10,6 +10,7 @@ import DataResolver from '../util/DataResolver';
  * @extends {CachedManager}
  */
 class GuildInviteManager extends CachedManager {
+  declare guild: import('../structures/Guild').Guild;
   constructor(guild: any, iterable?: any) {
     super(guild.client, Invite, iterable);
 
