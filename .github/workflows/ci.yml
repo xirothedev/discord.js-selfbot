@@ -35,7 +35,7 @@ jobs:
 
       - name: Detect changed surfaces
         id: filter
-        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v4.0.3
+        uses: dorny/paths-filter@f3360c560367c9daf72b88c0e6164162034c5721 # v4
         with:
           predicate-quantifier: 'some-with-excludes'
           filters: |
