@@ -21,8 +21,11 @@ let deprecationEmittedForDeleted = false;
  * @extends {Base}
  */
 class Role extends Base {
-  [key: string]: any;
-  constructor(client: any, data: any, guild: any) {
+  constructor(
+    client: import('../client/Client').default,
+    data: Record<string, unknown>,
+    guild: import('./Guild').Guild,
+  ) {
     super(client);
 
     /**
@@ -46,7 +49,7 @@ class Role extends Base {
     if (data) this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: Record<string, unknown>) {
     /**
      * The role's id (unique to the guild it is part of)
      * @type {Snowflake}
@@ -86,10 +89,11 @@ class Role extends Base {
        *
        * @type {RoleColors}
        */
+      const colors = data.colors as { primary_color: unknown; secondary_color: unknown; tertiary_color: unknown };
       this.colors = {
-        primaryColor: data.colors.primary_color,
-        secondaryColor: data.colors.secondary_color,
-        tertiaryColor: data.colors.tertiary_color,
+        primaryColor: colors.primary_color,
+        secondaryColor: colors.secondary_color,
+        tertiaryColor: colors.tertiary_color,
       };
     }
 
@@ -114,7 +118,7 @@ class Role extends Base {
        * The permissions of the role
        * @type {Readonly<Permissions>}
        */
-      this.permissions = new Permissions(BigInt(data.permissions)).freeze();
+      this.permissions = new Permissions(BigInt(data.permissions as string | number | bigint)).freeze();
     }
 
     if ('managed' in data) {
@@ -148,24 +152,25 @@ class Role extends Base {
      * @property {true} [guildConnections] Whether this role is a guild's linked role
      */
     this.tags = data.tags ? {} : null;
-    if (data.tags) {
-      if ('bot_id' in data.tags) {
-        this.tags.botId = data.tags.bot_id;
+    const tags = data.tags as Record<string, unknown> | null;
+    if (tags) {
+      if ('bot_id' in tags) {
+        this.tags!.botId = tags.bot_id;
       }
-      if ('integration_id' in data.tags) {
-        this.tags.integrationId = data.tags.integration_id;
+      if ('integration_id' in tags) {
+        this.tags!.integrationId = tags.integration_id;
       }
-      if ('premium_subscriber' in data.tags) {
-        this.tags.premiumSubscriberRole = true;
+      if ('premium_subscriber' in tags) {
+        this.tags!.premiumSubscriberRole = true;
       }
-      if ('subscription_listing_id' in data.tags) {
-        this.tags.subscriptionListingId = data.tags.subscription_listing_id;
+      if ('subscription_listing_id' in tags) {
+        this.tags!.subscriptionListingId = tags.subscription_listing_id;
       }
-      if ('available_for_purchase' in data.tags) {
-        this.tags.availableForPurchase = true;
+      if ('available_for_purchase' in tags) {
+        this.tags!.availableForPurchase = true;
       }
-      if ('guild_connections' in data.tags) {
-        this.tags.guildConnections = true;
+      if ('guild_connections' in tags) {
+        this.tags!.guildConnections = true;
       }
     }
 
@@ -174,7 +179,7 @@ class Role extends Base {
        * The flags of this role
        * @type {Readonly<RoleFlags>}
        */
-      this.flags = new RoleFlags(data.flags).freeze();
+      this.flags = new RoleFlags(data.flags as number).freeze();
     } else {
       this.flags ??= new RoleFlags().freeze();
     }
@@ -215,7 +220,7 @@ class Role extends Base {
     return deletedRoles.has(this);
   }
 
-  set deleted(value: any) {
+  set deleted(value: boolean) {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
@@ -243,7 +248,9 @@ class Role extends Base {
    * @readonly
    */
   get members() {
-    return this.guild.members.cache.filter((m: any) => m.roles.cache.has(this.id));
+    return this.guild.members.cache.filter((m: unknown) =>
+      (m as { roles: { cache: { has: (id: string) => boolean } } }).roles.cache.has(this.id),
+    );
   }
 
   /**
@@ -283,7 +290,7 @@ class Role extends Base {
    * const roleCompare = role.comparePositionTo(otherRole);
    * if (roleCompare >= 1) console.log(`${role.name} is higher than ${otherRole.name}`);
    */
-  comparePositionTo(role: any) {
+  comparePositionTo(role: unknown) {
     return this.guild.roles.comparePositions(this, role);
   }
 
@@ -315,7 +322,7 @@ class Role extends Base {
    *   .then(updated => console.log(`Edited role name to ${updated.name}`))
    *   .catch(console.error);
    */
-  edit(data: any, reason?: any) {
+  edit(data: Record<string, unknown>, reason?: string) {
     return this.guild.roles.edit(this, data, reason);
   }
 
@@ -326,10 +333,12 @@ class Role extends Base {
    * @param {boolean} [checkAdmin=true] Whether having `ADMINISTRATOR` will return all permissions
    * @returns {Readonly<Permissions>}
    */
-  permissionsIn(channel: any, checkAdmin: any = true) {
-    channel = this.guild.channels.resolve(channel);
-    if (!channel) throw new Error('GUILD_CHANNEL_RESOLVE');
-    return channel.rolePermissions(this, checkAdmin);
+  permissionsIn(channel: unknown, checkAdmin: boolean = true) {
+    const resolved = this.guild.channels.resolve(channel) as {
+      rolePermissions: (role: unknown, checkAdmin: boolean) => unknown;
+    } | null;
+    if (!resolved) throw new Error('GUILD_CHANNEL_RESOLVE');
+    return resolved.rolePermissions(this, checkAdmin);
   }
 
   /**
@@ -343,7 +352,7 @@ class Role extends Base {
    *   .then(updated => console.log(`Updated role name to ${updated.name}`))
    *   .catch(console.error);
    */
-  setName(name: any, reason: any) {
+  setName(name: unknown, reason?: string) {
     return this.edit({ name }, reason);
   }
 
@@ -354,7 +363,7 @@ class Role extends Base {
    * @returns {Promise<Role>}
    * @deprecated Use {@link Role#setColors} instead.
    */
-  setColor(color: any, reason: any) {
+  setColor(color: unknown, reason?: string) {
     return this.edit({ color }, reason);
   }
 
@@ -379,7 +388,7 @@ class Role extends Base {
    *   .then(updated => console.log(`Set holographic colors for role ${updated.name}`))
    *   .catch(console.error);
    */
-  setColors(colors: any, reason: any) {
+  setColors(colors: unknown, reason?: string) {
     return this.edit({ colors, reason });
   }
 
@@ -394,7 +403,7 @@ class Role extends Base {
    *   .then(updated => console.log(`Role hoisted: ${updated.hoist}`))
    *   .catch(console.error);
    */
-  setHoist(hoist: any = true, reason: any) {
+  setHoist(hoist: boolean = true, reason?: string) {
     return this.edit({ hoist }, reason);
   }
 
@@ -414,7 +423,7 @@ class Role extends Base {
    *   .then(updated => console.log(`Updated permissions to ${updated.permissions.bitfield}`))
    *   .catch(console.error);
    */
-  setPermissions(permissions: any, reason: any) {
+  setPermissions(permissions: unknown, reason?: string) {
     return this.edit({ permissions }, reason);
   }
 
@@ -429,7 +438,7 @@ class Role extends Base {
    *   .then(updated => console.log(`Role updated ${updated.name}`))
    *   .catch(console.error);
    */
-  setMentionable(mentionable: any = true, reason: any) {
+  setMentionable(mentionable: boolean = true, reason?: string) {
     return this.edit({ mentionable }, reason);
   }
 
@@ -441,7 +450,7 @@ class Role extends Base {
    * @param {string} [reason] Reason for changing the role's icon
    * @returns {Promise<Role>}
    */
-  setIcon(icon: any, reason: any) {
+  setIcon(icon: unknown, reason?: string) {
     return this.edit({ icon }, reason);
   }
 
@@ -456,7 +465,7 @@ class Role extends Base {
    *   .then(updated => console.log(`Set unicode emoji for the role to ${updated.unicodeEmoji}`))
    *   .catch(console.error);
    */
-  setUnicodeEmoji(unicodeEmoji: any, reason: any) {
+  setUnicodeEmoji(unicodeEmoji: unknown, reason?: string) {
     return this.edit({ unicodeEmoji }, reason);
   }
 
@@ -478,7 +487,7 @@ class Role extends Base {
    *   .then(updated => console.log(`Role position: ${updated.position}`))
    *   .catch(console.error);
    */
-  setPosition(position: any, options: any = {}) {
+  setPosition(position: unknown, options: Record<string, unknown> = {}) {
     return this.guild.roles.setPosition(this, position, options);
   }
 
@@ -492,7 +501,7 @@ class Role extends Base {
    *   .then(deleted => console.log(`Deleted role ${deleted.name}`))
    *   .catch(console.error);
    */
-  async delete(reason: any) {
+  async delete(reason?: string) {
     await this.guild.roles.delete(this.id, reason);
     return this;
   }
@@ -511,7 +520,7 @@ class Role extends Base {
    * @param {StaticImageURLOptions} [options={}] Options for the image URL
    * @returns {?string}
    */
-  iconURL({ format, size }: any = {}) {
+  iconURL({ format, size }: { format?: string; size?: number } = {}) {
     if (!this.icon) return null;
     return this.client.rest.cdn.RoleIcon(this.id, this.icon, format, size);
   }
@@ -523,7 +532,7 @@ class Role extends Base {
    * @param {Role} role Role to compare with
    * @returns {boolean}
    */
-  equals(role: any) {
+  equals(role: Role | null) {
     return (
       role &&
       this.id === role.id &&
@@ -567,7 +576,7 @@ class Role extends Base {
    * positive number if the first's is higher (second's is lower), 0 if equal
    * @deprecated Use {@link RoleManager#comparePositions} instead.
    */
-  static comparePositions(role1: any, role2: any) {
+  static comparePositions(role1: unknown, role2: unknown) {
     if (!deprecationEmittedForComparePositions) {
       process.emitWarning(
         'The Role.comparePositions method is deprecated. Use RoleManager#comparePositions instead.',
@@ -577,7 +586,8 @@ class Role extends Base {
       deprecationEmittedForComparePositions = true;
     }
 
-    return role1.guild.roles.comparePositions(role1, role2);
+    const r1 = role1 as { guild: { roles: { comparePositions: (a: unknown, b: unknown) => unknown } } };
+    return r1.guild.roles.comparePositions(role1, role2);
   }
 }
 
