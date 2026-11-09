@@ -69,3 +69,23 @@ The static Fumadocs application in `apps/docs`. It renders guides, examples, pro
 ## API reference
 
 The generated docs under `apps/docs/content/docs/api`. It is built from source JSDoc and `typings/index.d.ts`; do not edit the generated MDX by hand.
+
+## Raw data
+
+The JSON object received from the Discord API or gateway for a structure, before it is mapped onto object fields. The public aliases are named `Raw*Data`.
+
+## Entity
+
+The object shape of a structure: the fields the runtime instance holds, named in camelCase.
+
+## Entity schema
+
+The map from an entity name to its raw data type, its entity type, and the provenance of its fields.
+
+## Field provenance
+
+The tag on an entity field: `api` (standard Discord bot API), `selfbot` (user-account only), `internal` (cache or bookkeeping), or `relation` (points at another structure).
+
+## Payload
+
+The outgoing message body assembled by `MessagePayload`. It is not used for inbound JSON; see **Raw data**.

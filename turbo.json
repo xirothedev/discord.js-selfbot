@@ -6,6 +6,7 @@
     "build": {
       "inputs": [
         "src/**",
+        "tools/**",
         "typings/**",
         "app/**",
         "components/**",
@@ -23,6 +24,7 @@
     "check": {
       "inputs": [
         "src/**",
+        "tools/**",
         "typings/**",
         "app/**",
         "components/**",
@@ -37,13 +39,14 @@
       "outputLogs": "errors-only"
     },
     "lint": {
-      "inputs": ["src/**", "typings/**", "app/**", "components/**", "lib/**", "scripts/**", "package.json"],
+      "inputs": ["src/**", "tools/**", "typings/**", "app/**", "components/**", "lib/**", "scripts/**", "package.json"],
       "outputs": [],
       "outputLogs": "errors-only"
     },
     "fmt": {
       "inputs": [
         "src/**",
+        "tools/**",
         "typings/**",
         "app/**",
         "components/**",
@@ -60,6 +63,7 @@
     "fmt:check": {
       "inputs": [
         "src/**",
+        "tools/**",
         "typings/**",
         "app/**",
         "components/**",
@@ -76,6 +80,7 @@
     "test": {
       "inputs": [
         "src/**",
+        "tools/**",
         "typings/**",
         "tests/**",
         "scripts/**",

@@ -26,19 +26,12 @@
     "forceConsistentCasingInFileNames": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "lib": [
-      "ESNext",
-      "ES2021",
-      "DOM"
-    ],
+    "lib": ["ESNext", "ES2021", "DOM"],
     "target": "ES2020",
     "useDefineForClassFields": true,
     "pretty": false,
     "skipLibCheck": true,
     "skipDefaultLibCheck": true
   },
-  "include": [
-    "src/**/*.ts",
-    "typings/**/*.ts"
-  ]
+  "include": ["src/**/*.ts", "typings/**/*.ts", "tools/**/*.ts"]
 }

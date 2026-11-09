@@ -5,6 +5,9 @@ const { Error } = _errorsModule;
 import Permissions from '../util/Permissions';
 import RoleFlags from '../util/RoleFlags';
 import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { RawRoleData } from '../../typings/rawDataTypes';
+import type { RoleEntity } from '../types/entities/role';
+import type { PatchOf } from '../types/schema';
 
 let deprecationEmittedForComparePositions = false;
 
@@ -20,12 +23,23 @@ let deprecationEmittedForDeleted = false;
  * Represents a role on Discord.
  * @extends {Base}
  */
-class Role extends Base {
-  constructor(
-    client: import('../client/Client').default,
-    data: Record<string, unknown>,
-    guild: import('./Guild').Guild,
-  ) {
+class Role extends Base implements RoleEntity {
+  declare color: RoleEntity['color'];
+  declare colors: RoleEntity['colors'];
+  declare flags: RoleEntity['flags'];
+  declare guild: RoleEntity['guild'];
+  declare hoist: RoleEntity['hoist'];
+  declare id: RoleEntity['id'];
+  declare managed: RoleEntity['managed'];
+  declare mentionable: RoleEntity['mentionable'];
+  declare name: RoleEntity['name'];
+  declare permissions: RoleEntity['permissions'];
+  declare rawPosition: RoleEntity['rawPosition'];
+  declare tags: RoleEntity['tags'];
+  declare icon: RoleEntity['icon'];
+  declare unicodeEmoji: RoleEntity['unicodeEmoji'];
+
+  constructor(client: import('../client/Client').default, data: RawRoleData, guild: import('./Guild').Guild) {
     super(client);
 
     /**
@@ -49,13 +63,13 @@ class Role extends Base {
     if (data) this._patch(data);
   }
 
-  _patch(data: Record<string, unknown>) {
+  _patch(data: PatchOf<'Role'>) {
     /**
      * The role's id (unique to the guild it is part of)
      * @type {Snowflake}
      */
-    this.id = data.id;
-    if ('name' in data) {
+    this.id = data.id ?? this.id;
+    if (data.name !== undefined) {
       /**
        * The name of the role
        * @type {string}
@@ -63,7 +77,7 @@ class Role extends Base {
       this.name = data.name;
     }
 
-    if ('color' in data) {
+    if (data.color !== undefined) {
       /**
        * The base 10 color of the role
        * @type {number}
@@ -83,13 +97,13 @@ class Role extends Base {
      * These values are available as a constant: `Constants.HolographicStyle`
      */
 
-    if ('colors' in data) {
+    if (data.colors !== undefined) {
       /**
        * The colors of the role
        *
        * @type {RoleColors}
        */
-      const colors = data.colors as { primary_color: unknown; secondary_color: unknown; tertiary_color: unknown };
+      const colors = data.colors;
       this.colors = {
         primaryColor: colors.primary_color,
         secondaryColor: colors.secondary_color,
@@ -97,7 +111,7 @@ class Role extends Base {
       };
     }
 
-    if ('hoist' in data) {
+    if (data.hoist !== undefined) {
       /**
        * If true, users that are part of this role will appear in a separate category in the users list
        * @type {boolean}
@@ -105,7 +119,7 @@ class Role extends Base {
       this.hoist = data.hoist;
     }
 
-    if ('position' in data) {
+    if (data.position !== undefined) {
       /**
        * The raw position of the role from the API
        * @type {number}
@@ -113,15 +127,15 @@ class Role extends Base {
       this.rawPosition = data.position;
     }
 
-    if ('permissions' in data) {
+    if (data.permissions !== undefined) {
       /**
        * The permissions of the role
        * @type {Readonly<Permissions>}
        */
-      this.permissions = new Permissions(BigInt(data.permissions as string | number | bigint)).freeze();
+      this.permissions = new Permissions(BigInt(data.permissions)).freeze();
     }
 
-    if ('managed' in data) {
+    if (data.managed !== undefined) {
       /**
        * Whether or not the role is managed by an external service
        * @type {boolean}
@@ -129,7 +143,7 @@ class Role extends Base {
       this.managed = data.managed;
     }
 
-    if ('mentionable' in data) {
+    if (data.mentionable !== undefined) {
       /**
        * Whether or not the role can be mentioned by anyone
        * @type {boolean}
@@ -137,9 +151,9 @@ class Role extends Base {
       this.mentionable = data.mentionable;
     }
 
-    if ('icon' in data) this.icon = data.icon;
+    if (data.icon !== undefined) this.icon = data.icon;
 
-    if ('unicode_emoji' in data) this.unicodeEmoji = data.unicode_emoji;
+    if (data.unicode_emoji !== undefined) this.unicodeEmoji = data.unicode_emoji;
 
     /**
      * The tags this role has
@@ -151,35 +165,26 @@ class Role extends Base {
      * @property {true} [availableForPurchase] Whether this role is available for purchase
      * @property {true} [guildConnections] Whether this role is a guild's linked role
      */
-    this.tags = data.tags ? {} : null;
-    const tags = data.tags as Record<string, unknown> | null;
+    const tags = data.tags;
     if (tags) {
-      if ('bot_id' in tags) {
-        this.tags!.botId = tags.bot_id;
-      }
-      if ('integration_id' in tags) {
-        this.tags!.integrationId = tags.integration_id;
-      }
-      if ('premium_subscriber' in tags) {
-        this.tags!.premiumSubscriberRole = true;
-      }
-      if ('subscription_listing_id' in tags) {
-        this.tags!.subscriptionListingId = tags.subscription_listing_id;
-      }
-      if ('available_for_purchase' in tags) {
-        this.tags!.availableForPurchase = true;
-      }
-      if ('guild_connections' in tags) {
-        this.tags!.guildConnections = true;
-      }
+      const mapped: NonNullable<RoleEntity['tags']> = {};
+      if (tags.bot_id !== undefined) mapped.botId = tags.bot_id;
+      if (tags.integration_id !== undefined) mapped.integrationId = tags.integration_id;
+      if (tags.premium_subscriber !== undefined) mapped.premiumSubscriberRole = true;
+      if (tags.subscription_listing_id !== undefined) mapped.subscriptionListingId = tags.subscription_listing_id;
+      if (tags.available_for_purchase !== undefined) mapped.availableForPurchase = true;
+      if (tags.guild_connections !== undefined) mapped.guildConnections = true;
+      this.tags = mapped;
+    } else {
+      this.tags = null;
     }
 
-    if ('flags' in data) {
+    if (data.flags !== undefined) {
       /**
        * The flags of this role
        * @type {Readonly<RoleFlags>}
        */
-      this.flags = new RoleFlags(data.flags as number).freeze();
+      this.flags = new RoleFlags(data.flags).freeze();
     } else {
       this.flags ??= new RoleFlags().freeze();
     }
@@ -248,9 +253,7 @@ class Role extends Base {
    * @readonly
    */
   get members() {
-    return this.guild.members.cache.filter((m: unknown) =>
-      (m as { roles: { cache: { has: (id: string) => boolean } } }).roles.cache.has(this.id),
-    );
+    return this.guild.members.cache.filter((m: import('./GuildMember').GuildMember) => m.roles.cache.has(this.id));
   }
 
   /**
@@ -333,10 +336,8 @@ class Role extends Base {
    * @param {boolean} [checkAdmin=true] Whether having `ADMINISTRATOR` will return all permissions
    * @returns {Readonly<Permissions>}
    */
-  permissionsIn(channel: unknown, checkAdmin: boolean = true) {
-    const resolved = this.guild.channels.resolve(channel) as {
-      rolePermissions: (role: unknown, checkAdmin: boolean) => unknown;
-    } | null;
+  permissionsIn(channel: import('./GuildChannel').GuildChannel | string, checkAdmin: boolean = true) {
+    const resolved = this.guild.channels.resolve(channel);
     if (!resolved) throw new Error('GUILD_CHANNEL_RESOLVE');
     return resolved.rolePermissions(this, checkAdmin);
   }
@@ -352,7 +353,7 @@ class Role extends Base {
    *   .then(updated => console.log(`Updated role name to ${updated.name}`))
    *   .catch(console.error);
    */
-  setName(name: unknown, reason?: string) {
+  setName(name: string, reason?: string) {
     return this.edit({ name }, reason);
   }
 
@@ -576,7 +577,7 @@ class Role extends Base {
    * positive number if the first's is higher (second's is lower), 0 if equal
    * @deprecated Use {@link RoleManager#comparePositions} instead.
    */
-  static comparePositions(role1: unknown, role2: unknown) {
+  static comparePositions(role1: Role, role2: Role) {
     if (!deprecationEmittedForComparePositions) {
       process.emitWarning(
         'The Role.comparePositions method is deprecated. Use RoleManager#comparePositions instead.',
@@ -586,8 +587,7 @@ class Role extends Base {
       deprecationEmittedForComparePositions = true;
     }
 
-    const r1 = role1 as { guild: { roles: { comparePositions: (a: unknown, b: unknown) => unknown } } };
-    return r1.guild.roles.comparePositions(role1, role2);
+    return role1.guild.roles.comparePositions(role1, role2);
   }
 }
 

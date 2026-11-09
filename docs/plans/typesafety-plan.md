@@ -22,7 +22,9 @@ Remove every `any`, unsafe cast, and untyped boundary from `packages/discord-ts-
 | Source files with `any`                         | 290 / 316 | src                |
 | Source LOC                                      | 50,958    | src                |
 
-`bun check` currently passes (strict mode, 317 files).
+`bun check` currently passes (strict mode, 321 files).
+
+Current ratchet (2026-11-09): `any` 1,836; casts 551 (`bun tools/typesafety/count.ts`).
 
 ## Agreed decisions
 
@@ -32,8 +34,9 @@ Remove every `any`, unsafe cast, and untyped boundary from `packages/discord-ts-
 4. **Strategy**: bottom-up by module: `util` → `structures` → `managers` → `rest` → `client` → `sharding` → `WebSocket` → `voice`. Each module is its own PR.
 5. **Allowed substitutes for `any`**: `unknown` + narrowing, generics with constraints, `Record<string, unknown>`, and a single documented `DiscordPayload` alias for raw API blobs. No `eslint-disable` / `@ts-ignore` without an ADR.
 6. **Tests**: add `test:types` script (separate gate). Main `bun check` stays src+typings only until the migration is complete, then fold tests in.
-7. **Definition of done**: `grep` for `\bany\b` returns 0 in src+typings; `bun check` + a new `no-explicit-any` lint rule pass; parity harness type-checks against discord.js's public surface.
+7. **Definition of done**: `grep` for `\bany\b` returns 0 in src+typings; the cast ratchet returns 0 (documented boundary casts excepted); `Base`'s index signature is removed; every structure declares its properties; `bun check` + a new `no-explicit-any` lint rule pass; parity harness type-checks against discord.js's public surface.
 8. **Delivery**: incremental per-module PRs with a ratcheting counter in CI (the `any` count must not increase). No mega-PR.
+9. **Entity schema**: the object model is generated from `typings/index.d.ts` ∩ `src` assignments into `src/types/entities/*` and `src/types/schema.ts`. `_patch` takes `PatchOf<K>` from `Raw*Data`. See ADR 0004.
 
 ## Work breakdown
 
@@ -45,6 +48,14 @@ Remove every `any`, unsafe cast, and untyped boundary from `packages/discord-ts-
 - Add CI ratchet check: count `any` in src+typings; fail if greater than committed baseline; update baseline only when count decreases.
 - Document the migration in this plan and link from `docs/agents`.
 
+### Phase 0.5 — Entity schema foundation (pilot: `Role`)
+
+- Add `src/types/entities/` and `src/types/schema.ts`: `Raw*Data` → `*Entity` → `EntitySchema`, with field provenance (`api`, `selfbot`, `internal`, `relation`).
+- Add `tools/schema/generate.ts` (checked in; `--check`, `--report`, `--entity`) and wire `schema:check` into `bun check`.
+- Pilot `Role`: `declare` fields from `RoleEntity`, `_patch(data: PatchOf<'Role'>)`, narrow with `data.x !== undefined`, remove per-field casts, `implements RoleEntity`.
+- Gate: `bun check` (including `schema:check` and the `any`/cast ratchet), `bun test`, `bun fmt:check`, `bun run lint:boundaries`.
+- Report: 116 candidates, 740 fields, 85 assigned-but-undeclared, 96 drift rows across 38 entities. Triage before the remaining structures.
+
 ### Phase 1 — `util` (lowest dependency)
 
 Modules: `BitField`, `Collection` re-exports, `Constants`, `Sweepers`, `Util`, `RemoteAuth`, `Voice*` helpers.
@@ -55,6 +66,7 @@ Modules: `BitField`, `Collection` re-exports, `Constants`, `Sweepers`, `Util`, `
 
 ### Phase 2 — `structures`
 
+- Use the Phase 0.5 recipe for each structure: declare fields from `*Entity`, type `_patch` with `PatchOf<'X'>`, narrow with `data.x !== undefined`, remove casts, record drift.
 - `User`, `Guild`, `Channel` hierarchy, `Message`, `MessageEmbed`, `Role`, `GuildMember`, `Presence`, `ThreadChannel`, `AutoModerationRule`, etc.
 - Type constructors to accept `API*` raw data and narrow internally.
 - Public getters typed to match discord.js reference signatures.

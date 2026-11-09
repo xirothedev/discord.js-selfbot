@@ -16,6 +16,10 @@
     "fmt:check": "turbo run fmt:check",
     "test": "turbo run test",
     "docs": "turbo run docs",
+    "schema:generate": "bun run --cwd packages/discord-ts-selfbot schema:generate",
+    "schema:check": "bun run --cwd packages/discord-ts-selfbot schema:check",
+    "ratchet:check": "bun run --cwd packages/discord-ts-selfbot ratchet:check",
+    "ratchet:write": "bun run --cwd packages/discord-ts-selfbot ratchet:write",
     "lint:boundaries": "bun run --cwd packages/discord-ts-selfbot lint:boundaries",
     "docs:dev": "bun run --cwd apps/docs dev",
     "docs:api": "bun run --cwd apps/docs api"
