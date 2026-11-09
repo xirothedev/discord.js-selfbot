@@ -1,4 +1,4 @@
-import BitField from './BitField';
+import BitField, { BitFieldResolvable } from './BitField';
 
 /**
  * Data structure that makes it easy to interact with a permission bitfield. All {@link GuildMember}s have a set of
@@ -7,6 +7,9 @@ import BitField from './BitField';
  * @extends {BitField}
  */
 class Permissions extends BitField {
+  static ALL: bigint = 0n;
+  static DEFAULT: bigint = 0n;
+  static STAGE_MODERATOR: bigint = 0n;
   /**
    * Bitfield of the packed bits
    * @type {bigint}
@@ -28,8 +31,8 @@ class Permissions extends BitField {
    * @param {boolean} [checkAdmin=true] Whether to allow the administrator permission to override
    * @returns {string[]}
    */
-  override missing(bits: any, checkAdmin = true): string[] {
-    return checkAdmin && this.has((this.constructor as any).FLAGS.ADMINISTRATOR) ? [] : super.missing(bits);
+  override missing(bits: BitFieldResolvable, checkAdmin = true): string[] {
+    return checkAdmin && this.has(Permissions.FLAGS.ADMINISTRATOR) ? [] : super.missing(bits);
   }
 
   /**
@@ -38,8 +41,8 @@ class Permissions extends BitField {
    * @param {boolean} [checkAdmin=true] Whether to allow the administrator permission to override
    * @returns {boolean}
    */
-  override any(permission: any, checkAdmin = true): boolean {
-    return (checkAdmin && super.has((this.constructor as any).FLAGS.ADMINISTRATOR)) || super.any(permission);
+  override any(permission: BitFieldResolvable, checkAdmin = true): boolean {
+    return (checkAdmin && super.has(Permissions.FLAGS.ADMINISTRATOR)) || super.any(permission);
   }
 
   /**
@@ -48,8 +51,8 @@ class Permissions extends BitField {
    * @param {boolean} [checkAdmin=true] Whether to allow the administrator permission to override
    * @returns {boolean}
    */
-  override has(permission: any, checkAdmin = true): boolean {
-    return (checkAdmin && super.has((this.constructor as any).FLAGS.ADMINISTRATOR)) || super.has(permission);
+  override has(permission: BitFieldResolvable, checkAdmin = true): boolean {
+    return (checkAdmin && super.has(Permissions.FLAGS.ADMINISTRATOR)) || super.has(permission);
   }
 
   /**
@@ -119,7 +122,7 @@ class Permissions extends BitField {
  * @type {Object<string, bigint>}
  * @see {@link https://discord.com/developers/docs/topics/permissions#permissions-bitwise-permission-flags}
  */
-(Permissions as any).FLAGS = {
+Permissions.FLAGS = {
   CREATE_INSTANT_INVITE: 1n << 0n,
   KICK_MEMBERS: 1n << 1n,
   BAN_MEMBERS: 1n << 2n,
@@ -180,24 +183,27 @@ class Permissions extends BitField {
  * Bitfield representing every permission combined
  * @type {bigint}
  */
-(Permissions as any).ALL = Object.values((Permissions as any).FLAGS).reduce((all: any, p: any) => all | p, 0n);
+Permissions.ALL = Object.values(Permissions.FLAGS).reduce(
+  (all: bigint, p: number | bigint) => (all as bigint) | (p as bigint),
+  0n,
+);
 
 /**
  * Bitfield representing the default permissions for users
  * @type {bigint}
  */
-(Permissions as any).DEFAULT = BigInt(104324673);
+Permissions.DEFAULT = BigInt(104324673);
 
 /**
  * Bitfield representing the permissions required for moderators of stage channels
  * @type {bigint}
  */
-(Permissions as any).STAGE_MODERATOR =
-  (Permissions as any).FLAGS.MANAGE_CHANNELS |
-  (Permissions as any).FLAGS.MUTE_MEMBERS |
-  (Permissions as any).FLAGS.MOVE_MEMBERS;
+Permissions.STAGE_MODERATOR =
+  (Permissions.FLAGS.MANAGE_CHANNELS as bigint) |
+  (Permissions.FLAGS.MUTE_MEMBERS as bigint) |
+  (Permissions.FLAGS.MOVE_MEMBERS as bigint);
 
-(Permissions as any).defaultBit = BigInt(0);
+Permissions.defaultBit = BigInt(0);
 
 export default Permissions;
 export { Permissions };

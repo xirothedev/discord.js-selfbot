@@ -13,6 +13,7 @@
     "test": "bun test",
     "test:types": "bun check",
     "test:typescript": "bun check",
+    "test:types": "bun x tsc --noEmit -p tsconfig.test.json",
     "lint:boundaries": "depcruise src/packages",
     "all": "bun run build && bun publish",
     "test:manual": "bun test tests/manual"

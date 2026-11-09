@@ -2,7 +2,13 @@ import _errorsModule from '../errors';
 const { RangeError } = _errorsModule;
 // Data structure that makes it easy to interact with a bitfield.
 
-type BitFieldResolvable = number | string | bigint | BitField | BitFieldResolvable[];
+export type BitFieldResolvable = number | string | bigint | BitField | BitFieldResolvable[];
+
+interface BitFieldStatic {
+  defaultBit: number | bigint;
+  FLAGS: Record<string, number | bigint>;
+  resolve(bit: BitFieldResolvable): number | bigint;
+}
 
 class BitField {
   static FLAGS: Record<string, number | bigint> = {};
@@ -10,25 +16,36 @@ class BitField {
 
   bitfield: number | bigint;
 
-  constructor(bits: BitFieldResolvable = (this.constructor as any).defaultBit) {
-    this.bitfield = (this.constructor as any).resolve(bits) as number | bigint;
+  constructor(bits: BitFieldResolvable = (this.constructor as unknown as BitFieldStatic).defaultBit) {
+    this.bitfield = (this.constructor as unknown as BitFieldStatic).resolve(bits) as number | bigint;
   }
 
   any(bit: BitFieldResolvable): boolean {
-    return ((this.bitfield as any) & (this.constructor as any).resolve(bit)) !== (this.constructor as any).defaultBit;
+    const lhs = this.bitfield;
+    const rhs = (this.constructor as unknown as BitFieldStatic).resolve(bit);
+    if (typeof lhs === 'bigint' || typeof rhs === 'bigint') {
+      return ((lhs as bigint) & (rhs as bigint)) !== (this.constructor as unknown as BitFieldStatic).defaultBit;
+    }
+    return ((lhs as number) & (rhs as number)) !== (this.constructor as unknown as BitFieldStatic).defaultBit;
   }
 
   equals(bit: BitFieldResolvable): boolean {
-    return this.bitfield === (this.constructor as any).resolve(bit);
+    return this.bitfield === (this.constructor as unknown as BitFieldStatic).resolve(bit);
   }
 
-  has(bit: BitFieldResolvable, ..._hasParams: any[]): boolean {
-    bit = (this.constructor as any).resolve(bit) as any;
-    return ((this.bitfield as any) & (bit as any)) === (bit as any);
+  has(bit: BitFieldResolvable, ..._hasParams: unknown[]): boolean {
+    const resolved = (this.constructor as unknown as BitFieldStatic).resolve(bit) as number | bigint;
+    const lhs = this.bitfield;
+    if (typeof lhs === 'bigint' || typeof resolved === 'bigint') {
+      return ((lhs as bigint) & (resolved as bigint)) === (resolved as bigint);
+    }
+    return ((lhs as number) & (resolved as number)) === (resolved as number);
   }
 
-  missing(bits: BitFieldResolvable, ...hasParams: any[]): string[] {
-    return new (this.constructor as any)(bits).remove(this).toArray(...hasParams);
+  missing(bits: BitFieldResolvable, ...hasParams: unknown[]): string[] {
+    return new (this.constructor as unknown as new (b: BitFieldResolvable) => BitField)(bits)
+      .remove(this)
+      .toArray(...hasParams);
   }
 
   freeze(): Readonly<this> {
@@ -36,35 +53,53 @@ class BitField {
   }
 
   add(...bits: BitFieldResolvable[]): this {
-    let total: any = (this.constructor as any).defaultBit;
+    const ctor = this.constructor as unknown as BitFieldStatic;
+    let total: number | bigint = ctor.defaultBit;
     for (const bit of bits) {
-      total |= (this.constructor as any).resolve(bit);
+      const resolved = ctor.resolve(bit);
+      total =
+        typeof total === 'bigint' ? (total as bigint) | (resolved as bigint) : (total as number) | (resolved as number);
     }
-    if (Object.isFrozen(this)) return new (this.constructor as any)((this.bitfield as any) | total) as this;
-    this.bitfield = (this.bitfield as any) | total;
+    const next =
+      typeof this.bitfield === 'bigint'
+        ? (this.bitfield as bigint) | (total as bigint)
+        : (this.bitfield as number) | (total as number);
+    if (Object.isFrozen(this))
+      return new (this.constructor as unknown as new (b: BitFieldResolvable) => BitField)(next) as this;
+    this.bitfield = next;
     return this;
   }
 
   remove(...bits: BitFieldResolvable[]): this {
-    let total: any = (this.constructor as any).defaultBit;
+    const ctor = this.constructor as unknown as BitFieldStatic;
+    let total: number | bigint = ctor.defaultBit;
     for (const bit of bits) {
-      total |= (this.constructor as any).resolve(bit);
+      const resolved = ctor.resolve(bit);
+      total =
+        typeof total === 'bigint' ? (total as bigint) | (resolved as bigint) : (total as number) | (resolved as number);
     }
-    if (Object.isFrozen(this)) return new (this.constructor as any)((this.bitfield as any) & ~total) as this;
-    this.bitfield = (this.bitfield as any) & ~total;
+    const next =
+      typeof this.bitfield === 'bigint'
+        ? (this.bitfield as bigint) & ~(total as bigint)
+        : (this.bitfield as number) & ~(total as number);
+    if (Object.isFrozen(this))
+      return new (this.constructor as unknown as new (b: BitFieldResolvable) => BitField)(next) as this;
+    this.bitfield = next;
     return this;
   }
 
-  serialize(...hasParams: any[]): Record<string, boolean> {
+  serialize(...hasParams: unknown[]): Record<string, boolean> {
     const serialized: Record<string, boolean> = {};
-    for (const [flag, bit] of Object.entries((this.constructor as any).FLAGS)) {
-      serialized[flag] = this.has(bit as any, ...(hasParams as any[]));
+    const flags = (this.constructor as unknown as BitFieldStatic).FLAGS;
+    for (const [flag, bit] of Object.entries(flags)) {
+      serialized[flag] = this.has(bit as BitFieldResolvable, ...(hasParams as unknown[]));
     }
     return serialized;
   }
 
-  toArray(...hasParams: any[]): string[] {
-    return Object.keys((this.constructor as any).FLAGS).filter(bit => this.has(bit as any, ...(hasParams as any[])));
+  toArray(...hasParams: unknown[]): string[] {
+    const flags = (this.constructor as unknown as BitFieldStatic).FLAGS;
+    return Object.keys(flags).filter(bit => this.has(bit as BitFieldResolvable, ...(hasParams as unknown[])));
   }
 
   toJSON(): number | string {
@@ -80,12 +115,17 @@ class BitField {
   }
 
   static resolve(bit: BitFieldResolvable): number | bigint {
-    const self = this as any;
+    const self = this as unknown as BitFieldStatic;
     const { defaultBit } = self;
-    if (typeof defaultBit === typeof bit && bit >= defaultBit) return bit as number | bigint;
+    if (typeof defaultBit === typeof bit && (bit as number | bigint) >= defaultBit) return bit as number | bigint;
     if (bit instanceof BitField) return bit.bitfield;
     if (Array.isArray(bit))
-      return bit.map((p: any) => self.resolve(p)).reduce((prev: any, p: any) => prev | p, defaultBit);
+      return bit
+        .map((p: BitFieldResolvable) => self.resolve(p))
+        .reduce((prev: number | bigint, p: number | bigint) => {
+          if (typeof prev === 'bigint' || typeof p === 'bigint') return (prev as bigint) | (p as bigint);
+          return (prev as number) | (p as number);
+        }, defaultBit);
     if (typeof bit === 'string') {
       if (!isNaN(Number(bit))) return typeof defaultBit === 'bigint' ? BigInt(bit) : Number(bit);
       if (self.FLAGS[bit] !== undefined) return self.FLAGS[bit];
@@ -95,4 +135,3 @@ class BitField {
 }
 
 export default BitField;
-export { BitField };

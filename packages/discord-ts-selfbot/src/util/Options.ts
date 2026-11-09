@@ -167,6 +167,7 @@ import LimitedCollection from './LimitedCollection';
  * Contains various utilities for client options.
  */
 class Options extends null {
+  static defaultSweeperSettings: Record<string, unknown> = {};
   /**
    * The default client options.
    * @returns {ClientOptions}
@@ -191,7 +192,7 @@ class Options extends null {
       messageCacheLifetime: 0,
       messageSweepInterval: 0,
       invalidRequestWarningInterval: 0,
-      intents: (Intents as any).ALL,
+      intents: Intents.ALL,
       partials: ['USER', 'CHANNEL', 'GUILD_MEMBER', 'MESSAGE', 'REACTION', 'GUILD_SCHEDULED_EVENT'], // Enable the partials
       restWsBridgeTimeout: 5_000,
       restRequestTimeout: 15_000,
@@ -282,8 +283,8 @@ class Options extends null {
    *   }
    * });
    */
-  static cacheWithLimits(settings: any = {}) {
-    return (manager: any) => {
+  static cacheWithLimits(settings: Record<string, unknown> = {}) {
+    return (manager: { name: string }) => {
       const setting = settings[manager.name];
       /* eslint-disable-next-line eqeqeq */
       if (setting == null) {
@@ -295,18 +296,19 @@ class Options extends null {
         }
         return new LimitedCollection({ maxSize: setting });
       }
+      const s = setting as Record<string, unknown>;
       /* eslint-disable eqeqeq */
       const noSweeping =
-        setting.sweepFilter == null ||
-        setting.sweepInterval == null ||
-        setting.sweepInterval <= 0 ||
-        setting.sweepInterval === Infinity;
-      const noLimit = setting.maxSize == null || setting.maxSize === Infinity;
+        s.sweepFilter == null ||
+        s.sweepInterval == null ||
+        (s.sweepInterval as number) <= 0 ||
+        s.sweepInterval === Infinity;
+      const noLimit = s.maxSize == null || s.maxSize === Infinity;
       /* eslint-enable eqeqeq */
       if (noSweeping && noLimit) {
         return new Collection();
       }
-      return new LimitedCollection(setting);
+      return new LimitedCollection(s);
     };
   }
 
@@ -356,7 +358,7 @@ class Options extends null {
  * `sweepers: { ...Options.defaultSweeperSettings, messages: { interval: 300, lifetime: 600 } }`</info>
  * @type {SweeperOptions}
  */
-(Options as any).defaultSweeperSettings = {
+Options.defaultSweeperSettings = {
   threads: {
     interval: 3600,
     lifetime: 14400,

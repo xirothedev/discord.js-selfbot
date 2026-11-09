@@ -9,6 +9,7 @@ import DataResolver from '../util/DataResolver';
  * @extends {Base}
  */
 class GuildTemplate extends Base {
+  static GUILD_TEMPLATES_PATTERN: RegExp = /./;
   constructor(client: any, data: any) {
     super(client);
     this._patch(data);
@@ -230,7 +231,7 @@ class GuildTemplate extends Base {
  * Regular expression that globally matches guild template links
  * @type {RegExp}
  */
-(GuildTemplate as any).GUILD_TEMPLATES_PATTERN = /discord(?:app)?\.(?:com\/template|new)\/([\w-]{2,255})/gi;
+GuildTemplate.GUILD_TEMPLATES_PATTERN = /discord(?:app)?\.(?:com\/template|new)\/([\w-]{2,255})/gi;
 
 export default GuildTemplate;
 export { GuildTemplate };

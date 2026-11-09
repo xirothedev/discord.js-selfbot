@@ -72,6 +72,7 @@ export { default as SystemChannelFlags } from './util/SystemChannelFlags';
 export { default as ThreadMemberFlags } from './util/ThreadMemberFlags';
 export { default as UserFlags } from './util/UserFlags';
 export { default as Util } from './util/Util';
+export type { DiscordPayload } from './util/types';
 export const version = pkg.version;
 
 // V14 aliases for the v13 flag classes above

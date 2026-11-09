@@ -1,4 +1,4 @@
-import { setInterval } from 'node:timers';
+import { setInterval, clearInterval } from 'node:timers';
 import { Collection } from '@discordjs/collection';
 import _ConstantsModule from './Constants';
 const { _cleanupSymbol } = _ConstantsModule;
@@ -34,13 +34,28 @@ const { TypeError } = _DJSErrorModule;
  * @param {LimitedCollectionOptions} [options={}] Options for constructing the Collection.
  * @param {Iterable} [iterable=null] Optional entries passed to the Map constructor.
  */
-class LimitedCollection extends Collection<any, any> {
-  [key: string]: any;
-  constructor(options: any = {}, iterable?: any) {
+class LimitedCollection<K = unknown, V = unknown> extends Collection<K, V> {
+  [key: string]: unknown;
+  maxSize: number;
+  keepOverLimit: ((value: V, key: K, collection: this) => boolean) | null;
+  sweepFilter: ((collection: this) => ((value: V, key: K, collection: this) => boolean) | null) | null;
+  interval: ReturnType<typeof setInterval> | null;
+  constructor(options: unknown = {}, iterable?: Iterable<readonly [K, V]>) {
     if (typeof options !== 'object' || options === null) {
       throw new TypeError('INVALID_TYPE', 'options', 'object', true);
     }
-    const { maxSize = Infinity, keepOverLimit = null, sweepInterval = 0, sweepFilter = null } = options;
+    const opts = (options ?? {}) as Record<string, unknown>;
+    const {
+      maxSize = Infinity,
+      keepOverLimit = null,
+      sweepInterval = 0,
+      sweepFilter = null,
+    } = opts as {
+      maxSize?: unknown;
+      keepOverLimit?: unknown;
+      sweepInterval?: unknown;
+      sweepFilter?: unknown;
+    };
 
     if (typeof maxSize !== 'number') {
       throw new TypeError('INVALID_TYPE', 'maxSize', 'number');
@@ -61,20 +76,21 @@ class LimitedCollection extends Collection<any, any> {
      * The max size of the Collection.
      * @type {number}
      */
-    this.maxSize = maxSize;
+    this.maxSize = maxSize as number;
 
     /**
      * A function called to check if an entry should be kept when the Collection is at max size.
      * @type {?Function}
      */
-    this.keepOverLimit = keepOverLimit;
+    this.keepOverLimit = keepOverLimit as ((value: V, key: K, collection: this) => boolean) | null;
 
     /**
      * A function called every sweep interval that returns a function passed to `sweep`.
      * @deprecated in favor of {@link Client#sweepers}
      * @type {?SweepFilter}
      */
-    this.sweepFilter = sweepFilter;
+    this.sweepFilter = sweepFilter as
+      ((collection: this) => ((value: V, key: K, collection: this) => boolean) | null) | null;
 
     /**
      * The id of the interval being used to sweep.
@@ -84,7 +100,9 @@ class LimitedCollection extends Collection<any, any> {
     this.interval =
       sweepInterval > 0 && sweepInterval !== Infinity && sweepFilter
         ? setInterval(() => {
-            const sweepFn = this.sweepFilter(this);
+            const sf = this.sweepFilter;
+            if (!sf) return;
+            const sweepFn = sf(this);
             if (sweepFn === null) return;
             if (typeof sweepFn !== 'function') throw new TypeError('SWEEP_FILTER_RETURN');
             this.sweep(sweepFn);
@@ -92,7 +110,7 @@ class LimitedCollection extends Collection<any, any> {
         : null;
   }
 
-  set(key: any, value: any): this {
+  set(key: K, value: V): this {
     if (this.maxSize === 0) return this;
     if (this.size >= this.maxSize && !this.has(key)) {
       for (const [k, v] of this.entries()) {
@@ -114,14 +132,14 @@ class LimitedCollection extends Collection<any, any> {
    */
   static filterByLifetime({
     lifetime = 14400,
-    getComparisonTimestamp = (e: any) => e?.createdTimestamp,
+    getComparisonTimestamp = (e: unknown) => (e as { createdTimestamp?: number } | null)?.createdTimestamp,
     excludeFromSweep = () => false,
   } = {}) {
     return Sweepers.filterByLifetime({ lifetime, getComparisonTimestamp, excludeFromSweep });
   }
 
   [_cleanupSymbol]() {
-    return this.interval ? () => clearInterval(this.interval) : null;
+    return this.interval ? () => clearInterval(this.interval as ReturnType<typeof setInterval>) : null;
   }
 
   static get [Symbol.species]() {

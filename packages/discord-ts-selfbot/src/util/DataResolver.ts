@@ -34,8 +34,8 @@ class DataResolver extends null {
    * @param {RegExp} regex The RegExp used to extract the code
    * @returns {string}
    */
-  static resolveCode(data: any, regex: any) {
-    return new RegExp(regex.source).exec(data)?.[1] ?? data;
+  static resolveCode(data: unknown, regex: RegExp) {
+    return new RegExp(regex.source).exec(String(data))?.[1] ?? (data as string);
   }
 
   /**
@@ -43,8 +43,8 @@ class DataResolver extends null {
    * @param {InviteResolvable} data The invite resolvable to resolve
    * @returns {string}
    */
-  static resolveInviteCode(data: any) {
-    return this.resolveCode(data, (Invite as any).INVITES_PATTERN);
+  static resolveInviteCode(data: unknown) {
+    return this.resolveCode(data, Invite.INVITES_PATTERN);
   }
 
   /**
@@ -52,8 +52,8 @@ class DataResolver extends null {
    * @param {GuildTemplateResolvable} data The template resolvable to resolve
    * @returns {string}
    */
-  static resolveGuildTemplateCode(data: any) {
-    return this.resolveCode(data, (GuildTemplate as any).GUILD_TEMPLATES_PATTERN);
+  static resolveGuildTemplateCode(data: unknown) {
+    return this.resolveCode(data, GuildTemplate.GUILD_TEMPLATES_PATTERN);
   }
 
   /**
@@ -61,7 +61,7 @@ class DataResolver extends null {
    * @param {BufferResolvable|Base64Resolvable} image The image to be resolved
    * @returns {Promise<?string>}
    */
-  static async resolveImage(image: any) {
+  static async resolveImage(image: unknown) {
     if (!image) return null;
     if (typeof image === 'string' && image.startsWith('data:')) {
       return image;
@@ -82,9 +82,9 @@ class DataResolver extends null {
    * @param {Base64Resolvable} data The base 64 resolvable you want to resolve
    * @returns {?string}
    */
-  static resolveBase64(data: any) {
+  static resolveBase64(data: unknown) {
     if (Buffer.isBuffer(data)) return `data:image/jpg;base64,${data.toString('base64')}`;
-    return data;
+    return data as string;
   }
 
   /**
@@ -106,7 +106,7 @@ class DataResolver extends null {
    * @param {BufferResolvable|Stream} resource The buffer or stream resolvable to resolve
    * @returns {Promise<Buffer|Stream>}
    */
-  static async resolveFile(resource: any) {
+  static async resolveFile(resource: unknown) {
     if (Buffer.isBuffer(resource) || resource instanceof stream.Readable) return resource;
     if (typeof resource === 'string') {
       if (/^https?:\/\//.test(resource)) {
@@ -115,9 +115,9 @@ class DataResolver extends null {
         else throw new DiscordError('FILE_NOT_FOUND', resource);
       }
 
-      return new Promise<any>((resolve, reject) => {
+      return new Promise<stream.Readable>((resolve, reject) => {
         const file = path.resolve(resource);
-        fs.stat(file, (err: any, stats: any) => {
+        fs.stat(file, (err: NodeJS.ErrnoException | null, stats: fs.Stats) => {
           if (err) return reject(err);
           if (!stats.isFile()) return reject(new DiscordError('FILE_NOT_FOUND', file));
           return resolve(fs.createReadStream(file));
@@ -133,12 +133,13 @@ class DataResolver extends null {
    * @param {BufferResolvable|Stream} resource The buffer or stream resolvable to resolve
    * @returns {Promise<Buffer>}
    */
-  static async resolveFileAsBuffer(resource: any) {
+  static async resolveFileAsBuffer(resource: unknown) {
     const file = await this.resolveFile(resource);
     if (Buffer.isBuffer(file)) return file;
+    if (!file) throw new DiscordError('FILE_NOT_FOUND', String(resource));
 
     const buffers = [];
-    for await (const data of file) buffers.push(data);
+    for await (const data of file as AsyncIterable<Buffer>) buffers.push(data);
     return Buffer.concat(buffers);
   }
 }

@@ -5,7 +5,10 @@ import BitField from './BitField';
  * Data structure that makes it easy to calculate intents.
  * @extends {BitField}
  */
-class Intents extends BitField {}
+class Intents extends BitField {
+  static FLAGS: Record<string, number> = {};
+  static ALL: number = 0;
+}
 
 /**
  * @name Intents
@@ -47,7 +50,7 @@ class Intents extends BitField {}
  * @type {Object}
  * @see {@link https://discord.com/developers/docs/topics/gateway#list-of-intents}
  */
-(Intents as any).FLAGS = {
+Intents.FLAGS = {
   GUILDS: 1 << 0,
   GUILD_MEMBERS: 1 << 1,
   GUILD_BANS: 1 << 2,
@@ -69,7 +72,7 @@ class Intents extends BitField {}
   AUTO_MODERATION_EXECUTION: 1 << 21,
 };
 
-(Intents as any).ALL = Object.values(Intents.FLAGS).reduce((all: any, p: any) => all | p, 0);
+Intents.ALL = Object.values(Intents.FLAGS).reduce((all: number, p: number) => all | p, 0);
 
 export default Intents;
 export { Intents };

@@ -21,7 +21,7 @@ import {
 /**
  * Contains various Discord-specific functions for formatting messages.
  */
-const Formatters: any = class extends null {};
+const Formatters: Record<string, unknown> = class extends null {} as unknown as Record<string, unknown>;
 
 /**
  * Formats the content into a block quote. This needs to be at the start of the line for Discord to format it.
@@ -64,10 +64,10 @@ Formatters.channelMention = channelMention;
  * @static
  */
 Formatters.chatInputApplicationCommandMention = function chatInputApplicationCommandMention(
-  commandName: any,
-  subcommandGroupOrSubOrId: any,
-  subcommandNameOrId: any,
-  commandId: any,
+  commandName: string,
+  subcommandGroupOrSubOrId: string,
+  subcommandNameOrId?: string,
+  commandId?: string,
 ) {
   if (typeof commandId !== 'undefined') {
     return `</${commandName} ${subcommandGroupOrSubOrId} ${subcommandNameOrId}:${commandId}>`;

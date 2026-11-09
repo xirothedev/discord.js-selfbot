@@ -18,6 +18,7 @@ import InviteGuild from './InviteGuild';
  * @extends {Base}
  */
 class Invite extends Base {
+  static INVITES_PATTERN: RegExp = /./;
   constructor(client: any, data: any) {
     super(client);
     this._patch(data);
@@ -354,7 +355,7 @@ class Invite extends Base {
  * Regular expression that globally matches Discord invite links
  * @type {RegExp}
  */
-(Invite as any).INVITES_PATTERN = /discord(?:(?:app)?\.com\/invite|\.gg(?:\/invite)?)\/([\w-]{2,255})/gi;
+Invite.INVITES_PATTERN = /discord(?:(?:app)?\.com\/invite|\.gg(?:\/invite)?)\/([\w-]{2,255})/gi;
 
 export default Invite;
 export { Invite };
