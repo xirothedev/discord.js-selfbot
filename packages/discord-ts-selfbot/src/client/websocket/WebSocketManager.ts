@@ -34,8 +34,17 @@ const UNRESUMABLE_CLOSE_CODES = [
  * @extends {EventEmitter}
  */
 class WebSocketManager extends EventEmitter {
-  [key: string]: any;
-  constructor(client: any) {
+  declare client: import('../Client').default;
+  declare gateway: string | null;
+  declare totalShards: number;
+  declare shards: Collection<number, WebSocketShard>;
+  declare shardQueue: Set<WebSocketShard>;
+  declare packetQueue: { packet: unknown; shard: unknown }[];
+  declare status: number;
+  declare destroyed: boolean;
+  declare reconnecting: boolean;
+
+  constructor(client: import('../Client').default) {
     super();
 
     /**
@@ -338,9 +347,11 @@ class WebSocketManager extends EventEmitter {
 
     if (this.packetQueue.length) {
       const item = this.packetQueue.shift();
-      setImmediate(() => {
-        this.handlePacket(item.packet, item.shard);
-      }).unref();
+      if (item) {
+        setImmediate(() => {
+          this.handlePacket(item.packet, item.shard);
+        }).unref();
+      }
     }
 
     if (packet && PacketHandlers[packet.t]) {

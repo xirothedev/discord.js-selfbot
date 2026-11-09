@@ -1701,8 +1701,8 @@ class Guild extends AnonymousGuild implements GuildEntity {
       this.client.voice.adapters.set(this.id, methods);
       return {
         sendPayload: (data: unknown) => {
-          if (this.shard.status !== Status.READY) return false;
-          this.shard.send(data);
+          if (!this.shard || this.shard.status !== Status.READY) return false;
+          this.shard!.send(data);
           return true;
         },
         destroy: () => {

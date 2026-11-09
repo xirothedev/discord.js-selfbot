@@ -21,8 +21,35 @@ try {
  * @extends {EventEmitter}
  */
 class WebSocketShard extends EventEmitter {
-  [key: string]: any;
-  constructor(manager: any, id: any) {
+  declare manager: import('./WebSocketManager').default;
+  declare id: number;
+  declare resumeURL: string | null;
+  declare status: number;
+  declare sequence: number;
+  declare closeSequence: number;
+  declare sessionId: string | null;
+  declare ping: number;
+  declare lastPingTimestamp: number;
+  declare lastHeartbeatAcked: boolean;
+  declare closeEmitted: boolean;
+  declare ratelimit: {
+    queue: unknown[];
+    total: number;
+    remaining: number;
+    time: number;
+    timer: NodeJS.Timeout | null;
+  };
+  declare connection: import('ws').WebSocket | null;
+  declare inflate: { push(data: Buffer, flush?: number): void; result: string } | null;
+  declare helloTimeout: NodeJS.Timeout | null;
+  declare wsCloseTimeout: NodeJS.Timeout | null;
+  declare eventsAttached: boolean;
+  declare expectedGuilds: Set<string> | null;
+  declare readyTimeout: NodeJS.Timeout | null;
+  declare connectedAt: number;
+  declare heartbeatInterval: NodeJS.Timeout | null;
+
+  constructor(manager: import('./WebSocketManager').default, id: number) {
     super();
 
     /**
@@ -315,9 +342,9 @@ class WebSocketShard extends EventEmitter {
       const flush =
         l >= 4 && data[l - 4] === 0x00 && data[l - 3] === 0x00 && data[l - 2] === 0xff && data[l - 1] === 0xff;
 
-      this.inflate.push(data, flush && zlib.Z_SYNC_FLUSH);
+      this.inflate!.push(data, flush && zlib.Z_SYNC_FLUSH);
       if (!flush) return;
-      raw = this.inflate.result;
+      raw = this.inflate!.result;
     } else {
       raw = data;
     }
@@ -498,7 +525,7 @@ class WebSocketShard extends EventEmitter {
       default:
         this.manager.handlePacket(packet, this);
         if (this.status === Status.WAITING_FOR_GUILDS && packet.t === WSEvents.GUILD_CREATE) {
-          this.expectedGuilds.delete(packet.d.id);
+          this.expectedGuilds?.delete(packet.d.id);
           this.checkReady();
         }
     }
@@ -515,7 +542,7 @@ class WebSocketShard extends EventEmitter {
       this.readyTimeout = null;
     }
     // Step 1. If we don't have any other guilds pending, we are ready
-    if (!this.expectedGuilds.size) {
+    if (!this.expectedGuilds?.size) {
       this.debug('Shard received all its guilds. Marking as fully ready.');
       this.status = Status.READY;
 
@@ -543,7 +570,7 @@ class WebSocketShard extends EventEmitter {
         this.debug(
           `Shard ${hasGuildsIntent ? 'did' : 'will'} not receive any more guild packets` +
             `${hasGuildsIntent ? ` in ${waitGuildTimeout} ms` : ''}.\nUnavailable guild count: ${
-              this.expectedGuilds.size
+              this.expectedGuilds?.size
             }`,
         );
 
@@ -774,7 +801,7 @@ class WebSocketShard extends EventEmitter {
     }
 
     this.debug(`[WebSocketShard] send packet '${JSON.stringify(data)}'`);
-    this.connection.send(WebSocket.pack(data), (err: any) => {
+    this.connection!.send(WebSocket.pack(data), (err: any) => {
       if (err) this.manager.client.emit(Events.SHARD_ERROR, err, this.id);
     });
   }
@@ -887,8 +914,8 @@ class WebSocketShard extends EventEmitter {
    * @private
    */
   _cleanupConnection() {
-    this.connection.onopen = this.connection.onclose = this.connection.onmessage = null;
-    this.connection.onerror = () => null;
+    this.connection!.onopen = this.connection!.onclose = this.connection!.onmessage = null;
+    this.connection!.onerror = () => null;
   }
 
   /**

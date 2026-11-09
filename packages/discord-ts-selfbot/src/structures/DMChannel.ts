@@ -199,8 +199,8 @@ class DMChannel extends Channel {
       this.client.voice.adapters.set(this.id, methods);
       return {
         sendPayload: (data: any) => {
-          if (this.shard.status !== Status.READY) return false;
-          this.shard.send(data);
+          if (!this.shard || this.shard.status !== Status.READY) return false;
+          this.shard!.send(data);
           return true;
         },
         destroy: () => {
