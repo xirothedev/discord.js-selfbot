@@ -3,25 +3,39 @@ import Base from './Base';
 import _ConstantsModule from '../util/Constants';
 const { Events } = _ConstantsModule;
 import DataResolver from '../util/DataResolver';
+import type { RawGuildTemplateData } from '../../typings/rawDataTypes';
+import type { GuildTemplateEntity } from '../types/entities/guild-template';
+import type { PatchOf } from '../types/schema';
 
 /**
  * Represents the template for a guild.
  * @extends {Base}
  */
-class GuildTemplate extends Base {
+class GuildTemplate extends Base implements GuildTemplateEntity {
+  declare code: GuildTemplateEntity['code'];
+  declare name: GuildTemplateEntity['name'];
+  declare description: GuildTemplateEntity['description'];
+  declare usageCount: GuildTemplateEntity['usageCount'];
+  declare creator: GuildTemplateEntity['creator'];
+  declare creatorId: GuildTemplateEntity['creatorId'];
+  declare createdAt: GuildTemplateEntity['createdAt'];
+  declare updatedAt: GuildTemplateEntity['updatedAt'];
+  declare guildId: GuildTemplateEntity['guildId'];
+  declare serializedGuild: GuildTemplateEntity['serializedGuild'];
+  declare unSynced: GuildTemplateEntity['unSynced'];
   static GUILD_TEMPLATES_PATTERN: RegExp = /./;
-  constructor(client: any, data: any) {
+  constructor(client: import('../client/Client').default, data: RawGuildTemplateData) {
     super(client);
     this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: PatchOf<'GuildTemplate'>) {
     if ('code' in data) {
       /**
        * The unique code of this template
        * @type {string}
        */
-      this.code = data.code;
+      this.code = data.code!;
     }
 
     if ('name' in data) {
@@ -29,7 +43,7 @@ class GuildTemplate extends Base {
        * The name of this template
        * @type {string}
        */
-      this.name = data.name;
+      this.name = data.name!;
     }
 
     if ('description' in data) {
@@ -37,7 +51,7 @@ class GuildTemplate extends Base {
        * The description of this template
        * @type {?string}
        */
-      this.description = data.description;
+      this.description = data.description ?? null;
     }
 
     if ('usage_count' in data) {
@@ -45,7 +59,7 @@ class GuildTemplate extends Base {
        * The amount of times this template has been used
        * @type {number}
        */
-      this.usageCount = data.usage_count;
+      this.usageCount = data.usage_count!;
     }
 
     if ('creator_id' in data) {
@@ -53,7 +67,7 @@ class GuildTemplate extends Base {
        * The id of the user that created this template
        * @type {Snowflake}
        */
-      this.creatorId = data.creator_id;
+      this.creatorId = data.creator_id!;
     }
 
     if ('creator' in data) {
@@ -69,7 +83,7 @@ class GuildTemplate extends Base {
        * The time when this template was created at
        * @type {Date}
        */
-      this.createdAt = new Date(data.created_at);
+      this.createdAt = new Date(data.created_at!);
     }
 
     if ('updated_at' in data) {
@@ -77,7 +91,7 @@ class GuildTemplate extends Base {
        * The time when this template was last synced to the guild
        * @type {Date}
        */
-      this.updatedAt = new Date(data.updated_at);
+      this.updatedAt = new Date(data.updated_at!);
     }
 
     if ('source_guild_id' in data) {
@@ -85,7 +99,7 @@ class GuildTemplate extends Base {
        * The id of the guild that this template belongs to
        * @type {Snowflake}
        */
-      this.guildId = data.source_guild_id;
+      this.guildId = data.source_guild_id!;
     }
 
     if ('serialized_source_guild' in data) {
@@ -93,7 +107,7 @@ class GuildTemplate extends Base {
        * The data of the guild that this template would create
        * @type {APIGuild}
        */
-      this.serializedGuild = data.serialized_source_guild;
+      this.serializedGuild = data.serialized_source_guild!;
     }
 
     /**

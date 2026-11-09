@@ -660,7 +660,10 @@ class GuildAuditLogsEntry<
 
       this.target =
         (typeof code === 'string' ? guild.invites.cache.get(code) : null) ??
-        new Invite(guild.client, this.changesObject({ guild }));
+        new Invite(
+          guild.client,
+          this.changesObject({ guild }) as unknown as import('../../typings/rawDataTypes').RawInviteData,
+        );
     } else if (targetType === Targets.MESSAGE) {
       // Discord sends a channel id for the MESSAGE_BULK_DELETE action type.
       this.target =
@@ -670,7 +673,13 @@ class GuildAuditLogsEntry<
     } else if (targetType === Targets.INTEGRATION) {
       this.target =
         logs?.integrations.get(data.target_id!) ??
-        new Integration(guild.client, this.changesObject({ id: data.target_id! }), guild);
+        new Integration(
+          guild.client,
+          this.changesObject({
+            id: data.target_id!,
+          }) as unknown as import('../../typings/rawDataTypes').RawIntegrationData,
+          guild,
+        );
     } else if (targetType === Targets.CHANNEL || targetType === Targets.THREAD) {
       this.target = guild.channels.cache.get(data.target_id!) ?? this.changesObject({ id: data.target_id! });
     } else if (targetType === Targets.STAGE_INSTANCE) {

@@ -2,7 +2,12 @@ import GuildChannel from './GuildChannel';
 import TextBasedChannel from './interfaces/TextBasedChannel';
 import GuildTextThreadManager from '../managers/GuildTextThreadManager';
 import MessageManager from '../managers/MessageManager';
-import type { AllowedThreadTypeForNewsChannel, AllowedThreadTypeForTextChannel } from '../../typings';
+import type {
+  AllowedThreadTypeForNewsChannel,
+  AllowedThreadTypeForTextChannel,
+  ThreadAutoArchiveDuration,
+} from '../../typings';
+import type { Snowflake } from 'discord-api-types/v10';
 
 /**
  * Represents a text-based guild channel on Discord.
@@ -10,6 +15,13 @@ import type { AllowedThreadTypeForNewsChannel, AllowedThreadTypeForTextChannel }
  * @implements {TextBasedChannel}
  */
 class BaseGuildTextChannel extends GuildChannel {
+  declare messages: MessageManager;
+  declare nsfw: boolean;
+  declare topic: string | null;
+  declare lastMessageId: Snowflake | null;
+  declare lastPinTimestamp: number | null;
+  declare defaultAutoArchiveDuration?: ThreadAutoArchiveDuration;
+  declare defaultThreadRateLimitPerUser: number | null;
   declare threads: GuildTextThreadManager<AllowedThreadTypeForTextChannel | AllowedThreadTypeForNewsChannel>;
   constructor(guild: any, data: any, client: any) {
     super(guild, data, client, false);

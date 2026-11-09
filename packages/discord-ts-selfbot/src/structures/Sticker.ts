@@ -136,7 +136,7 @@ class Sticker extends Base {
    * @readonly
    */
   get createdTimestamp() {
-    return SnowflakeUtil.timestampFrom(this.id);
+    return SnowflakeUtil.timestampFrom(this.id!);
   }
 
   /**

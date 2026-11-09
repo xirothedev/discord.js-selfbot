@@ -10,6 +10,9 @@ const { Endpoints } = _ConstantsModule;
 import InviteFlags from '../util/InviteFlags';
 import Permissions from '../util/Permissions';
 import InviteGuild from './InviteGuild';
+import type { RawInviteData } from '../../typings/rawDataTypes';
+import type { InviteEntity } from '../types/entities/invite';
+import type { PatchOf } from '../types/schema';
 
 // TODO: Convert `inviter` and `channel` in this class to a getter.
 
@@ -17,14 +20,35 @@ import InviteGuild from './InviteGuild';
  * Represents an invitation to a guild channel.
  * @extends {Base}
  */
-class Invite extends Base {
+class Invite extends Base implements InviteEntity {
+  declare channel: InviteEntity['channel'];
+  declare channelId: InviteEntity['channelId'];
+  declare code: InviteEntity['code'];
+  declare createdTimestamp: InviteEntity['createdTimestamp'];
+  declare guild: InviteEntity['guild'];
+  declare inviter: InviteEntity['inviter'];
+  declare inviterId: InviteEntity['inviterId'];
+  declare maxAge: InviteEntity['maxAge'];
+  declare maxUses: InviteEntity['maxUses'];
+  declare memberCount: InviteEntity['memberCount'];
+  declare presenceCount: InviteEntity['presenceCount'];
+  declare type: InviteEntity['type'];
+  declare targetApplication: InviteEntity['targetApplication'];
+  declare targetUser: InviteEntity['targetUser'];
+  declare targetType: InviteEntity['targetType'];
+  declare temporary: InviteEntity['temporary'];
+  declare uses: InviteEntity['uses'];
+  declare stageInstance: InviteEntity['stageInstance'];
+  declare guildScheduledEvent: InviteEntity['guildScheduledEvent'];
+  declare flags: InviteEntity['flags'];
+  declare _expiresTimestamp: number | null;
   static INVITES_PATTERN: RegExp = /./;
-  constructor(client: any, data: any) {
+  constructor(client: import('../client/Client').default, data: RawInviteData) {
     super(client);
     this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: PatchOf<'Invite'>) {
     /**
      * The guild the invite is for including welcome screen data if present
      * @type {?(Guild|InviteGuild)}
@@ -39,7 +63,7 @@ class Invite extends Base {
        * The code for this invite
        * @type {string}
        */
-      this.code = data.code;
+      this.code = data.code!;
     }
 
     if ('approximate_presence_count' in data) {
@@ -48,7 +72,7 @@ class Invite extends Base {
        * <info>This is only available when the invite was fetched through {@link Client#fetchInvite}.</info>
        * @type {?number}
        */
-      this.presenceCount = data.approximate_presence_count;
+      this.presenceCount = data.approximate_presence_count ?? null;
     } else {
       this.presenceCount ??= null;
     }
@@ -59,7 +83,7 @@ class Invite extends Base {
        * <info>This is only available when the invite was fetched through {@link Client#fetchInvite}.</info>
        * @type {?number}
        */
-      this.memberCount = data.approximate_member_count;
+      this.memberCount = data.approximate_member_count ?? null;
     } else {
       this.memberCount ??= null;
     }
@@ -83,7 +107,7 @@ class Invite extends Base {
        * or created through {@link GuildInviteManager#create}.</info>
        * @type {?number}
        */
-      this.maxAge = data.max_age;
+      this.maxAge = data.max_age ?? null;
     } else {
       this.maxAge ??= null;
     }
@@ -95,7 +119,7 @@ class Invite extends Base {
        * or created through {@link GuildInviteManager#create}.</info>
        * @type {?number}
        */
-      this.uses = data.uses;
+      this.uses = data.uses ?? null;
     } else {
       this.uses ??= null;
     }
@@ -107,7 +131,7 @@ class Invite extends Base {
        * or created through {@link GuildInviteManager#create}.</info>
        * @type {?number}
        */
-      this.maxUses = data.max_uses;
+      this.maxUses = data.max_uses ?? null;
     } else {
       this.maxUses ??= null;
     }
@@ -117,7 +141,7 @@ class Invite extends Base {
        * The user's id who created this invite
        * @type {?Snowflake}
        */
-      this.inviterId = data.inviter_id;
+      this.inviterId = data.inviter_id ? String(data.inviter_id) : null;
       this.inviter = this.client.users.resolve(data.inviter_id);
     } else {
       this.inviterId ??= null;
@@ -129,7 +153,7 @@ class Invite extends Base {
        * @type {?User}
        */
       this.inviter ??= this.client.users._add(data.inviter);
-      this.inviterId = data.inviter.id;
+      this.inviterId = data.inviter!.id;
     } else {
       this.inviter ??= null;
     }
@@ -169,7 +193,7 @@ class Invite extends Base {
        * The target type
        * @type {?TargetType}
        */
-      this.targetType = data.target_type;
+      this.targetType = data.target_type ?? null;
     } else {
       this.targetType ??= null;
     }
@@ -187,7 +211,7 @@ class Invite extends Base {
        * The type of invite
        * @type {?InviteType}
        */
-      this.type = data.type;
+      this.type = data.type ?? null;
     } else {
       this.type ??= null;
     }
@@ -207,7 +231,7 @@ class Invite extends Base {
        * @type {?Channel}
        */
       this.channel ??= this.client.channels._add(data.channel, this.guild, { cache: false });
-      this.channelId ??= data.channel.id;
+      this.channelId ??= data.channel!.id;
     }
 
     if ('created_at' in data) {
@@ -215,13 +239,13 @@ class Invite extends Base {
        * The timestamp this invite was created at
        * @type {?number}
        */
-      this.createdTimestamp = new Date(data.created_at).getTime();
+      this.createdTimestamp = new Date(data.created_at!).getTime();
     } else {
       this.createdTimestamp ??= null;
     }
 
     if ('expires_at' in data) {
-      this._expiresTimestamp = data.expires_at && Date.parse(data.expires_at);
+      this._expiresTimestamp = data.expires_at ? Date.parse(data.expires_at) : null;
     } else {
       this._expiresTimestamp ??= null;
     }
@@ -231,7 +255,7 @@ class Invite extends Base {
        * The stage instance data if there is a public {@link StageInstance} in the stage channel this invite is for
        * @type {?InviteStageInstance}
        */
-      this.stageInstance = new InviteStageInstance(this.client, data.stage_instance, this.channel.id, this.guild.id);
+      this.stageInstance = new InviteStageInstance(this.client, data.stage_instance!, this.channel!.id, this.guild!.id);
     } else {
       this.stageInstance ??= null;
     }
@@ -241,7 +265,7 @@ class Invite extends Base {
        * The guild scheduled event data if there is a {@link GuildScheduledEvent} in the channel this invite is for
        * @type {?GuildScheduledEvent}
        */
-      this.guildScheduledEvent = new GuildScheduledEvent(this.client, data.guild_scheduled_event);
+      this.guildScheduledEvent = new GuildScheduledEvent(this.client, data.guild_scheduled_event!);
     } else {
       this.guildScheduledEvent ??= null;
     }
@@ -273,11 +297,13 @@ class Invite extends Base {
    */
   get deletable() {
     const guild = this.guild;
-    if (!guild || !this.client.guilds.cache.has(guild.id)) return false;
+    if (!guild || !('members' in guild) || !this.client.guilds.cache.has(guild.id)) return false;
     if (!guild.members.me) throw new Error('GUILD_UNCACHED_ME');
+    if (!this.channel || !('permissionsFor' in this.channel)) return false;
     return (
-      this.channel.permissionsFor(this.client.user).has(Permissions.FLAGS.MANAGE_CHANNELS, false) ||
-      guild.members.me.permissions.has(Permissions.FLAGS.MANAGE_GUILD)
+      (this.channel.permissionsFor(this.client.user!.id)?.has(BigInt(Permissions.FLAGS.MANAGE_CHANNELS), false) ??
+        false) ||
+      guild.members.me.permissions.has(BigInt(Permissions.FLAGS.MANAGE_GUILD))
     );
   }
 

@@ -20,6 +20,7 @@ class AutocompleteInteraction<Cached extends CacheType = CacheType> extends Inte
   declare commandId: Snowflake;
   declare commandName: string;
   declare responded: boolean;
+  declare options: Omit<CommandInteractionOptionResolver<Cached>, 'getMessage'>;
 
   constructor(client: import('../client/Client').default, data: APIChatInputApplicationCommandInteraction) {
     super(client, data);
@@ -64,7 +65,7 @@ class AutocompleteInteraction<Cached extends CacheType = CacheType> extends Inte
    */
   get command() {
     const id = this.commandId;
-    return this.guild?.commands.cache.get(id) ?? this.client.application!.commands.cache.get(id) ?? null;
+    return this.client.application?.commands.cache.get(id) ?? null;
   }
 
   /**

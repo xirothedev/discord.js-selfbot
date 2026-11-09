@@ -487,9 +487,8 @@ class ApplicationCommandPermissionsManager<
     if (!guildId) throw new Error('GLOBAL_COMMAND_PERMISSIONS');
     let commandId: Snowflake | null = this.commandId;
     if (command && !commandId) {
-      commandId = this.manager.resolveId?.(command);
-      if (!commandId && this.guild) {
-        commandId = this.guild.commands.resolveId(command);
+      if ('resolveId' in this.manager) {
+        commandId = this.manager.resolveId(command);
       }
       commandId ??= this.client.application?.commands.resolveId(command);
       if (!commandId) {

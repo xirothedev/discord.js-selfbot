@@ -7,6 +7,7 @@ const { VideoQualityModes } = _ConstantsModule;
 import Permissions from '../util/Permissions';
 import type { Snowflake } from 'discord-api-types/v10';
 import type { GuildMember } from './GuildMember';
+import type { VideoQualityMode } from '../../typings';
 
 /**
  * Represents a voice-based guild channel on Discord.
@@ -14,6 +15,15 @@ import type { GuildMember } from './GuildMember';
  * @implements {TextBasedChannel}
  */
 class BaseGuildVoiceChannel extends GuildChannel {
+  declare messages: MessageManager;
+  declare nsfw: boolean;
+  declare bitrate: number;
+  declare rtcRegion: string | null;
+  declare userLimit: number;
+  declare videoQualityMode: VideoQualityMode | null;
+  declare lastMessageId: Snowflake | null;
+  declare rateLimitPerUser: number | null;
+  declare status?: string;
   constructor(guild: any, data: any, client: any) {
     super(guild, data, client, false);
     /**

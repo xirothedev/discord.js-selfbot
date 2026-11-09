@@ -24,7 +24,7 @@ class ReactionEmoji extends Emoji {
   }
 
   valueOf() {
-    return this.id;
+    return this.id ?? '';
   }
 }
 

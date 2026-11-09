@@ -1,11 +1,15 @@
 import { Collection } from '@discordjs/collection';
 import Base from './Base';
+import type { Snowflake } from 'discord-api-types/v10';
 
 /**
  * Represents a call
  * @extends {Base}
  */
 class CallState extends Base {
+  declare channelId: Snowflake;
+  declare region: string;
+  declare _ringing: Snowflake[];
   constructor(client: any, data: any) {
     super(client);
     /**

@@ -6,6 +6,9 @@ import ChannelFlags from '../util/ChannelFlags';
 import _ConstantsModule from '../util/Constants';
 const { ChannelTypes, ThreadChannelTypes, VoiceBasedChannelTypes } = _ConstantsModule;
 import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { RawChannelData } from '../../typings/rawDataTypes';
+import type { ChannelEntity } from '../types/entities/channel';
+import type { PatchOf } from '../types/schema';
 let CategoryChannel;
 let DMChannel;
 let NewsChannel;
@@ -31,11 +34,14 @@ let deprecationEmittedForDeleted = false;
  * @extends {Base}
  * @abstract
  */
-class Channel extends Base {
-  constructor(client: any, data: any, immediatePatch: any = true) {
+class Channel extends Base implements ChannelEntity {
+  declare id: ChannelEntity['id'];
+  declare type: ChannelEntity['type'];
+  declare flags: ChannelEntity['flags'];
+  constructor(client: import('../client/Client').default, data?: RawChannelData, immediatePatch = true) {
     super(client);
 
-    const type = ChannelTypes[data?.type];
+    const type = data?.type !== undefined ? ChannelTypes[data.type] : undefined;
     /**
      * The type of the channel
      * @type {ChannelType}
@@ -45,12 +51,12 @@ class Channel extends Base {
     if (data && immediatePatch) this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: PatchOf<'Channel'>) {
     /**
      * The channel's id
      * @type {Snowflake}
      */
-    this.id = data.id;
+    this.id = data.id!;
 
     if ('flags' in data) {
       /**
@@ -98,7 +104,7 @@ class Channel extends Base {
     return deletedChannels.has(this);
   }
 
-  set deleted(value: any) {
+  set deleted(value: boolean) {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
@@ -141,7 +147,7 @@ class Channel extends Base {
    *   .then(console.log)
    *   .catch(console.error);
    */
-  async delete(_reason: any = null) {
+  async delete(_reason: string | null = null) {
     await this.client.api.channels(this.id).delete();
     return this;
   }
@@ -151,7 +157,7 @@ class Channel extends Base {
    * @param {boolean} [force=true] Whether to skip the cache check and request the API
    * @returns {Promise<Channel>}
    */
-  fetch(force: any = true) {
+  fetch(force = true) {
     return this.client.channels.fetch(this.id, { force });
   }
 

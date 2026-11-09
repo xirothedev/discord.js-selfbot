@@ -46,6 +46,11 @@ class GuildChannel extends Channel implements GuildChannelEntity {
   declare parentId: GuildChannelEntity['parentId'];
   declare permissionOverwrites: GuildChannelEntity['permissionOverwrites'];
   declare rawPosition: GuildChannelEntity['rawPosition'];
+  declare topic?: string | null;
+  declare nsfw?: boolean;
+  declare bitrate?: number;
+  declare userLimit?: number;
+  declare rateLimitPerUser?: number | null;
 
   constructor(
     guild: Guild,

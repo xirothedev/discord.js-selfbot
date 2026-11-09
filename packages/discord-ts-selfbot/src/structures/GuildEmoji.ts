@@ -3,17 +3,20 @@ import _errorsModule from '../errors';
 const { Error } = _errorsModule;
 import GuildEmojiRoleManager from '../managers/GuildEmojiRoleManager';
 import Permissions from '../util/Permissions';
+import type { RawGuildEmojiData } from '../../typings/rawDataTypes';
+import type { GuildEmojiEntity } from '../types/entities/guild-emoji';
+import type { PatchOf } from '../types/schema';
+import type { Guild } from './Guild';
 
 /**
  * Represents a custom emoji.
  * @extends {BaseGuildEmoji}
  */
-class GuildEmoji extends BaseGuildEmoji {
-  constructor(
-    client: import('../client/Client').default,
-    data: Record<string, unknown>,
-    guild: import('./Guild').Guild,
-  ) {
+class GuildEmoji extends BaseGuildEmoji implements GuildEmojiEntity {
+  declare guild: Guild;
+  declare author: GuildEmojiEntity['author'];
+  declare _roles: GuildEmojiEntity['_roles'];
+  constructor(client: import('../client/Client').default, data: RawGuildEmojiData, guild: import('./Guild').Guild) {
     super(client, data, guild);
 
     /**
@@ -45,7 +48,7 @@ class GuildEmoji extends BaseGuildEmoji {
     return clone;
   }
 
-  _patch(data: Record<string, unknown>) {
+  _patch(data: PatchOf<'GuildEmoji'>) {
     super._patch(data);
 
     if (data.user) this.author = this.client.users._add(data.user);

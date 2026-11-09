@@ -6,7 +6,6 @@ import Util from '../util/Util';
  */
 class Base {
   declare client: import('../client/Client').default;
-  [key: string]: any;
 
   constructor(client: any) {
     /**
@@ -36,8 +35,8 @@ class Base {
     return Util.flatten(this, ...props);
   }
 
-  valueOf() {
-    return this.id;
+  valueOf(): string {
+    return 'id' in this && typeof this.id === 'string' ? this.id : '';
   }
 }
 

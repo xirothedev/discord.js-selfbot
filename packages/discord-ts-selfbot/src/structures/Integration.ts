@@ -1,5 +1,9 @@
 import Base from './Base';
 import IntegrationApplication from './IntegrationApplication';
+import type { Role } from './Role';
+import type { RawIntegrationData } from '../../typings/rawDataTypes';
+import type { IntegrationEntity } from '../types/entities/integration';
+import type { PatchOf } from '../types/schema';
 
 /**
  * The information account for an integration
@@ -21,8 +25,24 @@ import IntegrationApplication from './IntegrationApplication';
  * Represents a guild integration.
  * @extends {Base}
  */
-class Integration extends Base {
-  constructor(client: any, data: any, guild: any) {
+class Integration extends Base implements IntegrationEntity {
+  declare account: IntegrationEntity['account'];
+  declare application: IntegrationEntity['application'];
+  declare enabled: IntegrationEntity['enabled'];
+  declare expireBehavior: IntegrationEntity['expireBehavior'];
+  declare expireGracePeriod: IntegrationEntity['expireGracePeriod'];
+  declare guild: IntegrationEntity['guild'];
+  declare id: IntegrationEntity['id'];
+  declare name: IntegrationEntity['name'];
+  declare role: IntegrationEntity['role'];
+  declare enableEmoticons: IntegrationEntity['enableEmoticons'];
+  declare syncedAt: IntegrationEntity['syncedAt'];
+  declare syncing: IntegrationEntity['syncing'];
+  declare type: IntegrationEntity['type'];
+  declare user: IntegrationEntity['user'];
+  declare subscriberCount: IntegrationEntity['subscriberCount'];
+  declare revoked: IntegrationEntity['revoked'];
+  constructor(client: import('../client/Client').default, data: RawIntegrationData, guild: import('./Guild').Guild) {
     super(client);
 
     /**
@@ -72,7 +92,7 @@ class Integration extends Base {
        * Whether emoticons should be synced for this integration (twitch only currently)
        * @type {?boolean}
        */
-      this.enableEmoticons = data.enable_emoticons;
+      this.enableEmoticons = data.enable_emoticons ?? null;
     } else {
       this.enableEmoticons ??= null;
     }
@@ -97,14 +117,14 @@ class Integration extends Base {
      * The last time this integration was last synced
      * @type {?number}
      */
-    this.syncedAt = data.synced_at;
+    this.syncedAt = data.synced_at ? Date.parse(data.synced_at) : undefined;
 
     if ('subscriber_count' in data) {
       /**
        * How many subscribers this integration has
        * @type {?number}
        */
-      this.subscriberCount = data.subscriber_count;
+      this.subscriberCount = data.subscriber_count ?? null;
     } else {
       this.subscriberCount ??= null;
     }
@@ -114,7 +134,7 @@ class Integration extends Base {
        * Whether this integration has been revoked
        * @type {?boolean}
        */
-      this.revoked = data.revoked;
+      this.revoked = data.revoked ?? null;
     } else {
       this.revoked ??= null;
     }
@@ -129,10 +149,10 @@ class Integration extends Base {
    */
   get roles() {
     const roles = this.guild.roles.cache;
-    return roles.filter((role: any) => role.tags?.integrationId === this.id);
+    return roles.filter((role: Role) => role.tags?.integrationId === this.id);
   }
 
-  _patch(data: any) {
+  _patch(data: PatchOf<'Integration'>) {
     if ('expire_behavior' in data) {
       /**
        * The behavior of expiring subscribers
@@ -169,7 +189,7 @@ class Integration extends Base {
    * @returns {Promise<Integration>}
    * @param {string} [reason] Reason for deleting this integration
    */
-  async delete(reason: any) {
+  async delete(reason?: string) {
     await this.client.api.guilds(this.guild.id).integrations(this.id).delete({ reason });
     return this;
   }

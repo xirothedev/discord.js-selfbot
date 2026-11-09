@@ -86,7 +86,7 @@ class BaseCommandInteraction<Cached extends CacheType = CacheType> extends Inter
    */
   get command() {
     const id = this.commandId;
-    return this.guild?.commands.cache.get(id) ?? this.client.application!.commands.cache.get(id) ?? null;
+    return this.client.application?.commands.cache.get(id) ?? null;
   }
 
   /**

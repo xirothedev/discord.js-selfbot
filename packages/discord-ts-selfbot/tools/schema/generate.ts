@@ -64,10 +64,38 @@ const TSCONFIG = join(PKG, 'tsconfig.json');
  */
 const CONFIG: Record<string, EntityConfig> = {
   Application: {
-    imports: [],
-    fields: {},
-    generate: false,
-    fieldTypes: { installParams: 'ClientApplicationInstallParams | null' },
+    rawType: { name: 'RawApplicationData', from: '../../typings/rawDataTypes' },
+    patchType: { type: 'ApplicationPatch', from: './selfbot/application' },
+    imports: [
+      {
+        from: 'discord-api-types/v10',
+        named: [
+          'APIApplicationIntegrationTypesConfigMap',
+          'APIUser',
+          'ApplicationWebhookEventStatus',
+          'ApplicationWebhookEventType',
+          'Snowflake',
+        ],
+      },
+      { from: '../../../typings/enums', named: ['ApplicationType'] },
+      {
+        from: '../../../typings',
+        named: ['ClientApplicationInstallParams', 'PartialUser', 'StaticImageURLOptions'],
+      },
+      { from: '../../structures/User', named: ['User'] },
+      { from: '../../structures/Team', named: ['Team'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
+      { from: '../../managers/ApplicationCommandManager', default: 'ApplicationCommandManager' },
+      { from: '../../util/ApplicationFlags', default: 'ApplicationFlags' },
+      { from: '../../util/Permissions', default: 'Permissions' },
+    ],
+    fields: { commands: 'relation', owner: 'relation' },
+    fieldTypes: {
+      id: 'Snowflake',
+      bot: 'APIUser | null',
+      installParams: '{ scopes: string[]; permissions: Readonly<Permissions> } | null',
+      integrationTypesConfig: 'APIApplicationIntegrationTypesConfigMap | null',
+    },
   },
   ApplicationCommand: {
     imports: [],
@@ -258,6 +286,60 @@ const CONFIG: Record<string, EntityConfig> = {
       premiumUsageFlags: 'selfbot',
     },
   },
+  Channel: {
+    rawType: { name: 'RawChannelData', from: '../../typings/rawDataTypes' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '../../util/ChannelFlags', default: 'ChannelFlags' },
+    ],
+    fields: {},
+    fieldTypes: { type: 'string' },
+  },
+  BaseGuild: {
+    rawType: { name: 'RawBaseGuildData', from: '../../typings/rawDataTypes' },
+    imports: [{ from: 'discord-api-types/v10', named: ['GuildFeature', 'Snowflake'] }],
+    fields: {},
+  },
+  AnonymousGuild: {
+    extends: 'BaseGuildEntity',
+    rawType: { name: 'RawAnonymousGuildData', from: '../../typings/rawDataTypes' },
+    imports: [{ from: '../../../typings', named: ['NSFWLevel', 'VerificationLevel'] }],
+    fields: {},
+    fieldTypes: { description: 'string | null' },
+  },
+  Guild: {
+    extends: 'AnonymousGuildEntity',
+    rawType: { name: 'RawGuildData', from: '../../typings/rawDataTypes' },
+    patchType: { type: 'GuildPatch', from: './selfbot/guild' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      {
+        from: '../../../typings',
+        named: [
+          'DefaultMessageNotificationLevel',
+          'ExplicitContentFilterLevel',
+          'IncidentActions',
+          'MFALevel',
+          'PremiumTier',
+        ],
+      },
+      { from: '../../managers/AutoModerationRuleManager', default: 'AutoModerationRuleManager' },
+      { from: '../../managers/GuildBanManager', default: 'GuildBanManager' },
+      { from: '../../managers/GuildChannelManager', default: 'GuildChannelManager' },
+      { from: '../../managers/GuildEmojiManager', default: 'GuildEmojiManager' },
+      { from: '../../managers/GuildInviteManager', default: 'GuildInviteManager' },
+      { from: '../../managers/GuildMemberManager', default: 'GuildMemberManager' },
+      { from: '../../managers/GuildScheduledEventManager', default: 'GuildScheduledEventManager' },
+      { from: '../../managers/GuildSettingManager', default: 'GuildSettingManager' },
+      { from: '../../managers/GuildStickerManager', default: 'GuildStickerManager' },
+      { from: '../../managers/PresenceManager', default: 'PresenceManager' },
+      { from: '../../managers/RoleManager', default: 'RoleManager' },
+      { from: '../../managers/StageInstanceManager', default: 'StageInstanceManager' },
+      { from: '../../managers/VoiceStateManager', default: 'VoiceStateManager' },
+      { from: '../../util/SystemChannelFlags', default: 'SystemChannelFlags' },
+    ],
+    fields: {},
+  },
   GuildChannel: {
     rawType: { name: 'RawGuildChannelData', from: '../../typings/rawDataTypes' },
     imports: [
@@ -308,6 +390,7 @@ const CONFIG: Record<string, EntityConfig> = {
       { from: 'discord-api-types/v10', named: ['Snowflake'] },
       { from: '@discordjs/collection', named: ['Collection'] },
       { from: '../../structures/Guild', named: ['Guild'] },
+      { from: '../../../typings/enums', named: ['InviteTargetTypes', 'InviteTypes'] },
       { from: '../../structures/InviteGuild', named: ['InviteGuild'] },
       { from: '../../structures/WelcomeChannel', default: 'WelcomeChannel' },
     ],
@@ -336,6 +419,84 @@ const CONFIG: Record<string, EntityConfig> = {
     fieldTypes: {
       emojis: 'Collection<Snowflake, GuildPreviewEmoji>',
       stickers: 'Collection<Snowflake, Sticker>',
+    },
+  },
+  Emoji: {
+    rawType: { name: 'RawEmojiData', from: '../../typings/rawDataTypes' },
+    imports: [{ from: 'discord-api-types/v10', named: ['Snowflake'] }],
+    fields: {},
+  },
+  BaseGuildEmoji: {
+    extends: 'EmojiEntity',
+    rawType: { name: 'RawGuildEmojiData', from: '../../typings/rawDataTypes' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
+      { from: '../../structures/GuildPreview', named: ['GuildPreview'] },
+    ],
+    fields: { guild: 'relation' },
+  },
+  GuildEmoji: {
+    extends: 'BaseGuildEmojiEntity',
+    rawType: { name: 'RawGuildEmojiData', from: '../../typings/rawDataTypes' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '../../structures/User', named: ['User'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
+    ],
+    fields: { guild: 'relation', author: 'relation', _roles: 'internal' },
+    extraFields: [{ name: '_roles', type: 'Snowflake[]', kind: 'internal' }],
+  },
+  GuildTemplate: {
+    rawType: { name: 'RawGuildTemplateData', from: '../../typings/rawDataTypes' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['APITemplateSerializedSourceGuild', 'Snowflake'] },
+      { from: '../../structures/User', named: ['User'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
+    ],
+    fields: { creator: 'relation', guild: 'relation' },
+  },
+  Integration: {
+    rawType: { name: 'RawIntegrationData', from: '../../typings/rawDataTypes' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '../../../typings', named: ['IntegrationAccount', 'IntegrationType'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
+      { from: '../../structures/Role', named: ['Role'] },
+      { from: '../../structures/User', named: ['User'] },
+      { from: '../../structures/IntegrationApplication', default: 'IntegrationApplication' },
+    ],
+    fields: { guild: 'relation', role: 'relation', user: 'relation', application: 'relation' },
+  },
+  Invite: {
+    rawType: { name: 'RawInviteData', from: '../../typings/rawDataTypes' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      {
+        from: '../../../typings',
+        named: ['GroupDMChannel', 'NonThreadGuildBasedChannel'],
+      },
+      { from: '../../../typings/enums', named: ['InviteTargetTypes', 'InviteTypes'] },
+      { from: '../../structures/InviteGuild', named: ['InviteGuild'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
+      { from: '../../structures/User', named: ['User'] },
+      { from: '../../structures/IntegrationApplication', default: 'IntegrationApplication' },
+      { from: '../../structures/InviteStageInstance', default: 'InviteStageInstance' },
+      { from: '../../structures/GuildScheduledEvent', named: ['GuildScheduledEvent'] },
+      { from: '../../util/InviteFlags', default: 'InviteFlags' },
+    ],
+    fields: {
+      guild: 'relation',
+      inviter: 'relation',
+      targetUser: 'relation',
+      targetApplication: 'relation',
+      stageInstance: 'relation',
+      guildScheduledEvent: 'relation',
+    },
+    fieldTypes: {
+      channel: 'NonThreadGuildBasedChannel | GroupDMChannel | undefined',
+      type: 'InviteTypes | number | null',
+      targetType: 'InviteTargetTypes | number | null',
     },
   },
   InviteStageInstance: {
@@ -752,9 +913,9 @@ function generateSchema(results: EntityResult[]): string {
   const patchImports = new Map<string, string[]>();
   for (const result of generated) {
     const raw = result.rawType!;
-    const rawNames = rawImports.get(raw.from) ?? [];
-    rawNames.push(raw.name);
-    rawImports.set(raw.from, rawNames);
+    const rawNames = new Set(rawImports.get(raw.from) ?? []);
+    rawNames.add(raw.name);
+    rawImports.set(raw.from, [...rawNames]);
     const patch = CONFIG[result.name]?.patchType;
     if (patch) {
       const patchNames = patchImports.get(patch.from) ?? [];

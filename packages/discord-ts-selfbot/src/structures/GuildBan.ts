@@ -5,6 +5,9 @@ import Base from './Base';
  * @extends {Base}
  */
 class GuildBan extends Base {
+  declare guild: import('./Guild').Guild;
+  declare user: import('./User').User;
+  declare reason?: string | null;
   constructor(client: any, data: any, guild: any) {
     super(client);
 

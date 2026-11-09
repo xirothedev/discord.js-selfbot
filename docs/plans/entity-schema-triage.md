@@ -39,10 +39,16 @@ Two public contracts stay as `fieldTypes` overrides because the runtime value is
 - **Webhook**: `avatar`, `channelId`, `guildId`, and `name` are nullable; `sourceGuild` and `sourceChannel` keep the API fallback.
 - **Collectors**: `Collector<K, V, F>`, `InteractionCollector<T>`, `ReactionCollector`, and `MessageCollector` carry type parameters, so `collected` and `users` are typed.
 
+## Final gate: closed
+
+`Base` no longer has `[key: string]: any`. The structural gate now passes with 354 source files type-checking and 0 drift rows. The ratchet is **1,318 `any` / 440 casts**.
+
+The remaining `[key: string]: any` declarations are per-class boundaries on 72 classes that are not in the `Base` inheritance chain (voice, websocket, collectors, mixins, and small structures). Removing all of them at once reports 1,941 errors; they are now the next incremental surface.
+
 ## Next modules
 
-1. `Interaction.memberPermissions` / `CacheTypeReducer` and `ApplicationCommand` generic propagation.
-2. Final gate: convert the remaining `Base` subclasses (785 errors when the index signature is removed), then remove it and tighten tsconfig.
+1. Remove the per-class `[key: string]: any` boundaries in waves, starting with the collectors and channel mixins.
+2. `Interaction.memberPermissions` / `CacheTypeReducer` and `ApplicationCommand` generic propagation.
 3. Replace the last `Constants` boundary (`const Constants: any = {}`) with a named interface once consumers are typed.
 
 ## Closed in the follow-up pass
@@ -52,5 +58,7 @@ Two public contracts stay as `fieldTypes` overrides because the runtime value is
 - **Audit logs**: `GuildAuditLogs<T>` and `GuildAuditLogsEntry<...>` carry real parameters; entry targets and extras stay `unknown` until the target classes expose partial constructors.
 - **`GuildChannel`**: entity-backed with `PatchOf<'GuildChannel'>`, typed getters and resolvers, and `Permissions.ALL`/`FLAGS` used directly.
 - **`Constants`**: all `Endpoints` and image-URL helpers are typed; the module-level `Constants` bag is the single remaining boundary.
-- **`Guild`**: setters, audit-log fetch, community/template/widget helpers, and the voice adapter creator are typed; only the constructor and `_patch` remain untyped.
+- **`Guild`**: entity-backed with `PatchOf<'Guild'>`; setters, audit-log fetch, community/template/widget helpers, and the voice adapter creator are typed.
+- **Inheritance chain**: `Channel`, `BaseGuild`, `AnonymousGuild`, `Guild`, `Emoji`, `BaseGuildEmoji`, `GuildEmoji`, `Invite`, `Integration`, `GuildTemplate`, `Application`, and `ApplicationCommand` declare their public fields.
+- **Final gate**: `Base` index signature removed; `Channel`, `Guild`, `Invite`, `Application`, and the emoji chain are entity-backed.
 - **`Client`**: manager, user, application, token, and shard fields are typed; login, invite, sticker, OAuth2, and option-validation methods use public types. The public typings `any[]` event-listener signatures stay because they mirror discord.js.

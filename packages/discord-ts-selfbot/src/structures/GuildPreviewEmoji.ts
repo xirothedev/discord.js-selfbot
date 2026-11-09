@@ -5,6 +5,7 @@ import BaseGuildEmoji from './BaseGuildEmoji';
  * @extends {BaseGuildEmoji}
  */
 class GuildPreviewEmoji extends BaseGuildEmoji {
+  declare roles: import('discord-api-types/v10').Snowflake[];
   /**
    * The public guild this emoji is part of
    * @type {GuildPreview}

@@ -6,6 +6,7 @@ const { Channel } = _ChannelModule;
  * @extends {Channel}
  */
 class DirectoryChannel extends Channel {
+  declare name: string;
   _patch(data: any) {
     super._patch(data);
     /**

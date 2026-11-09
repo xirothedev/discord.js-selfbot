@@ -565,6 +565,8 @@ class Client extends BaseClient {
    *   .then(pack => console.log(`Sticker pack name: ${pack.name}`))
    *   .catch(console.error);
    */
+  async fetchStickerPacks(options: { packId: Snowflake }): Promise<StickerPack>;
+  async fetchStickerPacks(options?: StickerPackFetchOptions): Promise<Collection<Snowflake, StickerPack>>;
   async fetchStickerPacks({ packId }: StickerPackFetchOptions = {}) {
     if (packId) {
       const data = await this.api('sticker-packs', packId).get();

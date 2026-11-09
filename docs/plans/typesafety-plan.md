@@ -34,7 +34,7 @@ Current ratchet (2026-11-09): `any` 1,836; casts 551 (`bun tools/typesafety/coun
 4. **Strategy**: bottom-up by module: `util` → `structures` → `managers` → `rest` → `client` → `sharding` → `WebSocket` → `voice`. Each module is its own PR.
 5. **Allowed substitutes for `any`**: `unknown` + narrowing, generics with constraints, `Record<string, unknown>`, and a single documented `DiscordPayload` alias for raw API blobs. No `eslint-disable` / `@ts-ignore` without an ADR.
 6. **Tests**: add `test:types` script (separate gate). Main `bun check` stays src+typings only until the migration is complete, then fold tests in.
-7. **Definition of done**: `grep` for `\bany\b` returns 0 in src+typings; the cast ratchet returns 0 (documented boundary casts excepted); `Base`'s index signature is removed; every structure declares its properties; `bun check` + a new `no-explicit-any` lint rule pass; parity harness type-checks against discord.js's public surface.
+7. **Definition of done**: `grep` for `\bany\b` returns 0 in src+typings; the cast ratchet returns 0 (documented boundary casts excepted); `Base`'s index signature is removed (done); every structure declares its properties; `bun check` + a new `no-explicit-any` lint rule pass; parity harness type-checks against discord.js's public surface.
 8. **Delivery**: incremental per-module PRs with a ratcheting counter in CI (the `any` count must not increase). No mega-PR.
 9. **Entity schema**: the object model is generated from `typings/index.d.ts` ∩ `src` assignments into `src/types/entities/*` and `src/types/schema.ts`. `_patch` takes `PatchOf<K>` from `Raw*Data`. See ADR 0004.
 

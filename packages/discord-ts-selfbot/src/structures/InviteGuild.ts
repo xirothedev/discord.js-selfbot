@@ -1,12 +1,15 @@
 import AnonymousGuild from './AnonymousGuild';
 import WelcomeScreen from './WelcomeScreen';
+import type { RawInviteGuildData } from '../../typings/rawDataTypes';
 
 /**
  * Represents a guild received from an invite, includes welcome screen data if available.
  * @extends {AnonymousGuild}
  */
 class InviteGuild extends AnonymousGuild {
-  constructor(client: any, data: any) {
+  declare welcomeScreen: WelcomeScreen | null;
+
+  constructor(client: import('../client/Client').default, data: RawInviteGuildData) {
     super(client, data);
 
     /**

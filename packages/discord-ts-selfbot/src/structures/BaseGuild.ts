@@ -1,13 +1,22 @@
 import Base from './Base';
 import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { RawBaseGuildData } from '../../typings/rawDataTypes';
+import type { BaseGuildEntity } from '../types/entities/base-guild';
+import type { ImageURLOptions } from '../../typings';
+import { GuildFeature } from 'discord-api-types/v10';
 
 /**
  * The base class for {@link Guild}, {@link OAuth2Guild} and {@link InviteGuild}.
  * @extends {Base}
  * @abstract
  */
-class BaseGuild extends Base {
-  constructor(client: any, data: any) {
+class BaseGuild extends Base implements BaseGuildEntity {
+  declare id: BaseGuildEntity['id'];
+  declare name: BaseGuildEntity['name'];
+  declare icon: BaseGuildEntity['icon'];
+  declare features: BaseGuildEntity['features'];
+
+  constructor(client: import('../client/Client').default, data: RawBaseGuildData) {
     super(client);
 
     /**
@@ -20,19 +29,19 @@ class BaseGuild extends Base {
      * The name of this guild
      * @type {string}
      */
-    this.name = data.name;
+    this.name = 'name' in data ? data.name : '';
 
     /**
      * The icon hash of this guild
      * @type {?string}
      */
-    this.icon = data.icon ?? null;
+    this.icon = 'icon' in data ? (data.icon ?? null) : null;
 
     /**
      * An array of features available to this guild
      * @type {Features[]}
      */
-    this.features = data.features;
+    this.features = 'features' in data ? (data.features ?? []) : [];
   }
 
   /**
@@ -61,7 +70,7 @@ class BaseGuild extends Base {
   get nameAcronym() {
     return this.name
       .replace(/'s /g, ' ')
-      .replace(/\w+/g, (e: any) => e[0])
+      .replace(/\w+/g, e => e[0])
       .replace(/\s/g, '');
   }
 
@@ -71,7 +80,7 @@ class BaseGuild extends Base {
    * @readonly
    */
   get partnered() {
-    return this.features.includes('PARTNERED');
+    return this.features.includes(GuildFeature.Partnered);
   }
 
   /**
@@ -80,7 +89,7 @@ class BaseGuild extends Base {
    * @readonly
    */
   get verified() {
-    return this.features.includes('VERIFIED');
+    return this.features.includes(GuildFeature.Verified);
   }
 
   /**
@@ -88,7 +97,7 @@ class BaseGuild extends Base {
    * @param {ImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  iconURL({ format, size, dynamic }: any = {}) {
+  iconURL({ format, size, dynamic }: ImageURLOptions = {}) {
     if (!this.icon) return null;
     return this.client.rest.cdn.Icon(this.id, this.icon, format, size, dynamic);
   }

@@ -135,14 +135,15 @@ class GuildManager extends CachedManager {
    * @returns {?Snowflake}
    */
   resolveId(guild: any) {
+    const inviteGuild = guild instanceof Invite ? guild.guild : null;
     if (
       guild instanceof GuildChannel ||
       guild instanceof GuildMember ||
       guild instanceof GuildEmoji ||
       guild instanceof Role ||
-      (guild instanceof Invite && guild.guild)
+      inviteGuild
     ) {
-      return super.resolveId(guild.guild.id);
+      return super.resolveId(inviteGuild ? inviteGuild.id : guild.guild.id);
     }
     return super.resolveId(guild);
   }

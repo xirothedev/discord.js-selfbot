@@ -8,6 +8,10 @@ import _ApplicationRoleConnectionMetadataModule from '../ApplicationRoleConnecti
 const { ApplicationRoleConnectionMetadata } = _ApplicationRoleConnectionMetadataModule;
 import Base from '../Base';
 import Team from '../Team';
+import ApplicationCommandManager from '../../managers/ApplicationCommandManager';
+import type { RawApplicationData } from '../../../typings/rawDataTypes';
+import type { ApplicationEntity } from '../../types/entities/application';
+import type { ApplicationPatch } from '../../types/selfbot/application';
 
 const AssetTypes = Object.keys(ClientApplicationAssetTypes);
 
@@ -18,25 +22,92 @@ let deprecationEmittedForFetchAssets = false;
  * @extends {Base}
  * @abstract
  */
-class Application extends Base {
-  constructor(client: any, data: any) {
+class Application extends Base implements ApplicationEntity {
+  declare commands: ApplicationCommandManager;
+  declare description: ApplicationEntity['description'];
+  declare icon: ApplicationEntity['icon'];
+  declare id: ApplicationEntity['id'];
+  declare name: ApplicationEntity['name'];
+  declare termsOfServiceURL: ApplicationEntity['termsOfServiceURL'];
+  declare privacyPolicyURL: ApplicationEntity['privacyPolicyURL'];
+  declare verifyKey: ApplicationEntity['verifyKey'];
+  declare roleConnectionsVerificationURL: ApplicationEntity['roleConnectionsVerificationURL'];
+  declare approximateGuildCount: ApplicationEntity['approximateGuildCount'];
+  declare botPublic: ApplicationEntity['botPublic'];
+  declare botRequireCodeGrant: ApplicationEntity['botRequireCodeGrant'];
+  declare cover: ApplicationEntity['cover'];
+  declare flags: ApplicationEntity['flags'];
+  declare guildId: ApplicationEntity['guildId'];
+  declare tags: ApplicationEntity['tags'];
+  declare installParams: ApplicationEntity['installParams'];
+  declare customInstallURL: ApplicationEntity['customInstallURL'];
+  declare owner: ApplicationEntity['owner'];
+  declare rpcOrigins: ApplicationEntity['rpcOrigins'];
+  declare splash: ApplicationEntity['splash'];
+  declare type: ApplicationEntity['type'];
+  declare primarySkuId: ApplicationEntity['primarySkuId'];
+  declare eulaId: ApplicationEntity['eulaId'];
+  declare slug: ApplicationEntity['slug'];
+  declare aliases: ApplicationEntity['aliases'];
+  declare executables: ApplicationEntity['executables'];
+  declare thirdPartySkus: ApplicationEntity['thirdPartySkus'];
+  declare hook: ApplicationEntity['hook'];
+  declare overlay: ApplicationEntity['overlay'];
+  declare overlayMethods: ApplicationEntity['overlayMethods'];
+  declare overlayWarn: ApplicationEntity['overlayWarn'];
+  declare overlayCompatibilityHook: ApplicationEntity['overlayCompatibilityHook'];
+  declare bot: ApplicationEntity['bot'];
+  declare developers: ApplicationEntity['developers'];
+  declare publishers: ApplicationEntity['publishers'];
+  declare redirectUris: ApplicationEntity['redirectUris'];
+  declare deeplinkUri: ApplicationEntity['deeplinkUri'];
+  declare integrationPublic: ApplicationEntity['integrationPublic'];
+  declare integrationRequireCodeGrant: ApplicationEntity['integrationRequireCodeGrant'];
+  declare botDisabled: ApplicationEntity['botDisabled'];
+  declare botQuarantined: ApplicationEntity['botQuarantined'];
+  declare approximateUserInstallCount: ApplicationEntity['approximateUserInstallCount'];
+  declare approximateUserAuthorizationCount: ApplicationEntity['approximateUserAuthorizationCount'];
+  declare internalGuildRestriction: ApplicationEntity['internalGuildRestriction'];
+  declare interactionsEndpointUrl: ApplicationEntity['interactionsEndpointUrl'];
+  declare interactionsVersion: ApplicationEntity['interactionsVersion'];
+  declare interactionsEventTypes: ApplicationEntity['interactionsEventTypes'];
+  declare eventWebhooksStatus: ApplicationEntity['eventWebhooksStatus'];
+  declare eventWebhooksUrl: ApplicationEntity['eventWebhooksUrl'];
+  declare eventWebhooksTypes: ApplicationEntity['eventWebhooksTypes'];
+  declare explicitContentFilter: ApplicationEntity['explicitContentFilter'];
+  declare integrationTypesConfig: ApplicationEntity['integrationTypesConfig'];
+  declare isVerified: ApplicationEntity['isVerified'];
+  declare verificationState: ApplicationEntity['verificationState'];
+  declare storeApplicationState: ApplicationEntity['storeApplicationState'];
+  declare rpcApplicationState: ApplicationEntity['rpcApplicationState'];
+  declare creatorMonetizationState: ApplicationEntity['creatorMonetizationState'];
+  declare isDiscoverable: ApplicationEntity['isDiscoverable'];
+  declare discoverabilityState: ApplicationEntity['discoverabilityState'];
+  declare discoveryEligibilityFlags: ApplicationEntity['discoveryEligibilityFlags'];
+  declare isMonetized: ApplicationEntity['isMonetized'];
+  declare storefrontAvailable: ApplicationEntity['storefrontAvailable'];
+  declare monetizationState: ApplicationEntity['monetizationState'];
+  declare monetizationEligibilityFlags: ApplicationEntity['monetizationEligibilityFlags'];
+  declare maxParticipants: ApplicationEntity['maxParticipants'];
+  constructor(client: import('../../client/Client').default, data: RawApplicationData) {
     super(client);
-    this._patch(data);
+    this.commands = new ApplicationCommandManager(this.client);
+    if (data) this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: ApplicationPatch) {
     /**
      * The application's id
      * @type {Snowflake}
      */
-    this.id = data.id;
+    this.id = data.id!;
 
     if ('name' in data) {
       /**
        * The name of the application
        * @type {?string}
        */
-      this.name = data.name;
+      this.name = data.name ?? null;
     } else {
       this.name ??= null;
     }
@@ -46,7 +117,7 @@ class Application extends Base {
        * The application's description
        * @type {?string}
        */
-      this.description = data.description;
+      this.description = data.description ?? null;
     } else {
       this.description ??= null;
     }
@@ -56,7 +127,7 @@ class Application extends Base {
        * The application's icon hash
        * @type {?string}
        */
-      this.icon = data.icon;
+      this.icon = data.icon ?? null;
     } else {
       this.icon ??= null;
     }
@@ -66,7 +137,7 @@ class Application extends Base {
        * The URL of the application's terms of service
        * @type {?string}
        */
-      this.termsOfServiceURL = data.terms_of_service_url;
+      this.termsOfServiceURL = data.terms_of_service_url ?? null;
     } else {
       this.termsOfServiceURL ??= null;
     }
@@ -76,7 +147,7 @@ class Application extends Base {
        * The URL of the application's privacy policy
        * @type {?string}
        */
-      this.privacyPolicyURL = data.privacy_policy_url;
+      this.privacyPolicyURL = data.privacy_policy_url ?? null;
     } else {
       this.privacyPolicyURL ??= null;
     }
@@ -86,7 +157,7 @@ class Application extends Base {
        * The hex-encoded key for verification in interactions and the GameSDK's GetTicket
        * @type {?string}
        */
-      this.verifyKey = data.verify_key;
+      this.verifyKey = data.verify_key ?? null;
     } else {
       this.verifyKey ??= null;
     }
@@ -96,7 +167,7 @@ class Application extends Base {
        * This application's role connection verification entry point URL
        * @type {?string}
        */
-      this.roleConnectionsVerificationURL = data.role_connections_verification_url;
+      this.roleConnectionsVerificationURL = data.role_connections_verification_url ?? null;
     } else {
       this.roleConnectionsVerificationURL ??= null;
     }
@@ -105,9 +176,9 @@ class Application extends Base {
      * The tags this application has (max of 5)
      * @type {string[]}
      */
-    this.tags = data.tags ?? [];
+    this.tags = data.tags?.filter((tag): tag is string => typeof tag === 'string') ?? [];
 
-    if ('install_params' in data) {
+    if ('install_params' in data && data.install_params) {
       /**
        * Settings for this application's default in-app authorization
        * @type {?ClientApplicationInstallParams}
@@ -126,7 +197,7 @@ class Application extends Base {
        * This application's custom installation URL
        * @type {?string}
        */
-      this.customInstallURL = data.custom_install_url;
+      this.customInstallURL = data.custom_install_url ?? null;
     } else {
       this.customInstallURL = null;
     }
@@ -144,7 +215,7 @@ class Application extends Base {
        * An approximate amount of guilds this application is in.
        * @type {?number}
        */
-      this.approximateGuildCount = data.approximate_guild_count;
+      this.approximateGuildCount = data.approximate_guild_count ?? null;
     } else {
       this.approximateGuildCount ??= null;
     }
@@ -154,7 +225,7 @@ class Application extends Base {
        * The id of the guild associated with this application.
        * @type {?Snowflake}
        */
-      this.guildId = data.guild_id;
+      this.guildId = data.guild_id ?? null;
     } else {
       this.guildId ??= null;
     }
@@ -164,7 +235,7 @@ class Application extends Base {
        * The hash of the application's cover image
        * @type {?string}
        */
-      this.cover = data.cover_image;
+      this.cover = data.cover_image ?? null;
     } else {
       this.cover ??= null;
     }
@@ -174,7 +245,7 @@ class Application extends Base {
        * The application's RPC origins, if enabled
        * @type {string[]}
        */
-      this.rpcOrigins = data.rpc_origins;
+      this.rpcOrigins = data.rpc_origins ?? [];
     } else {
       this.rpcOrigins ??= [];
     }
@@ -185,7 +256,7 @@ class Application extends Base {
        * @deprecated
        * @type {?boolean}
        */
-      this.botRequireCodeGrant = data.bot_require_code_grant;
+      this.botRequireCodeGrant = data.bot_require_code_grant ?? null;
     } else {
       this.botRequireCodeGrant ??= null;
     }
@@ -196,7 +267,7 @@ class Application extends Base {
        * @deprecated
        * @type {?boolean}
        */
-      this.botPublic = data.bot_public;
+      this.botPublic = data.bot_public ?? null;
     } else {
       this.botPublic ??= null;
     }
@@ -216,7 +287,7 @@ class Application extends Base {
        * The application's splash image hash
        * @type {?string}
        */
-      this.splash = data.splash;
+      this.splash = data.splash ?? null;
     } else {
       this.splash ??= null;
     }
@@ -227,7 +298,7 @@ class Application extends Base {
        * @type {number}
        * @see {@link https://docs.discord.food/resources/application#application-type}
        */
-      this.type = data.type;
+      this.type = data.type ?? null;
     } else {
       this.type = null;
     }
@@ -237,7 +308,7 @@ class Application extends Base {
        * The ID of the application's primary SKU (game, application subscription, etc.)
        * @type {?Snowflake}
        */
-      this.primarySkuId = data.primary_sku_id;
+      this.primarySkuId = data.primary_sku_id ?? null;
     } else {
       this.primarySkuId = null;
     }
@@ -247,7 +318,7 @@ class Application extends Base {
        * The ID of the application's EULA
        * @type {?Snowflake}
        */
-      this.eulaId = data.eula_id;
+      this.eulaId = data.eula_id ?? null;
     } else {
       this.eulaId = null;
     }
@@ -257,7 +328,7 @@ class Application extends Base {
        * The URL slug that links to the primary store page of the application
        * @type {?string}
        */
-      this.slug = data.slug;
+      this.slug = data.slug ?? null;
     } else {
       this.slug = null;
     }
@@ -267,7 +338,7 @@ class Application extends Base {
        * Other names the application's game is associated with
        * @type {string[]}
        */
-      this.aliases = data.aliases;
+      this.aliases = data.aliases ?? [];
     } else {
       this.aliases = [];
     }
@@ -284,7 +355,7 @@ class Application extends Base {
        * The unique executables of the application's game
        * @type {?ApplicationExecutable[]}
        */
-      this.executables = data.executables;
+      this.executables = data.executables ?? null;
     } else {
       this.executables ??= null;
     }
@@ -301,7 +372,7 @@ class Application extends Base {
        * The third party SKUs of the application's game
        * @type {?ApplicationSku[]}
        */
-      this.thirdPartySkus = data.third_party_skus;
+      this.thirdPartySkus = data.third_party_skus ?? null;
     } else {
       this.thirdPartySkus ??= null;
     }
@@ -311,7 +382,7 @@ class Application extends Base {
        * Whether the Discord client is allowed to hook into the application's game directly
        * @type {?boolean}
        */
-      this.hook = data.hook;
+      this.hook = data.hook ?? null;
     } else {
       this.hook ??= null;
     }
@@ -321,7 +392,7 @@ class Application extends Base {
        * Whether the application's game supports the Discord overlay (default false)
        * @type {?boolean}
        */
-      this.overlay = data.overlay;
+      this.overlay = data.overlay ?? null;
     } else {
       this.overlay ??= null;
     }
@@ -331,7 +402,7 @@ class Application extends Base {
        * The methods of overlaying that the application's game supports
        * @type {?number}
        */
-      this.overlayMethods = data.overlay_methods;
+      this.overlayMethods = data.overlay_methods ?? null;
     } else {
       this.overlayMethods ??= null;
     }
@@ -341,7 +412,7 @@ class Application extends Base {
        * Whether the Discord overlay is known to be problematic with this application's game (default false)
        * @type {?boolean}
        */
-      this.overlayWarn = data.overlay_warn;
+      this.overlayWarn = data.overlay_warn ?? null;
     } else {
       this.overlayWarn ??= null;
     }
@@ -351,7 +422,7 @@ class Application extends Base {
        * Whether to use the compatibility hook for the overlay (default false)
        * @type {?boolean}
        */
-      this.overlayCompatibilityHook = data.overlay_compatibility_hook;
+      this.overlayCompatibilityHook = data.overlay_compatibility_hook ?? null;
     } else {
       this.overlayCompatibilityHook ??= null;
     }
@@ -361,7 +432,7 @@ class Application extends Base {
        * The bot attached to this application
        * @type {?User}
        */
-      this.bot = data.bot;
+      this.bot = data.bot ?? null;
     } else {
       this.bot ??= null;
     }
@@ -377,7 +448,7 @@ class Application extends Base {
        * The companies that developed the application
        * @type {?Company[]}
        */
-      this.developers = data.developers;
+      this.developers = data.developers ?? null;
     } else {
       this.developers ??= null;
     }
@@ -387,7 +458,7 @@ class Application extends Base {
        * The companies that published the application
        * @type {?Company[]}
        */
-      this.publishers = data.publishers;
+      this.publishers = data.publishers ?? null;
     } else {
       this.publishers ??= null;
     }
@@ -397,7 +468,7 @@ class Application extends Base {
        * The whitelisted URLs for redirecting to during OAuth2 authorization (max 10)
        * @type {?string[]}
        */
-      this.redirectUris = data.redirect_uris;
+      this.redirectUris = data.redirect_uris ?? null;
     } else {
       this.redirectUris ??= null;
     }
@@ -407,7 +478,7 @@ class Application extends Base {
        * The URL used for deep linking during OAuth2 authorization on mobile devices
        * @type {?string}
        */
-      this.deeplinkUri = data.deeplink_uri;
+      this.deeplinkUri = data.deeplink_uri ?? null;
     } else {
       this.deeplinkUri ??= null;
     }
@@ -417,7 +488,7 @@ class Application extends Base {
        * Whether only the application owner can add the integration
        * @type {?boolean}
        */
-      this.integrationPublic = data.integration_public;
+      this.integrationPublic = data.integration_public ?? null;
     } else {
       this.integrationPublic ??= null;
     }
@@ -427,7 +498,7 @@ class Application extends Base {
        * Whether the integration will only be added upon completion of a full OAuth2 token exchange
        * @type {?boolean}
        */
-      this.integrationRequireCodeGrant = data.integration_require_code_grant;
+      this.integrationRequireCodeGrant = data.integration_require_code_grant ?? null;
     } else {
       this.integrationRequireCodeGrant ??= null;
     }
@@ -437,7 +508,7 @@ class Application extends Base {
        * Whether the application's bot is disabled by Discord (default false)
        * @type {?boolean}
        */
-      this.botDisabled = data.bot_disabled;
+      this.botDisabled = data.bot_disabled ?? null;
     } else {
       this.botDisabled ??= null;
     }
@@ -447,7 +518,7 @@ class Application extends Base {
        * Whether the application's bot is quarantined by Discord
        * @type {?boolean}
        */
-      this.botQuarantined = data.bot_quarantined;
+      this.botQuarantined = data.bot_quarantined ?? null;
     } else {
       this.botQuarantined ??= null;
     }
@@ -457,7 +528,7 @@ class Application extends Base {
        * Approximate count of users that have authorized the application with the applications.commands scope
        * @type {?number}
        */
-      this.approximateUserInstallCount = data.approximate_user_install_count;
+      this.approximateUserInstallCount = data.approximate_user_install_count ?? null;
     } else {
       this.approximateUserInstallCount ??= null;
     }
@@ -467,7 +538,7 @@ class Application extends Base {
        * Approximate count of users that have OAuth2 authorizations for the application
        * @type {?number}
        */
-      this.approximateUserAuthorizationCount = data.approximate_user_authorization_count;
+      this.approximateUserAuthorizationCount = data.approximate_user_authorization_count ?? null;
     } else {
       this.approximateUserAuthorizationCount ??= null;
     }
@@ -477,7 +548,7 @@ class Application extends Base {
        * What guilds the application can be authorized in
        * @type {?number}
        */
-      this.internalGuildRestriction = data.internal_guild_restriction;
+      this.internalGuildRestriction = data.internal_guild_restriction ?? null;
     } else {
       this.internalGuildRestriction ??= null;
     }
@@ -487,7 +558,7 @@ class Application extends Base {
        * The URL of the application's interactions endpoint
        * @type {?string}
        */
-      this.interactionsEndpointUrl = data.interactions_endpoint_url;
+      this.interactionsEndpointUrl = data.interactions_endpoint_url ?? null;
     } else {
       this.interactionsEndpointUrl ??= null;
     }
@@ -497,7 +568,7 @@ class Application extends Base {
        * The version of the application's interactions endpoint implementation
        * @type {?number}
        */
-      this.interactionsVersion = data.interactions_version;
+      this.interactionsVersion = data.interactions_version ?? null;
     } else {
       this.interactionsVersion ??= null;
     }
@@ -507,7 +578,7 @@ class Application extends Base {
        * The enabled event webhook types to send to the interaction endpoint
        * @type {?string[]}
        */
-      this.interactionsEventTypes = data.interactions_event_types;
+      this.interactionsEventTypes = data.interactions_event_types ?? null;
     } else {
       this.interactionsEventTypes ??= null;
     }
@@ -517,7 +588,7 @@ class Application extends Base {
        * Whether event webhooks are enabled
        * @type {?number}
        */
-      this.eventWebhooksStatus = data.event_webhooks_status;
+      this.eventWebhooksStatus = data.event_webhooks_status ?? null;
     } else {
       this.eventWebhooksStatus ??= null;
     }
@@ -527,7 +598,7 @@ class Application extends Base {
        * The URL of the application's event webhooks endpoint
        * @type {?string}
        */
-      this.eventWebhooksUrl = data.event_webhooks_url;
+      this.eventWebhooksUrl = data.event_webhooks_url ?? null;
     } else {
       this.eventWebhooksUrl ??= null;
     }
@@ -537,7 +608,7 @@ class Application extends Base {
        * The enabled event webhook types to send to the event webhooks endpoint
        * @type {?string[]}
        */
-      this.eventWebhooksTypes = data.event_webhooks_types;
+      this.eventWebhooksTypes = data.event_webhooks_types ?? null;
     } else {
       this.eventWebhooksTypes ??= null;
     }
@@ -547,7 +618,7 @@ class Application extends Base {
        * Whether uploaded media content used in application commands is scanned and deleted for explicit content
        * @type {?number}
        */
-      this.explicitContentFilter = data.explicit_content_filter;
+      this.explicitContentFilter = data.explicit_content_filter ?? null;
     } else {
       this.explicitContentFilter ??= null;
     }
@@ -557,7 +628,7 @@ class Application extends Base {
        * The configuration for each integration type supported by the application
        * @type {?object}
        */
-      this.integrationTypesConfig = data.integration_types_config;
+      this.integrationTypesConfig = data.integration_types_config ?? null;
     } else {
       this.integrationTypesConfig ??= null;
     }
@@ -567,7 +638,7 @@ class Application extends Base {
        * Whether the application is verified
        * @type {?boolean}
        */
-      this.isVerified = data.is_verified;
+      this.isVerified = data.is_verified ?? null;
     } else {
       this.isVerified ??= null;
     }
@@ -577,7 +648,7 @@ class Application extends Base {
        * The current verification state of the application
        * @type {?number}
        */
-      this.verificationState = data.verification_state;
+      this.verificationState = data.verification_state ?? null;
     } else {
       this.verificationState ??= null;
     }
@@ -587,7 +658,7 @@ class Application extends Base {
        * The current store approval state of the commerce application
        * @type {?number}
        */
-      this.storeApplicationState = data.store_application_state;
+      this.storeApplicationState = data.store_application_state ?? null;
     } else {
       this.storeApplicationState ??= null;
     }
@@ -597,7 +668,7 @@ class Application extends Base {
        * The current RPC approval state of the application
        * @type {?number}
        */
-      this.rpcApplicationState = data.rpc_application_state;
+      this.rpcApplicationState = data.rpc_application_state ?? null;
     } else {
       this.rpcApplicationState ??= null;
     }
@@ -607,7 +678,7 @@ class Application extends Base {
        * The current guild creator monetization state of the application
        * @type {?number}
        */
-      this.creatorMonetizationState = data.creator_monetization_state;
+      this.creatorMonetizationState = data.creator_monetization_state ?? null;
     } else {
       this.creatorMonetizationState ??= null;
     }
@@ -617,7 +688,7 @@ class Application extends Base {
        * Whether the application is discoverable in the application directory
        * @type {?boolean}
        */
-      this.isDiscoverable = data.is_discoverable;
+      this.isDiscoverable = data.is_discoverable ?? null;
     } else {
       this.isDiscoverable ??= null;
     }
@@ -627,7 +698,7 @@ class Application extends Base {
        * The current application directory discoverability state of the application
        * @type {?number}
        */
-      this.discoverabilityState = data.discoverability_state;
+      this.discoverabilityState = data.discoverability_state ?? null;
     } else {
       this.discoverabilityState ??= null;
     }
@@ -637,7 +708,7 @@ class Application extends Base {
        * The current application directory eligibility flags for the application
        * @type {?number}
        */
-      this.discoveryEligibilityFlags = data.discovery_eligibility_flags;
+      this.discoveryEligibilityFlags = data.discovery_eligibility_flags ?? null;
     } else {
       this.discoveryEligibilityFlags ??= null;
     }
@@ -647,7 +718,7 @@ class Application extends Base {
        * Whether the application has monetization enabled
        * @type {?boolean}
        */
-      this.isMonetized = data.is_monetized;
+      this.isMonetized = data.is_monetized ?? null;
     } else {
       this.isMonetized ??= null;
     }
@@ -657,7 +728,7 @@ class Application extends Base {
        * Whether the application has public subscriptions or products available for purchase
        * @type {?boolean}
        */
-      this.storefrontAvailable = data.storefront_available;
+      this.storefrontAvailable = data.storefront_available ?? null;
     } else {
       this.storefrontAvailable ??= null;
     }
@@ -667,7 +738,7 @@ class Application extends Base {
        * The current application monetization state of the application
        * @type {?number}
        */
-      this.monetizationState = data.monetization_state;
+      this.monetizationState = data.monetization_state ?? null;
     } else {
       this.monetizationState ??= null;
     }
@@ -677,7 +748,7 @@ class Application extends Base {
        * The current application monetization eligibility flags for the application
        * @type {?number}
        */
-      this.monetizationEligibilityFlags = data.monetization_eligibility_flags;
+      this.monetizationEligibilityFlags = data.monetization_eligibility_flags ?? null;
     } else {
       this.monetizationEligibilityFlags ??= null;
     }
@@ -687,7 +758,7 @@ class Application extends Base {
        * The maximum possible participants in the application's embedded activity (-1 for no limit)
        * @type {?number}
        */
-      this.maxParticipants = data.max_participants;
+      this.maxParticipants = data.max_participants ?? null;
     } else {
       this.maxParticipants ??= null;
     }

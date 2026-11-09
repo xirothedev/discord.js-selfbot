@@ -838,12 +838,12 @@ class Util extends null {
    * @returns {IncidentActions}
    * @ignore
    */
-  static transformAPIIncidentsData(data: Record<string, unknown>) {
+  static transformAPIIncidentsData(data: import('discord-api-types/v10').APIIncidentsData) {
     return {
-      invitesDisabledUntil: data.invites_disabled_until ? new Date(data.invites_disabled_until as string) : null,
-      dmsDisabledUntil: data.dms_disabled_until ? new Date(data.dms_disabled_until as string) : null,
-      dmSpamDetectedAt: data.dm_spam_detected_at ? new Date(data.dm_spam_detected_at as string) : null,
-      raidDetectedAt: data.raid_detected_at ? new Date(data.raid_detected_at as string) : null,
+      invitesDisabledUntil: data.invites_disabled_until ? new Date(data.invites_disabled_until) : null,
+      dmsDisabledUntil: data.dms_disabled_until ? new Date(data.dms_disabled_until) : null,
+      dmSpamDetectedAt: data.dm_spam_detected_at ? new Date(data.dm_spam_detected_at) : null,
+      raidDetectedAt: data.raid_detected_at ? new Date(data.raid_detected_at) : null,
     };
   }
 

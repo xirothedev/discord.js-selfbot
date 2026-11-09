@@ -1,6 +1,8 @@
 import process from 'node:process';
 import Base from './Base';
 import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { RawEmojiData } from '../../typings/rawDataTypes';
+import type { EmojiEntity } from '../types/entities/emoji';
 
 /**
  * @type {WeakSet<Emoji>}
@@ -22,14 +24,17 @@ let deprecationEmittedForDeleted = false;
  * Represents an emoji, see {@link GuildEmoji} and {@link ReactionEmoji}.
  * @extends {Base}
  */
-class Emoji extends Base {
-  constructor(client: any, emoji: any) {
+class Emoji extends Base implements EmojiEntity {
+  declare animated: EmojiEntity['animated'];
+  declare id: EmojiEntity['id'];
+  declare name: EmojiEntity['name'];
+  constructor(client: import('../client/Client').default, emoji: RawEmojiData) {
     super(client);
     /**
      * Whether or not the emoji is animated
      * @type {?boolean}
      */
-    this.animated = emoji.animated ?? null;
+    this.animated = 'animated' in emoji ? (emoji.animated ?? null) : null;
 
     /**
      * The emoji's name
@@ -81,7 +86,7 @@ class Emoji extends Base {
    */
   get identifier() {
     if (this.id) return `${this.animated ? 'a:' : ''}${this.name}:${this.id}`;
-    return encodeURIComponent(this.name);
+    return encodeURIComponent(this.name ?? '');
   }
 
   /**
@@ -108,7 +113,7 @@ class Emoji extends Base {
    * @readonly
    */
   get createdAt() {
-    return this.id && new Date(this.createdTimestamp);
+    return this.createdTimestamp ? new Date(this.createdTimestamp) : null;
   }
 
   /**
@@ -124,7 +129,7 @@ class Emoji extends Base {
    * reaction.message.channel.send(`The emoji used was: ${reaction.emoji}`);
    */
   toString() {
-    return this.id ? `<${this.animated ? 'a' : ''}:${this.name}:${this.id}>` : this.name;
+    return this.id ? `<${this.animated ? 'a' : ''}:${this.name}:${this.id}>` : (this.name ?? '');
   }
 
   toJSON() {

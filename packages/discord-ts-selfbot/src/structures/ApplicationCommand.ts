@@ -4,13 +4,45 @@ import _ConstantsModule from '../util/Constants';
 const { ApplicationCommandOptionTypes, ApplicationCommandTypes, ChannelTypes } = _ConstantsModule;
 import Permissions from '../util/Permissions';
 import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { LocalizationMap, Snowflake } from 'discord-api-types/v10';
+import type { ApplicationCommandOption, ApplicationCommandType } from '../../typings';
+import type { RawApplicationCommandData } from '../../typings/rawDataTypes';
+import type { Guild } from './Guild';
+
+type ApplicationCommandPatch = Partial<RawApplicationCommandData> & {
+  name_localized?: string;
+  description_localized?: string;
+};
 
 /**
  * Represents an application command.
  * @extends {Base}
  */
 class ApplicationCommand extends Base {
-  constructor(client: any, data: any, guild: any, guildId: any = null) {
+  declare id: Snowflake;
+  declare applicationId: Snowflake;
+  declare guild: Guild | null;
+  declare guildId: Snowflake | null;
+  declare permissions: ApplicationCommandPermissionsManager;
+  declare type: ApplicationCommandType;
+  declare name: string;
+  declare nameLocalizations: LocalizationMap | null;
+  declare nameLocalized: string | null;
+  declare description: string;
+  declare descriptionLocalizations: LocalizationMap | null;
+  declare descriptionLocalized: string | null;
+  declare options: (ApplicationCommandOption & { nameLocalized?: string; descriptionLocalized?: string })[];
+  declare defaultPermission: boolean;
+  declare defaultMemberPermissions: Readonly<Permissions> | null;
+  declare dmPermission: boolean | null;
+  declare version: Snowflake;
+  declare autocomplete?: boolean;
+  constructor(
+    client: import('../client/Client').default,
+    data: RawApplicationCommandData,
+    guild: Guild | null,
+    guildId: Snowflake | null = null,
+  ) {
     super(client);
 
     /**
@@ -53,13 +85,13 @@ class ApplicationCommand extends Base {
     this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: ApplicationCommandPatch) {
     if ('name' in data) {
       /**
        * The name of this command
        * @type {string}
        */
-      this.name = data.name;
+      this.name = data.name!;
     }
 
     if ('name_localizations' in data) {
@@ -67,7 +99,7 @@ class ApplicationCommand extends Base {
        * The name localizations for this command
        * @type {?Object<Locale, string>}
        */
-      this.nameLocalizations = data.name_localizations;
+      this.nameLocalizations = data.name_localizations ?? null;
     } else {
       this.nameLocalizations ??= null;
     }
@@ -77,7 +109,7 @@ class ApplicationCommand extends Base {
        * The localized name for this command
        * @type {?string}
        */
-      this.nameLocalized = data.name_localized;
+      this.nameLocalized = data.name_localized ?? null;
     } else {
       this.nameLocalized ??= null;
     }
@@ -87,7 +119,7 @@ class ApplicationCommand extends Base {
        * The description of this command
        * @type {string}
        */
-      this.description = data.description;
+      this.description = data.description!;
     }
 
     if ('description_localizations' in data) {
@@ -95,7 +127,7 @@ class ApplicationCommand extends Base {
        * The description localizations for this command
        * @type {?Object<Locale, string>}
        */
-      this.descriptionLocalizations = data.description_localizations;
+      this.descriptionLocalizations = data.description_localizations ?? null;
     } else {
       this.descriptionLocalizations ??= null;
     }
@@ -105,7 +137,7 @@ class ApplicationCommand extends Base {
        * The localized description for this command
        * @type {?string}
        */
-      this.descriptionLocalized = data.description_localized;
+      this.descriptionLocalized = data.description_localized ?? null;
     } else {
       this.descriptionLocalized ??= null;
     }
@@ -115,7 +147,7 @@ class ApplicationCommand extends Base {
        * The options of this command
        * @type {ApplicationCommandOption[]}
        */
-      this.options = data.options.map((o: any) => (this.constructor as any).transformOption(o, true));
+      this.options = (data.options ?? []).map(o => ApplicationCommand.transformOption(o, true));
     } else {
       this.options ??= [];
     }
@@ -127,7 +159,7 @@ class ApplicationCommand extends Base {
        * @type {boolean}
        * @deprecated Use {@link ApplicationCommand.defaultMemberPermissions} and {@link ApplicationCommand.dmPermission} instead.
        */
-      this.defaultPermission = data.default_permission;
+      this.defaultPermission = data.default_permission ?? false;
     }
     /* eslint-disable max-len */
 
@@ -149,7 +181,7 @@ class ApplicationCommand extends Base {
        * <info>This property is always `null` on guild commands</info>
        * @type {?boolean}
        */
-      this.dmPermission = data.dm_permission;
+      this.dmPermission = data.dm_permission ?? null;
     } else {
       this.dmPermission ??= null;
     }
@@ -159,7 +191,7 @@ class ApplicationCommand extends Base {
        * Autoincrementing version identifier updated during substantial record changes
        * @type {Snowflake}
        */
-      this.version = data.version;
+      this.version = data.version!;
     }
   }
 
@@ -187,7 +219,8 @@ class ApplicationCommand extends Base {
    * @readonly
    */
   get manager() {
-    return (this.guild ?? this.client.application).commands;
+    if (!this.client.application) throw new Error('CLIENT_NOT_READY');
+    return this.client.application.commands;
   }
 
   /**

@@ -2,6 +2,7 @@ import { Collection } from '@discordjs/collection';
 import Base from './Base';
 import WelcomeChannel from './WelcomeChannel';
 import type { RawWelcomeScreenData } from '../../typings/rawDataTypes';
+import { GuildFeature } from 'discord-api-types/v10';
 import type { Guild } from './Guild';
 import type { InviteGuild } from './InviteGuild';
 import type { WelcomeScreenEntity } from '../types/entities/welcome-screen';
@@ -47,7 +48,7 @@ class WelcomeScreen extends Base implements WelcomeScreenEntity {
    * @type {boolean}
    */
   get enabled() {
-    return this.guild.features.includes('WELCOME_SCREEN_ENABLED');
+    return this.guild.features.includes(GuildFeature.WelcomeScreenEnabled);
   }
 }
 

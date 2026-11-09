@@ -5,6 +5,7 @@ import Application from './interfaces/Application';
  * @extends {Application}
  */
 class IntegrationApplication extends Application {
+  declare summary: string | null;
   _patch(data: any) {
     super._patch(data);
 

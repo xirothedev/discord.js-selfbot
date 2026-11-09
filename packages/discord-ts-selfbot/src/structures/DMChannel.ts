@@ -3,6 +3,8 @@ import _ChannelModule from './Channel';
 const { Channel } = _ChannelModule;
 import TextBasedChannel from './interfaces/TextBasedChannel';
 import MessageManager from '../managers/MessageManager';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { User } from './User';
 import _ConstantsModule from '../util/Constants';
 const { Opcodes, Status } = _ConstantsModule;
 
@@ -12,6 +14,12 @@ const { Opcodes, Status } = _ConstantsModule;
  * @implements {TextBasedChannel}
  */
 class DMChannel extends Channel {
+  declare messages: MessageManager;
+  declare recipient: User;
+  declare lastMessageId: Snowflake | null;
+  declare lastPinTimestamp: number | null;
+  declare messageRequest?: boolean;
+  declare messageRequestTimestamp?: number | null;
   constructor(client: any, data: any) {
     super(client, data);
 
