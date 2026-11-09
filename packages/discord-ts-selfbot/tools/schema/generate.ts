@@ -14,6 +14,10 @@ interface ImportSpec {
 interface EntityConfig {
   imports: ImportSpec[];
   fields?: Record<string, FieldKind>;
+  extends?: string;
+  rawType?: { name: string; from: string };
+  patchType?: { type: string; from: string };
+  extraFields?: Array<{ name: string; type: string; kind: FieldKind }>;
 }
 
 interface Field {
@@ -21,6 +25,7 @@ interface Field {
   type: string;
   publicType: string;
   runtimeType: string;
+  optional: boolean;
 }
 
 interface Drift {
@@ -37,7 +42,7 @@ interface EntityResult {
   assignedNotDeclared: string[];
   declaredNotAssigned: string[];
   drift: Drift[];
-  rawTypeName?: string;
+  rawType?: { name: string; from: string };
 }
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -65,6 +70,43 @@ const CONFIG: Record<string, EntityConfig> = {
       { from: '../../util/RoleFlags', default: 'RoleFlags' },
     ],
     fields: { guild: 'relation' },
+  },
+  User: {
+    rawType: { name: 'SelfbotUserData', from: './selfbot/user' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '../../../typings', named: ['AvatarDecorationData', 'Collectibles', 'UserPrimaryGuild'] },
+      { from: '../../util/UserFlags', default: 'UserFlags' },
+    ],
+    fields: { bannerColor: 'selfbot' },
+  },
+  ClientUser: {
+    extends: 'UserEntity',
+    rawType: { name: 'SelfbotClientUserData', from: './selfbot/user' },
+    imports: [
+      { from: '../../util/PremiumUsageFlags', default: 'PremiumUsageFlags' },
+      { from: '../../util/PurchasedFlags', default: 'PurchasedFlags' },
+    ],
+    fields: {
+      phone: 'selfbot',
+      bio: 'selfbot',
+      pronouns: 'selfbot',
+      nsfwAllowed: 'selfbot',
+      purchasedFlags: 'selfbot',
+      premiumUsageFlags: 'selfbot',
+    },
+  },
+  GuildMember: {
+    rawType: { name: 'RawGuildMemberData', from: '../../typings/rawDataTypes' },
+    patchType: { type: 'GuildMemberPatch', from: './selfbot/guild-member' },
+    imports: [
+      { from: '../../../typings', named: ['AvatarDecorationData'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
+      { from: '../../structures/User', named: ['User'] },
+      { from: '../../util/GuildMemberFlags', default: 'GuildMemberFlags' },
+    ],
+    fields: { guild: 'relation', _roles: 'internal' },
+    extraFields: [{ name: '_roles', type: 'string[]', kind: 'internal' }],
   },
 };
 
@@ -170,6 +212,7 @@ interface Declared {
   name: string;
   typeText: string;
   type: ts.Type;
+  optional: boolean;
 }
 
 function collectDeclared(classNode: ts.ClassDeclaration, sf: ts.SourceFile): Declared[] {
@@ -192,6 +235,7 @@ function collectDeclared(classNode: ts.ClassDeclaration, sf: ts.SourceFile): Dec
       name,
       typeText: member.type.getText(sf).replace(/\s+/g, ' ').trim(),
       type: checker.getTypeAtLocation(member.type),
+      optional: Boolean(member.questionToken),
     });
   }
   return out;
@@ -265,18 +309,33 @@ function analyze(name: string, file: string): EntityResult | undefined {
       type: assignable ? prop.typeText : runtimeType,
       publicType: prop.typeText,
       runtimeType,
+      optional: prop.optional,
     });
     if (!assignable) {
       drift.push({ entity: name, field: prop.name, publicType: prop.typeText, runtimeType });
     }
   }
 
+  const extraFields = CONFIG[name]?.extraFields ?? [];
+  for (const extra of extraFields) {
+    fields.push({
+      name: extra.name,
+      type: extra.type,
+      publicType: extra.type,
+      runtimeType: extra.type,
+      optional: false,
+    });
+  }
+
   const assignedNames = new Set(assignments.keys());
+  const extraNames = new Set(extraFields.map(field => field.name));
   return {
     name,
     file,
     fields,
-    assignedNotDeclared: [...assignedNames].filter(prop => !declaredNames.has(prop)).sort(),
+    assignedNotDeclared: [...assignedNames]
+      .filter(prop => !declaredNames.has(prop) && !extraNames.has(prop) && prop !== 'client' && !prop.startsWith('#'))
+      .sort(),
     declaredNotAssigned: declared
       .map(prop => prop.name)
       .filter(prop => !assignedNames.has(prop))
@@ -332,12 +391,18 @@ function renderFields(fields: Record<string, FieldKind> | undefined): string {
 
 function generateEntity(result: EntityResult): string {
   const file = relative(PKG, result.file).replaceAll('\\', '/');
-  const rawType = result.rawTypeName ?? `Raw${result.name}Data`;
-  const body = result.fields.map(field => `  ${field.name}: ${field.type};`).join('\n');
+  const config = CONFIG[result.name];
+  if (!config) throw new Error(`No import config for ${result.name}`);
+  const rawType = result.rawType?.name ?? `Raw${result.name}Data`;
+  const extendsImport = config.extends
+    ? `import type { ${config.extends} } from './${kebab(config.extends.replace(/Entity$/, ''))}';\n`
+    : '';
+  const body = result.fields.map(field => `  ${field.name}${field.optional ? '?' : ''}: ${field.type};`).join('\n');
+  const extendsClause = config.extends ? ` extends ${config.extends}` : '';
   return `// @generated by tools/schema/generate.ts — do not edit by hand.
 // Run \`bun run schema:generate\` from the package to update.
 
-${renderImports(result.name, result.fields)}
+${extendsImport}${renderImports(result.name, result.fields)}
 
 /**
  * The object shape of a \`${result.name}\`.
@@ -345,7 +410,7 @@ ${renderImports(result.name, result.fields)}
  * Derived from the public \`${result.name}\` class in \`typings/index.d.ts\` and the
  * assignments in \`${file}\`. The wire shape is \`${rawType}\`.
  */
-export interface ${result.name}Entity {
+export interface ${result.name}Entity${extendsClause} {
 ${body}
 }
 `;
@@ -353,19 +418,39 @@ ${body}
 
 function generateSchema(results: EntityResult[]): string {
   const generated = results
-    .filter(result => result.rawTypeName && generatedNames.has(result.name))
+    .filter(result => result.rawType && generatedNames.has(result.name))
     .sort((a, b) => a.name.localeCompare(b.name));
+  const rawImports = new Map<string, string[]>();
+  const patchImports = new Map<string, string[]>();
+  for (const result of generated) {
+    const raw = result.rawType!;
+    const rawNames = rawImports.get(raw.from) ?? [];
+    rawNames.push(raw.name);
+    rawImports.set(raw.from, rawNames);
+    const patch = CONFIG[result.name]?.patchType;
+    if (patch) {
+      const patchNames = patchImports.get(patch.from) ?? [];
+      patchNames.push(patch.type);
+      patchImports.set(patch.from, patchNames);
+    }
+  }
   const imports = [
-    ...generated.map(result => `import type { ${result.rawTypeName} } from '../../typings/rawDataTypes';`),
+    ...[...rawImports.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([from, names]) => `import type { ${names.join(', ')} } from '${from}';`),
+    ...[...patchImports.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([from, names]) => `import type { ${names.join(', ')} } from '${from}';`),
     ...generated.map(result => `import type { ${result.name}Entity } from './entities/${kebab(result.name)}';`),
   ].join('\n');
   const entries = generated
-    .map(
-      result =>
-        `  ${result.name}: EntityEntry<${result.rawTypeName}, ${result.name}Entity, ${renderFields(
-          CONFIG[result.name]?.fields,
-        )}>;`,
-    )
+    .map(result => {
+      const patch = CONFIG[result.name]?.patchType;
+      const patchGeneric = patch ? `, Partial<${patch.type}>` : '';
+      return `  ${result.name}: EntityEntry<${result.rawType!.name}, ${result.name}Entity, ${renderFields(
+        CONFIG[result.name]?.fields,
+      )}${patchGeneric}>;`;
+    })
     .join('\n');
   return `// @generated by tools/schema/generate.ts — do not edit by hand.
 // Run \`bun run schema:generate\` from the package to update.
@@ -382,10 +467,16 @@ ${imports}
  */
 export type FieldKind = 'api' | 'selfbot' | 'internal' | 'relation';
 
-export interface EntityEntry<Raw, Entity, Fields extends Partial<Record<keyof Entity, FieldKind>>> {
+export interface EntityEntry<
+  Raw,
+  Entity,
+  Fields extends Partial<Record<keyof Entity, FieldKind>>,
+  Patch = Partial<Raw>,
+> {
   raw: Raw;
   entity: Entity;
   fields: Fields;
+  patch: Patch;
 }
 
 /**
@@ -399,7 +490,7 @@ ${entries}
 export type EntityName = keyof EntitySchema;
 export type RawOf<K extends EntityName> = EntitySchema[K]['raw'];
 export type EntityOf<K extends EntityName> = EntitySchema[K]['entity'];
-export type PatchOf<K extends EntityName> = Partial<RawOf<K>>;
+export type PatchOf<K extends EntityName> = EntitySchema[K]['patch'];
 `;
 }
 
@@ -409,7 +500,10 @@ function checkFile(path: string, content: string): boolean {
     return false;
   }
   const current = readFileSync(path, 'utf8');
-  if (current === content) return true;
+  // `bun fmt` may wrap long type entries; compare tokens, not line breaks.
+  // Formatting itself is enforced separately by `bun fmt:check`.
+  const normalize = (text: string): string => text.replace(/\s+/g, '').replace(/;}/g, '}');
+  if (normalize(current) === normalize(content)) return true;
   const actual = current.split('\n');
   const expected = content.split('\n');
   for (let i = 0; i < Math.max(actual.length, expected.length); i++) {
@@ -436,7 +530,8 @@ for (const [name, file] of [...classFiles.entries()].sort(([a], [b]) => a.locale
   if (filter && name !== filter) continue;
   const result = analyze(name, file);
   if (!result) continue;
-  result.rawTypeName = findRawAlias(name);
+  const alias = findRawAlias(name);
+  result.rawType = CONFIG[name]?.rawType ?? (alias ? { name: alias, from: '../../typings/rawDataTypes' } : undefined);
   results.push(result);
 }
 
@@ -463,7 +558,7 @@ if (report) {
 if (check) {
   let ok = true;
   for (const result of results) {
-    if (!generatedNames.has(result.name) || !result.rawTypeName) continue;
+    if (!generatedNames.has(result.name) || !result.rawType) continue;
     ok = checkFile(join(ENTITIES, `${kebab(result.name)}.ts`), generateEntity(result)) && ok;
   }
   if (!filter) ok = checkFile(SCHEMA, generateSchema(results)) && ok;
@@ -474,7 +569,7 @@ if (check) {
 mkdirSync(ENTITIES, { recursive: true });
 let written = 0;
 for (const result of results) {
-  if (!generatedNames.has(result.name) || !result.rawTypeName) continue;
+  if (!generatedNames.has(result.name) || !result.rawType) continue;
   writeFileSync(join(ENTITIES, `${kebab(result.name)}.ts`), generateEntity(result));
   written++;
 }

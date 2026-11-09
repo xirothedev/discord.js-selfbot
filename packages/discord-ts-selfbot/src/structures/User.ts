@@ -8,14 +8,34 @@ const { RelationshipTypes } = _ConstantsModule;
 import SnowflakeUtil from '../util/SnowflakeUtil';
 import UserFlags from '../util/UserFlags';
 import Util from '../util/Util';
+import type { APIUser } from 'discord-api-types/v10';
+import type { ImageURLOptions } from '../../typings';
+import type { SelfbotUserData } from '../types/selfbot/user';
+import type { UserEntity } from '../types/entities/user';
+import type { PatchOf } from '../types/schema';
 
 /**
  * Represents a user on Discord.
  * @implements {TextBasedChannel}
  * @extends {Base}
  */
-class User extends Base {
-  constructor(client: import('../client/Client').default, data: Record<string, unknown>) {
+class User extends Base implements UserEntity {
+  declare accentColor: UserEntity['accentColor'];
+  declare avatar: UserEntity['avatar'];
+  declare avatarDecorationData: UserEntity['avatarDecorationData'];
+  declare banner: UserEntity['banner'];
+  declare bannerColor: UserEntity['bannerColor'];
+  declare bot: UserEntity['bot'];
+  declare collectibles: UserEntity['collectibles'];
+  declare discriminator: UserEntity['discriminator'];
+  declare flags: UserEntity['flags'];
+  declare globalName: UserEntity['globalName'];
+  declare id: UserEntity['id'];
+  declare primaryGuild: UserEntity['primaryGuild'];
+  declare system: UserEntity['system'];
+  declare username: UserEntity['username'];
+
+  constructor(client: import('../client/Client').default, data: SelfbotUserData) {
     super(client);
 
     /**
@@ -24,27 +44,25 @@ class User extends Base {
      */
     this.id = data.id;
 
-    this.bot = null;
+    this.bot = false;
 
-    this.system = null;
+    this.system = false;
 
     this.flags = null;
 
     this._patch(data);
   }
 
-  _patch(data: Record<string, unknown>) {
-    if ('username' in data) {
+  _patch(data: PatchOf<'User'>) {
+    if (data.username !== undefined) {
       /**
        * The username of the user
        * @type {?string}
        */
       this.username = data.username;
-    } else {
-      this.username ??= null;
     }
 
-    if ('global_name' in data) {
+    if (data.global_name !== undefined) {
       /**
        * The global name of this user
        * @type {?string}
@@ -54,28 +72,26 @@ class User extends Base {
       this.globalName ??= null;
     }
 
-    if ('bot' in data) {
+    if (data.bot !== undefined) {
       /**
        * Whether or not the user is a bot
        * @type {?boolean}
        */
       this.bot = Boolean(data.bot);
-    } else if (!this.partial && typeof this.bot !== 'boolean') {
+    } else if (!this.partial) {
       this.bot = false;
     }
 
-    if ('discriminator' in data) {
+    if (data.discriminator !== undefined) {
       /**
        * The discriminator of this user
        * <info>`'0'`, or a 4-digit stringified number if they're using the legacy username system</info>
        * @type {?string}
        */
       this.discriminator = data.discriminator;
-    } else {
-      this.discriminator ??= null;
     }
 
-    if ('avatar' in data) {
+    if (data.avatar !== undefined) {
       /**
        * The user avatar's hash
        * @type {?string}
@@ -85,7 +101,7 @@ class User extends Base {
       this.avatar ??= null;
     }
 
-    if ('banner' in data) {
+    if (data.banner !== undefined) {
       /**
        * The user banner's hash
        * <info>The user must be force fetched for this property to be present or be updated</info>
@@ -96,7 +112,7 @@ class User extends Base {
       this.banner ??= undefined;
     }
 
-    if ('banner_color' in data) {
+    if (data.banner_color !== undefined) {
       /**
        * The user banner's hex
        * <info>The user must be force fetched for this property to be present or be updated</info>
@@ -107,7 +123,7 @@ class User extends Base {
       this.bannerColor ??= undefined;
     }
 
-    if ('accent_color' in data) {
+    if (data.accent_color !== undefined) {
       /**
        * The base 10 accent color of the user's banner
        * <info>The user must be force fetched for this property to be present or be updated</info>
@@ -118,22 +134,22 @@ class User extends Base {
       this.accentColor ??= undefined;
     }
 
-    if ('system' in data) {
+    if (data.system !== undefined) {
       /**
        * Whether the user is an Official Discord System user (part of the urgent message system)
        * @type {?boolean}
        */
       this.system = Boolean(data.system);
-    } else if (!this.partial && typeof this.system !== 'boolean') {
+    } else if (!this.partial) {
       this.system = false;
     }
 
-    if ('public_flags' in data) {
+    if (data.public_flags !== undefined) {
       /**
        * The flags for this user
        * @type {?UserFlags}
        */
-      this.flags = new UserFlags(data.public_flags as number);
+      this.flags = new UserFlags(data.public_flags).freeze();
     }
 
     /**
@@ -142,15 +158,15 @@ class User extends Base {
      * @property {Snowflake} skuId The id of the avatar decoration's SKU
      */
 
-    if (data.avatar_decoration_data) {
+    if (data.avatar_decoration_data !== undefined) {
       if (data.avatar_decoration_data) {
         /**
          * The user avatar decoration's data
          * @type {?AvatarDecorationData}
          */
         this.avatarDecorationData = {
-          asset: (data.avatar_decoration_data as { asset: unknown }).asset as string,
-          skuId: (data.avatar_decoration_data as { sku_id: unknown }).sku_id as string,
+          asset: data.avatar_decoration_data.asset,
+          skuId: data.avatar_decoration_data.sku_id,
         };
       } else {
         this.avatarDecorationData = null;
@@ -167,17 +183,17 @@ class User extends Base {
      * @property {?string} badge The guild tag badge hash
      */
 
-    if ('primary_guild' in data) {
+    if (data.primary_guild !== undefined) {
       if (data.primary_guild) {
         /**
          * The primary guild of the user
          * @type {?UserPrimaryGuild}
          */
         this.primaryGuild = {
-          identityGuildId: (data.primary_guild as { identity_guild_id: unknown }).identity_guild_id as string,
-          identityEnabled: (data.primary_guild as { identity_enabled: unknown }).identity_enabled as boolean,
-          tag: (data.primary_guild as { tag: unknown }).tag as string,
-          badge: (data.primary_guild as { badge: unknown }).badge as string,
+          identityGuildId: data.primary_guild.identity_guild_id,
+          identityEnabled: data.primary_guild.identity_enabled,
+          tag: data.primary_guild.tag,
+          badge: data.primary_guild.badge,
         };
       } else {
         this.primaryGuild = null;
@@ -200,18 +216,17 @@ class User extends Base {
      */
 
     if (data.collectibles) {
-      const coll = data.collectibles as { nameplate?: unknown };
-      if (coll.nameplate) {
+      if (data.collectibles.nameplate) {
         /**
          * The user's collectibles
          * @type {?Collectibles}
          */
         this.collectibles = {
           nameplate: {
-            skuId: (data.collectibles as { nameplate: { sku_id: unknown } }).nameplate.sku_id as string,
-            asset: (data.collectibles as { nameplate: { asset: unknown } }).nameplate.asset as string,
-            label: (data.collectibles as { nameplate: { label: unknown } }).nameplate.label as string,
-            palette: (data.collectibles as { nameplate: { palette: unknown } }).nameplate.palette as unknown,
+            skuId: data.collectibles.nameplate.sku_id,
+            asset: data.collectibles.nameplate.asset,
+            label: data.collectibles.nameplate.label,
+            palette: data.collectibles.nameplate.palette,
           },
         };
       } else {
@@ -238,7 +253,7 @@ class User extends Base {
    * Removed in v4
    */
   get avatarDecoration() {
-    return (this.avatarDecorationData as { asset?: string } | null)?.asset || null;
+    return this.avatarDecorationData?.asset ?? null;
   }
 
   /**
@@ -256,7 +271,7 @@ class User extends Base {
    * @readonly
    */
   get createdTimestamp() {
-    return SnowflakeUtil.timestampFrom(this.id as string);
+    return SnowflakeUtil.timestampFrom(this.id);
   }
 
   /**
@@ -273,7 +288,7 @@ class User extends Base {
    * @param {ImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  avatarURL({ format, size, dynamic }: { format?: string; size?: number; dynamic?: boolean } = {}) {
+  avatarURL({ format, size, dynamic }: ImageURLOptions = {}) {
     if (!this.avatar) return null;
     return this.client.rest.cdn.Avatar(this.id, this.avatar, format, size, dynamic);
   }
@@ -284,7 +299,7 @@ class User extends Base {
    */
   avatarDecorationURL() {
     if (!this.avatarDecorationData) return null;
-    return this.client.rest.cdn.AvatarDecoration((this.avatarDecorationData as { asset: string }).asset);
+    return this.client.rest.cdn.AvatarDecoration(this.avatarDecorationData.asset);
   }
 
   /**
@@ -301,8 +316,8 @@ class User extends Base {
    * @returns {?string}
    */
   guildTagBadgeURL() {
-    const pg = this.primaryGuild as { identityGuildId?: string; badge?: string } | null;
-    if (!pg || !pg.identityGuildId || !pg.badge) return null;
+    const pg = this.primaryGuild;
+    if (!pg?.identityGuildId || !pg.badge) return null;
     return this.client.rest.cdn.GuildTagBadge(pg.identityGuildId, pg.badge);
   }
 
@@ -315,7 +330,7 @@ class User extends Base {
     const index =
       this.discriminator === '0' || this.discriminator === '0000'
         ? Util.calculateUserDefaultAvatarIndex(this.id)
-        : this.discriminator % 5;
+        : Number(this.discriminator) % 5;
     return this.client.rest.cdn.DefaultAvatar(index);
   }
 
@@ -325,8 +340,8 @@ class User extends Base {
    * @param {ImageURLOptions} [options={}] Options for the Image URL
    * @returns {string}
    */
-  displayAvatarURL(options?: unknown) {
-    return this.avatarURL(options as { format?: string; size?: number; dynamic?: boolean }) ?? this.defaultAvatarURL;
+  displayAvatarURL(options?: ImageURLOptions) {
+    return this.avatarURL(options) ?? this.defaultAvatarURL;
   }
 
   /**
@@ -347,7 +362,7 @@ class User extends Base {
    * @param {ImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  bannerURL({ format, size, dynamic }: { format?: string; size?: number; dynamic?: boolean } = {}) {
+  bannerURL({ format, size, dynamic }: ImageURLOptions = {}) {
     if (typeof this.banner === 'undefined') throw new Error('USER_BANNER_NOT_FETCHED');
     if (!this.banner) return null;
     return this.client.rest.cdn.Banner(this.id, this.banner, format, size, dynamic);
@@ -418,30 +433,19 @@ class User extends Base {
       this.discriminator === user.discriminator &&
       this.globalName === user.globalName &&
       this.avatar === user.avatar &&
-      (this.flags as { bitfield?: unknown } | null)?.bitfield ===
-        (user as { flags?: { bitfield?: unknown } } | null)?.flags?.bitfield &&
+      this.flags?.bitfield === user.flags?.bitfield &&
       this.banner === user.banner &&
       this.accentColor === user.accentColor &&
-      (this.avatarDecorationData as { asset?: unknown } | null)?.asset ===
-        (user as { avatarDecorationData?: { asset?: unknown } } | null)?.avatarDecorationData?.asset &&
-      (this.avatarDecorationData as { skuId?: unknown } | null)?.skuId ===
-        (user as { avatarDecorationData?: { skuId?: unknown } } | null)?.avatarDecorationData?.skuId &&
-      (this.collectibles as { nameplate?: { skuId?: unknown } } | null)?.nameplate?.skuId ===
-        (user as { collectibles?: { nameplate?: { skuId?: unknown } } } | null)?.collectibles?.nameplate?.skuId &&
-      (this.collectibles as { nameplate?: { asset?: unknown } } | null)?.nameplate?.asset ===
-        (user as { collectibles?: { nameplate?: { asset?: unknown } } } | null)?.collectibles?.nameplate?.asset &&
-      (this.collectibles as { nameplate?: { label?: unknown } } | null)?.nameplate?.label ===
-        (user as { collectibles?: { nameplate?: { label?: unknown } } } | null)?.collectibles?.nameplate?.label &&
-      (this.collectibles as { nameplate?: { palette?: unknown } } | null)?.nameplate?.palette ===
-        (user as { collectibles?: { nameplate?: { palette?: unknown } } } | null)?.collectibles?.nameplate?.palette &&
-      (this.primaryGuild as { identityGuildId?: unknown } | null)?.identityGuildId ===
-        (user as { primaryGuild?: { identityGuildId?: unknown } } | null)?.primaryGuild?.identityGuildId &&
-      (this.primaryGuild as { identityEnabled?: unknown } | null)?.identityEnabled ===
-        (user as { primaryGuild?: { identityEnabled?: unknown } } | null)?.primaryGuild?.identityEnabled &&
-      (this.primaryGuild as { tag?: unknown } | null)?.tag ===
-        (user as { primaryGuild?: { tag?: unknown } } | null)?.primaryGuild?.tag &&
-      (this.primaryGuild as { badge?: unknown } | null)?.badge ===
-        (user as { primaryGuild?: { badge?: unknown } } | null)?.primaryGuild?.badge
+      this.avatarDecorationData?.asset === user.avatarDecorationData?.asset &&
+      this.avatarDecorationData?.skuId === user.avatarDecorationData?.skuId &&
+      this.collectibles?.nameplate?.skuId === user.collectibles?.nameplate?.skuId &&
+      this.collectibles?.nameplate?.asset === user.collectibles?.nameplate?.asset &&
+      this.collectibles?.nameplate?.label === user.collectibles?.nameplate?.label &&
+      this.collectibles?.nameplate?.palette === user.collectibles?.nameplate?.palette &&
+      this.primaryGuild?.identityGuildId === user.primaryGuild?.identityGuildId &&
+      this.primaryGuild?.identityEnabled === user.primaryGuild?.identityEnabled &&
+      this.primaryGuild?.tag === user.primaryGuild?.tag &&
+      this.primaryGuild?.badge === user.primaryGuild?.badge
     );
   }
 
@@ -451,7 +455,7 @@ class User extends Base {
    * @returns {boolean}
    * @private
    */
-  _equals(user: Record<string, unknown>) {
+  _equals(user: APIUser) {
     return (
       user &&
       this.id === user.id &&
@@ -459,34 +463,24 @@ class User extends Base {
       this.discriminator === user.discriminator &&
       this.globalName === user.global_name &&
       this.avatar === user.avatar &&
-      (this.flags as { bitfield?: unknown } | null)?.bitfield === user.public_flags &&
-      ('banner' in user ? this.banner === user.banner : true) &&
-      ('accent_color' in user ? this.accentColor === user.accent_color : true) &&
-      ('avatar_decoration_data' in user
-        ? (this.avatarDecorationData as { asset?: unknown } | null)?.asset ===
-            (user.avatar_decoration_data as { asset?: unknown } | null)?.asset &&
-          (this.avatarDecorationData as { skuId?: unknown } | null)?.skuId ===
-            (user.avatar_decoration_data as { sku_id?: unknown } | null)?.sku_id
+      this.flags?.bitfield === user.public_flags &&
+      (user.banner !== undefined ? this.banner === user.banner : true) &&
+      (user.accent_color !== undefined ? this.accentColor === user.accent_color : true) &&
+      (user.avatar_decoration_data !== undefined
+        ? this.avatarDecorationData?.asset === user.avatar_decoration_data?.asset &&
+          this.avatarDecorationData?.skuId === user.avatar_decoration_data?.sku_id
         : true) &&
-      ('collectibles' in user
-        ? (this.collectibles as { nameplate?: { skuId?: unknown } } | null)?.nameplate?.skuId ===
-            (user.collectibles as { nameplate?: { sku_id?: unknown } } | null)?.nameplate?.sku_id &&
-          (this.collectibles as { nameplate?: { asset?: unknown } } | null)?.nameplate?.asset ===
-            (user.collectibles as { nameplate?: { asset?: unknown } } | null)?.nameplate?.asset &&
-          (this.collectibles as { nameplate?: { label?: unknown } } | null)?.nameplate?.label ===
-            (user.collectibles as { nameplate?: { label?: unknown } } | null)?.nameplate?.label &&
-          (this.collectibles as { nameplate?: { palette?: unknown } } | null)?.nameplate?.palette ===
-            (user.collectibles as { nameplate?: { palette?: unknown } } | null)?.nameplate?.palette
+      (user.collectibles !== undefined
+        ? this.collectibles?.nameplate?.skuId === user.collectibles?.nameplate?.sku_id &&
+          this.collectibles?.nameplate?.asset === user.collectibles?.nameplate?.asset &&
+          this.collectibles?.nameplate?.label === user.collectibles?.nameplate?.label &&
+          this.collectibles?.nameplate?.palette === user.collectibles?.nameplate?.palette
         : true) &&
-      ('primary_guild' in user
-        ? (this.primaryGuild as { identityGuildId?: unknown } | null)?.identityGuildId ===
-            (user.primary_guild as { identity_guild_id?: unknown } | null)?.identity_guild_id &&
-          (this.primaryGuild as { identityEnabled?: unknown } | null)?.identityEnabled ===
-            (user.primary_guild as { identity_enabled?: unknown } | null)?.identity_enabled &&
-          (this.primaryGuild as { tag?: unknown } | null)?.tag ===
-            (user.primary_guild as { tag?: unknown } | null)?.tag &&
-          (this.primaryGuild as { badge?: unknown } | null)?.badge ===
-            (user.primary_guild as { badge?: unknown } | null)?.badge
+      (user.primary_guild !== undefined
+        ? this.primaryGuild?.identityGuildId === user.primary_guild?.identity_guild_id &&
+          this.primaryGuild?.identityEnabled === user.primary_guild?.identity_enabled &&
+          this.primaryGuild?.tag === user.primary_guild?.tag &&
+          this.primaryGuild?.badge === user.primary_guild?.badge
         : true)
     );
   }
@@ -512,7 +506,7 @@ class User extends Base {
    * @returns {Promise<Object>}
    * @see {@link https://discord-userdoccers.vercel.app/resources/user#response-body}
    */
-  getProfile(guildId: unknown) {
+  getProfile(guildId?: string) {
     return this.client.api.users(this.id).profile.get({
       query: {
         with_mutual_guilds: true,
@@ -557,7 +551,7 @@ class User extends Base {
    * user. It is an optional parameter and its default value is `null`.
    * @returns {Promise<User>} The `setNote` method is returning the `User` object.
    */
-  async setNote(note: unknown = null) {
+  async setNote(note: string | null = null) {
     await this.client.notes.updateNote(this.id, note);
     return this;
   }
@@ -579,10 +573,8 @@ class User extends Base {
     return (
       this.client.voiceStates.cache.get(this.id) ??
       this.client.guilds.cache
-        .find((g: unknown) =>
-          (g as { voiceStates?: { cache: { get: (id: string) => unknown } } } | null)?.voiceStates?.cache?.get(this.id),
-        )
-        ?.voiceStates?.cache?.get(this.id) ??
+        .find((g: import('./Guild').Guild) => g.voiceStates.cache.get(this.id))
+        ?.voiceStates.cache.get(this.id) ??
       new VoiceState({ client: this.client }, { user_id: this.id })
     );
   }

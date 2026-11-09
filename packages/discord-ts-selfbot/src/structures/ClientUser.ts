@@ -6,16 +6,29 @@ import DataResolver from '../util/DataResolver';
 import PremiumUsageFlags from '../util/PremiumUsageFlags';
 import PurchasedFlags from '../util/PurchasedFlags';
 import Util from '../util/Util';
+import type { SelfbotClientUserData } from '../types/selfbot/user';
+import type { ClientUserEntity } from '../types/entities/client-user';
+import type { PatchOf } from '../types/schema';
 
 /**
  * Represents the logged in client's Discord user.
  * @extends {User}
  */
-class ClientUser extends User {
+class ClientUser extends User implements ClientUserEntity {
+  declare mfaEnabled: ClientUserEntity['mfaEnabled'];
+  declare verified: ClientUserEntity['verified'];
+  declare purchasedFlags: ClientUserEntity['purchasedFlags'];
+  declare premiumUsageFlags: ClientUserEntity['premiumUsageFlags'];
+  declare phone: ClientUserEntity['phone'];
+  declare nsfwAllowed: ClientUserEntity['nsfwAllowed'];
+  declare email: ClientUserEntity['email'];
+  declare bio: ClientUserEntity['bio'];
+  declare pronouns: ClientUserEntity['pronouns'];
+  declare premiumType: ClientUserEntity['premiumType'];
   #packageName: string | null = null;
 
-  constructor(...args: unknown[]) {
-    super(args[0] as import('../client/Client').default, args[1] as Record<string, unknown>);
+  constructor(client: import('../client/Client').default, data: SelfbotClientUserData) {
+    super(client, data);
     setInterval(
       () => {
         this.client.emit('debug', `[UPDATE] Samsung Presence: ${this.#packageName}`);
@@ -26,58 +39,50 @@ class ClientUser extends User {
     ).unref();
   }
 
-  _patch(data: Record<string, unknown>) {
+  _patch(data: PatchOf<'ClientUser'>) {
     super._patch(data);
 
-    if ('verified' in data) {
+    if (data.verified !== undefined) {
       /**
        * Whether or not this account has been verified
        * @type {boolean}
        */
       this.verified = data.verified;
-    }
-
-    if ('mfa_enabled' in data) {
-      /**
-       * If the bot's {@link Application#owner Owner} has MFA enabled on their account
-       * @type {?boolean}
-       */
-      this.mfaEnabled = typeof data.mfa_enabled === 'boolean' ? data.mfa_enabled : null;
     } else {
-      this.mfaEnabled ??= null;
+      this.verified ??= false;
     }
 
-    if ('token' in data) this.client.token = data.token;
+    /**
+     * If the bot's {@link Application#owner Owner} has MFA enabled on their account
+     * @type {?boolean}
+     */
+    this.mfaEnabled = Boolean(data.mfa_enabled);
 
-    if ('purchased_flags' in data) {
-      /**
-       * Purchased state of the client user.
-       * @type {Readonly<PurchasedFlags>}
-       */
-      this.purchasedFlags = new PurchasedFlags((data.purchased_flags as number) || 0).freeze();
-    } else {
-      this.purchasedFlags = new PurchasedFlags().freeze();
-    }
+    if (data.token !== undefined) this.client.token = data.token;
 
-    if ('premium_usage_flags' in data) {
-      /**
-       * Premium usage state of the client user.
-       * @type {Readonly<PremiumUsageFlags>}
-       */
-      this.premiumUsageFlags = new PremiumUsageFlags((data.premium_usage_flags as number) || 0);
-    } else {
-      this.premiumUsageFlags = new PremiumUsageFlags().freeze();
-    }
+    /**
+     * Purchased state of the client user.
+     * @type {Readonly<PurchasedFlags>}
+     */
+    this.purchasedFlags = new PurchasedFlags(data.purchased_flags ?? 0).freeze();
 
-    if ('phone' in data) {
+    /**
+     * Premium usage state of the client user.
+     * @type {Readonly<PremiumUsageFlags>}
+     */
+    this.premiumUsageFlags = new PremiumUsageFlags(data.premium_usage_flags ?? 0).freeze();
+
+    if (data.phone !== undefined) {
       /**
        * Phone number of the client user.
        * @type {?string}
        */
       this.phone = data.phone;
+    } else {
+      this.phone ??= null;
     }
 
-    if ('nsfw_allowed' in data) {
+    if (data.nsfw_allowed !== undefined) {
       /**
        * Whether or not the client user is allowed to send NSFW messages [iOS device].
        * @type {?boolean}
@@ -85,15 +90,17 @@ class ClientUser extends User {
       this.nsfwAllowed = data.nsfw_allowed;
     }
 
-    if ('email' in data) {
+    if (data.email !== undefined) {
       /**
        * Email address of the client user.
        * @type {?string}
        */
       this.email = data.email;
+    } else {
+      this.email ??= null;
     }
 
-    if ('bio' in data) {
+    if (data.bio !== undefined) {
       /**
        * About me (User)
        * <info>The user must be force fetched for this property to be present or be updated</info>
@@ -102,7 +109,7 @@ class ClientUser extends User {
       this.bio = data.bio;
     }
 
-    if ('pronouns' in data) {
+    if (data.pronouns !== undefined) {
       /**
        * Pronouns (User)
        * <info>The user must be force fetched for this property to be present or be updated</info>
@@ -111,13 +118,15 @@ class ClientUser extends User {
       this.pronouns = data.pronouns;
     }
 
-    if ('premium_type' in data) {
+    if (data.premium_type !== undefined) {
       /**
        * Premium types denote the level of premium a user has.
        * @type {number}
        * @see {@link https://discord-userdoccers.vercel.app/resources/user#premium-type}
        */
       this.premiumType = data.premium_type;
+    } else {
+      this.premiumType ??= 0;
     }
   }
 
@@ -167,7 +176,7 @@ class ClientUser extends User {
    *   .then(user => console.log(`My new username is ${user.username}`))
    *   .catch(console.error);
    */
-  setUsername(username: unknown, password: unknown) {
+  setUsername(username: string, password: string) {
     return this.edit({ username, password });
   }
 
@@ -346,7 +355,7 @@ class ClientUser extends User {
    * @param {string} [bio=null] Bio to set
    * @returns {Promise<ClientUser>}
    */
-  setAboutMe(bio: unknown = null) {
+  setAboutMe(bio: string | null = null) {
     return this.edit({ bio });
   }
 
@@ -402,18 +411,17 @@ class ClientUser extends User {
    * // Stop
    * client.user.setSamsungActivity('com.miHoYo.GenshinImpact', 'STOP');
    */
-  async setSamsungActivity(packageName: unknown, type: unknown = 'START') {
-    const t = String(type).toUpperCase();
-    type = t;
-    if (!packageName || typeof packageName !== 'string') throw new Error('Package name is required.');
+  async setSamsungActivity(packageName: string, type: 'START' | 'UPDATE' | 'STOP' = 'START') {
+    const t = type.toUpperCase();
+    if (!packageName) throw new Error('Package name is required.');
     if (!['START', 'UPDATE', 'STOP'].includes(t)) throw new Error('Invalid type (Must be START, UPDATE, or STOP)');
     await this.client.api.presences.post({
       data: {
         package_name: packageName,
-        update: type,
+        update: t,
       },
     });
-    if (type !== 'STOP') this.#packageName = packageName;
+    if (t !== 'STOP') this.#packageName = packageName;
     else this.#packageName = null;
     return this;
   }
@@ -433,8 +441,8 @@ class ClientUser extends User {
    * Super Reactions
    * @returns {Promise<number>}
    */
-  fetchBurstCredit() {
-    return this.client.api.users['@me']['burst-credits'].get().then((d: unknown) => (d as { amount: unknown }).amount);
+  fetchBurstCredit(): Promise<number> {
+    return this.client.api.users['@me']['burst-credits'].get().then((data: { amount: number }) => data.amount);
   }
 
   /**
@@ -442,7 +450,7 @@ class ClientUser extends User {
    * @param {string} globalName The new display name
    * @returns {Promise<ClientUser>}
    */
-  setGlobalName(globalName: unknown = '') {
+  setGlobalName(globalName: string | null = '') {
     return this.edit({ global_name: globalName });
   }
 
@@ -451,7 +459,7 @@ class ClientUser extends User {
    * @param {?string} pronouns Your pronouns
    * @returns {Promise<ClientUser>}
    */
-  setPronouns(pronouns: unknown = '') {
+  setPronouns(pronouns: string | null = '') {
     return this.edit({ pronouns });
   }
 }

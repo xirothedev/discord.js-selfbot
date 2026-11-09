@@ -54,7 +54,8 @@ Current ratchet (2026-11-09): `any` 1,836; casts 551 (`bun tools/typesafety/coun
 - Add `tools/schema/generate.ts` (checked in; `--check`, `--report`, `--entity`) and wire `schema:check` into `bun check`.
 - Pilot `Role`: `declare` fields from `RoleEntity`, `_patch(data: PatchOf<'Role'>)`, narrow with `data.x !== undefined`, remove per-field casts, `implements RoleEntity`.
 - Gate: `bun check` (including `schema:check` and the `any`/cast ratchet), `bun test`, `bun fmt:check`, `bun run lint:boundaries`.
-- Report: 116 candidates, 740 fields, 85 assigned-but-undeclared, 96 drift rows across 38 entities. Triage before the remaining structures.
+- Report: 116 candidates, 740 fields, 85 assigned-but-undeclared, 96 drift rows across 38 entities. Triage before the remaining structures: see `docs/plans/entity-schema-triage.md`.
+- First follow-up (`User`, `ClientUser`, `GuildMember`): 70 drift rows remain, 82 assigned-but-undeclared, zero drift in the three converted entities.
 
 ### Phase 1 — `util` (lowest dependency)
 

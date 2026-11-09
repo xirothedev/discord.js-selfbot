@@ -55,6 +55,8 @@ const deletedGuilds = new WeakSet();
  * @extends {AnonymousGuild}
  */
 class Guild extends AnonymousGuild {
+  declare client: import('../client/Client').default;
+
   constructor(client: any, data: any) {
     super(client, data, false);
 

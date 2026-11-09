@@ -8,6 +8,10 @@ const { Error } = _errorsModule;
 import GuildMemberRoleManager from '../managers/GuildMemberRoleManager';
 import GuildMemberFlags from '../util/GuildMemberFlags';
 import Permissions from '../util/Permissions';
+import type { RawGuildMemberData } from '../../typings/rawDataTypes';
+import type { ImageURLOptions } from '../../typings';
+import type { GuildMemberEntity } from '../types/entities/guild-member';
+import type { PatchOf } from '../types/schema';
 
 /**
  * @type {WeakSet<GuildMember>}
@@ -22,12 +26,21 @@ let deprecationEmittedForDeleted = false;
  * @implements {TextBasedChannel}
  * @extends {Base}
  */
-class GuildMember extends Base {
-  constructor(
-    client: import('../client/Client').default,
-    data: Record<string, unknown>,
-    guild: import('./Guild').Guild,
-  ) {
+class GuildMember extends Base implements GuildMemberEntity {
+  declare avatar: GuildMemberEntity['avatar'];
+  declare avatarDecorationData: GuildMemberEntity['avatarDecorationData'];
+  declare banner: GuildMemberEntity['banner'];
+  declare communicationDisabledUntilTimestamp: GuildMemberEntity['communicationDisabledUntilTimestamp'];
+  declare flags: GuildMemberEntity['flags'];
+  declare guild: GuildMemberEntity['guild'];
+  declare joinedTimestamp: GuildMemberEntity['joinedTimestamp'];
+  declare nickname: GuildMemberEntity['nickname'];
+  declare pending: GuildMemberEntity['pending'];
+  declare premiumSinceTimestamp: GuildMemberEntity['premiumSinceTimestamp'];
+  declare user: GuildMemberEntity['user'];
+  declare _roles: GuildMemberEntity['_roles'];
+
+  constructor(client: import('../client/Client').default, data: RawGuildMemberData, guild: import('./Guild').Guild) {
     super(client);
 
     /**
@@ -75,8 +88,8 @@ class GuildMember extends Base {
     if (data) this._patch(data);
   }
 
-  _patch(data: Record<string, unknown>) {
-    if ('user' in data) {
+  _patch(data: PatchOf<'GuildMember'>) {
+    if (data.user !== undefined) {
       /**
        * The user that this guild member instance represents
        * @type {?User}
@@ -84,8 +97,8 @@ class GuildMember extends Base {
       this.user = this.client.users._add(data.user, true);
     }
 
-    if ('nick' in data) this.nickname = data.nick;
-    if ('avatar' in data) {
+    if (data.nick !== undefined) this.nickname = data.nick;
+    if (data.avatar !== undefined) {
       /**
        * The guild member's avatar hash
        * @type {?string}
@@ -94,7 +107,7 @@ class GuildMember extends Base {
     } else if (typeof this.avatar !== 'string') {
       this.avatar = null;
     }
-    if ('banner' in data) {
+    if (data.banner !== undefined) {
       /**
        * The guild member's banner hash.
        * @type {?string}
@@ -104,23 +117,26 @@ class GuildMember extends Base {
       this.banner ??= null;
     }
 
-    if ('joined_at' in data) this.joinedTimestamp = new Date(data.joined_at as string).getTime();
-    if ('premium_since' in data) {
-      this.premiumSinceTimestamp = data.premium_since ? new Date(data.premium_since as string).getTime() : null;
+    if (data.joined_at !== undefined && data.joined_at !== null) {
+      this.joinedTimestamp = new Date(data.joined_at).getTime();
     }
-    if ('roles' in data) this._roles = data.roles as unknown[];
+    if (data.premium_since !== undefined) {
+      this.premiumSinceTimestamp = data.premium_since ? new Date(data.premium_since).getTime() : null;
+    }
+    if (data.roles !== undefined) this._roles = data.roles;
     this.pending = data.pending ?? false;
 
-    if ('communication_disabled_until' in data) {
-      this.communicationDisabledUntilTimestamp =
-        data.communication_disabled_until && Date.parse(data.communication_disabled_until as string);
+    if (data.communication_disabled_until !== undefined) {
+      this.communicationDisabledUntilTimestamp = data.communication_disabled_until
+        ? Date.parse(data.communication_disabled_until)
+        : null;
     }
-    if ('flags' in data) {
+    if (data.flags !== undefined) {
       /**
        * The flags of this member
        * @type {Readonly<GuildMemberFlags>}
        */
-      this.flags = new GuildMemberFlags(data.flags as number).freeze();
+      this.flags = new GuildMemberFlags(data.flags).freeze();
     } else {
       this.flags ??= new GuildMemberFlags().freeze();
     }
@@ -130,10 +146,9 @@ class GuildMember extends Base {
        * The member avatar decoration's data
        * @type {?AvatarDecorationData}
        */
-      const add = data.avatar_decoration_data as { asset: unknown; sku_id: unknown };
       this.avatarDecorationData = {
-        asset: add.asset as string,
-        skuId: add.sku_id as string,
+        asset: data.avatar_decoration_data.asset,
+        skuId: data.avatar_decoration_data.sku_id,
       };
     } else {
       this.avatarDecorationData = null;
@@ -217,7 +232,7 @@ class GuildMember extends Base {
    * @param {ImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  avatarURL({ format, size, dynamic }: { format?: string; size?: number; dynamic?: boolean } = {}) {
+  avatarURL({ format, size, dynamic }: ImageURLOptions = {}) {
     if (!this.avatar) return null;
     return this.client.rest.cdn.GuildMemberAvatar(this.guild.id, this.id, this.avatar, format, size, dynamic);
   }
@@ -227,7 +242,7 @@ class GuildMember extends Base {
    * @param {ImageURLOptions} [options={}] Options for the banner URL
    * @returns {?string}
    */
-  bannerURL({ format, size, dynamic }: { format?: string; size?: number; dynamic?: boolean } = {}) {
+  bannerURL({ format, size, dynamic }: ImageURLOptions = {}) {
     return (
       this.banner && this.client.rest.cdn.GuildMemberBanner(this.guild.id, this.id, this.banner, format, size, dynamic)
     );
@@ -248,11 +263,8 @@ class GuildMember extends Base {
    * @param {ImageURLOptions} [options={}] Options for the Image URL
    * @returns {string}
    */
-  displayAvatarURL(options?: unknown) {
-    return (
-      this.avatarURL(options as { format?: string; size?: number; dynamic?: boolean }) ??
-      this.user.displayAvatarURL(options)
-    );
+  displayAvatarURL(options?: ImageURLOptions) {
+    return this.avatarURL(options) ?? this.user.displayAvatarURL(options);
   }
 
   /**
@@ -261,11 +273,8 @@ class GuildMember extends Base {
    * @param {ImageURLOptions} [options={}] Options for the image URL
    * @returns {?string}
    */
-  displayBannerURL(options?: unknown) {
-    return (
-      this.bannerURL(options as { format?: string; size?: number; dynamic?: boolean }) ??
-      this.user.bannerURL(options as { format?: string; size?: number; dynamic?: boolean })
-    );
+  displayBannerURL(options?: ImageURLOptions) {
+    return this.bannerURL(options) ?? this.user.bannerURL(options);
   }
 
   /**
@@ -347,11 +356,7 @@ class GuildMember extends Base {
    */
   get permissions() {
     if (this.user.id === this.guild.ownerId) return new Permissions(Permissions.ALL).freeze();
-    return new Permissions(
-      this.roles.cache.map(
-        (role: unknown) => (role as { permissions: unknown }).permissions,
-      ) as unknown as import('../util/BitField').BitFieldResolvable,
-    ).freeze();
+    return new Permissions(this.roles.cache.map((role: import('./Role').Role) => role.permissions.bitfield)).freeze();
   }
 
   /**
@@ -403,8 +408,8 @@ class GuildMember extends Base {
    * Whether this member is currently timed out
    * @returns {boolean}
    */
-  isCommunicationDisabled() {
-    return this.communicationDisabledUntilTimestamp > Date.now();
+  isCommunicationDisabled(): this is GuildMember & { communicationDisabledUntilTimestamp: number } {
+    return this.communicationDisabledUntilTimestamp !== null && this.communicationDisabledUntilTimestamp > Date.now();
   }
 
   /**
@@ -413,8 +418,8 @@ class GuildMember extends Base {
    * @param {GuildChannelResolvable} channel The guild channel to use as context
    * @returns {Readonly<Permissions>}
    */
-  permissionsIn(channel: unknown) {
-    const resolved = this.guild.channels.resolve(channel) as { permissionsFor: (m: unknown) => unknown } | null;
+  permissionsIn(channel: import('./GuildChannel').GuildChannel | string) {
+    const resolved = this.guild.channels.resolve(channel);
     if (!resolved) throw new Error('GUILD_CHANNEL_RESOLVE');
     return resolved.permissionsFor(this);
   }
@@ -445,7 +450,7 @@ class GuildMember extends Base {
    *   .then(member => console.log(`Removed nickname for ${member.user.username}`))
    *   .catch(console.error);
    */
-  setNickname(nick: unknown, reason?: string) {
+  setNickname(nick: string | null, reason?: string) {
     return this.edit({ nick }, reason);
   }
 
@@ -516,7 +521,7 @@ class GuildMember extends Base {
    *   .then(member => console.log(`Removed timeout for ${member.displayName}`))
    *   .catch(console.error);
    */
-  disableCommunicationUntil(communicationDisabledUntil: unknown, reason?: string) {
+  disableCommunicationUntil(communicationDisabledUntil: Date | number | string | null, reason?: string) {
     return this.edit({ communicationDisabledUntil }, reason);
   }
 
@@ -532,8 +537,8 @@ class GuildMember extends Base {
    *   .then(console.log)
    *   .catch(console.error);
    */
-  timeout(timeout: unknown, reason?: string) {
-    return this.disableCommunicationUntil(timeout && Date.now() + (timeout as number), reason);
+  timeout(timeout: number | null, reason?: string) {
+    return this.disableCommunicationUntil(timeout && Date.now() + timeout, reason);
   }
 
   /**
@@ -554,7 +559,7 @@ class GuildMember extends Base {
    */
   equals(member: GuildMember | null) {
     return (
-      member instanceof (this.constructor as { new (...a: unknown[]): GuildMember }) &&
+      member instanceof GuildMember &&
       this.id === member.id &&
       this.partial === member.partial &&
       this.guild.id === member.guild.id &&
@@ -564,12 +569,9 @@ class GuildMember extends Base {
       this.banner === member.banner &&
       this.pending === member.pending &&
       this.communicationDisabledUntilTimestamp === member.communicationDisabledUntilTimestamp &&
-      this.flags.equals(member.flags) &&
+      this.flags.bitfield === member.flags.bitfield &&
       (this._roles === member._roles ||
-        (this._roles.length === member._roles.length &&
-          this._roles.every(
-            (role: unknown, i: number) => role === (member as unknown as { _roles: unknown[] })._roles[i],
-          ))) &&
+        (this._roles.length === member._roles.length && this._roles.every((role, i) => role === member._roles[i]))) &&
       this.avatarDecorationData?.asset === member.avatarDecorationData?.asset &&
       this.avatarDecorationData?.skuId === member.avatarDecorationData?.skuId
     );
@@ -624,7 +626,7 @@ class GuildMember extends Base {
    * @param {string | null} bio Bio to set
    * @returns {Promise<GuildMember>}
    */
-  setAboutMe(bio: unknown = null) {
+  setAboutMe(bio: string | null = null) {
     return this.edit({ bio });
   }
 }
