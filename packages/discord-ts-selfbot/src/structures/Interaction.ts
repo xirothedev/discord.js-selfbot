@@ -3,13 +3,46 @@ import _ConstantsModule from '../util/Constants';
 const { InteractionTypes, MessageComponentTypes, ApplicationCommandTypes } = _ConstantsModule;
 import Permissions from '../util/Permissions';
 import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { APIInteractionGuildMember, Snowflake } from 'discord-api-types/v10';
+import type { CacheType, InteractionType, MessageComponentType } from '../../typings';
+import type { RawInteractionData } from '../../typings/rawDataTypes';
+import type { Guild } from './Guild';
+import type { GuildMember } from './GuildMember';
+import type { User } from './User';
+import type { TextBasedChannel } from './interfaces/TextBasedChannel';
+import type BaseCommandInteraction from './BaseCommandInteraction';
+import type ButtonInteraction from './ButtonInteraction';
+import type AutocompleteInteraction from './AutocompleteInteraction';
+import type CommandInteraction from './CommandInteraction';
+import type ContextMenuInteraction from './ContextMenuInteraction';
+import type MessageComponentInteraction from './MessageComponentInteraction';
+import type ModalSubmitInteraction from './ModalSubmitInteraction';
+import type SelectMenuInteraction from './SelectMenuInteraction';
+import type UserContextMenuInteraction from './UserContextMenuInteraction';
+import type MessageContextMenuInteraction from './MessageContextMenuInteraction';
 
 /**
  * Represents an interaction.
  * @extends {Base}
  */
-class Interaction extends Base {
-  constructor(client: any, data: any) {
+class Interaction<Cached extends CacheType = CacheType> extends Base {
+  declare type: InteractionType;
+  declare id: Snowflake;
+  declare readonly token: string;
+  declare applicationId: Snowflake;
+  declare channelId: Snowflake | null;
+  declare guildId: Snowflake | null;
+  declare user: User;
+  declare member: GuildMember | APIInteractionGuildMember | null;
+  declare version: number;
+  declare appPermissions: Readonly<Permissions> | null;
+  declare memberPermissions: Readonly<Permissions> | null;
+  declare locale: string;
+  declare guildLocale: string | null;
+  declare targetId?: Snowflake;
+  declare componentType?: MessageComponentType;
+
+  constructor(client: import('../client/Client').default, data: RawInteractionData) {
     super(client);
 
     /**
@@ -54,7 +87,7 @@ class Interaction extends Base {
      * The user which sent this interaction
      * @type {User}
      */
-    this.user = this.client.users._add(data.user ?? data.member.user);
+    this.user = this.client.users._add(data.user ?? data.member!.user);
 
     /**
      * If this interaction was sent in a guild, the member which sent it
@@ -120,7 +153,7 @@ class Interaction extends Base {
      * The locale of the user who invoked this interaction
      * @type {Locale}
      */
-    this.locale = data.locale;
+    this.locale = 'locale' in data ? data.locale : 'en-US';
 
     /**
      * The preferred locale from the guild this interaction was sent in
@@ -152,7 +185,7 @@ class Interaction extends Base {
    * @type {?TextBasedChannels}
    * @readonly
    */
-  get channel() {
+  get channel(): TextBasedChannel | null {
     return this.client.channels.cache.get(this.channelId) ?? null;
   }
 
@@ -161,7 +194,7 @@ class Interaction extends Base {
    * @type {?Guild}
    * @readonly
    */
-  get guild() {
+  get guild(): Guild | null {
     return this.client.guilds.cache.get(this.guildId) ?? null;
   }
 
@@ -169,7 +202,7 @@ class Interaction extends Base {
    * Indicates whether this interaction is received from a guild.
    * @returns {boolean}
    */
-  inGuild() {
+  inGuild(): this is Interaction<'raw' | 'cached'> {
     return Boolean(this.guildId && this.member);
   }
 
@@ -177,7 +210,7 @@ class Interaction extends Base {
    * Indicates whether or not this interaction is both cached and received from a guild.
    * @returns {boolean}
    */
-  inCachedGuild() {
+  inCachedGuild(): this is Interaction<'cached'> {
     return Boolean(this.guild && this.member);
   }
 
@@ -185,7 +218,7 @@ class Interaction extends Base {
    * Indicates whether or not this interaction is received from an uncached guild.
    * @returns {boolean}
    */
-  inRawGuild() {
+  inRawGuild(): this is Interaction<'raw'> {
     return Boolean(this.guildId && !this.guild && this.member);
   }
 
@@ -193,7 +226,7 @@ class Interaction extends Base {
    * Indicates whether this interaction is a {@link BaseCommandInteraction}.
    * @returns {boolean}
    */
-  isApplicationCommand() {
+  isApplicationCommand(): this is BaseCommandInteraction<Cached> {
     return InteractionTypes[this.type] === InteractionTypes.APPLICATION_COMMAND;
   }
 
@@ -201,7 +234,7 @@ class Interaction extends Base {
    * Indicates whether this interaction is a {@link CommandInteraction}.
    * @returns {boolean}
    */
-  isCommand() {
+  isCommand(): this is CommandInteraction<Cached> {
     return InteractionTypes[this.type] === InteractionTypes.APPLICATION_COMMAND && typeof this.targetId === 'undefined';
   }
 
@@ -209,7 +242,7 @@ class Interaction extends Base {
    * Indicates whether this interaction is a {@link ContextMenuInteraction}
    * @returns {boolean}
    */
-  isContextMenu() {
+  isContextMenu(): this is ContextMenuInteraction<Cached> {
     return InteractionTypes[this.type] === InteractionTypes.APPLICATION_COMMAND && typeof this.targetId !== 'undefined';
   }
 
@@ -217,7 +250,7 @@ class Interaction extends Base {
    * Indicates whether this interaction is a {@link ModalSubmitInteraction}
    * @returns {boolean}
    */
-  isModalSubmit() {
+  isModalSubmit(): this is ModalSubmitInteraction<Cached> {
     return InteractionTypes[this.type] === InteractionTypes.MODAL_SUBMIT;
   }
 
@@ -225,7 +258,7 @@ class Interaction extends Base {
    * Indicates whether this interaction is a {@link UserContextMenuInteraction}
    * @returns {boolean}
    */
-  isUserContextMenu() {
+  isUserContextMenu(): this is UserContextMenuInteraction<Cached> {
     return this.isContextMenu() && ApplicationCommandTypes[this.targetType] === ApplicationCommandTypes.USER;
   }
 
@@ -233,7 +266,7 @@ class Interaction extends Base {
    * Indicates whether this interaction is a {@link MessageContextMenuInteraction}
    * @returns {boolean}
    */
-  isMessageContextMenu() {
+  isMessageContextMenu(): this is MessageContextMenuInteraction<Cached> {
     return this.isContextMenu() && ApplicationCommandTypes[this.targetType] === ApplicationCommandTypes.MESSAGE;
   }
 
@@ -241,7 +274,7 @@ class Interaction extends Base {
    * Indicates whether this interaction is an {@link AutocompleteInteraction}
    * @returns {boolean}
    */
-  isAutocomplete() {
+  isAutocomplete(): this is AutocompleteInteraction<Cached> {
     return InteractionTypes[this.type] === InteractionTypes.APPLICATION_COMMAND_AUTOCOMPLETE;
   }
 
@@ -249,7 +282,7 @@ class Interaction extends Base {
    * Indicates whether this interaction is a {@link MessageComponentInteraction}.
    * @returns {boolean}
    */
-  isMessageComponent() {
+  isMessageComponent(): this is MessageComponentInteraction<Cached> {
     return InteractionTypes[this.type] === InteractionTypes.MESSAGE_COMPONENT;
   }
 
@@ -257,9 +290,10 @@ class Interaction extends Base {
    * Indicates whether this interaction is a {@link ButtonInteraction}.
    * @returns {boolean}
    */
-  isButton() {
+  isButton(): this is ButtonInteraction<Cached> {
     return (
       InteractionTypes[this.type] === InteractionTypes.MESSAGE_COMPONENT &&
+      typeof this.componentType !== 'undefined' &&
       MessageComponentTypes[this.componentType] === MessageComponentTypes.BUTTON
     );
   }
@@ -268,9 +302,10 @@ class Interaction extends Base {
    * Indicates whether this interaction is a {@link SelectMenuInteraction}.
    * @returns {boolean}
    */
-  isSelectMenu() {
+  isSelectMenu(): this is SelectMenuInteraction<Cached> {
     return (
       InteractionTypes[this.type] === InteractionTypes.MESSAGE_COMPONENT &&
+      typeof this.componentType !== 'undefined' &&
       MessageComponentTypes[this.componentType] === MessageComponentTypes.SELECT_MENU
     );
   }

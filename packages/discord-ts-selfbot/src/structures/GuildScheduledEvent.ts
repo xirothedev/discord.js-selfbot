@@ -38,7 +38,10 @@ class GuildScheduledEvent extends Base implements GuildScheduledEventEntity {
   declare recurrenceRule: GuildScheduledEventEntity['recurrenceRule'];
   declare image: GuildScheduledEventEntity['image'];
 
-  constructor(client: import('../client/Client').default, data: RawGuildScheduledEventData) {
+  constructor(
+    client: import('../client/Client').default,
+    data: PatchOf<'GuildScheduledEvent'> & Pick<RawGuildScheduledEventData, 'id' | 'guild_id'>,
+  ) {
     super(client);
 
     /**

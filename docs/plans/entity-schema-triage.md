@@ -2,7 +2,7 @@
 
 Status: closed for the flat entity schema
 Source: `bun tools/schema/generate.ts --report`
-Snapshot: 2026-11-09, after the `Message`, `MessageMentions`, `MessageEmbed`, `WebEmbed`, `Activity`, `MessageButton`, `MessagePayload`, `Webhook`, and generic-contract passes.
+Snapshot: 2026-11-09, after the `Message`, `MessageMentions`, `MessageEmbed`, `WebEmbed`, `Activity`, `MessageButton`, `MessagePayload`, `Webhook`, and generic-contract passes, including the interaction stack, permissions manager, and audit logs.
 
 ## Summary
 
@@ -17,14 +17,18 @@ All public/runtime disagreements are resolved. The 82 assigned-but-undeclared fi
 
 ## Generic contracts
 
-The flat entity schema cannot express type parameters. The remaining generic public contracts are recorded as `fieldTypes` overrides with `generate: false`:
+The flat entity schema cannot express type parameters. The generic source contracts now carry real parameters:
 
-- `ApplicationCommand.permissions` (`ApplicationCommandPermissionsManager<...>`)
-- `AutocompleteInteraction.options`, `CommandInteraction.options`, `ContextMenuInteraction.options` (`CommandInteractionOptionResolver<Cached>`)
-- `Interaction.memberPermissions` (`CacheTypeReducer<Cached, ...>`)
-- `GuildAuditLogs.entries` and `GuildAuditLogsEntry` (`TAction`, `TActionType`, `TTargetType`)
+- `Interaction<Cached>`, `BaseCommandInteraction<Cached>`, `CommandInteraction<Cached>`, `AutocompleteInteraction<Cached>`, `ContextMenuInteraction<Cached>`, and the message-component interaction classes.
+- `CommandInteractionOptionResolver<Cached>`, with source-level option and resolved-data shapes that keep the runtime `MessageAttachment` class.
+- `ApplicationCommandPermissionsManager<BaseOptions, FetchSingleOptions, FullPermissionsOptions, GuildType, CommandIdType>`.
+- `GuildAuditLogs<T>` and `GuildAuditLogsEntry<TActionRaw, TAction, TActionType, TTargetType>`.
+- `Collector`, `InteractionCollector`, `ReactionCollector`, `MessageCollector`, and `GuildTextThreadManager`.
 
-`Collector`, `InteractionCollector`, `ReactionCollector`, `MessageCollector`, and `GuildTextThreadManager` now carry real type parameters. The remaining generic source refactors are tracked as a separate module task; the public typings remain the contract.
+Two public contracts stay as `fieldTypes` overrides because the runtime value is wider than the public type:
+
+- `Interaction.memberPermissions` is `Readonly<Permissions> | null` at runtime; `CacheTypeReducer<Cached, Readonly<Permissions>>` would require an unchecked assertion on every assignment.
+- `ApplicationCommand.permissions` keeps the public manager generic until `ApplicationCommand` itself is converted.
 
 ## Closed in this pass
 
@@ -37,6 +41,6 @@ The flat entity schema cannot express type parameters. The remaining generic pub
 
 ## Next modules
 
-1. Generic source refactor for `GuildAuditLogs`, interaction option resolvers, `ApplicationCommandPermissionsManager`, and `CacheTypeReducer`.
-2. `GuildChannel.ts` (39 `any`) and `Constants.ts` (74 `any`).
+1. `GuildChannel.ts` (39 `any`) and `Constants.ts` (74 `any`).
+2. `Interaction.memberPermissions` / `CacheTypeReducer` and `ApplicationCommand` generic propagation.
 3. Final gate: remove the `Base` index signature, tighten tsconfig, finish the `typings/index.d.ts` `any` sweep.

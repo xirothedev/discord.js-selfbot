@@ -1,10 +1,11 @@
 import ContextMenuInteraction from './ContextMenuInteraction';
+import type { CacheType } from '../../typings';
 
 /**
  * Represents a user context menu interaction.
  * @extends {ContextMenuInteraction}
  */
-class UserContextMenuInteraction extends ContextMenuInteraction {
+class UserContextMenuInteraction<Cached extends CacheType = CacheType> extends ContextMenuInteraction<Cached> {
   [key: string]: any;
   /**
    * The target user from this interaction

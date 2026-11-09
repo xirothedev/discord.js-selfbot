@@ -5,6 +5,16 @@ import MessageAttachment from './MessageAttachment';
 import InteractionResponses from './interfaces/InteractionResponses';
 import _ConstantsModule from '../util/Constants';
 const { ApplicationCommandOptionTypes } = _ConstantsModule;
+import type {
+  APIApplicationCommandInteractionDataOption,
+  APIInteractionDataResolved,
+  APIMessage,
+  Snowflake,
+} from 'discord-api-types/v10';
+import type { CacheType } from '../../typings';
+import type { CommandInteractionOption, CommandInteractionResolvedData } from './CommandInteractionOptionResolver';
+
+type ResolvedData = APIInteractionDataResolved & { messages?: Record<Snowflake, APIMessage> };
 
 /**
  * Represents a command interaction.
@@ -12,8 +22,19 @@ const { ApplicationCommandOptionTypes } = _ConstantsModule;
  * @implements {InteractionResponses}
  * @abstract
  */
-class BaseCommandInteraction extends Interaction {
-  constructor(client: any, data: any) {
+class BaseCommandInteraction<Cached extends CacheType = CacheType> extends Interaction<Cached> {
+  declare commandId: Snowflake;
+  declare commandName: string;
+  declare deferred: boolean;
+  declare replied: boolean;
+  declare ephemeral: boolean | null;
+  declare webhook: InteractionWebhook;
+  declare options: import('./CommandInteractionOptionResolver').default<Cached>;
+
+  constructor(
+    client: import('../client/Client').default,
+    data: import('../../typings/rawDataTypes').RawCommandInteractionData,
+  ) {
     super(client, data);
 
     /**
@@ -85,48 +106,55 @@ class BaseCommandInteraction extends Interaction {
    * @returns {CommandInteractionResolvedData}
    * @private
    */
-  transformResolved({ members, users, channels, roles, messages, attachments }: any) {
-    const result: any = {};
+  transformResolved({
+    members,
+    users,
+    channels,
+    roles,
+    messages,
+    attachments,
+  }: ResolvedData): CommandInteractionResolvedData<Cached> {
+    const result: CommandInteractionResolvedData<Cached> = {};
 
     if (members) {
       result.members = new Collection();
-      for (const [id, member] of Object.entries(members) as [string, any][]) {
-        const user = users[id];
+      for (const [id, member] of Object.entries(members)) {
+        const user = users?.[id];
         result.members.set(id, this.guild?.members._add({ user, ...member }) ?? member);
       }
     }
 
     if (users) {
       result.users = new Collection();
-      for (const user of Object.values(users) as any[]) {
+      for (const user of Object.values(users)) {
         result.users.set(user.id, this.client.users._add(user));
       }
     }
 
     if (roles) {
       result.roles = new Collection();
-      for (const role of Object.values(roles) as any[]) {
+      for (const role of Object.values(roles)) {
         result.roles.set(role.id, this.guild?.roles._add(role) ?? role);
       }
     }
 
     if (channels) {
       result.channels = new Collection();
-      for (const channel of Object.values(channels) as any[]) {
+      for (const channel of Object.values(channels)) {
         result.channels.set(channel.id, this.client.channels._add(channel, this.guild) ?? channel);
       }
     }
 
     if (messages) {
       result.messages = new Collection();
-      for (const message of Object.values(messages) as any[]) {
+      for (const message of Object.values(messages)) {
         result.messages.set(message.id, this.channel?.messages?._add(message) ?? message);
       }
     }
 
     if (attachments) {
       result.attachments = new Collection();
-      for (const attachment of Object.values(attachments) as any[]) {
+      for (const attachment of Object.values(attachments)) {
         const patched = new MessageAttachment(attachment.url, attachment.filename, attachment);
         result.attachments.set(attachment.id, patched);
       }
@@ -158,30 +186,37 @@ class BaseCommandInteraction extends Interaction {
    * @returns {CommandInteractionOption}
    * @private
    */
-  transformOption(option: any, resolved: any) {
-    const result: any = {
+  transformOption(
+    option: APIApplicationCommandInteractionDataOption,
+    resolved?: ResolvedData,
+  ): CommandInteractionOption<Cached> {
+    const result: CommandInteractionOption<Cached> = {
       name: option.name,
       type: ApplicationCommandOptionTypes[option.type],
     };
 
     if ('value' in option) result.value = option.value;
-    if ('options' in option) result.options = option.options.map((opt: any) => this.transformOption(opt, resolved));
+    if ('options' in option) result.options = option.options?.map(opt => this.transformOption(opt, resolved)) ?? [];
 
     if (resolved) {
-      const user = resolved.users?.[option.value];
-      if (user) result.user = this.client.users._add(user);
+      const value = 'value' in option ? option.value : undefined;
+      const key = value === undefined ? undefined : String(value);
+      if (key !== undefined) {
+        const user = resolved.users?.[key];
+        if (user) result.user = this.client.users._add(user);
 
-      const member = resolved.members?.[option.value];
-      if (member) result.member = this.guild?.members._add({ user, ...member }) ?? member;
+        const member = resolved.members?.[key];
+        if (member) result.member = this.guild?.members._add({ user, ...member }) ?? member;
 
-      const channel = resolved.channels?.[option.value];
-      if (channel) result.channel = this.client.channels._add(channel, this.guild) ?? channel;
+        const channel = resolved.channels?.[key];
+        if (channel) result.channel = this.client.channels._add(channel, this.guild) ?? channel;
 
-      const role = resolved.roles?.[option.value];
-      if (role) result.role = this.guild?.roles._add(role) ?? role;
+        const role = resolved.roles?.[key];
+        if (role) result.role = this.guild?.roles._add(role) ?? role;
 
-      const attachment = resolved.attachments?.[option.value];
-      if (attachment) result.attachment = new MessageAttachment(attachment.url, attachment.filename, attachment);
+        const attachment = resolved.attachments?.[key];
+        if (attachment) result.attachment = new MessageAttachment(attachment.url, attachment.filename, attachment);
+      }
     }
 
     return result;

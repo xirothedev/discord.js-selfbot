@@ -114,6 +114,7 @@ const CONFIG: Record<string, EntityConfig> = {
     fieldTypes: {
       action: 'TAction',
       actionType: 'TActionType',
+      changes: 'Array<{ key: string; old?: unknown; new?: unknown }>',
       extra: 'TAction extends keyof GuildAuditLogsEntryExtraField ? GuildAuditLogsEntryExtraField[TAction] : null',
       target:
         'TTargetType extends keyof GuildAuditLogsEntryTargetField<TActionType> ? GuildAuditLogsEntryTargetField<TActionType>[TTargetType] : Role | GuildEmoji | { id: Snowflake } | null',
@@ -124,7 +125,11 @@ const CONFIG: Record<string, EntityConfig> = {
     imports: [],
     fields: {},
     generate: false,
-    fieldTypes: { memberPermissions: 'Readonly<Permissions> | null' },
+    fieldTypes: {
+      guildId: 'Snowflake | null',
+      guildLocale: 'string | null',
+      memberPermissions: 'Readonly<Permissions> | null',
+    },
   },
   RichPresence: {
     imports: [],

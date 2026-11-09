@@ -3,6 +3,7 @@ import InteractionWebhook from './InteractionWebhook';
 import ModalSubmitFieldsResolver from './ModalSubmitFieldsResolver';
 import InteractionResponses from './interfaces/InteractionResponses';
 import _ConstantsModule from '../util/Constants';
+import type { CacheType } from '../../typings';
 const { MessageComponentTypes } = _ConstantsModule;
 
 /**
@@ -10,7 +11,7 @@ const { MessageComponentTypes } = _ConstantsModule;
  * @extends {Interaction}
  * @implements {InteractionResponses}
  */
-class ModalSubmitInteraction extends Interaction {
+class ModalSubmitInteraction<Cached extends CacheType = CacheType> extends Interaction<Cached> {
   [key: string]: any;
   constructor(client: any, data: any) {
     super(client, data);

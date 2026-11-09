@@ -1,18 +1,38 @@
+import { Stream } from 'node:stream';
 import AttachmentFlags from '../util/AttachmentFlags';
 import Util from '../util/Util';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { BufferResolvable } from '../../typings';
+import type { RawMessageAttachmentData } from '../../typings/rawDataTypes';
+
+type MessageAttachmentPatch = Partial<RawMessageAttachmentData> & { flags?: number; title?: string };
 
 /**
  * Represents an attachment in a message.
  */
 class MessageAttachment {
-  [key: string]: any;
+  declare attachment: BufferResolvable | Stream;
+  declare contentType: string | null;
+  declare description: string | null;
+  declare duration: number | null;
+  declare ephemeral: boolean;
+  declare flags: Readonly<AttachmentFlags>;
+  declare height: number | null;
+  declare id: Snowflake;
+  declare name: string | null;
+  declare proxyURL: string;
+  declare size: number;
+  declare title: string | null;
+  declare url: string;
+  declare waveform: string | null;
+  declare width: number | null;
 
   /**
    * @param {BufferResolvable|Stream} attachment The file
    * @param {string} [name=null] The name of the file, if any
    * @param {APIAttachment} [data] Extra data
    */
-  constructor(attachment: any, name: any = null, data: any) {
+  constructor(attachment: BufferResolvable | Stream, name: string | null = null, data?: MessageAttachmentPatch) {
     this.attachment = attachment;
     /**
      * The name of this attachment
@@ -27,7 +47,7 @@ class MessageAttachment {
    * @param {string} description The description of the file
    * @returns {MessageAttachment} This attachment
    */
-  setDescription(description: any) {
+  setDescription(description: string) {
     this.description = description;
     return this;
   }
@@ -35,10 +55,10 @@ class MessageAttachment {
   /**
    * Sets the file of this attachment.
    * @param {BufferResolvable|Stream} attachment The file
-   * @param {string} [name=null] The name of the file, if any
+   * @param {string} [name=null] The name of the file
    * @returns {MessageAttachment} This attachment
    */
-  setFile(attachment: any, name: any = null) {
+  setFile(attachment: BufferResolvable | Stream, name: string | null = null) {
     this.attachment = attachment;
     this.name = name;
     return this;
@@ -49,7 +69,7 @@ class MessageAttachment {
    * @param {string} name The name of the file
    * @returns {MessageAttachment} This attachment
    */
-  setName(name: any) {
+  setName(name: string) {
     this.name = name;
     return this;
   }
@@ -59,12 +79,12 @@ class MessageAttachment {
    * @param {boolean} [spoiler=true] Whether the attachment should be marked as a spoiler
    * @returns {MessageAttachment} This attachment
    */
-  setSpoiler(spoiler: any = true) {
+  setSpoiler(spoiler = true) {
     if (spoiler === this.spoiler) return this;
 
     if (!spoiler) {
       while (this.spoiler) {
-        this.name = this.name.slice('SPOILER_'.length);
+        this.name = this.name?.slice('SPOILER_'.length) ?? null;
       }
       return this;
     }
@@ -72,19 +92,19 @@ class MessageAttachment {
     return this;
   }
 
-  _patch(data: any) {
+  _patch(data: MessageAttachmentPatch) {
     /**
      * The attachment's id
      * @type {Snowflake}
      */
-    this.id = data.id;
+    this.id = data.id!;
 
     if ('size' in data) {
       /**
        * The size of this attachment in bytes
        * @type {number}
        */
-      this.size = data.size;
+      this.size = data.size!;
     }
 
     if ('url' in data) {
@@ -92,7 +112,7 @@ class MessageAttachment {
        * The URL to this attachment
        * @type {string}
        */
-      this.url = data.url;
+      this.url = data.url!;
     }
 
     if ('proxy_url' in data) {
@@ -100,7 +120,7 @@ class MessageAttachment {
        * The Proxy URL to this attachment
        * @type {string}
        */
-      this.proxyURL = data.proxy_url;
+      this.proxyURL = data.proxy_url!;
     }
 
     if ('height' in data) {
@@ -108,7 +128,7 @@ class MessageAttachment {
        * The height of this attachment (if an image or video)
        * @type {?number}
        */
-      this.height = data.height;
+      this.height = data.height ?? null;
     } else {
       this.height ??= null;
     }
@@ -118,7 +138,7 @@ class MessageAttachment {
        * The width of this attachment (if an image or video)
        * @type {?number}
        */
-      this.width = data.width;
+      this.width = data.width ?? null;
     } else {
       this.width ??= null;
     }
@@ -129,7 +149,7 @@ class MessageAttachment {
        * @type {?string}
        * @see {@link https://developer.mozilla.org/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types}
        */
-      this.contentType = data.content_type;
+      this.contentType = data.content_type ?? null;
     } else {
       this.contentType ??= null;
     }
@@ -139,7 +159,7 @@ class MessageAttachment {
        * The description (alt text) of this attachment
        * @type {?string}
        */
-      this.description = data.description;
+      this.description = data.description ?? null;
     } else {
       this.description ??= null;
     }
@@ -156,7 +176,7 @@ class MessageAttachment {
        * <info>This will only be available if the attachment is an audio file.</info>
        * @type {?number}
        */
-      this.duration = data.duration_secs;
+      this.duration = data.duration_secs ?? null;
     } else {
       this.duration ??= null;
     }
@@ -167,7 +187,7 @@ class MessageAttachment {
        * <info>This will only be available if the attachment is an audio file.</info>
        * @type {?string}
        */
-      this.waveform = data.waveform;
+      this.waveform = data.waveform ?? null;
     } else {
       this.waveform ??= null;
     }
@@ -188,7 +208,7 @@ class MessageAttachment {
        * <info>This will only be available if the attachment name contains special characters.</info>
        * @type {?string}
        */
-      this.title = data.title;
+      this.title = data.title ?? null;
     } else {
       this.title ??= null;
     }

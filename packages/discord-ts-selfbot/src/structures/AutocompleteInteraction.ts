@@ -4,13 +4,24 @@ import _errorsModule from '../errors';
 const { Error } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
 const { InteractionResponseTypes, ApplicationCommandOptionTypes } = _ConstantsModule;
+import type {
+  APIApplicationCommandInteractionDataOption,
+  APIChatInputApplicationCommandInteraction,
+  Snowflake,
+} from 'discord-api-types/v10';
+import type { ApplicationCommandOptionChoiceData, CacheType } from '../../typings';
+import type { CommandInteractionOption } from './CommandInteractionOptionResolver';
 
 /**
  * Represents an autocomplete interaction.
  * @extends {Interaction}
  */
-class AutocompleteInteraction extends Interaction {
-  constructor(client: any, data: any) {
+class AutocompleteInteraction<Cached extends CacheType = CacheType> extends Interaction<Cached> {
+  declare commandId: Snowflake;
+  declare commandName: string;
+  declare responded: boolean;
+
+  constructor(client: import('../client/Client').default, data: APIChatInputApplicationCommandInteraction) {
     super(client, data);
 
     /**
@@ -41,9 +52,9 @@ class AutocompleteInteraction extends Interaction {
      * The options passed to the command
      * @type {CommandInteractionOptionResolver}
      */
-    this.options = new CommandInteractionOptionResolver(
+    this.options = new CommandInteractionOptionResolver<Cached>(
       this.client,
-      data.data.options?.map((option: any) => this.transformOption(option, data.data.resolved)) ?? [],
+      data.data.options?.map(option => this.transformOption(option)) ?? [],
     );
   }
 
@@ -62,14 +73,14 @@ class AutocompleteInteraction extends Interaction {
    * @returns {CommandInteractionOption}
    * @private
    */
-  transformOption(option: any, _resolved?: any) {
-    const result: any = {
+  transformOption(option: APIApplicationCommandInteractionDataOption): CommandInteractionOption<Cached> {
+    const result: CommandInteractionOption<Cached> = {
       name: option.name,
       type: ApplicationCommandOptionTypes[option.type],
     };
 
     if ('value' in option) result.value = option.value;
-    if ('options' in option) result.options = option.options.map((opt: any) => this.transformOption(opt));
+    if ('options' in option) result.options = option.options?.map(opt => this.transformOption(opt)) ?? [];
     if ('focused' in option) result.focused = option.focused;
 
     return result;
@@ -90,13 +101,18 @@ class AutocompleteInteraction extends Interaction {
    *  .then(console.log)
    *  .catch(console.error);
    */
-  async respond(options: any) {
+  async respond(options: ApplicationCommandOptionChoiceData[]): Promise<void> {
     if (this.responded) throw new Error('INTERACTION_ALREADY_REPLIED');
 
     await this.client.api.interactions(this.id, this.token).callback.post({
       data: {
         type: InteractionResponseTypes.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
-        data: { choices: options.map((choice: any) => ({ ...choice, name_localizations: options.nameLocalizations })) },
+        data: {
+          choices: options.map(({ nameLocalizations, ...choice }) => ({
+            ...choice,
+            name_localizations: nameLocalizations,
+          })),
+        },
       },
       auth: false,
     });

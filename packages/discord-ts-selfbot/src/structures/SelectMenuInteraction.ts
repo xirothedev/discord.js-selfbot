@@ -1,10 +1,11 @@
 import MessageComponentInteraction from './MessageComponentInteraction';
+import type { CacheType } from '../../typings';
 
 /**
  * Represents a select menu interaction.
  * @extends {MessageComponentInteraction}
  */
-class SelectMenuInteraction extends MessageComponentInteraction {
+class SelectMenuInteraction<Cached extends CacheType = CacheType> extends MessageComponentInteraction<Cached> {
   [key: string]: any;
   constructor(client: any, data: any) {
     super(client, data);
