@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const qrcode: any = require('qrcode');
+const qrcode = require('qrcode');
 import { Buffer } from 'node:buffer';
 import crypto from 'node:crypto';
 import EventEmitter from 'node:events';
@@ -52,12 +52,12 @@ const Event = {
  * @abstract
  */
 class DiscordAuthWebsocket extends EventEmitter {
-  #ws: any = null;
-  #heartbeatInterval: any = null;
-  #expire: any = null;
-  #publicKey: any = null;
-  #privateKey: any = null;
-  #ticket: any = null;
+  #ws: WebSocket | null = null;
+  #heartbeatInterval: number = 0;
+  #expire: Date | null = null;
+  #publicKey: string = '';
+  #privateKey: string = '';
+  #ticket: string = '';
   #fingerprint = '';
   #userDecryptString = '';
 
@@ -81,18 +81,18 @@ class DiscordAuthWebsocket extends EventEmitter {
   /**
    * @type {Date}
    */
-  get exprire(): any {
+  get exprire(): Date | null {
     return this.#expire;
   }
 
   /**
    * @type {UserRaw}
    */
-  get user(): any {
+  get user(): unknown {
     return DiscordAuthWebsocket.decryptUser(this.#userDecryptString);
   }
 
-  #createWebSocket(url: any) {
+  #createWebSocket(url: string) {
     this.#ws = new WebSocket(url, {
       headers: {
         Origin: 'https://discord.com',
@@ -103,7 +103,7 @@ class DiscordAuthWebsocket extends EventEmitter {
   }
 
   #handleWebSocket() {
-    this.#ws.on('error', (error: any) => {
+    this.#ws!.on('error', (error: Error) => {
       /**
        * WS Error
        * @event DiscordAuthWebsocket#error
@@ -111,7 +111,7 @@ class DiscordAuthWebsocket extends EventEmitter {
        */
       this.emit(Event.ERROR, error);
     });
-    this.#ws.on('open', () => {
+    this.#ws!.on('open', () => {
       /**
        * Debug Event
        * @event DiscordAuthWebsocket#debug
@@ -119,14 +119,14 @@ class DiscordAuthWebsocket extends EventEmitter {
        */
       this.emit(Event.DEBUG, '[WS] Client Connected');
     });
-    this.#ws.on('close', () => {
+    this.#ws!.on('close', () => {
       this.emit(Event.DEBUG, '[WS] Connection closed');
     });
-    this.#ws.on('message', this.#handleMessage.bind(this));
+    this.#ws!.on('message', this.#handleMessage.bind(this));
   }
 
-  #handleMessage(message: any) {
-    message = JSON.parse(message);
+  #handleMessage(raw: unknown) {
+    const message = JSON.parse(String(raw)) as Record<string, unknown>;
     switch (message.op) {
       case receiveEvent.HELLO: {
         this.#ready(message);
@@ -139,7 +139,7 @@ class DiscordAuthWebsocket extends EventEmitter {
       }
 
       case receiveEvent.PENDING_REMOTE_INIT: {
-        this.#fingerprint = message.fingerprint;
+        this.#fingerprint = message.fingerprint as string;
         /**
          * Ready Event
          * @event DiscordAuthWebsocket#ready
@@ -172,16 +172,16 @@ class DiscordAuthWebsocket extends EventEmitter {
       }
 
       case receiveEvent.PENDING_LOGIN: {
-        this.#ticket = message.ticket;
+        this.#ticket = message.ticket as string;
         this.#findRealToken();
         break;
       }
     }
   }
 
-  #send(op: any, data?: any) {
+  #send(op: string, data?: Record<string, unknown>) {
     if (!this.#ws) return;
-    let payload = { op: op };
+    let payload: Record<string, unknown> = { op: op };
     if (data !== null) payload = { ...payload, ...data };
     this.#ws.send(JSON.stringify(payload));
   }
@@ -189,13 +189,13 @@ class DiscordAuthWebsocket extends EventEmitter {
   #heartbeatAck() {
     setTimeout(() => {
       this.#send(sendEvent.HEARTBEAT);
-    }, this.#heartbeatInterval).unref();
+    }, this.#heartbeatInterval as number).unref();
   }
 
-  #ready(data: any) {
+  #ready(data: Record<string, unknown>) {
     this.emit(Event.DEBUG, 'Attempting server handshake...');
-    this.#expire = new Date(Date.now() + data.timeout_ms);
-    this.#heartbeatInterval = data.heartbeat_interval;
+    this.#expire = new Date(Date.now() + (data.timeout_ms as number));
+    this.#heartbeatInterval = data.heartbeat_interval as number;
     this.#createKey();
     this.#heartbeatAck();
     this.#init();
@@ -229,7 +229,7 @@ class DiscordAuthWebsocket extends EventEmitter {
     this.#send(sendEvent.INIT, { encoded_public_key: public_key });
   }
 
-  #receiveNonceProof(data: any) {
+  #receiveNonceProof(data: Record<string, unknown>) {
     const nonce = data.encrypted_nonce;
     const decrypted_nonce = this.#decryptPayload(nonce);
     const proof = crypto
@@ -244,8 +244,8 @@ class DiscordAuthWebsocket extends EventEmitter {
     this.#send(sendEvent.NONCE_PROOF, { proof: proof });
   }
 
-  #decryptPayload(encrypted_payload: any) {
-    const payload = Buffer.from(encrypted_payload, 'base64');
+  #decryptPayload(encrypted_payload: unknown) {
+    const payload = Buffer.from(String(encrypted_payload), 'base64');
     const decoder = new StringDecoder('utf-8');
     const private_key = decoder.write(this.#privateKey);
     const data = crypto.privateDecrypt(
@@ -259,7 +259,7 @@ class DiscordAuthWebsocket extends EventEmitter {
     return data;
   }
 
-  #pendingLogin(data: any) {
+  #pendingLogin(data: Record<string, unknown>) {
     const user_data = this.#decryptPayload(data.encrypted_user_payload);
     this.#userDecryptString = user_data.toString();
 
@@ -279,10 +279,10 @@ class DiscordAuthWebsocket extends EventEmitter {
     this.emit(Event.WAIT_SCAN, this.user);
   }
 
-  #awaitLogin(client: any) {
-    return new Promise<any>(r => {
-      this.once(Event.FINISH, (token: any) => {
-        r(client.login(token));
+  #awaitLogin(client: unknown) {
+    return new Promise<unknown>(r => {
+      this.once(Event.FINISH, (token: string) => {
+        r((client as { login: (t: string) => unknown }).login(token));
       });
     });
   }
@@ -292,7 +292,7 @@ class DiscordAuthWebsocket extends EventEmitter {
    * @param {Client} [client] DiscordJS Client
    * @returns {Promise<void>}
    */
-  connect(client?: any) {
+  connect(client?: unknown) {
     this.#createWebSocket(wsURL);
     if (client) {
       return this.#awaitLogin(client);
@@ -306,8 +306,8 @@ class DiscordAuthWebsocket extends EventEmitter {
    * @returns {void}
    */
   destroy() {
-    if (!(this as any).ws) return;
-    (this as any).ws.close();
+    if (!this.#ws) return;
+    this.#ws.close();
     this.emit(Event.DEBUG, 'WebSocket closed.');
     /**
      * Emitted whenever a connection is closed.
@@ -322,7 +322,7 @@ class DiscordAuthWebsocket extends EventEmitter {
    */
   generateQR() {
     if (!this.#fingerprint) return;
-    qrcode.toString(this.AuthURL, { type: 'utf8', errorCorrectionLevel: 'L' }, (err: any, url: any) => {
+    qrcode.toString(this.AuthURL, { type: 'utf8', errorCorrectionLevel: 'L' }, (err: Error | null, url: string) => {
       if (err) {
         //
       }
@@ -354,10 +354,11 @@ class DiscordAuthWebsocket extends EventEmitter {
         ticket: this.#ticket,
       }),
     })
-      .then((r: any) => r.json())
-      .then((res: any) => {
-        if (res.encrypted_token) {
-          this.token = this.#decryptPayload(res.encrypted_token).toString();
+      .then(r => r.json())
+      .then((res: unknown) => {
+        const resObj = res as Record<string, unknown>;
+        if (resObj.encrypted_token) {
+          this.token = this.#decryptPayload(resObj.encrypted_token).toString();
         }
         /**
          * Emitted whenever a real token is found.
@@ -370,8 +371,8 @@ class DiscordAuthWebsocket extends EventEmitter {
       .catch(() => false);
   }
 
-  static decryptUser(payload: any) {
-    const values = payload.split(':');
+  static decryptUser(payload: unknown) {
+    const values = String(payload).split(':');
     const id = values[0];
     const username = values[3];
     const discriminator = values[1];

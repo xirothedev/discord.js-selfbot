@@ -1,4 +1,5 @@
 import { setInterval } from 'node:timers';
+import type { Client } from '../client/Client';
 import _ConstantsModule from './Constants';
 const { Events, ThreadChannelTypes, SweeperKeys } = _ConstantsModule;
 import _DJSErrorModule from '../errors/DJSError';
@@ -15,12 +16,14 @@ const { TypeError } = _DJSErrorModule;
 /**
  * A container for all cache sweeping intervals and their associated sweep methods.
  */
-class Sweepers {
-  client: any;
-  options: any;
-  intervals: any;
+type SweepFilterFn = (value: unknown, key: unknown, collection: unknown) => boolean;
 
-  constructor(client: any, options: any) {
+class Sweepers {
+  client!: Client;
+  options: Record<string, unknown>;
+  intervals: Record<string, ReturnType<typeof setInterval> | null>;
+
+  constructor(client: Client, options: Record<string, unknown>) {
     /**
      * The client that instantiated this
      * @type {Client}
@@ -38,26 +41,26 @@ class Sweepers {
      * A record of interval timeout that is used to sweep the indicated items, or null if not being swept
      * @type {Object<SweeperKey, ?Timeout>}
      */
-    this.intervals = Object.fromEntries(SweeperKeys.map((key: any) => [key, null]));
+    this.intervals = Object.fromEntries(SweeperKeys.map((key: string) => [key, null]));
 
     for (const key of SweeperKeys) {
       if (!(key in options)) continue;
 
       this._validateProperties(key);
 
-      const clonedOptions = { ...this.options[key] };
+      const clonedOptions = { ...(this.options[key] as Record<string, unknown>) };
 
       // Handle cases that have a "lifetime"
       if (!('filter' in clonedOptions)) {
         switch (key) {
           case 'invites':
-            clonedOptions.filter = (this.constructor as any).expiredInviteSweepFilter(clonedOptions.lifetime);
+            clonedOptions.filter = Sweepers.expiredInviteSweepFilter(clonedOptions.lifetime as number);
             break;
           case 'messages':
-            clonedOptions.filter = (this.constructor as any).outdatedMessageSweepFilter(clonedOptions.lifetime);
+            clonedOptions.filter = Sweepers.outdatedMessageSweepFilter(clonedOptions.lifetime as number);
             break;
           case 'threads':
-            clonedOptions.filter = (this.constructor as any).archivedThreadSweepFilter(clonedOptions.lifetime);
+            clonedOptions.filter = Sweepers.archivedThreadSweepFilter(clonedOptions.lifetime as number);
         }
       }
 
@@ -70,7 +73,7 @@ class Sweepers {
    * @param {Function} filter The function used to determine which commands will be removed from the caches.
    * @returns {number} Amount of commands that were removed from the caches
    */
-  sweepApplicationCommands(filter: any) {
+  sweepApplicationCommands(filter: SweepFilterFn) {
     const { guilds, items: guildCommands } = this._sweepGuildDirectProp('commands', filter, { emit: false });
 
     const globalCommands = this.client.application?.commands.cache.sweep(filter) ?? 0;
@@ -88,7 +91,7 @@ class Sweepers {
    * which auto moderation rules will be removed from the caches
    * @returns {number} Amount of auto moderation rules that were removed from the caches
    */
-  sweepAutoModerationRules(filter: any) {
+  sweepAutoModerationRules(filter: SweepFilterFn) {
     return this._sweepGuildDirectProp('autoModerationRules', filter).items;
   }
 
@@ -97,7 +100,7 @@ class Sweepers {
    * @param {Function} filter The function used to determine which bans will be removed from the caches.
    * @returns {number} Amount of bans that were removed from the caches
    */
-  sweepBans(filter: any) {
+  sweepBans(filter: SweepFilterFn) {
     return this._sweepGuildDirectProp('bans', filter).items;
   }
 
@@ -106,7 +109,7 @@ class Sweepers {
    * @param {Function} filter The function used to determine which emojis will be removed from the caches.
    * @returns {number} Amount of emojis that were removed from the caches
    */
-  sweepEmojis(filter: any) {
+  sweepEmojis(filter: SweepFilterFn) {
     return this._sweepGuildDirectProp('emojis', filter).items;
   }
 
@@ -115,7 +118,7 @@ class Sweepers {
    * @param {Function} filter The function used to determine which invites will be removed from the caches.
    * @returns {number} Amount of invites that were removed from the caches
    */
-  sweepInvites(filter: any) {
+  sweepInvites(filter: SweepFilterFn) {
     return this._sweepGuildDirectProp('invites', filter).items;
   }
 
@@ -125,7 +128,7 @@ class Sweepers {
    * @param {Function} filter The function used to determine which guild members will be removed from the caches.
    * @returns {number} Amount of guild members that were removed from the caches
    */
-  sweepGuildMembers(filter: any) {
+  sweepGuildMembers(filter: SweepFilterFn) {
     return this._sweepGuildDirectProp('members', filter, { outputName: 'guild members' }).items;
   }
 
@@ -143,7 +146,7 @@ class Sweepers {
    * );
    * console.log(`Successfully removed ${amount} messages from the cache.`);
    */
-  sweepMessages(filter: any) {
+  sweepMessages(filter: SweepFilterFn) {
     if (typeof filter !== 'function') {
       throw new TypeError('INVALID_TYPE', 'filter', 'function');
     }
@@ -165,7 +168,7 @@ class Sweepers {
    * @param {Function} filter The function used to determine which presences will be removed from the caches.
    * @returns {number} Amount of presences that were removed from the caches
    */
-  sweepPresences(filter: any) {
+  sweepPresences(filter: SweepFilterFn) {
     return this._sweepGuildDirectProp('presences', filter).items;
   }
 
@@ -174,7 +177,7 @@ class Sweepers {
    * @param {Function} filter The function used to determine which reactions will be removed from the caches.
    * @returns {number} Amount of reactions that were removed from the caches
    */
-  sweepReactions(filter: any) {
+  sweepReactions(filter: SweepFilterFn) {
     if (typeof filter !== 'function') {
       throw new TypeError('INVALID_TYPE', 'filter', 'function');
     }
@@ -203,7 +206,7 @@ class Sweepers {
    * @param {Function} filter The function used to determine which stage instances will be removed from the caches.
    * @returns {number} Amount of stage instances that were removed from the caches
    */
-  sweepStageInstances(filter: any) {
+  sweepStageInstances(filter: SweepFilterFn) {
     return this._sweepGuildDirectProp('stageInstances', filter, { outputName: 'stage instances' }).items;
   }
 
@@ -212,7 +215,7 @@ class Sweepers {
    * @param {Function} filter The function used to determine which stickers will be removed from the caches.
    * @returns {number} Amount of stickers that were removed from the caches
    */
-  sweepStickers(filter: any) {
+  sweepStickers(filter: SweepFilterFn) {
     return this._sweepGuildDirectProp('stickers', filter).items;
   }
 
@@ -222,7 +225,7 @@ class Sweepers {
    * @param {Function} filter The function used to determine which thread members will be removed from the caches.
    * @returns {number} Amount of thread members that were removed from the caches
    */
-  sweepThreadMembers(filter: any) {
+  sweepThreadMembers(filter: SweepFilterFn) {
     if (typeof filter !== 'function') {
       throw new TypeError('INVALID_TYPE', 'filter', 'function');
     }
@@ -252,7 +255,7 @@ class Sweepers {
    * );
    * console.log(`Successfully removed ${amount} threads from the cache.`);
    */
-  sweepThreads(filter: any) {
+  sweepThreads(filter: SweepFilterFn) {
     if (typeof filter !== 'function') {
       throw new TypeError('INVALID_TYPE', 'filter', 'function');
     }
@@ -274,7 +277,7 @@ class Sweepers {
    * @param {Function} filter The function used to determine which users will be removed from the caches.
    * @returns {number} Amount of users that were removed from the caches
    */
-  sweepUsers(filter: any) {
+  sweepUsers(filter: SweepFilterFn) {
     if (typeof filter !== 'function') {
       throw new TypeError('INVALID_TYPE', 'filter', 'function');
     }
@@ -291,7 +294,7 @@ class Sweepers {
    * @param {Function} filter The function used to determine which voice states will be removed from the caches.
    * @returns {number} Amount of voice states that were removed from the caches
    */
-  sweepVoiceStates(filter: any) {
+  sweepVoiceStates(filter: SweepFilterFn) {
     return this._sweepGuildDirectProp('voiceStates', filter, { outputName: 'voice states' }).items;
   }
 
@@ -323,9 +326,9 @@ class Sweepers {
    */
   static filterByLifetime({
     lifetime = 14400,
-    getComparisonTimestamp = (e: any) => e?.createdTimestamp,
+    getComparisonTimestamp = (e: unknown) => (e as { createdTimestamp?: number } | null)?.createdTimestamp,
     excludeFromSweep = () => false,
-  }: any = {}) {
+  }: Record<string, unknown> = {}) {
     if (typeof lifetime !== 'number') {
       throw new TypeError('INVALID_TYPE', 'lifetime', 'number');
     }
@@ -339,7 +342,7 @@ class Sweepers {
       if (lifetime <= 0) return null;
       const lifetimeMs = lifetime * 1_000;
       const now = Date.now();
-      return (entry: any, key: any, coll: any) => {
+      return (entry: unknown, key: unknown, coll: unknown) => {
         if (excludeFromSweep(entry, key, coll)) {
           return false;
         }
@@ -355,11 +358,11 @@ class Sweepers {
    * @param {number} [lifetime=14400] How long a thread has to be archived to be valid for sweeping
    * @returns {GlobalSweepFilter}
    */
-  static archivedThreadSweepFilter(lifetime: any = 14400) {
+  static archivedThreadSweepFilter(lifetime: number = 14400) {
     return this.filterByLifetime({
       lifetime,
-      getComparisonTimestamp: (e: any) => e.archiveTimestamp,
-      excludeFromSweep: (e: any) => !e.archived,
+      getComparisonTimestamp: (e: unknown) => (e as { archiveTimestamp?: number } | null)?.archiveTimestamp,
+      excludeFromSweep: (e: unknown) => !(e as { archived?: boolean } | null)?.archived,
     });
   }
 
@@ -368,10 +371,10 @@ class Sweepers {
    * @param {number} [lifetime=14400] How long ago an invite has to have expired to be valid for sweeping
    * @returns {GlobalSweepFilter}
    */
-  static expiredInviteSweepFilter(lifetime: any = 14400) {
+  static expiredInviteSweepFilter(lifetime: number = 14400) {
     return this.filterByLifetime({
       lifetime,
-      getComparisonTimestamp: (i: any) => i.expiresTimestamp,
+      getComparisonTimestamp: (i: unknown) => (i as { expiresTimestamp?: number } | null)?.expiresTimestamp,
     });
   }
 
@@ -380,10 +383,12 @@ class Sweepers {
    * @param {number} [lifetime=3600] How long ago a message has to have been sent or edited to be valid for sweeping
    * @returns {GlobalSweepFilter}
    */
-  static outdatedMessageSweepFilter(lifetime: any = 3600) {
+  static outdatedMessageSweepFilter(lifetime: number = 3600) {
     return this.filterByLifetime({
       lifetime,
-      getComparisonTimestamp: (m: any) => m.editedTimestamp ?? m.createdTimestamp,
+      getComparisonTimestamp: (m: unknown) =>
+        (m as { editedTimestamp?: number; createdTimestamp?: number } | null)?.editedTimestamp ??
+        (m as { createdTimestamp?: number } | null)?.createdTimestamp,
     });
   }
 
@@ -403,7 +408,11 @@ class Sweepers {
    * @returns {Object} Object containing the number of guilds swept and the number of items swept
    * @private
    */
-  _sweepGuildDirectProp(key: any, filter: any, { emit = true, outputName }: any = {}) {
+  _sweepGuildDirectProp(
+    key: string,
+    filter: SweepFilterFn,
+    { emit = true, outputName }: { emit?: boolean; outputName?: string } = {},
+  ) {
     if (typeof filter !== 'function') {
       throw new TypeError('INVALID_TYPE', 'filter', 'function');
     }
@@ -430,9 +439,9 @@ class Sweepers {
    * @param {string} key Key of the options object to check
    * @private
    */
-  _validateProperties(key: any) {
-    const props = this.options[key];
-    if (typeof props !== 'object') {
+  _validateProperties(key: string) {
+    const props = this.options[key] as Record<string, unknown> | null;
+    if (typeof props !== 'object' || props === null) {
       throw new TypeError('INVALID_TYPE', `sweepers.${key}`, 'object', true);
     }
     if (typeof props.interval !== 'number') {
@@ -457,14 +466,16 @@ class Sweepers {
    * @param {Object} opts Validated options for a sweep
    * @private
    */
-  _initInterval(intervalKey: any, sweepKey: any, opts: any) {
-    if (opts.interval <= 0 || opts.interval === Infinity) return;
+  _initInterval(intervalKey: string, sweepKey: string, opts: Record<string, unknown>) {
+    const interval = opts.interval as number;
+    if (interval <= 0 || interval === Infinity) return;
+    const filter = opts.filter as () => SweepFilterFn | null;
     this.intervals[intervalKey] = setInterval(() => {
-      const sweepFn = opts.filter();
+      const sweepFn = filter();
       if (sweepFn === null) return;
       if (typeof sweepFn !== 'function') throw new TypeError('SWEEP_FILTER_RETURN');
-      (this as any)[sweepKey](sweepFn);
-    }, opts.interval * 1_000).unref();
+      (this as unknown as Record<string, (fn: SweepFilterFn) => number>)[sweepKey](sweepFn);
+    }, interval * 1_000).unref();
   }
 }
 
