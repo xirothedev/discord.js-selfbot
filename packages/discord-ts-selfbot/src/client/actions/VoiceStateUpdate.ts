@@ -10,7 +10,8 @@ class VoiceStateUpdate extends Action {
     if (guild) {
       // Update the state
       const oldState =
-        guild.voiceStates.cache.get(data.user_id)?._clone() ?? new VoiceState(guild, { user_id: data.user_id });
+        guild.voiceStates.cache.get(data.user_id)?._clone() ??
+        new VoiceState(guild.client, guild, { user_id: data.user_id });
 
       const newState = guild.voiceStates._add(data);
 
@@ -32,7 +33,7 @@ class VoiceStateUpdate extends Action {
     } else {
       // Update the state
       const oldState =
-        client.voiceStates.cache.get(data.user_id)?._clone() ?? new VoiceState({ client }, { user_id: data.user_id });
+        client.voiceStates.cache.get(data.user_id)?._clone() ?? new VoiceState(client, null, { user_id: data.user_id });
 
       const newState = client.voiceStates._add(data);
 

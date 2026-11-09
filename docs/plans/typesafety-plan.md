@@ -55,7 +55,7 @@ Current ratchet (2026-11-09): `any` 1,836; casts 551 (`bun tools/typesafety/coun
 - Pilot `Role`: `declare` fields from `RoleEntity`, `_patch(data: PatchOf<'Role'>)`, narrow with `data.x !== undefined`, remove per-field casts, `implements RoleEntity`.
 - Gate: `bun check` (including `schema:check` and the `any`/cast ratchet), `bun test`, `bun fmt:check`, `bun run lint:boundaries`.
 - Report: 116 candidates, 740 fields, 85 assigned-but-undeclared, 96 drift rows across 38 entities. Triage before the remaining structures: see `docs/plans/entity-schema-triage.md`.
-- First follow-up (`User`, `ClientUser`, `GuildMember`): 70 drift rows remain, 82 assigned-but-undeclared, zero drift in the three converted entities.
+- Follow-ups (`User`, `ClientUser`, `GuildMember`, then `VoiceState`, `GuildBoost`, `AutoModerationRule`): 54 drift rows remain, 82 assigned-but-undeclared; the six entities have zero drift except `VoiceState.guild`.
 
 ### Phase 1 — `util` (lowest dependency)
 

@@ -17,6 +17,7 @@ interface EntityConfig {
   extends?: string;
   rawType?: { name: string; from: string };
   patchType?: { type: string; from: string };
+  fieldTypes?: Record<string, string>;
   extraFields?: Array<{ name: string; type: string; kind: FieldKind }>;
 }
 
@@ -96,6 +97,40 @@ const CONFIG: Record<string, EntityConfig> = {
       premiumUsageFlags: 'selfbot',
     },
   },
+  AutoModerationRule: {
+    rawType: { name: 'APIAutoModerationRule', from: 'discord-api-types/v10' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '@discordjs/collection', named: ['Collection'] },
+      {
+        from: '../../../typings',
+        named: [
+          'AutoModerationAction',
+          'AutoModerationRuleEventType',
+          'AutoModerationRuleTriggerType',
+          'AutoModerationTriggerMetadata',
+          'GuildBasedChannel',
+        ],
+      },
+      { from: '../../structures/Guild', named: ['Guild'] },
+      { from: '../../structures/Role', named: ['Role'] },
+    ],
+    fields: { guild: 'relation' },
+    fieldTypes: { exemptRoles: 'Collection<Snowflake, Role>' },
+  },
+  GuildBoost: {
+    rawType: { name: 'SelfbotGuildBoostData', from: './selfbot/guild-boost' },
+    imports: [{ from: 'discord-api-types/v10', named: ['Snowflake'] }],
+    fields: {},
+  },
+  VoiceState: {
+    rawType: { name: 'RawVoiceStateData', from: '../../typings/rawDataTypes' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
+    ],
+    fields: { guild: 'relation' },
+  },
   GuildMember: {
     rawType: { name: 'RawGuildMemberData', from: '../../typings/rawDataTypes' },
     patchType: { type: 'GuildMemberPatch', from: './selfbot/guild-member' },
@@ -114,7 +149,6 @@ const BUILTIN_TYPES = new Set([
   'Array',
   'BigInt',
   'Boolean',
-  'Collection',
   'Date',
   'Error',
   'Function',
@@ -295,23 +329,30 @@ function analyze(name: string, file: string): EntityResult | undefined {
     // The public typings redeclare the classes instead of importing the src
     // classes, so nominal assignability fails even when the printed types are
     // identical. Text equality is the practical identity check across layers.
-    const assignable =
-      prop.typeText === runtimeType ||
-      types.every(type => {
-        try {
-          return isAssignable(type, prop.type);
-        } catch {
-          return false;
-        }
-      });
+    const checkAssignable = (type: ts.Type): boolean => {
+      if (prop.optional && (type.flags & ts.TypeFlags.Undefined) !== 0) return true;
+      if (type.isUnion()) {
+        const members = prop.optional
+          ? type.types.filter(member => (member.flags & ts.TypeFlags.Undefined) === 0)
+          : type.types;
+        return members.every(member => checkAssignable(member));
+      }
+      try {
+        return isAssignable(type, prop.type);
+      } catch {
+        return false;
+      }
+    };
+    const assignable = prop.typeText === runtimeType || types.every(checkAssignable);
+    const override = CONFIG[name]?.fieldTypes?.[prop.name];
     fields.push({
       name: prop.name,
-      type: assignable ? prop.typeText : runtimeType,
+      type: override ?? (assignable ? prop.typeText : runtimeType),
       publicType: prop.typeText,
       runtimeType,
       optional: prop.optional,
     });
-    if (!assignable) {
+    if (!override && !assignable) {
       drift.push({ entity: name, field: prop.name, publicType: prop.typeText, runtimeType });
     }
   }
@@ -502,7 +543,7 @@ function checkFile(path: string, content: string): boolean {
   const current = readFileSync(path, 'utf8');
   // `bun fmt` may wrap long type entries; compare tokens, not line breaks.
   // Formatting itself is enforced separately by `bun fmt:check`.
-  const normalize = (text: string): string => text.replace(/\s+/g, '').replace(/;}/g, '}');
+  const normalize = (text: string): string => text.replace(/\s+/g, '').replace(/[,;]+}/g, '}');
   if (normalize(current) === normalize(content)) return true;
   const actual = current.split('\n');
   const expected = content.split('\n');

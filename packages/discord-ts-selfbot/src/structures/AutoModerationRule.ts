@@ -1,5 +1,17 @@
 import { Collection } from '@discordjs/collection';
+import type { APIAutoModerationRule } from 'discord-api-types/v10';
+import type {
+  AutoModerationActionOptions,
+  AutoModerationRuleEventType,
+  AutoModerationRuleKeywordPresetType,
+  GuildBasedChannel,
+  GuildChannelResolvable,
+  RoleResolvable,
+} from '../../typings';
 import Base from './Base';
+import type { Role } from './Role';
+import type { AutoModerationRuleEntity } from '../types/entities/auto-moderation-rule';
+import type { PatchOf } from '../types/schema';
 import _ConstantsModule from '../util/Constants';
 const {
   AutoModerationRuleKeywordPresetTypes,
@@ -12,8 +24,20 @@ const {
  * Represents an auto moderation rule.
  * @extends {Base}
  */
-class AutoModerationRule extends Base {
-  constructor(client: any, data: any, guild: any) {
+class AutoModerationRule extends Base implements AutoModerationRuleEntity {
+  declare id: AutoModerationRuleEntity['id'];
+  declare guild: AutoModerationRuleEntity['guild'];
+  declare name: AutoModerationRuleEntity['name'];
+  declare creatorId: AutoModerationRuleEntity['creatorId'];
+  declare eventType: AutoModerationRuleEntity['eventType'];
+  declare triggerType: AutoModerationRuleEntity['triggerType'];
+  declare triggerMetadata: AutoModerationRuleEntity['triggerMetadata'];
+  declare actions: AutoModerationRuleEntity['actions'];
+  declare enabled: AutoModerationRuleEntity['enabled'];
+  declare exemptRoles: AutoModerationRuleEntity['exemptRoles'];
+  declare exemptChannels: AutoModerationRuleEntity['exemptChannels'];
+
+  constructor(client: import('../client/Client').default, data: APIAutoModerationRule, guild: import('./Guild').Guild) {
     super(client);
 
     /**
@@ -43,8 +67,8 @@ class AutoModerationRule extends Base {
     this._patch(data);
   }
 
-  _patch(data: any) {
-    if ('name' in data) {
+  _patch(data: PatchOf<'AutoModerationRule'>) {
+    if (data.name !== undefined) {
       /**
        * The name of this auto moderation rule.
        * @type {string}
@@ -52,7 +76,7 @@ class AutoModerationRule extends Base {
       this.name = data.name;
     }
 
-    if ('event_type' in data) {
+    if (data.event_type !== undefined) {
       /**
        * The event type of this auto moderation rule.
        * @type {AutoModerationRuleEventType}
@@ -60,7 +84,7 @@ class AutoModerationRule extends Base {
       this.eventType = AutoModerationRuleEventTypes[data.event_type];
     }
 
-    if ('trigger_metadata' in data) {
+    if (data.trigger_metadata !== undefined) {
       /**
        * Additional data used to determine whether an auto moderation rule should be triggered.
        * @typedef {Object} AutoModerationTriggerMetadata
@@ -82,15 +106,14 @@ class AutoModerationRule extends Base {
       this.triggerMetadata = {
         keywordFilter: data.trigger_metadata.keyword_filter ?? [],
         regexPatterns: data.trigger_metadata.regex_patterns ?? [],
-        presets:
-          data.trigger_metadata.presets?.map((preset: any) => AutoModerationRuleKeywordPresetTypes[preset]) ?? [],
+        presets: data.trigger_metadata.presets?.map(preset => AutoModerationRuleKeywordPresetTypes[preset]) ?? [],
         allowList: data.trigger_metadata.allow_list ?? [],
         mentionTotalLimit: data.trigger_metadata.mention_total_limit ?? null,
         mentionRaidProtectionEnabled: data.trigger_metadata.mention_raid_protection_enabled ?? false,
       };
     }
 
-    if ('actions' in data) {
+    if (data.actions !== undefined) {
       /**
        * An object containing information about an auto moderation rule action.
        * @typedef {Object} AutoModerationAction
@@ -110,17 +133,17 @@ class AutoModerationRule extends Base {
        * The actions of this auto moderation rule.
        * @type {AutoModerationAction[]}
        */
-      this.actions = data.actions.map((action: any) => ({
+      this.actions = data.actions.map(action => ({
         type: AutoModerationActionTypes[action.type],
         metadata: {
-          durationSeconds: action.metadata.duration_seconds ?? null,
-          channelId: action.metadata.channel_id ?? null,
-          customMessage: action.metadata.custom_message ?? null,
+          durationSeconds: action.metadata?.duration_seconds ?? null,
+          channelId: action.metadata?.channel_id ?? null,
+          customMessage: action.metadata?.custom_message ?? null,
         },
       }));
     }
 
-    if ('enabled' in data) {
+    if (data.enabled !== undefined) {
       /**
        * Whether this auto moderation rule is enabled.
        * @type {boolean}
@@ -128,23 +151,27 @@ class AutoModerationRule extends Base {
       this.enabled = data.enabled;
     }
 
-    if ('exempt_roles' in data) {
+    if (data.exempt_roles !== undefined) {
       /**
        * The roles exempt by this auto moderation rule.
        * @type {Collection<Snowflake, Role>}
        */
-      this.exemptRoles = new Collection(
-        data.exempt_roles.map((exemptRole: any) => [exemptRole, this.guild.roles.cache.get(exemptRole)]),
+      this.exemptRoles = new Collection<string, Role>(
+        data.exempt_roles
+          .map(id => [id, this.guild.roles.cache.get(id)] as const)
+          .filter((entry): entry is readonly [string, Role] => entry[1] !== undefined),
       );
     }
 
-    if ('exempt_channels' in data) {
+    if (data.exempt_channels !== undefined) {
       /**
        * The channels exempt by this auto moderation rule.
        * @type {Collection<Snowflake, GuildChannel|ThreadChannel>}
        */
-      this.exemptChannels = new Collection(
-        data.exempt_channels.map((exemptChannel: any) => [exemptChannel, this.guild.channels.cache.get(exemptChannel)]),
+      this.exemptChannels = new Collection<string, GuildBasedChannel>(
+        data.exempt_channels
+          .map(id => [id, this.guild.channels.cache.get(id)] as const)
+          .filter((entry): entry is readonly [string, GuildBasedChannel] => entry[1] !== undefined),
       );
     }
   }
@@ -154,7 +181,7 @@ class AutoModerationRule extends Base {
    * @param {AutoModerationRuleEditOptions} options Options for editing this auto moderation rule
    * @returns {Promise<AutoModerationRule>}
    */
-  edit(options: any) {
+  edit(options: Record<string, unknown>) {
     return this.guild.autoModerationRules.edit(this.id, options);
   }
 
@@ -163,7 +190,7 @@ class AutoModerationRule extends Base {
    * @param {string} [reason] The reason for deleting this auto moderation rule
    * @returns {Promise<void>}
    */
-  delete(reason: any) {
+  delete(reason?: string) {
     return this.guild.autoModerationRules.delete(this.id, reason);
   }
 
@@ -173,7 +200,7 @@ class AutoModerationRule extends Base {
    * @param {string} [reason] The reason for changing the name of this auto moderation rule
    * @returns {Promise<AutoModerationRule>}
    */
-  setName(name: any, reason: any) {
+  setName(name: string, reason?: string) {
     return this.edit({ name, reason });
   }
 
@@ -183,7 +210,7 @@ class AutoModerationRule extends Base {
    * @param {string} [reason] The reason for changing the event type of this auto moderation rule
    * @returns {Promise<AutoModerationRule>}
    */
-  setEventType(eventType: any, reason: any) {
+  setEventType(eventType: AutoModerationRuleEventType, reason?: string) {
     return this.edit({ eventType, reason });
   }
 
@@ -193,7 +220,7 @@ class AutoModerationRule extends Base {
    * @param {string} [reason] The reason for changing the keyword filter of this auto moderation rule
    * @returns {Promise<AutoModerationRule>}
    */
-  setKeywordFilter(keywordFilter: any, reason: any) {
+  setKeywordFilter(keywordFilter: string[], reason?: string) {
     return this.edit({ triggerMetadata: { ...this.triggerMetadata, keywordFilter }, reason });
   }
 
@@ -204,7 +231,7 @@ class AutoModerationRule extends Base {
    * @param {string} [reason] The reason for changing the regular expression patterns of this auto moderation rule
    * @returns {Promise<AutoModerationRule>}
    */
-  setRegexPatterns(regexPatterns: any, reason: any) {
+  setRegexPatterns(regexPatterns: string[], reason?: string) {
     return this.edit({ triggerMetadata: { ...this.triggerMetadata, regexPatterns }, reason });
   }
 
@@ -214,7 +241,7 @@ class AutoModerationRule extends Base {
    * @param {string} [reason] The reason for changing the presets of this auto moderation rule
    * @returns {Promise<AutoModerationRule>}
    */
-  setPresets(presets: any, reason: any) {
+  setPresets(presets: AutoModerationRuleKeywordPresetType[], reason?: string) {
     return this.edit({ triggerMetadata: { ...this.triggerMetadata, presets }, reason });
   }
 
@@ -224,7 +251,7 @@ class AutoModerationRule extends Base {
    * @param {string} [reason] The reason for changing the allow list of this auto moderation rule
    * @returns {Promise<AutoModerationRule>}
    */
-  setAllowList(allowList: any, reason: any) {
+  setAllowList(allowList: string[], reason?: string) {
     return this.edit({ triggerMetadata: { ...this.triggerMetadata, allowList }, reason });
   }
 
@@ -234,7 +261,7 @@ class AutoModerationRule extends Base {
    * @param {string} [reason] The reason for changing the mention total limit of this auto moderation rule
    * @returns {Promise<AutoModerationRule>}
    */
-  setMentionTotalLimit(mentionTotalLimit: any, reason: any) {
+  setMentionTotalLimit(mentionTotalLimit: number, reason?: string) {
     return this.edit({ triggerMetadata: { ...this.triggerMetadata, mentionTotalLimit }, reason });
   }
 
@@ -245,7 +272,7 @@ class AutoModerationRule extends Base {
    * @param {string} [reason] The reason for changing the mention raid protection of this auto moderation rule
    * @returns {Promise<AutoModerationRule>}
    */
-  setMentionRaidProtectionEnabled(mentionRaidProtectionEnabled: any, reason: any) {
+  setMentionRaidProtectionEnabled(mentionRaidProtectionEnabled: boolean, reason?: string) {
     return this.edit({ triggerMetadata: { ...this.triggerMetadata, mentionRaidProtectionEnabled }, reason });
   }
 
@@ -255,7 +282,7 @@ class AutoModerationRule extends Base {
    * @param {string} [reason] The reason for changing the actions of this auto moderation rule
    * @returns {Promise<AutoModerationRule>}
    */
-  setActions(actions: any, reason: any) {
+  setActions(actions: AutoModerationActionOptions[], reason?: string) {
     return this.edit({ actions, reason });
   }
 
@@ -265,7 +292,7 @@ class AutoModerationRule extends Base {
    * @param {string} [reason] The reason for enabling or disabling this auto moderation rule
    * @returns {Promise<AutoModerationRule>}
    */
-  setEnabled(enabled: any = true, reason: any) {
+  setEnabled(enabled: boolean = true, reason?: string) {
     return this.edit({ enabled, reason });
   }
 
@@ -275,7 +302,7 @@ class AutoModerationRule extends Base {
    * @param {string} [reason] The reason for changing the exempt roles of this auto moderation rule
    * @returns {Promise<AutoModerationRule>}
    */
-  setExemptRoles(exemptRoles: any, reason: any) {
+  setExemptRoles(exemptRoles: Collection<string, Role> | RoleResolvable[], reason?: string) {
     return this.edit({ exemptRoles, reason });
   }
 
@@ -286,7 +313,7 @@ class AutoModerationRule extends Base {
    * @param {string} [reason] The reason for changing the exempt channels of this auto moderation rule
    * @returns {Promise<AutoModerationRule>}
    */
-  setExemptChannels(exemptChannels: any, reason: any) {
+  setExemptChannels(exemptChannels: Collection<string, GuildBasedChannel> | GuildChannelResolvable[], reason?: string) {
     return this.edit({ exemptChannels, reason });
   }
 }

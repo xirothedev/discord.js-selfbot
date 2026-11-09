@@ -34,6 +34,6 @@ The wire contract already exists: `discord-api-types` and `typings/rawDataTypes.
 ## Consequences
 
 - `Base`'s index signature is removed at the end of the migration, not per module. Until then, a converted structure is only as strong as its `declare` fields.
-- The first report is 116 candidate classes, 740 fields, 85 assigned-but-undeclared fields, and 96 runtime/public drift rows across 38 entities. Each is triaged in `docs/plans/entity-schema-triage.md`, not ignored. The first follow-up (`User`, `ClientUser`, `GuildMember`) removed 26 rows and left zero drift in those entities. Generic classes (`Collector<K, V>`, `GuildAuditLogs<T>`) need type parameters in their entities and are deferred to their module phase.
+- The first report is 116 candidate classes, 740 fields, 85 assigned-but-undeclared fields, and 96 runtime/public drift rows across 38 entities. Each is triaged in `docs/plans/entity-schema-triage.md`, not ignored. The first follow-up (`User`, `ClientUser`, `GuildMember`) removed 26 rows and left zero drift in those entities. The second pass (`VoiceState`, `GuildBoost`, `AutoModerationRule`) removed 16 more; 54 rows remain. Generic classes (`Collector<K, V>`, `GuildAuditLogs<T>`) need type parameters in their entities and are deferred to their module phase.
 - `bun check` now includes `schema:check` and the `any`/cast ratchet; a hand edit to a generated entity fails the gate.
 - The `as` ratchet is added alongside the `any` ratchet so the cast count can only go down.

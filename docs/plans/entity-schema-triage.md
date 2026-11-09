@@ -2,38 +2,35 @@
 
 Status: working list
 Source: `bun tools/schema/generate.ts --report`
-Snapshot: 2026-11-09, after the `Role`, `User`, `ClientUser`, and `GuildMember` pilots.
+Snapshot: 2026-11-09, after the `Role`, `User`, `ClientUser`, `GuildMember`, `VoiceState`, `GuildBoost`, and `AutoModerationRule` passes.
 
 ## Summary
 
-| Metric                  | Before pilots | After pilots |
-| ----------------------- | ------------- | ------------ |
-| Drift rows              | 96            | 70           |
-| Entities with drift     | 38            | 35           |
-| Assigned but undeclared | 85            | 82           |
-| Fields                  | 740           | 741          |
+| Metric                  | First report | After current pass |
+| ----------------------- | ------------ | ------------------ |
+| Drift rows              | 96           | 54                 |
+| Entities with drift     | 38           | 33                 |
+| Assigned but undeclared | 85           | 82                 |
+| Fields                  | 740          | 741                |
 
-`Role`, `User`, `ClientUser`, and `GuildMember` now have zero drift and zero real casts in their `_patch` paths. The remaining 70 rows fall into four groups.
+The converted entities have zero drift except `VoiceState.guild`, where the public typing says `Guild` and the runtime can be `null` for the global voice-state cache. The remaining 54 rows fall into four groups.
 
-## 1. Untyped `_patch` leftovers (44)
+## 1. Untyped `_patch` leftovers (31)
 
 The structure still takes `Record<string, unknown>`, so the runtime type is `unknown`/`any`. Applying the Phase 0.5 recipe removes these without a public change.
 
-| Entity                                                                        | Fields                                                                                                                                              |
-| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Message`                                                                     | `author`, `content`, `system`, `tts`, `type`, `attachments`, `stickers`, `messageSnapshots`                                                         |
-| `VoiceState`                                                                  | `id`, `channelId`, `serverDeaf`, `serverMute`, `selfDeaf`, `selfMute`, `selfVideo`, `sessionId`, `streaming`, `suppress`, `requestToSpeakTimestamp` |
-| `GuildScheduledEvent`                                                         | `name`, `privacyLevel`, `status`, `entityType`, `entityMetadata`                                                                                    |
-| `AutoModerationRule`                                                          | `exemptRoles`, `exemptChannels`                                                                                                                     |
-| `GuildBoost`                                                                  | `guildId`, `premiumGuildSubscriptionId`, `ended`                                                                                                    |
-| `MessageEmbed` / `WebEmbed`                                                   | `author`, `footer`, `provider`                                                                                                                      |
-| `MessageMentions`                                                             | `roles`, `users`, `crosspostedChannels`                                                                                                             |
-| `Widget`                                                                      | `channels`, `members`                                                                                                                               |
-| `Team`, `StickerPack`, `GuildPreview`, `InviteStageInstance`, `WelcomeScreen` | one `Collection` each                                                                                                                               |
-| `StageInstance`                                                               | `guildScheduledEventId`                                                                                                                             |
-| `GroupDMChannel`                                                              | `ownerId`                                                                                                                                           |
-| `RichPresence`                                                                | `metadata`                                                                                                                                          |
-| `MessagePayload`                                                              | `data`                                                                                                                                              |
+| Entity                                                                        | Rows | Fields                                                                                      |
+| ----------------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------- |
+| `Message`                                                                     | 8    | `author`, `content`, `system`, `tts`, `type`, `attachments`, `stickers`, `messageSnapshots` |
+| `GuildScheduledEvent`                                                         | 5    | `name`, `privacyLevel`, `status`, `entityType`, `entityMetadata`                            |
+| `MessageMentions`                                                             | 3    | `roles`, `users`, `crosspostedChannels`                                                     |
+| `MessageEmbed` / `WebEmbed`                                                   | 4    | `author`, `footer`, `provider`                                                              |
+| `Widget`                                                                      | 2    | `channels`, `members`                                                                       |
+| `Activity`                                                                    | 1    | `emoji`                                                                                     |
+| `MessageButton`                                                               | 1    | `emoji`                                                                                     |
+| `MessagePayload`                                                              | 1    | `data`                                                                                      |
+| `StageInstance`                                                               | 1    | `guildScheduledEventId`                                                                     |
+| `GuildPreview`, `InviteStageInstance`, `StickerPack`, `Team`, `WelcomeScreen` | 5    | one `Collection` each                                                                       |
 
 ## 2. Generic classes (15)
 
@@ -47,16 +44,15 @@ These need type parameters in their entities. Deferred to their module phase, be
 - `ApplicationCommand.permissions` (`ApplicationCommandPermissionsManager<...>`)
 - `BaseGuildTextChannel.threads` (`GuildTextThreadManager<...>`)
 
-## 3. Selfbot-specific (8)
+## 3. Selfbot-specific (5)
 
-| Entity           | Field                                            | Reason                                                     |
-| ---------------- | ------------------------------------------------ | ---------------------------------------------------------- |
-| `DMChannel`      | `messageRequestTimestamp`                        | `is_message_request_timestamp` is absent from `APIChannel` |
-| `GroupDMChannel` | `ownerId`                                        | group-DM user-account shape                                |
-| `GuildBoost`     | `guildId`, `premiumGuildSubscriptionId`, `ended` | premium subscription object                                |
-| `Application`    | `installParams`                                  | user-account application fields                            |
-| `RichPresence`   | `metadata`                                       | selfbot activity metadata                                  |
-| `VoiceState`     | `guild`                                          | fake guild used for DM voice states                        |
+| Entity           | Field                     | Reason                                                     |
+| ---------------- | ------------------------- | ---------------------------------------------------------- |
+| `DMChannel`      | `messageRequestTimestamp` | `is_message_request_timestamp` is absent from `APIChannel` |
+| `GroupDMChannel` | `ownerId`                 | group-DM user-account shape                                |
+| `Application`    | `installParams`           | user-account application fields                            |
+| `RichPresence`   | `metadata`                | selfbot activity metadata                                  |
+| `VoiceState`     | `guild`                   | `null` for the global voice-state cache                    |
 
 These get local raw types under `src/types/selfbot/` and a `selfbot` tag in `EntitySchema`.
 
@@ -68,12 +64,10 @@ These get local raw types under `src/types/selfbot/` and a `selfbot` tag in `Ent
 | `Message`      | `pinned` | `boolean`               | `boolean                      | null`                               | Remove the null fallback or widen the public type                                              |
 | `ThreadMember` | `flags`  | `ThreadMemberFlags`     | `Readonly<ThreadMemberFlags>` | Align the public type to `Readonly` |
 
-`DMChannel.messageRequestTimestamp` is listed under selfbot because the wire field is absent from the bot API, but it also needs a public-type decision (`number` vs `number | null`).
-
 ## Next modules
 
-1. `VoiceState` and `Message` — largest untyped clusters (12 + 8 rows).
-2. `GuildScheduledEvent`, `AutoModerationRule`, `GuildBoost` — finish the untyped cluster.
-3. `GuildAuditLogs` — generic model, needs its own design pass.
-4. `MessageEmbed` / `WebEmbed` — object literals with `any`; model the author/footer/provider shapes.
-5. `Channel` / `ThreadMember` / `DMChannel` — close the public-type fixes.
+1. `Message` — largest untyped cluster (8 rows) and the biggest `any` surface.
+2. `GuildScheduledEvent` — generic `status`; needs a generic entity or a `GuildScheduledEventStatus` field override.
+3. `MessageMentions`, `MessageEmbed`, `WebEmbed`, `Widget` — finish the untyped cluster.
+4. `GuildAuditLogs` — generic model, needs its own design pass.
+5. `Channel` / `ThreadMember` / `DMChannel` — close the public-type and selfbot fixes.

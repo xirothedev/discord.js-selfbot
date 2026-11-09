@@ -575,7 +575,7 @@ class User extends Base implements UserEntity {
       this.client.guilds.cache
         .find((g: import('./Guild').Guild) => g.voiceStates.cache.get(this.id))
         ?.voiceStates.cache.get(this.id) ??
-      new VoiceState({ client: this.client }, { user_id: this.id })
+      new VoiceState(this.client, null, { user_id: this.id })
     );
   }
 

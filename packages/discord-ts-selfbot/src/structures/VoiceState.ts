@@ -1,20 +1,36 @@
 import Base from './Base';
 import _errorsModule from '../errors';
 const { Error, TypeError } = _errorsModule;
+import type { RawVoiceStateData } from '../../typings/rawDataTypes';
+import type { GuildVoiceChannelResolvable } from '../../typings';
+import type Client from '../client/Client';
+import type { Guild } from './Guild';
+import type { VoiceStateEntity } from '../types/entities/voice-state';
+import type { PatchOf } from '../types/schema';
 
 /**
  * Represents the voice state for a Guild Member.
  * @extends {Base}
  */
-class VoiceState extends Base {
-  constructor(
-    guild: { client: import('../client/Client').default } & Record<string, unknown>,
-    data: Record<string, unknown>,
-  ) {
-    super(guild.client);
+class VoiceState extends Base implements VoiceStateEntity {
+  declare channelId: VoiceStateEntity['channelId'];
+  declare guild: VoiceStateEntity['guild'];
+  declare id: VoiceStateEntity['id'];
+  declare selfDeaf: VoiceStateEntity['selfDeaf'];
+  declare selfMute: VoiceStateEntity['selfMute'];
+  declare serverDeaf: VoiceStateEntity['serverDeaf'];
+  declare serverMute: VoiceStateEntity['serverMute'];
+  declare sessionId: VoiceStateEntity['sessionId'];
+  declare streaming: VoiceStateEntity['streaming'];
+  declare selfVideo: VoiceStateEntity['selfVideo'];
+  declare suppress: VoiceStateEntity['suppress'];
+  declare requestToSpeakTimestamp: VoiceStateEntity['requestToSpeakTimestamp'];
+
+  constructor(client: Client, guild: Guild | null, data: Partial<RawVoiceStateData> & { user_id: string }) {
+    super(client);
     /**
      * The guild of this voice state
-     * @type {Guild}
+     * @type {?Guild}
      */
     this.guild = guild;
     /**
@@ -22,11 +38,21 @@ class VoiceState extends Base {
      * @type {Snowflake}
      */
     this.id = data.user_id;
+    this.streaming = false;
+    this.suppress = false;
     this._patch(data);
   }
 
-  _patch(data: Record<string, unknown>) {
-    if ('deaf' in data) {
+  _patch(data: PatchOf<'VoiceState'>) {
+    if (data.user_id !== undefined) {
+      /**
+       * The id of the member of this voice state
+       * @type {Snowflake}
+       */
+      this.id = data.user_id;
+    }
+
+    if (data.deaf !== undefined) {
       /**
        * Whether this member is deafened server-wide
        * @type {?boolean}
@@ -36,7 +62,7 @@ class VoiceState extends Base {
       this.serverDeaf ??= null;
     }
 
-    if ('mute' in data) {
+    if (data.mute !== undefined) {
       /**
        * Whether this member is muted server-wide
        * @type {?boolean}
@@ -46,7 +72,7 @@ class VoiceState extends Base {
       this.serverMute ??= null;
     }
 
-    if ('self_deaf' in data) {
+    if (data.self_deaf !== undefined) {
       /**
        * Whether this member is self-deafened
        * @type {?boolean}
@@ -56,7 +82,7 @@ class VoiceState extends Base {
       this.selfDeaf ??= null;
     }
 
-    if ('self_mute' in data) {
+    if (data.self_mute !== undefined) {
       /**
        * Whether this member is self-muted
        * @type {?boolean}
@@ -66,7 +92,7 @@ class VoiceState extends Base {
       this.selfMute ??= null;
     }
 
-    if ('self_video' in data) {
+    if (data.self_video !== undefined) {
       /**
        * Whether this member's camera is enabled
        * @type {?boolean}
@@ -76,7 +102,7 @@ class VoiceState extends Base {
       this.selfVideo ??= null;
     }
 
-    if ('session_id' in data) {
+    if (data.session_id !== undefined) {
       /**
        * The session id for this member's connection
        * @type {?string}
@@ -86,19 +112,19 @@ class VoiceState extends Base {
       this.sessionId ??= null;
     }
 
-    // The self_stream is property is omitted if false, check for another property
+    // The self_stream property is omitted if false, check another property
     // here to avoid incorrectly clearing this when partial data is specified
-    if ('self_video' in data) {
+    if (data.self_video !== undefined) {
       /**
        * Whether this member is streaming using "Screen Share"
        * @type {boolean}
        */
       this.streaming = data.self_stream ?? false;
     } else {
-      this.streaming ??= null;
+      this.streaming ??= false;
     }
 
-    if ('channel_id' in data) {
+    if (data.channel_id !== undefined) {
       /**
        * The {@link VoiceChannel} or {@link StageChannel} id the member is in
        * @type {?Snowflake}
@@ -108,21 +134,24 @@ class VoiceState extends Base {
       this.channelId ??= null;
     }
 
-    if ('suppress' in data) {
+    if (data.suppress !== undefined) {
       /**
        * Whether this member is suppressed from speaking. This property is specific to stage channels only.
        * @type {boolean}
        */
       this.suppress = data.suppress;
+    } else {
+      this.suppress ??= false;
     }
 
-    if ('request_to_speak_timestamp' in data) {
+    if (data.request_to_speak_timestamp !== undefined) {
       /**
        * The time at which the member requested to speak. This property is specific to stage channels only.
        * @type {?number}
        */
-      this.requestToSpeakTimestamp =
-        data.request_to_speak_timestamp && Date.parse(data.request_to_speak_timestamp as string);
+      this.requestToSpeakTimestamp = data.request_to_speak_timestamp
+        ? Date.parse(data.request_to_speak_timestamp)
+        : null;
     } else {
       this.requestToSpeakTimestamp ??= null;
     }
@@ -136,7 +165,7 @@ class VoiceState extends Base {
    * @readonly
    */
   get member() {
-    if (!this.guild?.id) return null;
+    if (!this.guild) return null;
     return this.guild.members.cache.get(this.id) ?? null;
   }
 
@@ -146,7 +175,7 @@ class VoiceState extends Base {
    * @readonly
    */
   get user() {
-    return this.guild.client.users.cache.get(this.id) ?? null;
+    return this.client.users.cache.get(this.id) ?? null;
   }
 
   /**
@@ -155,7 +184,7 @@ class VoiceState extends Base {
    * @readonly
    */
   get channel() {
-    return (this.guild?.id ? this.guild : this.client)?.channels?.cache.get(this.channelId) ?? null;
+    return (this.guild ?? this.client).channels.cache.get(this.channelId) ?? null;
   }
 
   /**
@@ -183,7 +212,7 @@ class VoiceState extends Base {
    * @returns {Promise<GuildMember>}
    */
   setMute(mute: boolean = true, reason?: string) {
-    if (!this.guild?.id) return null;
+    if (!this.guild) return null;
     return this.guild.members.edit(this.id, { mute }, reason);
   }
 
@@ -194,7 +223,7 @@ class VoiceState extends Base {
    * @returns {Promise<GuildMember>}
    */
   setDeaf(deaf: boolean = true, reason?: string) {
-    if (!this.guild?.id) return null;
+    if (!this.guild) return null;
     return this.guild.members.edit(this.id, { deaf }, reason);
   }
 
@@ -214,8 +243,8 @@ class VoiceState extends Base {
    * @param {string} [reason] Reason for moving member to another channel or disconnecting
    * @returns {Promise<GuildMember>}
    */
-  setChannel(channel: unknown, reason?: string) {
-    if (!this.guild?.id) return null;
+  setChannel(channel: GuildVoiceChannelResolvable | null, reason?: string) {
+    if (!this.guild) return null;
     return this.guild.members.edit(this.id, { channel }, reason);
   }
 
@@ -233,6 +262,7 @@ class VoiceState extends Base {
    */
   async setRequestToSpeak(request: boolean = true) {
     if (this.channel?.type !== 'GUILD_STAGE_VOICE') throw new Error('VOICE_NOT_STAGE_CHANNEL');
+    if (!this.guild) throw new Error('VOICE_GUILD_NOT_FOUND');
 
     if (this.client.user.id !== this.id) throw new Error('VOICE_STATE_NOT_OWN');
 
@@ -263,6 +293,7 @@ class VoiceState extends Base {
    */
   async setSuppressed(suppressed: boolean = true) {
     if (typeof suppressed !== 'boolean') throw new TypeError('VOICE_STATE_INVALID_TYPE', 'suppressed');
+    if (!this.guild) throw new Error('VOICE_GUILD_NOT_FOUND');
 
     if (this.channel?.type !== 'GUILD_STAGE_VOICE') throw new Error('VOICE_NOT_STAGE_CHANNEL');
 
@@ -288,7 +319,8 @@ class VoiceState extends Base {
    * guild.members.me.voice.setStatus()
    * @returns {Promise<void>}
    */
-  setStatus(status: unknown = '') {
+  setStatus(status: string = '') {
+    if (!this.channel) throw new Error('VOICE_CHANNEL_NOT_FOUND');
     // PUT https://discord.com/api/v9/channels/:id/voice-status
     return this.client.api.channels(this.channel.id, 'voice-status').put({
       data: {
@@ -305,7 +337,7 @@ class VoiceState extends Base {
     if (!this.streaming) throw new Error('USER_NOT_STREAMING');
     // URL: https://discord.com/api/v9/streams/guild:guildid:voicechannelid:userid/preview
     // URL: https://discord.com/api/v9/streams/call:channelId:userId/preview
-    const streamKey = this.guild?.id
+    const streamKey = this.guild
       ? `guild:${this.guild.id}:${this.channelId}:${this.id}`
       : `call:${this.channelId}:${this.id}`;
     const data = await this.client.api.streams[encodeURIComponent(streamKey)].preview.get();
@@ -317,8 +349,8 @@ class VoiceState extends Base {
    * @param {string} base64Image Base64 URI (data:image/jpeg;base64,data)
    * @returns {Promise<void>}
    */
-  postPreview(base64Image: unknown) {
-    if (!this.client.user.id === this.id || !this.streaming) throw new Error('USER_NOT_STREAMING');
+  postPreview(base64Image: string) {
+    if (this.client.user.id !== this.id || !this.streaming) throw new Error('USER_NOT_STREAMING');
     // URL: https://discord.com/api/v9/streams/guild:guildid:voicechannelid:userid/preview
     // URL: https://discord.com/api/v9/streams/call:channelId:userId/preview
     const streamKey = this.guild?.id
@@ -337,7 +369,8 @@ class VoiceState extends Base {
    * @returns {Promise<VoiceState>}
    */
   fetch(force: boolean = true) {
-    return this.guild?.voiceStates?.fetch(this.id, { force });
+    if (!this.guild) throw new Error('VOICE_GUILD_NOT_FOUND');
+    return this.guild.voiceStates.fetch(this.id, { force });
   }
 
   toJSON() {

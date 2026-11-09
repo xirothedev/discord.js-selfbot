@@ -215,7 +215,9 @@ class GuildMember extends Base implements GuildMemberEntity {
    * @readonly
    */
   get voice() {
-    return this.guild.voiceStates.cache.get(this.id) ?? new VoiceState(this.guild, { user_id: this.id });
+    return (
+      this.guild.voiceStates.cache.get(this.id) ?? new VoiceState(this.guild.client, this.guild, { user_id: this.id })
+    );
   }
 
   /**

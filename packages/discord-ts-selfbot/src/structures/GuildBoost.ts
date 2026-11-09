@@ -1,31 +1,43 @@
 import Base from './Base';
+import type { GuildResolvable } from '../../typings';
+import type { SelfbotGuildBoostData } from '../types/selfbot/guild-boost';
+import type { GuildBoostEntity } from '../types/entities/guild-boost';
+import type { PatchOf } from '../types/schema';
 
 /**
  * Represents a guild boost in a guild on Discord.
  * @extends {Base}
  */
-class GuildBoost extends Base {
-  constructor(client: any, data: any) {
+class GuildBoost extends Base implements GuildBoostEntity {
+  declare id: GuildBoostEntity['id'];
+  declare guildId: GuildBoostEntity['guildId'];
+  declare subscriptionId: GuildBoostEntity['subscriptionId'];
+  declare premiumGuildSubscriptionId: GuildBoostEntity['premiumGuildSubscriptionId'];
+  declare ended: GuildBoostEntity['ended'];
+  declare canceled: GuildBoostEntity['canceled'];
+  declare cooldownEndsAt: GuildBoostEntity['cooldownEndsAt'];
+
+  constructor(client: import('../client/Client').default, data: SelfbotGuildBoostData) {
     super(client);
     this._patch(data);
   }
 
-  _patch(data: any) {
-    if ('id' in data) {
+  _patch(data: PatchOf<'GuildBoost'>) {
+    if (data.id !== undefined) {
       /**
        * The id of the guild boost
        * @type {Snowflake}
        */
       this.id = data.id;
     }
-    if ('subscription_id' in data) {
+    if (data.subscription_id !== undefined) {
       /**
        * The id of the subscription
        * @type {Snowflake}
        */
       this.subscriptionId = data.subscription_id;
     }
-    if (typeof data.premium_guild_subscription === 'object' && data.premium_guild_subscription !== null) {
+    if (data.premium_guild_subscription) {
       /**
        * The premium guild subscription id
        * @type {?Snowflake}
@@ -42,19 +54,23 @@ class GuildBoost extends Base {
        */
       this.ended = data.premium_guild_subscription.ended;
     }
-    if ('canceled' in data) {
+    if (data.canceled !== undefined) {
       /**
        * Whether the subscription is canceled
        * @type {boolean}
        */
       this.canceled = data.canceled;
+    } else {
+      this.canceled ??= false;
     }
-    if ('cooldown_ends_at' in data) {
+    if (data.cooldown_ends_at) {
       /**
        * The cooldown end date
        * @type {Date}
        */
       this.cooldownEndsAt = new Date(data.cooldown_ends_at);
+    } else {
+      this.cooldownEndsAt ??= new Date(0);
     }
   }
   /**
@@ -62,8 +78,8 @@ class GuildBoost extends Base {
    * @type {?Guild}
    * @readonly
    */
-  get guilld() {
-    return this.client.guilds.cache.get(this.guildId);
+  get guild() {
+    return this.client.guilds.cache.get(this.guildId) ?? null;
   }
 
   /**
@@ -75,9 +91,9 @@ class GuildBoost extends Base {
     if (!this.guildId) throw new Error('BOOST_UNUSED');
     if (!this.premiumGuildSubscriptionId) throw new Error('BOOST_UNCACHED');
     await this.client.api.guilds(this.guildId).premium.subscriptions(this.premiumGuildSubscriptionId).delete();
-    this.guildId = null;
-    this.premiumGuildSubscriptionId = null;
-    this.ended = null;
+    this.guildId = undefined;
+    this.premiumGuildSubscriptionId = undefined;
+    this.ended = undefined;
     return this;
   }
 
@@ -86,7 +102,7 @@ class GuildBoost extends Base {
    * @param {GuildResolvable} guild The guild to use the boost on
    * @returns {Promise<GuildBoost>}
    */
-  async subscribe(guild: any) {
+  async subscribe(guild: GuildResolvable) {
     // https://discord.com/api/v9/guilds/:id/premium/subscriptions
     if (this.guildId || this.premiumGuildSubscriptionId) throw new Error('BOOST_USED');
     const id = this.client.guilds.resolveId(guild);
