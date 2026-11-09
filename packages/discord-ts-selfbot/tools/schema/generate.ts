@@ -258,6 +258,15 @@ const CONFIG: Record<string, EntityConfig> = {
       premiumUsageFlags: 'selfbot',
     },
   },
+  GuildChannel: {
+    rawType: { name: 'RawGuildChannelData', from: '../../typings/rawDataTypes' },
+    imports: [
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
+      { from: '../../managers/PermissionOverwriteManager', default: 'PermissionOverwriteManager' },
+    ],
+    fields: { guild: 'relation' },
+  },
   GuildScheduledEvent: {
     rawType: { name: 'RawGuildScheduledEventData', from: '../../typings/rawDataTypes' },
     imports: [
@@ -888,7 +897,7 @@ if (check) {
 mkdirSync(ENTITIES, { recursive: true });
 let written = 0;
 for (const result of results) {
-  if (!generatedNames.has(result.name) || !result.rawType) continue;
+  if (!generatedNames.has(result.name) || !result.rawType || CONFIG[result.name]?.generate === false) continue;
   writeFileSync(join(ENTITIES, `${kebab(result.name)}.ts`), generateEntity(result));
   written++;
 }

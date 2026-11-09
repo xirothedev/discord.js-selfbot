@@ -5,6 +5,8 @@ import MessageManager from '../managers/MessageManager';
 import _ConstantsModule from '../util/Constants';
 const { VideoQualityModes } = _ConstantsModule;
 import Permissions from '../util/Permissions';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { GuildMember } from './GuildMember';
 
 /**
  * Represents a voice-based guild channel on Discord.
@@ -104,8 +106,8 @@ class BaseGuildVoiceChannel extends GuildChannel {
    * @type {Collection<Snowflake, GuildMember>}
    * @readonly
    */
-  get members() {
-    const coll = new Collection();
+  get members(): Collection<Snowflake, GuildMember> {
+    const coll = new Collection<Snowflake, GuildMember>();
     for (const state of this.guild.voiceStates.cache.values()) {
       if (state.channelId === this.id && state.member) {
         coll.set(state.id, state.member);

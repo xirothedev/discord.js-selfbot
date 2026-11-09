@@ -2,6 +2,7 @@
 // Run `bun run schema:generate` from the package to update.
 
 import type {
+  RawGuildChannelData,
   RawGuildMemberData,
   RawGuildPreviewData,
   RawGuildScheduledEventData,
@@ -23,6 +24,7 @@ import type { GuildMemberPatch } from './selfbot/guild-member';
 import type { AutoModerationRuleEntity } from './entities/auto-moderation-rule';
 import type { ClientUserEntity } from './entities/client-user';
 import type { GuildBoostEntity } from './entities/guild-boost';
+import type { GuildChannelEntity } from './entities/guild-channel';
 import type { GuildMemberEntity } from './entities/guild-member';
 import type { GuildPreviewEntity } from './entities/guild-preview';
 import type { GuildScheduledEventEntity } from './entities/guild-scheduled-event';
@@ -79,6 +81,7 @@ export type EntitySchema = {
     }
   >;
   GuildBoost: EntityEntry<SelfbotGuildBoostData, GuildBoostEntity, Record<never, never>>;
+  GuildChannel: EntityEntry<RawGuildChannelData, GuildChannelEntity, { guild: 'relation' }>;
   GuildMember: EntityEntry<
     RawGuildMemberData,
     GuildMemberEntity,
