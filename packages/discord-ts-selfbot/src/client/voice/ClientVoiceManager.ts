@@ -8,8 +8,17 @@ const { Events } = _ConstantsModule;
  * Manages voice connections for the client
  * Feat: Support both lib & djs/voice
  */
+type VoiceAdapter = {
+  destroy(): void;
+  onVoiceServerUpdate(payload: unknown): void;
+  onVoiceStateUpdate(payload: unknown): void;
+};
+
 class ClientVoiceManager {
-  [key: string]: any;
+  declare client: import('../../client/Client').default;
+  declare connectionFactory: (voiceManager: ClientVoiceManager, channel: unknown) => VoiceConnection;
+  declare connection: VoiceConnection | null;
+  declare adapters: Map<string, VoiceAdapter>;
 
   constructor(client: any, options: any = {}) {
     /**
@@ -120,7 +129,7 @@ class ClientVoiceManager {
 
       if (connection) {
         if (connection.channel.id !== channel.id) {
-          this.connection.updateChannel(channel);
+          connection.updateChannel(channel);
         }
         resolve(connection);
         return;
@@ -128,7 +137,7 @@ class ClientVoiceManager {
         connection = this.connectionFactory(this, channel);
         if (config?.videoCodec) connection.setVideoCodec(config.videoCodec);
         connection.on('debug', (msg: any) =>
-          this.client.emit('debug', `[VOICE (${channel.guild?.id || channel.id}:${connection.status})]: ${msg}`),
+          this.client.emit('debug', `[VOICE (${channel.guild?.id || channel.id}:${connection!.status})]: ${msg}`),
         );
         connection.authenticate({
           self_mute: Boolean(config.selfMute),
