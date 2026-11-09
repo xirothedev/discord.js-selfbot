@@ -12,7 +12,8 @@ import BaseDispatcher from './BaseDispatcher';
  * @extends {BaseDispatcher}
  */
 class VideoDispatcher extends BaseDispatcher {
-  [key: string]: any;
+  declare fps: number;
+  declare mtu: number;
 
   constructor(player: any, highWaterMark = 12, streams: any, fps: any, payloadType: any) {
     super(player, highWaterMark, payloadType, true, streams);

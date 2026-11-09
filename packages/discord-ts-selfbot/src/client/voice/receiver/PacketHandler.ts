@@ -19,9 +19,12 @@ class Readable extends ReadableStream {
 }
 
 class PacketHandler extends EventEmitter {
-  [key: string]: any;
+  declare receiver: import('./Receiver').default;
+  declare streams: Map<string, { stream: Readable; end: string }>;
+  declare videoStreams: Map<string, Recorder>;
+  declare speakingTimeouts: Map<string, NodeJS.Timeout>;
 
-  constructor(receiver: any) {
+  constructor(receiver: import('./Receiver').default) {
     super();
     this.receiver = receiver;
     this.streams = new Map();
@@ -47,16 +50,16 @@ class PacketHandler extends EventEmitter {
     }
   }
 
-  makeStream(user: any, end: any) {
-    if (this.streams.has(user)) return this.streams.get(user).stream;
+  makeStream(user: string, end: string) {
+    if (this.streams.has(user)) return this.streams.get(user)!.stream;
     const stream = new Readable();
     stream.on('end', () => this.streams.delete(user));
     this.streams.set(user, { stream, end });
     return stream;
   }
 
-  makeVideoStream(user: any, output: any) {
-    if (this.videoStreams.has(user)) return this.videoStreams.get(user);
+  makeVideoStream(user: string, output: string) {
+    if (this.videoStreams.has(user)) return this.videoStreams.get(user)!;
     const stream = new Recorder(this, {
       userId: user,
       output,

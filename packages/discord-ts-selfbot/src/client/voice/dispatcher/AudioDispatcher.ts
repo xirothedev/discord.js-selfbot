@@ -23,7 +23,14 @@ const CHANNELS = 2;
  * @extends {BaseDispatcher}
  */
 class AudioDispatcher extends BaseDispatcher {
-  [key: string]: any;
+  declare streamOptions: {
+    seek: number;
+    volume: number;
+    fec: boolean;
+    plp: number;
+    bitrate: number;
+    highWaterMark: number;
+  };
 
   constructor(
     player: any,
@@ -68,7 +75,7 @@ class AudioDispatcher extends BaseDispatcher {
   setBitrate(value: any) {
     if (!value || !this.bitrateEditable) return false;
     const bitrate = value === 'auto' ? this.player.voiceConnection.channel.bitrate : value;
-    this.streams.opus.setBitrate(bitrate * 1000);
+    this.streams.opus!.setBitrate!(bitrate * 1000);
     return true;
   }
 
@@ -79,7 +86,7 @@ class AudioDispatcher extends BaseDispatcher {
    */
   setPLP(value: any) {
     if (!this.bitrateEditable) return false;
-    this.streams.opus.setPLP(value);
+    this.streams.opus!.setPLP!(value);
     return true;
   }
 
@@ -90,7 +97,7 @@ class AudioDispatcher extends BaseDispatcher {
    */
   setFEC(enabled: any) {
     if (!this.bitrateEditable) return false;
-    this.streams.opus.setFEC(enabled);
+    this.streams.opus!.setFEC!(enabled);
     return true;
   }
 
@@ -109,7 +116,7 @@ class AudioDispatcher extends BaseDispatcher {
 
   // Volume
   get volume() {
-    return this.streams.volume ? this.streams.volume.volume : 1;
+    return this.streams.volume ? (this.streams.volume.volume ?? 1) : 1;
   }
 
   setVolume(value: any) {
@@ -121,7 +128,7 @@ class AudioDispatcher extends BaseDispatcher {
      * @param {number} newVolume The new volume of this dispatcher
      */
     this.emit('volumeChange', this.volume, value);
-    this.streams.volume.setVolume(value);
+    this.streams.volume!.setVolume!(value);
     return true;
   }
 

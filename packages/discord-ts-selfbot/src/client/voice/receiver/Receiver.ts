@@ -14,9 +14,10 @@ const { PCMInsertSilence } = _PCMInsertSilenceModule;
  * const opusStream = receiver.createStream(user);
  */
 class VoiceReceiver extends EventEmitter {
-  [key: string]: any;
+  declare connection: import('../VoiceConnection').default;
+  declare packets: PacketHandler;
 
-  constructor(connection: any) {
+  constructor(connection: import('../VoiceConnection').default) {
     super();
     this.connection = connection;
     this.packets = new PacketHandler(this);

@@ -82,9 +82,12 @@ const FFMPEG_H265_ARGUMENTS = (options: any) => [
  * @extends {EventEmitter}
  */
 class MediaPlayer extends EventEmitter {
-  [key: string]: any;
+  declare dispatcher: import('../dispatcher/BaseDispatcher').default | null;
+  declare videoDispatcher: import('../dispatcher/BaseDispatcher').default | null;
+  declare voiceConnection: import('../VoiceConnection').default;
+  declare isScreenSharing: boolean;
 
-  constructor(voiceConnection: any, isScreenSharing: any) {
+  constructor(voiceConnection: import('../VoiceConnection').default, isScreenSharing: boolean) {
     super();
 
     this.dispatcher = null;

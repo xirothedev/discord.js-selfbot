@@ -19,8 +19,6 @@ Please use the @dank074/discord-video-stream library for the best support.
 */
 
 class VP8Dispatcher extends VideoDispatcher {
-  [key: string]: any;
-
   constructor(player: any, highWaterMark = 12, streams: any, fps: any) {
     super(player, highWaterMark, streams, fps, VoiceCodec.getPayloadType('VP8'));
   }

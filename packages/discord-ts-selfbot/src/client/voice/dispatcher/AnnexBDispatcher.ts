@@ -20,8 +20,16 @@ Thanks to mrjvs for discovering how Discord transmits data and the VP8 codec.
 Please use the @dank074/discord-video-stream library for the best support.
 */
 
+type NalFunctions = {
+  splitHeader(frame: Buffer): [Buffer, Buffer];
+};
+
 class AnnexBDispatcher extends VideoDispatcher {
-  [key: string]: any;
+  declare _nalFunctions: NalFunctions;
+
+  makeFragmentationUnitHeader(_isFirstPacket: boolean, _isLastPacket: boolean, _naluHeader: Buffer): Buffer {
+    throw new Error('The makeFragmentationUnitHeader method must be implemented');
+  }
 
   constructor(player: any, highWaterMark = 12, streams: any, fps: any, nalFunctions: any, payloadType: any) {
     super(player, highWaterMark, streams, fps, payloadType);

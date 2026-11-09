@@ -1,4 +1,5 @@
 import { spawn as spawnProcess } from 'child_process';
+import type { ChildProcessWithoutNullStreams } from 'child_process';
 import { createSocket } from 'dgram';
 import { EventEmitter } from 'events';
 import { Buffer } from 'node:buffer';
@@ -17,7 +18,21 @@ const { StreamOutput } = _SocketModule;
  * @extends {EventEmitter}
  */
 class Recorder extends EventEmitter {
-  [key: string]: any;
+  declare receiver: import('./PacketHandler').default;
+  declare spawn: typeof spawnProcess;
+  declare findProcess: typeof findProcessDefault;
+  declare killProcess: typeof killProcessDefault;
+  declare streamOutput: typeof StreamOutput;
+  declare userId: string;
+  declare portUdpH264: number | null;
+  declare portUdpH265: number | null;
+  declare portUdpOpus: number | null;
+  declare promise: Promise<void> | null;
+  declare output: string | Writable;
+  declare ready: boolean;
+  declare socket: import('dgram').Socket;
+  declare outputStream: import('../util/Socket').UnixStream | null;
+  declare stream: ChildProcessWithoutNullStreams | null;
 
   constructor(
     receiver: any,
@@ -119,7 +134,7 @@ class Recorder extends EventEmitter {
       '-y',
       '-f',
       'matroska',
-      isStream ? this.outputStream.url : output,
+      isStream ? this.outputStream!.url : output,
     ]);
 
     /**
@@ -163,6 +178,7 @@ class Recorder extends EventEmitter {
     } else {
       return;
     }
+    if (!port) return;
     this.socket.send(message, 0, message.length, port, '127.0.0.1', callback);
   }
 
@@ -179,6 +195,7 @@ class Recorder extends EventEmitter {
   }
 
   destroy() {
+    if (!this.stream) return;
     const ffmpegPid = this.stream.pid; // But it is ppid ;-;
     const args = this.stream.spawnargs.slice(1).join(' '); // Skip ffmpeg
     this.findProcess('name', 'ffmpeg', true).then((list: any) => {

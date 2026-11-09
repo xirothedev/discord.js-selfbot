@@ -12,9 +12,14 @@ const { Opcodes, VoiceOpcodes } = _ConstantsModule;
  * @private
  */
 class VoiceWebSocket extends EventEmitter {
-  [key: string]: any;
+  declare connection: import('../VoiceConnection').default;
+  declare attempts: number;
+  declare _sequenceNumber: number;
+  declare dead: boolean;
+  declare ws: import('ws').WebSocket | null;
+  declare heartbeatInterval: NodeJS.Timeout | null;
 
-  constructor(connection: any) {
+  constructor(connection: import('../VoiceConnection').default) {
     super();
     /**
      * The Voice Connection that this WebSocket serves
@@ -79,12 +84,13 @@ class VoiceWebSocket extends EventEmitter {
      * The actual WebSocket used to connect to the Voice WebSocket Server.
      * @type {WebSocket}
      */
-    this.ws = WebSocket.create(`wss://${this.connection.authentication.endpoint}/`, { v: 8 });
-    this.emit('debug', `[WS] connecting, ${this.attempts} attempts, ${this.ws.url}`);
-    this.ws.onopen = this.onOpen.bind(this);
-    this.ws.onmessage = this.onMessage.bind(this);
-    this.ws.onclose = this.onClose.bind(this);
-    this.ws.onerror = this.onError.bind(this);
+    const ws = WebSocket.create(`wss://${this.connection.authentication.endpoint}/`, { v: 8 });
+    this.ws = ws;
+    this.emit('debug', `[WS] connecting, ${this.attempts} attempts, ${ws.url}`);
+    ws.onopen = this.onOpen.bind(this);
+    ws.onmessage = this.onMessage.bind(this);
+    ws.onclose = this.onClose.bind(this);
+    ws.onerror = this.onError.bind(this);
   }
 
   /**
@@ -96,7 +102,7 @@ class VoiceWebSocket extends EventEmitter {
     this.emit('debug', `[WS] >> ${data}`);
     return new Promise((resolve, reject) => {
       if (!this.ws || this.ws.readyState !== WebSocket.OPEN) throw new Error('WS_NOT_OPEN', data);
-      this.ws.send(data, null, (error: any) => {
+      this.ws.send(data, {}, (error: any) => {
         if (error) reject(error);
         else resolve(data);
       });

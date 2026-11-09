@@ -14,9 +14,13 @@ import VoiceCodec from '../util/VoiceCodec';
  * @private
  */
 class VoiceConnectionUDPClient extends EventEmitter {
-  [key: string]: any;
+  declare voiceConnection: import('../VoiceConnection').default;
+  declare socket: udp.Socket | null;
+  declare discordAddress: string | null;
+  declare localAddress: string | null;
+  declare localPort: number | null;
 
-  constructor(voiceConnection: any) {
+  constructor(voiceConnection: import('../VoiceConnection').default) {
     super();
 
     /**
@@ -93,7 +97,7 @@ class VoiceConnectionUDPClient extends EventEmitter {
     });
   }
 
-  async createUDPSocket(address: any) {
+  async createUDPSocket(address: string) {
     this.discordAddress = address;
     const socket = (this.socket = udp.createSocket('udp4'));
     socket.on('error', (e: any) => {
@@ -121,8 +125,8 @@ class VoiceConnectionUDPClient extends EventEmitter {
 
       this.emit('debug', `[UDP] Parse local packet: ${packet.address}:${packet.port}`);
 
-      this.localAddress = packet.address;
-      this.localPort = packet.port;
+      this.localAddress = packet.address ?? null;
+      this.localPort = packet.port ?? null;
 
       this.voiceConnection.sockets.ws.sendPacket({
         op: VoiceOpcodes.SELECT_PROTOCOL,

@@ -1,5 +1,6 @@
 import { Buffer } from 'node:buffer';
 import crypto from 'node:crypto';
+import type { CipherGCM } from 'node:crypto';
 import { Writable } from 'node:stream';
 import { setTimeout } from 'node:timers';
 import secretbox from '../util/Secretbox';
@@ -17,8 +18,58 @@ const extensions = [{ id: 5, length: 2, value: 0 }];
 /**
  * @extends {Writable}
  */
+type DispatcherStream = {
+  on(event: string, listener: (...args: unknown[]) => void): unknown;
+  unpipe(destination?: unknown): unknown;
+  pipe(destination: unknown): unknown;
+  pause(): unknown;
+  resume(): unknown;
+  destroy(): unknown;
+  setBitrate?(bitrate: number): unknown;
+  setPLP?(plp: number): unknown;
+  setFEC?(fec: boolean): unknown;
+  setVolume?(volume: number): unknown;
+  volume?: number;
+};
+
+type DispatcherStreams = {
+  input?: DispatcherStream;
+  ffmpeg?: DispatcherStream;
+  opus?: DispatcherStream;
+  volume?: DispatcherStream;
+  video?: DispatcherStream;
+  silence?: DispatcherStream;
+};
+
 class BaseDispatcher extends Writable {
-  [key: string]: any;
+  declare streams: DispatcherStreams;
+  declare player: import('../player/MediaPlayer').default;
+  declare payloadType: number;
+  declare extensionEnabled: boolean;
+  declare _nonce: number;
+  declare _nonceBuffer: Buffer | null;
+  declare pausedSince: number | null;
+  declare _writeCallback: (() => void) | null;
+  declare _pausedTime: number;
+  declare _silentPausedTime: number;
+  declare count: number;
+  declare sequence: number;
+  declare timestamp: number;
+  declare startTime: number;
+  declare _syncDispatcher: BaseDispatcher | null;
+  declare _silence: boolean;
+
+  get TIMESTAMP_INC(): number {
+    return 0;
+  }
+
+  get FRAME_LENGTH(): number {
+    return 0;
+  }
+
+  _codecCallback(_chunk: Buffer): void {
+    throw new Error('The _codecCallback method must be implemented');
+  }
 
   constructor(player: any, highWaterMark = 12, payloadType: any, extensionEnabled: any, streams: any = {}) {
     super({
@@ -150,12 +201,12 @@ class BaseDispatcher extends Writable {
     if (this.paused) return;
     if (this.streams.opus) this.streams.opus.unpipe(this); // Audio
     if (this.streams.video) {
-      this.streams.ffmpeg.pause();
+      this.streams.ffmpeg!.pause();
       this.streams.video.unpipe(this);
     }
     if (this.getTypeDispatcher() === 'audio') {
       if (silence) {
-        this.streams.silence.pipe(this);
+        this.streams.silence!.pipe(this);
         this._silence = true;
       } else {
         this._setSpeaking(0);
@@ -179,7 +230,7 @@ class BaseDispatcher extends Writable {
    * @readonly
    */
   get pausedTime() {
-    return this._silentPausedTime + this._pausedTime + (this.paused ? performance.now() - this.pausedSince : 0);
+    return this._silentPausedTime + this._pausedTime + (this.paused ? performance.now() - this.pausedSince! : 0);
   }
 
   /**
@@ -187,10 +238,10 @@ class BaseDispatcher extends Writable {
    */
   resume() {
     if (!this.pausedSince) return;
-    if (this.getTypeDispatcher() === 'audio') this.streams.silence.unpipe(this);
+    if (this.getTypeDispatcher() === 'audio') this.streams.silence!.unpipe(this);
     if (this.streams.opus) this.streams.opus.pipe(this);
     if (this.streams.video) {
-      this.streams.ffmpeg.resume();
+      this.streams.ffmpeg!.resume();
       this.streams.video.pipe(this);
     }
     if (this._silence) {
@@ -312,16 +363,16 @@ class BaseDispatcher extends Writable {
     if (!this._nonceBuffer) {
       this.resetNonceBuffer();
     }
-    this._nonceBuffer.writeUInt32BE(this._nonce, 0);
+    this._nonceBuffer!.writeUInt32BE(this._nonce, 0);
 
     // 4 extra bytes of padding on the end of the encrypted packet
-    const noncePadding = this._nonceBuffer.slice(0, 4);
+    const noncePadding = this._nonceBuffer!.slice(0, 4);
 
     let encrypted;
 
     switch (mode) {
       case 'aead_aes256_gcm_rtpsize': {
-        const cipher = crypto.createCipheriv('aes-256-gcm', secret_key, this._nonceBuffer);
+        const cipher: CipherGCM = crypto.createCipheriv('aes-256-gcm', secret_key, this._nonceBuffer!);
         cipher.setAAD(additionalData);
 
         encrypted = Buffer.concat([cipher.update(buffer), cipher.final(), cipher.getAuthTag()]);
