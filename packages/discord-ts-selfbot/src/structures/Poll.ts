@@ -6,14 +6,24 @@ import _errorsModule from '../errors';
 const { Error } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
 const { PollLayoutTypes } = _ConstantsModule;
+import type { APIPoll } from 'discord-api-types/v10';
+import type { PollQuestionMedia } from '../../typings';
+import type { Message } from './Message';
 
 /**
  * Represents a Poll
  * @extends {Base}
  */
 class Poll extends Base {
-  [key: string]: any;
-  constructor(client: any, data: any, message: any) {
+  declare message: Message;
+  declare question: PollQuestionMedia;
+  declare answers: Collection<number, import('./PollAnswer').PollAnswer>;
+  declare expiresTimestamp: number;
+  declare allowMultiselect: boolean;
+  declare layoutType: import('../../typings/enums').PollLayoutTypes;
+  declare resultsFinalized: boolean;
+
+  constructor(client: import('../client/Client').default, data: APIPoll, message: Message) {
     super(client);
 
     /**
@@ -36,23 +46,23 @@ class Poll extends Base {
      * @type {PollQuestionMedia}
      */
     this.question = {
-      text: data.question.text,
+      text: data.question.text ?? '',
     };
 
     /**
      * The answers of this poll
      * @type {Collection<number, PollAnswer>}
      */
-    this.answers = data.answers.reduce(
-      (acc: any, answer: any) => acc.set(answer.answer_id, new PollAnswer(this.client, answer, this)),
-      new Collection(),
+    this.answers = data.answers.reduce<Collection<number, import('./PollAnswer').PollAnswer>>(
+      (acc, answer) => acc.set(answer.answer_id, new PollAnswer(this.client, answer, this)),
+      new Collection<number, import('./PollAnswer').PollAnswer>(),
     );
 
     /**
      * The timestamp when this poll expires
      * @type {number}
      */
-    this.expiresTimestamp = Date.parse(data.expiry);
+    this.expiresTimestamp = data.expiry ? Date.parse(data.expiry) : 0;
 
     /**
      * Whether this poll allows multiple answers

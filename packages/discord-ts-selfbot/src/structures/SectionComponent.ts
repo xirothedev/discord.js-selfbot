@@ -1,9 +1,13 @@
 import BaseMessageComponent from './BaseMessageComponent';
 import _ConstantsModule from '../util/Constants';
 const { MessageComponentTypes } = _ConstantsModule;
+import type MessageButton from './MessageButton';
+import type TextDisplayComponent from './TextDisplayComponent';
+import type ThumbnailComponent from './ThumbnailComponent';
 
 class SectionComponent extends BaseMessageComponent {
-  [key: string]: any;
+  declare components: TextDisplayComponent[];
+  declare accessory: MessageButton | ThumbnailComponent | null;
   /**
    * @property {TextDisplayComponent[]} [components] One to three text components
    * @property {ThumbnailComponent|MessageButton} [accessory] A thumbnail or a button component, with a future possibility of adding more compatible components
@@ -38,9 +42,9 @@ class SectionComponent extends BaseMessageComponent {
    */
   toJSON() {
     return {
-      type: MessageComponentTypes[this.type],
+      type: MessageComponentTypes[this.type!],
       components: this.components.map((c: any) => c.toJSON()),
-      accessory: this.accessory.toJSON(),
+      accessory: this.accessory?.toJSON(),
     };
   }
 }

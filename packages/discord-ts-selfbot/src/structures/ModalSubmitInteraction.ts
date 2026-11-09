@@ -3,7 +3,10 @@ import InteractionWebhook from './InteractionWebhook';
 import ModalSubmitFieldsResolver from './ModalSubmitFieldsResolver';
 import InteractionResponses from './interfaces/InteractionResponses';
 import _ConstantsModule from '../util/Constants';
-import type { CacheType } from '../../typings';
+import type { APIMessage } from 'discord-api-types/v10';
+import type { CacheType, PartialModalActionRow, PartialTextInputData } from '../../typings';
+import type { RawModalSubmitInteractionData } from '../../typings/rawDataTypes';
+import type { Message } from './Message';
 const { MessageComponentTypes } = _ConstantsModule;
 
 /**
@@ -12,8 +15,16 @@ const { MessageComponentTypes } = _ConstantsModule;
  * @implements {InteractionResponses}
  */
 class ModalSubmitInteraction<Cached extends CacheType = CacheType> extends Interaction<Cached> {
-  [key: string]: any;
-  constructor(client: any, data: any) {
+  declare customId: string;
+  declare components: PartialModalActionRow[];
+  declare deferred: boolean;
+  declare ephemeral: boolean | null;
+  declare message: Message | APIMessage | null;
+  declare fields: ModalSubmitFieldsResolver;
+  declare replied: boolean;
+  declare webhook: InteractionWebhook;
+
+  constructor(client: import('../client/Client').default, data: RawModalSubmitInteractionData) {
     super(client, data);
 
     /**
@@ -87,7 +98,9 @@ class ModalSubmitInteraction<Cached extends CacheType = CacheType> extends Inter
    * @param {*} rawComponent The data to transform
    * @returns {PartialTextInputData[]}
    */
-  static transformComponent(rawComponent: any) {
+  static transformComponent(rawComponent: {
+    components: { value: string; type: number; custom_id: string }[];
+  }): PartialTextInputData[] {
     return rawComponent.components.map((c: any) => ({
       value: c.value,
       type: MessageComponentTypes[c.type],

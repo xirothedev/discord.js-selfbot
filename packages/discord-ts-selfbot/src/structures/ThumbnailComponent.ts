@@ -4,7 +4,9 @@ import _ConstantsModule from '../util/Constants';
 const { MessageComponentTypes } = _ConstantsModule;
 
 class ThumbnailComponent extends BaseMessageComponent {
-  [key: string]: any;
+  declare media: UnfurledMediaItem;
+  declare description: string | null;
+  declare spoiler: boolean;
   /**
    * @property {UnfurledMediaItem} [media] A url or attachment
    * @property {String} [description] Alt text for the media, max 1024 characters
@@ -46,7 +48,7 @@ class ThumbnailComponent extends BaseMessageComponent {
    */
   toJSON() {
     return {
-      type: MessageComponentTypes[this.type],
+      type: MessageComponentTypes[this.type!],
       media: this.media.toJSON(),
       description: this.description,
       spoiler: this.spoiler,

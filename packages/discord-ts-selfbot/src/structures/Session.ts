@@ -1,4 +1,11 @@
 import Base from './Base';
+import type { SessionClientInfo } from '../../typings';
+
+type RawSessionData = {
+  id_hash?: string;
+  approx_last_used_time?: string;
+  client_info?: SessionClientInfo;
+};
 
 /**
  * @typedef {Object} SessionClientInfo
@@ -12,13 +19,16 @@ import Base from './Base';
  * @extends {Base}
  */
 class Session extends Base {
-  [key: string]: any;
-  constructor(client: any, data: any) {
+  declare id?: string;
+  declare approxLastUsedTime: string;
+  declare clientInfo?: SessionClientInfo;
+
+  constructor(client: import('../client/Client').default, data: RawSessionData) {
     super(client);
     this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: RawSessionData) {
     if ('id_hash' in data) {
       /**
        * The session hash id
@@ -31,7 +41,7 @@ class Session extends Base {
        * The approximate last used time
        * @type {string}
        */
-      this.approxLastUsedTime = data.approx_last_used_time;
+      this.approxLastUsedTime = data.approx_last_used_time!;
     }
     if ('client_info' in data) {
       /**

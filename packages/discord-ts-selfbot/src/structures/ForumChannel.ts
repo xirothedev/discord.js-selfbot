@@ -7,6 +7,7 @@ const { ForumLayoutTypes } = _ConstantsModule;
  * @extends {ThreadOnlyChannel}
  */
 class ForumChannel extends ThreadOnlyChannel {
+  declare defaultForumLayout: import('../../typings/enums').ForumLayoutTypes;
   _patch(data: any) {
     super._patch(data);
     /**
@@ -22,7 +23,7 @@ class ForumChannel extends ThreadOnlyChannel {
    * @param {string} [reason] Reason for changing the default forum layout
    * @returns {Promise<ForumChannel>}
    */
-  setDefaultForumLayout(defaultForumLayout: any, reason: any) {
+  setDefaultForumLayout(defaultForumLayout: import('../../typings/enums').ForumLayoutTypes, reason?: string) {
     return this.edit({ defaultForumLayout }, reason);
   }
 }

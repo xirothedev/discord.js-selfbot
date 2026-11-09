@@ -1,13 +1,19 @@
 import _ConstantsModule from '../util/Constants';
 const { ApplicationRoleConnectionMetadataTypes } = _ConstantsModule;
+import type { APIApplicationRoleConnectionMetadata, LocalizationMap } from 'discord-api-types/v10';
 
 /**
  * Role connection metadata object for an application.
  */
 class ApplicationRoleConnectionMetadata {
-  [key: string]: any;
+  declare name: string;
+  declare nameLocalizations: LocalizationMap | null;
+  declare description: string;
+  declare descriptionLocalizations: LocalizationMap | null;
+  declare key: string;
+  declare type: import('../../typings/enums').ApplicationRoleConnectionMetadataTypes;
 
-  constructor(data: any) {
+  constructor(data: APIApplicationRoleConnectionMetadata) {
     /**
      * The name of this metadata field
      * @type {string}

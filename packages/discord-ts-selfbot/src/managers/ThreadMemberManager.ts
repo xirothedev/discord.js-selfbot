@@ -94,7 +94,7 @@ class ThreadMemberManager extends CachedManager {
    * @param {string} [reason] The reason for adding this member
    * @returns {Promise<Snowflake>}
    */
-  async add(member: any, reason: any) {
+  async add(member: any, reason?: string) {
     const id = member === '@me' ? member : this.client.users.resolveId(member);
     if (!id) throw new TypeError('INVALID_TYPE', 'member', 'UserResolvable');
     await this.client.api.channels(this.thread.id, 'thread-members', id).put({ reason });
@@ -107,7 +107,7 @@ class ThreadMemberManager extends CachedManager {
    * @param {string} [reason] The reason for removing this member from the thread
    * @returns {Promise<Snowflake>}
    */
-  async remove(id: any, reason: any) {
+  async remove(id: any, reason?: string) {
     await this.client.api.channels(this.thread.id, 'thread-members', id).delete({ reason });
     return id;
   }

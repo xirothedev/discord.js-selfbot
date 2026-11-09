@@ -8,7 +8,13 @@ import Util from '../util/Util';
  * @extends {BaseMessageComponent}
  */
 class MessageSelectMenu extends BaseMessageComponent {
-  [key: string]: any;
+  declare channelTypes: import('../../typings/enums').ChannelTypes[];
+  declare customId: string | null;
+  declare disabled: boolean;
+  declare maxValues: number | null;
+  declare minValues: number | null;
+  declare options: import('../../typings').MessageSelectOption[];
+  declare placeholder: string | null;
   /**
    * @typedef {BaseMessageComponentOptions} MessageSelectMenuOptions
    * @property {string} [customId] A unique string to be sent in the interaction when clicked

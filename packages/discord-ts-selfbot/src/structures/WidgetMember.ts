@@ -1,18 +1,41 @@
 import Base from './Base';
+import type { PresenceStatus, WidgetActivity } from '../../typings';
+import type { RawWidgetMemberData } from '../../typings/rawDataTypes';
+
+type RawWidgetMemberSource = RawWidgetMemberData & {
+  deaf?: boolean;
+  mute?: boolean;
+  self_deaf?: boolean;
+  self_mute?: boolean;
+  suppress?: boolean;
+  channel_id?: string;
+};
 
 /**
  * Represents a WidgetMember.
  * @extends {Base}
  */
 class WidgetMember extends Base {
-  [key: string]: any;
+  declare id: string;
+  declare username: string;
+  declare discriminator: string;
+  declare avatar: string | null;
+  declare status: PresenceStatus;
+  declare deaf: boolean | null;
+  declare mute: boolean | null;
+  declare selfDeaf: boolean | null;
+  declare selfMute: boolean | null;
+  declare suppress: boolean | null;
+  declare channelId: string | null;
+  declare avatarURL: string;
+  declare activity: WidgetActivity | null;
   /**
    * Activity sent in a {@link WidgetMember}.
    * @typedef {Object} WidgetActivity
    * @property {string} name The name of the activity
    */
 
-  constructor(client: any, data: any) {
+  constructor(client: import('../client/Client').default, data: RawWidgetMemberSource) {
     super(client);
 
     /**

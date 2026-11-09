@@ -1,12 +1,26 @@
 import _EmojiModule from './Emoji';
 const { Emoji } = _EmojiModule;
+import type {
+  GatewayVoiceChannelEffectSendDispatchData,
+  Snowflake,
+  VoiceChannelEffectSendAnimationType,
+} from 'discord-api-types/v10';
+import type { Guild } from './Guild';
 
 /**
  * Represents an effect used in a {@link VoiceChannel}.
  */
 class VoiceChannelEffect {
-  [key: string]: any;
-  constructor(data: any, guild: any) {
+  declare guild: Guild;
+  declare channelId: Snowflake;
+  declare userId: Snowflake;
+  declare emoji: import('./Emoji').Emoji | null;
+  declare animationType: VoiceChannelEffectSendAnimationType | null;
+  declare animationId: number | null;
+  declare soundId: Snowflake | number | null;
+  declare soundVolume: number | null;
+
+  constructor(data: GatewayVoiceChannelEffectSendDispatchData, guild: Guild) {
     /**
      * The guild where the effect was sent from.
      * @type {Guild}

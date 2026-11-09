@@ -4,13 +4,15 @@ import _errorsModule from '../errors';
 const { TypeError } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
 const { MessageComponentTypes, Events } = _ConstantsModule;
+import type { MessageComponentOptions, MessageComponentType } from '../../typings';
 
 /**
  * Represents an interactive component of a Message or Modal. It should not be necessary to construct this directly.
  * See {@link MessageComponent}
  */
 class BaseMessageComponent {
-  [key: string]: any;
+  declare type: MessageComponentType | null;
+  declare data: MessageComponentOptions & { id?: number };
 
   /**
    * Options for a BaseMessageComponent
@@ -70,7 +72,7 @@ class BaseMessageComponent {
    * @readonly
    */
   get id() {
-    return this.data.id;
+    return this.data.id!;
   }
 
   /**

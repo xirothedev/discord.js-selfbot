@@ -1,8 +1,25 @@
 import type { Snowflake } from 'discord-api-types/v10';
+import { Collection } from '@discordjs/collection';
 import Collector from './interfaces/Collector';
-import type { Message, MessageCollectorOptions } from '../../typings';
+import type { CollectorOptions } from '../../typings';
+import type TextBasedChannel from './interfaces/TextBasedChannel';
+import type { Guild } from './Guild';
+import type GuildChannel from './GuildChannel';
+import type { Message } from './Message';
+import type ThreadChannel from './ThreadChannel';
 import _ConstantsModule from '../util/Constants';
 const { Events } = _ConstantsModule;
+
+/**
+ * The source shape of {@link MessageCollectorOptions}.
+ *
+ * The public options use the public `Message` class; the source collector
+ * operates on the concrete class instead.
+ */
+export type MessageCollectorSourceOptions = CollectorOptions<[Message]> & {
+  max?: number;
+  maxProcessed?: number;
+};
 
 /**
  * @typedef {CollectorOptions} MessageCollectorOptions
@@ -18,14 +35,16 @@ const { Events } = _ConstantsModule;
  * @extends {Collector}
  */
 class MessageCollector extends Collector<Snowflake, Message> {
-  declare options: MessageCollectorOptions;
-  [key: string]: any;
+  declare options: MessageCollectorSourceOptions;
+  declare channel: TextBasedChannel;
+  declare received: number;
+
   /**
    * @param {TextBasedChannels} channel The channel
    * @param {MessageCollectorOptions} options The options to be applied to this collector
    * @emits MessageCollector#message
    */
-  constructor(channel: any, options: any = {}) {
+  constructor(channel: TextBasedChannel, options: MessageCollectorSourceOptions = {}) {
     super(channel.client, options);
 
     /**
@@ -40,7 +59,7 @@ class MessageCollector extends Collector<Snowflake, Message> {
      */
     this.received = 0;
 
-    const bulkDeleteListener = (messages: any) => {
+    const bulkDeleteListener = (messages: Collection<Snowflake, Message>) => {
       for (const message of messages.values()) this.handleDispose(message);
     };
 
@@ -73,7 +92,7 @@ class MessageCollector extends Collector<Snowflake, Message> {
    * @returns {?Snowflake}
    * @private
    */
-  collect(message: any) {
+  collect(message: Message): Snowflake | null {
     /**
      * Emitted whenever a message is collected.
      * @event MessageCollector#collect
@@ -89,7 +108,7 @@ class MessageCollector extends Collector<Snowflake, Message> {
    * @param {Message} message The message that could be disposed of
    * @returns {?Snowflake}
    */
-  dispose(message: any) {
+  dispose(message: Message): Snowflake | null {
     /**
      * Emitted whenever a message is disposed of.
      * @event MessageCollector#dispose
@@ -103,7 +122,7 @@ class MessageCollector extends Collector<Snowflake, Message> {
    * @type {?string}
    * @readonly
    */
-  get endReason() {
+  get endReason(): string | null {
     if (this.options.max && this.collected.size >= this.options.max) return 'limit';
     if (this.options.maxProcessed && this.received === this.options.maxProcessed) return 'processedLimit';
     return null;
@@ -115,8 +134,8 @@ class MessageCollector extends Collector<Snowflake, Message> {
    * @param {GuildChannel} channel The channel that was deleted
    * @returns {void}
    */
-  _handleChannelDeletion(channel: any) {
-    if (channel.id === this.channel.id || channel.id === this.channel.parentId) {
+  _handleChannelDeletion(channel: GuildChannel) {
+    if (channel.id === this.channel.id || ('parentId' in this.channel && channel.id === this.channel.parentId)) {
       this.stop('channelDelete');
     }
   }
@@ -127,7 +146,7 @@ class MessageCollector extends Collector<Snowflake, Message> {
    * @param {ThreadChannel} thread The thread that was deleted
    * @returns {void}
    */
-  _handleThreadDeletion(thread: any) {
+  _handleThreadDeletion(thread: ThreadChannel) {
     if (thread.id === this.channel.id) {
       this.stop('threadDelete');
     }
@@ -139,8 +158,8 @@ class MessageCollector extends Collector<Snowflake, Message> {
    * @param {Guild} guild The guild that was deleted
    * @returns {void}
    */
-  _handleGuildDeletion(guild: any) {
-    if (guild.id === this.channel.guild?.id) {
+  _handleGuildDeletion(guild: Guild) {
+    if ('guild' in this.channel && guild.id === this.channel.guild?.id) {
       this.stop('guildDelete');
     }
   }

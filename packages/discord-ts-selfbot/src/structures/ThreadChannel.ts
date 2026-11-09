@@ -9,6 +9,15 @@ import ChannelFlags from '../util/ChannelFlags';
 import Permissions from '../util/Permissions';
 import _UtilModule from '../util/Util';
 const { resolveAutoArchiveMaxLimit } = _UtilModule;
+import type { Snowflake } from 'discord-api-types/v10';
+import type { ThreadAutoArchiveDuration } from '../../typings';
+import type { RawThreadChannelData } from '../../typings/rawDataTypes';
+
+type RawThreadChannelSource = RawThreadChannelData & {
+  owner_id?: Snowflake;
+  guild_id?: Snowflake;
+};
+import type { Guild } from './Guild';
 
 /**
  * Represents a thread channel on Discord.
@@ -16,8 +25,28 @@ const { resolveAutoArchiveMaxLimit } = _UtilModule;
  * @implements {TextBasedChannel}
  */
 class ThreadChannel extends Channel {
-  [key: string]: any;
-  constructor(guild: any, data: any, client: any) {
+  declare guild: Guild;
+  declare ownerId: Snowflake;
+  declare guildId: Snowflake;
+  declare messages: MessageManager;
+  declare members: ThreadMemberManager;
+  declare name: string;
+  declare parentId: Snowflake | null;
+  declare locked: boolean | null;
+  declare invitable: boolean | null;
+  declare archived: boolean | null;
+  declare autoArchiveDuration: ThreadAutoArchiveDuration | null;
+  declare archiveTimestamp: number | null;
+  declare _createdTimestamp: number | null;
+  declare lastMessageId: Snowflake | null;
+  declare lastPinTimestamp: number | null;
+  declare rateLimitPerUser: number | null;
+  declare messageCount: number | null;
+  declare memberCount: number | null;
+  declare totalMessageSent: number | null;
+  declare appliedTags: Snowflake[];
+
+  constructor(guild: Guild, data: RawThreadChannelSource, client?: import('../client/Client').default) {
     super(guild?.client ?? client, data, false);
 
     /**
@@ -30,13 +59,13 @@ class ThreadChannel extends Channel {
      * The id of the member who created this thread
      * @type {Snowflake}
      */
-    this.ownerId = data.owner_id;
+    this.ownerId = data.owner_id!;
 
     /**
      * The id of the guild the channel is in
      * @type {Snowflake}
      */
-    this.guildId = guild?.id ?? data.guild_id;
+    this.guildId = guild.id ?? data.guild_id!;
 
     /**
      * A manager of the messages sent to this thread
@@ -240,8 +269,8 @@ class ThreadChannel extends Channel {
    * @type {?Date}
    * @readonly
    */
-  get createdAt() {
-    return this.createdTimestamp && new Date(this.createdTimestamp);
+  get createdAt(): Date | null {
+    return this.createdTimestamp === null ? null : new Date(this.createdTimestamp);
   }
 
   /**

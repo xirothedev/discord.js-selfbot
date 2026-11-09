@@ -6,7 +6,6 @@ import type { CacheType } from '../../typings';
  * @extends {ContextMenuInteraction}
  */
 class MessageContextMenuInteraction<Cached extends CacheType = CacheType> extends ContextMenuInteraction<Cached> {
-  [key: string]: any;
   /**
    * The message this interaction was sent from
    * @type {Message|APIMessage}

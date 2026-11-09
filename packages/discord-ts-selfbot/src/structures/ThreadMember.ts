@@ -1,13 +1,22 @@
 import Base from './Base';
 import ThreadMemberFlags from '../util/ThreadMemberFlags';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { RawThreadMemberData } from '../../typings/rawDataTypes';
+import type { GuildMember } from './GuildMember';
+import type ThreadChannel from './ThreadChannel';
 
 /**
  * Represents a Member for a Thread.
  * @extends {Base}
  */
 class ThreadMember extends Base {
-  [key: string]: any;
-  constructor(thread: any, data: any, extra: any = {}) {
+  declare thread: ThreadChannel;
+  declare joinedTimestamp: number | null;
+  declare id: Snowflake;
+  declare flags: Readonly<ThreadMemberFlags>;
+  declare member: GuildMember | null;
+
+  constructor(thread: ThreadChannel, data?: RawThreadMemberData, extra: { cache?: boolean } = {}) {
     super(thread.client);
 
     /**
@@ -26,12 +35,12 @@ class ThreadMember extends Base {
      * The id of the thread member
      * @type {Snowflake}
      */
-    this.id = data.user_id;
+    this.id = data?.user_id ?? this.client.user!.id;
 
-    this._patch(data, extra);
+    if (data) this._patch(data, extra);
   }
 
-  _patch(data: any, extra: any = {}) {
+  _patch(data: RawThreadMemberData, extra: { cache?: boolean } = {}) {
     if ('join_timestamp' in data) this.joinedTimestamp = new Date(data.join_timestamp).getTime();
 
     if ('flags' in data) {
@@ -95,7 +104,7 @@ class ThreadMember extends Base {
    * @param {string} [reason] Reason for removing the member
    * @returns {ThreadMember}
    */
-  async remove(reason: any) {
+  async remove(reason?: string) {
     await this.thread.members.remove(this.id, reason);
     return this;
   }

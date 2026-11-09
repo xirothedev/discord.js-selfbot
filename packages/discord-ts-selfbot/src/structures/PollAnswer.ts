@@ -1,14 +1,23 @@
 import Base from './Base';
 import _EmojiModule from './Emoji';
 const { Emoji } = _EmojiModule;
+import type { APIPartialEmoji } from 'discord-api-types/v10';
+import type { APIPollAnswer } from 'discord-api-types/v10';
+import type { BaseFetchPollAnswerVotersOptions } from '../../typings';
+import type { Poll } from './Poll';
 
 /**
  * Represents an answer to a {@link Poll}
  * @extends {Base}
  */
 class PollAnswer extends Base {
-  [key: string]: any;
-  constructor(client: any, data: any, poll: any) {
+  declare poll: Poll;
+  declare id: number;
+  declare text: string | null;
+  declare _emoji: APIPartialEmoji | null;
+  declare voteCount: number;
+
+  constructor(client: import('../client/Client').default, data: APIPollAnswer & { count?: number }, poll: Poll) {
     super(client);
 
     /**
@@ -42,14 +51,14 @@ class PollAnswer extends Base {
     this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: APIPollAnswer & { count?: number }) {
     // This `count` field comes from `poll.results.answer_counts`
     if ('count' in data) {
       /**
        * The amount of votes this answer has
        * @type {number}
        */
-      this.voteCount = data.count;
+      this.voteCount = data.count ?? 0;
     } else {
       this.voteCount ??= 0;
     }
@@ -75,7 +84,7 @@ class PollAnswer extends Base {
    * @param {FetchPollVotersOptions} [options={}] The options for fetching voters
    * @returns {Promise<Collection<Snowflake, User>>}
    */
-  fetchVoters({ after, limit }: any = {}) {
+  fetchVoters({ after, limit }: BaseFetchPollAnswerVotersOptions = {}) {
     return this.poll.message.channel.messages.fetchPollAnswerVoters({
       messageId: this.poll.message.id,
       answerId: this.id,

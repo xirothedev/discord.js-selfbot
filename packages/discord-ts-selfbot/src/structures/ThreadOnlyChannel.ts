@@ -1,6 +1,15 @@
 import GuildChannel from './GuildChannel';
 import TextBasedChannel from './interfaces/TextBasedChannel';
 import GuildForumThreadManager from '../managers/GuildForumThreadManager';
+import type {
+  CreateInviteOptions,
+  DefaultReactionEmoji,
+  GuildForumTag,
+  GuildForumTagData,
+  ThreadAutoArchiveDuration,
+} from '../../typings';
+import type { RawGuildChannelData } from '../../typings/rawDataTypes';
+import type { Guild } from './Guild';
 import _ConstantsModule from '../util/Constants';
 const { SortOrderTypes } = _ConstantsModule;
 import _UtilModule from '../util/Util';
@@ -43,8 +52,17 @@ const { transformAPIGuildForumTag, transformAPIGuildDefaultReaction } = _UtilMod
  * @abstract
  */
 class ThreadOnlyChannel extends GuildChannel {
-  [key: string]: any;
-  constructor(guild: any, data: any, client: any) {
+  declare threads: GuildForumThreadManager;
+  declare availableTags: GuildForumTag[];
+  declare defaultReactionEmoji: DefaultReactionEmoji | null;
+  declare defaultThreadRateLimitPerUser: number | null;
+  declare rateLimitPerUser: number | null;
+  declare defaultAutoArchiveDuration: ThreadAutoArchiveDuration | null;
+  declare nsfw: boolean;
+  declare topic: string | null;
+  declare defaultSortOrder: import('../../typings/enums').SortOrderTypes | null;
+
+  constructor(guild: Guild, data: RawGuildChannelData, client?: import('../client/Client').default) {
     super(guild, data, client, false);
 
     /**
@@ -144,7 +162,7 @@ class ThreadOnlyChannel extends GuildChannel {
    * @param {string} [reason] Reason for changing the available tags
    * @returns {Promise<this>}
    */
-  setAvailableTags(availableTags: any, reason: any) {
+  setAvailableTags(availableTags: GuildForumTagData[], reason?: string) {
     return this.edit({ availableTags }, reason);
   }
 
@@ -154,8 +172,8 @@ class ThreadOnlyChannel extends GuildChannel {
    * @param {string} [reason] Reason for changing the default reaction emoji
    * @returns {Promise<this>}
    */
-  setDefaultReactionEmoji(defaultReactionEmoji: any, reason: any) {
-    return this.edit({ defaultReactionEmoji }, reason);
+  setDefaultReactionEmoji(defaultReactionEmoji: DefaultReactionEmoji | null, reason?: string) {
+    return this.edit({ defaultReactionEmoji: defaultReactionEmoji ?? undefined }, reason);
   }
 
   /**
@@ -164,7 +182,7 @@ class ThreadOnlyChannel extends GuildChannel {
    * @param {string} [reason] Reason for changing the default rate limit
    * @returns {Promise<this>}
    */
-  setDefaultThreadRateLimitPerUser(defaultThreadRateLimitPerUser: any, reason: any) {
+  setDefaultThreadRateLimitPerUser(defaultThreadRateLimitPerUser: number, reason?: string) {
     return this.edit({ defaultThreadRateLimitPerUser }, reason);
   }
 
@@ -174,7 +192,7 @@ class ThreadOnlyChannel extends GuildChannel {
    * @param {string} [reason] Reason for changing the default sort order
    * @returns {Promise<this>}
    */
-  setDefaultSortOrder(defaultSortOrder: any, reason: any) {
+  setDefaultSortOrder(defaultSortOrder: import('../../typings/enums').SortOrderTypes | null, reason?: string) {
     return this.edit({ defaultSortOrder }, reason);
   }
 
@@ -188,7 +206,7 @@ class ThreadOnlyChannel extends GuildChannel {
    *   .then(invite => console.log(`Created an invite with a code of ${invite.code}`))
    *   .catch(console.error);
    */
-  createInvite(options: any) {
+  createInvite(options?: CreateInviteOptions) {
     return this.guild.invites.create(this.id, options);
   }
 
@@ -198,7 +216,7 @@ class ThreadOnlyChannel extends GuildChannel {
    * @param {boolean} [cache=true] Whether or not to cache the fetched invites
    * @returns {Promise<Collection<string, Invite>>}
    */
-  fetchInvites(cache: any = true) {
+  fetchInvites(cache = true) {
     return this.guild.invites.fetch({ channelId: this.id, cache });
   }
 
@@ -208,7 +226,7 @@ class ThreadOnlyChannel extends GuildChannel {
    * @param {string} [reason] Reason for changing the channel's default auto archive duration
    * @returns {Promise<this>}
    */
-  setDefaultAutoArchiveDuration(defaultAutoArchiveDuration: any, reason: any) {
+  setDefaultAutoArchiveDuration(defaultAutoArchiveDuration: ThreadAutoArchiveDuration, reason?: string) {
     return this.edit({ defaultAutoArchiveDuration }, reason);
   }
 

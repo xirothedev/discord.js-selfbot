@@ -74,7 +74,7 @@ class Channel extends Base implements ChannelEntity {
    * @type {number}
    * @readonly
    */
-  get createdTimestamp() {
+  get createdTimestamp(): number | null {
     return SnowflakeUtil.timestampFrom(this.id);
   }
 
@@ -83,8 +83,9 @@ class Channel extends Base implements ChannelEntity {
    * @type {Date}
    * @readonly
    */
-  get createdAt() {
-    return new Date(this.createdTimestamp);
+  get createdAt(): Date | null {
+    const timestamp = this.createdTimestamp;
+    return timestamp === null ? null : new Date(timestamp);
   }
 
   /**

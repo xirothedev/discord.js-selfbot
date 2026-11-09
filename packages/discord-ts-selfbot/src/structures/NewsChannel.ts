@@ -1,13 +1,13 @@
 import BaseGuildTextChannel from './BaseGuildTextChannel';
 import _errorsModule from '../errors';
 const { Error } = _errorsModule;
+import type { TextChannelResolvable } from '../../typings';
 
 /**
  * Represents a guild news channel on Discord.
  * @extends {BaseGuildTextChannel}
  */
 class NewsChannel extends BaseGuildTextChannel {
-  [key: string]: any;
   /**
    * Adds the target to this channel's followers.
    * <info>If you need the created webhook id, use {@link GuildChannelManager#addFollower}.</info>
@@ -21,7 +21,7 @@ class NewsChannel extends BaseGuildTextChannel {
    *     .catch(console.error);
    * }
    */
-  async addFollower(channel: any, reason: any) {
+  async addFollower(channel: TextChannelResolvable, reason?: string) {
     const channelId = this.guild.channels.resolveId(channel);
     if (!channelId) throw new Error('GUILD_CHANNEL_RESOLVE');
     await this.client.api.channels(this.id).followers.post({ data: { webhook_channel_id: channelId }, reason });

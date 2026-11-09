@@ -9,7 +9,6 @@ let deprecationEmittedForEditable = false;
  * @extends {BaseGuildVoiceChannel}
  */
 class VoiceChannel extends BaseGuildVoiceChannel {
-  [key: string]: any;
   /**
    * Whether the channel is editable by the client user
    * @type {boolean}

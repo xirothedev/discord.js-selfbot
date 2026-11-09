@@ -2,13 +2,30 @@ import GuildEmoji from './GuildEmoji';
 import ReactionEmoji from './ReactionEmoji';
 import ReactionUserManager from '../managers/ReactionUserManager';
 import Util from '../util/Util';
+import type { ReactionCountDetailsData } from '../../typings';
+import type { RawMessageReactionData } from '../../typings/rawDataTypes';
+
+type RawMessageReactionSource = RawMessageReactionData & {
+  me?: boolean;
+  me_burst?: boolean;
+};
+import type { Message } from './Message';
 
 /**
  * Represents a reaction to a message.
  */
 class MessageReaction {
-  [key: string]: any;
-  constructor(client: any, data: any, message: any) {
+  declare client: import('../client/Client').default;
+  declare message: Message;
+  declare me: boolean;
+  declare meBurst: boolean;
+  declare users: ReactionUserManager;
+  declare _emoji: GuildEmoji | ReactionEmoji;
+  declare burstColors: string[] | null;
+  declare count: number;
+  declare countDetails: ReactionCountDetailsData;
+
+  constructor(client: import('../client/Client').default, data: RawMessageReactionSource, message: Message) {
     /**
      * The client that instantiated this message reaction
      * @name MessageReaction#client
@@ -27,7 +44,7 @@ class MessageReaction {
      * Whether the client has given this reaction
      * @type {boolean}
      */
-    this.me = data.me;
+    this.me = data.me ?? false;
 
     /**
      * Whether the client has super-reacted using this emoji
@@ -39,7 +56,7 @@ class MessageReaction {
      * A manager of the users that have given this reaction
      * @type {ReactionUserManager}
      */
-    this.users = new ReactionUserManager(this, this.me ? [client.user] : []);
+    this.users = new ReactionUserManager(this, this.me && client.user ? [client.user] : []);
 
     this._emoji = new ReactionEmoji(this, data.emoji);
 
@@ -48,7 +65,7 @@ class MessageReaction {
     this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: RawMessageReactionSource) {
     if (data.burst_colors) {
       /**
        * Hexadecimal colors used for this super reaction
@@ -113,8 +130,10 @@ class MessageReaction {
       const emojis = this.message.client.emojis.cache;
       if (emojis.has(this._emoji.id)) {
         const emoji = emojis.get(this._emoji.id);
-        this._emoji = emoji;
-        return emoji;
+        if (emoji) {
+          this._emoji = emoji;
+          return emoji;
+        }
       }
     }
     return this._emoji;

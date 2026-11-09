@@ -7,6 +7,7 @@ const { MessageComponentTypes } = _ConstantsModule;
  * @extends {BaseMessageComponent}
  */
 class MessageActionRow extends BaseMessageComponent {
+  declare components: import('../../typings').MessageActionRowComponent[];
   /**
    * Components that can be placed in an action row
    * * MessageButton
@@ -95,7 +96,7 @@ class MessageActionRow extends BaseMessageComponent {
   toJSON() {
     return {
       components: this.components.map((c: any) => c.toJSON()),
-      type: MessageComponentTypes[this.type],
+      type: MessageComponentTypes[this.type!],
     };
   }
 }

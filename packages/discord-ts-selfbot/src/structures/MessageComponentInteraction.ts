@@ -2,7 +2,10 @@ import Interaction from './Interaction';
 import InteractionWebhook from './InteractionWebhook';
 import InteractionResponses from './interfaces/InteractionResponses';
 import _ConstantsModule from '../util/Constants';
-import type { CacheType } from '../../typings';
+import type { APIMessage, Snowflake } from 'discord-api-types/v10';
+import type { CacheType, MessageComponentType } from '../../typings';
+import type { RawMessageComponentInteractionData } from '../../typings/rawDataTypes';
+import type { Message } from './Message';
 const { MessageComponentTypes } = _ConstantsModule;
 
 /**
@@ -11,8 +14,16 @@ const { MessageComponentTypes } = _ConstantsModule;
  * @implements {InteractionResponses}
  */
 class MessageComponentInteraction<Cached extends CacheType = CacheType> extends Interaction<Cached> {
-  [key: string]: any;
-  constructor(client: any, data: any) {
+  declare componentType: Exclude<MessageComponentType, 'ACTION_ROW'>;
+  declare customId: string;
+  declare channelId: Snowflake;
+  declare deferred: boolean;
+  declare ephemeral: boolean | null;
+  declare message: Message | APIMessage;
+  declare replied: boolean;
+  declare webhook: InteractionWebhook;
+
+  constructor(client: import('../client/Client').default, data: RawMessageComponentInteractionData) {
     super(client, data);
 
     /**
@@ -77,7 +88,7 @@ class MessageComponentInteraction<Cached extends CacheType = CacheType> extends 
    * @readonly
    */
   get component() {
-    return this.message.components
+    return (this.message.components ?? [])
       .flatMap((row: any) => row.components)
       .find((component: any) => (component.customId ?? component.custom_id) === this.customId);
   }

@@ -6,14 +6,27 @@ const { TypeError } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
 const { OverwriteTypes } = _ConstantsModule;
 import Permissions from '../util/Permissions';
+import type { Snowflake } from 'discord-api-types/v10';
+import type {
+  OverwriteResolvable,
+  OverwriteType,
+  PermissionOverwriteOptions,
+  PermissionResolvable,
+} from '../../typings';
+import type GuildChannel from './GuildChannel';
 
 /**
  * Represents a permission overwrite for a role or member in a guild channel.
  * @extends {Base}
  */
 class PermissionOverwrites extends Base {
-  [key: string]: any;
-  constructor(client: any, data: any, channel: any) {
+  declare channel: GuildChannel;
+  declare id: Snowflake;
+  declare type: OverwriteType;
+  declare deny: Readonly<Permissions>;
+  declare allow: Readonly<Permissions>;
+
+  constructor(client: import('../client/Client').default, data: any, channel: GuildChannel) {
     super(client);
 
     /**
@@ -72,7 +85,7 @@ class PermissionOverwrites extends Base {
    *   .then(channel => console.log(channel.permissionOverwrites.get(message.author.id)))
    *   .catch(console.error);
    */
-  async edit(options: any, reason: any) {
+  async edit(options: PermissionOverwriteOptions, reason?: string) {
     await this.channel.permissionOverwrites.upsert(this.id, options, { type: OverwriteTypes[this.type], reason }, this);
     return this;
   }
@@ -82,7 +95,7 @@ class PermissionOverwrites extends Base {
    * @param {string} [reason] Reason for deleting this overwrite
    * @returns {Promise<PermissionOverwrites>}
    */
-  async delete(reason: any) {
+  async delete(reason?: string) {
     await this.channel.permissionOverwrites.delete(this.id, reason);
     return this;
   }
@@ -120,24 +133,27 @@ class PermissionOverwrites extends Base {
    * @param {ResolvedOverwriteOptions} initialPermissions The initial permissions
    * @returns {ResolvedOverwriteOptions}
    */
-  static resolveOverwriteOptions(options: any, { allow, deny }: any = {}) {
-    allow = new Permissions(allow);
-    deny = new Permissions(deny);
+  static resolveOverwriteOptions(
+    options: PermissionOverwriteOptions,
+    { allow, deny }: { allow?: PermissionResolvable; deny?: PermissionResolvable } = {},
+  ) {
+    const allowPermissions = new Permissions(allow);
+    const denyPermissions = new Permissions(deny);
 
     for (const [perm, value] of Object.entries(options)) {
       if (value === true) {
-        allow.add(perm);
-        deny.remove(perm);
+        allowPermissions.add(perm);
+        denyPermissions.remove(perm);
       } else if (value === false) {
-        allow.remove(perm);
-        deny.add(perm);
+        allowPermissions.remove(perm);
+        denyPermissions.add(perm);
       } else if (value === null) {
-        allow.remove(perm);
-        deny.remove(perm);
+        allowPermissions.remove(perm);
+        denyPermissions.remove(perm);
       }
     }
 
-    return { allow, deny };
+    return { allow: allowPermissions, deny: denyPermissions };
   }
 
   /**
@@ -171,9 +187,9 @@ class PermissionOverwrites extends Base {
    * @param {Guild} [guild] The guild to resolve from
    * @returns {RawOverwriteData}
    */
-  static resolve(overwrite: any, guild: any) {
+  static resolve(overwrite: OverwriteResolvable, guild: import('./Guild').Guild) {
     if (overwrite instanceof this) return overwrite.toJSON();
-    if (typeof overwrite.id === 'string' && overwrite.type in OverwriteTypes) {
+    if (typeof overwrite.id === 'string' && overwrite.type !== undefined && overwrite.type in OverwriteTypes) {
       return {
         id: overwrite.id,
         type: OverwriteTypes[overwrite.type],

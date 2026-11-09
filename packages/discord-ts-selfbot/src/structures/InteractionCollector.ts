@@ -1,7 +1,19 @@
 import { Collection } from '@discordjs/collection';
 import type { Snowflake } from 'discord-api-types/v10';
 import Collector from './interfaces/Collector';
-import type { Interaction, InteractionCollectorOptions, User } from '../../typings';
+import type {
+  Interaction,
+  InteractionCollectorOptions,
+  InteractionType,
+  MessageComponentType,
+  TextBasedChannelResolvable,
+  User,
+} from '../../typings';
+import type Client from '../client/Client';
+import type { Guild } from './Guild';
+import type GuildChannel from './GuildChannel';
+import type { Message } from './Message';
+import type ThreadChannel from './ThreadChannel';
 import _ConstantsModule from '../util/Constants';
 const { Events } = _ConstantsModule;
 const { InteractionTypes, MessageComponentTypes } = _ConstantsModule;
@@ -19,6 +31,28 @@ const { InteractionTypes, MessageComponentTypes } = _ConstantsModule;
  */
 
 /**
+ * The source shape of {@link InteractionCollectorOptions}.
+ *
+ * `message` accepts both the cached `Message` and the raw `APIMessage`; the raw
+ * shape only carries the `*_id` variants, so the source options allow either.
+ */
+type InteractionCollectorSourceOptions<T extends Interaction> = Omit<
+  InteractionCollectorOptions<T>,
+  'channel' | 'message'
+> & {
+  channel?: TextBasedChannelResolvable & { guild?: unknown };
+  message?: {
+    id: Snowflake;
+    channel?: unknown;
+    channelId?: Snowflake | null;
+    channel_id?: Snowflake;
+    guild?: unknown;
+    guildId?: Snowflake | null;
+    guild_id?: Snowflake;
+  };
+};
+
+/**
  * Collects interactions.
  * Will automatically stop if the message ({@link Client#event:messageDelete messageDelete} or
  * {@link Client#event:messageDeleteBulk messageDeleteBulk}),
@@ -30,12 +64,19 @@ const { InteractionTypes, MessageComponentTypes } = _ConstantsModule;
  */
 class InteractionCollector<T extends Interaction = Interaction> extends Collector<Snowflake, T> {
   declare users: Collection<Snowflake, User>;
-  declare options: InteractionCollectorOptions<T>;
+  declare options: InteractionCollectorSourceOptions<T>;
+  declare messageId: Snowflake | null;
+  declare channelId: Snowflake | null;
+  declare guildId: Snowflake | null;
+  declare interactionType: InteractionType | null;
+  declare componentType: MessageComponentType | null;
+  declare total: number;
+
   /**
    * @param {Client} client The client on which to collect interactions
    * @param {InteractionCollectorOptions} [options={}] The options to apply to this collector
    */
-  constructor(client: any, options: any = {}) {
+  constructor(client: Client, options: InteractionCollectorSourceOptions<T> = {}) {
     super(client, options);
 
     /**
@@ -52,7 +93,8 @@ class InteractionCollector<T extends Interaction = Interaction> extends Collecto
       this.client.channels.resolveId(options.message?.channel) ??
       options.message?.channelId ??
       options.message?.channel_id ??
-      this.client.channels.resolveId(options.channel);
+      this.client.channels.resolveId(options.channel) ??
+      null;
 
     /**
      * The guild from which to collect interactions, if provided
@@ -63,7 +105,8 @@ class InteractionCollector<T extends Interaction = Interaction> extends Collecto
       options.message?.guildId ??
       options.message?.guild_id ??
       this.client.guilds.resolveId(options.channel?.guild) ??
-      this.client.guilds.resolveId(options.guild);
+      this.client.guilds.resolveId(options.guild) ??
+      null;
 
     /**
      * The type of interaction to collect
@@ -98,8 +141,8 @@ class InteractionCollector<T extends Interaction = Interaction> extends Collecto
     this.empty = this.empty.bind(this);
     this.client.incrementMaxListeners();
 
-    const bulkDeleteListener = (messages: any) => {
-      if (messages.has(this.messageId)) this.stop('messageDelete');
+    const bulkDeleteListener = (messages: Collection<Snowflake, Message>) => {
+      if (this.messageId && messages.has(this.messageId)) this.stop('messageDelete');
     };
 
     if (this.messageId) {
@@ -132,7 +175,7 @@ class InteractionCollector<T extends Interaction = Interaction> extends Collecto
       this.client.decrementMaxListeners();
     });
 
-    this.on('collect', (interaction: any) => {
+    this.on('collect', (interaction: T) => {
       this.total++;
       this.users.set(interaction.user.id, interaction.user);
     });
@@ -144,15 +187,17 @@ class InteractionCollector<T extends Interaction = Interaction> extends Collecto
    * @returns {?Snowflake}
    * @private
    */
-  collect(interaction: any) {
+  collect(interaction: T): Snowflake | null {
     /**
      * Emitted whenever an interaction is collected.
      * @event InteractionCollector#collect
      * @param {Interaction} interaction The interaction that was collected
      */
     if (this.interactionType && interaction.type !== this.interactionType) return null;
-    if (this.componentType && interaction.componentType !== this.componentType) return null;
-    if (this.messageId && interaction.message?.id !== this.messageId) return null;
+    if (this.componentType && (!('componentType' in interaction) || interaction.componentType !== this.componentType)) {
+      return null;
+    }
+    if (this.messageId && getMessageId(interaction) !== this.messageId) return null;
     if (this.channelId && interaction.channelId !== this.channelId) return null;
     if (this.guildId && interaction.guildId !== this.guildId) return null;
 
@@ -164,15 +209,17 @@ class InteractionCollector<T extends Interaction = Interaction> extends Collecto
    * @param {Interaction} interaction The interaction that could be disposed of
    * @returns {?Snowflake}
    */
-  dispose(interaction: any) {
+  dispose(interaction: T): Snowflake | null {
     /**
      * Emitted whenever an interaction is disposed of.
      * @event InteractionCollector#dispose
      * @param {Interaction} interaction The interaction that was disposed of
      */
-    if (this.type && interaction.type !== this.type) return null;
-    if (this.componentType && interaction.componentType !== this.componentType) return null;
-    if (this.messageId && interaction.message?.id !== this.messageId) return null;
+    if (this.interactionType && interaction.type !== this.interactionType) return null;
+    if (this.componentType && (!('componentType' in interaction) || interaction.componentType !== this.componentType)) {
+      return null;
+    }
+    if (this.messageId && getMessageId(interaction) !== this.messageId) return null;
     if (this.channelId && interaction.channelId !== this.channelId) return null;
     if (this.guildId && interaction.guildId !== this.guildId) return null;
 
@@ -194,7 +241,7 @@ class InteractionCollector<T extends Interaction = Interaction> extends Collecto
    * @type {?string}
    * @readonly
    */
-  get endReason() {
+  get endReason(): string | null {
     if (this.options.max && this.total >= this.options.max) return 'limit';
     if (this.options.maxComponents && this.collected.size >= this.options.maxComponents) return 'componentLimit';
     if (this.options.maxUsers && this.users.size >= this.options.maxUsers) return 'userLimit';
@@ -207,7 +254,7 @@ class InteractionCollector<T extends Interaction = Interaction> extends Collecto
    * @param {Message} message The message that was deleted
    * @returns {void}
    */
-  _handleMessageDeletion(message: any) {
+  _handleMessageDeletion(message: Message) {
     if (message.id === this.messageId) {
       this.stop('messageDelete');
     }
@@ -219,8 +266,8 @@ class InteractionCollector<T extends Interaction = Interaction> extends Collecto
    * @param {GuildChannel} channel The channel that was deleted
    * @returns {void}
    */
-  _handleChannelDeletion(channel: any) {
-    if (channel.id === this.channelId || channel.threads?.cache.has(this.channelId)) {
+  _handleChannelDeletion(channel: GuildChannel & { threads?: { cache: Collection<Snowflake, ThreadChannel> } }) {
+    if (channel.id === this.channelId || (this.channelId !== null && channel.threads?.cache.has(this.channelId))) {
       this.stop('channelDelete');
     }
   }
@@ -231,7 +278,7 @@ class InteractionCollector<T extends Interaction = Interaction> extends Collecto
    * @param {ThreadChannel} thread The thread that was deleted
    * @returns {void}
    */
-  _handleThreadDeletion(thread: any) {
+  _handleThreadDeletion(thread: ThreadChannel) {
     if (thread.id === this.channelId) {
       this.stop('threadDelete');
     }
@@ -243,11 +290,22 @@ class InteractionCollector<T extends Interaction = Interaction> extends Collecto
    * @param {Guild} guild The guild that was deleted
    * @returns {void}
    */
-  _handleGuildDeletion(guild: any) {
+  _handleGuildDeletion(guild: Guild) {
     if (guild.id === this.guildId) {
       this.stop('guildDelete');
     }
   }
+}
+
+/**
+ * Reads the message id from an interaction that carries a message, without
+ * assuming the concrete interaction subtype.
+ */
+function getMessageId(interaction: Interaction): Snowflake | null {
+  if (!('message' in interaction)) return null;
+  const { message } = interaction;
+  if (!message || typeof message !== 'object' || !('id' in message)) return null;
+  return typeof message.id === 'string' ? message.id : null;
 }
 
 export default InteractionCollector;

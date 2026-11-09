@@ -1,13 +1,16 @@
 import BaseGuild from './BaseGuild';
 import Permissions from '../util/Permissions';
+import type { RawOAuth2GuildData } from '../../typings/rawDataTypes';
 
 /**
  * A partial guild received when using {@link GuildManager#fetch} to fetch multiple guilds.
  * @extends {BaseGuild}
  */
 class OAuth2Guild extends BaseGuild {
-  [key: string]: any;
-  constructor(client: any, data: any) {
+  declare owner: boolean;
+  declare permissions: Readonly<Permissions>;
+
+  constructor(client: import('../client/Client').default, data: RawOAuth2GuildData) {
     super(client, data);
 
     /**

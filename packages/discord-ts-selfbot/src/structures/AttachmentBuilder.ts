@@ -1,15 +1,22 @@
+import type { Stream } from 'node:stream';
 import Util from '../util/Util';
+import type { AttachmentData, BufferResolvable } from '../../typings';
 
 /**
  * Represents an attachment builder.
  */
 class AttachmentBuilder {
-  [key: string]: any;
+  declare attachment: BufferResolvable | Stream;
+  declare name: string | null;
+  declare description: string | null;
+  declare title: string | null;
+  declare waveform: string | null;
+  declare duration: number | null;
   /**
    * @param {BufferResolvable|Stream} attachment The file
    * @param {AttachmentData} [data={}] Extra data
    */
-  constructor(attachment: any, data: any = {}) {
+  constructor(attachment: BufferResolvable | Stream, data: AttachmentData = {}) {
     /**
      * The file associated with this attachment.
      * @type {BufferResolvable|Stream}
@@ -64,7 +71,7 @@ class AttachmentBuilder {
    * @param {BufferResolvable|Stream} attachment The file
    * @returns {AttachmentBuilder} This attachment
    */
-  setFile(attachment: any) {
+  setFile(attachment: BufferResolvable | Stream) {
     this.attachment = attachment;
     return this;
   }
@@ -121,7 +128,7 @@ class AttachmentBuilder {
 
     if (!spoiler) {
       while (this.spoiler) {
-        this.name = this.name.slice('SPOILER_'.length);
+        this.name = this.name!.slice('SPOILER_'.length);
       }
       return this;
     }
@@ -148,10 +155,12 @@ class AttachmentBuilder {
    * @param {AttachmentBuilder|MessageAttachment|AttachmentPayload} other The builder to construct a new instance from
    * @returns {AttachmentBuilder}
    */
-  static from(other: any) {
+  static from(
+    other: AttachmentBuilder | import('../../typings').MessageAttachment | import('../../typings').AttachmentPayload,
+  ) {
     return new AttachmentBuilder(other.attachment, {
-      name: other.name,
-      description: other.description,
+      name: other.name ?? undefined,
+      description: other.description ?? undefined,
     });
   }
 }

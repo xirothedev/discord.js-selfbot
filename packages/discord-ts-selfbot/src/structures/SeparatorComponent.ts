@@ -3,7 +3,8 @@ import _ConstantsModule from '../util/Constants';
 const { MessageComponentTypes, SeparatorSpacingSizes } = _ConstantsModule;
 
 class SeparatorComponent extends BaseMessageComponent {
-  [key: string]: any;
+  declare spacing: import('../../typings/enums').SeparatorSpacingSizes;
+  declare divider: boolean;
   /**
    * @property {SeparatorSpacingSizes} [spacing] Size of separator padding — SeparatorSpacingSizes.SMALL for small padding, SeparatorSpacingSizes.LARGE for large padding. Defaults to SeparatorSpacingSizes.SMALL
    * @property {Boolean} [divider] Whether a visual divider should be displayed in the component. Defaults to true
@@ -38,7 +39,7 @@ class SeparatorComponent extends BaseMessageComponent {
    */
   toJSON() {
     return {
-      type: MessageComponentTypes[this.type],
+      type: MessageComponentTypes[this.type!],
       spacing: this.spacing,
       divider: this.divider,
     };

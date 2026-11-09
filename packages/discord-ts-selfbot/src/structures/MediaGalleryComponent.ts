@@ -4,6 +4,7 @@ import _ConstantsModule from '../util/Constants';
 const { MessageComponentTypes } = _ConstantsModule;
 
 class MediaGalleryComponent extends BaseMessageComponent {
+  declare items: MediaGalleryItem[];
   /**
    * @property {MediaGalleryItem[]} [items] 1 to 10 media gallery items
    */
@@ -31,7 +32,7 @@ class MediaGalleryComponent extends BaseMessageComponent {
    */
   toJSON() {
     return {
-      type: MessageComponentTypes[this.type],
+      type: MessageComponentTypes[this.type!],
       items: this.items.map((c: any) => c.toJSON()),
     };
   }

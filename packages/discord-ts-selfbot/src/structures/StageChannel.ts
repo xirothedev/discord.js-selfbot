@@ -1,11 +1,11 @@
 import BaseGuildVoiceChannel from './BaseGuildVoiceChannel';
+import type { StageInstanceCreateOptions } from '../../typings';
 
 /**
  * Represents a guild stage channel on Discord.
  * @extends {BaseGuildVoiceChannel}
  */
 class StageChannel extends BaseGuildVoiceChannel {
-  [key: string]: any;
   _patch(data: any) {
     super._patch(data);
 
@@ -32,7 +32,7 @@ class StageChannel extends BaseGuildVoiceChannel {
    * @param {StageInstanceCreateOptions} options The options to create the stage instance
    * @returns {Promise<StageInstance>}
    */
-  createStageInstance(options: any) {
+  createStageInstance(options: StageInstanceCreateOptions) {
     return this.guild.stageInstances.create(this.id, options);
   }
 
@@ -47,7 +47,7 @@ class StageChannel extends BaseGuildVoiceChannel {
    *   .then(newChannel => console.log(`Channel's new topic is ${newChannel.topic}`))
    *   .catch(console.error);
    */
-  setTopic(topic: any, reason: any) {
+  setTopic(topic: string, reason?: string) {
     return this.edit({ topic }, reason);
   }
 

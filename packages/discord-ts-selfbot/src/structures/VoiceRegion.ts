@@ -1,11 +1,18 @@
 import Util from '../util/Util';
+import type { RawVoiceRegionData } from '../../typings/rawDataTypes';
 
 /**
  * Represents a Discord voice region for guilds.
  */
 class VoiceRegion {
-  [key: string]: any;
-  constructor(data: any) {
+  declare id: string;
+  declare name: string;
+  declare vip: boolean;
+  declare deprecated: boolean;
+  declare optimal: boolean;
+  declare custom: boolean;
+
+  constructor(data: RawVoiceRegionData) {
     /**
      * The region's id
      * @type {string}
@@ -23,7 +30,7 @@ class VoiceRegion {
      * @type {boolean}
      * @deprecated This property is no longer being sent by the API.
      */
-    this.vip = data.vip;
+    this.vip = 'vip' in data ? Boolean(data.vip) : false;
 
     /**
      * Whether the region is deprecated

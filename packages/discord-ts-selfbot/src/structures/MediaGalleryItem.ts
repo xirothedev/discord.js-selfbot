@@ -1,7 +1,9 @@
 import UnfurledMediaItem from './UnfurledMediaItem';
 
 class MediaGalleryItem {
-  [key: string]: any;
+  declare media: UnfurledMediaItem;
+  declare description: string | null;
+  declare spoiler: boolean;
 
   /**
    * @property {UnfurledMediaItem} [media] A url or attachment
@@ -12,7 +14,7 @@ class MediaGalleryItem {
   /**
    * @param {MediaGalleryItem | APIMediaGalleryItem} [data={}] The data
    */
-  constructor(data: any = {}) {
+  constructor(data: MediaGalleryItem | Partial<import('discord-api-types/v10').APIMediaGalleryItem> = {}) {
     /**
      * A url or attachment
      * @type {UnfurledMediaItem}

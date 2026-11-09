@@ -3,6 +3,9 @@ import _ConstantsModule from '../util/Constants';
 const { MessageComponentTypes } = _ConstantsModule;
 
 class ContainerComponent extends BaseMessageComponent {
+  declare components: BaseMessageComponent[];
+  declare accentColor: number | null;
+  declare spoiler: boolean;
   /**
    * @typedef {MessageActionRow|TextDisplayComponent|SectionComponent|MediaGalleryComponent|SeparatorComponent|FileComponent} ContainerComponents
    * @property {ContainerComponents[]} [components] Components of the type action row, text display, section, media gallery, separator, or file
@@ -56,9 +59,9 @@ class ContainerComponent extends BaseMessageComponent {
    */
   toJSON() {
     return {
-      type: MessageComponentTypes[this.type],
+      type: MessageComponentTypes[this.type!],
       components: this.components.map((c: any) => c.toJSON()),
-      accent_color: this.accent_color,
+      accent_color: this.accentColor,
       spoiler: this.spoiler,
     };
   }

@@ -6,6 +6,8 @@ import MessageFlags from '../../util/MessageFlags';
 import InteractionCollector from '../InteractionCollector';
 import MessagePayload from '../MessagePayload';
 import Modal from '../Modal';
+import type { Snowflake } from 'discord-api-types/v10';
+import type InteractionWebhook from '../InteractionWebhook';
 
 /**
  * Interface for classes that support shared interaction response types.
@@ -13,7 +15,12 @@ import Modal from '../Modal';
  */
 class InteractionResponses {
   declare client: import('../../client/Client').default;
-  [key: string]: any;
+  declare id: Snowflake;
+  declare token: string;
+  declare deferred: boolean;
+  declare replied: boolean;
+  declare ephemeral: boolean | null;
+  declare webhook: InteractionWebhook;
   /**
    * Options for deferring the reply to an {@link Interaction}.
    * @typedef {Object} InteractionDeferReplyOptions

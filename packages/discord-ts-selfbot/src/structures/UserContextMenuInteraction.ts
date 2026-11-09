@@ -6,7 +6,6 @@ import type { CacheType } from '../../typings';
  * @extends {ContextMenuInteraction}
  */
 class UserContextMenuInteraction<Cached extends CacheType = CacheType> extends ContextMenuInteraction<Cached> {
-  [key: string]: any;
   /**
    * The target user from this interaction
    * @type {User}

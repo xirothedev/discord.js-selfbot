@@ -1,10 +1,11 @@
 import EventEmitter from 'node:events';
-import { setTimeout } from 'node:timers';
+import { setTimeout, clearTimeout } from 'node:timers';
 import { Collection } from '@discordjs/collection';
 import _errorsModule from '../../errors';
 const { TypeError } = _errorsModule;
 import Util from '../../util/Util';
-import type { CollectorOptions } from '../../../typings';
+import type { CollectorFilter, CollectorOptions, CollectorResetTimerOptions } from '../../../typings';
+import type Client from '../../client/Client';
 
 /**
  * Filter to be applied to the collector.
@@ -29,10 +30,15 @@ import type { CollectorOptions } from '../../../typings';
  * @abstract
  */
 class Collector<K = unknown, V = unknown, F extends unknown[] = []> extends EventEmitter {
+  declare client: Client;
   declare collected: Collection<K, V>;
   declare options: CollectorOptions<[V, ...F]>;
-  [key: string]: any;
-  constructor(client: any, options: any = {}) {
+  declare filter: CollectorFilter<[V, ...F]>;
+  declare ended: boolean;
+  declare _timeout: NodeJS.Timeout | null;
+  declare _idletimeout: NodeJS.Timeout | null;
+
+  constructor(client: Client, options: CollectorOptions<[V, ...F]> = {}) {
     super();
 
     /**
@@ -99,10 +105,12 @@ class Collector<K = unknown, V = unknown, F extends unknown[] = []> extends Even
    * @returns {Promise<void>}
    * @emits Collector#collect
    */
-  async handleCollect(...args: any[]) {
+  async handleCollect(...args: [V, ...F]) {
     const collect = await this.collect(...args);
 
-    if (collect && (await this.filter(...args, this.collected))) {
+    // The filter also receives the collection at runtime; the public filter
+    // type only describes the event arguments.
+    if (collect && (await Reflect.apply(this.filter, undefined, [...args, this.collected]))) {
       this.collected.set(collect, args[0]);
 
       /**
@@ -126,11 +134,11 @@ class Collector<K = unknown, V = unknown, F extends unknown[] = []> extends Even
    * @returns {Promise<void>}
    * @emits Collector#dispose
    */
-  async handleDispose(...args: any[]) {
+  async handleDispose(...args: [V, ...F]) {
     if (!this.options.dispose) return;
 
     const dispose = this.dispose(...args);
-    if (!dispose || !(await this.filter(...args)) || !this.collected.has(dispose)) return;
+    if (!dispose || !(await Reflect.apply(this.filter, undefined, args)) || !this.collected.has(dispose)) return;
     this.collected.delete(dispose);
 
     /**
@@ -148,8 +156,8 @@ class Collector<K = unknown, V = unknown, F extends unknown[] = []> extends Even
    * @type {Promise}
    * @readonly
    */
-  get next() {
-    return new Promise((resolve: any, reject: any) => {
+  get next(): Promise<V> {
+    return new Promise<V>((resolve, reject) => {
       if (this.ended) {
         reject(this.collected);
         return;
@@ -160,7 +168,7 @@ class Collector<K = unknown, V = unknown, F extends unknown[] = []> extends Even
         this.removeListener('end', onEnd);
       };
 
-      const onCollect = (item: any) => {
+      const onCollect = (item: V) => {
         cleanup();
         resolve(item);
       };
@@ -213,7 +221,7 @@ class Collector<K = unknown, V = unknown, F extends unknown[] = []> extends Even
    * Resets the collector's timeout and idle timer.
    * @param {CollectorResetTimerOptions} [options] Options for resetting
    */
-  resetTimer({ time, idle }: any = {}) {
+  resetTimer({ time, idle }: CollectorResetTimerOptions = {}) {
     if (this._timeout) {
       clearTimeout(this._timeout);
       this._timeout = setTimeout(() => this.stop('time'), time ?? this.options.time).unref();
@@ -238,18 +246,18 @@ class Collector<K = unknown, V = unknown, F extends unknown[] = []> extends Even
    * Allows collectors to be consumed with for-await-of loops
    * @see {@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/for-await...of}
    */
-  async *[Symbol.asyncIterator]() {
-    const queue: any[] = [];
-    const onCollect = (item: any) => queue.push(item);
+  async *[Symbol.asyncIterator](): AsyncIterableIterator<V> {
+    const queue: V[] = [];
+    const onCollect = (item: V) => queue.push(item);
     this.on('collect', onCollect);
 
     try {
       while (queue.length || !this.ended) {
         if (queue.length) {
-          yield queue.shift();
+          yield queue.shift()!;
         } else {
           // eslint-disable-next-line no-await-in-loop
-          await new Promise((resolve: any) => {
+          await new Promise<void>(resolve => {
             const tick = () => {
               this.removeListener('collect', tick);
               this.removeListener('end', tick);
@@ -265,7 +273,7 @@ class Collector<K = unknown, V = unknown, F extends unknown[] = []> extends Even
     }
   }
 
-  toJSON() {
+  toJSON(): unknown {
     return Util.flatten(this);
   }
 
@@ -276,8 +284,8 @@ class Collector<K = unknown, V = unknown, F extends unknown[] = []> extends Even
    * @readonly
    * @abstract
    */
-  get endReason(): any {
-    return undefined;
+  get endReason(): string | null {
+    return null;
   }
 
   /**
@@ -288,7 +296,9 @@ class Collector<K = unknown, V = unknown, F extends unknown[] = []> extends Even
    * @returns {?(*|Promise<?*>)} Data to insert into collection, if any
    * @abstract
    */
-  collect(..._args: any[]): any {}
+  collect(..._args: [V, ...F]): K | null | Promise<K | null> {
+    return null;
+  }
 
   /**
    * Handles incoming events from the `handleDispose`. Returns null if the event should not
@@ -298,7 +308,9 @@ class Collector<K = unknown, V = unknown, F extends unknown[] = []> extends Even
    * @returns {?*} Key to remove from the collection, if any
    * @abstract
    */
-  dispose(..._args: any[]): any {}
+  dispose(..._args: [V, ...F]): K | null {
+    return null;
+  }
   /* eslint-enable no-empty-function */
 }
 

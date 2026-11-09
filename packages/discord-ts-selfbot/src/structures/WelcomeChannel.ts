@@ -1,14 +1,21 @@
 import Base from './Base';
 import _EmojiModule from './Emoji';
 const { Emoji } = _EmojiModule;
+import type { Guild } from './Guild';
+import type InviteGuild from './InviteGuild';
+import type { RawWelcomeChannelData } from '../../typings/rawDataTypes';
 
 /**
  * Represents a channel link in a guild's welcome screen.
  * @extends {Base}
  */
 class WelcomeChannel extends Base {
-  [key: string]: any;
-  constructor(guild: any, data: any) {
+  declare guild: Guild | InviteGuild;
+  declare description: string;
+  declare _emoji: { name: string | null; id: string | null };
+  declare channelId: string;
+
+  constructor(guild: Guild | InviteGuild, data: RawWelcomeChannelData) {
     super(guild.client);
 
     /**
@@ -21,7 +28,7 @@ class WelcomeChannel extends Base {
      * The description of this welcome channel
      * @type {string}
      */
-    this.description = data.description;
+    this.description = data.description ?? '';
 
     /**
      * The raw emoji data

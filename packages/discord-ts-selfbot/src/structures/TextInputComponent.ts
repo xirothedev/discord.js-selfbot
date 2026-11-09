@@ -11,7 +11,14 @@ import Util from '../util/Util';
  */
 
 class TextInputComponent extends BaseMessageComponent {
-  [key: string]: any;
+  declare customId: string | null;
+  declare label: string | null;
+  declare maxLength: number | null;
+  declare minLength: number | null;
+  declare placeholder: string | null;
+  declare required: boolean;
+  declare style: import('../../typings').TextInputStyle | null;
+  declare value: string | null;
   /**
    * @typedef {BaseMessageComponentOptions} TextInputComponentOptions
    * @property {string} [customId] A unique string to be sent in the interaction when submitted
@@ -89,7 +96,7 @@ class TextInputComponent extends BaseMessageComponent {
    * @param {string} value Value of this text input component
    * @returns {TextInputComponent}
    */
-  setValue(value: any) {
+  setValue(value: string) {
     this.value = Util.verifyString(value, RangeError, 'TEXT_INPUT_VALUE');
     return this;
   }
@@ -106,8 +113,8 @@ class TextInputComponent extends BaseMessageComponent {
       min_length: this.minLength,
       placeholder: this.placeholder,
       required: this.required,
-      style: TextInputStyles[this.style],
-      type: MessageComponentTypes[this.type],
+      style: this.style ? TextInputStyles[this.style] : null,
+      type: MessageComponentTypes[this.type!],
       value: this.value,
     };
   }

@@ -5,6 +5,10 @@ const { Error } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
 const { StickerFormatTypes, StickerTypes } = _ConstantsModule;
 import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { StickerFormatType, StickerType } from '../../typings';
+import type { RawStickerData } from '../../typings/rawDataTypes';
+import type User from './User';
 
 /**
  * @type {WeakSet<StageInstance>}
@@ -19,8 +23,19 @@ let deprecationEmittedForDeleted = false;
  * @extends {Base}
  */
 class Sticker extends Base {
-  [key: string]: any;
-  constructor(client: any, sticker: any) {
+  declare id: Snowflake;
+  declare description: string | null;
+  declare type: StickerType | null;
+  declare format: StickerFormatType;
+  declare name: string;
+  declare packId: Snowflake | null;
+  declare tags: string[] | null;
+  declare available: boolean | null;
+  declare guildId: Snowflake | null;
+  declare user: User | null;
+  declare sortValue: number | null;
+
+  constructor(client: import('../client/Client').default, sticker: Partial<RawStickerData> & { id: Snowflake }) {
     super(client);
 
     this._patch(sticker);
@@ -285,8 +300,8 @@ class Sticker extends Base {
         other.format === this.format &&
         other.name === this.name &&
         other.packId === this.packId &&
-        other.tags.length === this.tags.length &&
-        other.tags.every((tag: any) => this.tags.includes(tag)) &&
+        (other.tags?.length ?? 0) === (this.tags?.length ?? 0) &&
+        (other.tags ?? []).every(tag => (this.tags ?? []).includes(tag)) &&
         other.available === this.available &&
         other.guildId === this.guildId &&
         other.sortValue === this.sortValue
@@ -296,7 +311,7 @@ class Sticker extends Base {
         other.id === this.id &&
         other.description === this.description &&
         other.name === this.name &&
-        other.tags === this.tags.join(', ')
+        other.tags === this.tags?.join(', ')
       );
     }
   }

@@ -5,7 +5,6 @@ import BaseGuildTextChannel from './BaseGuildTextChannel';
  * @extends {BaseGuildTextChannel}
  */
 class TextChannel extends BaseGuildTextChannel {
-  [key: string]: any;
   _patch(data: any) {
     super._patch(data);
 
@@ -24,7 +23,7 @@ class TextChannel extends BaseGuildTextChannel {
    * @param {string} [reason] Reason for changing the channel's rate limit
    * @returns {Promise<TextChannel>}
    */
-  setRateLimitPerUser(rateLimitPerUser: any, reason: any) {
+  setRateLimitPerUser(rateLimitPerUser: number, reason?: string) {
     return this.edit({ rateLimitPerUser }, reason);
   }
 }

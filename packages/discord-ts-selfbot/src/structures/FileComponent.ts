@@ -4,6 +4,8 @@ import _ConstantsModule from '../util/Constants';
 const { MessageComponentTypes } = _ConstantsModule;
 
 class FileComponent extends BaseMessageComponent {
+  declare file: UnfurledMediaItem;
+  declare spoiler: boolean;
   /**
    * @property {UnfurledMediaItem} [file] This unfurled media item is unique in that it only supports attachment references using the attachment://<filename> syntax
    * @property {Boolean} [spoiler] Whether the container should be a spoiler (or blurred out). Defaults to false.
@@ -38,8 +40,8 @@ class FileComponent extends BaseMessageComponent {
    */
   toJSON() {
     return {
-      type: MessageComponentTypes[this.type],
-      file: this.content,
+      type: MessageComponentTypes[this.type!],
+      file: this.file.toJSON(),
       spoiler: this.spoiler,
     };
   }

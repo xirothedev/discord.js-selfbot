@@ -7,14 +7,19 @@ const require = createRequire(import.meta.url);
  */
 class InteractionWebhook {
   declare client: import('../client/Client').default;
-  [key: string]: any;
+  declare id: import('discord-api-types/v10').Snowflake;
+  declare token: string;
 
   /**
    * @param {Client} client The instantiating client
    * @param {Snowflake} id The application's id
    * @param {string} token The interaction's token
    */
-  constructor(client: any, id: any, token: any) {
+  constructor(
+    client: import('../client/Client').default,
+    id: import('discord-api-types/v10').Snowflake,
+    token: string,
+  ) {
     /**
      * The client that instantiated the interaction webhook
      * @name InteractionWebhook#client
@@ -33,11 +38,11 @@ class InteractionWebhook {
    * @param {string|MessagePayload|InteractionReplyOptions} options The content for the reply
    * @returns {Promise<Message|APIMessage>}
    */
-  send() {}
-  fetchMessage() {}
-  editMessage() {}
-  deleteMessage() {}
-  get url(): any {
+  send(..._args: unknown[]) {}
+  fetchMessage(..._args: unknown[]) {}
+  editMessage(..._args: unknown[]) {}
+  deleteMessage(..._args: unknown[]) {}
+  get url(): string | undefined {
     return undefined;
   }
 }

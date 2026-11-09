@@ -28,7 +28,13 @@ const validateName = (stringName: any) =>
  */
 class TextBasedChannel {
   declare client: import('../../client/Client').default;
-  [key: string]: any;
+  declare id: import('discord-api-types/v10').Snowflake;
+  declare parentId?: import('discord-api-types/v10').Snowflake | null;
+  declare guild?: import('../Guild').Guild | null;
+  declare messages: MessageManager;
+  declare lastMessageId: import('discord-api-types/v10').Snowflake | null;
+  declare lastPinTimestamp: number | null;
+  declare edit: (options: Record<string, unknown>, reason?: string) => Promise<this>;
   constructor() {
     /**
      * A manager of the messages sent to this channel
@@ -461,7 +467,7 @@ class TextBasedChannel {
    *   .catch(console.error);
    */
   fetchWebhooks() {
-    return this.guild.channels.fetchWebhooks(this.id);
+    return this.guild!.channels.fetchWebhooks(this.id);
   }
 
   /**
@@ -486,7 +492,7 @@ class TextBasedChannel {
    *   .catch(console.error)
    */
   createWebhook(name: any, options: any = {}) {
-    return this.guild.channels.createWebhook(this.id, name, options);
+    return this.guild!.channels.createWebhook(this.id, name, options);
   }
 
   /**

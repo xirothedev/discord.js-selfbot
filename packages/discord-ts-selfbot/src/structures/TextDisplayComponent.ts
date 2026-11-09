@@ -3,7 +3,7 @@ import _ConstantsModule from '../util/Constants';
 const { MessageComponentTypes } = _ConstantsModule;
 
 class TextDisplayComponent extends BaseMessageComponent {
-  [key: string]: any;
+  declare content: string | null;
   /**
    * @property {String} [content] Text that will be displayed similar to a message
    */
@@ -31,7 +31,7 @@ class TextDisplayComponent extends BaseMessageComponent {
    */
   toJSON() {
     return {
-      type: MessageComponentTypes[this.type],
+      type: MessageComponentTypes[this.type!],
       content: this.content,
     };
   }

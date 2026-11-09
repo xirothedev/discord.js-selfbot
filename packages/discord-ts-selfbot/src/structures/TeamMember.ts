@@ -1,14 +1,24 @@
 import Base from './Base';
 import _ConstantsModule from '../util/Constants';
 const { MembershipStates } = _ConstantsModule;
+import type { TeamMemberRole } from 'discord-api-types/v10';
+import type { MembershipState } from '../../typings';
+import type { RawTeamMemberData } from '../../typings/rawDataTypes';
+import type Team from './Team';
+import type User from './User';
 
 /**
  * Represents a Client OAuth2 Application Team Member.
  * @extends {Base}
  */
 class TeamMember extends Base {
-  [key: string]: any;
-  constructor(team: any, data: any) {
+  declare team: Team;
+  declare permissions: string[];
+  declare role: TeamMemberRole;
+  declare membershipState: MembershipState;
+  declare user: User;
+
+  constructor(team: Team, data: RawTeamMemberData) {
     super(team.client);
 
     /**
@@ -20,7 +30,7 @@ class TeamMember extends Base {
     this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: RawTeamMemberData) {
     if ('permissions' in data) {
       /**
        * The permissions this Team Member has with regard to the team

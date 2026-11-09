@@ -1,6 +1,8 @@
 import _EmojiModule from './Emoji';
 const { Emoji } = _EmojiModule;
 import Util from '../util/Util';
+import type MessageReaction from './MessageReaction';
+import type { RawReactionEmojiData } from '../../typings/rawDataTypes';
 
 /**
  * Represents a limited emoji set used for both custom and unicode emojis. Custom emojis
@@ -9,8 +11,9 @@ import Util from '../util/Util';
  * @extends {Emoji}
  */
 class ReactionEmoji extends Emoji {
-  [key: string]: any;
-  constructor(reaction: any, emoji: any) {
+  declare reaction: MessageReaction;
+
+  constructor(reaction: MessageReaction, emoji: RawReactionEmojiData) {
     super(reaction.message.client, emoji);
     /**
      * The message reaction this emoji refers to

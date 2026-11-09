@@ -1,12 +1,18 @@
 import Base from './Base';
+import type TextBasedChannel from './interfaces/TextBasedChannel';
+import type User from './User';
+import type { RawTypingData } from '../../typings/rawDataTypes';
 
 /**
  * Represents a typing state for a user in a channel.
  * @extends {Base}
  */
 class Typing extends Base {
-  [key: string]: any;
-  constructor(channel: any, user: any, data: any) {
+  declare channel: TextBasedChannel;
+  declare user: User;
+  declare startedTimestamp: number;
+
+  constructor(channel: TextBasedChannel, user: User, data: RawTypingData) {
     super(channel.client);
 
     /**

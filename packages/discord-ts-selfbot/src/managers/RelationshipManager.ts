@@ -133,7 +133,7 @@ class RelationshipManager extends BaseManager {
    * @returns {?string}
    */
   resolveUsername(user: any) {
-    if (user instanceof ThreadMember) return user.member.user.username;
+    if (user instanceof ThreadMember) return user.guildMember?.user.username ?? null;
     if (user instanceof GuildMember) return user.user.username;
     if (user instanceof Message) return user.author?.username ?? null;
     if (user instanceof User) return user.username;

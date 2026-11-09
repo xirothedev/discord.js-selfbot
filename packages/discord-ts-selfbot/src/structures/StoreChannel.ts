@@ -1,4 +1,5 @@
 import GuildChannel from './GuildChannel';
+import type { CreateInviteOptions } from '../../typings';
 
 /**
  * Represents a guild store channel on Discord.
@@ -8,8 +9,12 @@ import GuildChannel from './GuildChannel';
  * @extends {GuildChannel}
  */
 class StoreChannel extends GuildChannel {
-  [key: string]: any;
-  constructor(guild: any, data: any, client: any) {
+  declare nsfw: boolean;
+  constructor(
+    guild: import('./Guild').Guild,
+    data: import('../../typings/rawDataTypes').RawGuildChannelData & { nsfw?: boolean },
+    client?: import('../client/Client').default,
+  ) {
     super(guild, data, client);
 
     /**
@@ -37,7 +42,7 @@ class StoreChannel extends GuildChannel {
    *   .then(invite => console.log(`Created an invite with a code of ${invite.code}`))
    *   .catch(console.error);
    */
-  createInvite(options: any) {
+  createInvite(options?: CreateInviteOptions) {
     return this.guild.invites.create(this.id, options);
   }
 
@@ -47,7 +52,7 @@ class StoreChannel extends GuildChannel {
    * @param {boolean} [cache=true] Whether or not to cache the fetched invites
    * @returns {Promise<Collection<string, Invite>>}
    */
-  fetchInvites(cache: any = true) {
+  fetchInvites(cache = true) {
     return this.guild.invites.fetch({ channelId: this.id, cache });
   }
 }

@@ -21,6 +21,7 @@ import MessagePayload from './MessagePayload';
 import _PollModule from './Poll';
 const { Poll } = _PollModule;
 import ReactionCollector from './ReactionCollector';
+import type { ReactionCollectorSourceOptions } from './ReactionCollector';
 import _StickerModule from './Sticker';
 const { Sticker } = _StickerModule;
 import Application from './interfaces/Application';
@@ -39,7 +40,6 @@ import type { RawMessageData, RawPartialMessageData } from '../../typings/rawDat
 import type {
   AnyChannel,
   AuthorizingIntegrationOwners,
-  AwaitReactionsOptions,
   EmojiIdentifierResolvable,
   MessageActionRowComponent,
   MessageActivity,
@@ -54,7 +54,6 @@ import type {
   MessageSelectMenu,
   MessageSnapshot,
   MessageType,
-  ReactionCollectorOptions,
   ReplyMessageOptions,
   RoleSubscriptionData,
   SharedClientTheme,
@@ -895,7 +894,7 @@ class Message extends Base {
    * collector.on('collect', r => console.log(`Collected ${r.emoji.name}`));
    * collector.on('end', collected => console.log(`Collected ${collected.size} items`));
    */
-  createReactionCollector(options: ReactionCollectorOptions = {}) {
+  createReactionCollector(options: ReactionCollectorSourceOptions = {}) {
     return new ReactionCollector(this, options);
   }
 
@@ -917,7 +916,9 @@ class Message extends Base {
    *   .then(collected => console.log(`Collected ${collected.size} reactions`))
    *   .catch(console.error);
    */
-  awaitReactions(options: AwaitReactionsOptions = {}): Promise<Collection<Snowflake | string, MessageReaction>> {
+  awaitReactions(
+    options: ReactionCollectorSourceOptions & { errors?: string[] } = {},
+  ): Promise<Collection<Snowflake | string, MessageReaction>> {
     return new Promise((resolve, reject) => {
       const collector = this.createReactionCollector(options);
       collector.once('end', (reactions: Collection<Snowflake | string, MessageReaction>, reason: string) => {

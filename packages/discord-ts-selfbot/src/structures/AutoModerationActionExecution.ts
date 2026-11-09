@@ -1,13 +1,30 @@
 import _ConstantsModule from '../util/Constants';
 const { AutoModerationRuleTriggerTypes } = _ConstantsModule;
+import type {
+  APIAutoModerationAction,
+  GatewayAutoModerationActionExecutionDispatchData,
+  Snowflake,
+} from 'discord-api-types/v10';
+import type { AutoModerationRuleTriggerType } from '../../typings';
+import type { Guild } from './Guild';
 
 /**
  * Represents the structure of an executed action when an {@link AutoModerationRule} is triggered.
  */
 class AutoModerationActionExecution {
-  [key: string]: any;
+  declare guild: Guild;
+  declare action: APIAutoModerationAction;
+  declare ruleId: Snowflake;
+  declare ruleTriggerType: AutoModerationRuleTriggerType;
+  declare userId: Snowflake;
+  declare channelId: Snowflake | null;
+  declare messageId: Snowflake | null;
+  declare alertSystemMessageId: Snowflake | null;
+  declare content: string;
+  declare matchedKeyword: string | null;
+  declare matchedContent: string | null;
 
-  constructor(data: any, guild: any) {
+  constructor(data: GatewayAutoModerationActionExecutionDispatchData, guild: Guild) {
     /**
      * The guild where this action was executed from.
      * @type {Guild}

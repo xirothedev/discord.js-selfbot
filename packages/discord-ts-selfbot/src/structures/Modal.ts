@@ -8,12 +8,20 @@ import Util from '../util/Util';
  * Represents a modal (form) to be shown in response to an interaction
  */
 class Modal {
-  [key: string]: any;
+  declare components: import('../../typings').MessageActionRow<import('../../typings').ModalActionRowComponent>[];
+  declare customId: string | null;
+  declare title: string | null;
+  declare nonce: string;
+  declare id: string;
+  declare applicationId: string;
+  declare channelId: string;
+  declare replied: boolean;
+  declare client: import('../client/Client').default;
   /**
    * @param {Object} data Modal to clone or raw data
    * @param {Client} client The client constructing this Modal, if provided
    */
-  constructor(data: any = {}, client: any = null) {
+  constructor(data: any = {}, client: import('../client/Client').default | null = null) {
     /**
      * A list of MessageActionRows in the modal
      * @type {MessageActionRow[]}
@@ -118,7 +126,7 @@ class Modal {
   reply() {
     if (!this.applicationId || !this.client || !this.channelId || this.replied) throw new Error('Modal cannot reply');
     // Get Object
-    const dataFinal = this.toJSON();
+    const { title: _title, ...dataFinal } = this.toJSON();
     dataFinal.components = dataFinal.components
       .map((c: any) => {
         c.components[0] = {
@@ -129,7 +137,6 @@ class Modal {
         return c;
       })
       .filter((c: any) => typeof c.components[0].value == 'string');
-    delete dataFinal.title;
     const nonce = SnowflakeUtil.generate();
     const postData = {
       type: InteractionTypes.MODAL_SUBMIT, // Modal
