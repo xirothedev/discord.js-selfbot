@@ -495,8 +495,9 @@ class BaseDispatcher extends Writable {
   }
 
   _setStreamStatus(value: any) {
-    if (typeof this.player.voiceConnection?.sendScreenshareState !== 'undefined') {
-      this.player.voiceConnection.sendScreenshareState(value);
+    const connection = this.player.voiceConnection;
+    if ('sendScreenshareState' in connection && typeof connection.sendScreenshareState === 'function') {
+      connection.sendScreenshareState(value);
     }
     /**
      * Emitted when the dispatcher starts/stops video.

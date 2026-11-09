@@ -94,7 +94,46 @@ function routeStreamPacket(connection: any, packet: any) {
  * @implements {PlayInterface}
  */
 class VoiceConnection extends EventEmitter {
-  [key: string]: any;
+  declare voiceManager: import('./ClientVoiceManager').default;
+  declare channel: any;
+  declare status: number;
+  declare speaking: Readonly<Speaking>;
+  declare videoStatus: boolean | null;
+  declare authentication: Record<string, any>;
+  declare player: import('./player/MediaPlayer').default;
+  declare ssrcMap: Map<number, { userId?: string; speaking?: number; hasVideo?: boolean }>;
+  declare _speaking: Map<string, Readonly<Speaking>>;
+  declare sockets: {
+    ws?: import('./networking/VoiceWebSocket').default | null;
+    udp?: import('./networking/VoiceUDPClient').default | null;
+  };
+  declare socketFactory: {
+    ws?: (connection: VoiceConnection) => import('./networking/VoiceWebSocket').default;
+    udp?: (connection: VoiceConnection) => import('./networking/VoiceUDPClient').default;
+  };
+  declare receiver: import('./receiver/Receiver').default;
+  declare videoCodec: string;
+  declare _streamConnection: StreamConnection | null;
+  declare _streamWatchConnection: Collection<string, StreamConnectionReadonly>;
+  declare connectTimeout?: NodeJS.Timeout;
+  declare eventHook: boolean;
+  declare serverId?: string | null;
+
+  get streamConnection(): StreamConnection | null {
+    return this._streamConnection;
+  }
+
+  set streamConnection(value: StreamConnection | null) {
+    this._streamConnection = value;
+  }
+
+  get streamWatchConnection(): Collection<string, StreamConnectionReadonly> {
+    return this._streamWatchConnection;
+  }
+
+  set streamWatchConnection(value: Collection<string, StreamConnectionReadonly>) {
+    this._streamWatchConnection = value;
+  }
 
   constructor(voiceManager: any, channel: any, options: any = {}) {
     super();
@@ -260,8 +299,8 @@ class VoiceConnection extends EventEmitter {
     if (this.speaking.equals(value)) return;
     if (this.status !== VoiceStatus.CONNECTED) return;
     this.speaking = new Speaking(value).freeze();
-    this.sockets.ws
-      .sendPacket({
+    this.sockets
+      .ws!.sendPacket({
         op: VoiceOpcodes.SPEAKING,
         d: {
           speaking: this.speaking.bitfield,
@@ -294,8 +333,8 @@ class VoiceConnection extends EventEmitter {
     if (this.status !== VoiceStatus.CONNECTED) return;
     this.videoStatus = value;
     if (!value) {
-      this.sockets.ws
-        .sendPacket({
+      this.sockets
+        .ws!.sendPacket({
           op: VoiceOpcodes.SOURCES,
           d: {
             audio_ssrc: this.authentication.ssrc,
@@ -308,8 +347,8 @@ class VoiceConnection extends EventEmitter {
           this.emit('debug', e);
         });
     } else {
-      this.sockets.ws
-        .sendPacket({
+      this.sockets
+        .ws!.sendPacket({
           op: VoiceOpcodes.SOURCES,
           d: {
             audio_ssrc: this.authentication.ssrc,
@@ -620,7 +659,7 @@ class VoiceConnection extends EventEmitter {
         break;
       }
     }
-    this.sockets.udp.createUDPSocket(data.ip);
+    this.sockets.udp!.createUDPSocket(data.ip);
   }
 
   /**
@@ -641,7 +680,7 @@ class VoiceConnection extends EventEmitter {
        */
       this.emit('ready');
     };
-    if (this.dispatcher || this.videoDispatcher) {
+    if (this.player.dispatcher || this.player.videoDispatcher) {
       ready();
     } else {
       // This serves to provide support for voice receive, sending audio is required to receive it.
@@ -864,6 +903,11 @@ class VoiceConnection extends EventEmitter {
  */
 class StreamConnection extends VoiceConnection {
   #requestDisconnect = false;
+  declare voiceConnection: VoiceConnection;
+  declare serverId: string | null;
+  declare isPaused: boolean | null;
+  declare viewerIds: string[];
+  declare region: string | null;
   /**
    * @param {ClientVoiceManager} voiceManager Voice manager
    * @param {Channel} channel any channel (joinable)
@@ -1048,6 +1092,12 @@ class StreamConnection extends VoiceConnection {
  */
 class StreamConnectionReadonly extends VoiceConnection {
   #requestDisconnect = false;
+  declare voiceConnection: VoiceConnection;
+  declare userId: string;
+  declare serverId: string | null;
+  declare isPaused: boolean;
+  declare viewerIds: string[];
+  declare region: string | null;
   /**
    * @param {ClientVoiceManager} voiceManager Voice manager
    * @param {Channel} channel any channel (joinable)
