@@ -41,15 +41,27 @@ Two public contracts stay as `fieldTypes` overrides because the runtime value is
 
 ## Final gate: closed
 
-`Base` no longer has `[key: string]: any`. The structural gate now passes with 354 source files type-checking and 0 drift rows. The ratchet is **1,318 `any` / 440 casts**.
+`Base` no longer has `[key: string]: any`. The structural gate now passes with 354 source files type-checking and 0 drift rows. The ratchet is **1,124 `any` / 440 casts**.
 
-The remaining `[key: string]: any` declarations are per-class boundaries on 72 classes that are not in the `Base` inheritance chain (voice, websocket, collectors, mixins, and small structures). Removing all of them at once reports 1,941 errors; they are now the next incremental surface.
+## Index-signature wave
+
+The shallow index signatures are closed. This wave removed the boundaries from:
+
+- Collectors: `Collector`, `InteractionCollector`, `ReactionCollector`, `MessageCollector`.
+- Channel mixins: `TextBasedChannel`, `InteractionResponses`, plus the guild text, voice, news, store, stage, thread, and thread-only channel subclasses.
+- Components: `BaseMessageComponent` and every concrete component (`MessageActionRow`, `MessageButton`, `MessageSelectMenu`, `TextInputComponent`, `ContainerComponent`, `FileComponent`, `MediaGalleryComponent`, `SectionComponent`, `SeparatorComponent`, `TextDisplayComponent`, `ThumbnailComponent`, `UnfurledMediaItem`, `MediaGalleryItem`).
+- Small structures: `OAuth2Guild`, `ReactionEmoji`, `VoiceRegion`, `Typing`, `Session`, `TeamMember`, `WelcomeChannel`, `WidgetMember`, `PollAnswer`, `Poll`, `ThreadMember`, `VoiceChannelEffect`, `MessageReaction`, `PermissionOverwrites`, `ApplicationRoleConnectionMetadata`, `AttachmentBuilder`, `Sticker`, `Presence` and its activity classes.
+- Interaction classes: `MessageComponentInteraction`, `ModalSubmitInteraction`, `SelectMenuInteraction`, and both context-menu interactions.
+- Voice helpers: `PCMInsertSilence`, `UnixStream`, `VolumeInterface`, `PlayInterface`, `IvfTransformer`, `AnnexBNalSplitter`.
+
+**18 classes remain**, all on the deep runtime surfaces: the voice stack (`BaseDispatcher`, `AudioDispatcher`, `VideoDispatcher`, `VPxDispatcher`, `AnnexBDispatcher`, `MediaPlayer`, `VoiceConnection`, `ClientVoiceManager`, `VoiceWebSocket`, `VoiceUDPClient`, `Receiver`, `Recorder`, `PacketHandler`), the websocket stack (`WebSocketManager`, `WebSocketShard`), the manager bases (`BaseManager`, `CachedManager`), and `ActionsManager`.
 
 ## Next modules
 
-1. Remove the per-class `[key: string]: any` boundaries in waves, starting with the collectors and channel mixins.
-2. `Interaction.memberPermissions` / `CacheTypeReducer` and `ApplicationCommand` generic propagation.
-3. Replace the last `Constants` boundary (`const Constants: any = {}`) with a named interface once consumers are typed.
+1. Type `BaseManager` / `CachedManager` and the manager subclasses in one wave; removing both base boundaries reports 337 errors.
+2. Type the websocket stack, then the voice dispatcher/receiver stack.
+3. `Interaction.memberPermissions` / `CacheTypeReducer` and `ApplicationCommand` generic propagation.
+4. Replace the last `Constants` boundary (`const Constants: any = {}`) with a named interface once consumers are typed.
 
 ## Closed in the follow-up pass
 
