@@ -1,13 +1,15 @@
 import CachedManager from './CachedManager';
 import _PresenceModule from '../structures/Presence';
 const { Presence } = _PresenceModule;
+import type { RawPresenceData } from '../../typings/rawDataTypes';
+import type { Client } from '../client/Client';
 
 /**
  * Manages API methods for Presences and holds their cache.
  * @extends {CachedManager}
  */
 class PresenceManager extends CachedManager<import('../structures/Presence').Presence> {
-  constructor(client: any, iterable?: any) {
+  constructor(client: Client, iterable?: Iterable<InstanceType<typeof Presence>>) {
     super(client, Presence, iterable);
   }
 
@@ -17,7 +19,7 @@ class PresenceManager extends CachedManager<import('../structures/Presence').Pre
    * @name PresenceManager#cache
    */
 
-  _add(data: any, cache: any = true) {
+  _add(data: RawPresenceData, cache = true): InstanceType<typeof Presence> {
     return super._add(data, cache, { id: data.user.id });
   }
 
@@ -34,7 +36,7 @@ class PresenceManager extends CachedManager<import('../structures/Presence').Pre
    * @param {PresenceResolvable} presence The presence resolvable to resolve
    * @returns {?Presence}
    */
-  resolve(presence: any) {
+  resolve(presence: unknown): InstanceType<typeof Presence> | null {
     const presenceResolvable = super.resolve(presence);
     if (presenceResolvable) return presenceResolvable;
     const userId = this.client.users.resolveId(presence);
@@ -46,7 +48,7 @@ class PresenceManager extends CachedManager<import('../structures/Presence').Pre
    * @param {PresenceResolvable} presence The presence resolvable to resolve
    * @returns {?Snowflake}
    */
-  resolveId(presence: any) {
+  resolveId(presence: unknown): string | null {
     const presenceResolvable = super.resolveId(presence);
     if (presenceResolvable) return presenceResolvable;
     const userId = this.client.users.resolveId(presence);
@@ -59,9 +61,9 @@ class PresenceManager extends CachedManager<import('../structures/Presence').Pre
    * @returns {Promise<Collection<Snowflake, Presence>>}
    */
   async fetch() {
-    const data = await this.client.api.presences.get();
+    const data: { presences: RawPresenceData[] } = await this.client.api.presences.get();
     // https://docs.discord.food/resources/presence#endpoints
-    data.presences.forEach((presence: any) => {
+    data.presences.forEach(presence => {
       this._add(presence, true);
     });
     return this.cache;

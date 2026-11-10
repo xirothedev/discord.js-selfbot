@@ -1,13 +1,18 @@
 // Heavily inspired by node's `internal/errors` module
 
 const kCode = Symbol('code');
-const messages = new Map<string, string | ((...args: any[]) => string)>();
+const messages = new Map<string, string | ((...args: unknown[]) => string)>();
 
-function makeDiscordjsError(Base: ErrorConstructor): any {
+interface DiscordjsErrorConstructor {
+  new (key: string, ...args: unknown[]): Error & { code: string };
+  readonly prototype: Error;
+}
+
+function makeDiscordjsError(Base: ErrorConstructor): DiscordjsErrorConstructor {
   return class DiscordjsError extends Base {
     [kCode]: string;
 
-    constructor(key: string, ...args: any[]) {
+    constructor(key: string, ...args: unknown[]) {
       super(message(key, args));
       this[kCode] = key;
       if (Error.captureStackTrace) Error.captureStackTrace(this, DiscordjsError);
@@ -23,17 +28,17 @@ function makeDiscordjsError(Base: ErrorConstructor): any {
   };
 }
 
-function message(key: string, args: any[]): string {
+function message(key: string, args: unknown[]): string {
   if (typeof key !== 'string') throw new Error('Error message key must be a string');
   const msg = messages.get(key);
   if (!msg) throw new Error(`An invalid error message key was used: ${key}.`);
   if (typeof msg === 'function') return msg(...args);
-  if (!args?.length) return msg as string;
+  if (!args?.length) return msg;
   args.unshift(msg);
   return String(...args);
 }
 
-function register(sym: string, val: string | ((...args: any[]) => string)): void {
+function register(sym: string, val: string | ((...args: unknown[]) => string)): void {
   messages.set(sym, typeof val === 'function' ? val : String(val));
 }
 
