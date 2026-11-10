@@ -28,7 +28,7 @@ class SessionManager extends CachedManager<Session> {
    * @returns {Promise<Collection<string, Session>>}
    */
   fetch() {
-    return this.client.api.auth.sessions.get().then((data: { user_sessions: RawSessionData[] }) => {
+    return this.client.api.auth.sessions.get<{ user_sessions: RawSessionData[] }>().then(data => {
       const allData = data.user_sessions;
       this.cache.clear();
       for (const session of allData) {

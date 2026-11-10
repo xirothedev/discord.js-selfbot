@@ -61,6 +61,10 @@ interface PollVotersResponse {
   users: RawUserData[];
 }
 
+interface RawPinnedMessagesResponse {
+  items?: RawMessageData[];
+}
+
 /**
  * Manages API methods for Messages and holds their cache.
  * @extends {CachedManager}
@@ -145,7 +149,7 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
    *   .catch(console.error);
    */
   async fetchPinned(cache = true) {
-    const data = await this.client.api.channels[this.channel.id].messages.pins.get({
+    const data = await this.client.api.channels[this.channel.id].messages.pins.get<RawPinnedMessagesResponse>({
       query: { limit: 50 },
     });
     const messages = new Collection<Snowflake, SourceMessage>();
@@ -241,7 +245,7 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
     const messageId = this.resolveId(message);
     if (!messageId) throw new TypeError('INVALID_TYPE', 'message', 'MessageResolvable');
 
-    const data = await this.client.api.channels(this.channel.id).messages(messageId).crosspost.post();
+    const data = await this.client.api.channels(this.channel.id).messages(messageId).crosspost.post<RawMessageData>();
     return this.cache.get(data.id) ?? this._add(data);
   }
 

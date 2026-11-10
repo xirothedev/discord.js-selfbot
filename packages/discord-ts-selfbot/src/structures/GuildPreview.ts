@@ -153,7 +153,7 @@ class GuildPreview extends Base implements GuildPreviewEntity {
    * @param {StaticImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  splashURL({ format, size }: StaticImageURLOptions = {}) {
+  splashURL({ format = 'webp', size }: StaticImageURLOptions = {}) {
     return this.splash && this.client.rest.cdn.Splash(this.id, this.splash, format, size);
   }
 
@@ -162,7 +162,7 @@ class GuildPreview extends Base implements GuildPreviewEntity {
    * @param {StaticImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  discoverySplashURL({ format, size }: StaticImageURLOptions = {}) {
+  discoverySplashURL({ format = 'webp', size }: StaticImageURLOptions = {}) {
     return this.discoverySplash && this.client.rest.cdn.DiscoverySplash(this.id, this.discoverySplash, format, size);
   }
 
@@ -171,7 +171,7 @@ class GuildPreview extends Base implements GuildPreviewEntity {
    * @param {ImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  iconURL({ format, size, dynamic }: ImageURLOptions = {}) {
+  iconURL({ format = 'webp', size, dynamic }: ImageURLOptions = {}) {
     return this.icon && this.client.rest.cdn.Icon(this.id, this.icon, format, size, dynamic);
   }
 
@@ -180,7 +180,7 @@ class GuildPreview extends Base implements GuildPreviewEntity {
    * @returns {Promise<GuildPreview>}
    */
   async fetch() {
-    const data = await this.client.api.guilds(this.id).preview.get();
+    const data = await this.client.api.guilds(this.id).preview.get<RawGuildPreviewData>();
     this._patch(data);
     return this;
   }

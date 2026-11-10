@@ -19,6 +19,7 @@ import type { Message } from '../Message';
 import type { MessageCollectorSourceOptions } from '../MessageCollector';
 import type { ChannelWebhookCreateOptions, UserResolvable } from '../../../typings';
 import type { SendOptions } from '../../types/channels';
+import type { RawMessageData } from '../../../typings/rawDataTypes';
 import type { UploadAttachment } from '../../types/uploads';
 /* eslint-disable import/order */
 const validateName = (stringName: unknown): string =>
@@ -234,7 +235,7 @@ class TextBasedChannel {
     attachmentsData.sort((a, b) => parseInt(a.id) - parseInt(b.id));
     if (data) Object.assign(data, { attachments: attachmentsData });
     // Empty Files
-    const d = await this.client.api.channels[this.id].messages.post({ data });
+    const d = await this.client.api.channels[this.id].messages.post<RawMessageData>({ data });
 
     return this.messages.cache.get(d.id) ?? this.messages._add(d);
   }
@@ -245,7 +246,7 @@ class TextBasedChannel {
     //     https://canary.discord.com/api/v9/channels/:id/application-command-index // DM Channel
     // Updated: 07/01/2023
     return this.client.api[this.guild ? 'guilds' : 'channels'][this.guild?.id || this.id]['application-command-index']
-      .get()
+      .get<ApplicationCommandIndex>()
       .catch(() => ({
         application_commands: [],
         applications: [],
@@ -254,7 +255,7 @@ class TextBasedChannel {
   }
 
   searchInteractionUserApps(): Promise<ApplicationCommandIndex> {
-    return this.client.api.users['@me']['application-command-index'].get().catch(() => ({
+    return this.client.api.users['@me']['application-command-index'].get<ApplicationCommandIndex>().catch(() => ({
       application_commands: [],
       applications: [],
       version: '',

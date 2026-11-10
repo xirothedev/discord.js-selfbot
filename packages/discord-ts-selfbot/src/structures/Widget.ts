@@ -87,7 +87,7 @@ class Widget extends Base implements WidgetEntity {
    * @returns {Promise<Widget>}
    */
   async fetch() {
-    const data = await this.client.api.guilds(this.id, 'widget.json').get();
+    const data = await this.client.api.guilds(this.id, 'widget.json').get<RawWidgetData>();
     this._patch(data);
     return this;
   }

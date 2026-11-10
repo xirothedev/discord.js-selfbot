@@ -332,7 +332,7 @@ class VoiceState extends Base implements VoiceStateEntity {
     const streamKey = this.guild
       ? `guild:${this.guild.id}:${this.channelId}:${this.id}`
       : `call:${this.channelId}:${this.id}`;
-    const data = await this.client.api.streams[encodeURIComponent(streamKey)].preview.get();
+    const data = await this.client.api.streams[encodeURIComponent(streamKey)].preview.get<{ url: string }>();
     return data.url;
   }
 

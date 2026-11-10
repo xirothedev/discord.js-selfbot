@@ -6,7 +6,7 @@ const { TypeError, Error } = _errorsModule;
 import GuildBan from '../structures/GuildBan';
 import _GuildMemberModule from '../structures/GuildMember';
 const { GuildMember } = _GuildMemberModule;
-import type { Snowflake } from 'discord-api-types/v10';
+import type { RESTPostAPIGuildBulkBanResult, Snowflake } from 'discord-api-types/v10';
 import type { RawGuildBanData } from '../../typings/rawDataTypes';
 import type {
   BanOptions,
@@ -294,7 +294,7 @@ class GuildBanManager extends CachedManager<GuildBan> {
     );
     if (userIds.length === 0) throw new Error('BULK_BAN_USERS_OPTION_EMPTY');
 
-    const result = await this.client.api.guilds(this.guild.id)['bulk-ban'].post({
+    const result = await this.client.api.guilds(this.guild.id)['bulk-ban'].post<RESTPostAPIGuildBulkBanResult>({
       data: { delete_message_days: options.deleteMessageSeconds, user_ids: userIds },
       reason: options.reason,
     });

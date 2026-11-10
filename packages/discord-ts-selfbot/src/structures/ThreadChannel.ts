@@ -10,7 +10,7 @@ import Permissions from '../util/Permissions';
 import _UtilModule from '../util/Util';
 import { isTextBasedChannel } from '../types/channels';
 const { resolveAutoArchiveMaxLimit } = _UtilModule;
-import type { Snowflake } from 'discord-api-types/v10';
+import type { GatewayThreadUpdateDispatchData, Snowflake } from 'discord-api-types/v10';
 import type {
   BaseFetchOptions,
   ChannelFlagsResolvable,
@@ -406,7 +406,7 @@ class ThreadChannel extends Channel {
     let autoArchiveDuration: ThreadAutoArchiveDuration | 'MAX' | number | undefined = data.autoArchiveDuration;
     if (autoArchiveDuration === 'MAX') autoArchiveDuration = resolveAutoArchiveMaxLimit(this.guild);
 
-    const newData = await this.client.api.channels(this.id).patch({
+    const newData = await this.client.api.channels(this.id).patch<GatewayThreadUpdateDispatchData>({
       data: {
         name: data.name,
         archived: data.archived,

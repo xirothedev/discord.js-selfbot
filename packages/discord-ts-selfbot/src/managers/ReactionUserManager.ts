@@ -3,6 +3,7 @@ import CachedManager from './CachedManager';
 import _errorsModule from '../errors';
 const { Error } = _errorsModule;
 import User from '../structures/User';
+import type { RESTGetAPIChannelMessageReactionUsersResult } from 'discord-api-types/v10';
 import type { MessageReaction } from '../structures/MessageReaction';
 import type { FetchReactionUsersOptions, UserResolvable } from '../../typings';
 
@@ -50,7 +51,9 @@ class ReactionUserManager extends CachedManager<User> {
     const message = this.reaction.message;
     const data = await this.client.api.channels[message.channelId].messages[message.id].reactions[
       this.reaction.emoji.identifier
-    ].get({ query: { limit, after, type: resolveEnumValue(ReactionTypes, type) } });
+    ].get<RESTGetAPIChannelMessageReactionUsersResult>({
+      query: { limit, after, type: resolveEnumValue(ReactionTypes, type) },
+    });
     const users = new Collection<string, User>();
     for (const rawUser of data) {
       const user = this.client.users._add(rawUser);

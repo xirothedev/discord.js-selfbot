@@ -35,7 +35,20 @@ import DataResolver from '../util/DataResolver';
 import SystemChannelFlags from '../util/SystemChannelFlags';
 import Util from '../util/Util';
 import { GuildFeature } from 'discord-api-types/v10';
-import type { APIGuildIntegration, Snowflake } from 'discord-api-types/v10';
+import type {
+  APIGuildIntegration,
+  RESTGetAPIAuditLogResult,
+  RESTGetAPIGuildIntegrationsResult,
+  RESTGetAPIGuildPreviewResult,
+  RESTGetAPIGuildTemplatesResult,
+  RESTGetAPIGuildWebhooksResult,
+  RESTGetAPIGuildWelcomeScreenResult,
+  RESTGetAPIGuildWidgetSettingsResult,
+  RESTPatchAPIGuildResult,
+  RESTPatchAPIGuildWelcomeScreenResult,
+  RESTPostAPIGuildTemplatesResult,
+  Snowflake,
+} from 'discord-api-types/v10';
 import type { RawGuildData, RawGuildTemplateData } from '../../typings/rawDataTypes';
 import type {
   Base64Resolvable,
@@ -664,7 +677,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
    * @param {StaticImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  discoverySplashURL({ format, size }: StaticImageURLOptions = {}) {
+  discoverySplashURL({ format = 'webp', size }: StaticImageURLOptions = {}) {
     return this.discoverySplash && this.client.rest.cdn.DiscoverySplash(this.id, this.discoverySplash, format, size);
   }
 
@@ -780,7 +793,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
    *   .catch(console.error);
    */
   async fetchIntegrations() {
-    const data = await this.client.api.guilds(this.id).integrations.get();
+    const data = await this.client.api.guilds(this.id).integrations.get<RESTGetAPIGuildIntegrationsResult>();
     return data.reduce(
       (collection: Collection<Snowflake | string, Integration>, integration: APIGuildIntegration) =>
         collection.set(integration.id, new Integration(this.client, integration, this)),
@@ -794,7 +807,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
    * @returns {Promise<Collection<string, GuildTemplate>>}
    */
   async fetchTemplates() {
-    const templates = await this.client.api.guilds(this.id).templates.get();
+    const templates = await this.client.api.guilds(this.id).templates.get<RESTGetAPIGuildTemplatesResult>();
     return templates.reduce(
       (col: Collection<string, GuildTemplate>, data: RawGuildTemplateData) =>
         col.set(data.code, new GuildTemplate(this.client, data)),
@@ -807,7 +820,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
    * @returns {Promise<WelcomeScreen>}
    */
   async fetchWelcomeScreen() {
-    const data = await this.client.api.guilds(this.id, 'welcome-screen').get();
+    const data = await this.client.api.guilds(this.id, 'welcome-screen').get<RESTGetAPIGuildWelcomeScreenResult>();
     return new WelcomeScreen(this, data);
   }
 
@@ -818,7 +831,9 @@ class Guild extends AnonymousGuild implements GuildEntity {
    * @returns {Promise<GuildTemplate>}
    */
   async createTemplate(name: string, description?: string) {
-    const data = await this.client.api.guilds(this.id).templates.post({ data: { name, description } });
+    const data = await this.client.api.guilds(this.id).templates.post<RESTPostAPIGuildTemplatesResult>({
+      data: { name, description },
+    });
     return new GuildTemplate(this.client, data);
   }
 
@@ -827,7 +842,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
    * @returns {Promise<GuildPreview>}
    */
   async fetchPreview() {
-    const data = await this.client.api.guilds(this.id).preview.get();
+    const data = await this.client.api.guilds(this.id).preview.get<RESTGetAPIGuildPreviewResult>();
     return new GuildPreview(this.client, data);
   }
 
@@ -851,7 +866,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
    *   .catch(console.error);
    */
   async fetchVanityData() {
-    const data = await this.client.api.guilds(this.id, 'vanity-url').get();
+    const data = await this.client.api.guilds(this.id, 'vanity-url').get<Vanity>();
     this.vanityURLCode = data.code;
     this.vanityURLUses = data.uses;
 
@@ -868,7 +883,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
    *   .catch(console.error);
    */
   async fetchWebhooks() {
-    const apiHooks = await this.client.api.guilds(this.id).webhooks.get();
+    const apiHooks = await this.client.api.guilds(this.id).webhooks.get<RESTGetAPIGuildWebhooksResult>();
     const hooks = new Collection();
     for (const hook of apiHooks) hooks.set(hook.id, new Webhook(this.client, hook));
     return hooks;
@@ -911,7 +926,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
    *   .catch(console.error);
    */
   async fetchWidgetSettings() {
-    const data = await this.client.api.guilds(this.id).widget.get();
+    const data = await this.client.api.guilds(this.id).widget.get<RESTGetAPIGuildWidgetSettingsResult>();
     this.widgetEnabled = data.enabled;
     this.widgetChannelId = data.channel_id;
     return {
@@ -947,7 +962,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
     user,
     type,
   }: GuildAuditLogsFetchOptions<T> = {}): Promise<GuildAuditLogs<T>> {
-    const data = await this.client.api.guilds(this.id)['audit-logs'].get({
+    const data = await this.client.api.guilds(this.id)['audit-logs'].get<RESTGetAPIAuditLogResult>({
       query: {
         before: typeof before === 'string' ? before : before?.id,
         after: typeof after === 'string' ? after : after?.id,
@@ -1074,7 +1089,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
       _data.safety_alerts_channel_id = this.client.channels.resolveId(data.safetyAlertsChannel);
     }
     if ('premiumProgressBarEnabled' in data) _data.premium_progress_bar_enabled = data.premiumProgressBarEnabled;
-    const newData = await this.client.api.guilds(this.id).patch({ data: _data, reason });
+    const newData = await this.client.api.guilds(this.id).patch<RESTPatchAPIGuildResult>({ data: _data, reason });
     this.client.actions.GuildUpdate.handle(newData);
     return this;
   }
@@ -1139,13 +1154,15 @@ class Guild extends AnonymousGuild implements GuildEntity {
       };
     });
 
-    const patchData = await this.client.api.guilds(this.id, 'welcome-screen').patch({
-      data: {
-        welcome_channels,
-        description,
-        enabled,
-      },
-    });
+    const patchData = await this.client.api
+      .guilds(this.id, 'welcome-screen')
+      .patch<RESTPatchAPIGuildWelcomeScreenResult>({
+        data: {
+          welcome_channels,
+          description,
+          enabled,
+        },
+      });
     return new WelcomeScreen(this, patchData);
   }
 
@@ -1654,8 +1671,8 @@ class Guild extends AnonymousGuild implements GuildEntity {
     return new Promise<Collection<number, GuildEmoji>>((resolve, reject) => {
       this.client.api
         .guilds(this.id)
-        ['top-emojis'].get()
-        .then((data: { items: { emoji_rank: number; emoji_id: Snowflake }[] }) => {
+        ['top-emojis'].get<{ items: { emoji_rank: number; emoji_id: Snowflake }[] }>()
+        .then(data => {
           const emojis = new Collection<number, GuildEmoji>();
           for (const emoji of data.items) {
             const resolved = this.emojis.cache.get(emoji.emoji_id);
@@ -1682,7 +1699,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
    */
   async setVanityCode(code = ''): Promise<Vanity> {
     if (typeof code !== 'string') throw new TypeError('INVALID_VANITY_URL_CODE');
-    const data = await this.client.api.guilds(this.id, 'vanity-url').patch({
+    const data = await this.client.api.guilds(this.id, 'vanity-url').patch<Vanity>({
       data: { code },
     });
     this.vanityURLCode = data.code;

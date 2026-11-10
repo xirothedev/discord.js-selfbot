@@ -99,7 +99,7 @@ class StickerPack extends Base implements StickerPackEntity {
    * @param {StaticImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  bannerURL({ format, size }: StaticImageURLOptions = {}) {
+  bannerURL({ format = 'webp', size }: StaticImageURLOptions = {}) {
     return this.bannerId && this.client.rest.cdn.StickerPackBanner(this.bannerId, format, size);
   }
 }

@@ -176,7 +176,7 @@ class DMChannel extends Channel {
    * @returns {Promise<void>}
    */
   ring() {
-    return this.client.api.channels(this.id).call.ring.post({
+    return this.client.api.channels(this.id, 'call', 'ring').post({
       data: {
         recipients: null,
       },

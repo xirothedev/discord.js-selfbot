@@ -2,7 +2,7 @@ import process from 'node:process';
 import type { APIWebhookSourceChannel, APIWebhookSourceGuild, Snowflake } from 'discord-api-types/v10';
 import MessagePayload from './MessagePayload';
 import { Message } from './Message';
-import type { RawWebhookData } from '../../typings/rawDataTypes';
+import type { RawMessageData, RawWebhookData } from '../../typings/rawDataTypes';
 import type {
   BufferResolvable,
   MessageResolvable,
@@ -239,7 +239,7 @@ class Webhook {
     }
 
     const { data, files } = await messagePayload.resolveFiles();
-    const d = await this.client.api.webhooks(this.id, this.token).post({
+    const d = await this.client.api.webhooks(this.id, this.token).post<RawMessageData>({
       data,
       files,
       query: {
@@ -310,7 +310,7 @@ class Webhook {
         ? channel.id
         : channel
       : undefined;
-    const data = await this.client.api.webhooks(this.id, channel ? undefined : this.token).patch({
+    const data = await this.client.api.webhooks(this.id, channel ? undefined : this.token).patch<RawWebhookData>({
       data: { name: name ?? this.name ?? undefined, avatar: resolvedAvatar, channel_id: channelId },
       reason,
       auth: !this.token || Boolean(channelId),
@@ -361,7 +361,7 @@ class Webhook {
     const data = await this.client.api
       .webhooks(this.id, this.token)
       .messages(message)
-      .get({
+      .get<RawMessageData>({
         query: {
           thread_id: cacheOrOptions.threadId,
         },
@@ -396,7 +396,7 @@ class Webhook {
     const d = await this.client.api
       .webhooks(this.id, this.token)
       .messages(typeof message === 'string' ? message : message.id)
-      .patch({
+      .patch<RawMessageData>({
         data,
         files,
         query: {
@@ -491,7 +491,7 @@ class Webhook {
    * @param {StaticImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  avatarURL({ format, size }: StaticImageURLOptions = {}) {
+  avatarURL({ format = 'webp', size }: StaticImageURLOptions = {}) {
     if (!this.avatar) return null;
     return this.client.rest.cdn.Avatar(this.id, this.avatar, format, size);
   }

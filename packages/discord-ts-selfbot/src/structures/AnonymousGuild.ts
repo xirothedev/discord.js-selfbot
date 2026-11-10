@@ -92,7 +92,7 @@ class AnonymousGuild extends BaseGuild implements AnonymousGuildEntity {
    * @param {StaticImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  bannerURL({ format, size }: StaticImageURLOptions = {}) {
+  bannerURL({ format = 'webp', size }: StaticImageURLOptions = {}) {
     return this.banner && this.client.rest.cdn.Banner(this.id, this.banner, format, size);
   }
 
@@ -101,7 +101,7 @@ class AnonymousGuild extends BaseGuild implements AnonymousGuildEntity {
    * @param {StaticImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  splashURL({ format, size }: StaticImageURLOptions = {}) {
+  splashURL({ format = 'webp', size }: StaticImageURLOptions = {}) {
     return this.splash && this.client.rest.cdn.Splash(this.id, this.splash, format, size);
   }
 }

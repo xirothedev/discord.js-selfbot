@@ -5,7 +5,7 @@ import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
 const { ChannelTypes } = _ConstantsModule;
 import _UtilModule from '../util/Util';
 import type { GuildTextThreadCreateOptions } from '../../typings';
-import type { Snowflake } from 'discord-api-types/v10';
+import type { RESTPostAPIChannelThreadsResult, Snowflake } from 'discord-api-types/v10';
 
 type SourceGuildTextThreadCreateOptions<AllowedThreadType> = Omit<
   GuildTextThreadCreateOptions<AllowedThreadType>,
@@ -96,7 +96,7 @@ class GuildTextThreadManager<AllowedThreadType> extends ThreadManager {
     const resolvedAutoArchiveDuration =
       autoArchiveDuration === 'MAX' ? resolveAutoArchiveMaxLimit(this.channel.guild) : autoArchiveDuration;
 
-    const data = await path.threads.post({
+    const data = await path.threads.post<RESTPostAPIChannelThreadsResult>({
       data: {
         name,
         auto_archive_duration: resolvedAutoArchiveDuration,

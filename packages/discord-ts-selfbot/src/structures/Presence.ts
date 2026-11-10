@@ -633,7 +633,7 @@ class RichPresenceAssets {
       }
     }
 
-    return this.activity.presence.client.rest.cdn.AppAsset(this.activity.applicationId, this.smallImage, {
+    return this.activity.presence.client.rest.cdn.AppAsset(this.activity.applicationId!, this.smallImage, {
       format,
       size,
     });
@@ -662,7 +662,7 @@ class RichPresenceAssets {
       }
     }
 
-    return this.activity.presence.client.rest.cdn.AppAsset(this.activity.applicationId, this.largeImage, {
+    return this.activity.presence.client.rest.cdn.AppAsset(this.activity.applicationId!, this.largeImage, {
       format,
       size,
     });
@@ -1118,7 +1118,7 @@ class RichPresence extends Activity {
     if (images.some(image => !URL.canParse(image))) {
       throw new Error('Each image must be a valid URL.');
     }
-    const res = await client.api.applications[applicationId]['external-assets'].post({
+    const res = await client.api.applications[applicationId]['external-assets'].post<ExternalAssets[]>({
       data: {
         urls: images,
       },

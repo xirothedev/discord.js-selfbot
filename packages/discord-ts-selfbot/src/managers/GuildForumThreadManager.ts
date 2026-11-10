@@ -4,6 +4,7 @@ const { TypeError } = _errorsModule;
 import MessagePayload from '../structures/MessagePayload';
 import _UtilModule from '../util/Util';
 const { resolveAutoArchiveMaxLimit, getUploadURL, uploadFile } = _UtilModule;
+import type { RESTPostAPIChannelThreadsResult } from 'discord-api-types/v10';
 import type { GuildForumThreadCreateOptions } from '../../typings';
 import type { MessagePayloadOptions } from '../structures/MessagePayload';
 
@@ -101,7 +102,7 @@ class GuildForumThreadManager extends ThreadManager {
       autoArchiveDuration = 10080;
     }
 
-    const post_data = await this.client.api.channels(this.channel.id).threads.post({
+    const post_data = await this.client.api.channels(this.channel.id).threads.post<RESTPostAPIChannelThreadsResult>({
       data: {
         name,
         auto_archive_duration: autoArchiveDuration,
