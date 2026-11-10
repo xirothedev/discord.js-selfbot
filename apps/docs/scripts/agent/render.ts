@@ -32,6 +32,17 @@ const HIDDEN_MEMBERS = new Set([
   'token',
 ]);
 
+const ERROR_MEMBERS = new Set([
+  'captureStackTrace',
+  'cause',
+  'isError',
+  'message',
+  'name',
+  'prepareStackTrace',
+  'stack',
+  'stackTraceLimit',
+]);
+
 function summary(comment: Comment | undefined): string {
   const parts = comment?.summary;
   if (!parts?.length) return '';
@@ -143,10 +154,12 @@ export interface RenderClassInput {
 
 export function renderClassPage(input: RenderClassInput): string {
   const { name, typings, events } = input;
+  const extendsError = (typings.extendedTypes ?? []).some(type => type.name === 'Error');
+  const hidden = extendsError ? new Set([...HIDDEN_MEMBERS, ...ERROR_MEMBERS]) : HIDDEN_MEMBERS;
   const members = mergeMembers(undefined, typings).filter(
     member =>
       !member.name.startsWith('_') &&
-      !HIDDEN_MEMBERS.has(member.name) &&
+      !hidden.has(member.name) &&
       !member.typings?.flags?.isPrivate &&
       !member.typings?.flags?.isProtected,
   );
