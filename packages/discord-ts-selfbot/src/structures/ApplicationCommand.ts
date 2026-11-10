@@ -28,7 +28,7 @@ interface ApplicationCommandOptionChoiceSource {
   value: string | number;
 }
 
-interface ApplicationCommandOptionSource {
+export interface ApplicationCommandOptionSource {
   type: ApplicationCommandType | number;
   name: string;
   nameLocalizations?: LocalizationMap | null;
@@ -342,7 +342,7 @@ class ApplicationCommand extends Base {
    *   .catch(console.error);
    */
   edit(data: Partial<ApplicationCommandData>) {
-    return this.manager.edit(this, data, this.guildId);
+    return this.manager.edit(this, data, this.guildId ?? undefined);
   }
 
   /**
@@ -446,7 +446,7 @@ class ApplicationCommand extends Base {
    *   .catch(console.error);
    */
   delete() {
-    return this.manager.delete(this, this.guildId);
+    return this.manager.delete(this, this.guildId ?? undefined);
   }
 
   /**

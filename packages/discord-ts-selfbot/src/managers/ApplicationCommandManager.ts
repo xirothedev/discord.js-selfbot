@@ -7,6 +7,48 @@ import ApplicationCommand from '../structures/ApplicationCommand';
 import _ConstantsModule from '../util/Constants';
 const { ApplicationCommandTypes } = _ConstantsModule;
 import Permissions from '../util/Permissions';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { RawApplicationCommandData } from '../../typings/rawDataTypes';
+import type {
+  ApplicationCommandDataResolvable,
+  ApplicationCommandResolvable,
+  FetchApplicationCommandOptions,
+} from '../../typings';
+import type { Client } from '../client/Client';
+import type { Guild } from '../structures/Guild';
+import type { ApplicationCommandOptionSource } from '../structures/ApplicationCommand';
+
+type ApplicationCommandResolvableSource = ApplicationCommand | ApplicationCommandResolvable;
+
+interface CommandPath {
+  get<T = unknown>(options?: unknown): Promise<T>;
+  post<T = unknown>(options?: unknown): Promise<T>;
+  put<T = unknown>(options?: unknown): Promise<T>;
+  patch<T = unknown>(options?: unknown): Promise<T>;
+  delete<T = unknown>(options?: unknown): Promise<T>;
+}
+
+interface ApplicationCommandTransformable {
+  toJSON?(): unknown;
+  name?: string;
+  nameLocalizations?: Record<string, string> | null;
+  name_localizations?: Record<string, string> | null;
+  description?: string;
+  descriptionLocalizations?: Record<string, string> | null;
+  description_localizations?: Record<string, string> | null;
+  type?: string | number;
+  options?: ApplicationCommandOptionSource[];
+  defaultPermission?: boolean;
+  default_permission?: boolean;
+  defaultMemberPermissions?: unknown;
+  default_member_permissions?: string | null;
+  dmPermission?: boolean | null;
+  dm_permission?: boolean | null;
+}
+
+function isTransformableCommand(value: unknown): value is ApplicationCommandTransformable {
+  return typeof value === 'object' && value !== null;
+}
 
 /**
  * Manages API methods for application commands and stores their cache.
@@ -14,9 +56,9 @@ import Permissions from '../util/Permissions';
  */
 class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
   declare permissions: ApplicationCommandPermissionsManager;
-  declare guild?: import('../structures/Guild').Guild;
-  declare guildId?: import('discord-api-types/v10').Snowflake;
-  constructor(client: any, iterable?: any) {
+  declare guild?: Guild;
+  declare guildId?: Snowflake;
+  constructor(client: Client, iterable?: Iterable<ApplicationCommand>) {
     super(client, ApplicationCommand, iterable);
 
     /**
@@ -32,8 +74,14 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
    * @name ApplicationCommandManager#cache
    */
 
-  _add(data: any, cache: any, guildId?: any) {
-    return super._add(data, cache, { extras: [this.guild, guildId] });
+  _add(
+    data: unknown,
+    cache = true,
+    guildIdOrOptions?: Snowflake | { id?: string; extras?: unknown[] },
+  ): ApplicationCommand {
+    const options =
+      typeof guildIdOrOptions === 'object' ? guildIdOrOptions : { extras: [this.guild, guildIdOrOptions] };
+    return super._add(data, cache, options);
   }
 
   /**
@@ -44,7 +92,7 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
    * @returns {Object}
    * @private
    */
-  commandPath({ id, guildId }: any = {}) {
+  commandPath({ id, guildId }: { id?: Snowflake; guildId?: Snowflake } = {}): CommandPath {
     let path = this.client.api.applications(this.client.application!.id);
     if (this.guild ?? guildId) path = path.guilds(this.guild?.id ?? guildId);
     return id ? path.commands(id) : path.commands;
@@ -95,27 +143,38 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
    *   .then(commands => console.log(`Fetched ${commands.size} commands`))
    *   .catch(console.error);
    */
-  async fetch(id: any, { guildId, cache = true, force = false, locale, withLocalizations }: any = {}) {
+  async fetch(id: Snowflake, options?: FetchApplicationCommandOptions): Promise<ApplicationCommand>;
+  async fetch(options?: FetchApplicationCommandOptions): Promise<Collection<Snowflake, ApplicationCommand>>;
+  async fetch(
+    id?: Snowflake | FetchApplicationCommandOptions,
+    options: FetchApplicationCommandOptions = {},
+  ): Promise<ApplicationCommand | Collection<Snowflake, ApplicationCommand>> {
+    let guildId = options.guildId;
+    let cache = options.cache ?? true;
+    let force = options.force ?? false;
+    let locale = options.locale;
+    let withLocalizations = options.withLocalizations;
+
     if (typeof id === 'object') {
-      ({ guildId, cache = true, locale, withLocalizations } = id);
+      ({ guildId, cache = true, force = false, locale, withLocalizations } = id);
     } else if (id) {
       if (!force) {
         const existing = this.cache.get(id);
         if (existing) return existing;
       }
-      const command = await this.commandPath({ id, guildId }).get();
+      const command = await this.commandPath({ id, guildId }).get<RawApplicationCommandData>();
       return this._add(command, cache);
     }
 
-    const data = await this.commandPath({ guildId }).get({
+    const data = await this.commandPath({ guildId }).get<RawApplicationCommandData[]>({
       headers: {
         'X-Discord-Locale': locale,
       },
       query: typeof withLocalizations === 'boolean' ? { with_localizations: withLocalizations } : undefined,
     });
     return data.reduce(
-      (coll: any, command: any) => coll.set(command.id, this._add(command, cache, guildId)),
-      new Collection(),
+      (coll, command) => coll.set(command.id, this._add(command, cache, guildId)),
+      new Collection<Snowflake, ApplicationCommand>(),
     );
   }
 
@@ -134,9 +193,9 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
    *   .then(console.log)
    *   .catch(console.error);
    */
-  async create(command: any, guildId: any) {
-    const data = await this.commandPath({ guildId }).post({
-      data: (this.constructor as any).transformCommand(command),
+  async create(command: ApplicationCommandDataResolvable, guildId?: Snowflake): Promise<ApplicationCommand> {
+    const data = await this.commandPath({ guildId }).post<RawApplicationCommandData>({
+      data: ApplicationCommandManager.transformCommand(command),
     });
     return this._add(data, true, guildId);
   }
@@ -163,13 +222,16 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
    *   .then(console.log)
    *   .catch(console.error);
    */
-  async set(commands: any, guildId: any) {
-    const data = await this.commandPath({ guildId }).put({
-      data: commands.map((c: any) => (this.constructor as any).transformCommand(c)),
+  async set(
+    commands: readonly ApplicationCommandDataResolvable[],
+    guildId?: Snowflake,
+  ): Promise<Collection<Snowflake, ApplicationCommand>> {
+    const data = await this.commandPath({ guildId }).put<RawApplicationCommandData[]>({
+      data: commands.map(c => ApplicationCommandManager.transformCommand(c)),
     });
     return data.reduce(
-      (coll: any, command: any) => coll.set(command.id, this._add(command, true, guildId)),
-      new Collection(),
+      (coll, command) => coll.set(command.id, this._add(command, true, guildId)),
+      new Collection<Snowflake, ApplicationCommand>(),
     );
   }
 
@@ -188,12 +250,16 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
    *   .then(console.log)
    *   .catch(console.error);
    */
-  async edit(command: any, data: any, guildId: any) {
+  async edit(
+    command: ApplicationCommandResolvableSource,
+    data: Partial<ApplicationCommandDataResolvable>,
+    guildId?: Snowflake,
+  ): Promise<ApplicationCommand> {
     const id = this.resolveId(command);
     if (!id) throw new TypeError('INVALID_TYPE', 'command', 'ApplicationCommandResolvable');
 
-    const patched = await this.commandPath({ id, guildId }).patch({
-      data: (this.constructor as any).transformCommand(data),
+    const patched = await this.commandPath({ id, guildId }).patch<RawApplicationCommandData>({
+      data: ApplicationCommandManager.transformCommand(data),
     });
     return this._add(patched, true, guildId);
   }
@@ -210,7 +276,7 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
    *   .then(console.log)
    *   .catch(console.error);
    */
-  async delete(command: any, guildId: any) {
+  async delete(command: ApplicationCommandResolvableSource, guildId?: Snowflake): Promise<ApplicationCommand | null> {
     const id = this.resolveId(command);
     if (!id) throw new TypeError('INVALID_TYPE', 'command', 'ApplicationCommandResolvable');
 
@@ -227,15 +293,20 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
    * @returns {APIApplicationCommand}
    * @private
    */
-  static transformCommand(command: any) {
-    if (typeof command?.toJSON === 'function') return command.toJSON();
+  static transformCommand(command: unknown) {
+    if (!isTransformableCommand(command)) {
+      throw new TypeError('INVALID_TYPE', 'command', 'ApplicationCommandDataResolvable');
+    }
+    if (typeof command.toJSON === 'function') return command.toJSON();
 
-    let default_member_permissions;
+    let default_member_permissions: string | null | undefined;
 
     if ('default_member_permissions' in command) {
-      default_member_permissions = command.default_member_permissions
-        ? new Permissions(BigInt(command.default_member_permissions)).bitfield.toString()
-        : command.default_member_permissions;
+      const value = command.default_member_permissions;
+      default_member_permissions =
+        typeof value === 'string' || typeof value === 'number'
+          ? new Permissions(BigInt(value)).bitfield.toString()
+          : value;
     }
 
     if ('defaultMemberPermissions' in command) {
@@ -250,8 +321,13 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
       name_localizations: command.nameLocalizations ?? command.name_localizations,
       description: command.description,
       description_localizations: command.descriptionLocalizations ?? command.description_localizations,
-      type: typeof command.type === 'number' ? command.type : ApplicationCommandTypes[command.type],
-      options: command.options?.map((o: any) => ApplicationCommand.transformOption(o)),
+      type:
+        typeof command.type === 'number'
+          ? command.type
+          : typeof command.type === 'string'
+            ? ApplicationCommandTypes[command.type]
+            : undefined,
+      options: command.options?.map(o => ApplicationCommand.transformOption(o)),
       default_permission: command.defaultPermission ?? command.default_permission,
       default_member_permissions,
       dm_permission: command.dmPermission ?? command.dm_permission,
