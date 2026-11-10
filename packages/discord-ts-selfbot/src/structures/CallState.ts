@@ -59,7 +59,7 @@ class CallState extends Base {
    * @returns {Promise<void>}
    */
   setRTCRegion(region: string) {
-    return this.client.api.channels(this.channelId).call.patch({ data: { region } });
+    return this.client.api.channels(this.channelId, 'call').patch({ data: { region } });
   }
 
   /**

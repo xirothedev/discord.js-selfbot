@@ -13,7 +13,14 @@ const { PartialTypes } = _ConstantsModule;
 import DataResolver from '../util/DataResolver';
 import GuildMemberFlags from '../util/GuildMemberFlags';
 import SnowflakeUtil from '../util/SnowflakeUtil';
-import type { Snowflake } from 'discord-api-types/v10';
+import type {
+  APIGuildMember,
+  RESTGetAPIGuildMemberResult,
+  RESTGetAPIGuildPruneCountResult,
+  RESTPatchAPIGuildMemberResult,
+  RESTPostAPIGuildPruneResult,
+  Snowflake,
+} from 'discord-api-types/v10';
 import type { RawGuildMemberData } from '../../typings/rawDataTypes';
 import type {
   AddGuildMemberOptions,
@@ -190,7 +197,9 @@ class GuildMemberManager extends CachedManager<import('../structures/GuildMember
       }
       resolvedOptions.roles = resolvedRoles;
     }
-    const data = await this.client.api.guilds(this.guild.id).members(userId).put({ data: resolvedOptions });
+    const data = await this.client.api.guilds(this.guild.id).members(userId).put<APIGuildMember>({
+      data: resolvedOptions,
+    });
     // Data is an empty buffer if the member is already part of the guild.
     return data instanceof Buffer ? (options.fetchWhenExisting === false ? null : this.fetch(userId)) : this._add(data);
   }
@@ -410,7 +419,7 @@ class GuildMemberManager extends CachedManager<import('../structures/GuildMember
     } else {
       endpoint = endpoint.members(id);
     }
-    const d = await endpoint.patch({ data: _data, reason });
+    const d = await endpoint.patch<RESTPatchAPIGuildMemberResult>({ data: _data, reason });
 
     const clone = this.cache.get(id)?._clone();
     clone?._patch(d);
@@ -471,8 +480,8 @@ class GuildMemberManager extends CachedManager<import('../structures/GuildMember
     const endpoint = this.client.api.guilds(this.guild.id).prune;
 
     const { pruned } = await (dry
-      ? endpoint.get({ query, reason })
-      : endpoint.post({ data: { ...query, compute_prune_count }, reason }));
+      ? endpoint.get<RESTGetAPIGuildPruneCountResult>({ query, reason })
+      : endpoint.post<RESTPostAPIGuildPruneResult>({ data: { ...query, compute_prune_count }, reason }));
 
     return pruned;
   }
@@ -539,7 +548,7 @@ class GuildMemberManager extends CachedManager<import('../structures/GuildMember
       if (existing && !existing.partial) return existing;
     }
 
-    const data = await this.client.api.guilds(this.guild.id).members(user).get();
+    const data = await this.client.api.guilds(this.guild.id).members(user).get<RESTGetAPIGuildMemberResult>();
     return this._add(data, cache);
   }
 

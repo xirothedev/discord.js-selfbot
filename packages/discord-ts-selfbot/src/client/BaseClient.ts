@@ -12,7 +12,7 @@ import type { ClientOptions } from '../../typings';
 class BaseClient extends EventEmitter {
   declare options: ResolvedClientOptions;
   declare authenticator: typeof import('otplib').authenticator;
-  declare rest: any;
+  declare rest: RESTManager;
 
   constructor(options: ClientOptions = {}) {
     super({ captureRejections: true });

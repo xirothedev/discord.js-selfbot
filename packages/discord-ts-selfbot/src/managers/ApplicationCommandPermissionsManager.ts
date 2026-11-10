@@ -4,7 +4,15 @@ import _errorsModule from '../errors';
 const { Error, TypeError } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
 const { ApplicationCommandPermissionTypes, APIErrors } = _ConstantsModule;
-import type { APIApplicationCommandPermission, Snowflake } from 'discord-api-types/v10';
+import type {
+  APIApplicationCommandPermission,
+  APIGuildApplicationCommandPermissions,
+  RESTGetAPIApplicationCommandPermissionsResult,
+  RESTGetAPIGuildApplicationCommandsPermissionsResult,
+  RESTPutAPIApplicationCommandPermissionsResult,
+  RESTPutAPIGuildApplicationCommandsPermissionsResult,
+  Snowflake,
+} from 'discord-api-types/v10';
 import type {
   ApplicationCommandPermissionData,
   ApplicationCommandPermissions,
@@ -160,12 +168,9 @@ class ApplicationCommandPermissionsManager<
     const { guildId, commandId } = this._validateOptions(guild, command);
     if (commandId) return this.fetchSingle(guildId, commandId);
 
-    const data = await this.permissionsPath(guildId).get();
+    const data = await this.permissionsPath(guildId).get<RESTGetAPIGuildApplicationCommandsPermissionsResult>();
     return data.reduce(
-      (
-        coll: Collection<Snowflake, ApplicationCommandPermissions[]>,
-        perm: { id: Snowflake; permissions: ApplicationCommandPermissionData[] },
-      ) =>
+      (coll: Collection<Snowflake, ApplicationCommandPermissions[]>, perm: APIGuildApplicationCommandPermissions) =>
         coll.set(
           perm.id,
           perm.permissions.map(p => ApplicationCommandPermissionsManager.transformPermissions(p, true)),
@@ -175,8 +180,8 @@ class ApplicationCommandPermissionsManager<
   }
 
   private async fetchSingle(guildId: Snowflake, commandId: Snowflake): Promise<ApplicationCommandPermissions[]> {
-    const data = await this.permissionsPath(guildId, commandId).get();
-    return data.permissions.map((perm: ApplicationCommandPermissionData) =>
+    const data = await this.permissionsPath(guildId, commandId).get<RESTGetAPIApplicationCommandPermissionsResult>();
+    return data.permissions.map((perm: APIApplicationCommandPermission) =>
       ApplicationCommandPermissionsManager.transformPermissions(perm, true),
     );
   }
@@ -186,12 +191,12 @@ class ApplicationCommandPermissionsManager<
     commandId: Snowflake,
     permissions: ApplicationCommandPermissionData[],
   ): Promise<ApplicationCommandPermissions[]> {
-    const data = await this.permissionsPath(guildId, commandId).put({
+    const data = await this.permissionsPath(guildId, commandId).put<RESTPutAPIApplicationCommandPermissionsResult>({
       data: {
         permissions: permissions.map(perm => ApplicationCommandPermissionsManager.transformPermissions(perm)),
       },
     });
-    return data.permissions.map((perm: ApplicationCommandPermissionData) =>
+    return data.permissions.map((perm: APIApplicationCommandPermission) =>
       ApplicationCommandPermissionsManager.transformPermissions(perm, true),
     );
   }
@@ -278,7 +283,7 @@ class ApplicationCommandPermissionsManager<
         permissions: perm.permissions.map(p => ApplicationCommandPermissionsManager.transformPermissions(p)),
       });
     }
-    const data = await this.permissionsPath(guildId).put({
+    const data = await this.permissionsPath(guildId).put<RESTPutAPIGuildApplicationCommandsPermissionsResult>({
       data: APIPermissions,
     });
     return data.reduce(

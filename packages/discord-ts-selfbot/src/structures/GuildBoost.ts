@@ -107,11 +107,13 @@ class GuildBoost extends Base implements GuildBoostEntity {
     if (this.guildId || this.premiumGuildSubscriptionId) throw new Error('BOOST_USED');
     const id = this.client.guilds.resolveId(guild);
     if (!id) throw new Error('UNKNOWN_GUILD');
-    const d = await this.client.api.guilds(id).premium.subscriptions.put({
-      data: {
-        user_premium_guild_subscription_slot_ids: [this.id],
-      },
-    });
+    const d = await this.client.api
+      .guilds(id)
+      .premium.subscriptions.put<NonNullable<SelfbotGuildBoostData['premium_guild_subscription']>>({
+        data: {
+          user_premium_guild_subscription_slot_ids: [this.id],
+        },
+      });
     this._patch({
       premium_guild_subscription: d,
     });

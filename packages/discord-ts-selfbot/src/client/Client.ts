@@ -40,6 +40,16 @@ import type { ResolvedClientOptions } from '../util/Options';
 import Permissions from '../util/Permissions';
 import DiscordAuthWebsocket from '../util/RemoteAuth';
 import Sweepers from '../util/Sweepers';
+import type {
+  RawGuildPreviewData,
+  RawGuildTemplateData,
+  RawStickerData,
+  RawStickerPackData,
+  RawVoiceRegionData,
+  RawWebhookData,
+  RawWidgetData,
+} from '../../typings/rawDataTypes';
+import type { RawInviteDataSource } from '../structures/Invite';
 import type { Snowflake } from 'discord-api-types/v10';
 import type {
   AcceptInviteOptions,
@@ -84,6 +94,28 @@ interface AuthorizedToken {
 
 interface InstalledApplicationData {
   integration_types_config: Record<string, { oauth2_install_params: { scopes: string[] } } | undefined>;
+}
+
+type LoginResult = { token: string } | { ticket: string };
+
+interface AcceptInviteResult {
+  show_verification_form?: boolean;
+  channel?: { id: Snowflake };
+}
+
+interface MemberVerificationField {
+  field_type?: number;
+  label?: string;
+  description?: string | null;
+  placeholder?: string | null;
+  required?: boolean;
+  values?: string[] | null;
+  response?: boolean;
+}
+
+interface MemberVerificationData {
+  form_fields: MemberVerificationField[];
+  version: string;
 }
 
 /**
@@ -395,7 +427,7 @@ class Client extends BaseClient {
    * @deprecated This method will not be updated until I find the most convenient way to implement MFA.
    */
   async passLogin(email: string, password: string): Promise<string | null> {
-    const initial = await this.api.auth.login.post({
+    const initial = await this.api.auth.login.post<LoginResult>({
       auth: false,
       versioned: true,
       data: { gift_code_sku_id: null, login_source: null, undelete: false, login: email, password },
@@ -406,7 +438,7 @@ class Client extends BaseClient {
     } else if ('ticket' in initial) {
       if (!this.options.TOTPKey) throw new Error('TOTPKEY_MISSING');
       const otp = this.authenticator.generate(this.options.TOTPKey);
-      const totp = await this.api.auth.mfa.totp.post({
+      const totp = await this.api.auth.mfa.totp.post<LoginResult>({
         auth: false,
         versioned: true,
         data: { gift_code_sku_id: null, login_source: null, code: otp, ticket: initial.ticket },
@@ -478,7 +510,7 @@ class Client extends BaseClient {
    */
   async fetchInvite(invite: InviteResolvable, options?: ClientFetchInviteOptions) {
     const code = DataResolver.resolveInviteCode(invite);
-    const data = await this.api.invites(code).get({
+    const data = await this.api.invites(code).get<RawInviteDataSource>({
       query: { with_counts: true, guild_scheduled_event_id: options?.guildScheduledEventId },
     });
     return new Invite(this, data);
@@ -495,7 +527,7 @@ class Client extends BaseClient {
    */
   async fetchGuildTemplate(template: GuildTemplateResolvable) {
     const code = DataResolver.resolveGuildTemplateCode(template);
-    const data = await this.api.guilds.templates(code).get();
+    const data = await this.api.guilds.templates(code).get<RawGuildTemplateData>();
     return new GuildTemplate(this, data);
   }
 
@@ -510,7 +542,7 @@ class Client extends BaseClient {
    *   .catch(console.error);
    */
   async fetchWebhook(id: Snowflake, token?: string) {
-    const data = await this.api.webhooks(id, token).get();
+    const data = await this.api.webhooks(id, token).get<RawWebhookData>();
     return new Webhook(this, { token, ...data });
   }
 
@@ -539,7 +571,7 @@ class Client extends BaseClient {
    *   .catch(console.error);
    */
   async fetchVoiceRegions() {
-    const apiRegions = await this.api.voice.regions.get();
+    const apiRegions = await this.api.voice.regions.get<RawVoiceRegionData[]>();
     const regions = new Collection<string, VoiceRegion>();
     for (const region of apiRegions) regions.set(region.id, new VoiceRegion(region));
     return regions;
@@ -555,7 +587,7 @@ class Client extends BaseClient {
    *   .catch(console.error);
    */
   async fetchSticker(id: Snowflake): Promise<StickerType> {
-    const data = await this.api.stickers(id).get();
+    const data = await this.api.stickers(id).get<RawStickerData>();
     return new Sticker(this, data);
   }
 
@@ -576,16 +608,13 @@ class Client extends BaseClient {
   async fetchStickerPacks(options?: StickerPackFetchOptions): Promise<Collection<Snowflake, StickerPack>>;
   async fetchStickerPacks({ packId }: StickerPackFetchOptions = {}) {
     if (packId) {
-      const data = await this.api('sticker-packs', packId).get();
+      const data = await this.api('sticker-packs', packId).get<RawStickerPackData>();
       return new StickerPack(this, data);
     }
 
-    const data = await this.api('sticker-packs').get();
+    const data = await this.api('sticker-packs').get<{ sticker_packs: RawStickerPackData[] }>();
     return new Collection<Snowflake, StickerPack>(
-      data.sticker_packs.map((p: import('../../typings/rawDataTypes').RawStickerPackData) => [
-        p.id,
-        new StickerPack(this, p),
-      ]),
+      data.sticker_packs.map((p: RawStickerPackData) => [p.id, new StickerPack(this, p)]),
     );
   }
 
@@ -664,7 +693,7 @@ class Client extends BaseClient {
   async fetchGuildPreview(guild: GuildResolvable) {
     const id = this.guilds.resolveId(guild);
     if (!id) throw new TypeError('INVALID_TYPE', 'guild', 'GuildResolvable');
-    const data = await this.api.guilds(id).preview.get();
+    const data = await this.api.guilds(id).preview.get<RawGuildPreviewData>();
     return new GuildPreview(this, data);
   }
 
@@ -676,7 +705,7 @@ class Client extends BaseClient {
   async fetchGuildWidget(guild: GuildResolvable) {
     const id = this.guilds.resolveId(guild);
     if (!id) throw new TypeError('INVALID_TYPE', 'guild', 'GuildResolvable');
-    const data = await this.api.guilds(id, 'widget.json').get();
+    const data = await this.api.guilds(id, 'widget.json').get<RawWidgetData>();
     return new Widget(this, data);
   }
 
@@ -693,7 +722,9 @@ class Client extends BaseClient {
       urlObject.search = '';
       return urlObject.toString();
     });
-    const data = await this.api.attachments('refresh-urls').post({
+    const data = await this.api.attachments('refresh-urls').post<{
+      refreshed_urls: { original: string; refreshed: string }[];
+    }>({
       data: { attachment_urls: urls },
     });
     /**
@@ -818,7 +849,7 @@ class Client extends BaseClient {
     const i = await this.fetchInvite(code);
     if (i.guild?.id && this.guilds.cache.has(i.guild?.id)) return this.guilds.cache.get(i.guild?.id);
     if (i.channelId && this.channels.cache.has(i.channelId)) return this.channels.cache.get(i.channelId);
-    const data = await this.api.invites(code).post({
+    const data = await this.api.invites(code).post<AcceptInviteResult>({
       DiscordContext: { location: 'Markdown Link' },
       data: {
         session_id: this.sessionId,
@@ -833,10 +864,10 @@ class Client extends BaseClient {
         return guild;
       }
       if (options.bypassOnboarding) {
-        const onboardingData = await this.api.guilds[i.guild?.id].onboarding.get();
+        const onboardingData = await this.api.guilds[i.guild?.id].onboarding.get<OnboardingData>();
         // Onboarding
         if (onboardingData.enabled) {
-          const prompts = (onboardingData as OnboardingData).prompts.filter(o => o.in_onboarding);
+          const prompts = onboardingData.prompts.filter(o => o.in_onboarding);
           if (prompts.length) {
             const onboarding_prompts_seen: Record<string, number> = {};
             const onboarding_responses: Snowflake[] = [];
@@ -876,8 +907,8 @@ class Client extends BaseClient {
         }
         const getForm = await this.api
           .guilds(i.guild?.id)
-          ['member-verification'].get({ query: { with_guild: false, invite_code: this.code } })
-          .catch(() => {});
+          ['member-verification'].get<MemberVerificationData>({ query: { with_guild: false, invite_code: this.code } })
+          .catch(() => undefined);
         if (getForm && getForm.form_fields[0]) {
           const form = Object.assign(getForm.form_fields[0], { response: true });
           await this.api
@@ -888,7 +919,8 @@ class Client extends BaseClient {
       }
       return guild;
     } else {
-      return this.channels.cache.has(i.channelId || data.channel?.id);
+      const channelId = i.channelId || data.channel?.id;
+      return channelId ? this.channels.cache.has(channelId) : false;
     }
   }
 
@@ -955,7 +987,7 @@ class Client extends BaseClient {
     delete searchParams.permissions;
     delete searchParams.integration_type;
     delete searchParams.guild_id;
-    return this.api.oauth2.authorize.post({
+    return this.api.oauth2.authorize.post<{ location: string }>({
       query: searchParams,
       data: options,
     });
@@ -969,15 +1001,15 @@ class Client extends BaseClient {
   installUserApps(applicationId: Snowflake) {
     return this.api
       .applications(applicationId)
-      .public.get({
+      .public.get<InstalledApplicationData>({
         query: {
           with_guild: false,
         },
       })
-      .then((rawData: InstalledApplicationData) => {
+      .then<{ location: string } | false>((rawData: InstalledApplicationData) => {
         const installTypes = rawData.integration_types_config['1'];
         if (installTypes) {
-          return this.api.oauth2.authorize.post({
+          return this.api.oauth2.authorize.post<{ location: string }>({
             query: {
               client_id: applicationId,
               scope: installTypes.oauth2_install_params.scopes.join(' '),
@@ -1003,11 +1035,11 @@ class Client extends BaseClient {
   deauthorize(id: Snowflake, type: 'application' | 'token' = 'application') {
     if (type === 'application') {
       return this.api.oauth2.tokens
-        .get()
+        .get<AuthorizedToken[]>()
         .then((data: AuthorizedToken[]) => data.find(o => o.application.id === id))
-        .then((o: AuthorizedToken | undefined) => this.api.oauth2.tokens(o!.id).delete());
+        .then((o: AuthorizedToken | undefined) => this.api.oauth2.tokens(o!.id).delete<void>());
     } else {
-      return this.api.oauth2.tokens(id).delete();
+      return this.api.oauth2.tokens(id).delete<void>();
     }
   }
 
@@ -1024,7 +1056,7 @@ class Client extends BaseClient {
    * @returns {Promise<Collection<Snowflake, AuthorizedApplicationData>>}
    */
   authorizedApplications() {
-    return this.api.oauth2.tokens.get().then((data: AuthorizedToken[]) => {
+    return this.api.oauth2.tokens.get<AuthorizedToken[]>().then((data: AuthorizedToken[]) => {
       const results = new Collection<
         Snowflake,
         {

@@ -50,8 +50,8 @@ class UserNoteManager extends BaseManager {
       if (existing) return existing;
     }
     const data = await this.client.api.users['@me'].notes[id]
-      .get()
-      .then((d: { note?: string }) => d.note ?? '')
+      .get<{ note?: string }>()
+      .then(d => d.note ?? '')
       .catch(() => '');
     if (cache) this.cache.set(id, data);
     return data;

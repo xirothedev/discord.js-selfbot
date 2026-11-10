@@ -4,7 +4,7 @@ import _errorsModule from '../errors';
 const { Error, TypeError } = _errorsModule;
 import DataResolver from '../util/DataResolver';
 import Permissions from '../util/Permissions';
-import type { Snowflake } from 'discord-api-types/v10';
+import type { RESTPatchAPIGuildEmojiResult, RESTPostAPIGuildEmojiResult, Snowflake } from 'discord-api-types/v10';
 import type { RawGuildEmojiData } from '../../typings/rawDataTypes';
 import type {
   BaseFetchOptions,
@@ -86,7 +86,10 @@ class GuildEmojiManager extends BaseGuildEmojiManager {
       }
     }
 
-    const emoji = await this.client.api.guilds(this.guild.id).emojis.post({ data, reason });
+    const emoji = await this.client.api.guilds(this.guild.id).emojis.post<RESTPostAPIGuildEmojiResult>({
+      data,
+      reason,
+    });
     return this.client.actions.GuildEmojiCreate.handle(this.guild, emoji).emoji;
   }
 
@@ -159,7 +162,7 @@ class GuildEmojiManager extends BaseGuildEmojiManager {
     const newData = await this.client.api
       .guilds(this.guild.id)
       .emojis(id)
-      .patch({
+      .patch<RESTPatchAPIGuildEmojiResult>({
         data: {
           name: data.name,
           roles,

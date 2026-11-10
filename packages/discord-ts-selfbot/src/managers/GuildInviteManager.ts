@@ -4,7 +4,7 @@ import _errorsModule from '../errors';
 const { Error } = _errorsModule;
 import Invite from '../structures/Invite';
 import DataResolver from '../util/DataResolver';
-import type { Snowflake } from 'discord-api-types/v10';
+import type { RESTPostAPIChannelInviteResult, Snowflake } from 'discord-api-types/v10';
 import type { RawInviteData } from '../../typings/rawDataTypes';
 import type { RawInviteDataSource } from '../structures/Invite';
 import type {
@@ -253,7 +253,7 @@ class GuildInviteManager extends CachedManager<Invite> {
             ? target.applicationId
             : undefined;
 
-    const invite = await this.client.api.channels(id).invites.post({
+    const invite = await this.client.api.channels(id).invites.post<RESTPostAPIChannelInviteResult>({
       data: {
         temporary,
         max_age: maxAge,

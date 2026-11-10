@@ -1,12 +1,14 @@
 import { setInterval } from 'node:timers';
 import { Collection } from '@discordjs/collection';
-import Invite from './Invite';
+import Invite, { type RawInviteDataSource } from './Invite';
 import User from './User';
 import DataResolver from '../util/DataResolver';
 import PremiumUsageFlags from '../util/PremiumUsageFlags';
 import PurchasedFlags from '../util/PurchasedFlags';
 import Util from '../util/Util';
 import type { SelfbotClientUserData } from '../types/selfbot/user';
+import type { APIUser } from 'discord-api-types/v10';
+import type { RawInviteData } from '../../typings/rawDataTypes';
 import type { ClientUserEntity } from '../types/entities/client-user';
 import type { PatchOf } from '../types/schema';
 
@@ -158,7 +160,7 @@ class ClientUser extends User implements ClientUserEntity {
    * @returns {Promise<ClientUser>}
    */
   async edit(options: Record<string, unknown> = {}) {
-    const data = await this.client.api.users('@me').patch({ data: options });
+    const data = await this.client.api.users('@me').patch<APIUser>({ data: options });
     const { updated } = this.client.actions.UserUpdate.handle(data);
     return updated ?? this;
   }
@@ -371,7 +373,7 @@ class ClientUser extends User implements ClientUserEntity {
    *   .catch(console.error);
    */
   async createFriendInvite() {
-    const data = await this.client.api.users['@me'].invites.post({
+    const data = await this.client.api.users['@me'].invites.post<RawInviteDataSource>({
       data: {},
     });
     return new Invite(this.client, data);
@@ -382,7 +384,7 @@ class ClientUser extends User implements ClientUserEntity {
    * @returns {Promise<Collection<string, Invite>>}
    */
   async getAllFriendInvites() {
-    const data = await this.client.api.users['@me'].invites.get();
+    const data = await this.client.api.users['@me'].invites.get<RawInviteData[]>();
     const collection = new Collection();
     for (const invite of data) {
       collection.set(invite.code, new Invite(this.client, invite));
@@ -432,7 +434,7 @@ class ClientUser extends User implements ClientUserEntity {
    * @returns {Promise<void>}
    */
   stopRinging(channel: unknown) {
-    return this.client.api.channels(this.client.channels.resolveId(channel)).call['stop-ringing'].post({
+    return this.client.api.channels(this.client.channels.resolveId(channel), 'call', 'stop-ringing').post({
       data: {},
     });
   }
@@ -442,7 +444,7 @@ class ClientUser extends User implements ClientUserEntity {
    * @returns {Promise<number>}
    */
   fetchBurstCredit(): Promise<number> {
-    return this.client.api.users['@me']['burst-credits'].get().then((data: { amount: number }) => data.amount);
+    return this.client.api.users['@me']['burst-credits'].get<{ amount: number }>().then(data => data.amount);
   }
 
   /**

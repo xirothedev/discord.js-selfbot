@@ -4,7 +4,13 @@ import _errorsModule from '../errors';
 const { TypeError } = _errorsModule;
 import AutoModerationRule from '../structures/AutoModerationRule';
 import _ConstantsModule from '../util/Constants';
-import type { APIAutoModerationRule, Snowflake } from 'discord-api-types/v10';
+import type {
+  APIAutoModerationRule,
+  RESTGetAPIAutoModerationRuleResult,
+  RESTPatchAPIAutoModerationRuleResult,
+  RESTPostAPIAutoModerationRuleResult,
+  Snowflake,
+} from 'discord-api-types/v10';
 import type {
   AutoModerationActionOptions,
   AutoModerationRuleCreateOptions,
@@ -143,7 +149,8 @@ class AutoModerationRuleManager extends CachedManager<AutoModerationRule> {
     exemptChannels,
     reason,
   }: AutoModerationRuleCreateOptions): Promise<AutoModerationRule> {
-    const data = await this.client.api.guilds(this.guild.id)['auto-moderation'].rules.post({
+    const rules = this.client.api.guilds(this.guild.id)['auto-moderation'].rules;
+    const data = await rules.post<RESTPostAPIAutoModerationRuleResult>({
       data: {
         name,
         event_type: typeof eventType === 'number' ? eventType : AutoModerationRuleEventTypes[eventType],
@@ -220,7 +227,7 @@ class AutoModerationRuleManager extends CachedManager<AutoModerationRule> {
     const data = await this.client.api
       .guilds(this.guild.id)('auto-moderation')
       .rules(autoModerationRuleId)
-      .patch({
+      .patch<RESTPatchAPIAutoModerationRuleResult>({
         data: {
           name,
           event_type:
@@ -325,7 +332,10 @@ class AutoModerationRuleManager extends CachedManager<AutoModerationRule> {
       if (existing) return existing;
     }
 
-    const data = await this.client.api.guilds(this.guild.id)('auto-moderation').rules(autoModerationRule).get();
+    const data = await this.client.api
+      .guilds(this.guild.id)('auto-moderation')
+      .rules(autoModerationRule)
+      .get<RESTGetAPIAutoModerationRuleResult>();
     return this._add(data, cache);
   }
 

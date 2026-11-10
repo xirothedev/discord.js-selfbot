@@ -265,7 +265,7 @@ class ClientUserSettingManager extends BaseManager {
   }
 
   async fetch() {
-    const data = await this.client.api.users('@me').settings.get();
+    const data = await this.client.api.users('@me').settings.get<RawUserSettingsData>();
     this._patch(data);
     return this;
   }
@@ -275,7 +275,7 @@ class ClientUserSettingManager extends BaseManager {
    * @param {any} data Data to edit
    */
   async edit(data: UserSettingsPatch) {
-    const res = await this.client.api.users('@me').settings.patch({ data });
+    const res = await this.client.api.users('@me').settings.patch<RawUserSettingsData>({ data });
     this._patch(res);
     return this;
   }

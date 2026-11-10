@@ -9,7 +9,7 @@ const { ApplicationRoleConnectionMetadata } = _ApplicationRoleConnectionMetadata
 import Base from '../Base';
 import Team from '../Team';
 import ApplicationCommandManager from '../../managers/ApplicationCommandManager';
-import type { RawApplicationData } from '../../../typings/rawDataTypes';
+import type { RawApplicationData, RawUserData } from '../../../typings/rawDataTypes';
 import type { StaticImageURLOptions } from '../../../typings';
 import type { ApplicationEntity } from '../../types/entities/application';
 import type { ApplicationPatch } from '../../types/selfbot/application';
@@ -825,7 +825,10 @@ class Application extends Base implements ApplicationEntity {
    * @returns {Promise<Application>}
    */
   async fetch() {
-    const app = await this.client.api.oauth2.authorize.get({
+    const app = await this.client.api.oauth2.authorize.get<{
+      application: ApplicationPatch;
+      bot: RawUserData;
+    }>({
       query: {
         client_id: this.id,
         scope: 'bot applications.commands',

@@ -5,7 +5,7 @@ const { TypeError } = _errorsModule;
 import MessagePayload from '../structures/MessagePayload';
 import _StickerModule from '../structures/Sticker';
 const { Sticker } = _StickerModule;
-import type { Snowflake } from 'discord-api-types/v10';
+import type { RESTPostAPIGuildStickerResult, Snowflake } from 'discord-api-types/v10';
 import type { RawStickerData } from '../../typings/rawDataTypes';
 import type {
   BaseFetchOptions,
@@ -86,7 +86,7 @@ class GuildStickerManager extends CachedManager<import('../structures/Sticker').
 
     const sticker = await this.client.api
       .guilds(this.guild.id)
-      .stickers.post({ data, files: [payloadFile], reason, dontUsePayloadJSON: true });
+      .stickers.post<RESTPostAPIGuildStickerResult>({ data, files: [payloadFile], reason, dontUsePayloadJSON: true });
     return this.client.actions.GuildStickerCreate.handle(this.guild, sticker).sticker;
   }
 

@@ -97,7 +97,7 @@ class BaseGuild extends Base implements BaseGuildEntity {
    * @param {ImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  iconURL({ format, size, dynamic }: ImageURLOptions = {}) {
+  iconURL({ format = 'webp', size, dynamic }: ImageURLOptions = {}) {
     if (!this.icon) return null;
     return this.client.rest.cdn.Icon(this.id, this.icon, format, size, dynamic);
   }

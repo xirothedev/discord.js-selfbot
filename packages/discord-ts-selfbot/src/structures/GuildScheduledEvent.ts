@@ -276,7 +276,7 @@ class GuildScheduledEvent extends Base implements GuildScheduledEventEntity {
    * @param {StaticImageURLOptions} [options={}] Options for image URL
    * @returns {?string}
    */
-  coverImageURL({ format, size }: StaticImageURLOptions = {}) {
+  coverImageURL({ format = 'webp', size }: StaticImageURLOptions = {}) {
     return this.image && this.client.rest.cdn.GuildScheduledEventCover(this.id, this.image, format, size);
   }
 

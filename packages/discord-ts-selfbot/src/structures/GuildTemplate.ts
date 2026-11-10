@@ -175,7 +175,9 @@ class GuildTemplate extends Base implements GuildTemplateEntity {
    * @returns {Promise<GuildTemplate>}
    */
   async edit({ name, description }: EditGuildTemplateOptions = {}) {
-    const data = await this.client.api.guilds(this.guildId).templates(this.code).patch({ data: { name, description } });
+    const data = await this.client.api.guilds(this.guildId).templates(this.code).patch<RawGuildTemplateData>({
+      data: { name, description },
+    });
     return this._patch(data);
   }
 
@@ -193,7 +195,7 @@ class GuildTemplate extends Base implements GuildTemplateEntity {
    * @returns {Promise<GuildTemplate>}
    */
   async sync() {
-    const data = await this.client.api.guilds(this.guildId).templates(this.code).put();
+    const data = await this.client.api.guilds(this.guildId).templates(this.code).put<RawGuildTemplateData>();
     return this._patch(data);
   }
 

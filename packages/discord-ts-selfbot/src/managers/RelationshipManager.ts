@@ -182,11 +182,11 @@ class RelationshipManager extends BaseManager {
         const existing = this.cache.get(id);
         if (existing) return existing;
       }
-      const data = await this.client.api.users['@me'].relationships.get();
+      const data = await this.client.api.users['@me'].relationships.get<RelationshipData[]>();
       await this._setup(data);
       return this.cache.get(id);
     } else {
-      const data = await this.client.api.users['@me'].relationships.get();
+      const data = await this.client.api.users['@me'].relationships.get<RelationshipData[]>();
       await this._setup(data);
       return this;
     }

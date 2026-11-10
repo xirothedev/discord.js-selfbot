@@ -2,7 +2,7 @@ import { Collection } from '@discordjs/collection';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { Channel }: typeof import('./Channel') = require('./Channel');
-import Invite from './Invite';
+import Invite, { type RawInviteDataSource } from './Invite';
 import TextBasedChannel from './interfaces/TextBasedChannel';
 import MessageManager from '../managers/MessageManager';
 import _ConstantsModule from '../util/Constants';
@@ -10,7 +10,7 @@ const { Status, Opcodes } = _ConstantsModule;
 import DataResolver from '../util/DataResolver';
 import _errorsModule from '../errors';
 const { TypeError } = _errorsModule;
-import type { APIUser, Snowflake } from 'discord-api-types/v10';
+import type { APIUser, GatewayChannelUpdateDispatchData, Snowflake } from 'discord-api-types/v10';
 import type { RawChannelData, RawInviteData, RawUserData } from '../../typings/rawDataTypes';
 import type {
   BufferResolvable,
@@ -119,7 +119,7 @@ class GroupDMChannel extends Channel {
    * @param {StaticImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  iconURL({ format, size }: StaticImageURLOptions = {}) {
+  iconURL({ format = 'webp', size }: StaticImageURLOptions = {}) {
     return this.icon && this.client.rest.cdn.GDMIcon(this.id, this.icon, format, size);
   }
 
@@ -234,7 +234,7 @@ class GroupDMChannel extends Channel {
     if ('owner' in data) {
       _data.owner = data.owner;
     }
-    const newData = await this.client.api.channels[this.id].patch({
+    const newData = await this.client.api.channels[this.id].patch<GatewayChannelUpdateDispatchData>({
       data: _data,
     });
 
@@ -302,7 +302,7 @@ class GroupDMChannel extends Channel {
    * @returns {Promise<Invite>}
    */
   async getInvite() {
-    const inviteCode = await this.client.api.channels(this.id).invites.post({
+    const inviteCode = await this.client.api.channels(this.id).invites.post<RawInviteDataSource>({
       data: {
         max_age: 86400,
       },
@@ -345,7 +345,7 @@ class GroupDMChannel extends Channel {
         .map(r => this.client.users.resolveId(r))
         .filter((id): id is Snowflake => id !== null && this.recipients.has(id));
     }
-    await this.client.api.channels(this.id).call.ring.post({
+    await this.client.api.channels(this.id, 'call', 'ring').post({
       data: {
         recipients: recipientIds,
       },

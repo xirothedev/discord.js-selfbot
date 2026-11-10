@@ -289,7 +289,7 @@ class User extends Base implements UserEntity {
    * @param {ImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  avatarURL({ format, size, dynamic }: ImageURLOptions = {}) {
+  avatarURL({ format = 'webp', size, dynamic }: ImageURLOptions = {}) {
     if (!this.avatar) return null;
     return this.client.rest.cdn.Avatar(this.id, this.avatar, format, size, dynamic);
   }
@@ -363,7 +363,7 @@ class User extends Base implements UserEntity {
    * @param {ImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  bannerURL({ format, size, dynamic }: ImageURLOptions = {}) {
+  bannerURL({ format = 'webp', size, dynamic }: ImageURLOptions = {}) {
     if (typeof this.banner === 'undefined') throw new Error('USER_BANNER_NOT_FETCHED');
     if (!this.banner) return null;
     return this.client.rest.cdn.Banner(this.id, this.banner, format, size, dynamic);

@@ -14,7 +14,13 @@ import DataResolver from '../util/DataResolver';
 import Util from '../util/Util';
 import _UtilModule from '../util/Util';
 const { resolveAutoArchiveMaxLimit, transformGuildForumTag, transformGuildDefaultReaction } = _UtilModule;
-import type { Snowflake } from 'discord-api-types/v10';
+import type {
+  GatewayChannelCreateDispatchData,
+  GatewayChannelUpdateDispatchData,
+  RESTPostAPIChannelFollowersResult,
+  RESTPostAPIChannelWebhookResult,
+  Snowflake,
+} from 'discord-api-types/v10';
 import type { RawGuildChannelData, RawWebhookData } from '../../typings/rawDataTypes';
 import type {
   BaseFetchOptions,
@@ -247,7 +253,7 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
       );
     }
 
-    const data = await this.client.api.guilds(this.guild.id).channels.post({
+    const data = await this.client.api.guilds(this.guild.id).channels.post<GatewayChannelCreateDispatchData>({
       data: {
         name,
         topic,
@@ -299,7 +305,7 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
 
     const resolvedImage = await DataResolver.resolveImage(avatar);
 
-    const data = await this.client.api.channels[id].webhooks.post({
+    const data = await this.client.api.channels[id].webhooks.post<RESTPostAPIChannelWebhookResult>({
       data: {
         name,
         avatar: resolvedImage,
@@ -324,7 +330,7 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
     const channelId = this.resolveId(channel);
     const targetChannelId = this.resolveId(targetChannel);
     if (!channelId || !targetChannelId) throw new Error('GUILD_CHANNEL_RESOLVE');
-    const { webhook_id } = await this.client.api.channels[channelId].followers.post({
+    const { webhook_id } = await this.client.api.channels[channelId].followers.post<RESTPostAPIChannelFollowersResult>({
       data: { webhook_channel_id: targetChannelId },
       reason,
     });
@@ -408,7 +414,7 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
       data.defaultAutoArchiveDuration;
     if (defaultAutoArchiveDuration === 'MAX') defaultAutoArchiveDuration = resolveAutoArchiveMaxLimit(this.guild);
 
-    const newData = await this.client.api.channels(resolved.id).patch({
+    const newData = await this.client.api.channels(resolved.id).patch<GatewayChannelUpdateDispatchData>({
       data: {
         name: (data.name ?? resolved.name).trim(),
         type: data.type,

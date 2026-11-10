@@ -10,7 +10,7 @@ import Permissions from '../util/Permissions';
 import _UtilModule from '../util/Util';
 const { resolveColor } = _UtilModule;
 import Util from '../util/Util';
-import type { Snowflake } from 'discord-api-types/v10';
+import type { RESTPostAPIGuildRoleResult, Snowflake } from 'discord-api-types/v10';
 import type { RawRoleData } from '../../typings/rawDataTypes';
 import type {
   BaseFetchOptions,
@@ -248,7 +248,7 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
       };
     }
 
-    const data = await this.client.api.guilds(this.guild.id).roles.post({
+    const data = await this.client.api.guilds(this.guild.id).roles.post<RESTPostAPIGuildRoleResult>({
       data: {
         name,
         colors,
