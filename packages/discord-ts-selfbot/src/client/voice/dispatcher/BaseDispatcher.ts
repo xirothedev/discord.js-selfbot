@@ -371,31 +371,32 @@ class BaseDispatcher extends Writable {
     if (!this._nonceBuffer) {
       this.resetNonceBuffer();
     }
-    this._nonceBuffer!.writeUInt32BE(this._nonce, 0);
+    const nonceBuffer = this._nonceBuffer!;
+    nonceBuffer.writeUInt32BE(this._nonce, 0);
 
     // 4 extra bytes of padding on the end of the encrypted packet
-    const noncePadding = this._nonceBuffer!.slice(0, 4);
+    const noncePadding = nonceBuffer.slice(0, 4);
 
-    let encrypted;
+    let encrypted: Buffer | Uint8Array;
 
     switch (mode) {
       case 'aead_aes256_gcm_rtpsize': {
-        const cipher: CipherGCM = crypto.createCipheriv('aes-256-gcm', secret_key, this._nonceBuffer!);
+        const cipher: CipherGCM = crypto.createCipheriv('aes-256-gcm', secret_key, nonceBuffer);
         cipher.setAAD(additionalData);
 
         encrypted = Buffer.concat([cipher.update(buffer), cipher.final(), cipher.getAuthTag()]);
 
-        return [encrypted, noncePadding];
+        return [Buffer.from(encrypted), noncePadding];
       }
       case 'aead_xchacha20_poly1305_rtpsize': {
         encrypted = secretbox.methods.crypto_aead_xchacha20poly1305_ietf_encrypt(
           buffer,
           additionalData,
-          this._nonceBuffer,
+          nonceBuffer,
           secret_key,
         );
 
-        return [encrypted, noncePadding];
+        return [Buffer.from(encrypted), noncePadding];
       }
       default: {
         // This should never happen. Our encryption mode is chosen from a list given to us by the gateway and checked with the ones we support.
