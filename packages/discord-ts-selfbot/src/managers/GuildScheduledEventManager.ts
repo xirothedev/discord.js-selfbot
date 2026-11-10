@@ -8,6 +8,50 @@ import _ConstantsModule from '../util/Constants';
 const { PrivacyLevels, GuildScheduledEventEntityTypes, GuildScheduledEventStatuses } = _ConstantsModule;
 import DataResolver from '../util/DataResolver';
 import Util from '../util/Util';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { RawGuildScheduledEventData } from '../../typings/rawDataTypes';
+import type {
+  FetchGuildScheduledEventOptions,
+  FetchGuildScheduledEventsOptions,
+  GuildScheduledEventCreateOptions,
+  GuildScheduledEventRecurrenceRuleOptions,
+  GuildScheduledEventResolvable,
+  GuildVoiceChannelResolvable,
+} from '../../typings';
+import type { Guild } from '../structures/Guild';
+import type { GuildMember } from '../structures/GuildMember';
+import type { User } from '../structures/User';
+
+type GuildScheduledEventResolvableSource = InstanceType<typeof GuildScheduledEvent> | GuildScheduledEventResolvable;
+
+export type GuildScheduledEventEditOptionsSource = Partial<
+  Omit<GuildScheduledEventCreateOptions, 'channel' | 'recurrenceRule'>
+> & {
+  channel?: GuildVoiceChannelResolvable | null;
+  status?: string | number;
+  recurrenceRule?: GuildScheduledEventRecurrenceRuleOptions | null;
+};
+
+interface FetchGuildScheduledEventSubscribersOptionsSource {
+  limit?: number;
+  withMember?: boolean;
+  before?: Snowflake;
+  after?: Snowflake;
+}
+
+interface GuildScheduledEventUserSource {
+  guildScheduledEventId: Snowflake;
+  user: User;
+  member: GuildMember | null;
+}
+
+function isFetchEventOptions(value: unknown): value is FetchGuildScheduledEventOptions {
+  return typeof value === 'object' && value !== null && 'guildScheduledEvent' in value;
+}
+
+function isFetchEventsOptions(value: unknown): value is FetchGuildScheduledEventsOptions {
+  return typeof value === 'object' && value !== null && ('withUserCount' in value || 'cache' in value);
+}
 
 /**
  * Manages API methods for GuildScheduledEvents and stores their cache.
@@ -16,8 +60,8 @@ import Util from '../util/Util';
 class GuildScheduledEventManager extends CachedManager<
   import('../structures/GuildScheduledEvent').GuildScheduledEvent
 > {
-  declare guild: import('../structures/Guild').Guild;
-  constructor(guild: any, iterable?: any) {
+  declare guild: Guild;
+  constructor(guild: Guild, iterable?: Iterable<InstanceType<typeof GuildScheduledEvent>>) {
     super(guild.client, GuildScheduledEvent, iterable);
 
     /**
@@ -85,7 +129,7 @@ class GuildScheduledEventManager extends CachedManager<
    * @param {GuildScheduledEventCreateOptions} options Options for creating the guild scheduled event
    * @returns {Promise<GuildScheduledEvent>}
    */
-  async create(options: any) {
+  async create(options: GuildScheduledEventCreateOptions): Promise<InstanceType<typeof GuildScheduledEvent>> {
     if (typeof options !== 'object') throw new TypeError('INVALID_TYPE', 'options', 'object', true);
     let {
       privacyLevel,
@@ -114,7 +158,7 @@ class GuildScheduledEventManager extends CachedManager<
       entity_metadata = typeof entityMetadata === 'undefined' ? entityMetadata : null;
     }
 
-    const data = await this.client.api.guilds(this.guild.id, 'scheduled-events').post({
+    const data: RawGuildScheduledEventData = await this.client.api.guilds(this.guild.id, 'scheduled-events').post({
       data: {
         channel_id,
         name,
@@ -154,29 +198,42 @@ class GuildScheduledEventManager extends CachedManager<
    * The id of the guild scheduled event or options
    * @returns {Promise<GuildScheduledEvent|Collection<Snowflake, GuildScheduledEvent>>}
    */
-  async fetch(options: any = {}) {
-    const id = this.resolveId(options.guildScheduledEvent ?? options);
+  fetch(
+    options: GuildScheduledEventResolvableSource | FetchGuildScheduledEventOptions,
+  ): Promise<InstanceType<typeof GuildScheduledEvent>>;
+  fetch(
+    options?: FetchGuildScheduledEventsOptions,
+  ): Promise<Collection<Snowflake, InstanceType<typeof GuildScheduledEvent>>>;
+  async fetch(
+    options:
+      GuildScheduledEventResolvableSource | FetchGuildScheduledEventOptions | FetchGuildScheduledEventsOptions = {},
+  ): Promise<
+    InstanceType<typeof GuildScheduledEvent> | Collection<Snowflake, InstanceType<typeof GuildScheduledEvent>>
+  > {
+    const eventOptions = isFetchEventOptions(options) ? options : undefined;
+    const eventsOptions = isFetchEventsOptions(options) ? options : undefined;
+    const id = this.resolveId(eventOptions?.guildScheduledEvent ?? options);
 
     if (id) {
-      if (!options.force) {
+      if (!eventOptions?.force) {
         const existing = this.cache.get(id);
         if (existing) return existing;
       }
 
-      const data = await this.client.api
+      const data: RawGuildScheduledEventData = await this.client.api
         .guilds(this.guild.id, 'scheduled-events', id)
-        .get({ query: { with_user_count: options.withUserCount ?? true } });
-      return this._add(data, options.cache);
+        .get({ query: { with_user_count: eventOptions?.withUserCount ?? true } });
+      return this._add(data, eventOptions?.cache);
     }
 
-    const data = await this.client.api
+    const data: RawGuildScheduledEventData[] = await this.client.api
       .guilds(this.guild.id, 'scheduled-events')
-      .get({ query: { with_user_count: options.withUserCount ?? true } });
+      .get({ query: { with_user_count: eventsOptions?.withUserCount ?? true } });
 
     return data.reduce(
-      (coll: any, rawGuildScheduledEventData: any) =>
-        coll.set(rawGuildScheduledEventData.id, this._add(rawGuildScheduledEventData, options.cache)),
-      new Collection(),
+      (coll, rawGuildScheduledEventData) =>
+        coll.set(rawGuildScheduledEventData.id, this._add(rawGuildScheduledEventData, eventsOptions?.cache)),
+      new Collection<Snowflake, InstanceType<typeof GuildScheduledEvent>>(),
     );
   }
 
@@ -206,7 +263,10 @@ class GuildScheduledEventManager extends CachedManager<
    * @param {GuildScheduledEventEditOptions} options Options to edit the guild scheduled event
    * @returns {Promise<GuildScheduledEvent>}
    */
-  async edit(guildScheduledEvent: any, options: any) {
+  async edit(
+    guildScheduledEvent: GuildScheduledEventResolvableSource,
+    options: GuildScheduledEventEditOptionsSource,
+  ): Promise<InstanceType<typeof GuildScheduledEvent>> {
     const guildScheduledEventId = this.resolveId(guildScheduledEvent);
     if (!guildScheduledEventId) throw new Error('GUILD_SCHEDULED_EVENT_RESOLVE');
 
@@ -237,22 +297,24 @@ class GuildScheduledEventManager extends CachedManager<
       };
     }
 
-    const data = await this.client.api.guilds(this.guild.id, 'scheduled-events', guildScheduledEventId).patch({
-      data: {
-        channel_id: typeof channel === 'undefined' ? channel : this.guild.channels.resolveId(channel),
-        name,
-        privacy_level: privacyLevel,
-        scheduled_start_time: scheduledStartTime ? new Date(scheduledStartTime).toISOString() : undefined,
-        scheduled_end_time: scheduledEndTime ? new Date(scheduledEndTime).toISOString() : scheduledEndTime,
-        description,
-        entity_type: entityType,
-        status,
-        image: image && (await DataResolver.resolveImage(image)),
-        entity_metadata,
-        recurrence_rule: recurrenceRule && Util.transformGuildScheduledEventRecurrenceRule(recurrenceRule),
-      },
-      reason,
-    });
+    const data: RawGuildScheduledEventData = await this.client.api
+      .guilds(this.guild.id, 'scheduled-events', guildScheduledEventId)
+      .patch({
+        data: {
+          channel_id: typeof channel === 'undefined' ? channel : this.guild.channels.resolveId(channel),
+          name,
+          privacy_level: privacyLevel,
+          scheduled_start_time: scheduledStartTime ? new Date(scheduledStartTime).toISOString() : undefined,
+          scheduled_end_time: scheduledEndTime ? new Date(scheduledEndTime).toISOString() : scheduledEndTime,
+          description,
+          entity_type: entityType,
+          status,
+          image: image && (await DataResolver.resolveImage(image)),
+          entity_metadata,
+          recurrence_rule: recurrenceRule && Util.transformGuildScheduledEventRecurrenceRule(recurrenceRule),
+        },
+        reason,
+      });
 
     return this._add(data);
   }
@@ -262,7 +324,7 @@ class GuildScheduledEventManager extends CachedManager<
    * @param {GuildScheduledEventResolvable} guildScheduledEvent The guild scheduled event to delete
    * @returns {Promise<void>}
    */
-  async delete(guildScheduledEvent: any) {
+  async delete(guildScheduledEvent: GuildScheduledEventResolvableSource): Promise<void> {
     const guildScheduledEventId = this.resolveId(guildScheduledEvent);
     if (!guildScheduledEventId) throw new Error('GUILD_SCHEDULED_EVENT_RESOLVE');
 
@@ -293,24 +355,31 @@ class GuildScheduledEventManager extends CachedManager<
    * @param {FetchGuildScheduledEventSubscribersOptions} [options={}] Options for fetching the subscribers
    * @returns {Promise<Collection<Snowflake, GuildScheduledEventUser>>}
    */
-  async fetchSubscribers(guildScheduledEvent: any, options: any = {}) {
+  async fetchSubscribers(
+    guildScheduledEvent: GuildScheduledEventResolvableSource,
+    options: FetchGuildScheduledEventSubscribersOptionsSource = {},
+  ): Promise<Collection<Snowflake, GuildScheduledEventUserSource>> {
     const guildScheduledEventId = this.resolveId(guildScheduledEvent);
     if (!guildScheduledEventId) throw new Error('GUILD_SCHEDULED_EVENT_RESOLVE');
 
     let { limit, withMember, before, after } = options;
 
-    const data = await this.client.api.guilds(this.guild.id, 'scheduled-events', guildScheduledEventId).users.get({
+    const data: {
+      guild_scheduled_event_id: Snowflake;
+      user: import('discord-api-types/v10').APIUser;
+      member?: import('discord-api-types/v10').APIGuildMember;
+    }[] = await this.client.api.guilds(this.guild.id, 'scheduled-events', guildScheduledEventId).users.get({
       query: { limit, with_member: withMember, before, after },
     });
 
     return data.reduce(
-      (coll: any, rawData: any) =>
+      (coll, rawData) =>
         coll.set(rawData.user.id, {
           guildScheduledEventId: rawData.guild_scheduled_event_id,
           user: this.client.users._add(rawData.user),
           member: rawData.member ? this.guild.members._add({ ...rawData.member, user: rawData.user }) : null,
         }),
-      new Collection(),
+      new Collection<Snowflake, GuildScheduledEventUserSource>(),
     );
   }
 }

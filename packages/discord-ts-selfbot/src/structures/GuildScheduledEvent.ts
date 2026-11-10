@@ -400,7 +400,7 @@ class GuildScheduledEvent extends Base implements GuildScheduledEventEntity {
    *  .then(guildScheduledEvent => console.log(guildScheduledEvent))
    *  .catch(console.error);
    */
-  edit(options: Record<string, unknown>) {
+  edit(options: import('../managers/GuildScheduledEventManager').GuildScheduledEventEditOptionsSource) {
     const guild = this.guild;
     if (!guild) throw new Error('GUILD_NOT_FOUND');
     return guild.scheduledEvents.edit(this.id, options);
