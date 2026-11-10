@@ -5,6 +5,42 @@ const { Error } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
 const { Events } = _ConstantsModule;
 import Util from '../util/Util';
+import type { MessagePort } from 'node:worker_threads';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { ShardingManagerMode } from '../../typings';
+import type { Client } from '../client/Client';
+
+interface ShardIPCMessage {
+  _ready?: boolean;
+  _disconnect?: boolean;
+  _reconnecting?: boolean;
+  _fetchProp?: string;
+  _eval?: string;
+  _result?: unknown;
+  _error?: unknown;
+  _sFetchProp?: string;
+  _sFetchPropShard?: number;
+  _sEval?: string;
+  _sEvalShard?: number;
+  _sRespawnAll?: { shardDelay: number; respawnDelay: number; timeout: number };
+}
+
+type ListenerEmitter = { getMaxListeners(): number; setMaxListeners(n: number): unknown };
+
+interface BroadcastEvalOptions {
+  shard?: number;
+  context?: unknown;
+}
+
+function readProperty(value: unknown, key: string): unknown {
+  if (typeof value !== 'object' || value === null) return undefined;
+  return Reflect.get(value, key);
+}
+
+function sendToProcess(message: ShardIPCMessage, callback: (error: Error | null) => void): void {
+  const send = Reflect.get(process, 'send');
+  if (typeof send === 'function') Reflect.apply(send, process, [message, callback]);
+}
 
 /**
  * Helper class for sharded clients spawned as a child process/worker, such as from a {@link ShardingManager}.
@@ -12,13 +48,13 @@ import Util from '../util/Util';
  * @deprecated
  */
 class ShardClientUtil {
-  static _singleton: any;
+  static _singleton: ShardClientUtil | null = null;
 
-  client: any;
-  mode: any;
-  parentPort: any;
+  client: Client;
+  mode: ShardingManagerMode;
+  parentPort: MessagePort | null;
 
-  constructor(client: any, mode: any) {
+  constructor(client: Client, mode: ShardingManagerMode) {
     /**
      * Client for the shard
      * @type {Client}
@@ -38,28 +74,31 @@ class ShardClientUtil {
     this.parentPort = null;
 
     if (mode === 'process') {
-      (process as any).on('message', this._handleMessage.bind(this));
+      process.on('message', this._handleMessage.bind(this));
       client.on('ready', () => {
-        (process as any).send({ _ready: true });
+        sendToProcess({ _ready: true }, () => {});
       });
       client.on('disconnect', () => {
-        (process as any).send({ _disconnect: true });
+        sendToProcess({ _disconnect: true }, () => {});
       });
       client.on('reconnecting', () => {
-        (process as any).send({ _reconnecting: true });
+        sendToProcess({ _reconnecting: true }, () => {});
       });
     } else if (mode === 'worker') {
-      this.parentPort = parentPort;
-      this.parentPort.on('message', this._handleMessage.bind(this));
-      client.on('ready', () => {
-        this.parentPort.postMessage({ _ready: true });
-      });
-      client.on('disconnect', () => {
-        this.parentPort.postMessage({ _disconnect: true });
-      });
-      client.on('reconnecting', () => {
-        this.parentPort.postMessage({ _reconnecting: true });
-      });
+      const port = parentPort;
+      if (port) {
+        this.parentPort = port;
+        port.on('message', this._handleMessage.bind(this));
+        client.on('ready', () => {
+          port.postMessage({ _ready: true });
+        });
+        client.on('disconnect', () => {
+          port.postMessage({ _disconnect: true });
+        });
+        client.on('reconnecting', () => {
+          port.postMessage({ _reconnecting: true });
+        });
+      }
     }
   }
 
@@ -68,7 +107,7 @@ class ShardClientUtil {
    * @type {number[]}
    * @readonly
    */
-  get ids(): any {
+  get ids(): number[] {
     return this.client.options.shards;
   }
 
@@ -77,7 +116,7 @@ class ShardClientUtil {
    * @type {number}
    * @readonly
    */
-  get count(): any {
+  get count(): number {
     return this.client.options.shardCount;
   }
 
@@ -87,15 +126,15 @@ class ShardClientUtil {
    * @returns {Promise<void>}
    * @emits Shard#message
    */
-  send(message: any): Promise<void> {
+  send(message: ShardIPCMessage): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       if (this.mode === 'process') {
-        (process as any).send(message, (err: any) => {
-          if (err) reject(err);
+        sendToProcess(message, error => {
+          if (error) reject(error);
           else resolve();
         });
       } else if (this.mode === 'worker') {
-        this.parentPort.postMessage(message);
+        this.parentPort?.postMessage(message);
         resolve();
       }
     });
@@ -112,11 +151,11 @@ class ShardClientUtil {
    *   .catch(console.error);
    * @see {@link ShardingManager#fetchClientValues}
    */
-  fetchClientValues(prop: any, shard?: any): Promise<any> {
-    return new Promise<any>((resolve, reject) => {
+  fetchClientValues(prop: string, shard?: number): Promise<unknown> {
+    return new Promise<unknown>((resolve, reject) => {
       const parent = this.parentPort ?? process;
 
-      const listener = (message: any) => {
+      const listener = (message: ShardIPCMessage) => {
         if (message?._sFetchProp !== prop || message._sFetchPropShard !== shard) return;
         parent.removeListener('message', listener);
         this.decrementMaxListeners(parent);
@@ -126,7 +165,7 @@ class ShardClientUtil {
       this.incrementMaxListeners(parent);
       parent.on('message', listener);
 
-      this.send({ _sFetchProp: prop, _sFetchPropShard: shard }).catch((err: any) => {
+      this.send({ _sFetchProp: prop, _sFetchPropShard: shard }).catch((err: unknown) => {
         parent.removeListener('message', listener);
         this.decrementMaxListeners(parent);
         reject(err);
@@ -145,17 +184,20 @@ class ShardClientUtil {
    *   .catch(console.error);
    * @see {@link ShardingManager#broadcastEval}
    */
-  broadcastEval(script: any, options: any = {}): Promise<any> {
-    return new Promise<any>((resolve, reject) => {
+  broadcastEval(
+    script: string | ((client: Client, context: unknown) => unknown),
+    options: BroadcastEvalOptions = {},
+  ): Promise<unknown> {
+    return new Promise<unknown>((resolve, reject) => {
       const parent = this.parentPort ?? process;
       if (typeof script !== 'function') {
         reject(new TypeError('SHARDING_INVALID_EVAL_BROADCAST'));
         return;
       }
-      script = `(${script})(this, ${JSON.stringify(options.context)})`;
+      const evalScript = `(${script})(this, ${JSON.stringify(options.context)})`;
 
-      const listener = (message: any) => {
-        if (message?._sEval !== script || message._sEvalShard !== options.shard) return;
+      const listener = (message: ShardIPCMessage) => {
+        if (message?._sEval !== evalScript || message._sEvalShard !== options.shard) return;
         parent.removeListener('message', listener);
         this.decrementMaxListeners(parent);
         if (!message._error) resolve(message._result);
@@ -163,7 +205,7 @@ class ShardClientUtil {
       };
       this.incrementMaxListeners(parent);
       parent.on('message', listener);
-      this.send({ _sEval: script, _sEvalShard: options.shard }).catch((err: any) => {
+      this.send({ _sEval: evalScript, _sEvalShard: options.shard }).catch((err: unknown) => {
         parent.removeListener('message', listener);
         this.decrementMaxListeners(parent);
         reject(err);
@@ -177,7 +219,11 @@ class ShardClientUtil {
    * @returns {Promise<void>} Resolves upon the message being sent
    * @see {@link ShardingManager#respawnAll}
    */
-  respawnAll({ shardDelay = 5_000, respawnDelay = 500, timeout = 30_000 } = {}): Promise<void> {
+  respawnAll({
+    shardDelay = 5_000,
+    respawnDelay = 500,
+    timeout = 30_000,
+  }: { shardDelay?: number; respawnDelay?: number; timeout?: number } = {}): Promise<void> {
     return this.send({ _sRespawnAll: { shardDelay, respawnDelay, timeout } });
   }
 
@@ -186,21 +232,21 @@ class ShardClientUtil {
    * @param {*} message Message received
    * @private
    */
-  async _handleMessage(message: any): Promise<void> {
+  async _handleMessage(message: ShardIPCMessage | null | undefined): Promise<void> {
     if (!message) return;
     if (message._fetchProp) {
       try {
         const props = message._fetchProp.split('.');
-        let value = this.client;
-        for (const prop of props) value = value[prop];
+        let value: unknown = this.client;
+        for (const prop of props) value = readProperty(value, prop);
         this._respond('fetchProp', { _fetchProp: message._fetchProp, _result: value });
-      } catch (err: any) {
+      } catch (err: unknown) {
         this._respond('fetchProp', { _fetchProp: message._fetchProp, _error: Util.makePlainError(err) });
       }
     } else if (message._eval) {
       try {
         this._respond('eval', { _eval: message._eval, _result: await this.client._eval(message._eval) });
-      } catch (err: any) {
+      } catch (err: unknown) {
         this._respond('eval', { _eval: message._eval, _error: Util.makePlainError(err) });
       }
     }
@@ -212,10 +258,11 @@ class ShardClientUtil {
    * @param {*} message Message to send
    * @private
    */
-  _respond(type: any, message: any): void {
-    this.send(message).catch((err: any) => {
-      const error = new Error(`Error when sending ${type} response to master process: ${err.message}`);
-      error.stack = err.stack;
+  _respond(type: string, message: ShardIPCMessage): void {
+    this.send(message).catch((err: unknown) => {
+      const reason = err instanceof Error ? err : new Error(String(err));
+      const error = new Error(`Error when sending ${type} response to master process: ${reason.message}`);
+      error.stack = reason.stack;
       /**
        * Emitted when the client encounters an error.
        * <warn>Errors thrown within this event do not have a catch handler, it is
@@ -234,7 +281,7 @@ class ShardClientUtil {
    * @param {ShardingManagerMode} mode Mode the shard was spawned with
    * @returns {ShardClientUtil}
    */
-  static singleton(client: any, mode: any): any {
+  static singleton(client: Client, mode: ShardingManagerMode): ShardClientUtil {
     if (!this._singleton) {
       this._singleton = new this(client, mode);
     } else {
@@ -252,7 +299,7 @@ class ShardClientUtil {
    * @param {number} shardCount Number of shards
    * @returns {number}
    */
-  static shardIdForGuildId(guildId: any, shardCount: any): number {
+  static shardIdForGuildId(guildId: Snowflake, shardCount: number): number {
     const shard = Number(BigInt(guildId) >> 22n) % shardCount;
     if (shard < 0) throw new Error('SHARDING_SHARD_MISCALCULATION', shard, guildId, shardCount);
     return shard;
@@ -263,7 +310,7 @@ class ShardClientUtil {
    * @param {EventEmitter|process} emitter The emitter that emits the events.
    * @private
    */
-  incrementMaxListeners(emitter: any): void {
+  incrementMaxListeners(emitter: ListenerEmitter): void {
     const maxListeners = emitter.getMaxListeners();
     if (maxListeners !== 0) {
       emitter.setMaxListeners(maxListeners + 1);
@@ -275,7 +322,7 @@ class ShardClientUtil {
    * @param {EventEmitter|process} emitter The emitter that emits the events.
    * @private
    */
-  decrementMaxListeners(emitter: any): void {
+  decrementMaxListeners(emitter: ListenerEmitter): void {
     const maxListeners = emitter.getMaxListeners();
     if (maxListeners !== 0) {
       emitter.setMaxListeners(maxListeners - 1);

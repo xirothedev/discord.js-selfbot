@@ -492,10 +492,12 @@ class Util extends null {
    * @returns {Error}
    * @private
    */
-  static makeError(obj: Record<string, unknown>) {
-    const err = new Error(String(obj.message));
-    err.name = String(obj.name);
-    err.stack = obj.stack as string;
+  static makeError(obj: unknown) {
+    const data = typeof obj === 'object' && obj !== null ? obj : {};
+    const err = new Error(String('message' in data ? data.message : obj));
+    err.name = String('name' in data ? data.name : 'Error');
+    const stack = 'stack' in data ? data.stack : undefined;
+    if (typeof stack === 'string') err.stack = stack;
     return err;
   }
 
@@ -505,12 +507,11 @@ class Util extends null {
    * @returns {MakeErrorOptions}
    * @private
    */
-  static makePlainError(err: Record<string, unknown>) {
-    return {
-      name: err.name as string,
-      message: err.message as string,
-      stack: err.stack as string,
-    };
+  static makePlainError(err: unknown) {
+    if (err instanceof Error) {
+      return { name: err.name, message: err.message, stack: err.stack };
+    }
+    return { name: 'Error', message: String(err), stack: undefined };
   }
 
   /**

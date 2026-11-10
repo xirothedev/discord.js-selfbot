@@ -167,9 +167,11 @@ class Client extends BaseClient {
      * Shard helpers for the client (only if the process was spawned from a {@link ShardingManager})
      * @type {?ShardClientUtil}
      */
-    this.shard = process.env.SHARDING_MANAGER
-      ? ShardClientUtil.singleton(this, process.env.SHARDING_MANAGER_MODE)
-      : null;
+    const shardingMode = process.env.SHARDING_MANAGER_MODE;
+    this.shard =
+      process.env.SHARDING_MANAGER && (shardingMode === 'process' || shardingMode === 'worker')
+        ? ShardClientUtil.singleton(this, shardingMode)
+        : null;
 
     /**
      * The user manager of this client
