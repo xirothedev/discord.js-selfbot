@@ -1,6 +1,21 @@
 import BaseMessageComponent from './BaseMessageComponent';
 import _ConstantsModule from '../util/Constants';
 const { MessageComponentTypes } = _ConstantsModule;
+import type { Client } from '../client/Client';
+import type { MessageActionRowComponentResolvable, MessageActionRowOptions } from '../../typings';
+
+type MessageActionRowData = MessageActionRow | MessageActionRowOptions;
+
+function flattenComponents(
+  components: (MessageActionRowComponentResolvable | MessageActionRowComponentResolvable[])[],
+): MessageActionRowComponentResolvable[] {
+  const flattened: MessageActionRowComponentResolvable[] = [];
+  for (const component of components) {
+    if (Array.isArray(component)) flattened.push(...component);
+    else flattened.push(component);
+  }
+  return flattened;
+}
 
 /**
  * Represents an action row containing message components.
@@ -41,14 +56,14 @@ class MessageActionRow extends BaseMessageComponent {
    * @param {MessageActionRow|MessageActionRowOptions} [data={}] MessageActionRow to clone or raw data
    * @param {Client} [client] The client constructing this MessageActionRow, if provided
    */
-  constructor(data: any = {}, client: any = null) {
+  constructor(data: MessageActionRowData = { components: [] }, client: Client | null = null) {
     super({ type: 'ACTION_ROW' });
 
     /**
      * The components in this action row
      * @type {MessageActionRowComponent[]}
      */
-    this.components = data.components?.map((c: any) => BaseMessageComponent.create(c, client)) ?? [];
+    this.components = data.components?.map(c => BaseMessageComponent.create(c, client)) ?? [];
 
     super.setup(data);
   }
@@ -58,8 +73,8 @@ class MessageActionRow extends BaseMessageComponent {
    * @param {...MessageActionRowComponentResolvable[]} components The components to add
    * @returns {MessageActionRow}
    */
-  addComponents(...components: any[]) {
-    this.components.push(...components.flat(Infinity).map((c: any) => BaseMessageComponent.create(c)));
+  addComponents(...components: (MessageActionRowComponentResolvable | MessageActionRowComponentResolvable[])[]) {
+    this.components.push(...flattenComponents(components).map(c => BaseMessageComponent.create(c)));
     return this;
   }
 
@@ -68,8 +83,8 @@ class MessageActionRow extends BaseMessageComponent {
    * @param {...MessageActionRowComponentResolvable[]} components The components to set
    * @returns {MessageActionRow}
    */
-  setComponents(...components: any[]) {
-    this.spliceComponents(0, this.components.length, components);
+  setComponents(...components: (MessageActionRowComponentResolvable | MessageActionRowComponentResolvable[])[]) {
+    this.spliceComponents(0, this.components.length, ...components);
     return this;
   }
 
@@ -80,11 +95,15 @@ class MessageActionRow extends BaseMessageComponent {
    * @param {...MessageActionRowComponentResolvable[]} [components] The replacing components
    * @returns {MessageActionRow}
    */
-  spliceComponents(index: any, deleteCount: any, ...components: any[]) {
+  spliceComponents(
+    index: number,
+    deleteCount: number,
+    ...components: (MessageActionRowComponentResolvable | MessageActionRowComponentResolvable[])[]
+  ) {
     this.components.splice(
       index,
       deleteCount,
-      ...components.flat(Infinity).map((c: any) => BaseMessageComponent.create(c)),
+      ...flattenComponents(components).map(c => BaseMessageComponent.create(c)),
     );
     return this;
   }
@@ -95,7 +114,7 @@ class MessageActionRow extends BaseMessageComponent {
    */
   toJSON() {
     return {
-      components: this.components.map((c: any) => c.toJSON()),
+      components: this.components.map(c => c.toJSON()),
       type: MessageComponentTypes[this.type!],
     };
   }
