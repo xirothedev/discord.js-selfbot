@@ -1,11 +1,12 @@
 import Action from './Action';
+import type { GatewayGuildMemberRemoveDispatchData } from 'discord-api-types/v10';
 import _GuildMemberModule from '../../structures/GuildMember';
 const { deletedGuildMembers } = _GuildMemberModule;
 import _ConstantsModule from '../../util/Constants';
 const { Events, Status } = _ConstantsModule;
 
 class GuildMemberRemoveAction extends Action {
-  handle(data: any, shard: any) {
+  handle(data: GatewayGuildMemberRemoveDispatchData, shard: import('../websocket/WebSocketShard').WebSocketShard) {
     const client = this.client;
     const guild = client.guilds.cache.get(data.guild_id);
     let member = null;

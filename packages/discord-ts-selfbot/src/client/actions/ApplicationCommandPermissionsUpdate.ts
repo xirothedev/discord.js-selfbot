@@ -1,4 +1,5 @@
 import Action from './Action';
+import type { GatewayApplicationCommandPermissionsUpdateDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
@@ -12,7 +13,7 @@ const { Events } = _ConstantsModule;
  */
 
 class ApplicationCommandPermissionsUpdateAction extends Action {
-  handle(data: any) {
+  handle(data: GatewayApplicationCommandPermissionsUpdateDispatchData) {
     const client = this.client;
     /**
      * Emitted whenever permissions for an application command in a guild were updated.

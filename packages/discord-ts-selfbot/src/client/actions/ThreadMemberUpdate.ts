@@ -1,9 +1,10 @@
 import Action from './Action';
+import type { GatewayThreadMemberUpdateDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 class ThreadMemberUpdateAction extends Action {
-  handle(data: any) {
+  handle(data: GatewayThreadMemberUpdateDispatchData) {
     const client = this.client;
     // Discord sends the thread id as id in this object
     const thread = client.channels.cache.get(data.id);

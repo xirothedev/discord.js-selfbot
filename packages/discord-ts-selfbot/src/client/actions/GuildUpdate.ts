@@ -1,9 +1,10 @@
 import Action from './Action';
+import type { GatewayGuildUpdateDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 class GuildUpdateAction extends Action {
-  handle(data: any) {
+  handle(data: GatewayGuildUpdateDispatchData) {
     const client = this.client;
 
     const guild = client.guilds.cache.get(data.id);

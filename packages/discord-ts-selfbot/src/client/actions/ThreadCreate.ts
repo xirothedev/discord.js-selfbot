@@ -1,9 +1,10 @@
 import Action from './Action';
+import type { GatewayThreadCreateDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 class ThreadCreateAction extends Action {
-  handle(data: any) {
+  handle(data: GatewayThreadCreateDispatchData) {
     const client = this.client;
     const existing = client.channels.cache.has(data.id);
     const thread = client.channels._add(data);

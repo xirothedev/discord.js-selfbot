@@ -1,9 +1,10 @@
 import Action from './Action';
+import type { GatewayAutoModerationRuleDeleteDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 class AutoModerationRuleDeleteAction extends Action {
-  handle(data: any) {
+  handle(data: GatewayAutoModerationRuleDeleteDispatchData) {
     const { client } = this;
     const guild = client.guilds.cache.get(data.guild_id);
 

@@ -1,19 +1,22 @@
 import { setTimeout } from 'node:timers';
 import Action from './Action';
+import type { Client } from '../Client';
+import type { GatewayGuildDeleteDispatchData } from 'discord-api-types/v10';
 import _GuildModule from '../../structures/Guild';
+import type { Guild } from '../../structures/Guild';
 const { deletedGuilds } = _GuildModule;
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 class GuildDeleteAction extends Action {
-  declare deleted: Map<any, any>;
+  declare deleted: Map<string, Guild>;
 
-  constructor(client: any) {
+  constructor(client: Client) {
     super(client);
-    this.deleted = new Map();
+    this.deleted = new Map<string, InstanceType<typeof Guild>>();
   }
 
-  handle(data: any) {
+  handle(data: GatewayGuildDeleteDispatchData) {
     const client = this.client;
 
     let guild = client.guilds.cache.get(data.id);
@@ -59,7 +62,7 @@ class GuildDeleteAction extends Action {
     return { guild };
   }
 
-  scheduleForDeletion(id: any) {
+  scheduleForDeletion(id: string) {
     setTimeout(() => this.deleted.delete(id), this.client.options.restWsBridgeTimeout).unref();
   }
 }

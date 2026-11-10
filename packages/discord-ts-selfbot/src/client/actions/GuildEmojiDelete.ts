@@ -1,12 +1,13 @@
 import Action from './Action';
+import type { GuildEmoji } from '../../structures/GuildEmoji';
 import _EmojiModule from '../../structures/Emoji';
 const { deletedEmojis } = _EmojiModule;
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 class GuildEmojiDeleteAction extends Action {
-  handle(emoji: any) {
-    emoji.guild.emojis.cache.delete(emoji.id);
+  handle(emoji: GuildEmoji) {
+    if (emoji.id) emoji.guild.emojis.cache.delete(emoji.id);
     deletedEmojis.add(emoji);
     /**
      * Emitted whenever a custom emoji is deleted in a guild.

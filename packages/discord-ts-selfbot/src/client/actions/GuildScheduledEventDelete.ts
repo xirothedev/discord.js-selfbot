@@ -1,9 +1,10 @@
 import Action from './Action';
+import type { GatewayGuildScheduledEventDeleteDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 class GuildScheduledEventDeleteAction extends Action {
-  handle(data: any) {
+  handle(data: GatewayGuildScheduledEventDeleteDispatchData) {
     const client = this.client;
     const guild = client.guilds.cache.get(data.guild_id);
 

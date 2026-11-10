@@ -1,4 +1,7 @@
 import Action from './Action';
+import type { Client } from '../Client';
+import type { Channel } from '../../structures/Channel';
+import type { GatewayChannelDeleteDispatchData } from 'discord-api-types/v10';
 import _ChannelModule from '../../structures/Channel';
 const { deletedChannels } = _ChannelModule;
 import DMChannel from '../../structures/DMChannel';
@@ -8,14 +11,14 @@ import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 class ChannelDeleteAction extends Action {
-  declare deleted: Map<any, any>;
+  declare deleted: Map<string, Channel>;
 
-  constructor(client: any) {
+  constructor(client: Client) {
     super(client);
-    this.deleted = new Map();
+    this.deleted = new Map<string, Channel>();
   }
 
-  handle(data: any) {
+  handle(data: GatewayChannelDeleteDispatchData) {
     const client = this.client;
     const channel = client.channels.cache.get(data.id);
 

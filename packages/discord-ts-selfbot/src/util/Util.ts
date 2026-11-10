@@ -620,17 +620,17 @@ class Util extends null {
    * @returns {Promise<Channel[]|Role[]>} Updated item list, with `id` and `position` properties
    * @private
    */
-  static async setPosition(
-    item: unknown,
+  static async setPosition<T extends { id: unknown }>(
+    item: T,
     position: number,
     relative: boolean,
-    sorted: { values: () => Iterable<unknown> },
+    sorted: { values: () => Iterable<T> },
     route: { patch: (o: unknown) => Promise<unknown> },
     reason?: string,
   ) {
-    let updatedItems = [...sorted.values()];
-    Util.moveElementInArray(updatedItems, item, position, relative);
-    updatedItems = updatedItems.map((r, i) => ({ id: (r as { id: unknown }).id, position: i }));
+    const sortedValues = [...sorted.values()];
+    Util.moveElementInArray(sortedValues, item, position, relative);
+    const updatedItems = sortedValues.map((entry, index) => ({ id: entry.id, position: index }));
     await route.patch({ data: updatedItems, reason });
     return updatedItems;
   }

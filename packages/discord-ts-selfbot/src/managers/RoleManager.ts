@@ -344,7 +344,8 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
    */
   async delete(role: RoleResolvableSource, reason?: string): Promise<void> {
     const id = this.resolveId(role);
-    await this.client.api.guilds[this.guild.id].roles[id!].delete({ reason });
+    if (!id) throw new TypeError('INVALID_TYPE', 'role', 'RoleResolvable');
+    await this.client.api.guilds[this.guild.id].roles[id].delete({ reason });
     this.client.actions.GuildRoleDelete.handle({ guild_id: this.guild.id, role_id: id });
   }
 

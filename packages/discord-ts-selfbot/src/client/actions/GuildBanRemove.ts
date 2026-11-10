@@ -1,10 +1,11 @@
 import Action from './Action';
+import type { GatewayGuildBanRemoveDispatchData } from 'discord-api-types/v10';
 import GuildBan from '../../structures/GuildBan';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 class GuildBanRemove extends Action {
-  handle(data: any) {
+  handle(data: GatewayGuildBanRemoveDispatchData) {
     const client = this.client;
     const guild = client.guilds.cache.get(data.guild_id);
 

@@ -1,7 +1,8 @@
 import Action from './Action';
+import type { GatewayMessageUpdateDispatchData } from 'discord-api-types/v10';
 
 class MessageUpdateAction extends Action {
-  handle(data: any) {
+  handle(data: GatewayMessageUpdateDispatchData) {
     const channel = this.getChannel({ id: data.channel_id, ...('guild_id' in data && { guild_id: data.guild_id }) });
     if (channel) {
       if (!channel.isText()) return {};

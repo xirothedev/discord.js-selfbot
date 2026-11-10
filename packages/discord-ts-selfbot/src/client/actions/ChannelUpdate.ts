@@ -1,11 +1,12 @@
 import Action from './Action';
+import type { GatewayChannelUpdateDispatchData } from 'discord-api-types/v10';
 import _ChannelModule from '../../structures/Channel';
 const { Channel } = _ChannelModule;
 import _ConstantsModule from '../../util/Constants';
 const { ChannelTypes } = _ConstantsModule;
 
 class ChannelUpdateAction extends Action {
-  handle(data: any) {
+  handle(data: GatewayChannelUpdateDispatchData) {
     const client = this.client;
     let channel = client.channels.cache.get(data.id);
 

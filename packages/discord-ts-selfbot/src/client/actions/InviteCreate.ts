@@ -1,9 +1,10 @@
 import Action from './Action';
+import type { GatewayInviteCreateDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 class InviteCreateAction extends Action {
-  handle(data: any) {
+  handle(data: GatewayInviteCreateDispatchData) {
     const client = this.client;
     const channel = client.channels.cache.get(data.channel_id);
     const guild = client.guilds.cache.get(data.guild_id);

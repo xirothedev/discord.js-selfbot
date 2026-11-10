@@ -1,9 +1,12 @@
 import Action from './Action';
+import type { RawGuildEmojiData } from '../../../typings/rawDataTypes';
+import type { Guild } from '../../structures/Guild';
+import type { GuildEmoji } from '../../structures/GuildEmoji';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 class GuildEmojiCreateAction extends Action {
-  handle(guild: any, createdEmoji: any) {
+  handle(guild: Guild, createdEmoji: RawGuildEmojiData & { id: string }): { emoji: GuildEmoji } {
     const already = guild.emojis.cache.has(createdEmoji.id);
     const emoji = guild.emojis._add(createdEmoji);
     /**

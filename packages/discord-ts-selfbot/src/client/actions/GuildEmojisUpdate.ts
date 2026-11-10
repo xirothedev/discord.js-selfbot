@@ -1,7 +1,8 @@
 import Action from './Action';
+import type { GatewayGuildEmojisUpdateDispatchData } from 'discord-api-types/v10';
 
 class GuildEmojisUpdateAction extends Action {
-  handle(data: any) {
+  handle(data: GatewayGuildEmojisUpdateDispatchData) {
     const guild = this.client.guilds.cache.get(data.guild_id);
     if (!guild?.emojis) return;
 

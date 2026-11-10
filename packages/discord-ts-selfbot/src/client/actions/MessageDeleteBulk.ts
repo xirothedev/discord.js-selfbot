@@ -1,12 +1,13 @@
 import { Collection } from '@discordjs/collection';
 import Action from './Action';
+import type { GatewayMessageDeleteBulkDispatchData } from 'discord-api-types/v10';
 import _MessageModule from '../../structures/Message';
 const { deletedMessages } = _MessageModule;
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 class MessageDeleteBulkAction extends Action {
-  handle(data: any) {
+  handle(data: GatewayMessageDeleteBulkDispatchData) {
     const client = this.client;
     const channel = client.channels.cache.get(data.channel_id);
 

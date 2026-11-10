@@ -1,9 +1,10 @@
 import Action from './Action';
+import type { GatewayGuildMemberUpdateDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
 const { Status, Events } = _ConstantsModule;
 
 class GuildMemberUpdateAction extends Action {
-  handle(data: any, shard: any) {
+  handle(data: GatewayGuildMemberUpdateDispatchData, shard: import('../websocket/WebSocketShard').WebSocketShard) {
     const { client } = this;
     if (data.user.username) {
       const user = client.users.cache.get(data.user.id);

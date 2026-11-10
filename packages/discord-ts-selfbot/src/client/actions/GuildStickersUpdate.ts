@@ -1,7 +1,8 @@
 import Action from './Action';
+import type { GatewayGuildStickersUpdateDispatchData } from 'discord-api-types/v10';
 
 class GuildStickersUpdateAction extends Action {
-  handle(data: any) {
+  handle(data: GatewayGuildStickersUpdateDispatchData) {
     const guild = this.client.guilds.cache.get(data.guild_id);
     if (!guild?.stickers) return;
 

@@ -1,4 +1,5 @@
 import Action from './Action';
+import type { APIPartialEmoji, GatewayMessageReactionAddDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 const { PartialTypes } = _ConstantsModule;
@@ -14,8 +15,13 @@ const { PartialTypes } = _ConstantsModule;
      member: { ..., user: { ... } } }
 */
 
+type MessageReactionAddData = Omit<Partial<GatewayMessageReactionAddDispatchData>, 'emoji'> & {
+  emoji?: APIPartialEmoji | null;
+  [key: string]: unknown;
+};
+
 class MessageReactionAdd extends Action {
-  handle(data: any, fromStructure: any = false) {
+  handle(data: MessageReactionAddData, fromStructure = false) {
     if (!data.emoji) return false;
 
     const user = this.getUserFromMember(data);
@@ -37,10 +43,10 @@ class MessageReactionAdd extends Action {
     const includePartial = this.client.options.partials.includes(PartialTypes.REACTION);
     if (message.partial && !includePartial) return false;
     const reaction = message.reactions._add({
+      ...data,
       emoji: data.emoji,
       count: message.partial ? null : 0,
       me: user.id === this.client.user!.id,
-      ...data,
     });
     if (!reaction) return false;
     reaction._add(user, data.burst);

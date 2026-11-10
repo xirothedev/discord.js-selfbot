@@ -1,11 +1,12 @@
 import Action from './Action';
+import type { GatewayMessageDeleteDispatchData } from 'discord-api-types/v10';
 import _MessageModule from '../../structures/Message';
 const { deletedMessages } = _MessageModule;
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 class MessageDeleteAction extends Action {
-  handle(data: any) {
+  handle(data: GatewayMessageDeleteDispatchData) {
     const client = this.client;
     const channel = this.getChannel({ id: data.channel_id, ...('guild_id' in data && { guild_id: data.guild_id }) });
     let message;

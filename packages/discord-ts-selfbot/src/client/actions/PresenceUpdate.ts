@@ -1,10 +1,11 @@
 import Action from './Action';
+import type { GatewayPresenceUpdateDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 const { PartialTypes } = _ConstantsModule;
 
 class PresenceUpdateAction extends Action {
-  handle(data: any) {
+  handle(data: GatewayPresenceUpdateDispatchData) {
     let user = this.client.users.cache.get(data.user.id);
     if (!user && data.user?.username) user = this.client.users._add(data.user);
     if (!user && ('username' in data.user || this.client.options.partials.includes(PartialTypes.USER))) {

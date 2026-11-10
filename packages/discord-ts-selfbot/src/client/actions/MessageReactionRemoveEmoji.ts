@@ -1,9 +1,10 @@
 import Action from './Action';
+import type { GatewayMessageReactionRemoveEmojiDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 class MessageReactionRemoveEmoji extends Action {
-  handle(data: any) {
+  handle(data: GatewayMessageReactionRemoveEmojiDispatchData) {
     const channel = this.getChannel({ id: data.channel_id, ...('guild_id' in data && { guild_id: data.guild_id }) });
     if (!channel || !channel.isText()) return false;
 

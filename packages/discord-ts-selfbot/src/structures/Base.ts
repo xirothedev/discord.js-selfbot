@@ -1,13 +1,14 @@
 import Util from '../util/Util';
+import type { Client } from '../client/Client';
 
 /**
  * Represents a data model that is identifiable by a Snowflake (i.e. Discord API data models).
  * @abstract
  */
 class Base {
-  declare client: import('../client/Client').default;
+  declare client: Client;
 
-  constructor(client: any) {
+  constructor(client: Client) {
     /**
      * The client that instantiated this
      * @name Base#client
@@ -21,17 +22,17 @@ class Base {
     return Object.assign(Object.create(this), this);
   }
 
-  _patch(data: any) {
+  _patch(data: unknown) {
     return data;
   }
 
-  _update(data: any) {
+  _update(data: unknown) {
     const clone = this._clone();
     this._patch(data);
     return clone;
   }
 
-  toJSON(...props: any[]) {
+  toJSON(...props: unknown[]) {
     return Util.flatten(this, ...props);
   }
 

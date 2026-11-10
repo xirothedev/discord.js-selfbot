@@ -1,12 +1,13 @@
 import process from 'node:process';
 import Action from './Action';
+import type { GatewayMessageCreateDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 let deprecationEmitted = false;
 
 class MessageCreateAction extends Action {
-  handle(data: any) {
+  handle(data: GatewayMessageCreateDispatchData) {
     const client = this.client;
     const channel = this.getChannel({
       id: data.channel_id,

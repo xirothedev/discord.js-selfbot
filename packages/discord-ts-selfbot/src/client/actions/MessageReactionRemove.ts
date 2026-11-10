@@ -1,4 +1,5 @@
 import Action from './Action';
+import type { GatewayMessageReactionRemoveDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
@@ -11,7 +12,7 @@ const { Events } = _ConstantsModule;
 */
 
 class MessageReactionRemove extends Action {
-  handle(data: any) {
+  handle(data: GatewayMessageReactionRemoveDispatchData) {
     if (!data.emoji) return false;
 
     const user = this.getUser(data);

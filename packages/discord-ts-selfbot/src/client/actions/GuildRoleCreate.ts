@@ -1,9 +1,10 @@
 import Action from './Action';
+import type { GatewayGuildRoleCreateDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 class GuildRoleCreate extends Action {
-  handle(data: any) {
+  handle(data: GatewayGuildRoleCreateDispatchData) {
     const client = this.client;
     const guild = client.guilds.cache.get(data.guild_id);
     let role;

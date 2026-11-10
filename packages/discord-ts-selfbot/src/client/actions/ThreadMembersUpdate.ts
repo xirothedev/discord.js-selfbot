@@ -1,20 +1,21 @@
 import Action from './Action';
+import type { GatewayThreadMembersUpdateDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 class ThreadMembersUpdateAction extends Action {
-  handle(data: any) {
+  handle(data: GatewayThreadMembersUpdateDispatchData) {
     const client = this.client;
     const thread = client.channels.cache.get(data.id);
     if (thread) {
       const old = thread.members.cache.clone();
       thread.memberCount = data.member_count;
 
-      data.added_members?.forEach((rawMember: any) => {
+      data.added_members?.forEach(rawMember => {
         thread.members._add(rawMember);
       });
 
-      data.removed_member_ids?.forEach((memberId: any) => {
+      data.removed_member_ids?.forEach(memberId => {
         thread.members.cache.delete(memberId);
       });
 

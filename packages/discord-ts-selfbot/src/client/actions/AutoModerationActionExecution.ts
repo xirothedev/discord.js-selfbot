@@ -1,10 +1,11 @@
 import Action from './Action';
+import type { GatewayAutoModerationActionExecutionDispatchData } from 'discord-api-types/v10';
 import AutoModerationActionExecution from '../../structures/AutoModerationActionExecution';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 class AutoModerationActionExecutionAction extends Action {
-  handle(data: any) {
+  handle(data: GatewayAutoModerationActionExecutionDispatchData) {
     const { client } = this;
     const guild = client.guilds.cache.get(data.guild_id);
 

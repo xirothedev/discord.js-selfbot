@@ -1,10 +1,11 @@
 import Action from './Action';
+import type { GatewayVoiceStateUpdateDispatchData } from 'discord-api-types/v10';
 import VoiceState from '../../structures/VoiceState';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
 class VoiceStateUpdate extends Action {
-  handle(data: any) {
+  handle(data: GatewayVoiceStateUpdateDispatchData) {
     const client = this.client;
     const guild = client.guilds.cache.get(data.guild_id);
     if (guild) {
