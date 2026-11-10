@@ -14,7 +14,12 @@ import type { Client } from '../client/Client';
 import type { DMChannel } from '../structures/DMChannel';
 
 type UserResolvableSource =
-  User | InstanceType<typeof GuildMember> | InstanceType<typeof Message> | ThreadMember | Snowflake | UserResolvable;
+  | User
+  | InstanceType<typeof GuildMember>
+  | InstanceType<typeof Message>
+  | ThreadMember
+  | Snowflake
+  | UserResolvable;
 
 class UserManager extends CachedManager<User> {
   constructor(client: Client, iterable?: Iterable<User>) {

@@ -65,32 +65,32 @@ export function runTypeDoc(options: RunTypeDocOptions): Project {
 }
 
 export function modulesByName(project: Project): Map<string, Reflection> {
-  return new Map((project.children ?? []).map((child) => [child.name, child]));
+  return new Map((project.children ?? []).map(child => [child.name, child]));
 }
 
 export function reflectionsByName(project: Project): Map<string, Reflection> {
-  return new Map((project.children ?? []).map((child) => [child.name, child]));
+  return new Map((project.children ?? []).map(child => [child.name, child]));
 }
 
 export function findExportedReflection(module: Reflection | undefined, exported: PublicExport): Reflection | undefined {
   if (!module?.children?.length) return undefined;
 
-  const exact = exported.namedExport ? module.children.find((child) => child.name === exported.namedExport) : undefined;
+  const exact = exported.namedExport ? module.children.find(child => child.name === exported.namedExport) : undefined;
   if (exact) return exact;
 
-  const exportEquals = module.children.find((child) => child.name === 'export=');
+  const exportEquals = module.children.find(child => child.name === 'export=');
   if (exportEquals) {
     const named = exportEquals.type?.declaration?.children?.find(
-      (child) => child.name === (exported.namedExport ?? exported.name),
+      child => child.name === (exported.namedExport ?? exported.name),
     );
     return named ?? exportEquals;
   }
 
   if (module.children.length === 1) return module.children[0];
 
-  return module.children.find((child) => child.name === exported.name);
+  return module.children.find(child => child.name === exported.name);
 }
 
 export function sourceUrlFor(reflection: Reflection | undefined): string | undefined {
-  return reflection?.sources?.find((source) => source.url)?.url;
+  return reflection?.sources?.find(source => source.url)?.url;
 }

@@ -14,7 +14,7 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
-const files = DIRS.flatMap((dir) => walk(dir));
+const files = DIRS.flatMap(dir => walk(dir));
 let any = 0;
 let casts = 0;
 

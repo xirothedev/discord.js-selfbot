@@ -27,9 +27,9 @@ function decodeEntities(text: string): string {
 
 function dedent(text: string): string {
   const lines = text.replace(/^\n+|\n+$/g, '').split('\n');
-  const indents = lines.filter((line) => line.trim().length > 0).map((line) => line.match(/^[ \t]*/)?.[0].length ?? 0);
+  const indents = lines.filter(line => line.trim().length > 0).map(line => line.match(/^[ \t]*/)?.[0].length ?? 0);
   const width = indents.length ? Math.min(...indents) : 0;
-  return lines.map((line) => line.slice(width)).join('\n');
+  return lines.map(line => line.slice(width)).join('\n');
 }
 
 function renderCallouts(body: string): string {
@@ -40,7 +40,7 @@ function renderCallouts(body: string): string {
     const text = dedent(inner).trim();
     const quoted = text
       .split('\n')
-      .map((line) => (line.length ? `> ${line}` : '>'))
+      .map(line => (line.length ? `> ${line}` : '>'))
       .join('\n');
     return `> **${label}**\n>\n${quoted}`;
   });
@@ -50,7 +50,7 @@ function renderCards(body: string): string {
   return body.replace(/<Cards\b[^>]*>([\s\S]*?)<\/Cards>/g, (_match, inner: string) => {
     const cards = [...inner.matchAll(/<Card\b([^>]*?)(?:\/>|>([\s\S]*?)<\/Card>)/g)];
     return cards
-      .map((card) => {
+      .map(card => {
         const attributes = card[1] ?? '';
         const title = attribute(attributes, 'title') ?? 'Reference';
         const href = attribute(attributes, 'href');

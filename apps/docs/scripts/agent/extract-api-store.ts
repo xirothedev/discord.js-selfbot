@@ -58,8 +58,8 @@ function compactBase(entry: DocgenClass | DocgenType) {
     name: entry.name,
     description: entry.description,
     meta: entry.meta,
-    props: entry.props?.filter((prop) => prop.access !== 'private').map(compactProp),
-    methods: entry.methods?.filter((method) => method.access !== 'private').map(compactMethod),
+    props: entry.props?.filter(prop => prop.access !== 'private').map(compactProp),
+    methods: entry.methods?.filter(method => method.access !== 'private').map(compactMethod),
   };
 }
 

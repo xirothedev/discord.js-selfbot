@@ -107,7 +107,7 @@ function ensureSignatureSummary(reflection: Reflection | undefined, description?
 
 function addBlockTag(comment: Comment, tag: string, text: string): void {
   if (!comment.blockTags) comment.blockTags = [];
-  if (!comment.blockTags.some((item) => item.tag === tag)) {
+  if (!comment.blockTags.some(item => item.tag === tag)) {
     comment.blockTags.push({ tag, content: [{ kind: 'text', text }] });
   }
 }
@@ -125,8 +125,8 @@ function ensureExamples(target: Commented | undefined, examples: string[] | unde
 
   const existing = new Set(
     comment.blockTags
-      .filter((item) => item.tag === '@example')
-      .map((item) => item.content?.map((part) => part.text ?? '').join('') ?? ''),
+      .filter(item => item.tag === '@example')
+      .map(item => item.content?.map(part => part.text ?? '').join('') ?? ''),
   );
 
   for (const example of examples) {
@@ -139,7 +139,7 @@ function ensureExamples(target: Commented | undefined, examples: string[] | unde
 }
 
 function findChild(reflection: Reflection | undefined, name: string): Reflection | undefined {
-  return reflection?.children?.find((child) => child.name === name);
+  return reflection?.children?.find(child => child.name === name);
 }
 
 export function enrichClass(
@@ -153,13 +153,13 @@ export function enrichClass(
   ensureSummary(typings, docgenClass.description);
 
   const constructor =
-    source?.children?.find((child) => child.kind === 512) ?? typings?.children?.find((child) => child.kind === 512);
+    source?.children?.find(child => child.kind === 512) ?? typings?.children?.find(child => child.kind === 512);
   if (docgenClass.construct) {
     ensureSummary(constructor, docgenClass.construct.description);
     for (const signature of constructor?.signatures ?? []) {
       for (const param of docgenClass.construct.params ?? []) {
         ensureSummary(
-          signature.parameters?.find((candidate) => candidate.name === param.name),
+          signature.parameters?.find(candidate => candidate.name === param.name),
           param.description,
         );
       }
@@ -177,7 +177,7 @@ export function enrichClass(
     for (const signature of child?.signatures ?? []) {
       for (const param of method.params ?? []) {
         ensureSummary(
-          signature.parameters?.find((candidate) => candidate.name === param.name),
+          signature.parameters?.find(candidate => candidate.name === param.name),
           param.description,
         );
       }

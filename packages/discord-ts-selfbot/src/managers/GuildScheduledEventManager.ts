@@ -119,7 +119,9 @@ class GuildScheduledEventManager extends CachedManager<
   ): Promise<Collection<Snowflake, InstanceType<typeof GuildScheduledEvent>>>;
   async fetch(
     options:
-      GuildScheduledEventResolvableSource | FetchGuildScheduledEventOptions | FetchGuildScheduledEventsOptions = {},
+      | GuildScheduledEventResolvableSource
+      | FetchGuildScheduledEventOptions
+      | FetchGuildScheduledEventsOptions = {},
   ): Promise<
     InstanceType<typeof GuildScheduledEvent> | Collection<Snowflake, InstanceType<typeof GuildScheduledEvent>>
   > {

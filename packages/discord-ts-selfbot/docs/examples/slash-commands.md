@@ -83,7 +83,7 @@ const commands = [
 
 const client = new Client();
 
-client.once(Events.CLIENT_READY, async (readyClient) => {
+client.once(Events.CLIENT_READY, async readyClient => {
   /** @type {import('discord-ts-selfbot').ApplicationCommandManager} */
   const manager = readyClient.application.commands;
   const registered = await manager.set(commands);
@@ -91,7 +91,7 @@ client.once(Events.CLIENT_READY, async (readyClient) => {
   console.log(`Registered ${registered.size} application commands.`);
 });
 
-client.on(Events.Error, (error) => {
+client.on(Events.Error, error => {
   console.error('Client error:', error);
 });
 

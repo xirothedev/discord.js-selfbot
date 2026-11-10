@@ -11,7 +11,9 @@ import type { GuildEmoji } from '../structures/GuildEmoji';
 
 type RoleResolvableSource = InstanceType<typeof Role> | RoleResolvable;
 type RoleOrRolesSource =
-  RoleResolvableSource | readonly RoleResolvableSource[] | Collection<Snowflake, InstanceType<typeof Role>>;
+  | RoleResolvableSource
+  | readonly RoleResolvableSource[]
+  | Collection<Snowflake, InstanceType<typeof Role>>;
 
 class GuildEmojiRoleManager extends DataManager<import('../structures/Role').Role> {
   declare emoji: GuildEmoji;

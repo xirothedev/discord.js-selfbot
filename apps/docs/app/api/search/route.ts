@@ -5,7 +5,7 @@ export const revalidate = false;
 
 const searchSource = {
   ...source,
-  getPages: () => source.getPages().filter((page) => !page.url.startsWith('/docs/api')),
+  getPages: () => source.getPages().filter(page => !page.url.startsWith('/docs/api')),
 };
 
 export const { staticGET: GET } = createFromSource(searchSource, {

@@ -119,7 +119,11 @@ interface AuditLogChangeEntry {
 }
 
 type AuditLogTarget =
-  GuildAuditLogsTarget | 'APPLICATION_COMMAND' | 'SOUNDBOARD_SOUND' | 'GUILD_ONBOARDING_PROMPT' | 'GUILD_ONBOARDING';
+  | GuildAuditLogsTarget
+  | 'APPLICATION_COMMAND'
+  | 'SOUNDBOARD_SOUND'
+  | 'GUILD_ONBOARDING_PROMPT'
+  | 'GUILD_ONBOARDING';
 
 class GuildAuditLogs<T extends GuildAuditLogsResolvable = 'ALL'> {
   declare webhooks: Collection<Snowflake, Webhook>;

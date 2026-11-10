@@ -91,7 +91,7 @@ function collectGuides(): GeneratedGuide[] {
     const text = readIfExists(source);
     if (!text) return;
     const converted = convertMdx(text, {
-      include: (file) => readIfExists(path.resolve(docsDir, file)),
+      include: file => readIfExists(path.resolve(docsDir, file)),
     });
     guides.push({
       source,
@@ -105,7 +105,7 @@ function collectGuides(): GeneratedGuide[] {
   add(path.join(contentDir, 'index.mdx'), 'index.md');
   for (const group of ['getting-started', 'guides', 'examples']) {
     const root = path.join(contentDir, group);
-    for (const file of walk(root).filter((candidate) => candidate.endsWith('.mdx'))) {
+    for (const file of walk(root).filter(candidate => candidate.endsWith('.mdx'))) {
       const name = path.basename(file, '.mdx');
       add(file, `${group}/${name}.md`);
     }
@@ -175,30 +175,30 @@ function oneLine(text: string | undefined, limit = 140): string {
 }
 
 function renderReferenceIndex(pages: GeneratedPage[], version: string): string {
-  const sections = AREA_ORDER.map((area) => {
-    const items = pages.filter((page) => page.area === area.id).sort((a, b) => a.name.localeCompare(b.name));
+  const sections = AREA_ORDER.map(area => {
+    const items = pages.filter(page => page.area === area.id).sort((a, b) => a.name.localeCompare(b.name));
     if (!items.length) return '';
-    const lines = items.map((page) => `- [${page.name}](./${area.id}/${page.slug}.md): ${page.description}`);
+    const lines = items.map(page => `- [${page.name}](./${area.id}/${page.slug}.md): ${page.description}`);
     return `### ${area.title}\n\n${lines.join('\n')}`;
   });
 
   const gaps = [...KNOWN_UNTYPED_EXPORTS]
     .sort()
-    .map((name) => `- \`${name}\`: runtime shim, not described by the public typings.`)
+    .map(name => `- \`${name}\`: runtime shim, not described by the public typings.`)
     .join('\n');
 
   return `# API reference\n\nPublic runtime surface of \`discord-ts-selfbot@${version}\`. Every page is generated from \`typings/index.d.ts\`.\n\nType-only exports stay in \`typings/index.d.ts\`; this reference does not repeat them.\n\n${sections.filter(Boolean).join('\n\n')}${gaps ? `\n\n## Known gaps\n\n${gaps}` : ''}\n`;
 }
 
 function renderEventsIndex(pages: GeneratedPage[], store: Map<string, DocgenClass | DocgenType>): string {
-  const publicNames = new Set(pages.map((page) => page.name));
+  const publicNames = new Set(pages.map(page => page.name));
   const sections: string[] = [];
 
   for (const page of pages.sort((a, b) => a.name.localeCompare(b.name))) {
     const classEvents = (store.get(page.reflectionName) as DocgenClass | undefined)?.events;
     if (!classEvents?.length || !publicNames.has(page.name)) continue;
 
-    const lines = classEvents.map((event) => {
+    const lines = classEvents.map(event => {
       const description = oneLine(stripJsdocSyntax(event.description ?? ''));
       return `- [\`${event.name}\`](../reference/${page.area}/${page.slug}.md#events): ${description || 'No description.'}`;
     });
@@ -229,28 +229,26 @@ function renderIndex(input: {
     ].map((target, index) => [target, index]),
   );
   const start = guides
-    .filter((guide) => guide.target === 'index.md' || guide.target.startsWith('getting-started/'))
+    .filter(guide => guide.target === 'index.md' || guide.target.startsWith('getting-started/'))
     .sort((a, b) => (startOrder.get(a.target) ?? 99) - (startOrder.get(b.target) ?? 99));
-  const usage = guides.filter((guide) => guide.target.startsWith('guides/'));
-  const examples = guides.filter((guide) => guide.target.startsWith('examples/'));
+  const usage = guides.filter(guide => guide.target.startsWith('guides/'));
+  const examples = guides.filter(guide => guide.target.startsWith('examples/'));
 
   const startLines = [
     '- [AGENTS.md block](./AGENTS.md): Copy this block into the project AGENTS.md before coding.',
-    ...start.map((guide) => `- [${guide.title}](./${guide.target}): ${oneLine(guide.description) || 'Start here.'}`),
+    ...start.map(guide => `- [${guide.title}](./${guide.target}): ${oneLine(guide.description) || 'Start here.'}`),
   ];
   const usageLines = usage.map(
-    (guide) => `- [${guide.title}](./${guide.target}): ${oneLine(guide.description) || 'Usage guide.'}`,
+    guide => `- [${guide.title}](./${guide.target}): ${oneLine(guide.description) || 'Usage guide.'}`,
   );
   const exampleLines = examples.map(
-    (guide) => `- [${guide.title}](./${guide.target}): ${oneLine(guide.description) || 'Runnable example.'}`,
+    guide => `- [${guide.title}](./${guide.target}): ${oneLine(guide.description) || 'Runnable example.'}`,
   );
 
-  const reference = AREA_ORDER.map((area) => {
-    const items = pages.filter((page) => page.area === area.id).sort((a, b) => a.name.localeCompare(b.name));
+  const reference = AREA_ORDER.map(area => {
+    const items = pages.filter(page => page.area === area.id).sort((a, b) => a.name.localeCompare(b.name));
     if (!items.length) return '';
-    const lines = items.map(
-      (page) => `- [${page.name}](./reference/${page.area}/${page.slug}.md): ${page.description}`,
-    );
+    const lines = items.map(page => `- [${page.name}](./reference/${page.area}/${page.slug}.md): ${page.description}`);
     return `### ${area.title}\n\n${lines.join('\n')}`;
   }).filter(Boolean);
 
@@ -291,9 +289,9 @@ function writeTree(root: string, files: Map<string, string>): void {
 
 function compareTrees(expectedRoot: string, actualRoot: string): string[] {
   const expected = new Map(
-    walk(expectedRoot).map((file) => [path.relative(expectedRoot, file), readFileSync(file, 'utf8')]),
+    walk(expectedRoot).map(file => [path.relative(expectedRoot, file), readFileSync(file, 'utf8')]),
   );
-  const actual = new Map(walk(actualRoot).map((file) => [path.relative(actualRoot, file), readFileSync(file, 'utf8')]));
+  const actual = new Map(walk(actualRoot).map(file => [path.relative(actualRoot, file), readFileSync(file, 'utf8')]));
   const diffs: string[] = [];
 
   for (const [file, content] of expected) {
@@ -373,7 +371,7 @@ export function generateAgentDocs(options: { outputDir: string }): {
   }
 
   const duplicateSlugs = pages
-    .map((page) => `${page.area}/${page.slug}`)
+    .map(page => `${page.area}/${page.slug}`)
     .filter((value, index, all) => all.indexOf(value) !== index);
   if (duplicateSlugs.length) {
     throw new Error(`Duplicate reference slugs: ${[...new Set(duplicateSlugs)].join(', ')}`);

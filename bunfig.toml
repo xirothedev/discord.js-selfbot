@@ -1,12 +1,6 @@
 [install]
 # CI sets --frozen-lockfile explicitly.
 
-[fmt]
-printWidth = 120
-singleQuote = true
-semi = true
-trailingComma = "all"
-
 [lint]
 # Bun's native linter. Oxlint baseline replaced by bun lint (per /implement scope).
 maxWarnings = 0

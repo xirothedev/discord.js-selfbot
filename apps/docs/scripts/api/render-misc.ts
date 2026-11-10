@@ -54,7 +54,7 @@ export function renderFunctionPage(input: MiscPageInput): string {
 export function renderEnumPage(input: MiscPageInput): string {
   const members = input.source?.children ?? [];
   const rows = members
-    .map((member) => `| ${inlineCode(member.name)} | ${inlineCode(renderType(member.type))} |`)
+    .map(member => `| ${inlineCode(member.name)} | ${inlineCode(renderType(member.type))} |`)
     .join('\n');
 
   return [
@@ -77,7 +77,7 @@ export function renderVariablePage(input: MiscPageInput): string {
   const type = input.typings?.type ?? input.source?.type;
   const children = input.typings?.children ?? [];
   const childList = children
-    .map((child) => {
+    .map(child => {
       const description = renderSummary(child.comment);
       return `- ${inlineCode(`${child.name}: ${renderType(child.type)}`)}${description ? ` — ${escapeMdx(description)}` : ''}`;
     })
@@ -114,7 +114,7 @@ export function renderEnumMembersPage(input: {
   sourceUrl?: string;
 }): string {
   const rows = input.members
-    .map((member) => `| ${inlineCode(member.name)} | ${inlineCode(renderType(member.type))} |`)
+    .map(member => `| ${inlineCode(member.name)} | ${inlineCode(renderType(member.type))} |`)
     .join('\n');
 
   return [

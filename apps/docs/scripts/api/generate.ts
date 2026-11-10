@@ -94,7 +94,7 @@ function enumMembers(reflection: Reflection | undefined): Reflection[] | undefin
   if (!reflection || reflection.kind !== Kind.Variable) return undefined;
   const members = reflection.type?.declaration?.children;
   if (!members?.length) return undefined;
-  return members.every((member) => member.type?.type === 'literal') ? members : undefined;
+  return members.every(member => member.type?.type === 'literal') ? members : undefined;
 }
 
 function sourceUrlForExport(exportedPath: string): string {
@@ -176,9 +176,9 @@ function collectFiles(root: string, current = root): Map<string, string> {
 
 function compareOutputs(outputs: Map<string, string>): GenerateResult {
   const existing = collectFiles(apiDir);
-  const missing = [...outputs.keys()].filter((file) => !existing.has(file));
-  const extra = [...existing.keys()].filter((file) => !outputs.has(file));
-  const changed = [...outputs.keys()].filter((file) => existing.has(file) && existing.get(file) !== outputs.get(file));
+  const missing = [...outputs.keys()].filter(file => !existing.has(file));
+  const extra = [...existing.keys()].filter(file => !outputs.has(file));
+  const changed = [...outputs.keys()].filter(file => existing.has(file) && existing.get(file) !== outputs.get(file));
 
   if (missing.length || extra.length || changed.length) {
     console.error('API reference is stale.');
@@ -218,7 +218,7 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
   const outputs = new Map<string, string>();
   const areaItems = new Map<string, PageItem[]>();
   const areaCounts = new Map<string, number>();
-  const publicNames = new Set(parsed.public.map((item) => item.name));
+  const publicNames = new Set(parsed.public.map(item => item.name));
   const publicReflections: Reflection[] = [];
   const skipped: string[] = [];
 
@@ -233,9 +233,8 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
     enrichClass(undefined, typings, storeEntry);
     enrichType(typings, storeEntry);
     const privateMembers =
-      typings.children
-        ?.filter((child) => child.flags?.isPrivate || child.flags?.isProtected)
-        .map((child) => child.name) ?? [];
+      typings.children?.filter(child => child.flags?.isPrivate || child.flags?.isProtected).map(child => child.name) ??
+      [];
     const sourceUrl = sourceUrlForEntry(storeEntry, exported.path);
     const area = areaFor(exported.path);
     const slug = slugify(exported.name);
@@ -268,7 +267,7 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
   for (const reflection of publicReflections) collectReflectionNames(reflection, referencedNames);
 
   const typingsOnly = [...typingsReflections.values()].filter(
-    (reflection) =>
+    reflection =>
       !publicNames.has(reflection.name) && referencedNames.has(reflection.name) && isTypingsKind(reflection.kind),
   );
   for (const reflection of typingsOnly) enrichType(reflection, store.get(reflection.name));
@@ -314,13 +313,13 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
     );
     outputs.set(
       'api/typings/meta.json',
-      meta('Typings', ['index', ...typingsItems.map((item) => path.basename(item.href))]),
+      meta('Typings', ['index', ...typingsItems.map(item => path.basename(item.href))]),
     );
   }
 
   for (const [area, items] of areaItems) {
     const sorted = [...items].sort((a, b) => a.title.localeCompare(b.title));
-    const areaMeta = AREA_ORDER.find((entry) => entry.id === area);
+    const areaMeta = AREA_ORDER.find(entry => entry.id === area);
     outputs.set(
       `api/${area}/index.mdx`,
       renderAreaIndex({
@@ -331,16 +330,16 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
     );
     outputs.set(
       `api/${area}/meta.json`,
-      meta(areaMeta?.title ?? area, ['index', ...sorted.map((item) => path.basename(item.href))]),
+      meta(areaMeta?.title ?? area, ['index', ...sorted.map(item => path.basename(item.href))]),
     );
   }
 
-  const indexAreas = AREA_ORDER.map((area) => ({ ...area, count: areaCounts.get(area.id) ?? 0 }));
+  const indexAreas = AREA_ORDER.map(area => ({ ...area, count: areaCounts.get(area.id) ?? 0 }));
   outputs.set(
     'api/index.mdx',
     renderApiIndex({
       areas: indexAreas,
-      aliases: parsed.aliases.map((item) => item.name),
+      aliases: parsed.aliases.map(item => item.name),
       external: parsed.external,
       skipped,
       version,
@@ -348,7 +347,7 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
   );
   outputs.set(
     'api/meta.json',
-    meta('API Reference', ['index', ...indexAreas.filter((area) => area.count > 0).map((area) => area.id)]),
+    meta('API Reference', ['index', ...indexAreas.filter(area => area.count > 0).map(area => area.id)]),
   );
 
   return options.check ? compareOutputs(outputs) : writeOutputs(outputs);

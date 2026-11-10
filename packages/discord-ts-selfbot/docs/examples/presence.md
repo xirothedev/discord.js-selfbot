@@ -65,7 +65,7 @@ import { Client, CustomStatus, Events } from 'discord-ts-selfbot';
 
 const client = new Client();
 
-client.once(Events.CLIENT_READY, (readyClient) => {
+client.once(Events.CLIENT_READY, readyClient => {
   const customStatus = new CustomStatus(readyClient).setEmoji('🎮').setState('discord-ts-selfbot v14 example');
 
   readyClient.user.setPresence({
@@ -77,7 +77,7 @@ client.once(Events.CLIENT_READY, (readyClient) => {
   console.log(`Presence set for ${readyClient.user.tag}.`);
 });
 
-client.on(Events.Error, (error) => {
+client.on(Events.Error, error => {
   console.error('Client error:', error);
 });
 

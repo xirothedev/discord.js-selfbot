@@ -36,7 +36,7 @@ function summary(comment: Comment | undefined): string {
   const parts = comment?.summary;
   if (!parts?.length) return '';
   return parts
-    .map((part) => {
+    .map(part => {
       if (part.kind === 'code') return part.text ?? '';
       return stripJsdocSyntax(part.text ?? '');
     })
@@ -45,17 +45,17 @@ function summary(comment: Comment | undefined): string {
 }
 
 function deprecated(comment: Comment | undefined): string {
-  const tag = comment?.blockTags?.find((item) => item.tag === '@deprecated');
+  const tag = comment?.blockTags?.find(item => item.tag === '@deprecated');
   if (!tag) return '';
   const text = stripJsdocSyntax(plainText(tag.content)).trim();
   return `> **Deprecated.** ${text || 'This API is deprecated.'}`;
 }
 
 function examples(comment: Comment | undefined): string[] {
-  const tags = comment?.blockTags?.filter((item) => item.tag === '@example') ?? [];
+  const tags = comment?.blockTags?.filter(item => item.tag === '@example') ?? [];
   return tags
-    .map((tag) => {
-      const code = tag.content?.find((part) => part.kind === 'code')?.text;
+    .map(tag => {
+      const code = tag.content?.find(part => part.kind === 'code')?.text;
       if (code) return code.trim();
       const text = stripJsdocSyntax(plainText(tag.content)).trim();
       return text ? `\`\`\`ts\n${text}\n\`\`\`` : '';
@@ -65,7 +65,7 @@ function examples(comment: Comment | undefined): string[] {
 
 function parameterList(parameters: ReturnType<typeof mergeSignature>['parameters']): string {
   return parameters
-    .map((parameter) => {
+    .map(parameter => {
       const optional = parameter.flags?.isOptional || parameter.defaultValue !== undefined ? '?' : '';
       const description = stripJsdocSyntax(plainText(parameter.comment?.summary)).trim();
       const code = `\`${parameter.name}${optional}: ${renderType(parameter.type) ?? 'unknown'}\``;
@@ -124,7 +124,7 @@ function renderProperty(member: MergedMember): string {
 function renderEvent(event: DocgenEvent): string {
   const description = event.description ? stripJsdocSyntax(event.description).trim() : '';
   const params = (event.params ?? [])
-    .map((parameter) => {
+    .map(parameter => {
       const optional = parameter.optional ? '?' : '';
       const details = parameter.description ? ` — ${stripJsdocSyntax(parameter.description).trim()}` : '';
       return `- \`${parameter.name}${optional}\`${details}`;
@@ -144,21 +144,21 @@ export interface RenderClassInput {
 export function renderClassPage(input: RenderClassInput): string {
   const { name, typings, events } = input;
   const members = mergeMembers(undefined, typings).filter(
-    (member) =>
+    member =>
       !member.name.startsWith('_') &&
       !HIDDEN_MEMBERS.has(member.name) &&
       !member.typings?.flags?.isPrivate &&
       !member.typings?.flags?.isProtected,
   );
-  const constructor = members.find((member) => member.kind === 'constructor');
+  const constructor = members.find(member => member.kind === 'constructor');
   const properties = members
-    .filter((member) => member.kind === 'property' || member.kind === 'accessor')
+    .filter(member => member.kind === 'property' || member.kind === 'accessor')
     .sort((a, b) => a.name.localeCompare(b.name));
-  const methods = members.filter((member) => member.kind === 'method').sort((a, b) => a.name.localeCompare(b.name));
+  const methods = members.filter(member => member.kind === 'method').sort((a, b) => a.name.localeCompare(b.name));
 
   const heritage = [
-    ...(typings.extendedTypes ?? []).map((type) => `extends ${renderType(type)}`),
-    ...(typings.implementedTypes ?? []).map((type) => `implements ${renderType(type)}`),
+    ...(typings.extendedTypes ?? []).map(type => `extends ${renderType(type)}`),
+    ...(typings.implementedTypes ?? []).map(type => `implements ${renderType(type)}`),
   ].join(' ');
   const declaration = `${typings.flags?.isAbstract ? 'abstract ' : ''}class ${name}${heritage ? ` ${heritage}` : ''}`;
 
@@ -170,9 +170,9 @@ export function renderClassPage(input: RenderClassInput): string {
     declaration,
     '```',
     constructor ? block('Constructor', renderMethod(constructor)) : '',
-    properties.length ? block('Properties', properties.map((member) => renderProperty(member)).join('\n\n')) : '',
-    methods.length ? block('Methods', methods.map((member) => renderMethod(member)).join('\n\n')) : '',
-    events?.length ? block('Events', events.map((event) => renderEvent(event)).join('\n\n')) : '',
+    properties.length ? block('Properties', properties.map(member => renderProperty(member)).join('\n\n')) : '',
+    methods.length ? block('Methods', methods.map(member => renderMethod(member)).join('\n\n')) : '',
+    events?.length ? block('Events', events.map(event => renderEvent(event)).join('\n\n')) : '',
     input.sourceUrl ? `---\n\nSource: ${input.sourceUrl}` : '',
   ];
 
@@ -187,7 +187,7 @@ export interface RenderFunctionInput {
 
 export function renderFunctionPage(input: RenderFunctionInput): string {
   const signatures = input.typings.signatures ?? [];
-  const parts = signatures.map((signature) => {
+  const parts = signatures.map(signature => {
     const merged = mergeSignature(signature, undefined);
     return [
       summary(merged.comment),
@@ -223,10 +223,10 @@ export interface RenderVariableInput {
 
 export function renderVariablePage(input: RenderVariableInput): string {
   const members = input.typings.type?.declaration?.children;
-  const isEnum = members?.length && members.every((member) => member.type?.type === 'literal');
+  const isEnum = members?.length && members.every(member => member.type?.type === 'literal');
   const enumMembers = isEnum
     ? members
-        .map((member) => {
+        .map(member => {
           const value = member.type?.value;
           const rendered = typeof value === 'string' ? JSON.stringify(value) : String(value ?? '');
           const description = summary(member.comment);

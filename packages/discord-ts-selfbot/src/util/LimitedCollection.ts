@@ -54,7 +54,8 @@ class LimitedCollection<K = unknown, V = unknown> extends Collection<K, V> {
      * @type {?SweepFilter}
      */
     this.sweepFilter = sweepFilter as
-      ((collection: this) => ((value: V, key: K, collection: this) => boolean) | null) | null;
+      | ((collection: this) => ((value: V, key: K, collection: this) => boolean) | null)
+      | null;
 
     /**
      * The id of the interval being used to sweep.

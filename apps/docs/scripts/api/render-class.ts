@@ -72,7 +72,7 @@ function renderMethod(member: MergedMember): string {
 function renderEvent(event: DocgenEvent): string {
   const description = event.description ? escapeMdx(stripJsdocSyntax(event.description)) : '';
   const params = (event.params ?? [])
-    .map((parameter) => {
+    .map(parameter => {
       const optional = parameter.optional ? '?' : '';
       const details = parameter.description ? ` — ${escapeMdx(stripJsdocSyntax(parameter.description))}` : '';
       return `- ${inlineCode(`${parameter.name}${optional}`)}${details}`;
@@ -110,13 +110,13 @@ export function renderClassPage(input: ClassPageInput): string {
 
   const hidden = new Set([...INHERITED_MEMBERS, ...(input.privateMembers ?? [])]);
   const members = mergeMembers(source, typings).filter(
-    (member) => !member.name.startsWith('_') && !hidden.has(member.name),
+    member => !member.name.startsWith('_') && !hidden.has(member.name),
   );
-  const constructor = members.find((member) => member.kind === 'constructor');
+  const constructor = members.find(member => member.kind === 'constructor');
   const properties = members
-    .filter((member) => member.kind === 'property' || member.kind === 'accessor')
+    .filter(member => member.kind === 'property' || member.kind === 'accessor')
     .sort((a, b) => a.name.localeCompare(b.name));
-  const methods = members.filter((member) => member.kind === 'method').sort((a, b) => a.name.localeCompare(b.name));
+  const methods = members.filter(member => member.kind === 'method').sort((a, b) => a.name.localeCompare(b.name));
 
   const sections: string[] = [];
 
@@ -134,22 +134,21 @@ export function renderClassPage(input: ClassPageInput): string {
 
   if (properties.length) {
     sections.push(
-      [
-        '## Properties',
-        ...properties.map((property) => `### \`${property.name}\`\n\n${renderProperty(property)}`),
-      ].join('\n\n'),
+      ['## Properties', ...properties.map(property => `### \`${property.name}\`\n\n${renderProperty(property)}`)].join(
+        '\n\n',
+      ),
     );
   }
 
   if (methods.length) {
     sections.push(
-      ['## Methods', ...methods.map((method) => `### \`${method.name}\`\n\n${renderMethod(method)}`)].join('\n\n'),
+      ['## Methods', ...methods.map(method => `### \`${method.name}\`\n\n${renderMethod(method)}`)].join('\n\n'),
     );
   }
 
   const events = [...(input.events ?? [])].sort((a, b) => a.name.localeCompare(b.name));
   if (events.length) {
-    sections.push(['## Events', ...events.map((event) => renderEvent(event))].join('\n\n'));
+    sections.push(['## Events', ...events.map(event => renderEvent(event))].join('\n\n'));
   }
 
   return [

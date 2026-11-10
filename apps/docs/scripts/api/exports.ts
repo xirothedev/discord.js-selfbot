@@ -11,7 +11,7 @@ function isMetadata(path: string): boolean {
 
 function isExported(statement: ts.Statement): boolean {
   const modifiers = ts.canHaveModifiers(statement) ? ts.getModifiers(statement) : undefined;
-  return modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword) ?? false;
+  return modifiers?.some(modifier => modifier.kind === ts.SyntaxKind.ExportKeyword) ?? false;
 }
 
 export function parseIndexExports(source: string): ParsedExports {

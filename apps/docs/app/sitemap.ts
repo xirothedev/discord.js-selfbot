@@ -5,7 +5,7 @@ import { siteUrl } from '@/lib/shared';
 export const dynamic = 'force-static';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const pages = source.getPages().map((page) => ({
+  const pages = source.getPages().map(page => ({
     url: `${siteUrl}${page.url}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,

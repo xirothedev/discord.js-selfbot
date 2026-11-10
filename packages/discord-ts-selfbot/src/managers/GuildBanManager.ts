@@ -35,7 +35,12 @@ function isFetchBansOptions(value: unknown): value is FetchBansOptions {
 }
 
 type UserResolvableSource =
-  User | InstanceType<typeof GuildMember> | Message | ThreadMember | Snowflake | UserResolvable;
+  | User
+  | InstanceType<typeof GuildMember>
+  | Message
+  | ThreadMember
+  | Snowflake
+  | UserResolvable;
 type GuildBanResolvableSource = GuildBan | UserResolvableSource;
 
 let deprecationEmittedForDays = false;

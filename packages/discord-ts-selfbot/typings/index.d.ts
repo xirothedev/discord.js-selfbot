@@ -4724,7 +4724,10 @@ export abstract class CachedManager<K, Holds, R> extends DataManager<K, Holds, R
 }
 
 export type ApplicationCommandDataResolvable =
-  ApplicationCommandData | RESTPostAPIApplicationCommandsJSONBody | SlashCommandBuilder | ContextMenuCommandBuilder;
+  | ApplicationCommandData
+  | RESTPostAPIApplicationCommandsJSONBody
+  | SlashCommandBuilder
+  | ContextMenuCommandBuilder;
 
 export class ApplicationCommandManager<
   ApplicationCommandScope = ApplicationCommand<{ guild: GuildResolvable }>,
@@ -5516,7 +5519,13 @@ export type AllowedImageFormat = 'webp' | 'png' | 'jpg' | 'jpeg';
 export type AllowedImageSize = 16 | 32 | 56 | 64 | 96 | 128 | 256 | 300 | 512 | 600 | 1024 | 2048 | 4096;
 
 export type AllowedPartial =
-  User | Channel | GuildMember | Message | MessageReaction | GuildScheduledEvent | ThreadMember;
+  | User
+  | Channel
+  | GuildMember
+  | Message
+  | MessageReaction
+  | GuildScheduledEvent
+  | ThreadMember;
 
 export type AllowedThreadTypeForNewsChannel = 'GUILD_NEWS_THREAD' | 10;
 
@@ -5710,10 +5719,15 @@ export type CommandOptionDataTypeResolvable = ApplicationCommandOptionType | App
 export type CommandOptionChannelResolvableType = ApplicationCommandOptionTypes.CHANNEL | 'CHANNEL';
 
 export type CommandOptionChoiceResolvableType =
-  ApplicationCommandOptionTypes.STRING | 'STRING' | CommandOptionNumericResolvableType;
+  | ApplicationCommandOptionTypes.STRING
+  | 'STRING'
+  | CommandOptionNumericResolvableType;
 
 export type CommandOptionNumericResolvableType =
-  ApplicationCommandOptionTypes.NUMBER | 'NUMBER' | ApplicationCommandOptionTypes.INTEGER | 'INTEGER';
+  | ApplicationCommandOptionTypes.NUMBER
+  | 'NUMBER'
+  | ApplicationCommandOptionTypes.INTEGER
+  | 'INTEGER';
 
 export type CommandOptionSubOptionResolvableType =
   | ApplicationCommandOptionTypes.SUB_COMMAND
@@ -5751,7 +5765,9 @@ export interface ChatInputApplicationCommandData extends BaseApplicationCommandD
 }
 
 export type ApplicationCommandData =
-  UserApplicationCommandData | MessageApplicationCommandData | ChatInputApplicationCommandData;
+  | UserApplicationCommandData
+  | MessageApplicationCommandData
+  | ChatInputApplicationCommandData;
 
 export interface ApplicationCommandChannelOptionData extends BaseApplicationCommandOptionsData {
   type: CommandOptionChannelResolvableType;
@@ -6865,7 +6881,10 @@ export interface EmbedFooterData {
 }
 
 export type EmojiIdentifierResolvable =
-  EmojiResolvable | `${'' | 'a:'}${string}:${Snowflake}` | `<${'' | 'a'}:${string}:${Snowflake}>` | string;
+  | EmojiResolvable
+  | `${'' | 'a:'}${string}:${Snowflake}`
+  | `<${'' | 'a'}:${string}:${Snowflake}>`
+  | string;
 
 export type EmojiResolvable = Snowflake | GuildEmoji | ReactionEmoji;
 
@@ -7008,7 +7027,8 @@ export interface FetchThreadMembersWithoutGuildMemberDataOptions {
 }
 
 export type FetchThreadMembersOptions =
-  FetchThreadMembersWithGuildMemberDataOptions | FetchThreadMembersWithoutGuildMemberDataOptions;
+  | FetchThreadMembersWithGuildMemberDataOptions
+  | FetchThreadMembersWithoutGuildMemberDataOptions;
 
 export interface FetchThreadsOptions {
   archived?: FetchArchivedThreadOptions;
@@ -7363,7 +7383,10 @@ export interface GuildMemberEditData {
 }
 
 export type GuildMemberFlagsString =
-  'DID_REJOIN' | 'COMPLETED_ONBOARDING' | 'BYPASSES_VERIFICATION' | 'STARTED_ONBOARDING';
+  | 'DID_REJOIN'
+  | 'COMPLETED_ONBOARDING'
+  | 'BYPASSES_VERIFICATION'
+  | 'STARTED_ONBOARDING';
 
 export type GuildMemberFlagsResolvable = BitFieldResolvable<GuildMemberFlagsString, number>;
 
@@ -7591,7 +7614,12 @@ export type IntentsString =
   | 'AUTO_MODERATION_EXECUTION';
 
 export type GuildInvitableChannelResolvable =
-  TextChannel | VoiceChannel | NewsChannel | StoreChannel | StageChannel | Snowflake;
+  | TextChannel
+  | VoiceChannel
+  | NewsChannel
+  | StoreChannel
+  | StageChannel
+  | Snowflake;
 
 export interface CreateInviteOptions {
   temporary?: boolean;
@@ -7646,14 +7674,18 @@ export type MessageActionRowComponentOptions =
   | (Required<BaseMessageComponentOptions> & MessageSelectMenuOptions);
 
 export type MessageActionRowComponentResolvable =
-  MessageActionRowComponent | MessageActionRowComponentOptions | APIMessageActionRowComponent;
+  | MessageActionRowComponent
+  | MessageActionRowComponentOptions
+  | APIMessageActionRowComponent;
 
 export type ModalActionRowComponent = TextInputComponent;
 
 export type ModalActionRowComponentOptions = TextInputComponentOptions;
 
 export type ModalActionRowComponentResolvable =
-  ModalActionRowComponent | ModalActionRowComponentOptions | APIModalActionRowComponent;
+  | ModalActionRowComponent
+  | ModalActionRowComponentOptions
+  | APIModalActionRowComponent;
 
 export interface MessageActionRowOptions<
   T extends MessageActionRowComponentResolvable | ModalActionRowComponentResolvable =
@@ -7706,7 +7738,10 @@ export type MessageChannelComponentCollectorOptions<T extends MessageComponentIn
   Omit<InteractionCollectorOptions<T>, 'channel' | 'guild' | 'interactionType'>;
 
 export type MessageComponentOptions =
-  BaseMessageComponentOptions | MessageActionRowOptions | MessageButtonOptions | MessageSelectMenuOptions;
+  | BaseMessageComponentOptions
+  | MessageActionRowOptions
+  | MessageButtonOptions
+  | MessageSelectMenuOptions;
 
 export type MessageComponentType = keyof typeof MessageComponentTypes;
 
@@ -7948,7 +7983,9 @@ export interface OtherMessageSelectMenuOptions extends BaseMessageSelectMenuOpti
 }
 
 export type MessageSelectMenuOptions =
-  StringMessageSelectMenuOptions | ChannelMessageSelectMenuOptions | OtherMessageSelectMenuOptions;
+  | StringMessageSelectMenuOptions
+  | ChannelMessageSelectMenuOptions
+  | OtherMessageSelectMenuOptions;
 
 export interface MessageSelectOption {
   default: boolean;
@@ -7983,7 +8020,8 @@ export type MFALevel = keyof typeof MFALevels;
 
 export interface ModalOptions {
   components:
-    MessageActionRow<ModalActionRowComponent>[] | MessageActionRowOptions<ModalActionRowComponentResolvable>[];
+    | MessageActionRow<ModalActionRowComponent>[]
+    | MessageActionRowOptions<ModalActionRowComponentResolvable>[];
   customId: string;
   title: string;
 }

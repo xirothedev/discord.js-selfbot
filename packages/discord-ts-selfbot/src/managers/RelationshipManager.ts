@@ -13,7 +13,11 @@ import type { BaseFetchOptions } from '../../typings';
 import type { Client } from '../client/Client';
 
 type UserResolvableSource =
-  User | InstanceType<typeof GuildMember> | InstanceType<typeof Message> | ThreadMember | Snowflake;
+  | User
+  | InstanceType<typeof GuildMember>
+  | InstanceType<typeof Message>
+  | ThreadMember
+  | Snowflake;
 
 export interface RelationshipData {
   id: Snowflake;

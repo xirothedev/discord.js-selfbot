@@ -19,7 +19,7 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   if (!page) notFound();
 
   const MDX = page.data.body;
-  const toc = page.url.startsWith('/docs/api') ? page.data.toc.filter((item) => item.depth <= 2) : page.data.toc;
+  const toc = page.url.startsWith('/docs/api') ? page.data.toc.filter(item => item.depth <= 2) : page.data.toc;
   const markdownUrl = getPageMarkdownUrl(page).url;
   const githubUrl = page.data.sourceUrl ?? getGitHubUrl(`apps/docs/content/docs/${page.path}`);
 

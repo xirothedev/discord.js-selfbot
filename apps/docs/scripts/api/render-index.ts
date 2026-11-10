@@ -22,7 +22,7 @@ export interface AreaIndexInput {
 
 export function renderAreaIndex(input: AreaIndexInput): string {
   const cards = input.items
-    .map((item) => {
+    .map(item => {
       const description = item.description ? ` description={${JSON.stringify(item.description)}}` : '';
       return `  <Card title={${JSON.stringify(item.title)}} href={${JSON.stringify(item.href)}}${description} />`;
     })
@@ -42,8 +42,8 @@ export function renderAreaIndex(input: AreaIndexInput): string {
 
 export function renderApiIndex(input: ApiIndexInput): string {
   const cards = input.areas
-    .filter((area) => area.count > 0)
-    .map((area) => `  <Card title="${area.title} (${area.count})" href="/docs/api/${area.id}" />`)
+    .filter(area => area.count > 0)
+    .map(area => `  <Card title="${area.title} (${area.count})" href="/docs/api/${area.id}" />`)
     .join('\n');
 
   return [

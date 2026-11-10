@@ -21,7 +21,8 @@ class CachedManager<Holds extends DataHold = DataHold> extends DataManager<Holds
     Object.defineProperty(this, '_cache', { value: this.client.options.makeCache(this.constructor, this.holds) });
 
     const cleanupFactory = Reflect.get(this._cache, _cleanupSymbol, this._cache) as
-      (() => (() => void) | undefined) | undefined;
+      | (() => (() => void) | undefined)
+      | undefined;
     let cleanup = cleanupFactory?.call(this._cache);
     if (cleanup) {
       cleanup = cleanup.bind(this._cache);
