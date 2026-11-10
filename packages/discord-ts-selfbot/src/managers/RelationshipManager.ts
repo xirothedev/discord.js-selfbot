@@ -8,6 +8,19 @@ import ThreadMember from '../structures/ThreadMember';
 import User from '../structures/User';
 import _ConstantsModule from '../util/Constants';
 const { RelationshipTypes } = _ConstantsModule;
+import type { Snowflake } from 'discord-api-types/v10';
+import type { BaseFetchOptions } from '../../typings';
+import type { Client } from '../client/Client';
+
+type UserResolvableSource =
+  User | InstanceType<typeof GuildMember> | InstanceType<typeof Message> | ThreadMember | Snowflake;
+
+interface RelationshipData {
+  id: Snowflake;
+  type: number;
+  nickname: string | null;
+  since?: string;
+}
 
 /**
  * Manages API methods for Relationships and stores their cache.
@@ -17,7 +30,7 @@ class RelationshipManager extends BaseManager {
   declare friendNicknames: Collection<string, string | null>;
   declare sinceCache: Collection<string, Date>;
 
-  constructor(client: any, users?: any) {
+  constructor(client: Client, users?: RelationshipData[]) {
     super(client);
     /**
      * A collection of users this manager is caching. (Type: Number)
@@ -40,14 +53,13 @@ class RelationshipManager extends BaseManager {
    * @type {Collection<Snowflake, User>}
    * @readonly
    */
-  get friendCache() {
-    const users = this.cache
-      .filter((value: any) => value === RelationshipTypes.FRIEND)
-      .map((_, key): [string, import('../structures/User').default | undefined] => [
-        key,
-        this.client.users.cache.get(key),
-      ]);
-    return new Collection(users);
+  get friendCache(): Collection<Snowflake, User> {
+    const users = new Collection<Snowflake, User>();
+    for (const key of this.cache.filter(value => value === RelationshipTypes.FRIEND).keys()) {
+      const user = this.client.users.cache.get(key);
+      if (user) users.set(key, user);
+    }
+    return users;
   }
 
   /**
@@ -55,14 +67,13 @@ class RelationshipManager extends BaseManager {
    * @type {Collection<Snowflake, User>}
    * @readonly
    */
-  get blockedCache() {
-    const users = this.cache
-      .filter((value: any) => value === RelationshipTypes.BLOCKED)
-      .map((_, key): [string, import('../structures/User').default | undefined] => [
-        key,
-        this.client.users.cache.get(key),
-      ]);
-    return new Collection(users);
+  get blockedCache(): Collection<Snowflake, User> {
+    const users = new Collection<Snowflake, User>();
+    for (const key of this.cache.filter(value => value === RelationshipTypes.BLOCKED).keys()) {
+      const user = this.client.users.cache.get(key);
+      if (user) users.set(key, user);
+    }
+    return users;
   }
 
   /**
@@ -70,14 +81,13 @@ class RelationshipManager extends BaseManager {
    * @type {Collection<Snowflake, User>}
    * @readonly
    */
-  get incomingCache() {
-    const users = this.cache
-      .filter((value: any) => value === RelationshipTypes.PENDING_INCOMING)
-      .map((_, key): [string, import('../structures/User').default | undefined] => [
-        key,
-        this.client.users.cache.get(key),
-      ]);
-    return new Collection(users);
+  get incomingCache(): Collection<Snowflake, User> {
+    const users = new Collection<Snowflake, User>();
+    for (const key of this.cache.filter(value => value === RelationshipTypes.PENDING_INCOMING).keys()) {
+      const user = this.client.users.cache.get(key);
+      if (user) users.set(key, user);
+    }
+    return users;
   }
 
   /**
@@ -85,14 +95,13 @@ class RelationshipManager extends BaseManager {
    * @type {Collection<Snowflake, User>}
    * @readonly
    */
-  get outgoingCache() {
-    const users = this.cache
-      .filter((value: any) => value === RelationshipTypes.PENDING_OUTGOING)
-      .map((_, key): [string, import('../structures/User').default | undefined] => [
-        key,
-        this.client.users.cache.get(key),
-      ]);
-    return new Collection(users);
+  get outgoingCache(): Collection<Snowflake, User> {
+    const users = new Collection<Snowflake, User>();
+    for (const key of this.cache.filter(value => value === RelationshipTypes.PENDING_OUTGOING).keys()) {
+      const user = this.client.users.cache.get(key);
+      if (user) users.set(key, user);
+    }
+    return users;
   }
 
   /**
@@ -108,7 +117,7 @@ class RelationshipManager extends BaseManager {
    * @returns {RelationshipJSONData[]}
    */
   toJSON() {
-    return this.cache.map((value: any, key: any) => ({
+    return this.cache.map((value, key) => ({
       id: key,
       type: RelationshipTypes[value],
       nickname: this.friendNicknames.get(key),
@@ -121,7 +130,7 @@ class RelationshipManager extends BaseManager {
    * @param {Array<User>} users An array of users to add to the cache
    * @returns {void}
    */
-  _setup(users: any) {
+  _setup(users?: RelationshipData[]) {
     if (!Array.isArray(users)) return;
     for (const relationShip of users) {
       this.friendNicknames.set(relationShip.id, relationShip.nickname);
@@ -135,7 +144,7 @@ class RelationshipManager extends BaseManager {
    * @param {UserResolvable} user The UserResolvable to identify
    * @returns {?Snowflake}
    */
-  resolveId(user: any) {
+  resolveId(user: UserResolvableSource): string | null {
     if (user instanceof ThreadMember) return user.id;
     if (user instanceof GuildMember) return user.user.id;
     if (user instanceof Message) return user.author?.id ?? null;
@@ -148,7 +157,7 @@ class RelationshipManager extends BaseManager {
    * @param {UserResolvable} user The UserResolvable to identify
    * @returns {?string}
    */
-  resolveUsername(user: any) {
+  resolveUsername(user: UserResolvableSource): string | null {
     if (user instanceof ThreadMember) return user.guildMember?.user.username ?? null;
     if (user instanceof GuildMember) return user.user.username;
     if (user instanceof Message) return user.author?.username ?? null;
@@ -162,9 +171,13 @@ class RelationshipManager extends BaseManager {
    * @param {BaseFetchOptions} [options] Additional options for this fetch
    * @returns {Promise<RelationshipType|RelationshipManager>}
    */
-  async fetch(user: any, { force = false }: any = {}) {
+  async fetch(
+    user?: UserResolvableSource,
+    { force = false }: BaseFetchOptions = {},
+  ): Promise<number | RelationshipManager | undefined> {
     if (user) {
       const id = this.resolveId(user);
+      if (!id) return undefined;
       if (!force) {
         const existing = this.cache.get(id);
         if (existing) return existing;
@@ -189,22 +202,8 @@ class RelationshipManager extends BaseManager {
    * @throws {Error} Always rejects with `Risky action, not finished yet.`
    * @see {@link https://github.com/xirothedev/discord.js-selfbot/issues/11}
    */
-  async deleteRelationship(user: any) {
+  async deleteRelationship(_user: UserResolvableSource): Promise<boolean> {
     throw new Error('Risky action, not finished yet.');
-    // eslint-disable-next-line no-unreachable
-    // @ts-ignore
-    const id = this.resolveId(user);
-    if (
-      ![RelationshipTypes.FRIEND, RelationshipTypes.BLOCKED, RelationshipTypes.PENDING_OUTGOING].includes(
-        this.cache.get(id),
-      )
-    ) {
-      return Promise.resolve(false);
-    }
-    await this.client.api.users['@me'].relationships[id].delete({
-      DiscordContext: { location: 'ContextMenu' },
-    });
-    return true;
   }
 
   /**
@@ -217,28 +216,8 @@ class RelationshipManager extends BaseManager {
    * @throws {Error} Always rejects with `Risky action, not finished yet.`
    * @see {@link https://github.com/xirothedev/discord.js-selfbot/issues/11}
    */
-  async sendFriendRequest(options: any) {
+  async sendFriendRequest(_options: UserResolvableSource): Promise<boolean> {
     throw new Error('Risky action, not finished yet.');
-    // eslint-disable-next-line no-unreachable
-    // @ts-ignore
-    const id = this.resolveId(options);
-    if (id) {
-      await this.client.api.users['@me'].relationships[id].put({
-        data: {},
-        DiscordContext: { location: 'ContextMenu' },
-      });
-    } else {
-      const username = this.resolveUsername(options);
-      await this.client.api.users['@me'].relationships.post({
-        versioned: true,
-        data: {
-          username,
-          discriminator: null,
-        },
-        DiscordContext: { location: 'Add Friend' },
-      });
-    }
-    return true;
   }
 
   /**
@@ -251,20 +230,8 @@ class RelationshipManager extends BaseManager {
    * @throws {Error} Always rejects with `Risky action, not finished yet.`
    * @see {@link https://github.com/xirothedev/discord.js-selfbot/issues/11}
    */
-  async addFriend(user: any) {
+  async addFriend(_user: UserResolvableSource): Promise<boolean> {
     throw new Error('Risky action, not finished yet.');
-    // eslint-disable-next-line no-unreachable
-    // @ts-ignore
-    const id = this.resolveId(user);
-    // Check if already friends
-    if (this.cache.get(id) === RelationshipTypes.FRIEND) return Promise.resolve(false);
-    // Check if outgoing request
-    if (this.cache.get(id) === RelationshipTypes.PENDING_OUTGOING) return Promise.resolve(false);
-    await this.client.api.users['@me'].relationships[id].put({
-      data: { confirm_stranger_request: true },
-      DiscordContext: { location: 'Friends' },
-    });
-    return true;
   }
 
   /**
@@ -273,9 +240,9 @@ class RelationshipManager extends BaseManager {
    * @param {?string} nickname New nickname
    * @returns {Promise<boolean>}
    */
-  async setNickname(user: any, nickname: any = null) {
+  async setNickname(user: UserResolvableSource, nickname: string | null = null): Promise<boolean> {
     const id = this.resolveId(user);
-    if (this.cache.get(id) !== RelationshipTypes.FRIEND) return Promise.resolve(false);
+    if (!id || this.cache.get(id) !== RelationshipTypes.FRIEND) return Promise.resolve(false);
     await this.client.api.users['@me'].relationships[id].patch({
       data: {
         nickname: typeof nickname === 'string' ? nickname : null,
@@ -299,20 +266,8 @@ class RelationshipManager extends BaseManager {
    * @throws {Error} Always rejects with `Risky action, not finished yet.`
    * @see {@link https://github.com/xirothedev/discord.js-selfbot/issues/11}
    */
-  async addBlocked(user: any) {
+  async addBlocked(_user: UserResolvableSource): Promise<boolean> {
     throw new Error('Risky action, not finished yet.');
-    // eslint-disable-next-line no-unreachable
-    // @ts-ignore
-    const id = this.resolveId(user);
-    // Check
-    if (this.cache.get(id) === RelationshipTypes.BLOCKED) return Promise.resolve(false);
-    await this.client.api.users['@me'].relationships[id].put({
-      data: {
-        type: RelationshipTypes.BLOCKED,
-      },
-      DiscordContext: { location: 'ContextMenu' },
-    });
-    return true;
   }
 }
 
