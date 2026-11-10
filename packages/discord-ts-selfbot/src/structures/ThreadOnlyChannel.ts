@@ -4,11 +4,22 @@ import GuildForumThreadManager from '../managers/GuildForumThreadManager';
 import type {
   CreateInviteOptions,
   DefaultReactionEmoji,
-  GuildForumTag,
   GuildForumTagData,
   ThreadAutoArchiveDuration,
 } from '../../typings';
 import type { RawGuildChannelData } from '../../typings/rawDataTypes';
+import type { PatchOf } from '../types/schema';
+
+type ThreadOnlyChannelPatch = PatchOf<'GuildChannel'> & {
+  available_tags?: { id?: string; name?: string; moderated?: boolean; emoji?: unknown }[];
+  default_reaction_emoji?: { emoji_id?: string | null; emoji_name?: string | null } | null;
+  default_thread_rate_limit_per_user?: number | null;
+  rate_limit_per_user?: number | null;
+  default_auto_archive_duration?: ThreadAutoArchiveDuration | null;
+  nsfw?: boolean;
+  topic?: string | null;
+  default_sort_order?: number | null;
+};
 import type { Guild } from './Guild';
 import _ConstantsModule from '../util/Constants';
 const { SortOrderTypes } = _ConstantsModule;
@@ -53,7 +64,7 @@ const { transformAPIGuildForumTag, transformAPIGuildDefaultReaction } = _UtilMod
  */
 class ThreadOnlyChannel extends GuildChannel {
   declare threads: GuildForumThreadManager;
-  declare availableTags: GuildForumTag[];
+  declare availableTags: ReturnType<typeof transformAPIGuildForumTag>[];
   declare defaultReactionEmoji: DefaultReactionEmoji | null;
   declare defaultThreadRateLimitPerUser: number | null;
   declare rateLimitPerUser: number | null;
@@ -74,14 +85,14 @@ class ThreadOnlyChannel extends GuildChannel {
     this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: ThreadOnlyChannelPatch) {
     super._patch(data);
     if ('available_tags' in data) {
       /**
        * The set of tags that can be used in this channel.
        * @type {GuildForumTag[]}
        */
-      this.availableTags = data.available_tags.map((tag: any) => transformAPIGuildForumTag(tag));
+      this.availableTags = (data.available_tags ?? []).map(tag => transformAPIGuildForumTag(tag));
     } else {
       this.availableTags ??= [];
     }
@@ -91,8 +102,9 @@ class ThreadOnlyChannel extends GuildChannel {
        * The emoji to show in the add reaction button on a thread in a guild forum channel
        * @type {?DefaultReactionEmoji}
        */
-      this.defaultReactionEmoji =
-        data.default_reaction_emoji && transformAPIGuildDefaultReaction(data.default_reaction_emoji);
+      this.defaultReactionEmoji = data.default_reaction_emoji
+        ? transformAPIGuildDefaultReaction(data.default_reaction_emoji)
+        : null;
     } else {
       this.defaultReactionEmoji ??= null;
     }
@@ -102,7 +114,7 @@ class ThreadOnlyChannel extends GuildChannel {
        * The initial rate limit per user (slowmode) to set on newly created threads in a channel.
        * @type {?number}
        */
-      this.defaultThreadRateLimitPerUser = data.default_thread_rate_limit_per_user;
+      this.defaultThreadRateLimitPerUser = data.default_thread_rate_limit_per_user ?? null;
     } else {
       this.defaultThreadRateLimitPerUser ??= null;
     }
@@ -112,7 +124,7 @@ class ThreadOnlyChannel extends GuildChannel {
        * The rate limit per user (slowmode) for this channel.
        * @type {?number}
        */
-      this.rateLimitPerUser = data.rate_limit_per_user;
+      this.rateLimitPerUser = data.rate_limit_per_user ?? null;
     } else {
       this.rateLimitPerUser ??= null;
     }
@@ -122,7 +134,7 @@ class ThreadOnlyChannel extends GuildChannel {
        * The default auto archive duration for newly created threads in this channel.
        * @type {?ThreadAutoArchiveDuration}
        */
-      this.defaultAutoArchiveDuration = data.default_auto_archive_duration;
+      this.defaultAutoArchiveDuration = data.default_auto_archive_duration ?? null;
     } else {
       this.defaultAutoArchiveDuration ??= null;
     }
@@ -132,7 +144,7 @@ class ThreadOnlyChannel extends GuildChannel {
        * If this channel is considered NSFW.
        * @type {boolean}
        */
-      this.nsfw = data.nsfw;
+      this.nsfw = data.nsfw ?? false;
     } else {
       this.nsfw ??= false;
     }
@@ -142,7 +154,7 @@ class ThreadOnlyChannel extends GuildChannel {
        * The topic of this channel.
        * @type {?string}
        */
-      this.topic = data.topic;
+      this.topic = data.topic ?? null;
     }
 
     if ('default_sort_order' in data) {
@@ -150,7 +162,8 @@ class ThreadOnlyChannel extends GuildChannel {
        * The default sort order mode used to order posts
        * @type {?SortOrderType}
        */
-      this.defaultSortOrder = SortOrderTypes[data.default_sort_order];
+      this.defaultSortOrder =
+        typeof data.default_sort_order === 'number' ? SortOrderTypes[data.default_sort_order] : null;
     } else {
       this.defaultSortOrder ??= null;
     }
@@ -241,7 +254,7 @@ class ThreadOnlyChannel extends GuildChannel {
    *   .then(newChannel => console.log(`Channel's new topic is ${newChannel.topic}`))
    *   .catch(console.error);
    */
-  setTopic(topic: any, reason: any) {
+  setTopic(topic: string | null, reason?: string) {
     return this.edit({ topic }, reason);
   }
 

@@ -1,5 +1,6 @@
 import CachedManager from './CachedManager';
-import Session from '../structures/Session';
+import Session, { type RawSessionData } from '../structures/Session';
+import type { Client } from '../client/Client';
 
 /**
  * Manages API methods for users and stores their cache.
@@ -7,7 +8,7 @@ import Session from '../structures/Session';
  */
 class SessionManager extends CachedManager<Session> {
   declare currentSessionIdHash: string | null;
-  constructor(client: any, iterable?: any) {
+  constructor(client: Client, iterable?: Iterable<Session>) {
     super(client, Session, iterable);
 
     /**
@@ -27,7 +28,7 @@ class SessionManager extends CachedManager<Session> {
    * @returns {Promise<Collection<string, Session>>}
    */
   fetch() {
-    return this.client.api.auth.sessions.get().then((data: any) => {
+    return this.client.api.auth.sessions.get().then((data: { user_sessions: RawSessionData[] }) => {
       const allData = data.user_sessions;
       this.cache.clear();
       for (const session of allData) {
@@ -44,7 +45,7 @@ class SessionManager extends CachedManager<Session> {
   logoutAllDevices() {
     return this.client.api.auth.sessions.logout({
       data: {
-        session_id_hashes: this.cache.map((session: any) => session.id),
+        session_id_hashes: this.cache.map(session => session.id).filter((id): id is string => typeof id === 'string'),
       },
     });
   }

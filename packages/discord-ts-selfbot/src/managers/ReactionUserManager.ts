@@ -3,6 +3,11 @@ import CachedManager from './CachedManager';
 import _errorsModule from '../errors';
 const { Error } = _errorsModule;
 import User from '../structures/User';
+import type { MessageReaction } from '../structures/MessageReaction';
+import type { FetchReactionUsersOptions, UserResolvable } from '../../typings';
+
+type UserResolvableSource = User | UserResolvable;
+type FetchReactionUsersOptionsSource = Omit<FetchReactionUsersOptions, 'type'> & { type?: string | number };
 import _ConstantsModule from '../util/Constants';
 const { ReactionTypes } = _ConstantsModule;
 
@@ -11,8 +16,8 @@ const { ReactionTypes } = _ConstantsModule;
  * @extends {CachedManager}
  */
 class ReactionUserManager extends CachedManager<User> {
-  declare reaction: import('../structures/MessageReaction').MessageReaction;
-  constructor(reaction: any, iterable?: any) {
+  declare reaction: MessageReaction;
+  constructor(reaction: MessageReaction, iterable?: Iterable<User>) {
     super(reaction.client, User, iterable);
 
     /**
@@ -41,12 +46,12 @@ class ReactionUserManager extends CachedManager<User> {
    * @param {FetchReactionUsersOptions} [options] Options for fetching the users
    * @returns {Promise<Collection<Snowflake, User>>}
    */
-  async fetch({ limit = 100, after, type = 'NORMAL' }: any = {}) {
+  async fetch({ limit = 100, after, type = 'NORMAL' }: FetchReactionUsersOptionsSource = {}) {
     const message = this.reaction.message;
     const data = await this.client.api.channels[message.channelId].messages[message.id].reactions[
       this.reaction.emoji.identifier
     ].get({ query: { limit, after, type: typeof type == 'number' ? type : ReactionTypes[type] } });
-    const users = new Collection();
+    const users = new Collection<string, User>();
     for (const rawUser of data) {
       const user = this.client.users._add(rawUser);
       this.cache.set(user.id, user);
@@ -60,7 +65,7 @@ class ReactionUserManager extends CachedManager<User> {
    * @param {UserResolvable} [user=this.client.user] The user to remove the reaction of
    * @returns {Promise<MessageReaction>}
    */
-  async remove(user: any = this.client.user) {
+  async remove(user: UserResolvableSource = this.client.user!) {
     const userId = this.client.users.resolveId(user);
     if (!userId) throw new Error('REACTION_RESOLVE_USER');
     const message = this.reaction.message;

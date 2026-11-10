@@ -758,16 +758,22 @@ class Util extends null {
    * @returns {GuildForumTag}
    * @ignore
    */
-  static transformAPIGuildForumTag(tag: Record<string, unknown>) {
+  static transformAPIGuildForumTag(tag: {
+    id?: unknown;
+    name?: unknown;
+    moderated?: unknown;
+    emoji_id?: unknown;
+    emoji_name?: unknown;
+  }): { id: string; name: string; moderated: boolean; emoji: { id: string | null; name: string | null } | null } {
     return {
-      id: tag.id,
-      name: tag.name,
-      moderated: tag.moderated,
+      id: typeof tag.id === 'string' ? tag.id : '',
+      name: typeof tag.name === 'string' ? tag.name : '',
+      moderated: Boolean(tag.moderated),
       emoji:
-        (tag.emoji_id ?? tag.emoji_name)
+        typeof tag.emoji_id === 'string' || typeof tag.emoji_name === 'string'
           ? {
-              id: tag.emoji_id,
-              name: tag.emoji_name,
+              id: typeof tag.emoji_id === 'string' ? tag.emoji_id : null,
+              name: typeof tag.emoji_name === 'string' ? tag.emoji_name : null,
             }
           : null,
     };
@@ -796,10 +802,13 @@ class Util extends null {
    * @returns {DefaultReactionEmoji}
    * @ignore
    */
-  static transformAPIGuildDefaultReaction(defaultReaction: Record<string, unknown>) {
+  static transformAPIGuildDefaultReaction(defaultReaction: { emoji_id?: unknown; emoji_name?: unknown }): {
+    id: string | null;
+    name: string | null;
+  } {
     return {
-      id: defaultReaction.emoji_id,
-      name: defaultReaction.emoji_name,
+      id: typeof defaultReaction.emoji_id === 'string' ? defaultReaction.emoji_id : null,
+      name: typeof defaultReaction.emoji_name === 'string' ? defaultReaction.emoji_name : null,
     };
   }
 

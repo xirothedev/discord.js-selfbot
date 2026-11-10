@@ -1,20 +1,24 @@
 import CachedManager from './CachedManager';
 import VoiceState from '../structures/VoiceState';
+import type { Guild } from '../structures/Guild';
+import type { RawVoiceStateData } from '../../typings/rawDataTypes';
+import type { BaseFetchOptions, GuildMemberResolvable } from '../../typings';
+import type { Client } from '../client/Client';
 
 /**
  * Manages API methods for VoiceStates and stores their cache.
  * @extends {CachedManager}
  */
 class VoiceStateManager extends CachedManager<VoiceState> {
-  declare guild: import('../structures/Guild').Guild;
-  constructor(guild: any, iterable?: any) {
+  declare guild: Guild | null;
+  constructor(guild: Guild | { client: Client }, iterable?: Iterable<VoiceState>) {
     super(guild.client, VoiceState, iterable);
 
     /**
      * The guild this manager belongs to
      * @type {Guild}
      */
-    this.guild = guild;
+    this.guild = 'id' in guild ? guild : null;
   }
 
   /**
@@ -23,11 +27,11 @@ class VoiceStateManager extends CachedManager<VoiceState> {
    * @name VoiceStateManager#cache
    */
 
-  _add(data: any, cache: any = true) {
+  _add(data: RawVoiceStateData, cache = true): VoiceState {
     const existing = this.cache.get(data.user_id);
     if (existing) return existing._patch(data);
 
-    const entry = Reflect.construct(this.holds, [this.client, this.guild, data]);
+    const entry = new VoiceState(this.client, this.guild, data);
     if (cache) this.cache.set(data.user_id, entry);
     return entry;
   }
@@ -43,14 +47,16 @@ class VoiceStateManager extends CachedManager<VoiceState> {
    *    .then(console.log)
    *    .catch(console.error);
    */
-  async fetch(member: any, { cache = true, force = false }: any = {}) {
-    if (!this.guild?.id) throw new Error('Guild is not defined');
-    const id = member === '@me' ? member : this.guild.members.resolveId(member);
+  async fetch(member: GuildMemberResolvable | '@me', { cache = true, force = false }: BaseFetchOptions = {}) {
+    if (!this.guild) throw new Error('Guild is not defined');
+    const resolvedId = member === '@me' ? member : this.guild.members.resolveId(member);
+    if (!resolvedId) throw new Error('VOICE_STATE_RESOLVE_MEMBER');
+    const id = resolvedId === '@me' ? this.client.user!.id : resolvedId;
     if (!force) {
-      const existing = this.cache.get(id === '@me' ? this.client.user!.id : id);
+      const existing = this.cache.get(id);
       if (existing) return existing;
     }
-    const data = await this.client.api.guilds(this.guild.id)['voice-states'][id].get();
+    const data: RawVoiceStateData = await this.client.api.guilds(this.guild.id)['voice-states'][id].get();
     return this._add(data, cache);
   }
 }

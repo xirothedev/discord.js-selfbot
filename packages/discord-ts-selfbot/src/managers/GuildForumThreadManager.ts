@@ -4,6 +4,12 @@ const { TypeError } = _errorsModule;
 import MessagePayload from '../structures/MessagePayload';
 import _UtilModule from '../util/Util';
 const { resolveAutoArchiveMaxLimit, getUploadURL, uploadFile } = _UtilModule;
+import type { GuildForumThreadCreateOptions } from '../../typings';
+import type { MessagePayloadOptions } from '../structures/MessagePayload';
+
+type GuildForumThreadCreateOptionsSource = Omit<GuildForumThreadCreateOptions, 'message'> & {
+  message: MessagePayload | MessagePayloadOptions;
+};
 
 /**
  * Manages API methods for threads in forum channels and stores their cache.
@@ -50,12 +56,12 @@ class GuildForumThreadManager extends ThreadManager {
    */
   async create({
     name,
-    autoArchiveDuration = this.channel.defaultAutoArchiveDuration,
+    autoArchiveDuration = this.channel.defaultAutoArchiveDuration ?? undefined,
     message,
     reason,
     rateLimitPerUser,
     appliedTags,
-  }: any = {}) {
+  }: GuildForumThreadCreateOptionsSource) {
     if (!message) {
       throw new TypeError('GUILD_FORUM_MESSAGE_REQUIRED');
     }
@@ -73,21 +79,27 @@ class GuildForumThreadManager extends ThreadManager {
 
     // New API
     const attachments = await getUploadURL(this.client, this.channel.id, fileList);
-    const requestPromises = attachments.map(async (attachment: any) => {
-      await uploadFile(fileList[attachment.id].file, attachment.upload_url);
+    const requestPromises = attachments.map(async attachment => {
+      const index = Number(attachment.id);
+      const file = fileList[index];
+      if (!file) throw new TypeError('GUILD_FORUM_ATTACHMENT_MISSING');
+      await uploadFile(file.file, attachment.upload_url);
       return {
         id: attachment.id,
-        filename: fileList[attachment.id].name,
+        filename: file.name,
         uploaded_filename: attachment.upload_filename,
-        description: fileList[attachment.id].description,
-        duration_secs: fileList[attachment.id].duration_secs,
-        waveform: fileList[attachment.id].waveform,
+        description: file.description,
+        duration_secs: file.duration_secs,
+        waveform: file.waveform,
       };
     });
     const attachmentsData = await Promise.all(requestPromises);
-    attachmentsData.sort((a: any, b: any) => parseInt(a.id) - parseInt(b.id));
+    attachmentsData.sort((a, b) => parseInt(a.id) - parseInt(b.id));
 
-    if (autoArchiveDuration === 'MAX') autoArchiveDuration = resolveAutoArchiveMaxLimit(this.channel.guild);
+    if (autoArchiveDuration === 'MAX') {
+      resolveAutoArchiveMaxLimit(this.channel.guild);
+      autoArchiveDuration = 10080;
+    }
 
     const post_data = await this.client.api.channels(this.channel.id).threads.post({
       data: {

@@ -1,25 +1,27 @@
 import BaseManager from './BaseManager';
+import type { RawGuildSettingsData } from '../../typings';
+import type { Guild } from '../structures/Guild';
 /**
  * Manages API methods for users and stores their cache.
  * @extends {BaseManager}
  * @see {@link https://luna.gitlab.io/discord-unofficial-docs/user_settings.html}
  */
 class GuildSettingManager extends BaseManager {
-  #rawSetting = {};
+  #rawSetting: Partial<RawGuildSettingsData> = {};
   declare guildId: import('discord-api-types/v10').Snowflake;
-  declare suppressEveryone: boolean;
-  declare suppressRoles: boolean;
-  declare muteScheduledEvents: boolean;
-  declare messageNotifications: number;
-  declare flags: number;
-  declare mobilePush: boolean;
-  declare muted: boolean;
-  declare muteConfig: { endTime: Date; selectedTimeWindow: number } | null;
-  declare hideMutedChannels: boolean;
-  declare channelOverrides: object[];
-  declare notifyHighlights: number;
-  declare version: number;
-  constructor(guild: any) {
+  declare suppressEveryone?: boolean;
+  declare suppressRoles?: boolean;
+  declare muteScheduledEvents?: boolean;
+  declare messageNotifications?: number;
+  declare flags?: number;
+  declare mobilePush?: boolean;
+  declare muted?: boolean;
+  declare muteConfig?: { endTime: Date; selectedTimeWindow: number } | null;
+  declare hideMutedChannels?: boolean;
+  declare channelOverrides?: object[];
+  declare notifyHighlights?: number;
+  declare version?: number;
+  constructor(guild: Guild) {
     super(guild.client);
     /**
      * Guild Id
@@ -50,7 +52,7 @@ class GuildSettingManager extends BaseManager {
    * @private
    * @param {Object} data Raw Data to patch
    */
-  _patch(data: any = {}) {
+  _patch(data: Partial<RawGuildSettingsData> = {}) {
     this.#rawSetting = Object.assign(this.#rawSetting, data);
     this.client.emit('debug', `[SETTING > Guild ${this.guildId}] Sync setting`);
     if ('suppress_everyone' in data) {
@@ -112,10 +114,12 @@ class GuildSettingManager extends BaseManager {
        * * `muteConfig.selectedTimeWindow`: Selected time window (seconds) (number)
        * @type {?Object}
        */
-      this.muteConfig = {
-        endTime: new Date(data.mute_config.end_time),
-        selectedTimeWindow: data.mute_config.selected_time_window,
-      };
+      if (data.mute_config) {
+        this.muteConfig = {
+          endTime: new Date(data.mute_config.end_time),
+          selectedTimeWindow: data.mute_config.selected_time_window,
+        };
+      }
     } else {
       this.muteConfig = null;
     }
@@ -131,7 +135,7 @@ class GuildSettingManager extends BaseManager {
        * Channel overrides (unknown)
        * @type {?Array}
        */
-      this.channelOverrides = data.channel_overrides;
+      this.channelOverrides = data.channel_overrides ?? [];
     }
     if ('notify_highlights' in data) {
       /**
@@ -156,7 +160,7 @@ class GuildSettingManager extends BaseManager {
    * @param {Object} data Data to edit
    * @returns {Promise<GuildSettingManager>}
    */
-  async edit(data: any) {
+  async edit(data: Partial<RawGuildSettingsData>) {
     const data_ = await this.client.api.users('@me').guilds(this.guildId).settings.patch({ data });
     this._patch(data_);
     return this;

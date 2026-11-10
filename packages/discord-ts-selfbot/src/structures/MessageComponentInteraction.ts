@@ -8,6 +8,10 @@ import type { RawMessageComponentInteractionData } from '../../typings/rawDataTy
 import type { Message } from './Message';
 const { MessageComponentTypes } = _ConstantsModule;
 
+function isComponentType(value: unknown): value is Exclude<MessageComponentType, 'ACTION_ROW'> {
+  return typeof value === 'string' && value in MessageComponentTypes && value !== 'ACTION_ROW';
+}
+
 /**
  * Represents a message component interaction.
  * @extends {Interaction}
@@ -48,7 +52,9 @@ class MessageComponentInteraction<Cached extends CacheType = CacheType> extends 
      * The type of component which was interacted with
      * @type {string}
      */
-    this.componentType = MessageComponentInteraction.resolveType(data.data.component_type);
+    const componentType = MessageComponentInteraction.resolveType(data.data.component_type);
+    if (!componentType) throw new Error('INVALID_COMPONENT_TYPE');
+    this.componentType = componentType;
 
     /**
      * Whether the reply to this interaction has been deferred
@@ -88,9 +94,16 @@ class MessageComponentInteraction<Cached extends CacheType = CacheType> extends 
    * @readonly
    */
   get component() {
-    return (this.message.components ?? [])
-      .flatMap((row: any) => row.components)
-      .find((component: any) => (component.customId ?? component.custom_id) === this.customId);
+    const rows = 'components' in this.message && this.message.components ? this.message.components : [];
+    const components: unknown[] = [];
+    for (const row of rows) {
+      if ('components' in row && Array.isArray(row.components)) components.push(...row.components);
+    }
+    return components.find(component => {
+      if (typeof component !== 'object' || component === null) return false;
+      if ('customId' in component && component.customId === this.customId) return true;
+      return 'custom_id' in component && component.custom_id === this.customId;
+    });
   }
 
   /**
@@ -99,8 +112,12 @@ class MessageComponentInteraction<Cached extends CacheType = CacheType> extends 
    * @returns {MessageComponentType}
    * @private
    */
-  static resolveType(type: any) {
-    return typeof type === 'string' ? type : MessageComponentTypes[type];
+  static resolveType(type: string | number | undefined): Exclude<MessageComponentType, 'ACTION_ROW'> | undefined {
+    if (typeof type === 'number') {
+      const name = MessageComponentTypes[type];
+      return isComponentType(name) ? name : undefined;
+    }
+    return isComponentType(type) ? type : undefined;
   }
 
   // These are here only for documentation purposes - they are implemented by InteractionResponses

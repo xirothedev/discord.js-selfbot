@@ -1,7 +1,23 @@
 import _ConstantsModule from '../../../util/Constants';
 const { Events, Opcodes, Status } = _ConstantsModule;
-const run = (client: any, guild: any) => {
-  const subs: any = {};
+import type { Client } from '../../Client';
+import type { WebSocketShard } from '../WebSocketShard';
+import type { GatewayGuildCreateDispatchData } from 'discord-api-types/v10';
+
+interface GuildCreateData extends GatewayGuildCreateDispatchData {
+  shardId?: number;
+}
+
+interface GuildLike {
+  id: string;
+}
+
+function isGuildCreateData(value: unknown): value is GuildCreateData {
+  return typeof value === 'object' && value !== null && 'id' in value && typeof value.id === 'string';
+}
+
+const run = (client: Client, guild: GuildLike) => {
+  const subs: Record<string, unknown> = {};
   subs[guild.id] = {
     typing: true,
     threads: true,
@@ -18,7 +34,9 @@ const run = (client: any, guild: any) => {
     },
   });
 };
-export default (client: any, { d: data }: any, shard: any) => {
+export default (client: Client, packet: { d?: unknown }, shard: WebSocketShard) => {
+  if (!isGuildCreateData(packet.d)) return;
+  const data = packet.d;
   let guild = client.guilds.cache.get(data.id);
   run(client, data);
   if (guild) {

@@ -65,7 +65,7 @@ class PacketHandler extends EventEmitter {
     return stream;
   }
 
-  makeVideoStream(user: string, output: string) {
+  makeVideoStream(user: string, output: import('node:stream').Writable | string) {
     if (this.videoStreams.has(user)) return this.videoStreams.get(user)!;
     const stream = new Recorder(this, {
       userId: user,

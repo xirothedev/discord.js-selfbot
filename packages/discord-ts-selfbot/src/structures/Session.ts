@@ -1,7 +1,7 @@
 import Base from './Base';
 import type { SessionClientInfo } from '../../typings';
 
-type RawSessionData = {
+export type RawSessionData = {
   id_hash?: string;
   approx_last_used_time?: string;
   client_info?: SessionClientInfo;
