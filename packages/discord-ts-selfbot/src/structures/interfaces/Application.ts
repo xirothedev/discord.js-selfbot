@@ -10,10 +10,30 @@ import Base from '../Base';
 import Team from '../Team';
 import ApplicationCommandManager from '../../managers/ApplicationCommandManager';
 import type { RawApplicationData } from '../../../typings/rawDataTypes';
+import type { StaticImageURLOptions } from '../../../typings';
 import type { ApplicationEntity } from '../../types/entities/application';
 import type { ApplicationPatch } from '../../types/selfbot/application';
 
 const AssetTypes = Object.keys(ClientApplicationAssetTypes);
+
+interface ApplicationAssetData {
+  id: string;
+  name: string;
+  type: number;
+}
+
+function isApplicationAsset(value: unknown): value is ApplicationAssetData {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'id' in value &&
+    typeof value.id === 'string' &&
+    'name' in value &&
+    typeof value.name === 'string' &&
+    'type' in value &&
+    typeof value.type === 'number'
+  );
+}
 
 let deprecationEmittedForFetchAssets = false;
 
@@ -821,8 +841,9 @@ class Application extends Base implements ApplicationEntity {
    * @returns {Promise<ApplicationRoleConnectionMetadata[]>}
    */
   async fetchRoleConnectionMetadataRecords() {
-    const metadata = await this.client.api.applications(this.id)('role-connections').metadata.get();
-    return metadata.map((data: any) => new ApplicationRoleConnectionMetadata(data));
+    const metadata: unknown = await this.client.api.applications(this.id)('role-connections').metadata.get();
+    if (!Array.isArray(metadata)) return [];
+    return metadata.map(data => new ApplicationRoleConnectionMetadata(data));
   }
 
   /**
@@ -830,7 +851,7 @@ class Application extends Base implements ApplicationEntity {
    * @param {StaticImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  iconURL({ format, size }: any = {}) {
+  iconURL({ format, size }: StaticImageURLOptions = {}) {
     if (!this.icon) return null;
     return this.client.rest.cdn.AppIcon(this.id, this.icon, { format, size });
   }
@@ -840,7 +861,7 @@ class Application extends Base implements ApplicationEntity {
    * @param {StaticImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  coverURL({ format, size }: any = {}) {
+  coverURL({ format, size }: StaticImageURLOptions = {}) {
     if (!this.cover) return null;
     return Endpoints.CDN(this.client.options.http.cdn).AppIcon(this.id, this.cover, { format, size });
   }
@@ -868,11 +889,12 @@ class Application extends Base implements ApplicationEntity {
       deprecationEmittedForFetchAssets = true;
     }
 
-    const assets = await this.client.api.oauth2.applications(this.id).assets.get();
-    return assets.map((a: any) => ({
-      id: a.id,
-      name: a.name,
-      type: AssetTypes[a.type - 1],
+    const assets: unknown = await this.client.api.oauth2.applications(this.id).assets.get();
+    if (!Array.isArray(assets)) return [];
+    return assets.filter(isApplicationAsset).map(asset => ({
+      id: asset.id,
+      name: asset.name,
+      type: AssetTypes[asset.type - 1],
     }));
   }
 

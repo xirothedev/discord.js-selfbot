@@ -1,6 +1,26 @@
 import { Collection } from '@discordjs/collection';
 import BaseManager from './BaseManager';
 import GuildBoost from '../structures/GuildBoost';
+import type { Client } from '../client/Client';
+import type { SelfbotGuildBoostData } from '../types/selfbot/guild-boost';
+
+interface BillingEntity {
+  id: string;
+  [key: string]: unknown;
+}
+
+function isBillingEntity(value: unknown): value is BillingEntity {
+  return typeof value === 'object' && value !== null && 'id' in value && typeof value.id === 'string';
+}
+
+function isGuildBoostData(value: BillingEntity): value is BillingEntity & SelfbotGuildBoostData {
+  return (
+    'subscription_id' in value ||
+    'premium_guild_subscription' in value ||
+    'canceled' in value ||
+    'cooldown_ends_at' in value
+  );
+}
 
 /**
  * Manages the API methods of a data model.
@@ -11,7 +31,7 @@ class BillingManager extends BaseManager {
   declare guildBoosts: Collection<string, GuildBoost>;
   declare currentSubscription: Collection<string, Record<string, unknown>>;
 
-  constructor(client: any) {
+  constructor(client: Client) {
     super(client);
     /**
      * All the payment sources of the client
@@ -36,9 +56,11 @@ class BillingManager extends BaseManager {
    */
   async fetchPaymentSources() {
     // https://discord.com/api/v9/users/@me/billing/payment-sources
-    const d = await this.client.api.users('@me').billing['payment-sources'].get();
+    const d: unknown = await this.client.api.users('@me').billing['payment-sources'].get();
     // ! TODO: Create a PaymentSource class
-    this.paymentSources = new Collection(d.map((s: any) => [s.id, s]));
+    this.paymentSources = new Collection(
+      Array.isArray(d) ? d.filter(isBillingEntity).map(source => [source.id, source]) : [],
+    );
     return this.paymentSources;
   }
 
@@ -48,8 +70,15 @@ class BillingManager extends BaseManager {
    */
   async fetchGuildBoosts() {
     // https://discord.com/api/v9/users/@me/guilds/premium/subscription-slots
-    const d = await this.client.api.users('@me').guilds.premium['subscription-slots'].get();
-    this.guildBoosts = new Collection(d.map((s: any) => [s.id, new GuildBoost(this.client, s)]));
+    const d: unknown = await this.client.api.users('@me').guilds.premium['subscription-slots'].get();
+    this.guildBoosts = new Collection(
+      Array.isArray(d)
+        ? d
+            .filter(isBillingEntity)
+            .filter(isGuildBoostData)
+            .map(source => [source.id, new GuildBoost(this.client, source)])
+        : [],
+    );
     return this.guildBoosts;
   }
 
@@ -59,8 +88,10 @@ class BillingManager extends BaseManager {
    */
   async fetchCurrentSubscription() {
     // https://discord.com/api/v9/users/@me/billing/subscriptions
-    const d = await this.client.api.users('@me').billing.subscriptions.get();
-    this.currentSubscription = new Collection(d.map((s: any) => [s.id, s]));
+    const d: unknown = await this.client.api.users('@me').billing.subscriptions.get();
+    this.currentSubscription = new Collection(
+      Array.isArray(d) ? d.filter(isBillingEntity).map(source => [source.id, source]) : [],
+    );
     return this.currentSubscription;
   }
 }

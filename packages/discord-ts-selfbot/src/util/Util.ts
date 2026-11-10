@@ -1056,11 +1056,11 @@ class Util extends null {
    * @param {'opus' | 'H264' | 'H265' | 'VP8' | 'VP9' | 'AV1'} codecName - Codec name
    * @returns {number}
    */
-  static getPayloadType(codecName: unknown) {
+  static getPayloadType(codecName: string) {
     return VoiceCodec.getPayloadType(codecName);
   }
 
-  static getSDPCodecName(portUdpH264: unknown, portUdpH265: unknown, portUdpOpus: unknown) {
+  static getSDPCodecName(portUdpH264: number | null, portUdpH265: number | null, portUdpOpus: number | null) {
     return VoiceCodec.getSDPCodecName(portUdpH264, portUdpH265, portUdpOpus);
   }
 }

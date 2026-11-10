@@ -1,4 +1,14 @@
-const payloadTypes: any[] = [
+interface PayloadType {
+  name: string;
+  type: 'audio' | 'video';
+  priority: number;
+  payload_type: number;
+  rtx_payload_type?: number;
+  encode?: boolean;
+  decode?: boolean;
+}
+
+const payloadTypes: PayloadType[] = [
   { name: 'opus', type: 'audio', priority: 1000, payload_type: 120 },
   {
     name: 'AV1',
@@ -35,10 +45,12 @@ class VoiceCodec {
   static getAllPayloadType() {
     return payloadTypes;
   }
-  static getPayloadType(codecName: any) {
-    return payloadTypes.find((p: any) => p.name === codecName).payload_type;
+  static getPayloadType(codecName: string): number {
+    const payloadType = payloadTypes.find(payload => payload.name === codecName);
+    if (!payloadType) throw new Error(`Unknown codec: ${codecName}`);
+    return payloadType.payload_type;
   }
-  static getSDPCodecName(portUdpH264: any, portUdpH265: any, portUdpOpus: any) {
+  static getSDPCodecName(portUdpH264: number | null, portUdpH265: number | null, portUdpOpus: number | null) {
     const payloadTypeH264 = VoiceCodec.getPayloadType('H264');
     const payloadTypeH265 = VoiceCodec.getPayloadType('H265');
     const payloadTypeOpus = VoiceCodec.getPayloadType('opus');
