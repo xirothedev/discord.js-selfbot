@@ -5,14 +5,25 @@ import _StageInstanceModule from '../structures/StageInstance';
 const { StageInstance } = _StageInstanceModule;
 import _ConstantsModule from '../util/Constants';
 const { PrivacyLevels } = _ConstantsModule;
+import type { RawStageInstanceData } from '../../typings/rawDataTypes';
+import type {
+  BaseFetchOptions,
+  StageChannelResolvable,
+  StageInstanceCreateOptions,
+  StageInstanceEditOptions,
+} from '../../typings';
+import type { Guild } from '../structures/Guild';
+import type { StageChannel } from '../structures/StageChannel';
+
+type StageChannelResolvableSource = StageChannel | StageChannelResolvable;
 
 /**
  * Manages API methods for {@link StageInstance} objects and holds their cache.
  * @extends {CachedManager}
  */
 class StageInstanceManager extends CachedManager<import('../structures/StageInstance').StageInstance> {
-  declare guild: import('../structures/Guild').Guild;
-  constructor(guild: any, iterable?: any) {
+  declare guild: Guild;
+  constructor(guild: Guild, iterable?: Iterable<InstanceType<typeof StageInstance>>) {
     super(guild.client, StageInstance, iterable);
 
     /**
@@ -59,7 +70,10 @@ class StageInstanceManager extends CachedManager<import('../structures/StageInst
    *  .then(stageInstance => console.log(stageInstance))
    *  .catch(console.error);
    */
-  async create(channel: any, options: any) {
+  async create(
+    channel: StageChannelResolvableSource,
+    options: StageInstanceCreateOptions,
+  ): Promise<InstanceType<typeof StageInstance>> {
     const channelId = this.guild.channels.resolveId(channel);
     if (!channelId) throw new Error('STAGE_CHANNEL_RESOLVE');
     if (typeof options !== 'object') throw new TypeError('INVALID_TYPE', 'options', 'object', true);
@@ -68,7 +82,7 @@ class StageInstanceManager extends CachedManager<import('../structures/StageInst
     privacyLevel &&= typeof privacyLevel === 'number' ? privacyLevel : PrivacyLevels[privacyLevel];
     const guildScheduledEventId = guildScheduledEvent && this.resolveId(guildScheduledEvent);
 
-    const data = await this.client.api['stage-instances'].post({
+    const data: RawStageInstanceData = await this.client.api['stage-instances'].post({
       data: {
         channel_id: channelId,
         topic,
@@ -92,16 +106,19 @@ class StageInstanceManager extends CachedManager<import('../structures/StageInst
    *  .then(stageInstance => console.log(stageInstance))
    *  .catch(console.error);
    */
-  async fetch(channel: any, { cache = true, force = false }: any = {}) {
+  async fetch(
+    channel: StageChannelResolvableSource,
+    { cache = true, force = false }: BaseFetchOptions = {},
+  ): Promise<InstanceType<typeof StageInstance>> {
     const channelId = this.guild.channels.resolveId(channel);
     if (!channelId) throw new Error('STAGE_CHANNEL_RESOLVE');
 
     if (!force) {
-      const existing = this.cache.find((stageInstance: any) => stageInstance.channelId === channelId);
+      const existing = this.cache.find(stageInstance => stageInstance.channelId === channelId);
       if (existing) return existing;
     }
 
-    const data = await this.client.api('stage-instances', channelId).get();
+    const data: RawStageInstanceData = await this.client.api('stage-instances', channelId).get();
     return this._add(data, cache);
   }
 
@@ -123,7 +140,10 @@ class StageInstanceManager extends CachedManager<import('../structures/StageInst
    *  .then(stageInstance => console.log(stageInstance))
    *  .catch(console.error);
    */
-  async edit(channel: any, options: any) {
+  async edit(
+    channel: StageChannelResolvableSource,
+    options: StageInstanceEditOptions,
+  ): Promise<InstanceType<typeof StageInstance>> {
     if (typeof options !== 'object') throw new TypeError('INVALID_TYPE', 'options', 'object', true);
     const channelId = this.guild.channels.resolveId(channel);
     if (!channelId) throw new Error('STAGE_CHANNEL_RESOLVE');
@@ -132,7 +152,7 @@ class StageInstanceManager extends CachedManager<import('../structures/StageInst
 
     privacyLevel &&= typeof privacyLevel === 'number' ? privacyLevel : PrivacyLevels[privacyLevel];
 
-    const data = await this.client.api('stage-instances', channelId).patch({
+    const data: RawStageInstanceData = await this.client.api('stage-instances', channelId).patch({
       data: {
         topic,
         privacy_level: privacyLevel,
@@ -154,7 +174,7 @@ class StageInstanceManager extends CachedManager<import('../structures/StageInst
    * @param {StageChannelResolvable} channel The stage channel whose associated stage instance is to be deleted
    * @returns {Promise<void>}
    */
-  async delete(channel: any) {
+  async delete(channel: StageChannelResolvableSource): Promise<void> {
     const channelId = this.guild.channels.resolveId(channel);
     if (!channelId) throw new Error('STAGE_CHANNEL_RESOLVE');
 
