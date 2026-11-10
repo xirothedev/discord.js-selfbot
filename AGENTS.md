@@ -19,9 +19,15 @@ Bun workspaces + Turborepo. **Bun-only runtime** (no Node compatibility). The li
 └── bunfig.toml
 ```
 
-## Agent docs
+<!-- BEGIN:discord-ts-selfbot-agent-rules -->
 
-The library ships a plain-Markdown corpus at `packages/discord-ts-selfbot/docs`. Read `docs/llms.txt` before you change the public API. Run `bun run docs:agent` after the change; `bun run docs:agent:check` fails when the committed corpus is stale. The corpus source is `apps/docs/scripts/agent/api.json` plus the Markdown under `apps/docs/content/docs`.
+## discord-ts-selfbot: read docs before coding
+
+Before you change the public API, read `packages/discord-ts-selfbot/docs/llms.txt` and the page for the task. Run `bun run docs:agent` after the change; `bun run docs:agent:check` fails when the committed corpus is stale.
+
+The corpus source is `apps/docs/scripts/agent/api.json` plus the Markdown under `apps/docs/content/docs`.
+
+<!-- END:discord-ts-selfbot-agent-rules -->
 
 ## Commands (run from root)
 

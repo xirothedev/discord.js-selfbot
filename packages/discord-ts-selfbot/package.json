@@ -2,16 +2,10 @@
   "name": "discord-ts-selfbot",
   "version": "14.0.0",
   "description": "An unofficial discord.js fork for creating selfbots, migrated to TypeScript and ESM",
-  "type": "module",
   "main": "./src/index.ts",
   "types": "./typings/index.d.ts",
-  "bin": {
-    "discord-ts-selfbot-mcp": "./dist/mcp/index.js"
-  },
   "scripts": {
-    "build": "bun build src/index.ts --target=bun --format=esm --outdir=dist --packages=external && bun run build:mcp",
-    "build:mcp": "bun build src/mcp/index.ts --target=node --format=esm --outdir=dist/mcp --packages=external",
-    "prepack": "bun run build",
+    "build": "bun build src/index.ts --target=bun --format=esm --outdir=dist --packages=external",
     "check": "bun check && bun run schema:check && bun run ratchet:check && bun run docs:check",
     "lint": "bun lint",
     "fmt": "bun fmt src typings tests tools",
@@ -61,7 +55,6 @@
   "dependencies": {
     "@discordjs/builders": "^1.6.3",
     "@discordjs/collection": "^2.1.1",
-    "@modelcontextprotocol/sdk": "^1.32.2",
     "@sapphire/async-queue": "^1.5.5",
     "@sapphire/shapeshift": "^4.0.0",
     "discord-api-types": "^0.38.15",
@@ -74,8 +67,7 @@
     "tree-kill": "^1.2.2",
     "undici": "^7.11.0",
     "werift-rtp": "^0.8.4",
-    "ws": "^8.16.0",
-    "zod": "^4.6.7"
+    "ws": "^8.16.0"
   },
   "devDependencies": {
     "@discord-ts-selfbot/test-harness": "workspace:*",

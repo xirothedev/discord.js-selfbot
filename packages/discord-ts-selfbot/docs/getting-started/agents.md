@@ -8,35 +8,24 @@ Start at `node_modules/discord-ts-selfbot/docs/llms.txt`. It lists the getting-s
 
 The reference is generated from the public typings. Exact types stay in `typings/index.d.ts`; the reference pages show the usage shape.
 
-## Connect the MCP gateway
-
-The gateway ships in the same package as the `discord-ts-selfbot-mcp` bin. You do not install a second package. It exposes one tool, `selfbot_docs`. The tool does not fetch documentation. It resolves the installed package and returns the absolute docs path with reading instructions.
-
-```json title=".mcp.json"
-{
-  "mcpServers": {
-    "discord-ts-selfbot": {
-      "command": "npx",
-      "args": ["--no-install", "discord-ts-selfbot-mcp"]
-    }
-  }
-}
-```
-
-Ask the agent to call `selfbot_docs` before it writes code. In a monorepo, pass `project_path` when the package is not installed at the project root.
-
 ## Point AGENTS.md at the docs
 
-Add this line to the project `AGENTS.md`:
+Copy `node_modules/discord-ts-selfbot/docs/AGENTS.md` into the project `AGENTS.md`, or add this block:
 
 ```md
-Before you write discord-ts-selfbot code, read `node_modules/discord-ts-selfbot/docs/llms.txt` and the page for the task.
+<!-- BEGIN:discord-ts-selfbot-agent-rules -->
+
+# discord-ts-selfbot: read docs before coding
+
+Before any discord-ts-selfbot work, read `node_modules/discord-ts-selfbot/docs/llms.txt` and the page for the task. The bundled docs match the installed version; do not rely on training data for the public API.
+
+The reference is generated from the public typings. Exact types stay in `node_modules/discord-ts-selfbot/typings/index.d.ts`.
+
+<!-- END:discord-ts-selfbot-agent-rules -->
 ```
 
-A coding agent that reads `AGENTS.md` does not need the MCP gateway. The gateway is for clients that discover tools instead of instruction files.
+An agent that reads `AGENTS.md` then opens the index and the page for the task. No MCP server is needed.
 
-## Status values
+## Keep the block current
 
-- `use_bundled_docs`: the installed package has the docs. Read `indexPath` first.
-- `install_required`: the package is not installed. Install dependencies and call the tool again.
-- `missing_docs`: the installed package has no bundled docs. Reinstall or upgrade.
+The block ships with the package version. Re-copy it after a major upgrade. The markers let you replace only that block and keep the rest of the project instructions.

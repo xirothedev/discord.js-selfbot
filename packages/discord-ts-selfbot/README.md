@@ -37,26 +37,21 @@ Read [Token safety](https://xirothedev.github.io/discord.js-selfbot/docs/getting
 
 ## For coding agents
 
-The package ships version-matched docs at `docs/llms.txt`. Read that file first, then open the page for the task. The reference is generated from the public typings; exact types stay in `typings/index.d.ts`.
-
-The MCP gateway ships in this package as the `discord-ts-selfbot-mcp` bin. No extra package is needed:
-
-```json
-{
-  "mcpServers": {
-    "discord-ts-selfbot": {
-      "command": "npx",
-      "args": ["--no-install", "discord-ts-selfbot-mcp"]
-    }
-  }
-}
-```
-
-Or add this line to the project `AGENTS.md`:
+The package ships version-matched docs at `docs/llms.txt`. Copy the block from `docs/AGENTS.md` into the project `AGENTS.md`:
 
 ```md
-Before you write discord-ts-selfbot code, read `node_modules/discord-ts-selfbot/docs/llms.txt` and the page for the task.
+<!-- BEGIN:discord-ts-selfbot-agent-rules -->
+
+# discord-ts-selfbot: read docs before coding
+
+Before any discord-ts-selfbot work, read `node_modules/discord-ts-selfbot/docs/llms.txt` and the page for the task. The bundled docs match the installed version; do not rely on training data for the public API.
+
+The reference is generated from the public typings. Exact types stay in `node_modules/discord-ts-selfbot/typings/index.d.ts`.
+
+<!-- END:discord-ts-selfbot-agent-rules -->
 ```
+
+The agent then reads `node_modules/discord-ts-selfbot/docs/llms.txt` before it writes code. No MCP server is needed.
 
 ## Docs
 

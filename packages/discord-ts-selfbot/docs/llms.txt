@@ -4,6 +4,7 @@ Version-matched documentation for coding agents. Read this file first, then open
 
 ## Start here
 
+- [AGENTS.md block](./AGENTS.md): Copy this block into the project AGENTS.md before coding.
 - [Introduction](./index.md): A Bun-first, TypeScript selfbot library with a discord.js v14-compatible API.
 - [Installation](./getting-started/installation.md): Install discord-ts-selfbot with Bun and confirm the runtime version.
 - [Token safety](./getting-started/token-safety.md): Treat a user token as a password. Read this before you connect.

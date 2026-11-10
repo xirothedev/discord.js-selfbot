@@ -76,11 +76,7 @@ The checked-in `apps/docs/scripts/agent/api.json` file that holds the descriptio
 
 ## Agent docs
 
-The plain-Markdown documentation corpus that ships with the package, written for coding agents. It holds usage guides, recipes, an event catalog, and a generated reference for the runtime exports.
-
-## Gateway tool
-
-The MCP tool that returns the installed **Agent docs** path and reading instructions. It does not serve documentation content. It ships as the `discord-ts-selfbot-mcp` bin inside the main package.
+The plain-Markdown documentation corpus that ships with the package, written for coding agents. It holds usage guides, recipes, an event catalog, and a generated reference for the runtime exports. Agents reach it through the project **AGENTS.md** block.
 
 ## Raw data
 

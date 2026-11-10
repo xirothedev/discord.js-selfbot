@@ -234,9 +234,10 @@ function renderIndex(input: {
   const usage = guides.filter((guide) => guide.target.startsWith('guides/'));
   const examples = guides.filter((guide) => guide.target.startsWith('examples/'));
 
-  const startLines = start.map(
-    (guide) => `- [${guide.title}](./${guide.target}): ${oneLine(guide.description) || 'Start here.'}`,
-  );
+  const startLines = [
+    '- [AGENTS.md block](./AGENTS.md): Copy this block into the project AGENTS.md before coding.',
+    ...start.map((guide) => `- [${guide.title}](./${guide.target}): ${oneLine(guide.description) || 'Start here.'}`),
+  ];
   const usageLines = usage.map(
     (guide) => `- [${guide.title}](./${guide.target}): ${oneLine(guide.description) || 'Usage guide.'}`,
   );
@@ -272,7 +273,11 @@ ${[
 }
 
 function renderReadme(version: string): string {
-  return `# Agent docs\n\nVersion-matched documentation for \`discord-ts-selfbot@${version}\`.\n\nStart at [\`llms.txt\`](./llms.txt). The \`reference/\` tree is generated from the public typings and the API prose store; the guides and examples are generated from \`apps/docs/content/docs\`. Do not edit this tree by hand.\n`;
+  return `# Agent docs\n\nVersion-matched documentation for \`discord-ts-selfbot@${version}\`.\n\nStart at [\`llms.txt\`](./llms.txt). The \`reference/\` tree is generated from the public typings and the API prose store; the guides and examples are generated from \`apps/docs/content/docs\`. Do not edit this tree by hand.\n\nCopy [\`AGENTS.md\`](./AGENTS.md) into the project \`AGENTS.md\` so coding agents read these docs before they write code.\n`;
+}
+
+function renderAgentsMd(): string {
+  return `<!-- BEGIN:discord-ts-selfbot-agent-rules -->\n\n# discord-ts-selfbot: read docs before coding\n\nBefore any discord-ts-selfbot work, read \`node_modules/discord-ts-selfbot/docs/llms.txt\` and the page for the task. The bundled docs match the installed version; do not rely on training data for the public API.\n\nThe reference is generated from the public typings. Exact types stay in \`node_modules/discord-ts-selfbot/typings/index.d.ts\`.\n\n<!-- END:discord-ts-selfbot-agent-rules -->\n`;
 }
 
 function writeTree(root: string, files: Map<string, string>): void {
@@ -405,6 +410,7 @@ export function generateAgentDocs(options: { outputDir: string }): {
     }),
   );
   files.set('README.md', renderReadme(version));
+  files.set('AGENTS.md', renderAgentsMd());
 
   writeTree(options.outputDir, files);
   rmSync(tempDir, { recursive: true, force: true });
