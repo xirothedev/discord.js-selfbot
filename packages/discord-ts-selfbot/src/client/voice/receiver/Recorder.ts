@@ -13,6 +13,17 @@ const { randomPorts } = _FunctionModule;
 import _SocketModule from '../util/Socket';
 const { StreamOutput } = _SocketModule;
 
+interface RecorderOptions {
+  userId: string;
+  portUdpH264?: number;
+  portUdpOpus?: number;
+  output: string | Writable;
+  spawn?: typeof spawnProcess;
+  findProcess?: typeof findProcessDefault;
+  killProcess?: typeof killProcessDefault;
+  streamOutput?: typeof StreamOutput;
+}
+
 /**
  * Represents a FFmpeg handler
  * @extends {EventEmitter}
@@ -35,7 +46,7 @@ class Recorder extends EventEmitter {
   declare stream: ChildProcessWithoutNullStreams | null;
 
   constructor(
-    receiver: any,
+    receiver: import('./PacketHandler').default,
     {
       userId,
       portUdpH264,
@@ -45,7 +56,7 @@ class Recorder extends EventEmitter {
       findProcess = findProcessDefault,
       killProcess = killProcessDefault,
       streamOutput = StreamOutput,
-    }: any = {},
+    }: RecorderOptions,
   ) {
     super();
 
@@ -63,17 +74,17 @@ class Recorder extends EventEmitter {
      */
     this.userId = userId;
 
-    this.portUdpH264 = portUdpH264;
+    this.portUdpH264 = portUdpH264 ?? null;
     this.portUdpH265 = null;
-    this.portUdpOpus = portUdpOpus;
+    this.portUdpOpus = portUdpOpus ?? null;
 
     this.promise = null;
 
     if (!portUdpH264 || !portUdpOpus) {
-      this.promise = randomPorts(6, 'udp4').then((ports: any) => {
-        ports = ports.filter((port: any) => port % 2 === 0);
-        this.portUdpH264 ??= ports[0];
-        this.portUdpOpus ??= ports[1];
+      this.promise = randomPorts(6, 'udp4').then(ports => {
+        const evenPorts = ports.filter((port): port is number => typeof port === 'number' && port % 2 === 0);
+        this.portUdpH264 ??= evenPorts[0] ?? null;
+        this.portUdpOpus ??= evenPorts[1] ?? null;
       });
     }
 
@@ -93,7 +104,7 @@ class Recorder extends EventEmitter {
 
     this.init(output);
   }
-  async init(output: any) {
+  async init(output: string | Writable) {
     await this.promise;
     const sdpData = VoiceCodec.getSDPCodecName(this.portUdpH264, this.portUdpH265, this.portUdpOpus);
     const isStream = output instanceof Writable;
@@ -144,7 +155,7 @@ class Recorder extends EventEmitter {
     this.stream = stream;
     this.stream.stdin.write(sdpData);
     this.stream.stdin.end();
-    this.stream.stderr.once('data', (data: any) => {
+    this.stream.stderr.once('data', (data: Buffer) => {
       this.emit('debug', `stderr: ${data}`);
       this.ready = true;
       this.emit('ready');
@@ -156,24 +167,25 @@ class Recorder extends EventEmitter {
    * @param {*} callback Callback
    */
   feed(
-    payload: any,
-    callback: any = (e: any) => {
-      if (e) {
-        console.error('Error sending packet:', e);
+    payload: RtpPacket | string | Buffer,
+    callback: (error?: Error | null) => void = error => {
+      if (error) {
+        console.error('Error sending packet:', error);
       }
     },
   ) {
-    if (!(payload instanceof RtpPacket)) {
-      payload = RtpPacket.deSerialize(Buffer.isBuffer(payload) ? payload : Buffer.from(payload));
-    }
-    const message = payload.serialize();
+    const packet =
+      payload instanceof RtpPacket
+        ? payload
+        : RtpPacket.deSerialize(Buffer.isBuffer(payload) ? payload : Buffer.from(payload));
+    const message = packet.serialize();
     // Get port from payloadType
-    let port;
-    if (payload.header.payloadType === VoiceCodec.getPayloadType('opus')) {
+    let port: number | null | undefined;
+    if (packet.header.payloadType === VoiceCodec.getPayloadType('opus')) {
       port = this.portUdpOpus;
-    } else if (payload.header.payloadType === VoiceCodec.getPayloadType('H264')) {
+    } else if (packet.header.payloadType === VoiceCodec.getPayloadType('H264')) {
       port = this.portUdpH264;
-    } else if (payload.header.payloadType === VoiceCodec.getPayloadType('H265')) {
+    } else if (packet.header.payloadType === VoiceCodec.getPayloadType('H265')) {
       port = this.portUdpH265;
     } else {
       return;
@@ -198,8 +210,8 @@ class Recorder extends EventEmitter {
     if (!this.stream) return;
     const ffmpegPid = this.stream.pid; // But it is ppid ;-;
     const args = this.stream.spawnargs.slice(1).join(' '); // Skip ffmpeg
-    this.findProcess('name', 'ffmpeg', true).then((list: any) => {
-      let process = list.find((o: any) => o.pid === ffmpegPid || o.ppid === ffmpegPid || o.cmd.includes(args));
+    this.findProcess('name', 'ffmpeg', true).then(list => {
+      const process = list.find(o => o.pid === ffmpegPid || o.ppid === ffmpegPid || o.cmd.includes(args));
       if (process) {
         this.killProcess(process.pid);
         this.receiver?.videoStreams?.delete(this.userId);

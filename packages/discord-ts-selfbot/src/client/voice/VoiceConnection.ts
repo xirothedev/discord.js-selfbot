@@ -218,7 +218,7 @@ class VoiceConnection extends EventEmitter {
   declare videoStatus: boolean | null;
   declare authentication: VoiceAuthentication;
   declare player: import('./player/MediaPlayer').default;
-  declare ssrcMap: Map<number, { userId?: string; speaking?: number; hasVideo?: boolean }>;
+  declare ssrcMap: Map<number, { userId: string; speaking?: number; hasVideo?: boolean }>;
   declare _speaking: Map<string, Readonly<Speaking>>;
   declare sockets: {
     ws?: import('./networking/VoiceWebSocket').default | null;

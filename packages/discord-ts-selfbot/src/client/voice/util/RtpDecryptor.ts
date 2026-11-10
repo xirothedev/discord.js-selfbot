@@ -6,8 +6,13 @@ import secretbox from './Secretbox';
 const UNPADDED_NONCE_LENGTH = 4;
 const AUTH_TAG_LENGTH = 16;
 
+interface RtpAuthentication {
+  secret_key?: Uint8Array;
+  mode?: string;
+}
+
 class RtpDecryptor {
-  static decrypt(buffer: any, authentication: any) {
+  static decrypt(buffer: Buffer, authentication: RtpAuthentication): RtpPacket | Error {
     const { secret_key, mode } = authentication;
     if (!secret_key) return new Error('secret_key cannot be null or undefined');
     const nonce = mode === 'aead_aes256_gcm_rtpsize' ? Buffer.alloc(12) : Buffer.alloc(24);
@@ -24,7 +29,7 @@ class RtpDecryptor {
       buffer.length - UNPADDED_NONCE_LENGTH,
     );
 
-    let packet;
+    let packet: Buffer;
     switch (mode) {
       case 'aead_aes256_gcm_rtpsize': {
         const decipheriv = crypto.createDecipheriv('aes-256-gcm', secret_key, nonce);
@@ -34,13 +39,13 @@ class RtpDecryptor {
         break;
       }
       case 'aead_xchacha20_poly1305_rtpsize': {
-        packet = secretbox.methods.crypto_aead_xchacha20poly1305_ietf_decrypt(
+        const decrypted = secretbox.methods.crypto_aead_xchacha20poly1305_ietf_decrypt(
           Buffer.concat([encrypted, authTag]),
           header,
           nonce,
           secret_key,
         );
-        packet = Buffer.from(packet);
+        packet = Buffer.from(decrypted);
         break;
       }
       default: {

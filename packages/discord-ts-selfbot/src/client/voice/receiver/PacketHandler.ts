@@ -2,6 +2,13 @@ import { Readable as ReadableStream } from 'node:stream';
 import EventEmitter from 'events';
 import { setTimeout } from 'node:timers';
 import Recorder from './Recorder';
+import type { RtpPacket } from 'werift-rtp';
+
+interface UserStat {
+  userId: string;
+  speaking?: number;
+  hasVideo?: boolean;
+}
 import Speaking from '../../../util/Speaking';
 import VoiceCodec from '../util/VoiceCodec';
 import RtpDecryptor from '../util/RtpDecryptor';
@@ -22,7 +29,7 @@ class PacketHandler extends EventEmitter {
   declare receiver: import('./Receiver').default;
   declare streams: Map<string, { stream: Readable; end: string }>;
   declare videoStreams: Map<string, Recorder>;
-  declare speakingTimeouts: Map<string, NodeJS.Timeout>;
+  declare speakingTimeouts: Map<number, NodeJS.Timeout>;
 
   constructor(receiver: import('./Receiver').default) {
     super();
@@ -42,7 +49,7 @@ class PacketHandler extends EventEmitter {
     return this.receiver.connection;
   }
 
-  _stoppedSpeaking(userId: any) {
+  _stoppedSpeaking(userId: string) {
     const streamInfo = this.streams.get(userId);
     if (streamInfo && streamInfo.end === 'silence') {
       this.streams.delete(userId);
@@ -72,11 +79,11 @@ class PacketHandler extends EventEmitter {
     return stream;
   }
 
-  parseBuffer(buffer: any) {
+  parseBuffer(buffer: Buffer): RtpPacket | Error {
     return RtpDecryptor.decrypt(buffer, this.receiver.connection.authentication);
   }
 
-  audioReceiver(ssrc: any, userStat: any, opusPacket: any) {
+  audioReceiver(ssrc: number, userStat: UserStat, opusPacket: RtpPacket | Error) {
     const streamInfo = this.streams.get(userStat.userId);
     // If the user is in video, we need to check if the packet is just silence
     if (userStat.hasVideo) {
@@ -105,9 +112,9 @@ class PacketHandler extends EventEmitter {
       // Ensure at least the speaking bit is set.
       // As the object is by reference, it's only needed once per client re-connect.
       if (userStat.speaking === 0) {
-        userStat.speaking = Speaking.FLAGS.SPEAKING;
+        userStat.speaking = Number(Speaking.FLAGS.SPEAKING);
       }
-      this.connection.onSpeaking({ user_id: userStat.userId, ssrc: ssrc, speaking: userStat.speaking });
+      this.connection.onSpeaking({ user_id: userStat.userId, ssrc: ssrc, speaking: userStat.speaking ?? 0 });
       speakingTimeout = setTimeout(() => {
         try {
           this.connection.onSpeaking({ user_id: userStat.userId, ssrc: ssrc, speaking: 0 });
@@ -135,7 +142,7 @@ class PacketHandler extends EventEmitter {
     }
   }
 
-  audioReceiverForStream(_ssrc: any, userStat: any, packet: any) {
+  audioReceiverForStream(_ssrc: number, userStat: UserStat, packet: RtpPacket | Error) {
     const streamInfo = this.videoStreams.get(userStat.userId);
     if (!streamInfo) return;
     if (packet instanceof Error) {
@@ -154,7 +161,7 @@ class PacketHandler extends EventEmitter {
    * @param {RtpPacket} packet RtpPacket
    * @returns {void}
    */
-  videoReceiver(_ssrc: any, userStat: any, packet: any) {
+  videoReceiver(_ssrc: number, userStat: UserStat, packet: RtpPacket | Error) {
     const streamInfo = this.videoStreams.get(userStat.userId);
     // If the user is in video, we need to check if the packet is just silence
     if (userStat.hasVideo) {
@@ -172,18 +179,21 @@ class PacketHandler extends EventEmitter {
     }
   }
 
-  push(buffer: any) {
+  push(buffer: Buffer) {
     const ssrc = buffer.readUInt32BE(8);
-    let userStat, packet;
+    let userStat: UserStat | undefined;
+    let packet: RtpPacket | Error | undefined;
     if (this.connection.ssrcMap.has(ssrc)) {
       userStat = this.connection.ssrcMap.get(ssrc); // Audio_ssrc
       packet = this.parseBuffer(buffer);
-      this.audioReceiver(ssrc, userStat, packet);
-      this.audioReceiverForStream(ssrc, userStat, packet);
+      if (userStat) {
+        this.audioReceiver(ssrc, userStat, packet);
+        this.audioReceiverForStream(ssrc, userStat, packet);
+      }
     } else if (this.connection.ssrcMap.has(ssrc - 1)) {
       userStat = this.connection.ssrcMap.get(ssrc - 1); // Video_ssrc
       packet = this.parseBuffer(buffer);
-      this.videoReceiver(ssrc, userStat, packet);
+      if (userStat) this.videoReceiver(ssrc, userStat, packet);
     }
     if (userStat && !(packet instanceof Error)) this.receiver.emit('receiverData', userStat, packet);
   }
