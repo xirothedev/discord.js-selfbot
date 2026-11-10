@@ -1,4 +1,5 @@
 import { createRequire } from 'node:module';
+
 const require = createRequire(import.meta.url);
 import process from 'node:process';
 import Base from './Base';
@@ -7,21 +8,64 @@ import type { Guild } from './Guild';
 import type { RawChannelData } from '../../typings/rawDataTypes';
 import ChannelFlags from '../util/ChannelFlags';
 import _ConstantsModule from '../util/Constants';
-const { ChannelTypes, ThreadChannelTypes, VoiceBasedChannelTypes } = _ConstantsModule;
+
+const { ChannelTypes, ThreadChannelTypes, VoiceBasedChannelTypes } =
+  _ConstantsModule;
 import SnowflakeUtil from '../util/SnowflakeUtil';
 import type { ChannelEntity } from '../types/entities/channel';
 import type { PatchOf } from '../types/schema';
-let CategoryChannel;
-let DMChannel;
-let NewsChannel;
-let StageChannel;
-let StoreChannel;
-let TextChannel;
-let ThreadChannel;
-let VoiceChannel;
-let DirectoryChannel;
-let ForumChannel;
-let MediaChannel;
+import type ClientType from '../client/Client';
+import type ThreadChannelType from './ThreadChannel';
+import type { Snowflake } from 'discord-api-types/v10';
+import { isThreadParentChannel } from '../types/channels';
+
+let CategoryChannel: new (
+  guild: Guild,
+  data: RawChannelData,
+  client: Client
+) => Channel;
+let DMChannel: new (client: Client, data: RawChannelData) => Channel;
+let NewsChannel: new (
+  guild: Guild,
+  data: RawChannelData,
+  client: Client
+) => Channel;
+let StageChannel: new (
+  guild: Guild,
+  data: RawChannelData,
+  client: Client
+) => Channel;
+let StoreChannel: new (
+  guild: Guild,
+  data: RawChannelData,
+  client: Client
+) => Channel;
+let TextChannel: new (
+  guild: Guild,
+  data: RawChannelData,
+  client: Client
+) => Channel;
+let ThreadChannel: new (
+  guild: Guild,
+  data: RawChannelData,
+  client: Client
+) => ThreadChannelType;
+let VoiceChannel: new (
+  guild: Guild,
+  data: RawChannelData,
+  client: Client
+) => Channel;
+let DirectoryChannel: new (client: Client, data: RawChannelData) => Channel;
+let ForumChannel: new (
+  guild: Guild,
+  data: RawChannelData,
+  client: Client
+) => Channel;
+let MediaChannel: new (
+  guild: Guild,
+  data: RawChannelData,
+  client: Client
+) => Channel;
 
 /**
  * @type {WeakSet<Channel>}
@@ -31,21 +75,139 @@ let MediaChannel;
 const deletedChannels = new WeakSet();
 let deprecationEmittedForDeleted = false;
 
+function loadChannelClasses() {
+  CategoryChannel ??= require('./CategoryChannel').default;
+  DMChannel ??= require('./DMChannel').default;
+  NewsChannel ??= require('./NewsChannel').default;
+  StageChannel ??= require('./StageChannel').default;
+  StoreChannel ??= require('./StoreChannel').default;
+  TextChannel ??= require('./TextChannel').default;
+  ThreadChannel ??= require('./ThreadChannel').default;
+  VoiceChannel ??= require('./VoiceChannel').default;
+  DirectoryChannel ??= require('./DirectoryChannel').default;
+  ForumChannel ??= require('./ForumChannel').default;
+  MediaChannel ??= require('./MediaChannel').default;
+}
+
+function cacheGuildChannel(cache: Map<Snowflake, unknown>, channel: Channel) {
+  cache.set(channel.id, channel);
+}
+
+function requireGuild(guild: Guild | null | undefined): Guild {
+  if (!guild) {
+    throw new TypeError('A guild is required to create a guild channel');
+  }
+  return guild;
+}
+
+function createDirectMessageChannel(client: Client, data: RawChannelData) {
+  let channel;
+  if (
+    ('recipients' in data &&
+      data.recipients &&
+      data.type !== ChannelTypes.GROUP_DM) ||
+    data.type === ChannelTypes.DM
+  ) {
+    channel = new DMChannel(client, data);
+  } else if (data.type === ChannelTypes.GROUP_DM) {
+    const GroupDMChannel = require('./GroupDMChannel').default;
+    channel = new GroupDMChannel(client, data);
+  }
+  return channel;
+}
+
+function createGuildChannel(
+  client: Client,
+  data: RawChannelData,
+  guild: Guild | undefined,
+  allowUnknownGuild: boolean
+) {
+  let channel;
+  switch (data.type) {
+    case ChannelTypes.GUILD_TEXT: {
+      channel = new TextChannel(requireGuild(guild), data, client);
+      break;
+    }
+    case ChannelTypes.GUILD_VOICE: {
+      channel = new VoiceChannel(requireGuild(guild), data, client);
+      break;
+    }
+    case ChannelTypes.GUILD_CATEGORY: {
+      channel = new CategoryChannel(requireGuild(guild), data, client);
+      break;
+    }
+    case ChannelTypes.GUILD_NEWS: {
+      channel = new NewsChannel(requireGuild(guild), data, client);
+      break;
+    }
+    case ChannelTypes.GUILD_STORE: {
+      channel = new StoreChannel(requireGuild(guild), data, client);
+      break;
+    }
+    case ChannelTypes.GUILD_STAGE_VOICE: {
+      channel = new StageChannel(requireGuild(guild), data, client);
+      break;
+    }
+    case ChannelTypes.GUILD_NEWS_THREAD:
+    case ChannelTypes.GUILD_PUBLIC_THREAD:
+    case ChannelTypes.GUILD_PRIVATE_THREAD: {
+      const thread = new ThreadChannel(requireGuild(guild), data, client);
+      if (
+        !allowUnknownGuild &&
+        thread.parent &&
+        isThreadParentChannel(thread.parent)
+      ) {
+        thread.parent.threads.cache.set(thread.id, thread);
+      }
+      channel = thread;
+      break;
+    }
+
+    case ChannelTypes.GUILD_DIRECTORY: {
+      channel = new DirectoryChannel(client, data);
+      break;
+    }
+
+    case ChannelTypes.GUILD_FORUM: {
+      channel = new ForumChannel(requireGuild(guild), data, client);
+      break;
+    }
+
+    case ChannelTypes.GUILD_MEDIA: {
+      channel = new MediaChannel(requireGuild(guild), data, client);
+      break;
+    }
+
+    default: {
+      break;
+    }
+  }
+  return channel;
+}
+
 class Channel extends Base implements ChannelEntity {
   declare id: ChannelEntity['id'];
   declare type: ChannelEntity['type'];
   declare flags: ChannelEntity['flags'];
-  constructor(client: import('../client/Client').default, data?: RawChannelData, immediatePatch = true) {
+  constructor(
+    client: ClientType,
+    data?: RawChannelData,
+    immediatePatch = true
+  ) {
     super(client);
 
-    const type = data?.type !== undefined ? ChannelTypes[data.type] : undefined;
+    const type = data?.type === undefined ? undefined : ChannelTypes[data.type];
     this.type = type ?? 'UNKNOWN';
 
-    if (data && immediatePatch) this._patch(data);
+    if (data && immediatePatch) {
+      this._patch(data);
+    }
   }
 
   _patch(data: PatchOf<'Channel'>) {
-    this.id = data.id!;
+    if (data.id !== undefined) {
+      this.id = data.id;
+    }
 
     if ('flags' in data) {
       this.flags = new ChannelFlags(data.flags).freeze();
@@ -73,7 +235,7 @@ class Channel extends Base implements ChannelEntity {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
         'Channel#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
-        'DeprecationWarning',
+        'DeprecationWarning'
       );
     }
 
@@ -85,12 +247,15 @@ class Channel extends Base implements ChannelEntity {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
         'Channel#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
-        'DeprecationWarning',
+        'DeprecationWarning'
       );
     }
 
-    if (value) deletedChannels.add(this);
-    else deletedChannels.delete(this);
+    if (value) {
+      deletedChannels.add(this);
+    } else {
+      deletedChannels.delete(this);
+    }
   }
 
   get partial() {
@@ -134,82 +299,28 @@ class Channel extends Base implements ChannelEntity {
     client: Client,
     data: RawChannelData,
     guild?: Guild | null,
-    { allowUnknownGuild = false }: { allowUnknownGuild?: boolean } = {},
+    { allowUnknownGuild = false }: { allowUnknownGuild?: boolean } = {}
   ) {
-    CategoryChannel ??= require('./CategoryChannel').default;
-    DMChannel ??= require('./DMChannel').default;
-    NewsChannel ??= require('./NewsChannel').default;
-    StageChannel ??= require('./StageChannel').default;
-    StoreChannel ??= require('./StoreChannel').default;
-    TextChannel ??= require('./TextChannel').default;
-    ThreadChannel ??= require('./ThreadChannel').default;
-    VoiceChannel ??= require('./VoiceChannel').default;
-    DirectoryChannel ??= require('./DirectoryChannel').default;
-    ForumChannel ??= require('./ForumChannel').default;
-    MediaChannel ??= require('./MediaChannel').default;
+    loadChannelClasses();
 
     let channel;
     const guildId = 'guild_id' in data ? data.guild_id : undefined;
     if (!guildId && !guild) {
-      if (
-        ('recipients' in data && data.recipients && data.type !== ChannelTypes.GROUP_DM) ||
-        data.type === ChannelTypes.DM
-      ) {
-        channel = new DMChannel(client, data);
-      } else if (data.type === ChannelTypes.GROUP_DM) {
-        const GroupDMChannel = require('./GroupDMChannel').default;
-        channel = new GroupDMChannel(client, data);
-      }
+      channel = createDirectMessageChannel(client, data);
     } else {
-      guild ??= guildId ? client.guilds.cache.get(guildId) : undefined;
+      const resolvedGuild =
+        guild ?? (guildId ? client.guilds.cache.get(guildId) : undefined);
 
-      if (guild || allowUnknownGuild) {
-        switch (data.type) {
-          case ChannelTypes.GUILD_TEXT: {
-            channel = new TextChannel(guild!, data, client);
-            break;
-          }
-          case ChannelTypes.GUILD_VOICE: {
-            channel = new VoiceChannel(guild!, data, client);
-            break;
-          }
-          case ChannelTypes.GUILD_CATEGORY: {
-            channel = new CategoryChannel(guild!, data, client);
-            break;
-          }
-          case ChannelTypes.GUILD_NEWS: {
-            channel = new NewsChannel(guild!, data, client);
-            break;
-          }
-          case ChannelTypes.GUILD_STORE: {
-            channel = new StoreChannel(guild!, data, client);
-            break;
-          }
-          case ChannelTypes.GUILD_STAGE_VOICE: {
-            channel = new StageChannel(guild!, data, client);
-            break;
-          }
-          case ChannelTypes.GUILD_NEWS_THREAD:
-          case ChannelTypes.GUILD_PUBLIC_THREAD:
-          case ChannelTypes.GUILD_PRIVATE_THREAD: {
-            channel = new ThreadChannel(guild!, data, client);
-            if (!allowUnknownGuild) channel.parent?.threads.cache.set(channel.id, channel);
-            break;
-          }
-
-          case ChannelTypes.GUILD_DIRECTORY:
-            channel = new DirectoryChannel(client, data);
-            break;
-
-          case ChannelTypes.GUILD_FORUM:
-            channel = new ForumChannel(guild!, data, client);
-            break;
-
-          case ChannelTypes.GUILD_MEDIA:
-            channel = new MediaChannel(guild!, data, client);
-            break;
+      if (resolvedGuild || allowUnknownGuild) {
+        channel = createGuildChannel(
+          client,
+          data,
+          resolvedGuild,
+          allowUnknownGuild
+        );
+        if (channel && !allowUnknownGuild && resolvedGuild) {
+          cacheGuildChannel(resolvedGuild.channels.cache, channel);
         }
-        if (channel && !allowUnknownGuild && guild) guild.channels.cache.set(channel.id, channel);
       }
     }
     return channel;

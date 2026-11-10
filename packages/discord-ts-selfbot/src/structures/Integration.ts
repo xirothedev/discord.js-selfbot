@@ -4,6 +4,8 @@ import type { Role } from './Role';
 import type { RawIntegrationData } from '../../typings/rawDataTypes';
 import type { IntegrationEntity } from '../types/entities/integration';
 import type { PatchOf } from '../types/schema';
+import type Client from '../client/Client';
+import type { Guild } from './Guild';
 
 class Integration extends Base implements IntegrationEntity {
   declare account: IntegrationEntity['account'];
@@ -22,7 +24,7 @@ class Integration extends Base implements IntegrationEntity {
   declare user: IntegrationEntity['user'];
   declare subscriberCount: IntegrationEntity['subscriberCount'];
   declare revoked: IntegrationEntity['revoked'];
-  constructor(client: import('../client/Client').default, data: RawIntegrationData, guild: import('./Guild').Guild) {
+  constructor(client: Client, data: RawIntegrationData, guild: Guild) {
     super(client);
 
     this.guild = guild;
@@ -37,7 +39,9 @@ class Integration extends Base implements IntegrationEntity {
 
     this.syncing = data.syncing;
 
-    this.role = data.role_id ? this.guild.roles.cache.get(data.role_id) : undefined;
+    this.role = data.role_id
+      ? this.guild.roles.cache.get(data.role_id)
+      : undefined;
 
     if ('enable_emoticons' in data) {
       this.enableEmoticons = data.enable_emoticons ?? null;
@@ -45,11 +49,7 @@ class Integration extends Base implements IntegrationEntity {
       this.enableEmoticons ??= null;
     }
 
-    if (data.user) {
-      this.user = this.client.users._add(data.user);
-    } else {
-      this.user = null;
-    }
+    this.user = data.user ? this.client.users._add(data.user) : null;
 
     this.account = data.account;
 
@@ -88,7 +88,10 @@ class Integration extends Base implements IntegrationEntity {
       if (this.application && data.application) {
         this.application._patch(data.application);
       } else {
-        this.application = new IntegrationApplication(this.client, data.application);
+        this.application = new IntegrationApplication(
+          this.client,
+          data.application
+        );
       }
     } else {
       this.application ??= null;
@@ -96,14 +99,17 @@ class Integration extends Base implements IntegrationEntity {
   }
 
   async delete(reason?: string) {
-    await this.client.api.guilds(this.guild.id).integrations(this.id).delete({ reason });
+    await this.client.api
+      .guilds(this.guild.id)
+      .integrations(this.id)
+      .delete({ reason });
     return this;
   }
 
   toJSON() {
     return super.toJSON({
-      role: 'roleId',
       guild: 'guildId',
+      role: 'roleId',
       user: 'userId',
     });
   }

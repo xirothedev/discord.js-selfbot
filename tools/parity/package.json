@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "description": "Private differential test harness: runs the same fixtures through discord-ts-selfbot and discord.js@14.28.1",
-  "main": "./src/index.ts",
   "type": "module",
+  "main": "./src/index.ts",
   "scripts": {
     "build": "bun build src/index.ts --target=node --format=esm --dts --outdir=dist",
     "check": "bun check",

@@ -1,7 +1,14 @@
-import { startFakeDiscord } from '@discord-ts-selfbot/test-harness';
 import { beforeAll, afterAll, test, expect } from 'bun:test';
+
+import { startFakeDiscord } from '@discord-ts-selfbot/test-harness';
+
+import {
+  Client,
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+} from '../src/index';
 import { DM_CHANNEL_ID, readyPayloadWithDM } from './helpers';
-import { Client, EmbedBuilder, ActionRowBuilder, ButtonBuilder } from '../src/index';
 
 let fake;
 let client;
@@ -11,65 +18,65 @@ beforeAll(async () => {
     readyPayload: readyPayloadWithDM(),
     responses: {
       [`POST /v9/channels/${DM_CHANNEL_ID}/messages`]: {
-        id: '900000000000000010',
+        attachments: [],
         channel_id: DM_CHANNEL_ID,
         content: 'hello',
-        timestamp: new Date().toISOString(),
         edited_timestamp: null,
-        tts: false,
-        mention_everyone: false,
-        mentions: [],
-        mention_roles: [],
-        attachments: [],
         embeds: [],
+        id: '900000000000000010',
+        mention_everyone: false,
+        mention_roles: [],
+        mentions: [],
         pinned: false,
+        timestamp: new Date().toISOString(),
+        tts: false,
         type: 0,
       },
       [`GET /v9/channels/${DM_CHANNEL_ID}/messages/900000000000000010`]: {
-        id: '900000000000000010',
+        attachments: [],
         channel_id: DM_CHANNEL_ID,
         content: 'hello',
-        timestamp: new Date().toISOString(),
         edited_timestamp: null,
-        tts: false,
-        mention_everyone: false,
-        mentions: [],
-        mention_roles: [],
-        attachments: [],
         embeds: [],
+        id: '900000000000000010',
+        mention_everyone: false,
+        mention_roles: [],
+        mentions: [],
         pinned: false,
+        timestamp: new Date().toISOString(),
+        tts: false,
         type: 0,
       },
       [`GET /v9/channels/${DM_CHANNEL_ID}/messages`]: [
         {
-          id: '900000000000000010',
+          attachments: [],
           channel_id: DM_CHANNEL_ID,
           content: 'hello',
-          timestamp: new Date().toISOString(),
           edited_timestamp: null,
-          tts: false,
-          mention_everyone: false,
-          mentions: [],
-          mention_roles: [],
-          attachments: [],
           embeds: [],
+          id: '900000000000000010',
+          mention_everyone: false,
+          mention_roles: [],
+          mentions: [],
           pinned: false,
+          timestamp: new Date().toISOString(),
+          tts: false,
           type: 0,
         },
       ],
       [`PATCH /v9/channels/${DM_CHANNEL_ID}/messages/900000000000000010`]: {
-        id: '900000000000000010',
+        attachments: [],
         channel_id: DM_CHANNEL_ID,
         content: 'edited',
-        timestamp: new Date().toISOString(),
         edited_timestamp: new Date().toISOString(),
-        tts: false,
-        mention_everyone: false,
-        mentions: [],
-        mention_roles: [],
-        attachments: [],
         embeds: [],
+        id: '900000000000000010',
+        mention_everyone: false,
+        mention_roles: [],
+        mentions: [],
         pinned: false,
+        timestamp: new Date().toISOString(),
+        tts: false,
         type: 0,
       },
     },
@@ -97,8 +104,10 @@ test('payload-shape: plain message body', async () => {
 test('payload-shape: embed + components body', async () => {
   const ch = client.channels.cache.get(DM_CHANNEL_ID);
   const embed = new EmbedBuilder().setTitle('t').setDescription('d');
-  const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('b').setLabel('Click').setStyle(1));
-  await ch.send({ embeds: [embed], components: [row] });
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('b').setLabel('Click').setStyle(1)
+  );
+  await ch.send({ components: [row], embeds: [embed] });
   const req = fake.getLastRequest();
   expect(req.body.embeds).toHaveLength(1);
   expect(req.body.embeds[0].title).toBe('t');

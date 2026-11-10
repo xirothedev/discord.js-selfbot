@@ -5,8 +5,11 @@ import { RPCErrorCodes } from 'discord-api-types/v10';
 import WebSocketShard from './WebSocketShard';
 import PacketHandlers from './handlers';
 import _errorsModule from '../../errors';
+
 const { Error } = _errorsModule;
 import _ConstantsModule from '../../util/Constants';
+import type Client from '../Client';
+
 const { Events, ShardEvents, Status, WSCodes, WSEvents } = _ConstantsModule;
 
 const BeforeReadyWhitelist: readonly string[] = [
@@ -20,7 +23,7 @@ const BeforeReadyWhitelist: readonly string[] = [
 ];
 
 interface GatewayPacket {
-  t?: string;
+  ['t']?: string;
   d?: unknown;
   op?: number;
   s?: number;
@@ -48,7 +51,7 @@ const UNRESUMABLE_CLOSE_CODES = [
 ];
 
 class WebSocketManager extends EventEmitter {
-  declare client: import('../Client').default;
+  declare client: Client;
   declare gateway: string | null;
   declare totalShards: number;
   declare shards: Collection<number, WebSocketShard>;
@@ -58,23 +61,23 @@ class WebSocketManager extends EventEmitter {
   declare destroyed: boolean;
   declare reconnecting: boolean;
 
-  constructor(client: import('../Client').default) {
+  constructor(client: Client) {
     super();
 
     Object.defineProperty(this, 'client', { value: client });
 
     this.gateway = null;
 
-    this.totalShards =
-      this.client.options.shards === 'auto'
-        ? this.client.options.shardCount
-        : Array.isArray(this.client.options.shards)
-          ? this.client.options.shards.length
-          : this.client.options.shardCount;
+    this.totalShards = Array.isArray(this.client.options.shards)
+      ? this.client.options.shards.length
+      : this.client.options.shardCount;
 
     this.shards = new Collection();
 
-    Object.defineProperty(this, 'shardQueue', { value: new Set(), writable: true });
+    Object.defineProperty(this, 'shardQueue', {
+      value: new Set(),
+      writable: true,
+    });
 
     Object.defineProperty(this, 'packetQueue', { value: [] });
 
@@ -86,12 +89,15 @@ class WebSocketManager extends EventEmitter {
   }
 
   get ping() {
-    const sum = this.shards.reduce((a, b) => a + b.ping, 0);
+    const sum = this.shards.reduce((total, shard) => total + shard.ping, 0);
     return sum / this.shards.size;
   }
 
   debug(message: string, shard?: WebSocketShard) {
-    this.client.emit(Events.DEBUG, `[WS => ${shard ? `Shard ${shard.id}` : 'Manager'}] ${message}`);
+    this.client.emit(
+      Events.DEBUG,
+      `[WS => ${shard ? `Shard ${shard.id}` : 'Manager'}] ${message}`
+    );
   }
 
   async connect() {
@@ -99,7 +105,9 @@ class WebSocketManager extends EventEmitter {
     await this.client.api.gateway
       .get<GatewayInfo>({ auth: false })
       .then((r: GatewayInfo) => (gatewayURL = r.url))
-      .catch(() => {});
+      .catch(() => {
+        /* empty */
+      });
 
     const total = Infinity;
     const remaining = Infinity;
@@ -118,50 +126,76 @@ class WebSocketManager extends EventEmitter {
     let { shards } = this.client.options;
 
     if (shards === 'auto') {
-      this.debug(`Using the recommended shard count provided by Discord: ${recommendedShards}`);
-      this.totalShards = this.client.options.shardCount = recommendedShards;
-      shards = this.client.options.shards = Array.from({ length: recommendedShards }, (_, i) => i);
+      this.debug(
+        `Using the recommended shard count provided by Discord: ${recommendedShards}`
+      );
+      this.totalShards = recommendedShards;
+      this.client.options.shardCount = recommendedShards;
+      shards = Array.from(
+        { length: recommendedShards },
+        (_value, index) => index
+      );
+      this.client.options.shards = shards;
     }
 
     if (!Array.isArray(shards)) {
-      shards = this.client.options.shards = Array.from({ length: this.client.options.shardCount }, (_, i) => i);
+      shards = Array.from(
+        { length: this.client.options.shardCount },
+        (_value, index) => index
+      );
+      this.client.options.shards = shards;
     }
 
     this.totalShards = shards.length;
     this.debug(`Spawning shards: ${shards.join(', ')}`);
-    this.shardQueue = new Set(shards.map((id: number) => new WebSocketShard(this, id)));
+    this.shardQueue = new Set(
+      shards.map((id: number) => new WebSocketShard(this, id))
+    );
 
     return this.createShards();
   }
 
   async createShards(): Promise<boolean> {
     // If we don't have any shards to handle, return
-    if (!this.shardQueue.size) return false;
+    if (!this.shardQueue.size) {
+      return false;
+    }
 
     const [shard] = this.shardQueue;
 
     this.shardQueue.delete(shard);
 
     if (!shard.eventsAttached) {
-      shard.on(ShardEvents.ALL_READY, (unavailableGuilds?: Set<string> | null) => {
-        this.client.emit(Events.SHARD_READY, shard.id, unavailableGuilds);
+      shard.on(
+        ShardEvents.ALL_READY,
+        (unavailableGuilds?: Set<string> | null) => {
+          this.client.emit(Events.SHARD_READY, shard.id, unavailableGuilds);
 
-        if (!this.shardQueue.size) this.reconnecting = false;
-        this.checkShardsReady();
-      });
+          if (!this.shardQueue.size) {
+            this.reconnecting = false;
+          }
+          this.checkShardsReady();
+        }
+      );
 
       shard.on(ShardEvents.CLOSE, (event: CloseEventLike) => {
         if (
-          event.code === 1_000
+          event.code === 1000
             ? this.destroyed
-            : event.code !== undefined && UNRECOVERABLE_CLOSE_CODES.includes(event.code)
+            : event.code !== undefined &&
+              UNRECOVERABLE_CLOSE_CODES.includes(event.code)
         ) {
           this.client.emit(Events.SHARD_DISCONNECT, event, shard.id);
-          if (event.code !== undefined) this.debug(WSCodes[event.code], shard);
+          if (event.code !== undefined) {
+            this.debug(WSCodes[event.code], shard);
+          }
           return;
         }
 
-        if (event.code !== undefined && UNRESUMABLE_CLOSE_CODES.includes(event.code)) {
+        if (
+          event.code !== undefined &&
+          UNRESUMABLE_CLOSE_CODES.includes(event.code)
+        ) {
           // These event codes cannot be resumed
           shard.sessionId = null;
         }
@@ -170,7 +204,12 @@ class WebSocketManager extends EventEmitter {
 
         this.shardQueue.add(shard);
 
-        if (shard.sessionId) this.debug(`Session id is present, attempting an immediate reconnect...`, shard);
+        if (shard.sessionId) {
+          this.debug(
+            `Session id is present, attempting an immediate reconnect...`,
+            shard
+          );
+        }
         this.reconnect();
       });
 
@@ -179,7 +218,10 @@ class WebSocketManager extends EventEmitter {
       });
 
       shard.on(ShardEvents.DESTROYED, () => {
-        this.debug('Shard was destroyed but no WebSocket connection was present! Reconnecting...', shard);
+        this.debug(
+          'Shard was destroyed but no WebSocket connection was present! Reconnecting...',
+          shard
+        );
 
         this.client.emit(Events.SHARD_RECONNECTING, shard.id);
 
@@ -195,7 +237,10 @@ class WebSocketManager extends EventEmitter {
     try {
       await shard.connect();
     } catch (error: unknown) {
-      const code = isRecord(error) && typeof error.code === 'number' ? error.code : undefined;
+      const code =
+        isRecord(error) && typeof error.code === 'number'
+          ? error.code
+          : undefined;
       if (code && UNRECOVERABLE_CLOSE_CODES.includes(code)) {
         throw new Error(WSCodes[code]);
         // Undefined if session is invalid, error event for regular closes
@@ -208,8 +253,10 @@ class WebSocketManager extends EventEmitter {
     }
     // If we have more shards, add a 5s delay
     if (this.shardQueue.size) {
-      this.debug(`Shard Queue Size: ${this.shardQueue.size}; continuing in 5 seconds...`);
-      await Bun.sleep(5_000);
+      this.debug(
+        `Shard Queue Size: ${this.shardQueue.size}; continuing in 5 seconds...`
+      );
+      await Bun.sleep(5000);
       return this.createShards();
     }
 
@@ -217,16 +264,23 @@ class WebSocketManager extends EventEmitter {
   }
 
   async reconnect(): Promise<boolean> {
-    if (this.reconnecting || this.status !== Status.READY) return false;
+    if (this.reconnecting || this.status !== Status.READY) {
+      return false;
+    }
     this.reconnecting = true;
     try {
       await this.createShards();
     } catch (error: unknown) {
-      this.debug(`Couldn't reconnect or fetch information about the gateway. ${String(error)}`);
-      const httpStatus = isRecord(error) && typeof error.httpStatus === 'number' ? error.httpStatus : undefined;
+      this.debug(
+        `Couldn't reconnect or fetch information about the gateway. ${String(error)}`
+      );
+      const httpStatus =
+        isRecord(error) && typeof error.httpStatus === 'number'
+          ? error.httpStatus
+          : undefined;
       if (httpStatus !== 401) {
         this.debug(`Possible network error occurred. Retrying in 5s...`);
-        await Bun.sleep(5_000);
+        await Bun.sleep(5000);
         this.reconnecting = false;
         return this.reconnect();
       }
@@ -245,23 +299,33 @@ class WebSocketManager extends EventEmitter {
   }
 
   broadcast(packet: unknown) {
-    for (const shard of this.shards.values()) shard.send(packet);
+    for (const shard of this.shards.values()) {
+      shard.send(packet);
+    }
   }
 
   destroy() {
-    if (this.destroyed) return;
-    this.debug(`Manager was destroyed. Called by:\n${new Error('MANAGER_DESTROYED').stack}`);
+    if (this.destroyed) {
+      return;
+    }
+    this.debug(
+      `Manager was destroyed. Called by:\n${new Error('MANAGER_DESTROYED').stack}`
+    );
     this.destroyed = true;
     this.shardQueue.clear();
-    for (const shard of this.shards.values()) shard.destroy({ closeCode: 1_000, reset: true, emit: false, log: false });
+    for (const shard of this.shards.values()) {
+      shard.destroy({ closeCode: 1000, emit: false, log: false, reset: true });
+    }
   }
 
   handlePacket(packet?: GatewayPacket, shard?: WebSocketShard) {
-    if (packet && this.status !== Status.READY) {
-      if (!BeforeReadyWhitelist.includes(packet.t ?? '')) {
-        this.packetQueue.push({ packet, shard });
-        return false;
-      }
+    if (
+      packet &&
+      this.status !== Status.READY &&
+      !BeforeReadyWhitelist.includes(packet.t ?? '')
+    ) {
+      this.packetQueue.push({ packet, shard });
+      return false;
     }
 
     if (this.packetQueue.length) {
@@ -278,10 +342,15 @@ class WebSocketManager extends EventEmitter {
     } else if (packet) {
       const actionName = String(packet.t || '')
         .split('_')
-        .map(part => part.charAt(0) + part.slice(1).toLowerCase())
+        .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
         .join('');
       const action = Reflect.get(this.client.actions, actionName);
-      if (action && typeof action === 'object' && 'handle' in action && typeof action.handle === 'function') {
+      if (
+        action &&
+        typeof action === 'object' &&
+        'handle' in action &&
+        typeof action.handle === 'function'
+      ) {
         Reflect.apply(action.handle, action, [packet.d, shard]);
         return true;
       }
@@ -292,8 +361,13 @@ class WebSocketManager extends EventEmitter {
   }
 
   checkShardsReady() {
-    if (this.status === Status.READY) return;
-    if (this.shards.size !== this.totalShards || this.shards.some(s => s.status !== Status.READY)) {
+    if (this.status === Status.READY) {
+      return;
+    }
+    if (
+      this.shards.size !== this.totalShards ||
+      this.shards.some((s) => s.status !== Status.READY)
+    ) {
       return;
     }
 

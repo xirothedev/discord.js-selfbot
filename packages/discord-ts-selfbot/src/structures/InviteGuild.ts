@@ -1,15 +1,18 @@
 import AnonymousGuild from './AnonymousGuild';
 import WelcomeScreen from './WelcomeScreen';
 import type { RawInviteGuildData } from '../../typings/rawDataTypes';
+import type Client from '../client/Client';
 
 class InviteGuild extends AnonymousGuild {
   declare welcomeScreen: WelcomeScreen | null;
 
-  constructor(client: import('../client/Client').default, data: RawInviteGuildData) {
+  constructor(client: Client, data: RawInviteGuildData) {
     super(client, data);
 
     this.welcomeScreen =
-      typeof data.welcome_screen !== 'undefined' ? new WelcomeScreen(this, data.welcome_screen) : null;
+      data.welcome_screen === undefined
+        ? null
+        : new WelcomeScreen(this, data.welcome_screen);
   }
 }
 

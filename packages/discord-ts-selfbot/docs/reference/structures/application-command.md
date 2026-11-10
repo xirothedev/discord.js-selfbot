@@ -190,11 +190,11 @@ what most users need.
 
 ```ts
 
-equals(command: ApplicationCommandData | APIApplicationCommand | ApplicationCommand<unknown>, enforceOptionorder?: boolean): boolean
+equals(command: ApplicationCommandData | APIApplicationCommand | ApplicationCommand<object>, enforceOptionorder?: boolean): boolean
 
 ```
 
-- `command: ApplicationCommandData | APIApplicationCommand | ApplicationCommand<unknown>` — The command to compare with
+- `command: ApplicationCommandData | APIApplicationCommand | ApplicationCommand<object>` — The command to compare with
 - `enforceOptionorder?: boolean`
 
 **Returns:** `boolean`

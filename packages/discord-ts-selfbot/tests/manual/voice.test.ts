@@ -1,5 +1,14 @@
 import { test, describe } from 'bun:test';
-import { token, voiceChannelId, skip, makeClient, login, makeStepRecorder } from './_helpers';
+import { setTimeout as sleep } from 'node:timers/promises';
+
+import {
+  fetchVoiceChannel,
+  login,
+  makeClient,
+  makeStepRecorder,
+  skip,
+  voiceChannelId,
+} from './_helpers';
 
 describe.skipIf(skip)('manual: voice', () => {
   test('voice operations', async () => {
@@ -11,15 +20,22 @@ describe.skipIf(skip)('manual: voice', () => {
         console.log('[SKIP] no TEST_VOICE_CHANNEL_ID');
         return;
       }
+      const targetChannelId = voiceChannelId;
       await step('fetch voice channel', async () => {
-        const vc = await client.channels.fetch(voiceChannelId!);
-        if (vc.id !== voiceChannelId) throw new Error('id mismatch');
+        const voiceChannel = await fetchVoiceChannel(client, targetChannelId);
+        if (voiceChannel.id !== targetChannelId) {
+          throw new Error('id mismatch');
+        }
       });
       await step('join + leave voice', async () => {
-        const vc = await client.channels.fetch(voiceChannelId!);
-        const conn = await client.voice.joinChannel(vc as any, { selfMute: true, selfDeaf: true, selfVideo: false });
-        await new Promise(r => setTimeout(r, 3000));
-        conn.disconnect();
+        const voiceChannel = await fetchVoiceChannel(client, targetChannelId);
+        const connection = await client.voice.joinChannel(voiceChannel, {
+          selfDeaf: true,
+          selfMute: true,
+          selfVideo: false,
+        });
+        await sleep(3000);
+        connection.disconnect();
       });
     } finally {
       client.destroy();

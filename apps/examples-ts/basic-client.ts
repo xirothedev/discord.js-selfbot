@@ -22,7 +22,9 @@ client.once(Events.CLIENT_READY, (readyClient: Client<true>) => {
 });
 
 client.on(Events.MessageCreate, async (message: Message) => {
-  if (message.author?.id === client.user?.id) return;
+  if (message.author?.id === client.user?.id) {
+    return;
+  }
 
   if (message.content === '!ping') {
     await message.reply('Pong!');

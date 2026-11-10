@@ -1,12 +1,13 @@
-const { Client } = require('../src/index');
+import { Client } from '../src/index';
+
 const client = new Client();
 
-client.on('ready', async () => {
+client.on('ready', () => {
   console.log(`${client.user.username} is ready!`);
 });
 
-client.on('messageCreate', message => {
-  if (message.content == 'ping') {
+client.on('messageCreate', (message) => {
+  if (message.content === 'ping') {
     message.reply('pong');
   }
 });

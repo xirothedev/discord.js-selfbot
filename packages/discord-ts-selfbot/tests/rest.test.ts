@@ -1,5 +1,7 @@
-import { startFakeDiscord } from '@discord-ts-selfbot/test-harness';
 import { test, expect } from 'bun:test';
+
+import { startFakeDiscord } from '@discord-ts-selfbot/test-harness';
+
 import { Client } from '../src/index';
 
 test('REST request builds correct URL and headers', async () => {
@@ -23,4 +25,4 @@ test('REST request builds correct URL and headers', async () => {
     client.destroy();
     fake.stop();
   }
-}, 15000);
+}, 15_000);

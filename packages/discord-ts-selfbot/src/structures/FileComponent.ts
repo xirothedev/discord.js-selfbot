@@ -1,6 +1,10 @@
-import BaseMessageComponent, { isComponentDataSource, readComponentBoolean } from './BaseMessageComponent';
+import BaseMessageComponent, {
+  isComponentDataSource,
+  readComponentBoolean,
+} from './BaseMessageComponent';
 import UnfurledMediaItem from './UnfurledMediaItem';
-import { ComponentType, type APIFileComponent } from 'discord-api-types/v10';
+import { ComponentType } from 'discord-api-types/v10';
+import type { APIFileComponent } from 'discord-api-types/v10';
 
 class FileComponent extends BaseMessageComponent {
   declare file: UnfurledMediaItem;
@@ -22,9 +26,9 @@ class FileComponent extends BaseMessageComponent {
 
   toJSON(): APIFileComponent {
     return {
-      type: ComponentType.File,
       file: this.file.toJSON(),
       spoiler: this.spoiler,
+      type: ComponentType.File,
     };
   }
 }

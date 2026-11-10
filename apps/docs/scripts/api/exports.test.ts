@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+
 import { areaFor, parseIndexExports, slugify } from './exports';
 
 const source = `import pkg from '../package.json';
@@ -19,13 +20,19 @@ describe('parseIndexExports', () => {
     const parsed = parseIndexExports(source);
 
     expect(parsed.public).toEqual([
-      { name: 'Client', path: './client/Client', namedExport: undefined },
-      { name: 'CustomStatus', path: './structures/Presence', namedExport: 'CustomStatus' },
-      { name: 'version', path: './index', namedExport: undefined },
-      { name: 'Guild', path: './structures/index', namedExport: 'Guild' },
-      { name: 'Message', path: './structures/index', namedExport: 'Message' },
+      { name: 'Client', namedExport: undefined, path: './client/Client' },
+      {
+        name: 'CustomStatus',
+        namedExport: 'CustomStatus',
+        path: './structures/Presence',
+      },
+      { name: 'version', namedExport: undefined, path: './index' },
+      { name: 'Guild', namedExport: 'Guild', path: './structures/index' },
+      { name: 'Message', namedExport: 'Message', path: './structures/index' },
     ]);
-    expect(parsed.aliases).toEqual([{ name: 'ClientAlias', target: 'DefaultClient' }]);
+    expect(parsed.aliases).toEqual([
+      { name: 'ClientAlias', target: 'DefaultClient' },
+    ]);
     expect(parsed.external).toEqual(['ActionRow']);
     expect(parsed.unparsed).toEqual([]);
   });

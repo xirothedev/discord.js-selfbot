@@ -1,6 +1,11 @@
 import type { Stream } from 'node:stream';
 import Util from '../util/Util';
-import type { AttachmentData, BufferResolvable } from '../../typings';
+import type {
+  AttachmentData,
+  AttachmentPayload,
+  BufferResolvable,
+  MessageAttachment,
+} from '../../typings';
 
 class AttachmentBuilder {
   declare attachment: BufferResolvable | Stream;
@@ -9,7 +14,10 @@ class AttachmentBuilder {
   declare title: string | null;
   declare waveform: string | null;
   declare duration: number | null;
-  constructor(attachment: BufferResolvable | Stream, data: AttachmentData = {}) {
+  constructor(
+    attachment: BufferResolvable | Stream,
+    data: AttachmentData = {}
+  ) {
     this.attachment = attachment;
 
     this.name = data.name ?? null;
@@ -54,11 +62,13 @@ class AttachmentBuilder {
   }
 
   setSpoiler(spoiler = true) {
-    if (spoiler === this.spoiler) return this;
+    if (spoiler === this.spoiler) {
+      return this;
+    }
 
     if (!spoiler) {
       while (this.spoiler) {
-        this.name = this.name!.slice('SPOILER_'.length);
+        this.name = this.name?.slice('SPOILER_'.length) ?? null;
       }
       return this;
     }
@@ -76,11 +86,11 @@ class AttachmentBuilder {
   }
 
   static from(
-    other: AttachmentBuilder | import('../../typings').MessageAttachment | import('../../typings').AttachmentPayload,
+    other: AttachmentBuilder | MessageAttachment | AttachmentPayload
   ) {
     return new AttachmentBuilder(other.attachment, {
-      name: other.name ?? undefined,
       description: other.description ?? undefined,
+      name: other.name ?? undefined,
     });
   }
 }

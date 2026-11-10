@@ -1,32 +1,36 @@
 import { test, describe } from 'bun:test';
-import { token, guildId, skip, makeClient, login, makeStepRecorder } from './_helpers';
+
+import { guildId, skip, makeClient, login, makeStepRecorder } from './_helpers';
 
 describe.skipIf(skip)('manual: members', () => {
   test('member operations', async () => {
     const client = makeClient();
     const { step, summary, writeArtifact } = makeStepRecorder();
     try {
-      await login(client);
+      const user = await login(client);
       if (!guildId) {
         console.log('[SKIP] no TEST_GUILD_ID');
         return;
       }
+      const targetGuildId = guildId;
       await step('fetch self member', async () => {
-        const g = await client.guilds.fetch(guildId!);
-        const m = await g.members.fetch(client.user!.id);
-        if (m.id !== client.user!.id) throw new Error('id mismatch');
+        const guild = await client.guilds.fetch(targetGuildId);
+        const member = await guild.members.fetch(user.id);
+        if (member.id !== user.id) {
+          throw new Error('id mismatch');
+        }
       });
       await step('set nickname', async () => {
-        const g = await client.guilds.fetch(guildId!);
-        const m = await g.members.fetch(client.user!.id);
-        await m.setNickname('manual-nick');
-        await m.setNickname(null);
+        const guild = await client.guilds.fetch(targetGuildId);
+        const member = await guild.members.fetch(user.id);
+        await member.setNickname('manual-nick');
+        await member.setNickname(null);
       });
       await step('fetch member voice state', async () => {
-        const g = await client.guilds.fetch(guildId!);
-        const m = await g.members.fetch(client.user!.id);
+        const guild = await client.guilds.fetch(targetGuildId);
+        const member = await guild.members.fetch(user.id);
         // voice state may be null
-        console.log('  voice:', m.voice?.channelId ?? 'none');
+        console.log('  voice:', member.voice?.channelId ?? 'none');
       });
     } finally {
       client.destroy();

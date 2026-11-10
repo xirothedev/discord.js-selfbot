@@ -1,13 +1,15 @@
-const { Client } = require('../src/index');
+import { Client } from '../src/index';
+
 const client = new Client();
 
-client.on('ready', async () => {
+client.on('ready', () => {
   console.log(`${client.user.username} is ready!`);
   const channel = client.channels.cache.get('id');
   channel.send({
     activity: {
-      type: 3, // MessageActivityType.Listen
       partyId: `spotify:${client.user.id}`,
+      // MessageActivityType.Listen
+      type: 3,
     },
   });
 });

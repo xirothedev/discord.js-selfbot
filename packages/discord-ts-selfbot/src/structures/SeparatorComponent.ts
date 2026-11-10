@@ -3,7 +3,8 @@ import BaseMessageComponent, {
   readComponentBoolean,
   readComponentNumber,
 } from './BaseMessageComponent';
-import { ComponentType, SeparatorSpacingSize, type APISeparatorComponent } from 'discord-api-types/v10';
+import { ComponentType, SeparatorSpacingSize } from 'discord-api-types/v10';
+import type { APISeparatorComponent } from 'discord-api-types/v10';
 
 class SeparatorComponent extends BaseMessageComponent {
   declare spacing: 1 | 2;
@@ -18,16 +19,19 @@ class SeparatorComponent extends BaseMessageComponent {
   setup(data: unknown) {
     super.setup(data);
     const source = isComponentDataSource(data) ? data : {};
-    this.spacing = readComponentNumber(source, 'spacing') === SeparatorSpacingSize.Large ? 2 : 1;
+    this.spacing =
+      readComponentNumber(source, 'spacing') === SeparatorSpacingSize.Large
+        ? 2
+        : 1;
 
     this.divider = readComponentBoolean(source, 'divider') ?? true;
   }
 
   toJSON(): APISeparatorComponent {
     return {
-      type: ComponentType.Separator,
-      spacing: this.spacing,
       divider: this.divider,
+      spacing: this.spacing,
+      type: ComponentType.Separator,
     };
   }
 }

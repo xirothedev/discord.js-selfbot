@@ -11,8 +11,8 @@ function isRecord(value: unknown): value is UnfurledMediaItemSource {
 class UnfurledMediaItem {
   declare url: string | null;
   declare data: UnfurledMediaItemSource;
-  constructor(data: unknown = { url: '' }) {
-    const source = isRecord(data) ? data : {};
+  constructor(data?: unknown) {
+    const source = isRecord(data) ? data : { url: '' };
     this.url = typeof source.url === 'string' ? source.url : null;
     this.data = isRecord(source.data) ? source.data : source;
   }

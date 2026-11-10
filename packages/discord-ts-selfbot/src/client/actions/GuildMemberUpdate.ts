@@ -1,10 +1,12 @@
 import Action from './Action';
 import type { GatewayGuildMemberUpdateDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
+import type { WebSocketShard } from '../websocket/WebSocketShard';
+
 const { Status, Events } = _ConstantsModule;
 
 class GuildMemberUpdateAction extends Action {
-  handle(data: GatewayGuildMemberUpdateDispatchData, shard: import('../websocket/WebSocketShard').WebSocketShard) {
+  handle(data: GatewayGuildMemberUpdateDispatchData, shard: WebSocketShard) {
     const { client } = this;
     if (data.user.username) {
       const user = client.users.cache.get(data.user.id);
@@ -27,7 +29,9 @@ class GuildMemberUpdateAction extends Action {
          * @param {GuildMember} newMember The member after the update
          * @deprecated See {@link https://github.com/aiko-chan-ai/discord.js-selfbot-v13/issues/197 this issue} for more information.
          */
-        if (shard.status === Status.READY && !member.equals(old)) client.emit(Events.GUILD_MEMBER_UPDATE, old, member);
+        if (shard.status === Status.READY && !member.equals(old)) {
+          client.emit(Events.GUILD_MEMBER_UPDATE, old, member);
+        }
       } else {
         const newMember = guild.members._add(data);
         this.client.emit(Events.GUILD_MEMBER_AVAILABLE, newMember);

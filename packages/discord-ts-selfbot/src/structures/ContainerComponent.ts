@@ -3,14 +3,20 @@ import BaseMessageComponent, {
   readComponentArray,
   readComponentBoolean,
   readComponentNumber,
-  type ContainerComponentSource,
 } from './BaseMessageComponent';
-import { ComponentType, type APIContainerComponent } from 'discord-api-types/v10';
+import type {
+  ContainerComponentSource,
+  MessageComponentInstance,
+} from './BaseMessageComponent';
+import { ComponentType } from 'discord-api-types/v10';
+import type { APIContainerComponent } from 'discord-api-types/v10';
 
 function isContainerChild(
-  component: import('./BaseMessageComponent').MessageComponentInstance | null,
+  component: MessageComponentInstance | null
 ): component is ContainerComponentSource {
-  return component !== null && BaseMessageComponent.isContainerComponent(component);
+  return (
+    component !== null && BaseMessageComponent.isContainerComponent(component)
+  );
 }
 
 class ContainerComponent extends BaseMessageComponent {
@@ -28,10 +34,11 @@ class ContainerComponent extends BaseMessageComponent {
     super.setup(data);
     const source = isComponentDataSource(data) ? data : {};
     this.components = readComponentArray(source, 'components')
-      .map(component => BaseMessageComponent.create(component))
+      .map((component) => BaseMessageComponent.create(component))
       .filter(isContainerChild);
 
-    this.accentColor = readComponentNumber(source, 'accent_color', 'accentColor') ?? null;
+    this.accentColor =
+      readComponentNumber(source, 'accent_color', 'accentColor') ?? null;
 
     this.spoiler = readComponentBoolean(source, 'spoiler') ?? false;
   }
@@ -44,10 +51,12 @@ class ContainerComponent extends BaseMessageComponent {
 
   toJSON(): APIContainerComponent {
     return {
-      type: ComponentType.Container,
-      components: this.components.map(component => BaseMessageComponent.serializeContainerComponent(component)),
       accent_color: this.accentColor,
+      components: this.components.map((component) =>
+        BaseMessageComponent.serializeContainerComponent(component)
+      ),
       spoiler: this.spoiler,
+      type: ComponentType.Container,
     };
   }
 }

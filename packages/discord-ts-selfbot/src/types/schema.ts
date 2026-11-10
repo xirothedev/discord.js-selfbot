@@ -90,74 +90,144 @@ export interface EntityEntry<
  * object shape and tagging the fields that are not plain API data.
  */
 export type EntitySchema = {
-  AnonymousGuild: EntityEntry<RawAnonymousGuildData, AnonymousGuildEntity, Record<never, never>>;
+  AnonymousGuild: EntityEntry<
+    RawAnonymousGuildData,
+    AnonymousGuildEntity,
+    Record<never, never>
+  >;
   Application: EntityEntry<
     RawApplicationData,
     ApplicationEntity,
     { commands: 'relation'; owner: 'relation' },
     Partial<ApplicationPatch>
   >;
-  AutoModerationRule: EntityEntry<APIAutoModerationRule, AutoModerationRuleEntity, { guild: 'relation' }>;
-  BaseGuild: EntityEntry<RawBaseGuildData, BaseGuildEntity, Record<never, never>>;
-  BaseGuildEmoji: EntityEntry<RawGuildEmojiData, BaseGuildEmojiEntity, { guild: 'relation' }>;
+  AutoModerationRule: EntityEntry<
+    APIAutoModerationRule,
+    AutoModerationRuleEntity,
+    { guild: 'relation' }
+  >;
+  BaseGuild: EntityEntry<
+    RawBaseGuildData,
+    BaseGuildEntity,
+    Record<never, never>
+  >;
+  BaseGuildEmoji: EntityEntry<
+    RawGuildEmojiData,
+    BaseGuildEmojiEntity,
+    { guild: 'relation' }
+  >;
   Channel: EntityEntry<RawChannelData, ChannelEntity, Record<never, never>>;
   ClientUser: EntityEntry<
     SelfbotClientUserData,
     ClientUserEntity,
     {
-      phone: 'selfbot';
       bio: 'selfbot';
-      pronouns: 'selfbot';
       nsfwAllowed: 'selfbot';
-      purchasedFlags: 'selfbot';
+      phone: 'selfbot';
       premiumUsageFlags: 'selfbot';
+      pronouns: 'selfbot';
+      purchasedFlags: 'selfbot';
     }
   >;
   Emoji: EntityEntry<RawEmojiData, EmojiEntity, Record<never, never>>;
-  Guild: EntityEntry<RawGuildData, GuildEntity, Record<never, never>, Partial<GuildPatch>>;
-  GuildBoost: EntityEntry<SelfbotGuildBoostData, GuildBoostEntity, Record<never, never>>;
-  GuildChannel: EntityEntry<RawGuildChannelData, GuildChannelEntity, { guild: 'relation' }>;
+  Guild: EntityEntry<
+    RawGuildData,
+    GuildEntity,
+    Record<never, never>,
+    Partial<GuildPatch>
+  >;
+  GuildBoost: EntityEntry<
+    SelfbotGuildBoostData,
+    GuildBoostEntity,
+    Record<never, never>
+  >;
+  GuildChannel: EntityEntry<
+    RawGuildChannelData,
+    GuildChannelEntity,
+    { guild: 'relation' }
+  >;
   GuildEmoji: EntityEntry<
     RawGuildEmojiData,
     GuildEmojiEntity,
-    { guild: 'relation'; author: 'relation'; _roles: 'internal' }
+    { _roles: 'internal'; author: 'relation'; guild: 'relation' }
   >;
   GuildMember: EntityEntry<
     RawGuildMemberData,
     GuildMemberEntity,
-    { guild: 'relation'; _roles: 'internal' },
+    { _roles: 'internal'; guild: 'relation' },
     Partial<GuildMemberPatch>
   >;
-  GuildPreview: EntityEntry<RawGuildPreviewData, GuildPreviewEntity, Record<never, never>>;
-  GuildScheduledEvent: EntityEntry<RawGuildScheduledEventData, GuildScheduledEventEntity, Record<never, never>>;
-  GuildTemplate: EntityEntry<RawGuildTemplateData, GuildTemplateEntity, { creator: 'relation'; guild: 'relation' }>;
+  GuildPreview: EntityEntry<
+    RawGuildPreviewData,
+    GuildPreviewEntity,
+    Record<never, never>
+  >;
+  GuildScheduledEvent: EntityEntry<
+    RawGuildScheduledEventData,
+    GuildScheduledEventEntity,
+    Record<never, never>
+  >;
+  GuildTemplate: EntityEntry<
+    RawGuildTemplateData,
+    GuildTemplateEntity,
+    { creator: 'relation'; guild: 'relation' }
+  >;
   Integration: EntityEntry<
     RawIntegrationData,
     IntegrationEntity,
-    { guild: 'relation'; role: 'relation'; user: 'relation'; application: 'relation' }
+    {
+      application: 'relation';
+      guild: 'relation';
+      role: 'relation';
+      user: 'relation';
+    }
   >;
   Invite: EntityEntry<
     RawInviteData,
     InviteEntity,
     {
       guild: 'relation';
-      inviter: 'relation';
-      targetUser: 'relation';
-      targetApplication: 'relation';
-      stageInstance: 'relation';
       guildScheduledEvent: 'relation';
+      inviter: 'relation';
+      stageInstance: 'relation';
+      targetApplication: 'relation';
+      targetUser: 'relation';
     }
   >;
-  InviteStageInstance: EntityEntry<RawInviteStageInstance, InviteStageInstanceEntity, Record<never, never>>;
+  InviteStageInstance: EntityEntry<
+    RawInviteStageInstance,
+    InviteStageInstanceEntity,
+    Record<never, never>
+  >;
   Message: EntityEntry<RawMessageData, MessageEntity, Record<never, never>>;
-  MessagePayload: EntityEntry<RawMessagePayloadData, MessagePayloadEntity, Record<never, never>>;
+  MessagePayload: EntityEntry<
+    RawMessagePayloadData,
+    MessagePayloadEntity,
+    Record<never, never>
+  >;
   Role: EntityEntry<RawRoleData, RoleEntity, { guild: 'relation' }>;
-  StageInstance: EntityEntry<RawStageInstanceData, StageInstanceEntity, Record<never, never>>;
-  StickerPack: EntityEntry<RawStickerPackData, StickerPackEntity, Record<never, never>>;
+  StageInstance: EntityEntry<
+    RawStageInstanceData,
+    StageInstanceEntity,
+    Record<never, never>
+  >;
+  StickerPack: EntityEntry<
+    RawStickerPackData,
+    StickerPackEntity,
+    Record<never, never>
+  >;
   Team: EntityEntry<RawTeamData, TeamEntity, Record<never, never>>;
   User: EntityEntry<SelfbotUserData, UserEntity, { bannerColor: 'selfbot' }>;
-  VoiceState: EntityEntry<RawVoiceStateData, VoiceStateEntity, { guild: 'relation' }>;
-  WelcomeScreen: EntityEntry<RawWelcomeScreenData, WelcomeScreenEntity, { guild: 'relation' }>;
+  VoiceState: EntityEntry<
+    RawVoiceStateData,
+    VoiceStateEntity,
+    { guild: 'relation' }
+  >;
+  WelcomeScreen: EntityEntry<
+    RawWelcomeScreenData,
+    WelcomeScreenEntity,
+    { guild: 'relation' }
+  >;
   Widget: EntityEntry<RawWidgetData, WidgetEntity, Record<never, never>>;
 };
 

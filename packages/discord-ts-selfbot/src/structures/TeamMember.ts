@@ -1,5 +1,6 @@
 import Base from './Base';
 import _ConstantsModule from '../util/Constants';
+
 const { MembershipStates } = _ConstantsModule;
 import type { TeamMemberRole } from 'discord-api-types/v10';
 import type { MembershipState } from '../../typings';

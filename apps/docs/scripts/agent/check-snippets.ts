@@ -1,4 +1,11 @@
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import path from 'node:path';
 
 const docsDir = path.resolve(import.meta.dir, '../..');
@@ -9,8 +16,11 @@ function walk(root: string): string[] {
   const files: string[] = [];
   for (const entry of readdirSync(root, { withFileTypes: true })) {
     const full = path.join(root, entry.name);
-    if (entry.isDirectory()) files.push(...walk(full));
-    else if (entry.name.endsWith('.md')) files.push(full);
+    if (entry.isDirectory()) {
+      files.push(...walk(full));
+    } else if (entry.name.endsWith('.md')) {
+      files.push(full);
+    }
   }
   return files;
 }
@@ -26,14 +36,14 @@ function collect(): Snippet[] {
 
   for (const file of walk(agentDocs)) {
     const relative = path.relative(agentDocs, file).replaceAll(path.sep, '/');
-    const lines = readFileSync(file, 'utf8').split('\n');
+    const lines = readFileSync(file, 'utf-8').split('\n');
     let inFence = false;
     let info = '';
     let buffer: string[] = [];
     let index = 0;
 
     for (const line of lines) {
-      const open = line.match(/^\s*```(\S.*)?$/);
+      const open = line.match(/^\s*```(?<info>\S.*)?$/u);
       if (!inFence && open) {
         inFence = true;
         info = (open[1] ?? '').trim();
@@ -41,18 +51,21 @@ function collect(): Snippet[] {
         continue;
       }
 
-      if (inFence && /^\s*```\s*$/.test(line)) {
+      if (inFence && /^\s*```\s*$/u.test(line)) {
         const marked = info.startsWith('ts check');
-        const example = relative.startsWith('examples/') && info.startsWith('ts');
+        const example =
+          relative.startsWith('examples/') && info.startsWith('ts');
         if ((marked || example) && buffer.length) {
           index += 1;
-          snippets.push({ file: relative, index, code: buffer.join('\n') });
+          snippets.push({ code: buffer.join('\n'), file: relative, index });
         }
         inFence = false;
         continue;
       }
 
-      if (inFence) buffer.push(line);
+      if (inFence) {
+        buffer.push(line);
+      }
     }
   }
 
@@ -72,25 +85,28 @@ function main(): void {
   try {
     const config = {
       compilerOptions: {
-        strict: true,
-        noEmit: true,
-        target: 'ES2022',
+        baseUrl: packageDir,
+        esModuleInterop: true,
         module: 'ESNext',
         moduleResolution: 'bundler',
-        skipLibCheck: true,
-        esModuleInterop: true,
-        types: ['bun'],
-        baseUrl: packageDir,
+        noEmit: true,
         paths: {
           'discord-ts-selfbot': ['typings/index.d.ts'],
         },
+        skipLibCheck: true,
+        strict: true,
+        target: 'ES2022',
+        types: ['bun'],
       },
       include: [path.join(temp, '*.ts')],
     };
-    writeFileSync(path.join(temp, 'tsconfig.json'), JSON.stringify(config, null, 2));
+    writeFileSync(
+      path.join(temp, 'tsconfig.json'),
+      JSON.stringify(config, null, 2)
+    );
 
     for (const snippet of snippets) {
-      const name = `${snippet.file.replaceAll('/', '__').replace(/\.md$/, '')}-${snippet.index}.ts`;
+      const name = `${snippet.file.replaceAll('/', '__').replace(/\.md$/u, '')}-${snippet.index}.ts`;
       writeFileSync(path.join(temp, name), `${snippet.code}\n`);
     }
 
@@ -98,22 +114,28 @@ function main(): void {
     const result = Bun.spawnSync({
       cmd: ['bun', tsc, '-p', path.join(temp, 'tsconfig.json')],
       cwd: packageDir,
-      stdout: 'pipe',
       stderr: 'pipe',
+      stdout: 'pipe',
     });
 
     if (result.exitCode !== 0) {
-      const output = new TextDecoder().decode(result.stdout) + new TextDecoder().decode(result.stderr);
+      const output =
+        new TextDecoder().decode(result.stdout) +
+        new TextDecoder().decode(result.stderr);
       console.error(output.trim());
-      console.error(`\n${snippets.length} snippets checked; type errors found.`);
+      console.error(
+        `\n${snippets.length} snippets checked; type errors found.`
+      );
       process.exitCode = 1;
       return;
     }
 
     console.log(`${snippets.length} snippets type-check.`);
   } finally {
-    rmSync(temp, { recursive: true, force: true });
+    rmSync(temp, { force: true, recursive: true });
   }
 }
 
-if (import.meta.main) main();
+if (import.meta.main) {
+  main();
+}

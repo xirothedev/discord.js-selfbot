@@ -1,6 +1,5 @@
 import pkg from '../package.json';
 import _GuildAuditLogsModule from './structures/GuildAuditLogs';
-('use strict');
 
 // "Root" classes (starting points)
 export { default as BaseClient } from './client/BaseClient';
@@ -14,20 +13,20 @@ export { default as ShardingManager } from './sharding/ShardingManager';
 export { default as WebhookClient } from './client/WebhookClient';
 
 // Builders
-export { ActionRowBuilder as ActionRowBuilder } from '@discordjs/builders';
+export { ActionRowBuilder } from '@discordjs/builders';
 export { default as AttachmentBuilder } from './structures/AttachmentBuilder';
-export { ButtonBuilder as ButtonBuilder } from '@discordjs/builders';
-export { ChannelSelectMenuBuilder as ChannelSelectMenuBuilder } from '@discordjs/builders';
-export { EmbedBuilder as EmbedBuilder } from '@discordjs/builders';
-export { MentionableSelectMenuBuilder as MentionableSelectMenuBuilder } from '@discordjs/builders';
-export { ModalBuilder as ModalBuilder } from '@discordjs/builders';
-export { RoleSelectMenuBuilder as RoleSelectMenuBuilder } from '@discordjs/builders';
-export { SelectMenuBuilder as SelectMenuBuilder } from '@discordjs/builders';
-export { SelectMenuOptionBuilder as SelectMenuOptionBuilder } from '@discordjs/builders';
-export { StringSelectMenuBuilder as StringSelectMenuBuilder } from '@discordjs/builders';
-export { StringSelectMenuOptionBuilder as StringSelectMenuOptionBuilder } from '@discordjs/builders';
-export { TextInputBuilder as TextInputBuilder } from '@discordjs/builders';
-export { UserSelectMenuBuilder as UserSelectMenuBuilder } from '@discordjs/builders';
+export { ButtonBuilder } from '@discordjs/builders';
+export { ChannelSelectMenuBuilder } from '@discordjs/builders';
+export { EmbedBuilder } from '@discordjs/builders';
+export { MentionableSelectMenuBuilder } from '@discordjs/builders';
+export { ModalBuilder } from '@discordjs/builders';
+export { RoleSelectMenuBuilder } from '@discordjs/builders';
+export { SelectMenuBuilder } from '@discordjs/builders';
+export { SelectMenuOptionBuilder } from '@discordjs/builders';
+export { StringSelectMenuBuilder } from '@discordjs/builders';
+export { StringSelectMenuOptionBuilder } from '@discordjs/builders';
+export { TextInputBuilder } from '@discordjs/builders';
+export { UserSelectMenuBuilder } from '@discordjs/builders';
 
 // V13 aliases for the v14 builders
 /** @deprecated Use {@link ActionRowBuilder} instead. */
@@ -49,7 +48,7 @@ export { default as ApplicationFlags } from './util/ApplicationFlags';
 export { default as AttachmentFlags } from './util/AttachmentFlags';
 export { default as BaseManager } from './managers/BaseManager';
 export { default as BitField } from './util/BitField';
-export { Collection as Collection } from '@discordjs/collection';
+export { Collection } from '@discordjs/collection';
 export { default as Constants } from './util/Constants';
 export { default as DataResolver } from './util/DataResolver';
 export { default as DiscordAPIError } from './rest/DiscordAPIError';
@@ -73,7 +72,7 @@ export { default as ThreadMemberFlags } from './util/ThreadMemberFlags';
 export { default as UserFlags } from './util/UserFlags';
 export { default as Util } from './util/Util';
 export type { DiscordPayload } from './util/types';
-export const version = pkg.version;
+export const { version } = pkg;
 
 // V14 aliases for the v13 flag classes above
 export { default as ActivityFlagsBitField } from './util/ActivityFlags';
@@ -127,7 +126,7 @@ export { default as RelationshipManager } from './managers/RelationshipManager';
 export { default as UserNoteManager } from './managers/UserNoteManager';
 
 // Structures
-export { Activity as Activity } from './structures/Presence';
+export { Activity } from './structures/Presence';
 export { default as AnonymousGuild } from './structures/AnonymousGuild';
 export { default as Application } from './structures/interfaces/Application';
 export { default as ApplicationCommand } from './structures/ApplicationCommand';
@@ -142,7 +141,7 @@ export { default as BaseGuildTextChannel } from './structures/BaseGuildTextChann
 export { default as BaseGuildVoiceChannel } from './structures/BaseGuildVoiceChannel';
 export { default as ButtonInteraction } from './structures/ButtonInteraction';
 export { default as CategoryChannel } from './structures/CategoryChannel';
-export { Channel as Channel } from './structures/Channel';
+export { Channel } from './structures/Channel';
 export { default as ClientPresence } from './structures/ClientPresence';
 export { default as ClientUser } from './structures/ClientUser';
 export { default as Collector } from './structures/interfaces/Collector';
@@ -151,19 +150,19 @@ export { default as CommandInteractionOptionResolver } from './structures/Comman
 export { default as ContainerComponent } from './structures/ContainerComponent';
 export { default as DirectoryChannel } from './structures/DirectoryChannel';
 export { default as DMChannel } from './structures/DMChannel';
-export { Emoji as Emoji } from './structures/Emoji';
+export { Emoji } from './structures/Emoji';
 export { default as FileComponent } from './structures/FileComponent';
 export { default as ForumChannel } from './structures/ForumChannel';
-export { Guild as Guild } from './structures/Guild';
+export { Guild } from './structures/Guild';
 export { default as GuildAuditLogs } from './structures/GuildAuditLogs';
 export const GuildAuditLogsEntry = _GuildAuditLogsModule.Entry;
 export { default as GuildBan } from './structures/GuildBan';
 export { default as GuildChannel } from './structures/GuildChannel';
 export { default as GuildEmoji } from './structures/GuildEmoji';
-export { GuildMember as GuildMember } from './structures/GuildMember';
+export { GuildMember } from './structures/GuildMember';
 export { default as GuildPreview } from './structures/GuildPreview';
 export { default as GuildPreviewEmoji } from './structures/GuildPreviewEmoji';
-export { GuildScheduledEvent as GuildScheduledEvent } from './structures/GuildScheduledEvent';
+export { GuildScheduledEvent } from './structures/GuildScheduledEvent';
 export { default as GuildTemplate } from './structures/GuildTemplate';
 export { default as Integration } from './structures/Integration';
 export { default as IntegrationApplication } from './structures/IntegrationApplication';
@@ -175,7 +174,7 @@ export { default as InviteGuild } from './structures/InviteGuild';
 export { default as MediaChannel } from './structures/MediaChannel';
 export { default as MediaGalleryComponent } from './structures/MediaGalleryComponent';
 export { default as MediaGalleryItem } from './structures/MediaGalleryItem';
-export { Message as Message } from './structures/Message';
+export { Message } from './structures/Message';
 export { default as MessageActionRow } from './structures/MessageActionRow';
 export { default as MessageAttachment } from './structures/MessageAttachment';
 export { default as MessageButton } from './structures/MessageButton';
@@ -191,18 +190,18 @@ export { default as NewsChannel } from './structures/NewsChannel';
 export { default as OAuth2Guild } from './structures/OAuth2Guild';
 export { default as GroupDMChannel } from './structures/GroupDMChannel';
 export { default as PermissionOverwrites } from './structures/PermissionOverwrites';
-export { Presence as Presence } from './structures/Presence';
+export { Presence } from './structures/Presence';
 export { default as ReactionCollector } from './structures/ReactionCollector';
 export { default as ReactionEmoji } from './structures/ReactionEmoji';
-export { RichPresenceAssets as RichPresenceAssets } from './structures/Presence';
-export { Role as Role } from './structures/Role';
+export { RichPresenceAssets } from './structures/Presence';
+export { Role } from './structures/Role';
 export { default as SectionComponent } from './structures/SectionComponent';
 export { default as SelectMenuInteraction } from './structures/SelectMenuInteraction';
 export { default as SeparatorComponent } from './structures/SeparatorComponent';
 export { default as Session } from './structures/Session';
 export { default as StageChannel } from './structures/StageChannel';
-export { StageInstance as StageInstance } from './structures/StageInstance';
-export { Sticker as Sticker } from './structures/Sticker';
+export { StageInstance } from './structures/StageInstance';
+export { Sticker } from './structures/Sticker';
 export { default as StickerPack } from './structures/StickerPack';
 export { default as StoreChannel } from './structures/StoreChannel';
 export { default as Team } from './structures/Team';
@@ -229,12 +228,12 @@ export { default as WelcomeScreen } from './structures/WelcomeScreen';
 
 export { default as WebSocket } from './WebSocket';
 
-export { CustomStatus as CustomStatus } from './structures/Presence';
-export { RichPresence as RichPresence } from './structures/Presence';
-export { SpotifyRPC as SpotifyRPC } from './structures/Presence';
+export { CustomStatus } from './structures/Presence';
+export { RichPresence } from './structures/Presence';
+export { SpotifyRPC } from './structures/Presence';
 export { default as WebEmbed } from './structures/WebEmbed';
 export { default as DiscordAuthWebsocket } from './util/RemoteAuth';
 export { default as PurchasedFlags } from './util/PurchasedFlags';
-export { Poll as Poll } from './structures/Poll';
-export { PollAnswer as PollAnswer } from './structures/PollAnswer';
+export { Poll } from './structures/Poll';
+export { PollAnswer } from './structures/PollAnswer';
 export { default as Recorder } from './client/voice/receiver/Recorder';

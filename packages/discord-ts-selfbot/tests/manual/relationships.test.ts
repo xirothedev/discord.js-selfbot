@@ -1,5 +1,6 @@
 import { test, describe } from 'bun:test';
-import { token, skip, makeClient, login, makeStepRecorder } from './_helpers';
+
+import { skip, makeClient, login, makeStepRecorder } from './_helpers';
 
 describe.skipIf(skip)('manual: relationships', () => {
   test('relationship operations', async () => {
@@ -9,10 +10,15 @@ describe.skipIf(skip)('manual: relationships', () => {
       await login(client);
       await step('fetch relationships', async () => {
         await client.relationships?.fetch?.();
-        console.log('  relationships:', client.relationships?.cache?.size ?? 'n/a');
+        console.log(
+          '  relationships:',
+          client.relationships?.cache?.size ?? 'n/a'
+        );
       });
-      await step('fetch friends', async () => {
-        const friends = client.relationships?.cache?.filter?.((r: any) => r.type === 1);
+      await step('fetch friends', () => {
+        const friends = client.relationships?.cache?.filter?.(
+          (relationshipType) => relationshipType === 1
+        );
         console.log('  friends:', friends?.size ?? 'n/a');
       });
     } finally {

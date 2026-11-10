@@ -20,18 +20,32 @@ class AudioDispatcher extends BaseDispatcher {
 
   constructor(
     player: MediaPlayer,
-    { seek = 0, volume = 1, fec, plp, bitrate = 96, highWaterMark = 12 }: StreamOptions = {},
-    streams: DispatcherStreams,
+    options: StreamOptions | undefined,
+    streams: DispatcherStreams
   ) {
+    const {
+      seek = 0,
+      volume = 1,
+      fec,
+      plp,
+      bitrate = 96,
+      highWaterMark = 12,
+    } = options ?? {};
     const streamOptions = {
+      bitrate: typeof bitrate === 'number' ? bitrate : 96,
+      fec: Boolean(fec),
+      highWaterMark,
+      plp: plp ?? 0,
       seek,
       volume: typeof volume === 'number' ? volume : 1,
-      fec: Boolean(fec),
-      plp: plp ?? 0,
-      bitrate: typeof bitrate === 'number' ? bitrate : 96,
-      highWaterMark,
     };
-    super(player, highWaterMark, VoiceCodec.getPayloadType('opus'), false, streams);
+    super(
+      player,
+      highWaterMark,
+      VoiceCodec.getPayloadType('opus'),
+      false,
+      streams
+    );
 
     this.streamOptions = streamOptions;
 
@@ -39,8 +53,12 @@ class AudioDispatcher extends BaseDispatcher {
 
     this.setVolume(volume);
     this.setBitrate(bitrate);
-    if (typeof fec !== 'undefined') this.setFEC(fec);
-    if (typeof plp !== 'undefined') this.setPLP(plp);
+    if (fec !== undefined) {
+      this.setFEC(fec);
+    }
+    if (plp !== undefined) {
+      this.setPLP(plp);
+    }
   }
 
   get TIMESTAMP_INC() {
@@ -56,21 +74,33 @@ class AudioDispatcher extends BaseDispatcher {
   }
 
   setBitrate(value: number | 'auto') {
-    if (!value || !this.bitrateEditable) return false;
-    const bitrate = value === 'auto' ? (this.player.voiceConnection.channel.bitrate ?? 96) : value;
-    this.streams.opus!.setBitrate!(bitrate * 1000);
+    const { opus } = this.streams;
+    if (!value || !opus?.setBitrate) {
+      return false;
+    }
+    const bitrate =
+      value === 'auto'
+        ? (this.player.voiceConnection.channel.bitrate ?? 96)
+        : value;
+    opus.setBitrate(bitrate * 1000);
     return true;
   }
 
   setPLP(value: number) {
-    if (!this.bitrateEditable) return false;
-    this.streams.opus!.setPLP!(value);
+    const { opus } = this.streams;
+    if (!opus?.setPLP) {
+      return false;
+    }
+    opus.setPLP(value);
     return true;
   }
 
   setFEC(enabled: boolean) {
-    if (!this.bitrateEditable) return false;
-    this.streams.opus!.setFEC!(enabled);
+    const { opus } = this.streams;
+    if (!opus?.setFEC) {
+      return false;
+    }
+    opus.setFEC(enabled);
     return true;
   }
 
@@ -88,10 +118,15 @@ class AudioDispatcher extends BaseDispatcher {
   }
 
   setVolume(value: number | boolean) {
-    if (!this.streams.volume) return false;
-    if (typeof value !== 'number') return false;
+    const { volume } = this.streams;
+    if (!volume?.setVolume) {
+      return false;
+    }
+    if (typeof value !== 'number') {
+      return false;
+    }
     this.emit('volumeChange', this.volume, value);
-    this.streams.volume!.setVolume!(value);
+    volume.setVolume(value);
     return true;
   }
 
@@ -102,16 +137,11 @@ class AudioDispatcher extends BaseDispatcher {
     this._syncDispatcher = otherDispatcher;
   }
 
-  // Volume stubs for docs
-  /* eslint-disable no-empty-function*/
-  get volumeDecibels() {
-    return undefined;
-  }
-  get volumeLogarithmic() {
-    return undefined;
-  }
-  setVolumeDecibels() {}
-  setVolumeLogarithmic() {}
+  // Volume stubs for docs; VolumeInterface.applyToClass installs the real ones.
+  declare volumeDecibels: number;
+  declare volumeLogarithmic: number;
+  declare setVolumeDecibels: (value: number) => void;
+  declare setVolumeLogarithmic: (value: number) => void;
 }
 
 VolumeInterface.applyToClass(AudioDispatcher);

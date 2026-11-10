@@ -1,5 +1,9 @@
 import UnfurledMediaItem from './UnfurledMediaItem';
-import { isComponentDataSource, readComponentBoolean, readComponentString } from './BaseMessageComponent';
+import {
+  isComponentDataSource,
+  readComponentBoolean,
+  readComponentString,
+} from './BaseMessageComponent';
 
 class MediaGalleryItem {
   declare media: UnfurledMediaItem;
@@ -17,8 +21,8 @@ class MediaGalleryItem {
 
   toJSON() {
     return {
-      media: this.media.toJSON(),
       description: this.description,
+      media: this.media.toJSON(),
       spoiler: this.spoiler,
     };
   }

@@ -1,9 +1,15 @@
 import BaseMessageComponent from './BaseMessageComponent';
 import { ButtonStyle, ComponentType } from 'discord-api-types/v10';
-import type { APIButtonComponent, APIMessageComponentEmoji, APIPartialEmoji } from 'discord-api-types/v10';
+import type {
+  APIButtonComponent,
+  APIMessageComponentEmoji,
+  APIPartialEmoji,
+} from 'discord-api-types/v10';
 import _errorsModule from '../errors';
+
 const { RangeError } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
+
 const { MessageButtonStyles } = _ConstantsModule;
 import Util from '../util/Util';
 import type {
@@ -13,15 +19,19 @@ import type {
   MessageButtonStyleResolvable,
 } from '../../typings';
 
-type MessageButtonInput = {
+interface MessageButtonInput {
   label?: string | null;
   customId?: string | null;
   custom_id?: string | null;
   style?: MessageButtonStyleResolvable | ButtonStyle | null;
-  emoji?: EmojiIdentifierResolvable | APIPartialEmoji | APIMessageComponentEmoji | null;
+  emoji?:
+    | EmojiIdentifierResolvable
+    | APIPartialEmoji
+    | APIMessageComponentEmoji
+    | null;
   url?: string | null;
   disabled?: boolean;
-};
+}
 
 class MessageButton extends BaseMessageComponent {
   declare customId: string | null;
@@ -32,7 +42,13 @@ class MessageButton extends BaseMessageComponent {
   declare type: 'BUTTON';
   declare url: string | null;
 
-  constructor(data: MessageButton | MessageButtonOptions | APIButtonComponent | MessageButtonInput = {}) {
+  constructor(
+    data:
+      | MessageButton
+      | MessageButtonOptions
+      | APIButtonComponent
+      | MessageButtonInput = {}
+  ) {
     super({ type: 'BUTTON' });
 
     this.setup(data);
@@ -92,7 +108,11 @@ class MessageButton extends BaseMessageComponent {
     } = {
       disabled: this.disabled,
       emoji: this.emoji
-        ? { id: this.emoji.id ?? undefined, name: this.emoji.name ?? undefined, animated: this.emoji.animated }
+        ? {
+            animated: this.emoji.animated,
+            id: this.emoji.id ?? undefined,
+            name: this.emoji.name ?? undefined,
+          }
         : undefined,
       label: this.label ?? undefined,
       type: ComponentType.Button,
@@ -102,12 +122,16 @@ class MessageButton extends BaseMessageComponent {
     }
     return {
       ...base,
-      style: this.style ? MessageButtonStyles[this.style] : ButtonStyle.Secondary,
       custom_id: this.customId ?? '',
+      style: this.style
+        ? MessageButtonStyles[this.style]
+        : ButtonStyle.Secondary,
     };
   }
 
-  static resolveStyle(style: MessageButtonStyleResolvable | ButtonStyle): MessageButtonStyle {
+  static resolveStyle(
+    style: MessageButtonStyleResolvable | ButtonStyle
+  ): MessageButtonStyle {
     return typeof style === 'string' ? style : MessageButtonStyles[style];
   }
 }

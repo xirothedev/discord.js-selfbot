@@ -26,13 +26,19 @@ import type { Message, PartialTypes } from 'discord-ts-selfbot';
 
 // The runtime Partials enum is numeric, while ClientOptions.partials uses the
 // v14 string union. Cast until the package typings and enum agree.
-const partials = [Partials.Channel, Partials.Message, Partials.Reaction] as unknown as PartialTypes[];
+const partials = [
+  Partials.Channel,
+  Partials.Message,
+  Partials.Reaction,
+] as unknown as PartialTypes[];
 
 const client = new Client({ partials });
 
 const announceReady = (readyClient: Client<true>) => {
   const gatewayStatus = Status[readyClient.ws.status] ?? 'unknown';
-  console.log(`${readyClient.user.tag} is ready (gateway status: ${gatewayStatus}).`);
+  console.log(
+    `${readyClient.user.tag} is ready (gateway status: ${gatewayStatus}).`
+  );
 };
 
 // discord.js v14 names this event `clientReady`. The current gateway also
@@ -41,7 +47,9 @@ client.once(Events.ClientReady, announceReady);
 client.once(Events.CLIENT_READY, announceReady);
 
 client.on(Events.MessageCreate, async (message: Message) => {
-  if (message.author?.id === client.user?.id) return;
+  if (message.author?.id === client.user?.id) {
+    return;
+  }
 
   if (message.content === '!hello') {
     await message.reply('Hello from the events example!');
@@ -78,9 +86,11 @@ const client = new Client({
   partials: [Partials.Channel, Partials.Message, Partials.Reaction],
 });
 
-const announceReady = readyClient => {
+const announceReady = (readyClient) => {
   const gatewayStatus = Status[readyClient.ws.status] ?? 'unknown';
-  console.log(`${readyClient.user.tag} is ready (gateway status: ${gatewayStatus}).`);
+  console.log(
+    `${readyClient.user.tag} is ready (gateway status: ${gatewayStatus}).`
+  );
 };
 
 // discord.js v14 names this event `clientReady`. The current gateway also
@@ -88,15 +98,17 @@ const announceReady = readyClient => {
 client.once(Events.ClientReady, announceReady);
 client.once(Events.CLIENT_READY, announceReady);
 
-client.on(Events.MessageCreate, async message => {
-  if (message.author.id === client.user?.id) return;
+client.on(Events.MessageCreate, async (message) => {
+  if (message.author.id === client.user?.id) {
+    return;
+  }
 
   if (message.content === '!hello') {
     await message.reply('Hello from the events example!');
   }
 });
 
-client.on(Events.Error, error => {
+client.on(Events.Error, (error) => {
   console.error('Client error:', error);
 });
 

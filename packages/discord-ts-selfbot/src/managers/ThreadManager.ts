@@ -3,7 +3,11 @@ import CachedManager from './CachedManager';
 import ThreadChannel from '../structures/ThreadChannel';
 import { isThreadChannel } from '../types/channels';
 import type { Snowflake } from 'discord-api-types/v10';
-import type { RawChannelData, RawMessageData, RawThreadMemberData } from '../../typings/rawDataTypes';
+import type {
+  RawChannelData,
+  RawMessageData,
+  RawThreadMemberData,
+} from '../../typings/rawDataTypes';
 import type {
   BaseFetchOptions,
   FetchArchivedThreadOptions,
@@ -14,7 +18,10 @@ import type { Client } from '../client/Client';
 import type { Guild } from '../structures/Guild';
 import type { GuildChannel } from '../structures/GuildChannel';
 
-type ThreadChannelResolvableSource = ThreadChannel | Snowflake | ThreadChannelResolvable;
+type ThreadChannelResolvableSource =
+  | ThreadChannel
+  | Snowflake
+  | ThreadChannelResolvable;
 
 interface FetchChannelThreadsOptionsSource {
   archived?: boolean;
@@ -46,21 +53,27 @@ class ThreadManager extends CachedManager<ThreadChannel> {
 
   _add(thread: ThreadChannel): ThreadChannel {
     const existing = this.cache.get(thread.id);
-    if (existing) return existing;
+    if (existing) {
+      return existing;
+    }
     this.cache.set(thread.id, thread);
     return thread;
   }
 
   fetch(
     options?: ThreadChannelResolvableSource | FetchThreadsOptions,
-    { cache, force }: BaseFetchOptions = {},
+    { cache, force }: BaseFetchOptions = {}
   ): Promise<ThreadChannel | FetchedThreadsSource | null> {
-    if (!options) return this.fetchActive(cache);
+    if (!options) {
+      return this.fetchActive(cache);
+    }
     const channel = this.client.channels.resolveId(options);
     if (channel) {
       return this.client.channels
         .fetch(channel, { cache, force })
-        .then(fetched => (fetched && isThreadChannel(fetched) ? fetched : null));
+        .then((fetched) =>
+          fetched && isThreadChannel(fetched) ? fetched : null
+        );
     }
     if (
       typeof options === 'object' &&
@@ -73,49 +86,77 @@ class ThreadManager extends CachedManager<ThreadChannel> {
     return this.fetchActive(cache);
   }
 
-  fetchArchived(options: FetchArchivedThreadOptions = {}, cache = true): Promise<FetchedThreadsSource> {
+  fetchArchived(
+    options: FetchArchivedThreadOptions = {},
+    cache = true
+  ): Promise<FetchedThreadsSource> {
     return this.fetchActive(cache, { archived: true, ...options });
   }
 
-  async fetchActive(cache = true, options: FetchChannelThreadsOptionsSource = {}): Promise<FetchedThreadsSource> {
-    const raw: RawThreadsResponse = await this.client.api.channels(this.channel.id).threads.search.get({
-      query: {
-        archived: options?.archived ?? false,
-        limit: options?.limit ?? 25,
-        offset: options?.offset ?? 0,
-        sort_by: options?.sortBy ?? 'last_message_time',
-        sort_order: options?.sortOrder ?? 'desc',
-      },
-    });
+  async fetchActive(
+    cache = true,
+    options: FetchChannelThreadsOptionsSource = {}
+  ): Promise<FetchedThreadsSource> {
+    const raw: RawThreadsResponse = await this.client.api
+      .channels(this.channel.id)
+      .threads.search.get({
+        query: {
+          archived: options?.archived ?? false,
+          limit: options?.limit ?? 25,
+          offset: options?.offset ?? 0,
+          sort_by: options?.sortBy ?? 'last_message_time',
+          sort_order: options?.sortOrder ?? 'desc',
+        },
+      });
 
-    return ThreadManager._mapThreads(raw, this.client, { parent: this.channel, cache });
+    return ThreadManager._mapThreads(raw, this.client, {
+      cache,
+      parent: this.channel,
+    });
   }
 
   static _mapThreads(
     rawThreads: RawThreadsResponse,
     client: Client,
-    { parent, guild, cache }: { parent?: GuildChannel; guild?: Guild | null; cache?: boolean },
+    {
+      parent,
+      guild,
+      cache,
+    }: { parent?: GuildChannel; guild?: Guild | null; cache?: boolean }
   ): FetchedThreadsSource {
-    const threads = rawThreads.threads.reduce((coll, raw) => {
-      const thread = client.channels._add(raw, guild ?? parent?.guild ?? null, { cache });
-      if (!thread || !isThreadChannel(thread)) return coll;
-      if (parent && thread.parentId !== parent.id) return coll;
-      return coll.set(thread.id, thread);
-    }, new Collection<Snowflake, ThreadChannel>());
+    const threads = new Collection<Snowflake, ThreadChannel>();
+    for (const raw of rawThreads.threads) {
+      const thread = client.channels._add(raw, guild ?? parent?.guild ?? null, {
+        cache,
+      });
+      if (!thread || !isThreadChannel(thread)) {
+        continue;
+      }
+      if (parent && thread.parentId !== parent.id) {
+        continue;
+      }
+      threads.set(thread.id, thread);
+    }
     // Discord sends the thread id as id in this object
     for (const rawMember of rawThreads.members) {
-      const channel = rawMember.id ? client.channels.cache.get(rawMember.id) : undefined;
-      if (channel && isThreadChannel(channel)) channel.members._add(rawMember);
+      const channel = rawMember.id
+        ? client.channels.cache.get(rawMember.id)
+        : undefined;
+      if (channel && isThreadChannel(channel)) {
+        channel.members._add(rawMember);
+      }
     }
     // Patch firstMessage
     // According to https://github.com/aiko-chan-ai/discord.js-selfbot-v13/issues/1502, rawThreads.first_messages could be null.
     for (const rawMessage of rawThreads.first_messages || []) {
       const channel = client.channels.cache.get(rawMessage.id);
-      if (channel && isThreadChannel(channel)) channel.messages._add(rawMessage);
+      if (channel && isThreadChannel(channel)) {
+        channel.messages._add(rawMessage);
+      }
     }
     return {
-      threads,
       hasMore: rawThreads.has_more ?? false,
+      threads,
     };
   }
 }

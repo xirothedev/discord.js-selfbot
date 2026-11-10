@@ -1,11 +1,13 @@
 import Base from './Base';
 import _EmojiModule from './Emoji';
+
 const { Emoji } = _EmojiModule;
-import type { APIPartialEmoji } from 'discord-api-types/v10';
-import type { APIPollAnswer } from 'discord-api-types/v10';
+import type { APIPartialEmoji, APIPollAnswer } from 'discord-api-types/v10';
 import type { BaseFetchPollAnswerVotersOptions } from '../../typings';
 import type { Poll } from './Poll';
 import _errorsModule from '../errors';
+import type Client from '../client/Client';
+
 const { Error } = _errorsModule;
 
 class PollAnswer extends Base {
@@ -16,9 +18,9 @@ class PollAnswer extends Base {
   declare voteCount: number;
 
   constructor(
-    client: import('../client/Client').default,
+    client: Client,
     data: Partial<APIPollAnswer> & { count?: number; answer_id?: number },
-    poll: Poll,
+    poll: Poll
   ) {
     super(client);
 
@@ -28,7 +30,9 @@ class PollAnswer extends Base {
 
     this.text = data.poll_media?.text ?? null;
 
-    Object.defineProperty(this, '_emoji', { value: data.poll_media?.emoji ?? null });
+    Object.defineProperty(this, '_emoji', {
+      value: data.poll_media?.emoji ?? null,
+    });
 
     this._patch(data);
   }
@@ -43,20 +47,25 @@ class PollAnswer extends Base {
   }
 
   get emoji() {
-    if (!this._emoji || (!this._emoji.id && !this._emoji.name)) return null;
+    if (!this._emoji || (!this._emoji.id && !this._emoji.name)) {
+      return null;
+    }
     return (
-      (this._emoji.id ? this.client.emojis.cache.get(this._emoji.id) : null) ?? new Emoji(this.client, this._emoji)
+      (this._emoji.id ? this.client.emojis.cache.get(this._emoji.id) : null) ??
+      new Emoji(this.client, this._emoji)
     );
   }
 
   fetchVoters({ after, limit }: BaseFetchPollAnswerVotersOptions = {}) {
-    const channel = this.poll.message.channel;
-    if (!channel) throw new Error('CHANNEL_NOT_CACHED');
+    const { channel } = this.poll.message;
+    if (!channel) {
+      throw new Error('CHANNEL_NOT_CACHED');
+    }
     return channel.messages.fetchPollAnswerVoters({
-      messageId: this.poll.message.id,
-      answerId: this.id,
       after,
+      answerId: this.id,
       limit,
+      messageId: this.poll.message.id,
     });
   }
 }

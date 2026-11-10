@@ -216,7 +216,6 @@ Type-only exports stay in `typings/index.d.ts`; this reference does not repeat t
 ### Other
 
 - [GuildAuditLogsEntry](./other/guild-audit-logs-entry.md): Audit logs entry.
-- [version](./other/version.md): version reference.
 
 ## Known gaps
 

@@ -1,4 +1,13 @@
 {
   "title": "Guides",
-  "pages": ["client-events", "messages", "interactions", "voice", "calls", "recording", "account-profile", "guilds"]
+  "pages": [
+    "client-events",
+    "messages",
+    "interactions",
+    "voice",
+    "calls",
+    "recording",
+    "account-profile",
+    "guilds"
+  ]
 }

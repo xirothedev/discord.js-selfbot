@@ -1,17 +1,23 @@
-import Base from './Base';
+import Base, { patchValue } from './Base';
 import _GuildScheduledEventModule from './GuildScheduledEvent';
+
 const { GuildScheduledEvent } = _GuildScheduledEventModule;
 import IntegrationApplication from './IntegrationApplication';
 import InviteStageInstance from './InviteStageInstance';
 import _errorsModule from '../errors';
+
 const { Error } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
+
 const { Endpoints } = _ConstantsModule;
 import InviteFlags from '../util/InviteFlags';
 import Permissions from '../util/Permissions';
 import InviteGuild from './InviteGuild';
 import type { RawInviteData } from '../../typings/rawDataTypes';
-import type { GatewayInviteCreateDispatchData, GatewayInviteDeleteDispatchData } from 'discord-api-types/v10';
+import type {
+  GatewayInviteCreateDispatchData,
+  GatewayInviteDeleteDispatchData,
+} from 'discord-api-types/v10';
 import { Guild } from './Guild';
 import type { GuildChannel } from './GuildChannel';
 
@@ -22,8 +28,9 @@ export type RawInviteDataSource =
 import type { InviteEntity } from '../types/entities/invite';
 import type { PatchOf } from '../types/schema';
 import { isInviteChannel } from '../types/channels';
+import type Client from '../client/Client';
 
-// TODO: Convert `inviter` and `channel` in this class to a getter.
+// Keep `inviter` and `channel` as assigned fields for v14 parity.
 
 class Invite extends Base implements InviteEntity {
   declare channel: InviteEntity['channel'];
@@ -47,131 +54,31 @@ class Invite extends Base implements InviteEntity {
   declare guildScheduledEvent: InviteEntity['guildScheduledEvent'];
   declare flags: InviteEntity['flags'];
   declare _expiresTimestamp: number | null;
-  static INVITES_PATTERN: RegExp = /./;
-  constructor(client: import('../client/Client').default, data: RawInviteDataSource) {
+  static INVITES_PATTERN = /./u;
+  constructor(client: Client, data: RawInviteDataSource) {
     super(client);
     this._patch(data);
   }
 
   _patch(data: PatchOf<'Invite'> | RawInviteDataSource) {
-    this.guild ??= null;
-    if (data.guild) {
-      const cached = this.client.guilds.cache.get(data.guild.id);
-      if (cached) this.guild = cached;
-      else if (data.guild instanceof Guild) this.guild = data.guild;
-      else this.guild = new InviteGuild(this.client, data.guild);
+    this.patchGuild(data);
+
+    if (data.code !== undefined) {
+      this.code = data.code;
     }
 
-    if ('code' in data) {
-      this.code = data.code!;
-    }
+    this.patchCounts(data);
 
-    if ('approximate_presence_count' in data) {
-      this.presenceCount = data.approximate_presence_count ?? null;
-    } else {
-      this.presenceCount ??= null;
-    }
+    this.patchUsers(data);
 
-    if ('approximate_member_count' in data) {
-      this.memberCount = data.approximate_member_count ?? null;
-    } else {
-      this.memberCount ??= null;
-    }
+    this.patchChannelAndDates(data);
+    this.patchStageInstance(data);
 
-    if ('temporary' in data) {
-      this.temporary = data.temporary ?? null;
-    } else {
-      this.temporary ??= null;
-    }
-
-    if ('max_age' in data) {
-      this.maxAge = data.max_age ?? null;
-    } else {
-      this.maxAge ??= null;
-    }
-
-    if ('uses' in data) {
-      this.uses = data.uses ?? null;
-    } else {
-      this.uses ??= null;
-    }
-
-    if ('max_uses' in data) {
-      this.maxUses = data.max_uses ?? null;
-    } else {
-      this.maxUses ??= null;
-    }
-
-    if ('inviter_id' in data) {
-      this.inviterId = data.inviter_id ? String(data.inviter_id) : null;
-      this.inviter = this.client.users.resolve(data.inviter_id);
-    } else {
-      this.inviterId ??= null;
-    }
-
-    if ('inviter' in data) {
-      this.inviter ??= this.client.users._add(data.inviter);
-      this.inviterId = data.inviter!.id;
-    } else {
-      this.inviter ??= null;
-    }
-
-    if ('target_user' in data) {
-      this.targetUser = this.client.users._add(data.target_user);
-    } else {
-      this.targetUser ??= null;
-    }
-
-    if ('target_application' in data) {
-      this.targetApplication = new IntegrationApplication(this.client, data.target_application);
-    } else {
-      this.targetApplication ??= null;
-    }
-
-    if ('target_type' in data) {
-      this.targetType = data.target_type ?? null;
-    } else {
-      this.targetType ??= null;
-    }
-
-    if ('type' in data) {
-      this.type = data.type ?? null;
-    } else {
-      this.type ??= null;
-    }
-
-    if ('channel_id' in data) {
-      this.channelId = data.channel_id;
-      const channel = data.channel_id ? this.client.channels.cache.get(data.channel_id) : undefined;
-      this.channel = channel && isInviteChannel(channel) ? channel : undefined;
-    }
-
-    if ('channel' in data && data.channel !== null) {
-      const channel = this.client.channels._add(data.channel, this.guild, { cache: false });
-      if (channel && isInviteChannel(channel)) this.channel ??= channel;
-      this.channelId ??= data.channel!.id;
-    }
-
-    if ('created_at' in data) {
-      this.createdTimestamp = new Date(data.created_at!).getTime();
-    } else {
-      this.createdTimestamp ??= null;
-    }
-
-    if ('expires_at' in data) {
-      this._expiresTimestamp = data.expires_at ? Date.parse(data.expires_at) : null;
-    } else {
-      this._expiresTimestamp ??= null;
-    }
-
-    if ('stage_instance' in data) {
-      this.stageInstance = new InviteStageInstance(this.client, data.stage_instance!, this.channel!.id, this.guild!.id);
-    } else {
-      this.stageInstance ??= null;
-    }
-
-    if ('guild_scheduled_event' in data) {
-      this.guildScheduledEvent = new GuildScheduledEvent(this.client, data.guild_scheduled_event!);
+    if ('guild_scheduled_event' in data && data.guild_scheduled_event) {
+      this.guildScheduledEvent = new GuildScheduledEvent(
+        this.client,
+        data.guild_scheduled_event
+      );
     } else {
       this.guildScheduledEvent ??= null;
     }
@@ -183,17 +90,164 @@ class Invite extends Base implements InviteEntity {
     }
   }
 
+  private patchChannelAndDates(data: PatchOf<'Invite'> | RawInviteDataSource) {
+    if ('channel_id' in data) {
+      this.channelId = data.channel_id;
+      const channel = data.channel_id
+        ? this.client.channels.cache.get(data.channel_id)
+        : undefined;
+      this.channel = channel && isInviteChannel(channel) ? channel : undefined;
+    }
+
+    if ('channel' in data && data.channel) {
+      const channel = this.client.channels._add(data.channel, this.guild, {
+        cache: false,
+      });
+      if (channel && isInviteChannel(channel)) {
+        this.channel ??= channel;
+      }
+      this.channelId ??= data.channel.id;
+    }
+
+    if ('created_at' in data && data.created_at !== undefined) {
+      this.createdTimestamp = new Date(data.created_at).getTime();
+    } else {
+      this.createdTimestamp ??= null;
+    }
+
+    if ('expires_at' in data) {
+      this._expiresTimestamp = data.expires_at
+        ? Date.parse(data.expires_at)
+        : null;
+    } else {
+      this._expiresTimestamp ??= null;
+    }
+  }
+
+  private patchCounts(data: PatchOf<'Invite'> | RawInviteDataSource) {
+    this.presenceCount = patchValue(
+      'approximate_presence_count' in data
+        ? data.approximate_presence_count
+        : undefined,
+      this.presenceCount
+    );
+    this.memberCount = patchValue(
+      'approximate_member_count' in data
+        ? data.approximate_member_count
+        : undefined,
+      this.memberCount
+    );
+    this.temporary = patchValue(
+      'temporary' in data ? data.temporary : undefined,
+      this.temporary
+    );
+    this.maxAge = patchValue(
+      'max_age' in data ? data.max_age : undefined,
+      this.maxAge
+    );
+    this.uses = patchValue('uses' in data ? data.uses : undefined, this.uses);
+    this.maxUses = patchValue(
+      'max_uses' in data ? data.max_uses : undefined,
+      this.maxUses
+    );
+  }
+
+  private patchUsers(data: PatchOf<'Invite'> | RawInviteDataSource) {
+    if ('inviter_id' in data) {
+      this.inviterId = data.inviter_id ? String(data.inviter_id) : null;
+      this.inviter = this.client.users.resolve(data.inviter_id);
+    } else {
+      this.inviterId ??= null;
+    }
+
+    if ('inviter' in data && data.inviter) {
+      this.inviter ??= this.client.users._add(data.inviter);
+      this.inviterId = data.inviter.id;
+    } else {
+      this.inviter ??= null;
+    }
+
+    if ('target_user' in data && data.target_user) {
+      this.targetUser = this.client.users._add(data.target_user);
+    } else {
+      this.targetUser ??= null;
+    }
+
+    if ('target_application' in data && data.target_application) {
+      this.targetApplication = new IntegrationApplication(
+        this.client,
+        data.target_application
+      );
+    } else {
+      this.targetApplication ??= null;
+    }
+
+    this.targetType = patchValue(
+      'target_type' in data ? data.target_type : undefined,
+      this.targetType
+    );
+    this.type = patchValue('type' in data ? data.type : undefined, this.type);
+  }
+
+  private patchGuild(data: PatchOf<'Invite'> | RawInviteDataSource) {
+    this.guild ??= null;
+    if (!data.guild) {
+      return;
+    }
+    const cached = this.client.guilds.cache.get(data.guild.id);
+    if (cached) {
+      this.guild = cached;
+    } else if (data.guild instanceof Guild) {
+      this.guild = data.guild;
+    } else {
+      this.guild = new InviteGuild(this.client, data.guild);
+    }
+  }
+
+  private patchStageInstance(data: PatchOf<'Invite'> | RawInviteDataSource) {
+    const stageInstance =
+      'stage_instance' in data ? data.stage_instance : undefined;
+    const stageChannel = this.channel;
+    const stageGuild = this.guild;
+    if (stageInstance && stageChannel && stageGuild) {
+      this.stageInstance = new InviteStageInstance(
+        this.client,
+        stageInstance,
+        stageChannel.id,
+        stageGuild.id
+      );
+    } else {
+      this.stageInstance ??= null;
+    }
+  }
+
   get createdAt() {
     return this.createdTimestamp ? new Date(this.createdTimestamp) : null;
   }
 
   get deletable() {
-    const guild = this.guild;
-    if (!guild || !('members' in guild) || !this.client.guilds.cache.has(guild.id)) return false;
-    if (!guild.members.me) throw new Error('GUILD_UNCACHED_ME');
-    if (!this.channel || !('permissionsFor' in this.channel)) return false;
+    const { guild } = this;
+    if (
+      !guild ||
+      !('members' in guild) ||
+      !this.client.guilds.cache.has(guild.id)
+    ) {
+      return false;
+    }
+    if (!guild.members.me) {
+      throw new Error('GUILD_UNCACHED_ME');
+    }
+    if (!this.channel || !('permissionsFor' in this.channel)) {
+      return false;
+    }
+    const { user } = this.client;
+    if (!user) {
+      return false;
+    }
     return (
-      (this.channel.permissionsFor(this.client.user!.id)?.has(BigInt(Permissions.FLAGS.MANAGE_CHANNELS), false) ??
+      (this.channel
+        .permissionsFor(user.id)
+        ?.has(BigInt(Permissions.FLAGS.MANAGE_CHANNELS), false) ??
         false) ||
       guild.members.me.permissions.has(BigInt(Permissions.FLAGS.MANAGE_GUILD))
     );
@@ -202,7 +256,9 @@ class Invite extends Base implements InviteEntity {
   get expiresTimestamp() {
     return (
       this._expiresTimestamp ??
-      (this.createdTimestamp && this.maxAge ? this.createdTimestamp + this.maxAge * 1_000 : null)
+      (this.createdTimestamp && this.maxAge
+        ? this.createdTimestamp + this.maxAge * 1000
+        : null)
     );
   }
 
@@ -226,14 +282,14 @@ class Invite extends Base implements InviteEntity {
 
   toJSON() {
     return super.toJSON({
-      url: true,
-      expiresTimestamp: true,
-      presenceCount: false,
-      memberCount: false,
-      uses: false,
       channel: 'channelId',
-      inviter: 'inviterId',
+      expiresTimestamp: true,
       guild: 'guildId',
+      inviter: 'inviterId',
+      memberCount: false,
+      presenceCount: false,
+      url: true,
+      uses: false,
     });
   }
 
@@ -242,7 +298,8 @@ class Invite extends Base implements InviteEntity {
   }
 }
 
-Invite.INVITES_PATTERN = /discord(?:(?:app)?\.com\/invite|\.gg(?:\/invite)?)\/([\w-]{2,255})/gi;
+Invite.INVITES_PATTERN =
+  /discord(?:(?:app)?\.com\/invite|\.gg(?:\/invite)?)\/(?<code>[\w-]{2,255})/giu;
 
 export default Invite;
 export { Invite };

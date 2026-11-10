@@ -1,7 +1,13 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "stream",
-  "globalDependencies": ["bunfig.toml", "tsconfig.json"],
+  "globalDependencies": [
+    "bunfig.toml",
+    "tsconfig.json",
+    "oxlint.config.ts",
+    ".oxfmtrc.json",
+    "bun.lock"
+  ],
   "tasks": {
     "build": {
       "inputs": [
@@ -43,7 +49,16 @@
       "outputLogs": "errors-only"
     },
     "lint": {
-      "inputs": ["src/**", "tools/**", "typings/**", "app/**", "components/**", "lib/**", "scripts/**", "package.json"],
+      "inputs": [
+        "src/**",
+        "tools/**",
+        "typings/**",
+        "app/**",
+        "components/**",
+        "lib/**",
+        "scripts/**",
+        "package.json"
+      ],
       "outputs": [],
       "outputLogs": "errors-only"
     },

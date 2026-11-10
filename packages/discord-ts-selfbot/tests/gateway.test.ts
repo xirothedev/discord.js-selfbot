@@ -1,5 +1,7 @@
-import { startFakeDiscord } from '@discord-ts-selfbot/test-harness';
 import { test, expect } from 'bun:test';
+
+import { startFakeDiscord } from '@discord-ts-selfbot/test-harness';
+
 import { Client } from '../src/index';
 
 test('gateway IDENTIFY (op 2) omits intents/shard and includes capabilities/client_state', async () => {
@@ -19,4 +21,4 @@ test('gateway IDENTIFY (op 2) omits intents/shard and includes capabilities/clie
     client.destroy();
     fake.stop();
   }
-}, 15000);
+}, 15_000);

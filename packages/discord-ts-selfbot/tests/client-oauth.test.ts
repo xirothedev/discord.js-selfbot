@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test';
+
 import { Client } from '../src/index';
 
 const APPLICATION_ID = '900000000000000099';
@@ -6,11 +7,13 @@ const GUILD_ID = '900000000000000001';
 const CHANNEL_ID = '900000000000000002';
 
 function createClient(respond) {
-  const client = new Client({ http: { api: 'https://discord.com/api', version: 9 } });
+  const client = new Client({
+    http: { api: 'https://discord.com/api', version: 9 },
+  });
   const requests = [];
 
   client.rest.request = (method, url, options = {}) => {
-    requests.push({ method, url, options });
+    requests.push({ method, options, url });
     return Promise.resolve(respond(method, url, options));
   };
 
@@ -22,7 +25,10 @@ test('Client#redeemNitro POSTs the gift code to the redeem route', async () => {
   const { client, requests } = createClient(() => ({ redeemed: true }));
 
   try {
-    const result = await client.redeemNitro(`https://discord.gift/${code}`, CHANNEL_ID);
+    const result = await client.redeemNitro(
+      `https://discord.gift/${code}`,
+      CHANNEL_ID
+    );
 
     expect(result).toEqual({ redeemed: true });
     expect(requests).toHaveLength(1);
@@ -50,13 +56,17 @@ test('Client#redeemNitro returns false for a non-nitro string', async () => {
 });
 
 test('Client#authorizeURL POSTs the OAuth2 query and body', async () => {
-  const { client, requests } = createClient(() => ({ location: 'https://discord.com/oauth2/authorized' }));
+  const { client, requests } = createClient(() => ({
+    location: 'https://discord.com/oauth2/authorized',
+  }));
   const url = `https://discord.com/api/oauth2/authorize?client_id=${APPLICATION_ID}&scope=bot%20applications.commands&permissions=8`;
 
   try {
     const result = await client.authorizeURL(url, { guild_id: GUILD_ID });
 
-    expect(result).toEqual({ location: 'https://discord.com/oauth2/authorized' });
+    expect(result).toEqual({
+      location: 'https://discord.com/oauth2/authorized',
+    });
     expect(requests).toHaveLength(1);
     expect(requests[0].method).toBe('post');
     expect(requests[0].url).toBe('/oauth2/authorize');
@@ -66,10 +76,10 @@ test('Client#authorizeURL POSTs the OAuth2 query and body', async () => {
     });
     expect(requests[0].options.data).toMatchObject({
       authorize: true,
-      permissions: '8',
-      integration_type: 0,
-      guild_id: GUILD_ID,
       client_id: APPLICATION_ID,
+      guild_id: GUILD_ID,
+      integration_type: 0,
+      permissions: '8',
       scope: 'bot applications.commands',
     });
   } finally {
@@ -81,7 +91,9 @@ test('Client#authorizeURL rejects a non-Discord URL', () => {
   const { client } = createClient(() => ({}));
 
   try {
-    expect(() => client.authorizeURL('https://example.com/oauth2/authorize')).toThrow();
+    expect(() =>
+      client.authorizeURL('https://example.com/oauth2/authorize')
+    ).toThrow();
   } finally {
     client.destroy();
   }
@@ -94,8 +106,8 @@ test('Client#installUserApps installs an application with user-install support',
         integration_types_config: {
           1: {
             oauth2_install_params: {
-              scopes: ['applications.commands', 'bot'],
               permissions: '0',
+              scopes: ['applications.commands', 'bot'],
             },
           },
         },
@@ -107,7 +119,9 @@ test('Client#installUserApps installs an application with user-install support',
   try {
     const result = await client.installUserApps(APPLICATION_ID);
 
-    expect(result).toEqual({ location: 'https://discord.com/oauth2/authorized' });
+    expect(result).toEqual({
+      location: 'https://discord.com/oauth2/authorized',
+    });
     expect(requests).toHaveLength(2);
     expect(requests[0].method).toBe('get');
     expect(requests[0].url).toBe(`/applications/${APPLICATION_ID}/public`);
@@ -119,9 +133,9 @@ test('Client#installUserApps installs an application with user-install support',
       scope: 'applications.commands bot',
     });
     expect(requests[1].options.data).toEqual({
-      permissions: '0',
       authorize: true,
       integration_type: 1,
+      permissions: '0',
     });
   } finally {
     client.destroy();
@@ -129,7 +143,9 @@ test('Client#installUserApps installs an application with user-install support',
 });
 
 test('Client#installUserApps returns false when the app has no user-install config', async () => {
-  const { client, requests } = createClient(() => ({ integration_types_config: {} }));
+  const { client, requests } = createClient(() => ({
+    integration_types_config: {},
+  }));
 
   try {
     expect(await client.installUserApps(APPLICATION_ID)).toBe(false);
@@ -143,7 +159,7 @@ test('Client#deauthorize resolves an application to its OAuth2 token', async () 
   const tokenId = '900000000000000010';
   const { client, requests } = createClient((method, url) => {
     if (method === 'get' && url === '/oauth2/tokens') {
-      return [{ id: tokenId, application: { id: APPLICATION_ID } }];
+      return [{ application: { id: APPLICATION_ID }, id: tokenId }];
     }
     return {};
   });
@@ -178,8 +194,16 @@ test('Client#deauthorize deletes a token directly', async () => {
 
 test('Client#authorizedApplications maps OAuth2 tokens and exposes deauthorize', async () => {
   const { client, requests } = createClient(() => [
-    { id: 'token-1', application: { id: 'app-1', name: 'First' }, scopes: ['identify', 'guilds'] },
-    { id: 'token-2', application: { id: 'app-2', name: 'Second' }, scopes: ['bot'] },
+    {
+      application: { id: 'app-1', name: 'First' },
+      id: 'token-1',
+      scopes: ['identify', 'guilds'],
+    },
+    {
+      application: { id: 'app-2', name: 'Second' },
+      id: 'token-2',
+      scopes: ['bot'],
+    },
   ]);
 
   try {

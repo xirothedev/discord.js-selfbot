@@ -1,4 +1,5 @@
 import _EmojiModule from './Emoji';
+
 const { Emoji } = _EmojiModule;
 import Util from '../util/Util';
 import type MessageReaction from './MessageReaction';

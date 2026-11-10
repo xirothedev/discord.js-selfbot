@@ -8,16 +8,19 @@
  */
 
 import { Client, Events } from 'discord-ts-selfbot';
-import type { ApplicationCommandData, ApplicationCommandManager } from 'discord-ts-selfbot';
+import type {
+  ApplicationCommandData,
+  ApplicationCommandManager,
+} from 'discord-ts-selfbot';
 
 const commands: ApplicationCommandData[] = [
   {
-    name: 'ping',
     description: 'Replies with Pong!',
+    name: 'ping',
   },
   {
-    name: 'hello',
     description: 'Says hello to the selected user',
+    name: 'hello',
   },
 ];
 

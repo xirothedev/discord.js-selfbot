@@ -1,9 +1,11 @@
 import BaseManager from './BaseManager';
 import type { RawGuildSettingsData } from '../../typings';
 import type { Guild } from '../structures/Guild';
+import type { Snowflake } from 'discord-api-types/v10';
+
 class GuildSettingManager extends BaseManager {
   #rawSetting: Partial<RawGuildSettingsData> = {};
-  declare guildId: import('discord-api-types/v10').Snowflake;
+  declare guildId: Snowflake;
   declare suppressEveryone?: boolean;
   declare suppressRoles?: boolean;
   declare muteScheduledEvents?: boolean;
@@ -77,9 +79,12 @@ class GuildSettingManager extends BaseManager {
     }
   }
   async edit(data: Partial<RawGuildSettingsData>) {
-    const data_ = await this.client.api.users('@me').guilds(this.guildId).settings.patch<RawGuildSettingsData>({
-      data,
-    });
+    const data_ = await this.client.api
+      .users('@me')
+      .guilds(this.guildId)
+      .settings.patch<RawGuildSettingsData>({
+        data,
+      });
     this._patch(data_);
     return this;
   }

@@ -1,5 +1,9 @@
-import BaseMessageComponent, { isComponentDataSource, readComponentString } from './BaseMessageComponent';
-import { ComponentType, type APITextDisplayComponent } from 'discord-api-types/v10';
+import BaseMessageComponent, {
+  isComponentDataSource,
+  readComponentString,
+} from './BaseMessageComponent';
+import { ComponentType } from 'discord-api-types/v10';
+import type { APITextDisplayComponent } from 'discord-api-types/v10';
 
 class TextDisplayComponent extends BaseMessageComponent {
   declare content: string | null;
@@ -18,8 +22,8 @@ class TextDisplayComponent extends BaseMessageComponent {
 
   toJSON(): APITextDisplayComponent {
     return {
-      type: ComponentType.TextDisplay,
       content: this.content ?? '',
+      type: ComponentType.TextDisplay,
     };
   }
 }

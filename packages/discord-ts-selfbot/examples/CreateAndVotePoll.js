@@ -1,4 +1,5 @@
-const { Client } = require('../src/index');
+import { Client } from '../src/index';
+
 const client = new Client();
 
 client.on('ready', async () => {
@@ -6,17 +7,17 @@ client.on('ready', async () => {
   const channel = client.channels.cache.get('channel id');
   const message = await channel.send({
     poll: {
+      allowMultiselect: true,
+      answers: [
+        { emoji: '🍎', text: 'Red' },
+        { emoji: '🥗', text: 'Green' },
+        { emoji: '💙', text: 'Blue' },
+        { emoji: '🟡', text: 'Yellow' },
+      ],
+      duration: 8,
       question: {
         text: 'What is your favorite color?',
       },
-      answers: [
-        { text: 'Red', emoji: '🍎' },
-        { text: 'Green', emoji: '🥗' },
-        { text: 'Blue', emoji: '💙' },
-        { text: 'Yellow', emoji: '🟡' },
-      ],
-      duration: 8,
-      allowMultiselect: true,
     },
   });
 
@@ -33,8 +34,10 @@ client.on('messagePollVoteRemove', (answer, userId) => {
   console.log(`User ${userId} removed their vote for answer ${answer.id}`);
 });
 
-client.on('messageUpdate', async (_oldMessage, newMessage) => {
-  if (!newMessage.poll) return;
+client.on('messageUpdate', (_oldMessage, newMessage) => {
+  if (!newMessage.poll) {
+    return;
+  }
 
   console.log('Poll was updated', newMessage.poll);
 });

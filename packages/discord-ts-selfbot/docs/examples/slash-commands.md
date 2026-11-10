@@ -22,16 +22,19 @@ DISCORD_TOKEN=your-token bun run --cwd apps/examples-ts slash-commands
  */
 
 import { Client, Events } from 'discord-ts-selfbot';
-import type { ApplicationCommandData, ApplicationCommandManager } from 'discord-ts-selfbot';
+import type {
+  ApplicationCommandData,
+  ApplicationCommandManager,
+} from 'discord-ts-selfbot';
 
 const commands: ApplicationCommandData[] = [
   {
-    name: 'ping',
     description: 'Replies with Pong!',
+    name: 'ping',
   },
   {
-    name: 'hello',
     description: 'Says hello to the selected user',
+    name: 'hello',
   },
 ];
 
@@ -72,18 +75,18 @@ import { Client, Events } from 'discord-ts-selfbot';
 
 const commands = [
   {
-    name: 'ping',
     description: 'Replies with Pong!',
+    name: 'ping',
   },
   {
-    name: 'hello',
     description: 'Says hello to the selected user',
+    name: 'hello',
   },
 ];
 
 const client = new Client();
 
-client.once(Events.CLIENT_READY, async readyClient => {
+client.once(Events.CLIENT_READY, async (readyClient) => {
   /** @type {import('discord-ts-selfbot').ApplicationCommandManager} */
   const manager = readyClient.application.commands;
   const registered = await manager.set(commands);
@@ -91,7 +94,7 @@ client.once(Events.CLIENT_READY, async readyClient => {
   console.log(`Registered ${registered.size} application commands.`);
 });
 
-client.on(Events.Error, error => {
+client.on(Events.Error, (error) => {
   console.error('Client error:', error);
 });
 

@@ -2,15 +2,18 @@ import Action from './Action';
 import { isThreadChannel } from '../../types/channels';
 import type { GatewayThreadDeleteDispatchData } from 'discord-api-types/v10';
 import _ChannelModule from '../../structures/Channel';
+
 const { deletedChannels } = _ChannelModule;
 import _MessageModule from '../../structures/Message';
+
 const { deletedMessages } = _MessageModule;
 import _ConstantsModule from '../../util/Constants';
+
 const { Events } = _ConstantsModule;
 
 class ThreadDeleteAction extends Action {
   handle(data: GatewayThreadDeleteDispatchData) {
-    const client = this.client;
+    const { client } = this;
     const thread = client.channels.cache.get(data.id);
 
     if (thread && isThreadChannel(thread)) {

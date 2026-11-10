@@ -1,14 +1,21 @@
 import Action from './Action';
 import { isTextBasedChannel, isGuildBasedChannel } from '../../types/channels';
-import type { GatewayChannelUpdateDispatchData, GatewayThreadUpdateDispatchData } from 'discord-api-types/v10';
+import type {
+  GatewayChannelUpdateDispatchData,
+  GatewayThreadUpdateDispatchData,
+} from 'discord-api-types/v10';
 import _ChannelModule from '../../structures/Channel';
+
 const { Channel } = _ChannelModule;
 import _ConstantsModule, { resolveEnumValue } from '../../util/Constants';
+
 const { ChannelTypes } = _ConstantsModule;
 
 class ChannelUpdateAction extends Action {
-  handle(data: GatewayChannelUpdateDispatchData | GatewayThreadUpdateDispatchData) {
-    const client = this.client;
+  handle(
+    data: GatewayChannelUpdateDispatchData | GatewayThreadUpdateDispatchData
+  ) {
+    const { client } = this;
     let channel = client.channels.cache.get(data.id);
 
     if (channel) {
@@ -24,7 +31,9 @@ class ChannelUpdateAction extends Action {
         }
 
         if (isTextBasedChannel(channel) && isTextBasedChannel(newChannel)) {
-          for (const [id, message] of channel.messages.cache) newChannel.messages.cache.set(id, message);
+          for (const [id, message] of channel.messages.cache) {
+            newChannel.messages.cache.set(id, message);
+          }
         }
 
         channel = newChannel;
@@ -35,9 +44,8 @@ class ChannelUpdateAction extends Action {
         old,
         updated: channel,
       };
-    } else {
-      client.channels._add(data);
     }
+    client.channels._add(data);
 
     return {};
   }

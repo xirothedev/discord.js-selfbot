@@ -12,9 +12,10 @@ import type {
   Snowflake,
 } from 'discord-api-types/v10';
 import Base from './Base';
-import BaseMessageComponent, {
-  type MessageComponentInstance,
-  type TopLevelComponentSource,
+import BaseMessageComponent from './BaseMessageComponent';
+import type {
+  MessageComponentInstance,
+  TopLevelComponentSource,
 } from './BaseMessageComponent';
 import InteractionCollector from './InteractionCollector';
 import MessageAttachment from './MessageAttachment';
@@ -22,24 +23,36 @@ import Embed from './MessageEmbed';
 import Mentions from './MessageMentions';
 import MessagePayload from './MessagePayload';
 import _PollModule from './Poll';
+
 const { Poll } = _PollModule;
 import ReactionCollector from './ReactionCollector';
 import type { ReactionCollectorSourceOptions } from './ReactionCollector';
 import _StickerModule from './Sticker';
+
 const { Sticker } = _StickerModule;
 import Application from './interfaces/Application';
 import _errorsModule from '../errors';
+
 const { Error } = _errorsModule;
 import ReactionManager from '../managers/ReactionManager';
 import _ConstantsModule, { resolveEnumMember } from '../util/Constants';
-const { InteractionTypes, MessageTypes, SystemMessageTypes, MessageComponentTypes, MessageReferenceTypes } =
-  _ConstantsModule;
+
+const {
+  InteractionTypes,
+  MessageTypes,
+  SystemMessageTypes,
+  MessageComponentTypes,
+  MessageReferenceTypes,
+} = _ConstantsModule;
 import MessageFlags from '../util/MessageFlags';
 import Permissions from '../util/Permissions';
 import SnowflakeUtil from '../util/SnowflakeUtil';
 import Util from '../util/Util';
 import type { Client } from '../client/Client';
-import type { RawMessageData, RawPartialMessageData } from '../../typings/rawDataTypes';
+import type {
+  RawMessageData,
+  RawPartialMessageData,
+} from '../../typings/rawDataTypes';
 import type {
   EmojiIdentifierResolvable,
   MessageActivity,
@@ -70,8 +83,9 @@ import {
   isTextBasedChannel,
   isThreadChannel,
   isThreadParentChannel,
-  type TextBasedChannel,
 } from '../types/channels';
+import type { TextBasedChannel } from '../types/channels';
+import type { MessagePayloadOptions } from './MessagePayload';
 
 /**
  * @type {WeakSet<Message>}
@@ -87,7 +101,7 @@ interface AuthorizingIntegrationOwners {
   userId: Snowflake | null;
   readonly guild: Guild | null;
   readonly user: User | null;
-  toJSON(): Record<string, Snowflake>;
+  toJSON: () => Record<string, Snowflake>;
 }
 
 export interface MessageInteraction {
@@ -109,107 +123,211 @@ interface MessageInteractionMetadata {
 
 function transformAuthorizingIntegrationOwners(
   client: Client,
-  data: APIAuthorizingIntegrationOwnersMap = {},
+  data: APIAuthorizingIntegrationOwnersMap = {}
 ): AuthorizingIntegrationOwners {
   return {
     ...data,
-    guildId: data[0] ?? null,
-    userId: data[1] ?? null,
     get guild() {
-      return (this.guildId ? client.guilds.cache.get(this.guildId) : null) ?? null;
+      return (
+        (this.guildId ? client.guilds.cache.get(this.guildId) : null) ?? null
+      );
+    },
+    guildId: data[0] ?? null,
+    toJSON() {
+      const out: Record<string, Snowflake> = {};
+      for (const [key, value] of Object.entries(data)) {
+        if (value !== undefined) {
+          out[key] = value;
+        }
+      }
+      return out;
     },
     get user() {
       return (this.userId ? client.users.cache.get(this.userId) : null) ?? null;
     },
-    toJSON() {
-      const out: Record<string, Snowflake> = {};
-      for (const [key, value] of Object.entries(data)) if (value !== undefined) out[key] = value;
-      return out;
-    },
+    userId: data[1] ?? null,
   };
 }
 
-function transformInteractionMetadata(client: Client, data: APIMessageInteractionMetadata): MessageInteractionMetadata {
+function transformInteractionMetadata(
+  client: Client,
+  data: APIMessageInteractionMetadata
+): MessageInteractionMetadata {
   return {
+    authorizingIntegrationOwners: transformAuthorizingIntegrationOwners(
+      client,
+      data.authorizing_integration_owners
+    ),
     id: data.id,
+    interactedMessageId:
+      'interacted_message_id' in data
+        ? (data.interacted_message_id ?? null)
+        : null,
+    originalResponseMessageId: data.original_response_message_id ?? null,
+    triggeringInteractionMetadata:
+      'triggering_interaction_metadata' in data &&
+      data.triggering_interaction_metadata
+        ? transformInteractionMetadata(
+            client,
+            data.triggering_interaction_metadata
+          )
+        : null,
     type: InteractionTypes[data.type],
     user: client.users._add(data.user),
-    authorizingIntegrationOwners: transformAuthorizingIntegrationOwners(client, data.authorizing_integration_owners),
-    originalResponseMessageId: data.original_response_message_id ?? null,
-    interactedMessageId: 'interacted_message_id' in data ? (data.interacted_message_id ?? null) : null,
-    triggeringInteractionMetadata:
-      'triggering_interaction_metadata' in data && data.triggering_interaction_metadata
-        ? transformInteractionMetadata(client, data.triggering_interaction_metadata)
-        : null,
   };
 }
 
-type ResolvedMessageData = APIInteractionDataResolved & { messages?: Record<Snowflake, APIMessage> };
+type ResolvedMessageData = APIInteractionDataResolved & {
+  messages?: Record<Snowflake, APIMessage>;
+};
 
 interface ResolvedData {
   users?: Collection<Snowflake, User>;
-  members?: Collection<Snowflake, GuildMember | APIInteractionDataResolvedGuildMember>;
+  members?: Collection<
+    Snowflake,
+    GuildMember | APIInteractionDataResolvedGuildMember
+  >;
   roles?: Collection<Snowflake, Role | APIRole>;
   channels?: Collection<Snowflake, Channel | APIInteractionDataResolvedChannel>;
   messages?: Collection<Snowflake, Message | APIMessage>;
   attachments?: Collection<Snowflake, MessageAttachment>;
 }
 
+function transformResolvedMembers(
+  guild: Guild | null,
+  members: NonNullable<ResolvedMessageData['members']>,
+  users: ResolvedMessageData['users']
+) {
+  const result = new Collection<
+    Snowflake,
+    GuildMember | APIInteractionDataResolvedGuildMember
+  >();
+  for (const [id, member] of Object.entries(members)) {
+    const user = users?.[id];
+    if (!user) {
+      continue;
+    }
+    result.set(id, guild?.members._add({ ...member, user }) ?? member);
+  }
+  return result;
+}
+
+function transformResolvedUsers(
+  client: Client,
+  users: NonNullable<ResolvedMessageData['users']>
+) {
+  const result = new Collection<Snowflake, User>();
+  for (const user of Object.values(users)) {
+    result.set(user.id, client.users._add(user));
+  }
+  return result;
+}
+
+function transformResolvedRoles(
+  guild: Guild | null,
+  roles: NonNullable<ResolvedMessageData['roles']>
+) {
+  const result = new Collection<Snowflake, Role | APIRole>();
+  for (const role of Object.values(roles)) {
+    result.set(role.id, guild?.roles._add(role) ?? role);
+  }
+  return result;
+}
+
+function transformResolvedChannels(
+  client: Client,
+  guild: Guild | null,
+  channels: NonNullable<ResolvedMessageData['channels']>
+) {
+  const result = new Collection<
+    Snowflake,
+    Channel | APIInteractionDataResolvedChannel
+  >();
+  for (const apiChannel of Object.values(channels)) {
+    result.set(
+      apiChannel.id,
+      client.channels._add(apiChannel, guild) ?? apiChannel
+    );
+  }
+  return result;
+}
+
+function transformResolvedMessages(
+  channel: Channel | null,
+  messages: NonNullable<ResolvedMessageData['messages']>,
+  createMessage: (data: APIMessage) => Message
+) {
+  const result = new Collection<Snowflake, Message | APIMessage>();
+  for (const message of Object.values(messages)) {
+    const added =
+      channel && isTextBasedChannel(channel)
+        ? channel.messages.cache.get(message.id)
+        : null;
+    result.set(message.id, added ?? createMessage(message));
+  }
+  return result;
+}
+
+function transformResolvedAttachments(
+  attachments: NonNullable<ResolvedMessageData['attachments']>
+) {
+  const result = new Collection<Snowflake, MessageAttachment>();
+  for (const attachment of Object.values(attachments)) {
+    result.set(
+      attachment.id,
+      new MessageAttachment(attachment.url, attachment.filename, attachment)
+    );
+  }
+  return result;
+}
+
 function transformResolved(
-  { client, guild, channel }: { client: Client; guild: Guild | null; channel: Channel | null },
-  { members, users, channels, roles, messages, attachments }: ResolvedMessageData = {},
+  {
+    client,
+    guild,
+    channel,
+  }: { client: Client; guild: Guild | null; channel: Channel | null },
+  createMessage: (data: APIMessage) => Message,
+  {
+    members,
+    users,
+    channels,
+    roles,
+    messages,
+    attachments,
+  }: ResolvedMessageData = {}
 ): ResolvedData {
   const result: ResolvedData = {};
 
   if (members) {
-    result.members = new Collection<Snowflake, GuildMember | APIInteractionDataResolvedGuildMember>();
-    for (const [id, member] of Object.entries(members)) {
-      const user = users?.[id];
-      if (!user) continue;
-      result.members.set(id, guild?.members._add({ ...member, user }) ?? member);
-    }
+    result.members = transformResolvedMembers(guild, members, users);
   }
-
   if (users) {
-    result.users = new Collection<Snowflake, User>();
-    for (const user of Object.values(users)) {
-      result.users.set(user.id, client.users._add(user));
-    }
+    result.users = transformResolvedUsers(client, users);
   }
-
   if (roles) {
-    result.roles = new Collection<Snowflake, Role | APIRole>();
-    for (const role of Object.values(roles)) {
-      result.roles.set(role.id, guild?.roles._add(role) ?? role);
-    }
+    result.roles = transformResolvedRoles(guild, roles);
   }
-
   if (channels) {
-    result.channels = new Collection<Snowflake, Channel | APIInteractionDataResolvedChannel>();
-    for (const apiChannel of Object.values(channels)) {
-      result.channels.set(apiChannel.id, client.channels._add(apiChannel, guild) ?? apiChannel);
-    }
+    result.channels = transformResolvedChannels(client, guild, channels);
   }
-
   if (messages) {
-    result.messages = new Collection<Snowflake, Message | APIMessage>();
-    for (const message of Object.values(messages)) {
-      const added = channel && isTextBasedChannel(channel) ? channel.messages.cache.get(message.id) : null;
-      result.messages.set(message.id, added instanceof Message ? added : new Message(client, message));
-    }
+    result.messages = transformResolvedMessages(
+      channel,
+      messages,
+      createMessage
+    );
   }
-
   if (attachments) {
-    result.attachments = new Collection<Snowflake, MessageAttachment>();
-    for (const attachment of Object.values(attachments)) {
-      result.attachments.set(attachment.id, new MessageAttachment(attachment.url, attachment.filename, attachment));
-    }
+    result.attachments = transformResolvedAttachments(attachments);
   }
 
   return result;
 }
 
-function isSelectMenu(component: { type: string }): component is MessageSelectMenu {
+function isSelectMenu(component: {
+  type: string;
+}): component is MessageSelectMenu {
   return (
     component.type === 'STRING_SELECT' ||
     component.type === 'USER_SELECT' ||
@@ -220,15 +338,28 @@ function isSelectMenu(component: { type: string }): component is MessageSelectMe
 }
 
 function resolveSelectValue(value: unknown): string | null {
-  if (typeof value === 'string') return value;
-  if (typeof value === 'object' && value !== null && 'id' in value && typeof value.id === 'string') return value.id;
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    'id' in value &&
+    typeof value.id === 'string'
+  ) {
+    return value.id;
+  }
   return null;
 }
 
 type MessagePatchData =
   | RawMessageData
   | RawPartialMessageData
-  | (APIMessageSnapshotFields & { id: Snowflake; channel_id: Snowflake; guild_id?: Snowflake });
+  | (APIMessageSnapshotFields & {
+      id: Snowflake;
+      channel_id: Snowflake;
+      guild_id?: Snowflake;
+    });
 
 class Message extends Base {
   declare activity: MessageActivity | null;
@@ -271,13 +402,25 @@ class Message extends Base {
     this.channelId = data.channel_id;
 
     const guildId = 'guild_id' in data ? data.guild_id : undefined;
-    const channelGuildId = this.channel && 'guild' in this.channel ? this.channel.guild?.id : undefined;
+    const channelGuildId =
+      this.channel && 'guild' in this.channel
+        ? this.channel.guild?.id
+        : undefined;
     this.guildId = guildId ?? channelGuildId ?? null;
 
     this._patch(data);
   }
 
   _patch(data: MessagePatchData) {
+    this.patchCore(data);
+    this.patchCollections(data);
+    this.patchMentions(data);
+    this.patchMetadata(data);
+    this.patchReferences(data);
+    this.patchCallAndTheme(data);
+  }
+
+  private patchCore(data: MessagePatchData) {
     this.id = data.id;
 
     if ('position' in data) {
@@ -288,10 +431,12 @@ class Message extends Base {
 
     if ('role_subscription_data' in data && data.role_subscription_data) {
       this.roleSubscriptionData = {
-        roleSubscriptionListingId: data.role_subscription_data.role_subscription_listing_id,
-        tierName: data.role_subscription_data.tier_name,
-        totalMonthsSubscribed: data.role_subscription_data.total_months_subscribed,
         isRenewal: data.role_subscription_data.is_renewal,
+        roleSubscriptionListingId:
+          data.role_subscription_data.role_subscription_listing_id,
+        tierName: data.role_subscription_data.tier_name,
+        totalMonthsSubscribed:
+          data.role_subscription_data.total_months_subscribed,
       };
     } else {
       this.roleSubscriptionData ??= null;
@@ -299,24 +444,32 @@ class Message extends Base {
 
     if ('resolved' in data) {
       this.resolved = transformResolved(
-        { client: this.client, guild: this.guild, channel: this.channel },
-        data.resolved,
+        { channel: this.channel, client: this.client, guild: this.guild },
+        (message) => new Message(this.client, message),
+        data.resolved
       );
     } else {
       this.resolved ??= null;
     }
 
-    this.createdTimestamp = this.id ? SnowflakeUtil.timestampFrom(this.id) : new Date(data.timestamp).getTime();
+    this.createdTimestamp = this.id
+      ? SnowflakeUtil.timestampFrom(this.id)
+      : new Date(data.timestamp).getTime();
 
     if ('type' in data) {
       this.type = MessageTypes[data.type] ?? null;
 
-      this.system = this.type !== null && SystemMessageTypes.includes(this.type);
+      this.system =
+        this.type !== null && SystemMessageTypes.includes(this.type);
     } else {
       this.system ??= null;
       this.type ??= null;
     }
 
+    this.patchCoreContent(data);
+  }
+
+  private patchCoreContent(data: MessagePatchData) {
     if ('content' in data) {
       this.content = data.content;
     } else {
@@ -346,43 +499,54 @@ class Message extends Base {
     } else {
       this.nonce ??= null;
     }
+  }
 
+  private patchCollections(data: MessagePatchData) {
     if ('embeds' in data) {
-      this.embeds = data.embeds.map(e => new Embed(e, true));
+      this.embeds = data.embeds.map((embed) => new Embed(embed, true));
     } else {
-      this.embeds = this.embeds?.slice() ?? [];
+      this.embeds = this.embeds ? [...this.embeds] : [];
     }
 
     if ('components' in data && data.components) {
       this.components = data.components
-        .map(c => BaseMessageComponent.create(c, this.client))
-        .filter((c): c is TopLevelComponentSource => BaseMessageComponent.isTopLevelComponent(c));
+        .map((component) => BaseMessageComponent.create(component, this.client))
+        .filter((component): component is TopLevelComponentSource =>
+          BaseMessageComponent.isTopLevelComponent(component)
+        );
     } else {
-      this.components = this.components?.slice() ?? [];
+      this.components = this.components ? [...this.components] : [];
     }
 
-    if ('attachments' in data) {
-      this.attachments = new Collection<Snowflake, MessageAttachment>();
-      if (data.attachments) {
-        for (const attachment of data.attachments) {
-          this.attachments.set(attachment.id, new MessageAttachment(attachment.url, attachment.filename, attachment));
-        }
-      }
-    } else {
-      this.attachments = new Collection(this.attachments);
-    }
+    this.attachments =
+      'attachments' in data
+        ? new Collection<Snowflake, MessageAttachment>(
+            data.attachments?.map((attachment) => [
+              attachment.id,
+              new MessageAttachment(
+                attachment.url,
+                attachment.filename,
+                attachment
+              ),
+            ])
+          )
+        : new Collection(this.attachments);
 
-    if ('sticker_items' in data || 'stickers' in data) {
-      this.stickers = new Collection<Snowflake, InstanceType<typeof Sticker>>(
-        (data.sticker_items ?? data.stickers)?.map(s => [s.id, new Sticker(this.client, s)]),
-      );
-    } else {
-      this.stickers = new Collection<Snowflake, InstanceType<typeof Sticker>>(this.stickers);
-    }
+    this.stickers =
+      'sticker_items' in data || 'stickers' in data
+        ? new Collection<Snowflake, InstanceType<typeof Sticker>>(
+            (data.sticker_items ?? data.stickers)?.map((sticker) => [
+              sticker.id,
+              new Sticker(this.client, sticker),
+            ])
+          )
+        : new Collection<Snowflake, InstanceType<typeof Sticker>>(
+            this.stickers
+          );
 
-    // Discord sends null if the message has not been edited
+    // Discord sends null if the message has not been edited.
     if (data.edited_timestamp) {
-      this.editedTimestamp = data.edited_timestamp ? Date.parse(data.edited_timestamp) : null;
+      this.editedTimestamp = Date.parse(data.edited_timestamp);
     } else {
       this.editedTimestamp ??= null;
     }
@@ -397,31 +561,38 @@ class Message extends Base {
     } else {
       this.reactions ??= new ReactionManager(this);
     }
+  }
 
-    const mentionEveryone = 'mention_everyone' in data ? data.mention_everyone : undefined;
-    const mentionChannels = 'mention_channels' in data ? data.mention_channels : undefined;
-    const referencedAuthor = 'referenced_message' in data ? data.referenced_message?.author : undefined;
+  private patchMentions(data: MessagePatchData) {
+    const mentionEveryone =
+      'mention_everyone' in data ? data.mention_everyone : undefined;
+    const mentionChannels =
+      'mention_channels' in data ? data.mention_channels : undefined;
+    const referencedAuthor =
+      'referenced_message' in data
+        ? data.referenced_message?.author
+        : undefined;
 
-    if (!this.mentions) {
-      this.mentions = new Mentions(
-        this,
-        data.mentions,
-        data.mention_roles,
-        mentionEveryone,
-        mentionChannels,
-        referencedAuthor,
-      );
-    } else {
-      this.mentions = new Mentions(
-        this,
-        data.mentions ?? this.mentions.users,
-        data.mention_roles ?? this.mentions.roles,
-        mentionEveryone ?? this.mentions.everyone,
-        mentionChannels ?? this.mentions.crosspostedChannels,
-        referencedAuthor ?? this.mentions.repliedUser,
-      );
-    }
+    this.mentions = this.mentions
+      ? new Mentions(
+          this,
+          data.mentions ?? this.mentions.users,
+          data.mention_roles ?? this.mentions.roles,
+          mentionEveryone ?? this.mentions.everyone,
+          mentionChannels ?? this.mentions.crosspostedChannels,
+          referencedAuthor ?? this.mentions.repliedUser
+        )
+      : new Mentions(
+          this,
+          data.mentions,
+          data.mention_roles,
+          mentionEveryone,
+          mentionChannels,
+          referencedAuthor
+        );
+  }
 
+  private patchMetadata(data: MessagePatchData) {
     if ('webhook_id' in data && data.webhook_id !== undefined) {
       this.webhookId = data.webhook_id;
     } else {
@@ -435,7 +606,10 @@ class Message extends Base {
     }
 
     if ('application' in data) {
-      this.groupActivityApplication = new Application(this.client, data.application);
+      this.groupActivityApplication = new Application(
+        this.client,
+        data.application
+      );
     } else {
       this.groupActivityApplication ??= null;
     }
@@ -459,36 +633,51 @@ class Message extends Base {
       this.client.channels._add(data.thread, this.guild);
     }
 
+    this.patchMemberState(data);
+  }
+
+  private patchMemberState(data: MessagePatchData) {
     if (this.member && 'member' in data && data.member) {
       this.member._patch(data.member);
     } else if ('member' in data && data.member && this.guild && this.author) {
-      this.guild.members._add(Object.assign(data.member, { user: this.author }));
+      this.guild.members._add(
+        Object.assign(data.member, { user: this.author })
+      );
     }
 
-    if ('flags' in data) {
-      this.flags = new MessageFlags(data.flags).freeze();
-    } else {
-      this.flags = new MessageFlags(this.flags).freeze();
-    }
+    this.flags = new MessageFlags(
+      'flags' in data ? data.flags : this.flags
+    ).freeze();
+  }
 
+  private patchReferences(data: MessagePatchData) {
     if ('message_reference' in data && data.message_reference) {
       this.reference = {
         channelId: data.message_reference.channel_id,
         guildId: data.message_reference.guild_id,
         messageId: data.message_reference.message_id,
         type:
-          resolveEnumMember(MessageReferenceTypes, data.message_reference.type ?? 0) ?? MessageReferenceTypes.DEFAULT,
+          resolveEnumMember(
+            MessageReferenceTypes,
+            data.message_reference.type ?? 0
+          ) ?? MessageReferenceTypes.DEFAULT,
       };
     } else {
       this.reference ??= null;
     }
 
     if ('referenced_message' in data && data.referenced_message) {
-      this.channel?.messages._add({ guild_id: data.message_reference?.guild_id, ...data.referenced_message });
+      this.channel?.messages._add({
+        guild_id: data.message_reference?.guild_id,
+        ...data.referenced_message,
+      });
     }
 
     if ('interaction_metadata' in data && data.interaction_metadata) {
-      this.interactionMetadata = transformInteractionMetadata(this.client, data.interaction_metadata);
+      this.interactionMetadata = transformInteractionMetadata(
+        this.client,
+        data.interaction_metadata
+      );
     } else {
       this.interactionMetadata ??= null;
     }
@@ -503,7 +692,6 @@ class Message extends Base {
      * @property {User} user The user that invoked the interaction
      * @deprecated Use {@link Message#interactionMetadata} instead.
      */
-
     if ('interaction' in data && data.interaction) {
       /**
        * Partial data of the interaction that this message is a reply to
@@ -511,9 +699,9 @@ class Message extends Base {
        * @deprecated Use {@link Message#interactionMetadata} instead.
        */
       const interaction: MessageInteraction = {
+        commandName: data.interaction.name,
         id: data.interaction.id,
         type: InteractionTypes[data.interaction.type],
-        commandName: data.interaction.name,
         user: this.client.users._add(data.interaction.user),
       };
       this.interaction = interaction;
@@ -521,37 +709,52 @@ class Message extends Base {
       this.interaction ??= null;
     }
 
-    if ('message_snapshots' in data && data.message_snapshots && this.reference) {
-      const reference = this.reference;
-      this.messageSnapshots = data.message_snapshots.reduce((coll: Collection<Snowflake, Message>, snapshot) => {
-        if (!reference.messageId) return coll;
-        const snapshotId = reference.messageId;
-        const channel = this.client.channels.cache.get(reference.channelId);
-        const snapshotData: MessagePatchData = {
-          ...snapshot.message,
-          id: snapshotId,
-          channel_id: reference.channelId,
-          guild_id: reference.guildId ?? undefined,
-        };
+    this.patchMessageSnapshots(data);
+  }
 
-        return coll.set(
-          snapshotId,
-          channel && isTextBasedChannel(channel)
-            ? channel.messages._add(snapshotData)
-            : new Message(this.client, snapshotData),
-        );
-      }, new Collection<Snowflake, Message>());
-    } else {
+  private patchMessageSnapshots(data: MessagePatchData) {
+    if (
+      !('message_snapshots' in data) ||
+      !data.message_snapshots ||
+      !this.reference
+    ) {
       this.messageSnapshots ??= new Collection<Snowflake, Message>();
+      return;
     }
 
+    const { reference } = this;
+    this.messageSnapshots = new Collection<Snowflake, Message>();
+    for (const snapshot of data.message_snapshots) {
+      if (!reference.messageId) {
+        continue;
+      }
+      const snapshotId = reference.messageId;
+      const channel = this.client.channels.cache.get(reference.channelId);
+      const snapshotData: MessagePatchData = {
+        ...snapshot.message,
+        channel_id: reference.channelId,
+        guild_id: reference.guildId ?? undefined,
+        id: snapshotId,
+      };
+      this.messageSnapshots.set(
+        snapshotId,
+        channel && isTextBasedChannel(channel)
+          ? channel.messages._add(snapshotData)
+          : new Message(this.client, snapshotData)
+      );
+    }
+  }
+
+  private patchCallAndTheme(data: MessagePatchData) {
     if ('call' in data && data.call) {
       this.call = {
-        endedTimestamp: data.call.ended_timestamp ? Date.parse(data.call.ended_timestamp) : null,
-        participants: data.call.participants,
         get endedAt() {
           return this.endedTimestamp ? new Date(this.endedTimestamp) : null;
         },
+        endedTimestamp: data.call.ended_timestamp
+          ? Date.parse(data.call.ended_timestamp)
+          : null,
+        participants: data.call.participants,
       };
     } else {
       this.call ??= null;
@@ -559,9 +762,9 @@ class Message extends Base {
 
     if ('shared_client_theme' in data && data.shared_client_theme) {
       this.sharedClientTheme = {
+        baseMix: data.shared_client_theme.base_mix,
         colors: data.shared_client_theme.colors,
         gradientAngle: data.shared_client_theme.gradient_angle,
-        baseMix: data.shared_client_theme.base_mix,
       };
 
       if ('base_theme' in data.shared_client_theme) {
@@ -582,7 +785,7 @@ class Message extends Base {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
         'Message#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
-        'DeprecationWarning',
+        'DeprecationWarning'
       );
     }
 
@@ -594,12 +797,15 @@ class Message extends Base {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
         'Message#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
-        'DeprecationWarning',
+        'DeprecationWarning'
       );
     }
 
-    if (value) deletedMessages.add(this);
-    else deletedMessages.delete(this);
+    if (value) {
+      deletedMessages.add(this);
+    } else {
+      deletedMessages.delete(this);
+    }
   }
 
   get channel(): TextBasedChannel | null {
@@ -624,7 +830,7 @@ class Message extends Base {
   }
 
   get guild() {
-    const channel = this.channel;
+    const { channel } = this;
     return (
       (this.guildId ? this.client.guilds.cache.get(this.guildId) : null) ??
       (channel && isGuildBasedChannel(channel) ? channel.guild : null)
@@ -636,8 +842,10 @@ class Message extends Base {
   }
 
   get thread() {
-    const channel = this.channel;
-    return channel && isThreadParentChannel(channel) ? (channel.threads.cache.get(this.id) ?? null) : null;
+    const { channel } = this;
+    return channel && isThreadParentChannel(channel)
+      ? (channel.threads.cache.get(this.id) ?? null)
+      : null;
   }
 
   get url() {
@@ -645,8 +853,9 @@ class Message extends Base {
   }
 
   get cleanContent() {
-    // eslint-disable-next-line eqeqeq
-    return this.content != null && this.channel ? Util.cleanContent(this.content, this.channel) : null;
+    return this.content !== null && this.content !== undefined && this.channel
+      ? Util.cleanContent(this.content, this.channel)
+      : null;
   }
 
   createReactionCollector(options: ReactionCollectorSourceOptions = {}) {
@@ -654,18 +863,30 @@ class Message extends Base {
   }
 
   awaitReactions(
-    options: ReactionCollectorSourceOptions & { errors?: string[] } = {},
+    options: ReactionCollectorSourceOptions & { errors?: string[] } = {}
   ): Promise<Collection<Snowflake | string, MessageReaction>> {
-    return new Promise((resolve, reject) => {
-      const collector = this.createReactionCollector(options);
-      collector.once('end', (reactions: Collection<Snowflake | string, MessageReaction>, reason: string) => {
-        if (options.errors?.includes(reason)) reject(reactions);
-        else resolve(reactions);
-      });
-    });
+    const { promise, reject, resolve } =
+      Promise.withResolvers<Collection<Snowflake | string, MessageReaction>>();
+    const collector = this.createReactionCollector(options);
+    collector.once(
+      'end',
+      (
+        reactions: Collection<Snowflake | string, MessageReaction>,
+        reason: string
+      ) => {
+        if (options.errors?.includes(reason)) {
+          reject(reactions);
+        } else {
+          resolve(reactions);
+        }
+      }
+    );
+    return promise;
   }
 
-  createMessageComponentCollector(options: MessageComponentCollectorOptions<MessageComponentInteraction> = {}) {
+  createMessageComponentCollector(
+    options: MessageComponentCollectorOptions<MessageComponentInteraction> = {}
+  ) {
     return new InteractionCollector(this.client, {
       ...options,
       interactionType: InteractionTypes.MESSAGE_COMPONENT,
@@ -674,36 +895,52 @@ class Message extends Base {
   }
 
   awaitMessageComponent(
-    options: AwaitMessageComponentOptions<MessageComponentInteraction> = {},
+    options: AwaitMessageComponentOptions<MessageComponentInteraction> = {}
   ): Promise<MessageComponentInteraction> {
     const _options = { ...options, max: 1 };
-    return new Promise((resolve, reject) => {
-      const collector = this.createMessageComponentCollector(_options);
-      collector.once('end', (interactions: Collection<Snowflake, MessageComponentInteraction>, reason: string) => {
+    const { promise, reject, resolve } =
+      Promise.withResolvers<MessageComponentInteraction>();
+    const collector = this.createMessageComponentCollector(_options);
+    collector.once(
+      'end',
+      (
+        interactions: Collection<Snowflake, MessageComponentInteraction>,
+        reason: string
+      ) => {
         const interaction = interactions.first();
-        if (interaction) resolve(interaction);
-        else reject(new Error('INTERACTION_COLLECTOR_ERROR', reason));
-      });
-    });
+        if (interaction) {
+          resolve(interaction);
+        } else {
+          reject(new Error('INTERACTION_COLLECTOR_ERROR', reason));
+        }
+      }
+    );
+    return promise;
   }
 
   get editable() {
-    const channel = this.channel;
-    const guildChannel = channel && isGuildBasedChannel(channel) ? channel : null;
+    const { channel } = this;
+    const { user } = this.client;
+    const guildChannel =
+      channel && isGuildBasedChannel(channel) ? channel : null;
     const precheck = Boolean(
-      this.author?.id === this.client.user!.id &&
+      this.author?.id === user?.id &&
       !deletedMessages.has(this) &&
       (!this.guild || guildChannel?.viewable) &&
-      this.reference?.type !== MessageReferenceTypes.FORWARD,
+      this.reference?.type !== MessageReferenceTypes.FORWARD
     );
 
     // Regardless of permissions thread messages cannot be edited if
     // the thread is archived or the thread is locked and the bot does not have permission to manage threads.
     if (channel && isThreadChannel(channel)) {
-      if (channel.archived) return false;
+      if (channel.archived) {
+        return false;
+      }
       if (channel.locked) {
-        const permissions = channel.permissionsFor(this.client.user!);
-        if (!permissions?.has(Permissions.FLAGS.MANAGE_THREADS, true)) return false;
+        const permissions = user ? channel.permissionsFor(user) : null;
+        if (!permissions?.has(Permissions.FLAGS.MANAGE_THREADS, true)) {
+          return false;
+        }
       }
     }
 
@@ -711,28 +948,33 @@ class Message extends Base {
   }
 
   get deletable() {
+    const { user } = this.client;
     if (deletedMessages.has(this)) {
       return false;
     }
     if (!this.guild) {
-      return this.author?.id === this.client.user!.id;
+      return this.author?.id === user?.id;
     }
     // DMChannel does not have viewable property, so check viewable after proved that message is on a guild.
-    const channel = this.channel;
+    const { channel } = this;
     if (!channel || !isGuildBasedChannel(channel) || !channel.viewable) {
       return false;
     }
 
-    const permissions = channel.permissionsFor(this.client.user!);
-    if (!permissions) return false;
+    const permissions = user ? channel.permissionsFor(user) : null;
+    if (!permissions) {
+      return false;
+    }
     // This flag allows deleting even if timed out
-    if (permissions.has(Permissions.FLAGS.ADMINISTRATOR, false)) return true;
+    if (permissions.has(Permissions.FLAGS.ADMINISTRATOR, false)) {
+      return true;
+    }
 
-    const me = this.guild.members.me;
+    const { me } = this.guild.members;
     const timedOut = me?.isCommunicationDisabled() ?? false;
     return Boolean(
-      this.author?.id === this.client.user!.id ||
-      (permissions.has(Permissions.FLAGS.MANAGE_MESSAGES, false) && !timedOut),
+      this.author?.id === user?.id ||
+      (permissions.has(Permissions.FLAGS.MANAGE_MESSAGES, false) && !timedOut)
     );
   }
 
@@ -742,30 +984,47 @@ class Message extends Base {
 
   get pinnable() {
     const { channel } = this;
-    const guildChannel = channel && isGuildBasedChannel(channel) ? channel : null;
+    const { user } = this.client;
+    const guildChannel =
+      channel && isGuildBasedChannel(channel) ? channel : null;
     return Boolean(
       !this.system &&
       !deletedMessages.has(this) &&
       (!this.guild ||
         (guildChannel?.viewable &&
-          guildChannel?.permissionsFor(this.client.user!)?.has(Permissions.FLAGS.MANAGE_MESSAGES, false))),
+          (user
+            ? guildChannel
+                ?.permissionsFor(user)
+                ?.has(Permissions.FLAGS.MANAGE_MESSAGES, false)
+            : false)))
     );
   }
 
   async fetchReference() {
-    if (!this.reference) throw new Error('MESSAGE_REFERENCE_MISSING');
+    if (!this.reference) {
+      throw new Error('MESSAGE_REFERENCE_MISSING');
+    }
     const { channelId, messageId } = this.reference;
-    if (!messageId) throw new Error('MESSAGE_REFERENCE_MISSING');
+    if (!messageId) {
+      throw new Error('MESSAGE_REFERENCE_MISSING');
+    }
     const channel = this.client.channels.resolve(channelId);
-    if (!channel || !isTextBasedChannel(channel)) throw new Error('GUILD_CHANNEL_RESOLVE');
+    if (!channel || !isTextBasedChannel(channel)) {
+      throw new Error('GUILD_CHANNEL_RESOLVE');
+    }
     const message = await channel.messages.fetch(messageId);
     return message;
   }
 
   get crosspostable() {
+    const { user } = this.client;
     const bitfield =
       Number(Permissions.FLAGS.SEND_MESSAGES) |
-      Number(this.author?.id === this.client.user!.id ? Permissions.defaultBit : Permissions.FLAGS.MANAGE_MESSAGES);
+      Number(
+        this.author?.id === user?.id
+          ? Permissions.defaultBit
+          : Permissions.FLAGS.MANAGE_MESSAGES
+      );
     const { channel } = this;
     return Boolean(
       channel &&
@@ -775,35 +1034,45 @@ class Message extends Base {
       this.type === 'DEFAULT' &&
       !this.poll &&
       channel.viewable &&
-      channel.permissionsFor(this.client.user!)?.has(bitfield, false) &&
-      !deletedMessages.has(this),
+      (user ? channel.permissionsFor(user)?.has(bitfield, false) : false) &&
+      !deletedMessages.has(this)
     );
   }
 
-  async edit(options: string | import('./MessagePayload').MessagePayloadOptions | MessagePayload) {
-    if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
+  edit(options: string | MessagePayloadOptions | MessagePayload) {
+    if (!this.channel) {
+      throw new Error('CHANNEL_NOT_CACHED');
+    }
     return this.channel.messages.edit(this, options);
   }
 
   async crosspost() {
-    if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
+    if (!this.channel) {
+      throw new Error('CHANNEL_NOT_CACHED');
+    }
     return this.channel.messages.crosspost(this.id);
   }
 
   async pin(reason?: string) {
-    if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
+    if (!this.channel) {
+      throw new Error('CHANNEL_NOT_CACHED');
+    }
     await this.channel.messages.pin(this.id, reason);
     return this;
   }
 
   async unpin(reason?: string) {
-    if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
+    if (!this.channel) {
+      throw new Error('CHANNEL_NOT_CACHED');
+    }
     await this.channel.messages.unpin(this.id, reason);
     return this;
   }
 
   async react(emoji: EmojiIdentifierResolvable, burst = false) {
-    if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
+    if (!this.channel) {
+      throw new Error('CHANNEL_NOT_CACHED');
+    }
     await this.channel.messages.react(this.id, emoji, burst);
 
     const result = this.client.actions.MessageReactionAdd.handle(
@@ -814,32 +1083,35 @@ class Message extends Base {
         emoji: Util.resolvePartialEmoji(emoji),
         me_burst: burst,
       },
-      true,
+      true
     );
     return result ? result.reaction : null;
   }
 
   async delete() {
-    if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
+    if (!this.channel) {
+      throw new Error('CHANNEL_NOT_CACHED');
+    }
     await this.channel.messages.delete(this.id);
     return this;
   }
 
   async reply(options: string | MessagePayload | ReplyMessageOptions) {
-    if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
-    let data;
-
-    if (options instanceof MessagePayload) {
-      data = options;
-    } else {
-      data = MessagePayload.create(this, options, {
-        reply: {
-          messageReference: this,
-          failIfNotExists:
-            (typeof options === 'object' ? options.failIfNotExists : undefined) ?? this.client.options.failIfNotExists,
-        },
-      });
+    if (!this.channel) {
+      throw new Error('CHANNEL_NOT_CACHED');
     }
+    const data =
+      options instanceof MessagePayload
+        ? options
+        : MessagePayload.create(this, options, {
+            reply: {
+              failIfNotExists:
+                (typeof options === 'object'
+                  ? options.failIfNotExists
+                  : undefined) ?? this.client.options.failIfNotExists,
+              messageReference: this,
+            },
+          });
     return this.channel.send(data);
   }
 
@@ -850,20 +1122,24 @@ class Message extends Base {
     }
     return resolvedChannel.send({
       forward: {
-        message: this.id,
         channel: this.channelId ?? undefined,
         guild: this.guildId ?? undefined,
+        message: this.id,
       },
     });
   }
 
   async startThread(options: StartThreadOptions) {
-    if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
-    const channel = this.channel;
+    if (!this.channel) {
+      throw new Error('CHANNEL_NOT_CACHED');
+    }
+    const { channel } = this;
     if (!isThreadParentChannel(channel)) {
       throw new Error('MESSAGE_THREAD_PARENT');
     }
-    if (this.hasThread) throw new Error('MESSAGE_EXISTING_THREAD');
+    if (this.hasThread) {
+      throw new Error('MESSAGE_EXISTING_THREAD');
+    }
     return channel.threads.create({ ...options, startMessage: this });
   }
 
@@ -873,23 +1149,29 @@ class Message extends Base {
       .polls(this.id)
       .answers['@me'].put({
         data: {
-          answer_ids: ids.flat(1).map(value => value.toString()),
+          answer_ids: ids.flat().map((value) => value.toString()),
         },
       });
   }
 
   async fetch(force = true): Promise<Message> {
-    if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
+    if (!this.channel) {
+      throw new Error('CHANNEL_NOT_CACHED');
+    }
     return this.channel.messages.fetch(this.id, { force });
   }
 
   async fetchWebhook() {
-    if (!this.webhookId) throw new Error('WEBHOOK_MESSAGE');
-    if (this.webhookId === this.applicationId) throw new Error('WEBHOOK_APPLICATION');
+    if (!this.webhookId) {
+      throw new Error('WEBHOOK_MESSAGE');
+    }
+    if (this.webhookId === this.applicationId) {
+      throw new Error('WEBHOOK_APPLICATION');
+    }
     return this.client.fetchWebhook(this.webhookId);
   }
 
-  suppressEmbeds(suppress: boolean = true) {
+  suppressEmbeds(suppress = true) {
     const flags = new MessageFlags(this.flags.bitfield);
 
     if (suppress) {
@@ -908,18 +1190,28 @@ class Message extends Base {
   resolveComponent(customId: string): MessageComponentInstance | null {
     return (
       this.components
-        .flatMap(component => BaseMessageComponent.extractInteractiveComponents(component))
-        .find(component => {
-          if ('customId' in component && component.customId === customId) return true;
+        .flatMap((component) =>
+          BaseMessageComponent.extractInteractiveComponents(component)
+        )
+        .find((component) => {
+          if ('customId' in component && component.customId === customId) {
+            return true;
+          }
           return 'custom_id' in component && component.custom_id === customId;
         }) ?? null
     );
   }
 
   equals(message: Message, rawData?: RawMessageData | RawPartialMessageData) {
-    if (!message) return false;
+    if (!message) {
+      return false;
+    }
     const embedUpdate = !message.author && !message.attachments;
-    if (embedUpdate) return this.id === message.id && this.embeds.length === message.embeds.length;
+    if (embedUpdate) {
+      return (
+        this.id === message.id && this.embeds.length === message.embeds.length
+      );
+    }
 
     let equal =
       this.id === message.id &&
@@ -929,14 +1221,19 @@ class Message extends Base {
       this.nonce === message.nonce &&
       this.embeds.length === message.embeds.length &&
       this.attachments.size === message.attachments.size &&
-      this.attachments.every(attachment => message.attachments.has(attachment.id)) &&
+      this.attachments.every((attachment) =>
+        message.attachments.has(attachment.id)
+      ) &&
       this.embeds.every((embed, index) => embed.equals(message.embeds[index]));
 
     if (equal && rawData) {
       equal =
         this.mentions.everyone === message.mentions.everyone &&
         this.createdTimestamp === new Date(rawData.timestamp).getTime() &&
-        this.editedTimestamp === (rawData.edited_timestamp ? new Date(rawData.edited_timestamp).getTime() : null);
+        this.editedTimestamp ===
+          (rawData.edited_timestamp
+            ? new Date(rawData.edited_timestamp).getTime()
+            : null);
     }
 
     return equal;
@@ -952,11 +1249,11 @@ class Message extends Base {
 
   toJSON() {
     return super.toJSON({
-      channel: 'channelId',
       author: 'authorId',
+      channel: 'channelId',
+      cleanContent: true,
       groupActivityApplication: 'groupActivityApplicationId',
       guild: 'guildId',
-      cleanContent: true,
       member: false,
       reactions: false,
     });
@@ -969,69 +1266,103 @@ class Message extends Base {
 
   clickButton(buttonid: string) {
     const button = this.resolveComponent(buttonid);
-    if (!button || button.type !== 'BUTTON') throw new TypeError('BUTTON_NOT_FOUND');
-    if ('disabled' in button && button.disabled) throw new TypeError('BUTTON_CANNOT_CLICK');
+    if (!button || button.type !== 'BUTTON') {
+      throw new TypeError('BUTTON_NOT_FOUND');
+    }
+    if ('disabled' in button && button.disabled) {
+      throw new TypeError('BUTTON_CANNOT_CLICK');
+    }
     const nonce = SnowflakeUtil.generate();
     const data = {
-      type: InteractionTypes.MESSAGE_COMPONENT,
-      nonce,
-      guild_id: this.guildId,
-      channel_id: this.channelId,
-      message_id: this.id,
       application_id: this.applicationId ?? this.author?.id,
-      session_id: this.client.sessionId,
-      message_flags: this.flags.bitfield,
+      channel_id: this.channelId,
       data: {
         component_type: MessageComponentTypes.BUTTON,
         custom_id: 'customId' in button ? button.customId : null,
       },
+      guild_id: this.guildId,
+      message_flags: this.flags.bitfield,
+      message_id: this.id,
+      nonce,
+      session_id: this.client.sessionId,
+      type: InteractionTypes.MESSAGE_COMPONENT,
     };
     this.client.api.interactions.post({
       data,
     });
-    return Util.createPromiseInteraction(this.client, nonce, 5_000, true, this);
+    return Util.createPromiseInteraction(this.client, nonce, 5000, true, this);
   }
 
-  selectMenu(menu: number | string, values: unknown[] = []): Promise<Message | Modal> {
-    const components: Array<{ type: string; customId?: string | null; disabled?: boolean }> = [];
+  private static resolveMenuIndex(menu: string | number) {
+    if (typeof menu === 'number') {
+      return menu;
+    }
+    return /^[0-4]$/u.test(menu) ? Number(menu) : undefined;
+  }
+
+  selectMenu(
+    menu: number | string,
+    values: unknown[] = []
+  ): Promise<Message | Modal> {
+    const components: {
+      type: string;
+      customId?: string | null;
+      disabled?: boolean;
+    }[] = [];
     for (const row of this.components) {
-      if (!('components' in row)) continue;
+      if (!('components' in row)) {
+        continue;
+      }
       for (const component of row.components) {
         if ('type' in component && typeof component.type === 'string') {
           components.push({
-            type: component.type,
             customId: 'customId' in component ? component.customId : undefined,
             disabled: 'disabled' in component ? component.disabled : undefined,
+            type: component.type,
           });
         }
       }
     }
-    const index = typeof menu === 'number' ? menu : /^[0-4]$/.test(menu) ? Number(menu) : undefined;
+    const index = Message.resolveMenuIndex(menu);
     let selectMenu: MessageSelectMenu | undefined;
-    if (index !== undefined) {
-      const component = components[index];
-      if (component && isSelectMenu(component)) selectMenu = component;
-    } else {
+    if (index === undefined) {
       selectMenu = components.find(
         (component): component is MessageSelectMenu =>
-          isSelectMenu(component) && component.customId === menu && !component.disabled,
+          isSelectMenu(component) &&
+          component.customId === menu &&
+          !component.disabled
+      );
+    } else {
+      const component = components[index];
+      if (component && isSelectMenu(component)) {
+        selectMenu = component;
+      }
+    }
+    if (!selectMenu) {
+      throw new RangeError(
+        '[SELECT_MENU_NOT_FOUND] The select menu could not be resolved'
       );
     }
-    if (!selectMenu) throw new RangeError('[SELECT_MENU_NOT_FOUND] The select menu could not be resolved');
 
     const minValues = selectMenu.minValues ?? 0;
     const maxValues = selectMenu.maxValues ?? 1;
     if (values.length < minValues) {
-      throw new RangeError(`[SELECT_MENU_MIN_VALUES] The minimum number of values is ${minValues}`);
+      throw new RangeError(
+        `[SELECT_MENU_MIN_VALUES] The minimum number of values is ${minValues}`
+      );
     }
     if (values.length > maxValues) {
-      throw new RangeError(`[SELECT_MENU_MAX_VALUES] The maximum number of values is ${maxValues}`);
+      throw new RangeError(
+        `[SELECT_MENU_MAX_VALUES] The maximum number of values is ${maxValues}`
+      );
     }
 
     const resolvedValues = values
-      .map(value => {
+      .map((value) => {
         if (selectMenu.type === 'STRING_SELECT') {
-          const match = selectMenu.options.find(option => option.value === value || option.label === value);
+          const match = selectMenu.options.find(
+            (option) => option.value === value || option.label === value
+          );
           return match?.value ?? null;
         }
         return resolveSelectValue(value);
@@ -1040,25 +1371,25 @@ class Message extends Base {
 
     const nonce = SnowflakeUtil.generate();
     const data = {
-      type: InteractionTypes.MESSAGE_COMPONENT,
-      guild_id: this.guildId,
-      channel_id: this.channelId,
-      message_id: this.id,
       application_id: this.applicationId ?? this.author?.id,
-      session_id: this.client.sessionId,
-      message_flags: this.flags.bitfield,
+      channel_id: this.channelId,
       data: {
         component_type: MessageComponentTypes[selectMenu.type],
         custom_id: selectMenu.customId,
         type: MessageComponentTypes[selectMenu.type],
         values: resolvedValues,
       },
+      guild_id: this.guildId,
+      message_flags: this.flags.bitfield,
+      message_id: this.id,
       nonce,
+      session_id: this.client.sessionId,
+      type: InteractionTypes.MESSAGE_COMPONENT,
     };
     this.client.api.interactions.post({
       data,
     });
-    return Util.createPromiseInteraction(this.client, nonce, 5_000, true, this);
+    return Util.createPromiseInteraction(this.client, nonce, 5000, true, this);
   }
 
   markUnread(): Promise<void> {
@@ -1078,17 +1409,20 @@ class Message extends Base {
     });
   }
 
-  report(breadcrumbs: number[], elements: Record<string, unknown> = {}): Promise<{ report_id: string }> {
+  report(
+    breadcrumbs: number[],
+    elements: Record<string, unknown> = {}
+  ): Promise<{ report_id: string }> {
     return this.client.api.reporting.message.post({
       data: {
-        version: '1.0',
-        variant: '4',
-        language: 'en',
         breadcrumbs,
-        elements,
         channel_id: this.channelId,
+        elements,
+        language: 'en',
         message_id: this.id,
         name: 'message',
+        variant: '4',
+        version: '1.0',
       },
     });
   }

@@ -1,5 +1,6 @@
 import { test, describe } from 'bun:test';
-import { token, guildId, skip, makeClient, login, makeStepRecorder } from './_helpers';
+
+import { guildId, skip, makeClient, login, makeStepRecorder } from './_helpers';
 
 describe.skipIf(skip)('manual: guilds', () => {
   test('guild operations', async () => {
@@ -11,45 +12,54 @@ describe.skipIf(skip)('manual: guilds', () => {
         console.log('[SKIP] no TEST_GUILD_ID');
         return;
       }
+      const targetGuildId = guildId;
       await step('fetch guild', async () => {
-        const g = await client.guilds.fetch(guildId!);
-        if (g.id !== guildId) throw new Error('id mismatch');
-        console.log('  name:', g.name);
+        const guild = await client.guilds.fetch(targetGuildId);
+        if (guild.id !== targetGuildId) {
+          throw new Error('id mismatch');
+        }
+        console.log('  name:', guild.name);
       });
       await step('fetch channels', async () => {
-        const g = await client.guilds.fetch(guildId!);
-        await g.channels.fetch();
-        if (g.channels.cache.size === 0) throw new Error('no channels');
+        const guild = await client.guilds.fetch(targetGuildId);
+        await guild.channels.fetch();
+        if (guild.channels.cache.size === 0) {
+          throw new Error('no channels');
+        }
       });
       await step('fetch members', async () => {
-        const g = await client.guilds.fetch(guildId!);
-        await g.members.fetch();
-        if (g.members.cache.size === 0) throw new Error('no members');
+        const guild = await client.guilds.fetch(targetGuildId);
+        await guild.members.fetch();
+        if (guild.members.cache.size === 0) {
+          throw new Error('no members');
+        }
       });
       await step('fetch roles', async () => {
-        const g = await client.guilds.fetch(guildId!);
-        await g.roles.fetch();
-        if (g.roles.cache.size === 0) throw new Error('no roles');
+        const guild = await client.guilds.fetch(targetGuildId);
+        await guild.roles.fetch();
+        if (guild.roles.cache.size === 0) {
+          throw new Error('no roles');
+        }
       });
       await step('fetch emojis', async () => {
-        const g = await client.guilds.fetch(guildId!);
-        await g.emojis.fetch();
+        const guild = await client.guilds.fetch(targetGuildId);
+        await guild.emojis.fetch();
       });
       await step('fetch invites', async () => {
-        const g = await client.guilds.fetch(guildId!);
-        await g.invites.fetch();
+        const guild = await client.guilds.fetch(targetGuildId);
+        await guild.invites.fetch();
       });
       await step('fetch scheduled events', async () => {
-        const g = await client.guilds.fetch(guildId!);
-        await g.scheduledEvents.fetch();
+        const guild = await client.guilds.fetch(targetGuildId);
+        await guild.scheduledEvents.fetch();
       });
       await step('fetch audit log', async () => {
-        const g = await client.guilds.fetch(guildId!);
-        await g.fetchAuditLogs();
+        const guild = await client.guilds.fetch(targetGuildId);
+        await guild.fetchAuditLogs();
       });
       await step('fetch vanity', async () => {
-        const g = await client.guilds.fetch(guildId!);
-        await g.fetchVanityData();
+        const guild = await client.guilds.fetch(targetGuildId);
+        await guild.fetchVanityData();
       });
     } finally {
       client.destroy();

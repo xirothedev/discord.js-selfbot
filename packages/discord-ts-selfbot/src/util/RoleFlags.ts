@@ -3,7 +3,7 @@ import BitField from './BitField';
 class RoleFlags extends BitField {}
 
 RoleFlags.FLAGS = {
-  IN_PROMPT: 1 << 0,
+  IN_PROMPT: Math.trunc(1),
 };
 
 export default RoleFlags;

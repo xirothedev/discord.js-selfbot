@@ -4,38 +4,39 @@ import type { CipherGCM } from 'node:crypto';
 import { Writable } from 'node:stream';
 import { setTimeout } from 'node:timers';
 import secretbox from '../util/Secretbox';
+import type MediaPlayer from '../player/MediaPlayer';
 
 const MAX_UINT_16 = 2 ** 16 - 1;
 const MAX_UINT_32 = 2 ** 32 - 1;
 
 const extensions = [{ id: 5, length: 2, value: 0 }];
 
-type DispatcherStream = {
-  on(event: string, listener: (...args: unknown[]) => void): unknown;
-  unpipe(destination?: unknown): unknown;
-  pipe(destination: unknown): unknown;
-  pause(): unknown;
-  resume(): unknown;
-  destroy(): unknown;
-  setBitrate?(bitrate: number): unknown;
-  setPLP?(plp: number): unknown;
-  setFEC?(fec: boolean): unknown;
-  setVolume?(volume: number): unknown;
+interface DispatcherStream {
+  on: (event: string, listener: (...args: unknown[]) => void) => unknown;
+  unpipe: (destination?: NodeJS.WritableStream) => unknown;
+  pipe: (destination: NodeJS.WritableStream) => unknown;
+  pause: () => unknown;
+  resume: () => unknown;
+  destroy: () => unknown;
+  setBitrate?: (bitrate: number) => unknown;
+  setPLP?: (plp: number) => unknown;
+  setFEC?: (fec: boolean) => unknown;
+  setVolume?: (volume: number) => unknown;
   volume?: number;
-};
+}
 
-type DispatcherStreams = {
+interface DispatcherStreams {
   input?: DispatcherStream;
   ffmpeg?: DispatcherStream;
   opus?: DispatcherStream;
   volume?: DispatcherStream;
   video?: DispatcherStream;
   silence?: DispatcherStream;
-};
+}
 
 class BaseDispatcher extends Writable {
   declare streams: DispatcherStreams;
-  declare player: import('../player/MediaPlayer').default;
+  declare player: MediaPlayer;
   declare payloadType: number;
   declare extensionEnabled: boolean;
   declare _nonce: number;
@@ -64,14 +65,14 @@ class BaseDispatcher extends Writable {
   }
 
   constructor(
-    player: import('../player/MediaPlayer').default,
-    highWaterMark = 12,
+    player: MediaPlayer,
+    highWaterMark: number | undefined,
     payloadType: number,
     extensionEnabled: boolean,
-    streams: DispatcherStreams = {},
+    streams: DispatcherStreams = {}
   ) {
     super({
-      highWaterMark,
+      highWaterMark: highWaterMark ?? 12,
     });
     this.streams = streams;
     this.player = player;
@@ -101,10 +102,18 @@ class BaseDispatcher extends Writable {
     };
 
     this.on('error', () => streamError());
-    if (this.streams.input) this.streams.input.on('error', err => streamError('input', err));
-    if (this.streams.ffmpeg) this.streams.ffmpeg.on('error', err => streamError('ffmpeg', err));
-    if (this.streams.opus) this.streams.opus.on('error', err => streamError('opus', err));
-    if (this.streams.volume) this.streams.volume.on('error', err => streamError('volume', err));
+    if (this.streams.input) {
+      this.streams.input.on('error', (err) => streamError('input', err));
+    }
+    if (this.streams.ffmpeg) {
+      this.streams.ffmpeg.on('error', (err) => streamError('ffmpeg', err));
+    }
+    if (this.streams.opus) {
+      this.streams.opus.on('error', (err) => streamError('opus', err));
+    }
+    if (this.streams.volume) {
+      this.streams.volume.on('error', (err) => streamError('volume', err));
+    }
 
     this.on('finish', () => {
       this._cleanup();
@@ -120,34 +129,46 @@ class BaseDispatcher extends Writable {
 
   resetNonceBuffer() {
     this._nonceBuffer =
-      this.player.voiceConnection.authentication.mode === 'aead_aes256_gcm_rtpsize'
+      this.player.voiceConnection.authentication.mode ===
+      'aead_aes256_gcm_rtpsize'
         ? Buffer.alloc(12)
         : Buffer.alloc(24);
+    return this._nonceBuffer;
   }
 
   getNewSequence() {
     const currentSeq = this.sequence;
     this.sequence++;
-    if (this.sequence > MAX_UINT_16) this.sequence = 0;
+    if (this.sequence > MAX_UINT_16) {
+      this.sequence = 0;
+    }
     return currentSeq;
   }
 
-  _write(chunk: Buffer, _enc: BufferEncoding, done: (error?: Error | null) => void) {
+  _write(
+    chunk: Buffer,
+    _enc: BufferEncoding,
+    done: (error?: Error | null) => void
+  ) {
     if (!this.startTime) {
       this.emit('start');
       this.startTime = performance.now();
     }
     if (this._syncDispatcher && !this._syncDispatcher.startTime) {
       this.pause();
+      let timedOut = false;
+      const timeout = setTimeout(() => {
+        timedOut = true;
+        this.resume();
+      }, 10_000).unref();
       const cb = () => {
+        if (timedOut) {
+          return;
+        }
         this.resume();
         clearTimeout(timeout);
       };
       this._syncDispatcher.once('start', cb);
-      let timeout = setTimeout(() => {
-        this.removeListener('start', cb);
-        this.resume();
-      }, 10_000).unref();
     }
     if (this.getTypeDispatcher() === 'video') {
       this._codecCallback(chunk);
@@ -157,9 +178,9 @@ class BaseDispatcher extends Writable {
     this._step(done);
   }
 
-  _destroy(err: Error | null, cb: (error?: Error | null) => void) {
+  _destroy(err: Error | null, done: (error?: Error | null) => void) {
     this._cleanup();
-    super._destroy(err, cb);
+    super._destroy(err, done);
   }
 
   _cleanup() {
@@ -172,20 +193,27 @@ class BaseDispatcher extends Writable {
       this.player.videoDispatcher = null;
     }
     const { streams } = this;
-    if (streams.opus) streams.opus.destroy();
+    if (streams.opus) {
+      streams.opus.destroy();
+    }
     streams.ffmpeg?.destroy();
   }
 
   pause(silence = false) {
-    if (this.paused) return;
-    if (this.streams.opus) this.streams.opus.unpipe(this); // Audio
+    if (this.paused) {
+      return;
+    }
+    const { streams } = this;
+    if (streams.opus) {
+      streams.opus.unpipe(this);
+    }
     if (this.streams.video) {
-      this.streams.ffmpeg!.pause();
+      this.streams.ffmpeg?.pause();
       this.streams.video.unpipe(this);
     }
     if (this.getTypeDispatcher() === 'audio') {
       if (silence) {
-        this.streams.silence!.pipe(this);
+        this.streams.silence?.pipe(this);
         this._silence = true;
       } else {
         this._setSpeaking(0);
@@ -199,15 +227,24 @@ class BaseDispatcher extends Writable {
   }
 
   get pausedTime() {
-    return this._silentPausedTime + this._pausedTime + (this.paused ? performance.now() - this.pausedSince! : 0);
+    const currentPause = this.pausedSince
+      ? performance.now() - this.pausedSince
+      : 0;
+    return this._silentPausedTime + this._pausedTime + currentPause;
   }
 
   resume() {
-    if (!this.pausedSince) return;
-    if (this.getTypeDispatcher() === 'audio') this.streams.silence!.unpipe(this);
-    if (this.streams.opus) this.streams.opus.pipe(this);
+    if (!this.pausedSince) {
+      return;
+    }
+    if (this.getTypeDispatcher() === 'audio') {
+      this.streams.silence?.unpipe(this);
+    }
+    if (this.streams.opus) {
+      this.streams.opus.pipe(this);
+    }
     if (this.streams.video) {
-      this.streams.ffmpeg!.resume();
+      this.streams.ffmpeg?.resume();
       this.streams.video.pipe(this);
     }
     if (this._silence) {
@@ -217,7 +254,9 @@ class BaseDispatcher extends Writable {
       this._pausedTime += performance.now() - this.pausedSince;
     }
     this.pausedSince = null;
-    if (typeof this._writeCallback === 'function') this._writeCallback();
+    if (typeof this._writeCallback === 'function') {
+      this._writeCallback();
+    }
   }
 
   get totalStreamTime() {
@@ -229,49 +268,62 @@ class BaseDispatcher extends Writable {
       this._writeCallback = null;
       done();
     };
-    const next = (this.count + 1) * this.FRAME_LENGTH - (performance.now() - this.startTime - this._pausedTime);
+    const next =
+      (this.count + 1) * this.FRAME_LENGTH -
+      (performance.now() - this.startTime - this._pausedTime);
     setTimeout(() => {
-      if ((!this.pausedSince || this._silence) && this._writeCallback) this._writeCallback();
+      if ((!this.pausedSince || this._silence) && this._writeCallback) {
+        this._writeCallback();
+      }
     }, next).unref();
     this.timestamp += this.TIMESTAMP_INC;
-    if (this.timestamp > MAX_UINT_32) this.timestamp = 0;
+    if (this.timestamp > MAX_UINT_32) {
+      this.timestamp = 0;
+    }
     this.count++;
-    if (this.count > MAX_UINT_16) this.count = 0;
+    if (this.count > MAX_UINT_16) {
+      this.count = 0;
+    }
   }
 
-  _final(callback: (error?: Error | null) => void) {
+  _final(done: (error?: Error | null) => void) {
     this._writeCallback = null;
-    callback();
+    done();
   }
 
   _playChunk(chunk: Buffer, isLastPacket = false) {
     if (
-      (this.player.dispatcher !== this && this.player.videoDispatcher !== this) ||
+      (this.player.dispatcher !== this &&
+        this.player.videoDispatcher !== this) ||
       !this.player.voiceConnection.authentication.secret_key
     ) {
       return;
     }
     const packet = this._createPacket(chunk, isLastPacket);
-    if (packet) this._sendPacket(packet);
+    if (packet) {
+      this._sendPacket(packet);
+    }
   }
 
   createHeaderExtension() {
     const profile = Buffer.alloc(4);
     profile[0] = 0xbe;
     profile[1] = 0xde;
-    profile.writeInt16BE(extensions.length, 2); // Extension count
+    // Extension count.
+    profile.writeInt16BE(extensions.length, 2);
 
     return profile;
   }
 
   createPayloadExtension() {
     const extensionsData = [];
-    for (let ext of extensions) {
+    for (const ext of extensions) {
       const data = Buffer.alloc(4);
 
       // https://webrtc.googlesource.com/src/+/refs/heads/main/docs/native-code/rtp-hdrext/playout-delay
       if (ext.id === 5) {
-        data.writeUIntBE(ext.value, 1, 2); // Not quite but its 0 anyway
+        // Not quite but its 0 anyway.
+        data.writeUIntBE(ext.value, 1, 2);
       }
       extensionsData.push(data);
     }
@@ -280,14 +332,18 @@ class BaseDispatcher extends Writable {
 
   _encrypt(buffer: Buffer, additionalData: Buffer): [Buffer, Buffer] {
     const { secret_key, mode } = this.player.voiceConnection.authentication;
-    if (!secret_key) throw new Error('VOICE_ENCRYPTION_KEY_MISSING');
+    if (!secret_key) {
+      throw new Error('VOICE_ENCRYPTION_KEY_MISSING');
+    }
     // Both supported encryption methods want the nonce to be an incremental integer
     this._nonce++;
-    if (this._nonce > MAX_UINT_32) this._nonce = 0;
+    if (this._nonce > MAX_UINT_32) {
+      this._nonce = 0;
+    }
     if (!this._nonceBuffer) {
       this.resetNonceBuffer();
     }
-    const nonceBuffer = this._nonceBuffer!;
+    const nonceBuffer = this._nonceBuffer ?? this.resetNonceBuffer();
     nonceBuffer.writeUInt32BE(this._nonce, 0);
 
     // 4 extra bytes of padding on the end of the encrypted packet
@@ -297,20 +353,29 @@ class BaseDispatcher extends Writable {
 
     switch (mode) {
       case 'aead_aes256_gcm_rtpsize': {
-        const cipher: CipherGCM = crypto.createCipheriv('aes-256-gcm', secret_key, nonceBuffer);
+        const cipher: CipherGCM = crypto.createCipheriv(
+          'aes-256-gcm',
+          secret_key,
+          nonceBuffer
+        );
         cipher.setAAD(additionalData);
 
-        encrypted = Buffer.concat([cipher.update(buffer), cipher.final(), cipher.getAuthTag()]);
+        encrypted = Buffer.concat([
+          cipher.update(buffer),
+          cipher.final(),
+          cipher.getAuthTag(),
+        ]);
 
         return [Buffer.from(encrypted), noncePadding];
       }
       case 'aead_xchacha20_poly1305_rtpsize': {
-        encrypted = secretbox.methods.crypto_aead_xchacha20poly1305_ietf_encrypt(
-          buffer,
-          additionalData,
-          nonceBuffer,
-          secret_key,
-        );
+        encrypted =
+          secretbox.methods.crypto_aead_xchacha20poly1305_ietf_encrypt(
+            buffer,
+            additionalData,
+            nonceBuffer,
+            secret_key
+          );
 
         return [Buffer.from(encrypted), noncePadding];
       }
@@ -346,59 +411,69 @@ class BaseDispatcher extends Writable {
       4,
     );
     */
-    // Header
-    let rtpHeader = Buffer.alloc(12); // RTP_HEADER_SIZE
-    rtpHeader[0] = 0x80; // Version + Flags (1 byte)
-    rtpHeader[1] = this.payloadType; // Payload Type (1 byte)
+    // Header layout: [0] version + flags, [1] payload type, [2-3] sequence,
+    // [4-7] timestamp, [8-11] SSRC.
+    let rtpHeader = Buffer.alloc(12);
+    rtpHeader[0] = 0x80;
+    rtpHeader[1] = this.payloadType;
     if (this.extensionEnabled) {
       rtpHeader = Buffer.concat([rtpHeader, this.createHeaderExtension()]);
-      rtpHeader[0] |= 1 << 4; // 0x90
+      rtpHeader[0] |= 1 << 4;
     }
     if (this.getTypeDispatcher() === 'video' && isLastPacket) {
-      rtpHeader[1] |= 1 << 7; // Marker bit
+      // Marker bit.
+      rtpHeader[1] |= 1 << 7;
     }
 
     rtpHeader.writeUIntBE(this.getNewSequence(), 2, 2);
     rtpHeader.writeUIntBE(this.timestamp, 4, 4);
     rtpHeader.writeUIntBE(
-      this.player.voiceConnection.authentication.ssrc + Number(this.getTypeDispatcher() === 'video'),
+      this.player.voiceConnection.authentication.ssrc +
+        Number(this.getTypeDispatcher() === 'video'),
       8,
-      4,
+      4
     );
     return Buffer.concat([rtpHeader, ...this._encrypt(buffer, rtpHeader)]);
   }
 
   _sendPacket(packet: Buffer) {
     if (this.getTypeDispatcher() === 'audio') {
-      this._setSpeaking(this.player.isScreenSharing ? 1 << 1 : 1 << 0); // 1 << 0 = SPEAKING, 1 << 1 = SOUND SHARE
+      // 1 << 0 = SPEAKING, 1 << 1 = SOUND SHARE.
+      this._setSpeaking(this.player.isScreenSharing ? 1 << 1 : Math.trunc(1));
     } else if (this.getTypeDispatcher() === 'video') {
       this._setVideoStatus(true);
       this._setStreamStatus(false);
     }
-    if (!this.player.voiceConnection.sockets.udp) {
+    const { udp } = this.player.voiceConnection.sockets;
+    if (!udp) {
       this.emit('debug', 'Failed to send a packet - no UDP socket');
       return;
     }
-    this.player.voiceConnection.sockets.udp.send(packet).catch((e: unknown) => {
-      if (this.getTypeDispatcher() === 'audio') {
-        this._setSpeaking(0);
-      } else if (this.getTypeDispatcher() === 'video') {
-        this._setVideoStatus(false);
-        this._setStreamStatus(true);
+    const send = async () => {
+      try {
+        await udp.send(packet);
+      } catch (error: unknown) {
+        if (this.getTypeDispatcher() === 'audio') {
+          this._setSpeaking(0);
+        } else if (this.getTypeDispatcher() === 'video') {
+          this._setVideoStatus(false);
+          this._setStreamStatus(true);
+        }
+        this.emit('debug', `Failed to send a packet - ${error}`);
       }
-      this.emit('debug', `Failed to send a packet - ${e}`);
-    });
+    };
+    void send();
   }
 
   _setSpeaking(value: number) {
-    if (typeof this.player.voiceConnection !== 'undefined') {
+    if (this.player.voiceConnection !== undefined) {
       this.player.voiceConnection.setSpeaking(value);
     }
     this.emit('speaking', value);
   }
 
   _setVideoStatus(value: boolean) {
-    if (typeof this.player.voiceConnection !== 'undefined') {
+    if (this.player.voiceConnection !== undefined) {
       this.player.voiceConnection.setVideoStatus(value);
     }
     this.emit('videoStatus', value);
@@ -406,7 +481,10 @@ class BaseDispatcher extends Writable {
 
   _setStreamStatus(value: boolean) {
     const connection = this.player.voiceConnection;
-    if ('sendScreenshareState' in connection && typeof connection.sendScreenshareState === 'function') {
+    if (
+      'sendScreenshareState' in connection &&
+      typeof connection.sendScreenshareState === 'function'
+    ) {
       connection.sendScreenshareState(value);
     }
     this.emit('streamStatus', value);

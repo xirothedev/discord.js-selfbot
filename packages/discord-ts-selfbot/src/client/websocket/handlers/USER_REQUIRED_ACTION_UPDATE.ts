@@ -4,7 +4,30 @@ export interface UserRequiredActionData {
   required_action?: string | null;
 }
 
-export default (client: Client, { d: data }: { d: UserRequiredActionData }) => {
+async function acceptAgreements(client: Client): Promise<void> {
+  try {
+    await client.api.users('@me').agreements.patch({
+      data: {
+        privacy: true,
+        terms: true,
+      },
+    });
+    client.emit(
+      'debug',
+      '[USER_REQUIRED_ACTION] Successfully accepted the new Terms of Service and Privacy Policy.'
+    );
+  } catch (error: unknown) {
+    client.emit(
+      'debug',
+      `[USER_REQUIRED_ACTION] Failed to accept the new Terms of Service and Privacy Policy: ${String(error)}`
+    );
+  }
+}
+
+export default function handleUserRequiredActionUpdate(
+  client: Client,
+  { d: data }: { d: UserRequiredActionData }
+) {
   let msg: string;
   switch (data.required_action) {
     case undefined:
@@ -15,26 +38,7 @@ export default (client: Client, { d: data }: { d: UserRequiredActionData }) => {
     case 'AGREEMENTS': {
       msg = 'You need to accept the new Terms of Service and Privacy Policy.';
       // https://discord.com/api/v9/users/@me/agreements
-      client.api
-        .users('@me')
-        .agreements.patch({
-          data: {
-            terms: true,
-            privacy: true,
-          },
-        })
-        .then(() => {
-          client.emit(
-            'debug',
-            '[USER_REQUIRED_ACTION] Successfully accepted the new Terms of Service and Privacy Policy.',
-          );
-        })
-        .catch((e: unknown) => {
-          client.emit(
-            'debug',
-            `[USER_REQUIRED_ACTION] Failed to accept the new Terms of Service and Privacy Policy: ${String(e)}`,
-          );
-        });
+      void acceptAgreements(client);
       break;
     }
     case 'REQUIRE_CAPTCHA': {
@@ -79,4 +83,4 @@ export default (client: Client, { d: data }: { d: UserRequiredActionData }) => {
     }
   }
   client.emit('debug', `[USER_REQUIRED_ACTION] ${msg}`);
-};
+}

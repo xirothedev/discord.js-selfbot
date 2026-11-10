@@ -14,6 +14,9 @@ import type { GuildChannel } from './GuildChannel';
 import type { AutoModerationRuleEntity } from '../types/entities/auto-moderation-rule';
 import type { PatchOf } from '../types/schema';
 import _ConstantsModule from '../util/Constants';
+import type Client from '../client/Client';
+import type { Guild } from './Guild';
+
 const {
   AutoModerationRuleKeywordPresetTypes,
   AutoModerationRuleTriggerTypes,
@@ -34,7 +37,7 @@ class AutoModerationRule extends Base implements AutoModerationRuleEntity {
   declare exemptRoles: AutoModerationRuleEntity['exemptRoles'];
   declare exemptChannels: AutoModerationRuleEntity['exemptChannels'];
 
-  constructor(client: import('../client/Client').default, data: APIAutoModerationRule, guild: import('./Guild').Guild) {
+  constructor(client: Client, data: APIAutoModerationRule, guild: Guild) {
     super(client);
 
     this.id = data.id;
@@ -59,23 +62,27 @@ class AutoModerationRule extends Base implements AutoModerationRuleEntity {
 
     if (data.trigger_metadata !== undefined) {
       this.triggerMetadata = {
-        keywordFilter: data.trigger_metadata.keyword_filter ?? [],
-        regexPatterns: data.trigger_metadata.regex_patterns ?? [],
-        presets: data.trigger_metadata.presets?.map(preset => AutoModerationRuleKeywordPresetTypes[preset]) ?? [],
         allowList: data.trigger_metadata.allow_list ?? [],
+        keywordFilter: data.trigger_metadata.keyword_filter ?? [],
+        mentionRaidProtectionEnabled:
+          data.trigger_metadata.mention_raid_protection_enabled ?? false,
         mentionTotalLimit: data.trigger_metadata.mention_total_limit ?? null,
-        mentionRaidProtectionEnabled: data.trigger_metadata.mention_raid_protection_enabled ?? false,
+        presets:
+          data.trigger_metadata.presets?.map(
+            (preset) => AutoModerationRuleKeywordPresetTypes[preset]
+          ) ?? [],
+        regexPatterns: data.trigger_metadata.regex_patterns ?? [],
       };
     }
 
     if (data.actions !== undefined) {
-      this.actions = data.actions.map(action => ({
-        type: AutoModerationActionTypes[action.type],
+      this.actions = data.actions.map((action) => ({
         metadata: {
-          durationSeconds: action.metadata?.duration_seconds ?? null,
           channelId: action.metadata?.channel_id ?? null,
           customMessage: action.metadata?.custom_message ?? null,
+          durationSeconds: action.metadata?.duration_seconds ?? null,
         },
+        type: AutoModerationActionTypes[action.type],
       }));
     }
 
@@ -86,8 +93,10 @@ class AutoModerationRule extends Base implements AutoModerationRuleEntity {
     if (data.exempt_roles !== undefined) {
       this.exemptRoles = new Collection<string, Role>(
         data.exempt_roles
-          .map(id => [id, this.guild.roles.cache.get(id)] as const)
-          .filter((entry): entry is readonly [string, Role] => entry[1] !== undefined),
+          .map((id) => [id, this.guild.roles.cache.get(id)] as const)
+          .filter(
+            (entry): entry is readonly [string, Role] => entry[1] !== undefined
+          )
       );
     }
 
@@ -95,7 +104,9 @@ class AutoModerationRule extends Base implements AutoModerationRuleEntity {
       const exemptChannels = new Collection<string, GuildChannel>();
       for (const id of data.exempt_channels) {
         const channel = this.guild.channels.cache.get(id);
-        if (channel) exemptChannels.set(id, channel);
+        if (channel) {
+          exemptChannels.set(id, channel);
+        }
       }
       this.exemptChannels = exemptChannels;
     }
@@ -118,42 +129,74 @@ class AutoModerationRule extends Base implements AutoModerationRuleEntity {
   }
 
   setKeywordFilter(keywordFilter: string[], reason?: string) {
-    return this.edit({ triggerMetadata: { ...this.triggerMetadata, keywordFilter }, reason });
+    return this.edit({
+      reason,
+      triggerMetadata: { ...this.triggerMetadata, keywordFilter },
+    });
   }
 
   setRegexPatterns(regexPatterns: string[], reason?: string) {
-    return this.edit({ triggerMetadata: { ...this.triggerMetadata, regexPatterns }, reason });
+    return this.edit({
+      reason,
+      triggerMetadata: { ...this.triggerMetadata, regexPatterns },
+    });
   }
 
   setPresets(presets: AutoModerationRuleKeywordPresetType[], reason?: string) {
-    return this.edit({ triggerMetadata: { ...this.triggerMetadata, presets }, reason });
+    return this.edit({
+      reason,
+      triggerMetadata: { ...this.triggerMetadata, presets },
+    });
   }
 
   setAllowList(allowList: string[], reason?: string) {
-    return this.edit({ triggerMetadata: { ...this.triggerMetadata, allowList }, reason });
+    return this.edit({
+      reason,
+      triggerMetadata: { ...this.triggerMetadata, allowList },
+    });
   }
 
   setMentionTotalLimit(mentionTotalLimit: number, reason?: string) {
-    return this.edit({ triggerMetadata: { ...this.triggerMetadata, mentionTotalLimit }, reason });
+    return this.edit({
+      reason,
+      triggerMetadata: { ...this.triggerMetadata, mentionTotalLimit },
+    });
   }
 
-  setMentionRaidProtectionEnabled(mentionRaidProtectionEnabled: boolean, reason?: string) {
-    return this.edit({ triggerMetadata: { ...this.triggerMetadata, mentionRaidProtectionEnabled }, reason });
+  setMentionRaidProtectionEnabled(
+    mentionRaidProtectionEnabled: boolean,
+    reason?: string
+  ) {
+    return this.edit({
+      reason,
+      triggerMetadata: {
+        ...this.triggerMetadata,
+        mentionRaidProtectionEnabled,
+      },
+    });
   }
 
   setActions(actions: AutoModerationActionOptions[], reason?: string) {
     return this.edit({ actions, reason });
   }
 
-  setEnabled(enabled: boolean = true, reason?: string) {
+  setEnabled(enabled = true, reason?: string) {
     return this.edit({ enabled, reason });
   }
 
-  setExemptRoles(exemptRoles: Collection<string, Role> | RoleResolvable[], reason?: string) {
+  setExemptRoles(
+    exemptRoles: Collection<string, Role> | RoleResolvable[],
+    reason?: string
+  ) {
     return this.edit({ exemptRoles, reason });
   }
 
-  setExemptChannels(exemptChannels: Collection<string, GuildBasedChannel> | GuildChannelResolvable[], reason?: string) {
+  setExemptChannels(
+    exemptChannels:
+      | Collection<string, GuildBasedChannel>
+      | GuildChannelResolvable[],
+    reason?: string
+  ) {
     return this.edit({ exemptChannels, reason });
   }
 }

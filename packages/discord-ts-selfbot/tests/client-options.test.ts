@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test';
+
 import { Client, Intents } from '../src/index';
 
 test('Client options default to a single shard and full intents', () => {

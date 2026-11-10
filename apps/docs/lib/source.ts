@@ -1,18 +1,19 @@
 import { llms, loader } from 'fumadocs-core/source';
-import { docsRoute } from './shared';
-import { defineDocs } from 'fumadocs-mdx/macro';
 import { metaSchema, pageSchema } from 'fumadocs-core/source/schema';
+import { defineDocs } from 'fumadocs-mdx/macro';
 import { z } from 'zod';
+
+import { docsRoute } from './shared';
 
 const docs = defineDocs({
   dir: 'content/docs',
   docs: {
-    schema: pageSchema.extend({
-      sourceUrl: z.string().optional(),
-    }),
     postprocess: {
       includeProcessedMarkdown: true,
     },
+    schema: pageSchema.extend({
+      sourceUrl: z.string().optional(),
+    }),
   },
   meta: {
     schema: metaSchema,
@@ -22,12 +23,12 @@ const docs = defineDocs({
 // See https://fumadocs.dev/docs/headless/source-api for more info
 export const source = loader({
   baseUrl: docsRoute,
-  source: docs.toFumadocsSource(),
   plugins: [],
+  source: docs.toFumadocsSource(),
 });
 
 export const docsLlms = llms(source, {
-  renderPage: async page => `# ${page.data.title} (${page.url})
+  renderPage: async (page) => `# ${page.data.title} (${page.url})
 
 ${await page.data.getText('processed')}`,
 });

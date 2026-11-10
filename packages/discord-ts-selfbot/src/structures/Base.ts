@@ -1,6 +1,23 @@
 import Util from '../util/Util';
 import type { Client } from '../client/Client';
 
+function patchValue<TValue>(
+  next: TValue | undefined,
+  current: TValue,
+  fallback?: TValue
+): TValue {
+  if (next !== undefined) {
+    return next;
+  }
+  if (current !== undefined) {
+    return current;
+  }
+  if (fallback !== undefined) {
+    return fallback;
+  }
+  return current;
+}
+
 class Base {
   declare client: Client;
 
@@ -32,4 +49,4 @@ class Base {
 }
 
 export default Base;
-export { Base };
+export { Base, patchValue };

@@ -109,7 +109,7 @@ Edits an application command.
 
 ```ts
 
-edit(command: ApplicationCommandResolvable, data: Partial<ApplicationCommandDataResolvable>, guildId: string): Promise<ApplicationCommand<unknown>>
+edit(command: ApplicationCommandResolvable, data: Partial<ApplicationCommandDataResolvable>, guildId: string): Promise<ApplicationCommand<object>>
 
 ```
 
@@ -117,7 +117,7 @@ edit(command: ApplicationCommandResolvable, data: Partial<ApplicationCommandData
 - `data: Partial<ApplicationCommandDataResolvable>` — The data to update the command with
 - `guildId: string` — The guild's id where the command registered, ignored when using a GuildApplicationCommandManager
 
-**Returns:** `Promise<ApplicationCommand<unknown>>`
+**Returns:** `Promise<ApplicationCommand<object>>`
 
 ```ts
 // Edit an existing command
@@ -132,14 +132,14 @@ client.application!.commands.edit('123456789012345678', {
 
 ```ts
 
-fetch(id: string, options: FetchApplicationCommandOptions & { guildId: string }): Promise<ApplicationCommand<unknown>>
+fetch(id: string, options: FetchApplicationCommandOptions & { guildId: string }): Promise<ApplicationCommand<object>>
 
 ```
 
 - `id: string`
 - `options: FetchApplicationCommandOptions & { guildId: string }`
 
-**Returns:** `Promise<ApplicationCommand<unknown>>`
+**Returns:** `Promise<ApplicationCommand<object>>`
 
 ```ts
 
@@ -262,14 +262,14 @@ Sets all the commands for this application or guild.
 
 ```ts
 
-set(commands: ApplicationCommandDataResolvable[], guildId: string): Promise<Collection<string, ApplicationCommand<unknown>>>
+set(commands: ApplicationCommandDataResolvable[], guildId: string): Promise<Collection<string, ApplicationCommand<object>>>
 
 ```
 
 - `commands: ApplicationCommandDataResolvable[]` — The commands
 - `guildId: string` — The guild's id to create the commands in, ignored when using a GuildApplicationCommandManager
 
-**Returns:** `Promise<Collection<string, ApplicationCommand<unknown>>>`
+**Returns:** `Promise<Collection<string, ApplicationCommand<object>>>`
 
 ```ts
 // Set all commands to just this one

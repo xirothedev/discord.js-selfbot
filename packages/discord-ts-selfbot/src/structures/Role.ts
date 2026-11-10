@@ -1,6 +1,7 @@
 import process from 'node:process';
 import Base from './Base';
 import _errorsModule from '../errors';
+
 const { Error } = _errorsModule;
 import Permissions from '../util/Permissions';
 import RoleFlags from '../util/RoleFlags';
@@ -8,6 +9,11 @@ import SnowflakeUtil from '../util/SnowflakeUtil';
 import type { RawRoleData } from '../../typings/rawDataTypes';
 import type { RoleEntity } from '../types/entities/role';
 import type { PatchOf } from '../types/schema';
+import type Client from '../client/Client';
+import type { Guild } from './Guild';
+import type { GuildMember } from './GuildMember';
+import type { GuildChannel } from './GuildChannel';
+import type { SetRolePositionOptions } from '../../typings';
 
 let deprecationEmittedForComparePositions = false;
 
@@ -35,7 +41,7 @@ class Role extends Base implements RoleEntity {
   declare icon: RoleEntity['icon'];
   declare unicodeEmoji: RoleEntity['unicodeEmoji'];
 
-  constructor(client: import('../client/Client').default, data: RawRoleData, guild: import('./Guild').Guild) {
+  constructor(client: Client, data: RawRoleData, guild: Guild) {
     super(client);
 
     this.guild = guild;
@@ -44,7 +50,9 @@ class Role extends Base implements RoleEntity {
 
     this.unicodeEmoji = null;
 
-    if (data) this._patch(data);
+    if (data) {
+      this._patch(data);
+    }
   }
 
   _patch(data: PatchOf<'Role'>) {
@@ -63,7 +71,7 @@ class Role extends Base implements RoleEntity {
     }
 
     if (data.colors !== undefined) {
-      const colors = data.colors;
+      const { colors } = data;
       this.colors = {
         primaryColor: colors.primary_color,
         secondaryColor: colors.secondary_color,
@@ -91,29 +99,47 @@ class Role extends Base implements RoleEntity {
       this.mentionable = data.mentionable;
     }
 
-    if (data.icon !== undefined) this.icon = data.icon;
-
-    if (data.unicode_emoji !== undefined) this.unicodeEmoji = data.unicode_emoji;
-
-    const tags = data.tags;
-    if (tags) {
-      const mapped: NonNullable<RoleEntity['tags']> = {};
-      if (tags.bot_id !== undefined) mapped.botId = tags.bot_id;
-      if (tags.integration_id !== undefined) mapped.integrationId = tags.integration_id;
-      if (tags.premium_subscriber !== undefined) mapped.premiumSubscriberRole = true;
-      if (tags.subscription_listing_id !== undefined) mapped.subscriptionListingId = tags.subscription_listing_id;
-      if (tags.available_for_purchase !== undefined) mapped.availableForPurchase = true;
-      if (tags.guild_connections !== undefined) mapped.guildConnections = true;
-      this.tags = mapped;
-    } else {
-      this.tags = null;
+    if (data.icon !== undefined) {
+      this.icon = data.icon;
     }
 
-    if (data.flags !== undefined) {
-      this.flags = new RoleFlags(data.flags).freeze();
-    } else {
+    if (data.unicode_emoji !== undefined) {
+      this.unicodeEmoji = data.unicode_emoji;
+    }
+
+    const { tags } = data;
+    this.tags = tags ? Role.mapTags(tags) : null;
+
+    if (data.flags === undefined) {
       this.flags ??= new RoleFlags().freeze();
+    } else {
+      this.flags = new RoleFlags(data.flags).freeze();
     }
+  }
+
+  static mapTags(
+    tags: NonNullable<PatchOf<'Role'>['tags']>
+  ): NonNullable<RoleEntity['tags']> {
+    const mapped: NonNullable<RoleEntity['tags']> = {};
+    if (tags.bot_id !== undefined) {
+      mapped.botId = tags.bot_id;
+    }
+    if (tags.integration_id !== undefined) {
+      mapped.integrationId = tags.integration_id;
+    }
+    if (tags.premium_subscriber !== undefined) {
+      mapped.premiumSubscriberRole = true;
+    }
+    if (tags.subscription_listing_id !== undefined) {
+      mapped.subscriptionListingId = tags.subscription_listing_id;
+    }
+    if (tags.available_for_purchase !== undefined) {
+      mapped.availableForPurchase = true;
+    }
+    if (tags.guild_connections !== undefined) {
+      mapped.guildConnections = true;
+    }
+    return mapped;
   }
 
   get createdTimestamp() {
@@ -134,7 +160,7 @@ class Role extends Base implements RoleEntity {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
         'Role#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
-        'DeprecationWarning',
+        'DeprecationWarning'
       );
     }
 
@@ -146,12 +172,15 @@ class Role extends Base implements RoleEntity {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
         'Role#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
-        'DeprecationWarning',
+        'DeprecationWarning'
       );
     }
 
-    if (value) deletedRoles.add(this);
-    else deletedRoles.delete(this);
+    if (value) {
+      deletedRoles.add(this);
+    } else {
+      deletedRoles.delete(this);
+    }
   }
 
   get hexColor() {
@@ -159,21 +188,35 @@ class Role extends Base implements RoleEntity {
   }
 
   get members() {
-    return this.guild.members.cache.filter((m: import('./GuildMember').GuildMember) => m.roles.cache.has(this.id));
+    return this.guild.members.cache.filter((member: GuildMember) =>
+      member.roles.cache.has(this.id)
+    );
   }
 
   get editable(): boolean {
-    if (this.managed) return false;
-    const clientMember: import('./GuildMember').GuildMember | null = this.guild.members.resolve(this.client.user);
-    if (!clientMember?.permissions.has(Permissions.FLAGS.MANAGE_ROLES)) return false;
+    if (this.managed) {
+      return false;
+    }
+    const clientMember: GuildMember | null = this.guild.members.resolve(
+      this.client.user
+    );
+    if (!clientMember?.permissions.has(Permissions.FLAGS.MANAGE_ROLES)) {
+      return false;
+    }
     return clientMember.roles.highest.comparePositionTo(this) > 0;
   }
 
   get position() {
     let count = 0;
     for (const role of this.guild.roles.cache.values()) {
-      if (this.rawPosition > role.rawPosition) count++;
-      else if (this.rawPosition === role.rawPosition && BigInt(this.id) < BigInt(role.id)) count++;
+      if (this.rawPosition > role.rawPosition) {
+        count++;
+      } else if (
+        this.rawPosition === role.rawPosition &&
+        BigInt(this.id) < BigInt(role.id)
+      ) {
+        count++;
+      }
     }
 
     return count;
@@ -187,9 +230,11 @@ class Role extends Base implements RoleEntity {
     return this.guild.roles.edit(this, data, reason);
   }
 
-  permissionsIn(channel: import('./GuildChannel').GuildChannel | string, checkAdmin: boolean = true) {
+  permissionsIn(channel: GuildChannel | string, checkAdmin = true) {
     const resolved = this.guild.channels.resolve(channel);
-    if (!resolved) throw new Error('GUILD_CHANNEL_RESOLVE');
+    if (!resolved) {
+      throw new Error('GUILD_CHANNEL_RESOLVE');
+    }
     return resolved.rolePermissions(this, checkAdmin);
   }
 
@@ -212,7 +257,7 @@ class Role extends Base implements RoleEntity {
     return this.edit({ colors, reason });
   }
 
-  setHoist(hoist: boolean = true, reason?: string) {
+  setHoist(hoist = true, reason?: string) {
     return this.edit({ hoist }, reason);
   }
 
@@ -220,7 +265,7 @@ class Role extends Base implements RoleEntity {
     return this.edit({ permissions }, reason);
   }
 
-  setMentionable(mentionable: boolean = true, reason?: string) {
+  setMentionable(mentionable = true, reason?: string) {
     return this.edit({ mentionable }, reason);
   }
 
@@ -232,7 +277,7 @@ class Role extends Base implements RoleEntity {
     return this.edit({ unicodeEmoji }, reason);
   }
 
-  setPosition(position: number, options: import('../../typings').SetRolePositionOptions = {}) {
+  setPosition(position: number, options: SetRolePositionOptions = {}) {
     return this.guild.roles.setPosition(this, position, options);
   }
 
@@ -246,7 +291,9 @@ class Role extends Base implements RoleEntity {
   }
 
   iconURL({ format, size }: { format?: string; size?: number } = {}) {
-    if (!this.icon) return null;
+    if (!this.icon) {
+      return null;
+    }
     return this.client.rest.cdn.RoleIcon(this.id, this.icon, format, size);
   }
 
@@ -268,7 +315,9 @@ class Role extends Base implements RoleEntity {
   }
 
   toString() {
-    if (this.id === this.guild.id) return '@everyone';
+    if (this.id === this.guild.id) {
+      return '@everyone';
+    }
     return `<@&${this.id}>`;
   }
 
@@ -291,7 +340,7 @@ class Role extends Base implements RoleEntity {
     if (!deprecationEmittedForComparePositions) {
       process.emitWarning(
         'The Role.comparePositions method is deprecated. Use RoleManager#comparePositions instead.',
-        'DeprecationWarning',
+        'DeprecationWarning'
       );
 
       deprecationEmittedForComparePositions = true;

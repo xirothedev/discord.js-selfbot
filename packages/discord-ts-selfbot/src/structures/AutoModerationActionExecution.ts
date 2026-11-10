@@ -1,4 +1,5 @@
 import _ConstantsModule from '../util/Constants';
+
 const { AutoModerationRuleTriggerTypes } = _ConstantsModule;
 import type {
   APIAutoModerationAction,
@@ -21,14 +22,18 @@ class AutoModerationActionExecution {
   declare matchedKeyword: string | null;
   declare matchedContent: string | null;
 
-  constructor(data: GatewayAutoModerationActionExecutionDispatchData, guild: Guild) {
+  constructor(
+    data: GatewayAutoModerationActionExecutionDispatchData,
+    guild: Guild
+  ) {
     this.guild = guild;
 
     this.action = data.action;
 
     this.ruleId = data.rule_id;
 
-    this.ruleTriggerType = AutoModerationRuleTriggerTypes[data.rule_trigger_type];
+    this.ruleTriggerType =
+      AutoModerationRuleTriggerTypes[data.rule_trigger_type];
 
     this.userId = data.user_id;
 

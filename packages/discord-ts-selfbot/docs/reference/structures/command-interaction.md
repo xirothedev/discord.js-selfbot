@@ -44,7 +44,7 @@ The client that instantiated this
 
 The invoked application command, if it was fetched before
 
-**Type:** `ApplicationCommand<unknown> | ApplicationCommand<{ guild: GuildResolvable }> | null` · **Modifiers:** readonly
+**Type:** `ApplicationCommand<object> | ApplicationCommand<{ guild: GuildResolvable }> | null` · **Modifiers:** readonly
 
 ### `commandId`
 

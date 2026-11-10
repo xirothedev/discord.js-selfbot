@@ -1,5 +1,12 @@
 import { test, describe } from 'bun:test';
-import { token, webhookUrl, skip, makeClient, login, makeStepRecorder } from './_helpers';
+
+import {
+  login,
+  makeClient,
+  makeStepRecorder,
+  skip,
+  webhookUrl,
+} from './_helpers';
 
 describe.skipIf(skip)('manual: webhooks', () => {
   test('webhook operations', async () => {
@@ -11,16 +18,24 @@ describe.skipIf(skip)('manual: webhooks', () => {
         console.log('[SKIP] no TEST_WEBHOOK_URL');
         return;
       }
-      const id = webhookUrl.split('/').slice(-2, -1)[0];
-      const tok = webhookUrl.split('/').pop()!;
+      const segments = webhookUrl.split('/');
+      const webhookId = segments.at(-2);
+      const webhookToken = segments.at(-1);
+      if (!webhookId || !webhookToken) {
+        throw new Error('TEST_WEBHOOK_URL is malformed');
+      }
       await step('fetch webhook', async () => {
-        const wh = await client.fetchWebhook(id, tok);
-        if (wh.id !== id) throw new Error('id mismatch');
+        const webhook = await client.fetchWebhook(webhookId, webhookToken);
+        if (webhook.id !== webhookId) {
+          throw new Error('id mismatch');
+        }
       });
       await step('send via webhook', async () => {
-        const wh = await client.fetchWebhook(id, tok);
-        const msg = await wh.send('manual: webhook hello');
-        if (typeof msg.id !== 'string' && typeof msg !== 'string') throw new Error('no result');
+        const webhook = await client.fetchWebhook(webhookId, webhookToken);
+        const message = await webhook.send('manual: webhook hello');
+        if (typeof message.id !== 'string' && typeof message !== 'string') {
+          throw new TypeError('no result');
+        }
       });
     } finally {
       client.destroy();

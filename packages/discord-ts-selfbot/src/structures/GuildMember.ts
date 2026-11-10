@@ -1,9 +1,11 @@
 import { createRequire } from 'node:module';
+
 const require = createRequire(import.meta.url);
 import process from 'node:process';
 import Base from './Base';
 import VoiceState from './VoiceState';
 import _errorsModule from '../errors';
+
 const { Error } = _errorsModule;
 import GuildMemberRoleManager from '../managers/GuildMemberRoleManager';
 import GuildMemberFlags from '../util/GuildMemberFlags';
@@ -12,6 +14,11 @@ import type { RawGuildMemberData } from '../../typings/rawDataTypes';
 import type { ImageURLOptions } from '../../typings';
 import type { GuildMemberEntity } from '../types/entities/guild-member';
 import type { PatchOf } from '../types/schema';
+import type Client from '../client/Client';
+import type { Guild } from './Guild';
+import type { Presence } from './Presence';
+import type { Role } from './Role';
+import type { GuildChannel } from './GuildChannel';
 
 /**
  * @type {WeakSet<GuildMember>}
@@ -35,7 +42,7 @@ class GuildMember extends Base implements GuildMemberEntity {
   declare user: GuildMemberEntity['user'];
   declare _roles: GuildMemberEntity['_roles'];
 
-  constructor(client: import('../client/Client').default, data: RawGuildMemberData, guild: import('./Guild').Guild) {
+  constructor(client: Client, data: RawGuildMemberData, guild: Guild) {
     super(client);
 
     this.guild = guild;
@@ -51,7 +58,9 @@ class GuildMember extends Base implements GuildMemberEntity {
     this.communicationDisabledUntilTimestamp = null;
 
     this._roles = [];
-    if (data) this._patch(data);
+    if (data) {
+      this._patch(data);
+    }
   }
 
   _patch(data: PatchOf<'GuildMember'>) {
@@ -59,51 +68,56 @@ class GuildMember extends Base implements GuildMemberEntity {
       this.user = this.client.users._add(data.user, true);
     }
 
-    if (data.nick !== undefined) this.nickname = data.nick;
+    if (data.nick !== undefined) {
+      this.nickname = data.nick;
+    }
     if (data.avatar !== undefined) {
       this.avatar = data.avatar;
     } else if (typeof this.avatar !== 'string') {
       this.avatar = null;
     }
-    if (data.banner !== undefined) {
-      this.banner = data.banner;
-    } else {
+    if (data.banner === undefined) {
       this.banner ??= null;
+    } else {
+      this.banner = data.banner;
     }
 
     if (data.joined_at !== undefined && data.joined_at !== null) {
       this.joinedTimestamp = new Date(data.joined_at).getTime();
     }
     if (data.premium_since !== undefined) {
-      this.premiumSinceTimestamp = data.premium_since ? new Date(data.premium_since).getTime() : null;
+      this.premiumSinceTimestamp = data.premium_since
+        ? new Date(data.premium_since).getTime()
+        : null;
     }
-    if (data.roles !== undefined) this._roles = data.roles;
+    if (data.roles !== undefined) {
+      this._roles = data.roles;
+    }
     this.pending = data.pending ?? false;
 
     if (data.communication_disabled_until !== undefined) {
-      this.communicationDisabledUntilTimestamp = data.communication_disabled_until
-        ? Date.parse(data.communication_disabled_until)
-        : null;
+      this.communicationDisabledUntilTimestamp =
+        data.communication_disabled_until
+          ? Date.parse(data.communication_disabled_until)
+          : null;
     }
-    if (data.flags !== undefined) {
-      this.flags = new GuildMemberFlags(data.flags).freeze();
-    } else {
+    if (data.flags === undefined) {
       this.flags ??= new GuildMemberFlags().freeze();
+    } else {
+      this.flags = new GuildMemberFlags(data.flags).freeze();
     }
 
-    if (data.avatar_decoration_data) {
-      this.avatarDecorationData = {
-        asset: data.avatar_decoration_data.asset,
-        skuId: data.avatar_decoration_data.sku_id,
-      };
-    } else {
-      this.avatarDecorationData = null;
-    }
+    this.avatarDecorationData = data.avatar_decoration_data
+      ? {
+          asset: data.avatar_decoration_data.asset,
+          skuId: data.avatar_decoration_data.sku_id,
+        }
+      : null;
   }
 
   _clone() {
     const clone = super._clone();
-    clone._roles = this._roles.slice();
+    clone._roles = [...this._roles];
     return clone;
   }
 
@@ -117,7 +131,7 @@ class GuildMember extends Base implements GuildMemberEntity {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
         'GuildMember#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
-        'DeprecationWarning',
+        'DeprecationWarning'
       );
     }
 
@@ -129,12 +143,15 @@ class GuildMember extends Base implements GuildMemberEntity {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
         'GuildMember#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
-        'DeprecationWarning',
+        'DeprecationWarning'
       );
     }
 
-    if (value) deletedGuildMembers.add(this);
-    else deletedGuildMembers.delete(this);
+    if (value) {
+      deletedGuildMembers.add(this);
+    } else {
+      deletedGuildMembers.delete(this);
+    }
   }
 
   get partial() {
@@ -147,23 +164,45 @@ class GuildMember extends Base implements GuildMemberEntity {
 
   get voice() {
     return (
-      this.guild.voiceStates.cache.get(this.id) ?? new VoiceState(this.guild.client, this.guild, { user_id: this.id })
+      this.guild.voiceStates.cache.get(this.id) ??
+      new VoiceState(this.guild.client, this.guild, { user_id: this.id })
     );
   }
 
   avatarDecorationURL() {
-    if (!this.avatarDecorationData) return null;
-    return this.client.rest.cdn.AvatarDecoration(this.avatarDecorationData.asset);
+    if (!this.avatarDecorationData) {
+      return null;
+    }
+    return this.client.rest.cdn.AvatarDecoration(
+      this.avatarDecorationData.asset
+    );
   }
 
   avatarURL({ format, size, dynamic }: ImageURLOptions = {}) {
-    if (!this.avatar) return null;
-    return this.client.rest.cdn.GuildMemberAvatar(this.guild.id, this.id, this.avatar, format, size, dynamic);
+    if (!this.avatar) {
+      return null;
+    }
+    return this.client.rest.cdn.GuildMemberAvatar(
+      this.guild.id,
+      this.id,
+      this.avatar,
+      format,
+      size,
+      dynamic
+    );
   }
 
   bannerURL({ format, size, dynamic }: ImageURLOptions = {}) {
     return (
-      this.banner && this.client.rest.cdn.GuildMemberBanner(this.guild.id, this.id, this.banner, format, size, dynamic)
+      this.banner &&
+      this.client.rest.cdn.GuildMemberBanner(
+        this.guild.id,
+        this.id,
+        this.banner,
+        format,
+        size,
+        dynamic
+      )
     );
   }
 
@@ -184,14 +223,19 @@ class GuildMember extends Base implements GuildMemberEntity {
   }
 
   get communicationDisabledUntil() {
-    return this.communicationDisabledUntilTimestamp && new Date(this.communicationDisabledUntilTimestamp);
+    return (
+      this.communicationDisabledUntilTimestamp &&
+      new Date(this.communicationDisabledUntilTimestamp)
+    );
   }
 
   get premiumSince() {
-    return this.premiumSinceTimestamp ? new Date(this.premiumSinceTimestamp) : null;
+    return this.premiumSinceTimestamp
+      ? new Date(this.premiumSinceTimestamp)
+      : null;
   }
 
-  get presence(): import('./Presence').Presence | null {
+  get presence(): Presence | null {
     return this.guild.presences.cache.get(this.id) ?? null;
   }
 
@@ -212,43 +256,75 @@ class GuildMember extends Base implements GuildMemberEntity {
   }
 
   get permissions() {
-    if (this.user.id === this.guild.ownerId) return new Permissions(Permissions.ALL).freeze();
-    return new Permissions(this.roles.cache.map((role: import('./Role').Role) => role.permissions.bitfield)).freeze();
+    if (this.user.id === this.guild.ownerId) {
+      return new Permissions(Permissions.ALL).freeze();
+    }
+    return new Permissions(
+      this.roles.cache.map((role: Role) => role.permissions.bitfield)
+    ).freeze();
   }
 
   get manageable(): boolean {
-    if (this.user.id === this.guild.ownerId) return false;
-    if (this.user.id === this.client.user!.id) return false;
-    if (this.client.user!.id === this.guild.ownerId) return true;
-    if (!this.guild.members.me) throw new Error('GUILD_UNCACHED_ME');
-    return this.guild.members.me.roles.highest.comparePositionTo(this.roles.highest) > 0;
+    if (this.user.id === this.guild.ownerId) {
+      return false;
+    }
+    if (this.user.id === this.client.user?.id) {
+      return false;
+    }
+    if (this.client.user?.id === this.guild.ownerId) {
+      return true;
+    }
+    if (!this.guild.members.me) {
+      throw new Error('GUILD_UNCACHED_ME');
+    }
+    return (
+      this.guild.members.me.roles.highest.comparePositionTo(
+        this.roles.highest
+      ) > 0
+    );
   }
 
   get kickable() {
-    const me = this.guild.members.me;
-    return this.manageable && Boolean(me?.permissions.has(Permissions.FLAGS.KICK_MEMBERS));
+    const { me } = this.guild.members;
+    return (
+      this.manageable &&
+      Boolean(me?.permissions.has(Permissions.FLAGS.KICK_MEMBERS))
+    );
   }
 
   get bannable() {
-    const me = this.guild.members.me;
-    return this.manageable && Boolean(me?.permissions.has(Permissions.FLAGS.BAN_MEMBERS));
+    const { me } = this.guild.members;
+    return (
+      this.manageable &&
+      Boolean(me?.permissions.has(Permissions.FLAGS.BAN_MEMBERS))
+    );
   }
 
   get moderatable() {
     return (
       !this.permissions.has(Permissions.FLAGS.ADMINISTRATOR) &&
       this.manageable &&
-      (this.guild.members.me?.permissions.has(Permissions.FLAGS.MODERATE_MEMBERS) ?? false)
+      (this.guild.members.me?.permissions.has(
+        Permissions.FLAGS.MODERATE_MEMBERS
+      ) ??
+        false)
     );
   }
 
-  isCommunicationDisabled(): this is GuildMember & { communicationDisabledUntilTimestamp: number } {
-    return this.communicationDisabledUntilTimestamp !== null && this.communicationDisabledUntilTimestamp > Date.now();
+  isCommunicationDisabled(): this is GuildMember & {
+    communicationDisabledUntilTimestamp: number;
+  } {
+    return (
+      this.communicationDisabledUntilTimestamp !== null &&
+      this.communicationDisabledUntilTimestamp > Date.now()
+    );
   }
 
-  permissionsIn(channel: import('./GuildChannel').GuildChannel | string) {
+  permissionsIn(channel: GuildChannel | string) {
     const resolved = this.guild.channels.resolve(channel);
-    if (!resolved) throw new Error('GUILD_CHANNEL_RESOLVE');
+    if (!resolved) {
+      throw new Error('GUILD_CHANNEL_RESOLVE');
+    }
     return resolved.permissionsFor(this);
   }
 
@@ -264,7 +340,7 @@ class GuildMember extends Base implements GuildMemberEntity {
     return this.edit({ flags, reason });
   }
 
-  createDM(force: boolean = false) {
+  createDM(force = false) {
     return this.user.createDM(force);
   }
 
@@ -280,16 +356,22 @@ class GuildMember extends Base implements GuildMemberEntity {
     return this.guild.bans.create(this, options);
   }
 
-  disableCommunicationUntil(communicationDisabledUntil: Date | number | string | null, reason?: string) {
+  disableCommunicationUntil(
+    communicationDisabledUntil: Date | number | string | null,
+    reason?: string
+  ) {
     return this.edit({ communicationDisabledUntil }, reason);
   }
 
   timeout(timeout: number | null, reason?: string) {
-    return this.disableCommunicationUntil(timeout && Date.now() + timeout, reason);
+    return this.disableCommunicationUntil(
+      timeout && Date.now() + timeout,
+      reason
+    );
   }
 
-  fetch(force: boolean = true) {
-    return this.guild.members.fetch({ user: this.id, cache: true, force });
+  fetch(force = true) {
+    return this.guild.members.fetch({ cache: true, force, user: this.id });
   }
 
   equals(member: GuildMember | null) {
@@ -303,10 +385,12 @@ class GuildMember extends Base implements GuildMemberEntity {
       this.avatar === member.avatar &&
       this.banner === member.banner &&
       this.pending === member.pending &&
-      this.communicationDisabledUntilTimestamp === member.communicationDisabledUntilTimestamp &&
+      this.communicationDisabledUntilTimestamp ===
+        member.communicationDisabledUntilTimestamp &&
       this.flags.bitfield === member.flags.bitfield &&
       (this._roles === member._roles ||
-        (this._roles.length === member._roles.length && this._roles.every((role, i) => role === member._roles[i]))) &&
+        (this._roles.length === member._roles.length &&
+          this._roles.every((role, index) => role === member._roles[index]))) &&
       this.avatarDecorationData?.asset === member.avatarDecorationData?.asset &&
       this.avatarDecorationData?.skuId === member.avatarDecorationData?.skuId
     );
@@ -318,10 +402,10 @@ class GuildMember extends Base implements GuildMemberEntity {
 
   toJSON() {
     const json = super.toJSON({
-      guild: 'guildId',
-      user: 'userId',
       displayName: true,
+      guild: 'guildId',
       roles: true,
+      user: 'userId',
     });
     json.avatarURL = this.avatarURL();
     json.bannerURL = this.bannerURL();
@@ -351,5 +435,7 @@ setTimeout(() => {
   try {
     const TextBasedChannel = require('./interfaces/TextBasedChannel');
     TextBasedChannel.applyToClass(GuildMember);
-  } catch {}
+  } catch {
+    // The channel mixin is optional during early circular imports.
+  }
 }, 0);

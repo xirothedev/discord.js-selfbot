@@ -12,6 +12,14 @@ import type StoreChannel from '../structures/StoreChannel';
 import type TextChannel from '../structures/TextChannel';
 import type ThreadChannel from '../structures/ThreadChannel';
 import type VoiceChannel from '../structures/VoiceChannel';
+import type MessagePayload from '../structures/MessagePayload';
+import type {
+  GuildResolvable,
+  MessageOptions,
+  TextBasedChannelResolvable,
+} from '../../typings';
+import type { Message } from '../structures/Message';
+import type { Snowflake } from 'discord-api-types/v10';
 
 export type AnyChannel =
   | CategoryChannel
@@ -27,7 +35,10 @@ export type AnyChannel =
   | ThreadChannel
   | VoiceChannel;
 
-export type TextBasedChannel = Exclude<Extract<AnyChannel, { messages: MessageManager }>, ForumChannel | MediaChannel>;
+export type TextBasedChannel = Exclude<
+  Extract<AnyChannel, { messages: MessageManager }>,
+  ForumChannel | MediaChannel
+>;
 
 export type GuildBasedChannel = Extract<AnyChannel, { guild: unknown }>;
 
@@ -35,17 +46,19 @@ export type ThreadParentChannel = Extract<AnyChannel, { threads: unknown }>;
 
 export type SendOptions =
   | string
-  | import('../structures/MessagePayload').default
-  | (Omit<import('../../typings').MessageOptions, 'forward'> & {
+  | MessagePayload
+  | (Omit<MessageOptions, 'forward'> & {
       forward?: {
-        message: import('../structures/Message').Message | import('discord-api-types/v10').Snowflake;
-        channel?: import('../../typings').TextBasedChannelResolvable;
-        guild?: import('../../typings').GuildResolvable;
+        message: Message | Snowflake;
+        channel?: TextBasedChannelResolvable;
+        guild?: GuildResolvable;
       };
     });
-export type SendResult = Promise<import('../structures/Message').Message>;
+export type SendResult = Promise<Message>;
 
-export function isTextBasedChannel(channel: object): channel is TextBasedChannel {
+export function isTextBasedChannel(
+  channel: object
+): channel is TextBasedChannel {
   return 'messages' in channel && Boolean(channel.messages);
 }
 
@@ -58,11 +71,20 @@ export function isThreadChannel(channel: object): channel is ThreadChannel {
   );
 }
 
-export function isGuildBasedChannel(channel: object): channel is GuildBasedChannel {
-  return 'permissionsFor' in channel && Boolean(channel.permissionsFor) && 'guild' in channel && Boolean(channel.guild);
+export function isGuildBasedChannel(
+  channel: object
+): channel is GuildBasedChannel {
+  return (
+    'permissionsFor' in channel &&
+    Boolean(channel.permissionsFor) &&
+    'guild' in channel &&
+    Boolean(channel.guild)
+  );
 }
 
-export function isThreadParentChannel(channel: object): channel is ThreadParentChannel {
+export function isThreadParentChannel(
+  channel: object
+): channel is ThreadParentChannel {
   return 'threads' in channel && Boolean(channel.threads);
 }
 
@@ -86,6 +108,13 @@ export function isDMChannel(channel: object): channel is DMChannel {
   return 'type' in channel && channel.type === 'DM';
 }
 
-export function isInviteChannel(channel: object): channel is GuildChannel | GroupDMChannel {
-  return ('permissionsFor' in channel && 'guild' in channel && !isThreadChannel(channel)) || isGroupDMChannel(channel);
+export function isInviteChannel(
+  channel: object
+): channel is GuildChannel | GroupDMChannel {
+  return (
+    ('permissionsFor' in channel &&
+      'guild' in channel &&
+      !isThreadChannel(channel)) ||
+    isGroupDMChannel(channel)
+  );
 }

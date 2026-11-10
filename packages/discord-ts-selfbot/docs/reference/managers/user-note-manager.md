@@ -14,12 +14,12 @@ class UserNoteManager extends BaseManager
 
 ```ts
 
-constructor(client: Client, users: unknown[]): UserNoteManager
+constructor(client: Client, users: Record<string, string>[]): UserNoteManager
 
 ```
 
 - `client: Client`
-- `users: unknown[]`
+- `users: Record<string, string>[]`
 
 **Returns:** `UserNoteManager`
 

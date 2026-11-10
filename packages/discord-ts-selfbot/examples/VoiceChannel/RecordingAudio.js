@@ -10,31 +10,34 @@ Install:
 - ffmpeg (install and add to your system environment)
 */
 
-const { Client } = require('../../src/index');
+import fs from 'node:fs';
+import Speaker from 'speaker';
+import { Client } from '../../src/index';
+
 const client = new Client();
 
-const fs = require('fs');
-const Speaker = require('speaker');
-
-client.on('ready', async client => {
+client.on('ready', async () => {
   console.log(`${client.user.username} is ready!`);
 
   const speaker = new Speaker({
-    channels: 2, // 2 channels
-    bitDepth: 16, // 16-bit samples
-    sampleRate: 48000, // 48000 Hz sample rate
+    // 16-bit samples
+    bitDepth: 16,
+    // 2 channels
+    channels: 2,
+    // 48000 Hz sample rate
+    sampleRate: 48_000,
   });
 
   const channel = client.channels.cache.get('voice_id');
   const connection = await client.voice.joinChannel(channel, {
-    selfMute: true,
     selfDeaf: true,
+    selfMute: true,
     selfVideo: false,
   });
 
   const audio = connection.receiver.createStream('user_id', {
-    mode: 'pcm',
     end: 'manual',
+    mode: 'pcm',
     paddingSilence: true,
   });
 

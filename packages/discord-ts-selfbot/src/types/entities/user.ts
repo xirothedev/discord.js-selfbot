@@ -2,7 +2,11 @@
 // Run `bun run schema:generate` from the package to update.
 
 import type { Snowflake } from 'discord-api-types/v10';
-import type { AvatarDecorationData, Collectibles, UserPrimaryGuild } from '../../../typings';
+import type {
+  AvatarDecorationData,
+  Collectibles,
+  UserPrimaryGuild,
+} from '../../../typings';
 import type UserFlags from '../../util/UserFlags';
 
 /**

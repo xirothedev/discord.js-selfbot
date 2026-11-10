@@ -15,59 +15,66 @@
 const PACKAGES_ROOT = 'src/packages';
 
 // --- derived patterns (no need to edit) -------------------------------------
-const R = PACKAGES_ROOT;
+const ROOT = PACKAGES_ROOT;
 /**
  * A package's private internals: anything nested inside a package subfolder.
  * The package's root files are its entry points and are NOT matched here:
  * they stay importable from outside.
  */
-const PACKAGE_INTERNALS = `^${R}/[^/]+/[^/]+/`;
+const PACKAGE_INTERNALS = `^${ROOT}/[^/]+/[^/]+/`;
 
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
   forbidden: [
     {
+      comment:
+        "App/root code may import a package's entry points (its root files), but nothing inside its subfolders.",
+      // Importer is not inside any package.
+      from: { pathNot: `^${ROOT}/` },
       name: 'entrypoint-boundary-from-app',
-      comment: "App/root code may import a package's entry points (its root files), but nothing inside its subfolders.",
       severity: 'error',
-      from: { pathNot: `^${R}/` }, // importer is NOT inside any package
       to: { path: PACKAGE_INTERNALS },
     },
     {
-      name: 'entrypoint-boundary-across-packages',
       comment:
         "A package's own files import each other freely, but may reach OTHER packages only through their entry points, never their internals.",
+      // Importer is inside a package ($1), but is not a test file.
+      from: { path: `^${ROOT}/([^/]+)/`, pathNot: `^${ROOT}/[^/]+/tests/` },
+      name: 'entrypoint-boundary-across-packages',
       severity: 'error',
-      // importer is inside a package ($1), but is not a test file
-      from: { path: `^${R}/([^/]+)/`, pathNot: `^${R}/[^/]+/tests/` },
       to: {
         path: PACKAGE_INTERNALS,
-        pathNot: `^${R}/$1/`, // same package → intra-package freedom
+        // Same package: intra-package freedom.
+        pathNot: `^${ROOT}/$1/`,
       },
     },
     {
-      name: 'tests-through-entrypoints',
       comment:
         "A package's tests exercise it through its entry points like everyone else: they may import any package's entry points and their own tests/ fixtures, but never any package's internals, not even their own.",
+      // A test file, in package $1.
+      from: { path: `^${ROOT}/([^/]+)/tests/` },
+      name: 'tests-through-entrypoints',
       severity: 'error',
-      from: { path: `^${R}/([^/]+)/tests/` }, // a test file, in package $1
       to: {
         path: PACKAGE_INTERNALS,
-        pathNot: `^${R}/$1/tests/`, // own tests/ fixtures → allowed
+        // Own tests/ fixtures are allowed.
+        pathNot: `^${ROOT}/$1/tests/`,
       },
     },
     {
+      comment:
+        "A package's tests/ folder is reachable only from tests: nothing else may import fixtures.",
+      // The importer is not itself a test.
+      from: { pathNot: `^${ROOT}/[^/]+/tests/` },
       name: 'tests-folder-is-private',
-      comment: "A package's tests/ folder is reachable only from tests: nothing else may import fixtures.",
       severity: 'error',
-      from: { pathNot: `^${R}/[^/]+/tests/` }, // importer is not itself a test
-      to: { path: `^${R}/[^/]+/tests/` },
+      to: { path: `^${ROOT}/[^/]+/tests/` },
     },
     {
-      name: 'no-circular',
-      comment: 'No dependency cycles. Scope to `^${R}/` if you want to allow cycles outside packages.',
-      severity: 'error',
+      comment: `No dependency cycles. Scope to ^\${ROOT}/ if you want to allow cycles outside packages.`,
       from: {},
+      name: 'no-circular',
+      severity: 'error',
       to: { circular: true },
     },
 
@@ -79,15 +86,15 @@ module.exports = {
     // {
     //   name: "ui-may-not-depend-on-billing",
     //   severity: "error",
-    //   from: { path: `^${R}/ui/` },
-    //   to:   { path: `^${R}/billing/` },
+    //   from: { path: `^${ROOT}/ui/` },
+    //   to:   { path: `^${ROOT}/billing/` },
     // },
   ],
   options: {
     doNotFollow: { path: 'node_modules' },
-    tsConfig: { fileName: 'tsconfig.json' },
     enhancedResolveOptions: {
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
     },
+    tsConfig: { fileName: 'tsconfig.json' },
   },
 };

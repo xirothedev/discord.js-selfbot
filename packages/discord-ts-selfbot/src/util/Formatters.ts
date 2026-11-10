@@ -18,7 +18,8 @@ import {
   userMention,
 } from '@discordjs/builders';
 
-const Formatters: Record<string, unknown> = class extends null {} as unknown as Record<string, unknown>;
+const Formatters: Record<string, unknown> =
+  class extends null {} as unknown as Record<string, unknown>;
 
 Formatters.blockQuote = blockQuote;
 
@@ -26,22 +27,23 @@ Formatters.bold = bold;
 
 Formatters.channelMention = channelMention;
 
-Formatters.chatInputApplicationCommandMention = function chatInputApplicationCommandMention(
-  commandName: string,
-  subcommandGroupOrSubOrId: string,
-  subcommandNameOrId?: string,
-  commandId?: string,
-) {
-  if (typeof commandId !== 'undefined') {
-    return `</${commandName} ${subcommandGroupOrSubOrId} ${subcommandNameOrId}:${commandId}>`;
-  }
+Formatters.chatInputApplicationCommandMention =
+  function chatInputApplicationCommandMention(
+    commandName: string,
+    subcommandGroupOrSubOrId: string,
+    subcommandNameOrId?: string,
+    commandId?: string
+  ) {
+    if (commandId !== undefined) {
+      return `</${commandName} ${subcommandGroupOrSubOrId} ${subcommandNameOrId}:${commandId}>`;
+    }
 
-  if (typeof subcommandNameOrId !== 'undefined') {
-    return `</${commandName} ${subcommandGroupOrSubOrId}:${subcommandNameOrId}>`;
-  }
+    if (subcommandNameOrId !== undefined) {
+      return `</${commandName} ${subcommandGroupOrSubOrId}:${subcommandNameOrId}>`;
+    }
 
-  return `</${commandName}:${subcommandGroupOrSubOrId}>`;
-};
+    return `</${commandName}:${subcommandGroupOrSubOrId}>`;
+  };
 
 Formatters.codeBlock = codeBlock;
 

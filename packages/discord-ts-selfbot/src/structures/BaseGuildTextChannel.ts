@@ -8,12 +8,16 @@ import type {
   ThreadAutoArchiveDuration,
 } from '../../typings';
 import type { Snowflake } from 'discord-api-types/v10';
-import type { RawGuildChannelData, RawMessageData } from '../../typings/rawDataTypes';
+import type {
+  RawGuildChannelData,
+  RawMessageData,
+} from '../../typings/rawDataTypes';
 import type { PatchOf } from '../types/schema';
 import type { Guild } from './Guild';
 import type { Client } from '../client/Client';
 import type { Message } from './Message';
 import type { CreateInviteOptionsSource } from '../managers/GuildInviteManager';
+import type { SendOptions, SendResult } from '../types/channels';
 
 type BaseGuildTextChannelPatch = PatchOf<'GuildChannel'> & {
   topic?: string | null;
@@ -33,13 +37,21 @@ class BaseGuildTextChannel extends GuildChannel {
   declare lastPinTimestamp: number | null;
   declare defaultAutoArchiveDuration?: ThreadAutoArchiveDuration;
   declare defaultThreadRateLimitPerUser: number | null;
-  declare threads: GuildTextThreadManager<AllowedThreadTypeForTextChannel | AllowedThreadTypeForNewsChannel>;
-  constructor(guild: Guild, data: BaseGuildTextChannelPatch & RawGuildChannelData, client?: Client) {
+  declare threads: GuildTextThreadManager<
+    AllowedThreadTypeForTextChannel | AllowedThreadTypeForNewsChannel
+  >;
+  constructor(
+    guild: Guild,
+    data: BaseGuildTextChannelPatch & RawGuildChannelData,
+    client?: Client
+  ) {
     super(guild, data, client, false);
 
     this.messages = new MessageManager(this);
 
-    this.threads = new GuildTextThreadManager<AllowedThreadTypeForTextChannel | AllowedThreadTypeForNewsChannel>(this);
+    this.threads = new GuildTextThreadManager<
+      AllowedThreadTypeForTextChannel | AllowedThreadTypeForNewsChannel
+    >(this);
 
     this.nsfw = Boolean(data.nsfw);
 
@@ -62,7 +74,9 @@ class BaseGuildTextChannel extends GuildChannel {
     }
 
     if ('last_pin_timestamp' in data) {
-      this.lastPinTimestamp = data.last_pin_timestamp ? new Date(data.last_pin_timestamp).getTime() : null;
+      this.lastPinTimestamp = data.last_pin_timestamp
+        ? new Date(data.last_pin_timestamp).getTime()
+        : null;
     }
 
     if ('default_auto_archive_duration' in data) {
@@ -70,17 +84,23 @@ class BaseGuildTextChannel extends GuildChannel {
     }
 
     if ('default_thread_rate_limit_per_user' in data) {
-      this.defaultThreadRateLimitPerUser = data.default_thread_rate_limit_per_user ?? null;
+      this.defaultThreadRateLimitPerUser =
+        data.default_thread_rate_limit_per_user ?? null;
     } else {
       this.defaultThreadRateLimitPerUser ??= null;
     }
 
     if (data.messages) {
-      for (const message of data.messages) this.messages._add(message);
+      for (const message of data.messages) {
+        this.messages._add(message);
+      }
     }
   }
 
-  setDefaultAutoArchiveDuration(defaultAutoArchiveDuration: ThreadAutoArchiveDuration, reason?: string) {
+  setDefaultAutoArchiveDuration(
+    defaultAutoArchiveDuration: ThreadAutoArchiveDuration,
+    reason?: string
+  ) {
     return this.edit({ defaultAutoArchiveDuration }, reason);
   }
 
@@ -97,25 +117,38 @@ class BaseGuildTextChannel extends GuildChannel {
   }
 
   fetchInvites(cache = true) {
-    return this.guild.invites.fetch({ channelId: this.id, cache });
+    return this.guild.invites.fetch({ cache, channelId: this.id });
   }
 
   // These are here only for documentation purposes - they are implemented by TextBasedChannel
-  /* eslint-disable no-empty-function */
   get lastMessage(): Message | null {
     return null;
   }
   get lastPinAt(): Date | null {
     return null;
   }
-  declare send: (options: import('../types/channels').SendOptions) => import('../types/channels').SendResult;
-  sendTyping() {}
-  createMessageCollector() {}
-  awaitMessages() {}
-  fetchWebhooks() {}
-  createWebhook() {}
-  setRateLimitPerUser(..._args: unknown[]) {}
-  setNSFW() {}
+  declare send: (options: SendOptions) => SendResult;
+  sendTyping() {
+    // Implemented by the subclass mixin.
+  }
+  createMessageCollector() {
+    // Implemented by the subclass mixin.
+  }
+  awaitMessages() {
+    // Implemented by the subclass mixin.
+  }
+  fetchWebhooks() {
+    // Implemented by the subclass mixin.
+  }
+  createWebhook() {
+    // Implemented by the subclass mixin.
+  }
+  setRateLimitPerUser(..._args: unknown[]) {
+    // Implemented by the subclass mixin.
+  }
+  setNSFW() {
+    // Implemented by the subclass mixin.
+  }
 }
 
 TextBasedChannel.applyToClass(BaseGuildTextChannel, true);

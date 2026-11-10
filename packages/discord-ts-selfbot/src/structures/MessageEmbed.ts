@@ -2,8 +2,11 @@ import process from 'node:process';
 import { EmbedType } from 'discord-api-types/v10';
 import type { APIEmbed } from 'discord-api-types/v10';
 import _errorsModule from '../errors';
+
 const { RangeError } = _errorsModule;
 import Util from '../util/Util';
+
+const NESTED_ARRAY_FLAT_DEPTH = 2;
 import type {
   ColorResolvable,
   EmbedAuthorData,
@@ -32,27 +35,37 @@ function isEmbedType(value: string): value is EmbedType {
   );
 }
 
-type MessageEmbedInput = {
+interface MessageEmbedInput {
   type?: string;
   title?: string | null;
   description?: string | null;
   url?: string | null;
   timestamp?: Date | number | string | null;
   color?: ColorResolvable | null;
-  fields?: Array<EmbedFieldData | EmbedField>;
-  author?: (Partial<MessageEmbedAuthor> & { icon_url?: string; proxy_icon_url?: string }) | null;
+  fields?: (EmbedFieldData | EmbedField)[];
+  author?:
+    | (Partial<MessageEmbedAuthor> & {
+        icon_url?: string;
+        proxy_icon_url?: string;
+      })
+    | null;
   thumbnail?: (Partial<MessageEmbedThumbnail> & { proxy_url?: string }) | null;
   image?: (Partial<MessageEmbedImage> & { proxy_url?: string }) | null;
   video?: (Partial<MessageEmbedVideo> & { proxy_url?: string }) | null;
-  footer?: (Partial<MessageEmbedFooter> & { icon_url?: string; proxy_icon_url?: string }) | null;
+  footer?:
+    | (Partial<MessageEmbedFooter> & {
+        icon_url?: string;
+        proxy_icon_url?: string;
+      })
+    | null;
   provider?: Partial<MessageEmbedProvider> | null;
-};
+}
 
 let deprecationEmittedForSetAuthor = false;
 let deprecationEmittedForSetFooter = false;
 let deprecationEmittedForAddField = false;
 
-// TODO: Remove the deprecated code for `setAuthor()` and `setFooter()`.
+// The deprecated string forms of `setAuthor()` and `setFooter()` must stay for parity.
 
 class MessageEmbed {
   declare type: string;
@@ -69,8 +82,10 @@ class MessageEmbed {
   declare provider: MessageEmbedProvider | null;
   declare footer: MessageEmbedFooter | null;
 
-  // eslint-disable-next-line valid-jsdoc
-  constructor(data: MessageEmbed | MessageEmbedInput = {}, skipValidation = false) {
+  constructor(
+    data: MessageEmbed | MessageEmbedInput = {},
+    skipValidation = false
+  ) {
     this.setup(data, skipValidation);
   }
 
@@ -97,48 +112,61 @@ class MessageEmbed {
 
     this.color = 'color' in data ? Util.resolveColor(data.color) : null;
 
-    this.timestamp = data.timestamp != null ? new Date(data.timestamp).getTime() : null;
+    this.timestamp =
+      data.timestamp !== null && data.timestamp !== undefined
+        ? new Date(data.timestamp).getTime()
+        : null;
 
     this.fields = [];
     if (data.fields) {
       this.fields = skipValidation
-        ? data.fields.map(field => ({ ...field, inline: field.inline ?? false }))
+        ? data.fields.map((field) => ({
+            ...field,
+            inline: field.inline ?? false,
+          }))
         : MessageEmbed.normalizeFields(data.fields);
     }
 
+    this.setupMedia(data);
+    this.setupAuthor(data);
+  }
+
+  private setupMedia(data: MessageEmbedInput) {
     this.thumbnail = data.thumbnail
       ? {
-          url: data.thumbnail.url ?? '',
-          proxyURL: data.thumbnail.proxyURL ?? data.thumbnail.proxy_url,
           height: data.thumbnail.height,
+          proxyURL: data.thumbnail.proxyURL ?? data.thumbnail.proxy_url,
+          url: data.thumbnail.url ?? '',
           width: data.thumbnail.width,
         }
       : null;
 
     this.image = data.image
       ? {
-          url: data.image.url ?? '',
-          proxyURL: data.image.proxyURL ?? data.image.proxy_url,
           height: data.image.height,
+          proxyURL: data.image.proxyURL ?? data.image.proxy_url,
+          url: data.image.url ?? '',
           width: data.image.width,
         }
       : null;
 
     this.video = data.video
       ? {
-          url: data.video.url,
-          proxyURL: data.video.proxyURL ?? data.video.proxy_url,
           height: data.video.height,
+          proxyURL: data.video.proxyURL ?? data.video.proxy_url,
+          url: data.video.url,
           width: data.video.width,
         }
       : null;
+  }
 
+  private setupAuthor(data: MessageEmbedInput) {
     this.author = data.author
       ? {
-          name: data.author.name ?? '',
-          url: data.author.url,
           iconURL: data.author.iconURL ?? data.author.icon_url,
+          name: data.author.name ?? '',
           proxyIconURL: data.author.proxyIconURL ?? data.author.proxy_icon_url,
+          url: data.author.url,
         }
       : null;
 
@@ -151,9 +179,9 @@ class MessageEmbed {
 
     this.footer = data.footer
       ? {
-          text: data.footer.text ?? '',
           iconURL: data.footer.iconURL ?? data.footer.icon_url,
           proxyIconURL: data.footer.proxyIconURL ?? data.footer.proxy_icon_url,
+          text: data.footer.text ?? '',
         }
       : null;
   }
@@ -171,7 +199,10 @@ class MessageEmbed {
       (this.title?.length ?? 0) +
       (this.description?.length ?? 0) +
       (this.fields.length >= 1
-        ? this.fields.reduce((prev, curr) => prev + curr.name.length + curr.value.length, 0)
+        ? this.fields.reduce(
+            (prev, curr) => prev + curr.name.length + curr.value.length,
+            0
+          )
         : 0) +
       (this.footer?.text.length ?? 0) +
       (this.author?.name.length ?? 0)
@@ -180,11 +211,24 @@ class MessageEmbed {
 
   equals(embed: MessageEmbed | MessageEmbedInput) {
     const authorIconURL = embed.author
-      ? (embed.author.iconURL ?? ('icon_url' in embed.author ? embed.author.icon_url : undefined))
+      ? (embed.author.iconURL ??
+        ('icon_url' in embed.author ? embed.author.icon_url : undefined))
       : undefined;
     const footerIconURL = embed.footer
-      ? (embed.footer.iconURL ?? ('icon_url' in embed.footer ? embed.footer.icon_url : undefined))
+      ? (embed.footer.iconURL ??
+        ('icon_url' in embed.footer ? embed.footer.icon_url : undefined))
       : undefined;
+    return (
+      this.equalsBasics(embed, authorIconURL) &&
+      this.equalsMetadata(embed, footerIconURL) &&
+      this.equalsMedia(embed)
+    );
+  }
+
+  private equalsBasics(
+    embed: MessageEmbed | MessageEmbedInput,
+    authorIconURL: string | undefined
+  ) {
     return (
       this.type === embed.type &&
       this.author?.name === embed.author?.name &&
@@ -194,11 +238,26 @@ class MessageEmbed {
       this.title === embed.title &&
       this.description === embed.description &&
       this.url === embed.url &&
-      this.timestamp === embed.timestamp &&
+      this.timestamp === embed.timestamp
+    );
+  }
+
+  private equalsMetadata(
+    embed: MessageEmbed | MessageEmbedInput,
+    footerIconURL: string | undefined
+  ) {
+    return (
       this.fields.length === (embed.fields?.length ?? 0) &&
-      this.fields.every((field, i) => this._fieldEquals(field, embed.fields?.[i])) &&
+      this.fields.every((field, index) =>
+        this._fieldEquals(field, embed.fields?.[index])
+      ) &&
       this.footer?.text === embed.footer?.text &&
-      this.footer?.iconURL === footerIconURL &&
+      this.footer?.iconURL === footerIconURL
+    );
+  }
+
+  private equalsMedia(embed: MessageEmbed | MessageEmbedInput) {
+    return (
       this.image?.url === embed.image?.url &&
       this.thumbnail?.url === embed.thumbnail?.url &&
       this.video?.url === embed.video?.url &&
@@ -208,7 +267,11 @@ class MessageEmbed {
   }
 
   _fieldEquals(field: EmbedField, other?: EmbedFieldData) {
-    return field.name === other?.name && field.value === other?.value && field.inline === other?.inline;
+    return (
+      field.name === other?.name &&
+      field.value === other?.value &&
+      field.inline === other?.inline
+    );
   }
 
   /**
@@ -222,14 +285,13 @@ class MessageEmbed {
   addField(name: string, value: string, inline?: boolean) {
     if (!deprecationEmittedForAddField) {
       process.emitWarning(
-        // eslint-disable-next-line max-len
         'MessageEmbed#addField is deprecated and will be removed in the next major update. Use MessageEmbed#addFields instead.',
-        'DeprecationWarning',
+        'DeprecationWarning'
       );
 
       deprecationEmittedForAddField = true;
     }
-    return this.addFields({ name, value, inline });
+    return this.addFields({ inline, name, value });
   }
 
   addFields(...fields: EmbedFieldData[] | EmbedFieldData[][]) {
@@ -237,8 +299,16 @@ class MessageEmbed {
     return this;
   }
 
-  spliceFields(index: number, deleteCount: number, ...fields: EmbedFieldData[] | EmbedFieldData[][]) {
-    this.fields.splice(index, deleteCount, ...MessageEmbed.normalizeFields(...fields));
+  spliceFields(
+    index: number,
+    deleteCount: number,
+    ...fields: EmbedFieldData[] | EmbedFieldData[][]
+  ) {
+    this.fields.splice(
+      index,
+      deleteCount,
+      ...MessageEmbed.normalizeFields(...fields)
+    );
     return this;
   }
 
@@ -247,27 +317,43 @@ class MessageEmbed {
     return this;
   }
 
-  setAuthor(options: EmbedAuthorData | string | null, deprecatedIconURL?: string, deprecatedURL?: string) {
+  setAuthor(
+    options: EmbedAuthorData | string | null,
+    deprecatedIconURL?: string,
+    deprecatedURL?: string
+  ) {
     if (options === null) {
       this.author = null;
       return this;
     }
 
+    let resolvedOptions: EmbedAuthorData;
+
     if (typeof options === 'string') {
       if (!deprecationEmittedForSetAuthor) {
         process.emitWarning(
           'Passing strings for MessageEmbed#setAuthor is deprecated. Pass a sole object instead.',
-          'DeprecationWarning',
+          'DeprecationWarning'
         );
 
         deprecationEmittedForSetAuthor = true;
       }
 
-      options = { name: options, url: deprecatedURL, iconURL: deprecatedIconURL };
+      resolvedOptions = {
+        iconURL: deprecatedIconURL,
+        name: options,
+        url: deprecatedURL,
+      };
+    } else {
+      resolvedOptions = options;
     }
 
-    const { name, url, iconURL } = options;
-    this.author = { name: Util.verifyString(name, RangeError, 'EMBED_AUTHOR_NAME'), url, iconURL };
+    const { name, url, iconURL } = resolvedOptions;
+    this.author = {
+      iconURL,
+      name: Util.verifyString(name, RangeError, 'EMBED_AUTHOR_NAME'),
+      url,
+    };
     return this;
   }
 
@@ -277,31 +363,45 @@ class MessageEmbed {
   }
 
   setDescription(description: string) {
-    this.description = Util.verifyString(description, RangeError, 'EMBED_DESCRIPTION');
+    this.description = Util.verifyString(
+      description,
+      RangeError,
+      'EMBED_DESCRIPTION'
+    );
     return this;
   }
 
-  setFooter(options: EmbedFooterData | string | null, deprecatedIconURL?: string) {
+  setFooter(
+    options: EmbedFooterData | string | null,
+    deprecatedIconURL?: string
+  ) {
     if (options === null) {
       this.footer = null;
       return this;
     }
 
+    let resolvedOptions: EmbedFooterData;
+
     if (typeof options === 'string') {
       if (!deprecationEmittedForSetFooter) {
         process.emitWarning(
           'Passing strings for MessageEmbed#setFooter is deprecated. Pass a sole object instead.',
-          'DeprecationWarning',
+          'DeprecationWarning'
         );
 
         deprecationEmittedForSetFooter = true;
       }
 
-      options = { text: options, iconURL: deprecatedIconURL };
+      resolvedOptions = { iconURL: deprecatedIconURL, text: options };
+    } else {
+      resolvedOptions = options;
     }
 
-    const { text, iconURL } = options;
-    this.footer = { text: Util.verifyString(text, RangeError, 'EMBED_FOOTER_TEXT'), iconURL };
+    const { text, iconURL } = resolvedOptions;
+    this.footer = {
+      iconURL,
+      text: Util.verifyString(text, RangeError, 'EMBED_FOOTER_TEXT'),
+    };
     return this;
   }
 
@@ -316,8 +416,8 @@ class MessageEmbed {
   }
 
   setTimestamp(timestamp: Date | number | null = Date.now()) {
-    if (timestamp instanceof Date) timestamp = timestamp.getTime();
-    this.timestamp = timestamp;
+    this.timestamp =
+      timestamp instanceof Date ? timestamp.getTime() : timestamp;
     return this;
   }
 
@@ -333,42 +433,28 @@ class MessageEmbed {
 
   toJSON(): APIEmbed {
     return {
-      title: this.title ?? undefined,
-      type: isEmbedType(this.type) ? this.type : EmbedType.Rich,
-      description: this.description ?? undefined,
-      url: this.url ?? undefined,
-      timestamp: this.timestamp ? new Date(this.timestamp).toISOString() : undefined,
-      color: this.color ?? undefined,
-      fields: this.fields,
-      thumbnail: this.thumbnail
+      author: this.author
         ? {
-            url: this.thumbnail.url,
-            proxy_url: this.thumbnail.proxyURL,
-            height: this.thumbnail.height,
-            width: this.thumbnail.width,
+            icon_url: this.author.iconURL,
+            name: this.author.name,
+            url: this.author.url,
+          }
+        : undefined,
+      color: this.color ?? undefined,
+      description: this.description ?? undefined,
+      fields: this.fields,
+      footer: this.footer
+        ? {
+            icon_url: this.footer.iconURL,
+            text: this.footer.text,
           }
         : undefined,
       image: this.image
         ? {
-            url: this.image.url,
-            proxy_url: this.image.proxyURL,
             height: this.image.height,
+            proxy_url: this.image.proxyURL,
+            url: this.image.url,
             width: this.image.width,
-          }
-        : undefined,
-      author: this.author
-        ? {
-            name: this.author.name,
-            url: this.author.url,
-            icon_url: this.author.iconURL,
-          }
-        : undefined,
-      video: this.video
-        ? {
-            url: this.video.url,
-            proxy_url: this.video.proxyURL,
-            height: this.video.height,
-            width: this.video.width,
           }
         : undefined,
       provider: this.provider
@@ -377,28 +463,54 @@ class MessageEmbed {
             url: this.provider.url,
           }
         : undefined,
-      footer: this.footer
+      thumbnail: this.thumbnail
         ? {
-            text: this.footer.text,
-            icon_url: this.footer.iconURL,
+            height: this.thumbnail.height,
+            proxy_url: this.thumbnail.proxyURL,
+            url: this.thumbnail.url,
+            width: this.thumbnail.width,
+          }
+        : undefined,
+      timestamp: this.timestamp
+        ? new Date(this.timestamp).toISOString()
+        : undefined,
+      title: this.title ?? undefined,
+      type: isEmbedType(this.type) ? this.type : EmbedType.Rich,
+      url: this.url ?? undefined,
+      video: this.video
+        ? {
+            height: this.video.height,
+            proxy_url: this.video.proxyURL,
+            url: this.video.url,
+            width: this.video.width,
           }
         : undefined,
     };
   }
 
-  static normalizeField(name: string, value: string, inline = false): EmbedField {
+  static normalizeField(
+    name: string,
+    value: string,
+    inline = false
+  ): EmbedField {
     return {
+      inline,
       name: Util.verifyString(name, RangeError, 'EMBED_FIELD_NAME', false),
       value: Util.verifyString(value, RangeError, 'EMBED_FIELD_VALUE', false),
-      inline,
     };
   }
 
-  static normalizeFields(...fields: Array<EmbedFieldData | EmbedFieldData[]>): EmbedField[] {
+  static normalizeFields(
+    ...fields: (EmbedFieldData | EmbedFieldData[])[]
+  ): EmbedField[] {
     return fields
-      .flat(2)
-      .map(field =>
-        MessageEmbed.normalizeField(field.name, field.value, typeof field.inline === 'boolean' ? field.inline : false),
+      .flat(NESTED_ARRAY_FLAT_DEPTH)
+      .map((field) =>
+        MessageEmbed.normalizeField(
+          field.name,
+          field.value,
+          typeof field.inline === 'boolean' ? field.inline : false
+        )
       );
   }
 }

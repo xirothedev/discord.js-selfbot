@@ -1,19 +1,24 @@
 import { test, describe } from 'bun:test';
-import { token, skip, makeClient, login, makeStepRecorder } from './_helpers';
+
+import { skip, makeClient, login, makeStepRecorder } from './_helpers';
 
 describe.skipIf(skip)('manual: users', () => {
   test('user operations', async () => {
     const client = makeClient();
     const { step, summary, writeArtifact } = makeStepRecorder();
     try {
-      await login(client);
+      const user = await login(client);
       await step('fetch self user', async () => {
-        const u = await client.users.fetch(client.user!.id);
-        if (u.id !== client.user!.id) throw new Error('id mismatch');
+        const fetched = await client.users.fetch(user.id);
+        if (fetched.id !== user.id) {
+          throw new Error('id mismatch');
+        }
       });
       await step('fetch self user (cached)', async () => {
-        const u = await client.users.fetch(client.user!.id);
-        if (u.username !== client.user!.username) throw new Error('username mismatch');
+        const fetched = await client.users.fetch(user.id);
+        if (fetched.username !== user.username) {
+          throw new Error('username mismatch');
+        }
       });
     } finally {
       client.destroy();

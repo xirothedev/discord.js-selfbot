@@ -89,11 +89,11 @@ static outdatedMessageSweepFilter(lifetime?: number): GlobalSweepFilter<string, 
 
 ```ts
 
-sweepApplicationCommands(filter: CollectionSweepFilter<string, ApplicationCommand<unknown>>): number
+sweepApplicationCommands(filter: CollectionSweepFilter<string, ApplicationCommand<object>>): number
 
 ```
 
-- `filter: CollectionSweepFilter<string, ApplicationCommand<unknown>>`
+- `filter: CollectionSweepFilter<string, ApplicationCommand<object>>`
 
 **Returns:** `number`
 

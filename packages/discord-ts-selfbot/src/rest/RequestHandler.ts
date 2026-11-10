@@ -1,13 +1,21 @@
-import { setTimeout } from 'node:timers';
+import { setTimeout as delay } from 'node:timers/promises';
 import { AsyncQueue } from '@sapphire/async-queue';
 import DiscordAPIError from './DiscordAPIError';
-import APIRequest from './APIRequest';
+import type APIRequest from './APIRequest';
 import HTTPError from './HTTPError';
 import RateLimitError from './RateLimitError';
 import Constants from '../util/Constants';
 import type { Captcha } from '../../typings';
+import type RESTManager from './RESTManager';
+
 const { Events } = Constants;
-const { DEBUG, RATE_LIMIT, INVALID_REQUEST_WARNING, API_RESPONSE, API_REQUEST } = Events;
+const {
+  DEBUG,
+  RATE_LIMIT,
+  INVALID_REQUEST_WARNING,
+  API_RESPONSE,
+  API_REQUEST,
+} = Events;
 
 const captchaMessage = [
   'incorrect-captcha',
@@ -21,14 +29,26 @@ const captchaMessage = [
   'sitekey-secret-mismatch',
 ];
 
+interface RestResponse {
+  ok: boolean;
+  status: number;
+  statusText: string;
+  headers: { get: (key: string) => string | null };
+  clone: () => unknown;
+  json: () => Promise<unknown>;
+  text: () => Promise<string>;
+  arrayBuffer: () => Promise<unknown>;
+}
+
 function parseResponse(res: unknown): Promise<Record<string, unknown>> {
   const r = res as {
-    headers: { get: (k: string) => string | null };
+    headers: { get: (key: string) => string | null };
     json: () => Promise<unknown>;
     arrayBuffer: () => Promise<unknown>;
   };
-  if (r.headers.get('content-type')?.startsWith('application/json'))
+  if (r.headers.get('content-type')?.startsWith('application/json')) {
     return r.json() as Promise<Record<string, unknown>>;
+  }
   return r.arrayBuffer() as Promise<Record<string, unknown>>;
 }
 
@@ -39,22 +59,38 @@ function getAPIOffset(serverDate: unknown): number {
 function readCaptcha(data: Record<string, unknown>): Captcha | null {
   const key = data.captcha_key;
   const sitekey = data.captcha_sitekey;
-  if (data.captcha_service !== 'hcaptcha' || !Array.isArray(key) || typeof sitekey !== 'string') return null;
+  if (
+    data.captcha_service !== 'hcaptcha' ||
+    !Array.isArray(key) ||
+    typeof sitekey !== 'string'
+  ) {
+    return null;
+  }
   return {
-    captcha_key: key.filter((value): value is string => typeof value === 'string'),
-    captcha_sitekey: sitekey,
+    captcha_key: key.filter(
+      (value): value is string => typeof value === 'string'
+    ),
+    captcha_rqdata:
+      typeof data.captcha_rqdata === 'string' ? data.captcha_rqdata : undefined,
+    captcha_rqtoken:
+      typeof data.captcha_rqtoken === 'string'
+        ? data.captcha_rqtoken
+        : undefined,
     captcha_service: 'hcaptcha',
-    captcha_rqdata: typeof data.captcha_rqdata === 'string' ? data.captcha_rqdata : undefined,
-    captcha_rqtoken: typeof data.captcha_rqtoken === 'string' ? data.captcha_rqtoken : undefined,
+    captcha_sitekey: sitekey,
   };
 }
 
-function calculateReset(reset: unknown, resetAfter: unknown, serverDate: unknown): number {
+function calculateReset(
+  reset: unknown,
+  resetAfter: unknown,
+  serverDate: unknown
+): number {
   // Use direct reset time when available, server date becomes irrelevant in this case
   if (resetAfter) {
-    return Date.now() + Number(resetAfter) * 1_000;
+    return Date.now() + Number(resetAfter) * 1000;
   }
-  return new Date(Number(reset) * 1_000).getTime() - getAPIOffset(serverDate);
+  return new Date(Number(reset) * 1000).getTime() - getAPIOffset(serverDate);
 }
 
 /* Invalid request limiting is done on a per-IP basis, not a per-token basis.
@@ -67,14 +103,14 @@ let invalidCount = 0;
 let invalidCountResetTime: number | null = null;
 
 class RequestHandler {
-  manager: import('./RESTManager').default;
-  queue!: import('@sapphire/async-queue').AsyncQueue;
+  manager: RESTManager;
+  queue!: AsyncQueue;
   globalDelay: Promise<void> | null = null;
   reset: number;
   remaining: number;
   limit: number;
 
-  constructor(manager: import('./RESTManager').default) {
+  constructor(manager: RESTManager) {
     this.manager = manager;
     this.queue = new AsyncQueue();
     this.reset = -1;
@@ -92,7 +128,10 @@ class RequestHandler {
   }
 
   get globalLimited(): boolean {
-    return this.manager.globalRemaining <= 0 && Date.now() < (this.manager.globalReset ?? 0);
+    return (
+      this.manager.globalRemaining <= 0 &&
+      Date.now() < (this.manager.globalReset ?? 0)
+    );
   }
 
   get localLimited(): boolean {
@@ -107,199 +146,92 @@ class RequestHandler {
     return this.queue.remaining === 0 && !this.limited;
   }
 
-  globalDelayFor(ms: number): Promise<void> {
-    return new Promise<void>(resolve => {
-      setTimeout(() => {
-        this.manager.globalDelay = null;
-        resolve();
-      }, ms).unref();
-    });
+  async globalDelayFor(ms: number): Promise<void> {
+    await delay(ms, undefined, { ref: false });
+    this.manager.globalDelay = null;
   }
 
   /*
    * Determines whether the request should be queued or whether a RateLimitError should be thrown
    */
-  async onRateLimit(request: APIRequest, limit: number, timeout: number, isGlobal: boolean): Promise<void> {
+  async onRateLimit(
+    request: APIRequest,
+    limit: number,
+    timeout: number,
+    isGlobal: boolean
+  ): Promise<void> {
     const { options } = this.manager.client;
-    if (!options.rejectOnRateLimit) return;
+    if (!options.rejectOnRateLimit) {
+      return;
+    }
 
     const rateLimitData = {
-      timeout,
+      global: isGlobal,
       limit,
       method: request.method,
       path: request.path,
       route: request.route,
-      global: isGlobal,
+      timeout,
     };
     const shouldThrow =
       typeof options.rejectOnRateLimit === 'function'
         ? await options.rejectOnRateLimit(rateLimitData)
         : (options.rejectOnRateLimit as string[]).some((route: string) =>
-            rateLimitData.route.startsWith(route.toLowerCase()),
+            rateLimitData.route.startsWith(route.toLowerCase())
           );
     if (shouldThrow) {
       throw new RateLimitError(rateLimitData);
     }
   }
 
-  async execute(request: APIRequest, captchaKey?: unknown, captchaToken?: unknown): Promise<unknown> {
+  async execute(
+    request: APIRequest,
+    captchaKey?: unknown,
+    captchaToken?: unknown
+  ): Promise<unknown> {
     /*
      * After calculations have been done, pre-emptively stop further requests
      * Potentially loop until this task can run if e.g. the global rate limit is hit twice
      */
-    while (this.limited) {
-      const isGlobal = this.globalLimited;
-      let limit: number, timeout: number, delayPromise: Promise<void> | null;
-
-      if (isGlobal) {
-        // Set the variables based on the global rate limit
-        limit = this.manager.globalLimit;
-        timeout = (this.manager.globalReset ?? Date.now()) + this.manager.client.options.restTimeOffset - Date.now();
-      } else {
-        // Set the variables based on the route-specific rate limit
-        limit = this.limit;
-        timeout = this.reset + this.manager.client.options.restTimeOffset - Date.now();
-      }
-
-      if (this.manager.client.listenerCount(RATE_LIMIT)) {
-        this.manager.client.emit(RATE_LIMIT, {
-          timeout,
-          limit,
-          method: request.method,
-          path: request.path,
-          route: request.route,
-          global: isGlobal,
-        });
-      }
-
-      if (isGlobal) {
-        // If this is the first task to reach the global timeout, set the global delay
-        if (!this.manager.globalDelay) {
-          // The global delay function should clear the global delay state when it is resolved
-          this.manager.globalDelay = this.globalDelayFor(timeout);
-        }
-        delayPromise = this.manager.globalDelay;
-      } else {
-        delayPromise = Bun.sleep(Math.max(1, timeout));
-      }
-
-      // Determine whether a RateLimitError should be thrown
-      await this.onRateLimit(request, limit, timeout, isGlobal); // eslint-disable-line no-await-in-loop
-
-      // Wait for the timeout to expire in order to avoid an actual 429
-      await delayPromise; // eslint-disable-line no-await-in-loop
-    }
+    await this.waitForRateLimit(request);
 
     // As the request goes out, update the global usage information
     if (!this.manager.globalReset || this.manager.globalReset < Date.now()) {
-      this.manager.globalReset = Date.now() + 1_000;
+      this.manager.globalReset = Date.now() + 1000;
       this.manager.globalRemaining = this.manager.globalLimit;
     }
     this.manager.globalRemaining--;
 
-    if (this.manager.client.listenerCount(API_REQUEST)) {
-      this.manager.client.emit(API_REQUEST, {
-        method: request.method,
-        path: request.path,
-        route: request.route,
-        options: request.options,
-        retries: request.retries,
-      });
-    }
+    this.emitRequestEvent(request);
 
     // Perform the request
-    let res: {
-      ok: boolean;
-      status: number;
-      statusText: string;
-      headers: { get: (k: string) => string | null };
-      clone: () => unknown;
-      json: () => Promise<unknown>;
-      text: () => Promise<string>;
-      arrayBuffer: () => Promise<unknown>;
-    };
+    let res: RestResponse;
     try {
-      res = (await request.make(captchaKey, captchaToken)) as typeof res;
+      res = (await request.make(captchaKey, captchaToken)) as RestResponse;
     } catch (error: unknown) {
       // Retry the specified number of times for request abortions
-      const e = error as { message?: string; constructor?: { name?: string }; status?: number };
+      const e = error as {
+        message?: string;
+        constructor?: { name?: string };
+        status?: number;
+      };
       if (request.retries === this.manager.client.options.retryLimit) {
-        throw new HTTPError(e.message ?? 'Unknown error', e.constructor?.name ?? 'Error', e.status, request);
+        throw new HTTPError(
+          e.message ?? 'Unknown error',
+          e.constructor?.name ?? 'Error',
+          e.status,
+          request
+        );
       }
 
       request.retries++;
       return this.execute(request);
     }
 
-    if (this.manager.client.listenerCount(API_RESPONSE)) {
-      this.manager.client.emit(
-        API_RESPONSE,
-        {
-          method: request.method,
-          path: request.path,
-          route: request.route,
-          options: request.options,
-          retries: request.retries,
-        },
-        res.clone(),
-      );
-    }
+    this.emitResponseEvent(request, res);
 
-    let sublimitTimeout: number | null = null;
-    if (res.headers) {
-      const serverDate = res.headers.get('date');
-      const limit = res.headers.get('x-ratelimit-limit');
-      const remaining = res.headers.get('x-ratelimit-remaining');
-      const reset = res.headers.get('x-ratelimit-reset');
-      const resetAfter = res.headers.get('x-ratelimit-reset-after');
-      this.limit = limit ? Number(limit) : Infinity;
-      this.remaining = remaining ? Number(remaining) : 1;
-
-      this.reset = reset || resetAfter ? calculateReset(reset, resetAfter, serverDate) : Date.now();
-
-      // https://github.com/discord/discord-api-docs/issues/182
-      if (!resetAfter && request.route.includes('reactions')) {
-        this.reset = new Date(serverDate as string).getTime() - getAPIOffset(serverDate) + 250;
-      }
-
-      // Handle retryAfter, which means we have actually hit a rate limit
-      const retryAfterHeader = res.headers.get('retry-after');
-      let retryAfter: number = retryAfterHeader ? Number(retryAfterHeader) * 1_000 : -1;
-      if (retryAfter > 0) {
-        // If the global rate limit header is set, that means we hit the global rate limit
-        if (res.headers.get('x-ratelimit-global')) {
-          this.manager.globalRemaining = 0;
-          this.manager.globalReset = Date.now() + retryAfter;
-        } else if (!this.localLimited) {
-          /*
-           * This is a sublimit (e.g. 2 channel name changes/10 minutes) since the headers don't indicate a
-           * route-wide rate limit. Don't update remaining or reset to avoid rate limiting the whole
-           * endpoint, just set a reset time on the request itself to avoid retrying too soon.
-           */
-          sublimitTimeout = retryAfter;
-        }
-      }
-    }
-
-    // Count the invalid requests
-    if (res.status === 401 || res.status === 403 || res.status === 429) {
-      if (!invalidCountResetTime || invalidCountResetTime < Date.now()) {
-        invalidCountResetTime = Date.now() + 1_000 * 60 * 10;
-        invalidCount = 0;
-      }
-      invalidCount++;
-
-      const emitInvalid =
-        this.manager.client.listenerCount(INVALID_REQUEST_WARNING) &&
-        this.manager.client.options.invalidRequestWarningInterval > 0 &&
-        invalidCount % this.manager.client.options.invalidRequestWarningInterval === 0;
-      if (emitInvalid) {
-        this.manager.client.emit(INVALID_REQUEST_WARNING, {
-          count: invalidCount,
-          remainingTime: invalidCountResetTime - Date.now(),
-        });
-      }
-    }
+    const sublimitTimeout = this.applyResponseHeaders(res, request);
+    this.trackInvalidRequest(res);
 
     // Handle 2xx and 3xx responses
     if (res.ok) {
@@ -309,131 +241,338 @@ class RequestHandler {
 
     // Handle 4xx responses
     if (res.status >= 400 && res.status < 500) {
-      // Handle ratelimited requests
-      if (res.status === 429) {
-        const isGlobal = this.globalLimited;
-        let limit: number, timeout: number;
-        if (isGlobal) {
-          // Set the variables based on the global rate limit
-          limit = this.manager.globalLimit;
-          timeout = (this.manager.globalReset ?? Date.now()) + this.manager.client.options.restTimeOffset - Date.now();
-        } else {
-          // Set the variables based on the route-specific rate limit
-          limit = this.limit;
-          timeout = this.reset + this.manager.client.options.restTimeOffset - Date.now();
-        }
+      return this.handleClientError(request, res, sublimitTimeout);
+    }
 
+    // Handle 5xx responses
+    if (res.status >= 500 && res.status < 600) {
+      return this.handleServerError(request, res);
+    }
+
+    // Fallback in the rare case a status code outside the range 200..=599 is returned
+    return null;
+  }
+
+  private async waitForRateLimit(request: APIRequest): Promise<void> {
+    if (!this.limited) {
+      return;
+    }
+    await this.runRateLimitCycle(request);
+    await this.waitForRateLimit(request);
+  }
+
+  private async runRateLimitCycle(request: APIRequest): Promise<void> {
+    const isGlobal = this.globalLimited;
+    const { globalLimit, globalReset } = this.manager;
+    const { restTimeOffset } = this.manager.client.options;
+    const limit = isGlobal ? globalLimit : this.limit;
+    const timeout = isGlobal
+      ? (globalReset ?? Date.now()) + restTimeOffset - Date.now()
+      : this.reset + restTimeOffset - Date.now();
+
+    if (this.manager.client.listenerCount(RATE_LIMIT)) {
+      this.manager.client.emit(RATE_LIMIT, {
+        global: isGlobal,
+        limit,
+        method: request.method,
+        path: request.path,
+        route: request.route,
+        timeout,
+      });
+    }
+
+    let delayPromise: Promise<void>;
+    if (isGlobal) {
+      // If this is the first task to reach the global timeout, set the global delay
+      if (!this.manager.globalDelay) {
+        // The global delay function should clear the global delay state when it is resolved
+        this.manager.globalDelay = this.globalDelayFor(timeout);
+      }
+      delayPromise = this.manager.globalDelay;
+    } else {
+      delayPromise = Bun.sleep(Math.max(1, timeout));
+    }
+
+    // Determine whether a RateLimitError should be thrown
+    await this.onRateLimit(request, limit, timeout, isGlobal);
+
+    // Wait for the timeout to expire in order to avoid an actual 429
+    await delayPromise;
+  }
+
+  private emitRequestEvent(request: APIRequest): void {
+    if (!this.manager.client.listenerCount(API_REQUEST)) {
+      return;
+    }
+    this.manager.client.emit(API_REQUEST, {
+      method: request.method,
+      options: request.options,
+      path: request.path,
+      retries: request.retries,
+      route: request.route,
+    });
+  }
+
+  private emitResponseEvent(request: APIRequest, res: RestResponse): void {
+    if (!this.manager.client.listenerCount(API_RESPONSE)) {
+      return;
+    }
+    this.manager.client.emit(
+      API_RESPONSE,
+      {
+        method: request.method,
+        options: request.options,
+        path: request.path,
+        retries: request.retries,
+        route: request.route,
+      },
+      res.clone()
+    );
+  }
+
+  private applyResponseHeaders(
+    res: RestResponse,
+    request: APIRequest
+  ): number | null {
+    let sublimitTimeout: number | null = null;
+    if (!res.headers) {
+      return sublimitTimeout;
+    }
+
+    const serverDate = res.headers.get('date');
+    const limit = res.headers.get('x-ratelimit-limit');
+    const remaining = res.headers.get('x-ratelimit-remaining');
+    const reset = res.headers.get('x-ratelimit-reset');
+    const resetAfter = res.headers.get('x-ratelimit-reset-after');
+    this.limit = limit ? Number(limit) : Infinity;
+    this.remaining = remaining ? Number(remaining) : 1;
+
+    this.reset =
+      reset || resetAfter
+        ? calculateReset(reset, resetAfter, serverDate)
+        : Date.now();
+
+    // https://github.com/discord/discord-api-docs/issues/182
+    if (!resetAfter && request.route.includes('reactions')) {
+      this.reset =
+        new Date(serverDate as string).getTime() -
+        getAPIOffset(serverDate) +
+        250;
+    }
+
+    // Handle retryAfter, which means we have actually hit a rate limit
+    const retryAfterHeader = res.headers.get('retry-after');
+    const retryAfter: number = retryAfterHeader
+      ? Number(retryAfterHeader) * 1000
+      : -1;
+    if (retryAfter > 0) {
+      // If the global rate limit header is set, that means we hit the global rate limit
+      if (res.headers.get('x-ratelimit-global')) {
+        this.manager.globalRemaining = 0;
+        this.manager.globalReset = Date.now() + retryAfter;
+      } else if (!this.localLimited) {
+        /*
+         * This is a sublimit (e.g. 2 channel name changes/10 minutes) since the headers don't indicate a
+         * route-wide rate limit. Don't update remaining or reset to avoid rate limiting the whole
+         * endpoint, just set a reset time on the request itself to avoid retrying too soon.
+         */
+        sublimitTimeout = retryAfter;
+      }
+    }
+
+    return sublimitTimeout;
+  }
+
+  private trackInvalidRequest(res: RestResponse): void {
+    if (res.status === 401 || res.status === 403 || res.status === 429) {
+      if (!invalidCountResetTime || invalidCountResetTime < Date.now()) {
+        invalidCountResetTime = Date.now() + 1000 * 60 * 10;
+        invalidCount = 0;
+      }
+      invalidCount++;
+
+      const emitInvalid =
+        this.manager.client.listenerCount(INVALID_REQUEST_WARNING) &&
+        this.manager.client.options.invalidRequestWarningInterval > 0 &&
+        invalidCount %
+          this.manager.client.options.invalidRequestWarningInterval ===
+          0;
+      if (emitInvalid) {
+        this.manager.client.emit(INVALID_REQUEST_WARNING, {
+          count: invalidCount,
+          remainingTime: invalidCountResetTime - Date.now(),
+        });
+      }
+    }
+  }
+
+  private async handleClientError(
+    request: APIRequest,
+    res: RestResponse,
+    sublimitTimeout: number | null
+  ): Promise<unknown> {
+    // Handle ratelimited requests
+    if (res.status === 429) {
+      return this.handleRateLimitedRequest(request, sublimitTimeout);
+    }
+
+    // Handle possible malformed requests
+    let data: Record<string, unknown>;
+    try {
+      data = await parseResponse(res);
+      // Captcha
+      const captcha = readCaptcha(data);
+      if (
+        captcha &&
+        typeof this.manager.client.options.captchaSolver === 'function' &&
+        request.retries < this.manager.client.options.captchaRetryLimit &&
+        captchaMessage.some((value) => captcha.captcha_key[0]?.includes(value))
+      ) {
+        // Retry the request after a captcha is solved
         this.manager.client.emit(
           DEBUG,
-          `[Request Handler] Hit a 429 while executing a request.
+          `[Request Handler] Hit a captcha while executing a request (${captcha.captcha_key.join(', ')})
+    Method  : ${request.method}
+    Path    : ${request.path}
+    Route   : ${request.route}
+    Sitekey : ${captcha.captcha_sitekey}
+    rqToken : ${data.captcha_rqtoken}`
+        );
+        const captchaSolution = await this.manager.client.options.captchaSolver(
+          captcha,
+          request.fullUserAgent
+        );
+        this.manager.client.emit(
+          DEBUG,
+          `[Request Handler] Captcha details:
+    Method  : ${request.method}
+    Path    : ${request.path}
+    Route   : ${request.route}
+    Key     : ${captchaSolution ? `${captchaSolution.slice(0, 120)}...` : '[Captcha not solved]'}
+    rqToken : ${data.captcha_rqtoken}`
+        );
+        request.retries++;
+        return this.execute(request, captchaSolution, data.captcha_rqtoken);
+      }
+      // Two factor handling
+      const twoFactor = await this.handleTwoFactor(request, data);
+      if (twoFactor.handled) {
+        return twoFactor.result;
+      }
+    } catch (error: unknown) {
+      const e = error as {
+        message?: string;
+        constructor?: { name?: string };
+        status?: number;
+      };
+      throw new HTTPError(
+        e.message ?? 'Unknown error',
+        e.constructor?.name ?? 'Error',
+        e.status,
+        request
+      );
+    }
+
+    throw new DiscordAPIError(data, res.status, request);
+  }
+
+  private async handleTwoFactor(
+    request: APIRequest,
+    data: Record<string, unknown>
+  ): Promise<{ handled: boolean; result?: unknown }> {
+    if (
+      !data?.code ||
+      data.code !== 60_003 ||
+      request.options.auth === false ||
+      request.retries >= 1
+    ) {
+      return { handled: false };
+    }
+
+    // https://gist.github.com/Dziurwa14/de2498e5ee28d2089f095aa037957cbb
+    // 60003: Two factor is required for this operation
+    const { mfa } = data as {
+      mfa?: { methods?: { type: string }[]; ticket?: string };
+    };
+    if (
+      !mfa?.methods?.find(
+        (option: { type: string }) => option.type === 'totp'
+      ) ||
+      typeof this.manager.client.options.TOTPKey !== 'string'
+    ) {
+      return { handled: false };
+    }
+
+    // Get mfa code
+    const otp = this.manager.client.authenticator.generate(
+      this.manager.client.options.TOTPKey
+    );
+    this.manager.client.emit(
+      DEBUG,
+      `[Request Handler] ${data.message}
+    Method  : ${request.method}
+    Path    : ${request.path}
+    Route   : ${request.route}
+    mfaCode : ${otp}`
+    );
+    // Get ticket
+    const mfaPost = (await this.manager.client.api.mfa.finish.post({
+      data: {
+        data: otp,
+        mfa_type: 'totp',
+        ticket: mfa?.ticket,
+      },
+    })) as { token?: string };
+    request.options.mfaToken = mfaPost.token;
+    request.retries++;
+    const result = await this.execute(request);
+    return { handled: true, result };
+  }
+
+  private async handleRateLimitedRequest(
+    request: APIRequest,
+    sublimitTimeout: number | null
+  ): Promise<unknown> {
+    const isGlobal = this.globalLimited;
+    const { globalLimit, globalReset } = this.manager;
+    const { restTimeOffset } = this.manager.client.options;
+    const limit = isGlobal ? globalLimit : this.limit;
+    const timeout = isGlobal
+      ? (globalReset ?? Date.now()) + restTimeOffset - Date.now()
+      : this.reset + restTimeOffset - Date.now();
+
+    this.manager.client.emit(
+      DEBUG,
+      `[Request Handler] Hit a 429 while executing a request.
     Global  : ${isGlobal}
     Method  : ${request.method}
     Path    : ${request.path}
     Route   : ${request.route}
     Limit   : ${limit}
     Timeout : ${timeout}ms
-    Sublimit: ${sublimitTimeout ? `${sublimitTimeout}ms` : 'None'}`,
-        );
+    Sublimit: ${sublimitTimeout ? `${sublimitTimeout}ms` : 'None'}`
+    );
 
-        await this.onRateLimit(request, limit, timeout, isGlobal);
+    await this.onRateLimit(request, limit, timeout, isGlobal);
 
-        // If caused by a sublimit, wait it out here so other requests on the route can be handled
-        if (sublimitTimeout) {
-          await Bun.sleep(Math.max(1, sublimitTimeout));
-        }
-        return this.execute(request);
-      }
+    // If caused by a sublimit, wait it out here so other requests on the route can be handled
+    if (sublimitTimeout) {
+      await Bun.sleep(Math.max(1, sublimitTimeout));
+    }
+    return this.execute(request);
+  }
 
-      // Handle possible malformed requests
-      let data: Record<string, unknown>;
-      try {
-        data = await parseResponse(res);
-        // Captcha
-        const captcha = readCaptcha(data);
-        if (
-          captcha &&
-          typeof this.manager.client.options.captchaSolver == 'function' &&
-          request.retries < this.manager.client.options.captchaRetryLimit &&
-          captchaMessage.some(s => captcha.captcha_key[0]?.includes(s))
-        ) {
-          // Retry the request after a captcha is solved
-          this.manager.client.emit(
-            DEBUG,
-            `[Request Handler] Hit a captcha while executing a request (${captcha.captcha_key.join(', ')})
-    Method  : ${request.method}
-    Path    : ${request.path}
-    Route   : ${request.route}
-    Sitekey : ${captcha.captcha_sitekey}
-    rqToken : ${data.captcha_rqtoken}`,
-          );
-          const captchaSolution = await this.manager.client.options.captchaSolver(captcha, request.fullUserAgent);
-          this.manager.client.emit(
-            DEBUG,
-            `[Request Handler] Captcha details:
-    Method  : ${request.method}
-    Path    : ${request.path}
-    Route   : ${request.route}
-    Key     : ${captchaSolution ? `${captchaSolution.slice(0, 120)}...` : '[Captcha not solved]'}
-    rqToken : ${data.captcha_rqtoken}`,
-          );
-          request.retries++;
-          return this.execute(request, captchaSolution, data.captcha_rqtoken);
-        }
-        // Two factor handling
-        if (data?.code && data.code == 60003 && request.options.auth !== false && request.retries < 1) {
-          // https://gist.github.com/Dziurwa14/de2498e5ee28d2089f095aa037957cbb
-          // 60003: Two factor is required for this operation
-          if (
-            (data as { mfa?: { methods?: Array<{ type: string }> } }).mfa?.methods?.find(
-              (o: { type: string }) => o.type === 'totp',
-            ) &&
-            typeof this.manager.client.options.TOTPKey === 'string'
-          ) {
-            // Get mfa code
-            const otp = this.manager.client.authenticator.generate(this.manager.client.options.TOTPKey);
-            this.manager.client.emit(
-              DEBUG,
-              `[Request Handler] ${data.message}
-    Method  : ${request.method}
-    Path    : ${request.path}
-    Route   : ${request.route}
-    mfaCode : ${otp}`,
-            );
-            // Get ticket
-            const mfaData = (data as { mfa?: { ticket?: string } }).mfa;
-            const mfaPost = (await this.manager.client.api.mfa.finish.post({
-              data: {
-                ticket: mfaData?.ticket,
-                data: otp,
-                mfa_type: 'totp',
-              },
-            })) as { token?: string };
-            request.options.mfaToken = mfaPost.token;
-            request.retries++;
-            return this.execute(request);
-          }
-        }
-      } catch (err: unknown) {
-        const e = err as { message?: string; constructor?: { name?: string }; status?: number };
-        throw new HTTPError(e.message ?? 'Unknown error', e.constructor?.name ?? 'Error', e.status, request);
-      }
-
-      throw new DiscordAPIError(data, res.status, request);
+  private async handleServerError(
+    request: APIRequest,
+    res: RestResponse
+  ): Promise<unknown> {
+    // Retry the specified number of times for possible serverside issues
+    if (request.retries === this.manager.client.options.retryLimit) {
+      throw new HTTPError(res.statusText, 'HTTPError', res.status, request);
     }
 
-    // Handle 5xx responses
-    if (res.status >= 500 && res.status < 600) {
-      // Retry the specified number of times for possible serverside issues
-      if (request.retries === this.manager.client.options.retryLimit) {
-        throw new HTTPError(res.statusText, 'HTTPError', res.status, request);
-      }
-
-      request.retries++;
-      return this.execute(request);
-    }
-
-    // Fallback in the rare case a status code outside the range 200..=599 is returned
-    return null;
+    request.retries++;
+    return this.execute(request);
   }
 }
 

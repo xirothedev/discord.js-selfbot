@@ -3,12 +3,13 @@ import Base from './Base';
 import type { Snowflake } from 'discord-api-types/v10';
 import type { Client } from '../client/Client';
 import type { User } from './User';
+import type { RawVoiceStateData } from '../../typings/rawDataTypes';
 
 export interface CallData {
   channel_id: Snowflake;
   region?: string;
   ringing?: Snowflake[];
-  voice_states?: import('../../typings/rawDataTypes').RawVoiceStateData[];
+  voice_states?: RawVoiceStateData[];
 }
 
 class CallState extends Base {
@@ -38,14 +39,18 @@ class CallState extends Base {
   }
 
   setRTCRegion(region: string) {
-    return this.client.api.channels(this.channelId, 'call').patch({ data: { region } });
+    return this.client.api
+      .channels(this.channelId, 'call')
+      .patch({ data: { region } });
   }
 
   get ringing(): Collection<Snowflake, User> {
     const users = new Collection<Snowflake, User>();
     for (const id of this._ringing) {
       const user = this.client.users.cache.get(id);
-      if (user) users.set(id, user);
+      if (user) {
+        users.set(id, user);
+      }
     }
     return users;
   }

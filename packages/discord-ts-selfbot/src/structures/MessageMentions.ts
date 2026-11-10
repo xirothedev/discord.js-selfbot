@@ -1,6 +1,12 @@
 import { Collection } from '@discordjs/collection';
-import type { APIChannelMention, APIGuildMember, APIUser, Snowflake } from 'discord-api-types/v10';
+import type {
+  APIChannelMention,
+  APIGuildMember,
+  APIUser,
+  Snowflake,
+} from 'discord-api-types/v10';
 import _ConstantsModule from '../util/Constants';
+
 const { ChannelTypes } = _ConstantsModule;
 import Util from '../util/Util';
 import type {
@@ -16,10 +22,13 @@ import type { GuildMember } from './GuildMember';
 import type { Message } from './Message';
 import type { Role } from './Role';
 import type { User } from './User';
+import type { Channel } from './Channel';
 
 type MentionUser = APIUser & { member?: Omit<APIGuildMember, 'user'> };
 
-function isChannelTypeName(value: string | undefined): value is CrosspostedChannel['type'] {
+function isChannelTypeName(
+  value: string | undefined
+): value is CrosspostedChannel['type'] {
   return typeof value === 'string' && value in ChannelTypes;
 }
 
@@ -33,7 +42,7 @@ class MessageMentions {
   declare crosspostedChannels: Collection<Snowflake, CrosspostedChannel>;
   declare repliedUser: User | null;
   declare _members: Collection<Snowflake, GuildMember> | null;
-  declare _channels: Collection<Snowflake, import('./Channel').Channel> | null;
+  declare _channels: Collection<Snowflake, Channel> | null;
   declare _parsedUsers: Collection<Snowflake, User> | null;
 
   declare static EVERYONE_PATTERN: RegExp;
@@ -46,8 +55,10 @@ class MessageMentions {
     users?: MentionUser[] | Collection<Snowflake, User>,
     roles?: Snowflake[] | Collection<Snowflake, Role>,
     everyone?: boolean,
-    crosspostedChannels?: APIChannelMention[] | Collection<Snowflake, CrosspostedChannel>,
-    repliedUser?: APIUser | User | null,
+    crosspostedChannels?:
+      | APIChannelMention[]
+      | Collection<Snowflake, CrosspostedChannel>,
+    repliedUser?: APIUser | User | null
   ) {
     Object.defineProperty(this, 'client', { value: message.client });
 
@@ -64,7 +75,9 @@ class MessageMentions {
         this.users = new Collection<Snowflake, User>();
         for (const mention of users) {
           if (mention.member && message.guild) {
-            message.guild.members._add(Object.assign(mention.member, { user: mention }));
+            message.guild.members._add(
+              Object.assign(mention.member, { user: mention })
+            );
           }
           const user = message.client.users._add(mention);
           this.users.set(user.id, user);
@@ -78,11 +91,13 @@ class MessageMentions {
       this.roles = new Collection<Snowflake, Role>(roles);
     } else if (roles) {
       this.roles = new Collection<Snowflake, Role>();
-      const guild = message.guild;
+      const { guild } = message;
       if (guild) {
         for (const mention of roles) {
           const role = guild.roles.cache.get(mention);
-          if (role) this.roles.set(role.id, role);
+          if (role) {
+            this.roles.set(role.id, role);
+          }
         }
       }
     } else {
@@ -97,58 +112,85 @@ class MessageMentions {
 
     if (crosspostedChannels) {
       if (crosspostedChannels instanceof Collection) {
-        this.crosspostedChannels = new Collection<Snowflake, CrosspostedChannel>(crosspostedChannels);
+        this.crosspostedChannels = new Collection<
+          Snowflake,
+          CrosspostedChannel
+        >(crosspostedChannels);
       } else {
-        this.crosspostedChannels = new Collection<Snowflake, CrosspostedChannel>();
+        this.crosspostedChannels = new Collection<
+          Snowflake,
+          CrosspostedChannel
+        >();
         const channelTypes = Object.keys(ChannelTypes);
         for (const d of crosspostedChannels) {
           const type = channelTypes[d.type];
           this.crosspostedChannels.set(d.id, {
             channelId: d.id,
             guildId: d.guild_id,
-            type: isChannelTypeName(type) ? type : 'UNKNOWN',
             name: d.name,
+            type: isChannelTypeName(type) ? type : 'UNKNOWN',
           });
         }
       }
     } else {
-      this.crosspostedChannels = new Collection<Snowflake, CrosspostedChannel>();
+      this.crosspostedChannels = new Collection<
+        Snowflake,
+        CrosspostedChannel
+      >();
     }
 
     this.repliedUser = repliedUser ? this.client.users._add(repliedUser) : null;
   }
 
   get members() {
-    if (this._members) return this._members;
-    const guild = this.guild;
-    if (!guild) return null;
+    if (this._members) {
+      return this._members;
+    }
+    const { guild } = this;
+    if (!guild) {
+      return null;
+    }
     const members = new Collection<Snowflake, GuildMember>();
     this._members = members;
-    this.users.forEach(user => {
+    for (const user of this.users.values()) {
       const member = guild.members.resolve(user);
-      if (member) members.set(member.user.id, member);
-    });
+      if (member) {
+        members.set(member.user.id, member);
+      }
+    }
     return members;
   }
 
   get channels() {
-    if (this._channels) return this._channels;
-    this._channels = new Collection<Snowflake, import('./Channel').Channel>();
+    if (this._channels) {
+      return this._channels;
+    }
+    this._channels = new Collection<Snowflake, Channel>();
     let matches;
-    while ((matches = MessageMentions.CHANNELS_PATTERN.exec(this._content)) !== null) {
+    while (
+      (matches = MessageMentions.CHANNELS_PATTERN.exec(this._content)) !== null
+    ) {
       const chan = this.client.channels.cache.get(matches[1]);
-      if (chan) this._channels.set(chan.id, chan);
+      if (chan) {
+        this._channels.set(chan.id, chan);
+      }
     }
     return this._channels;
   }
 
   get parsedUsers() {
-    if (this._parsedUsers) return this._parsedUsers;
+    if (this._parsedUsers) {
+      return this._parsedUsers;
+    }
     this._parsedUsers = new Collection<Snowflake, User>();
     let matches;
-    while ((matches = MessageMentions.USERS_PATTERN.exec(this._content)) !== null) {
+    while (
+      (matches = MessageMentions.USERS_PATTERN.exec(this._content)) !== null
+    ) {
       const user = this.client.users.cache.get(matches[1]);
-      if (user) this._parsedUsers.set(user.id, user);
+      if (user) {
+        this._parsedUsers.set(user.id, user);
+      }
     }
     return this._parsedUsers;
   }
@@ -160,51 +202,82 @@ class MessageMentions {
       ignoreRoles = false,
       ignoreRepliedUser = false,
       ignoreEveryone = false,
-    }: MessageMentionsHasOptions = {},
+    }: MessageMentionsHasOptions = {}
   ) {
     const user = this.client.users.resolve(data);
 
-    if (!ignoreEveryone && user && this.everyone) return true;
+    if (!ignoreEveryone && user && this.everyone) {
+      return true;
+    }
 
-    const userWasRepliedTo = user && this.repliedUser?.id === user.id;
+    if (this.isRepliedUser(user, ignoreRepliedUser)) {
+      return true;
+    }
 
-    if (!ignoreRepliedUser && userWasRepliedTo && this.users.has(user.id)) return true;
-
-    if (!ignoreDirect) {
-      if (user && (!ignoreRepliedUser || this.parsedUsers.has(user.id)) && this.users.has(user.id)) return true;
-
-      const role = this.guild?.roles.resolve(data);
-      if (role && this.roles.has(role.id)) return true;
-
-      const channel = this.client.channels.resolve(data);
-      if (channel && this.channels.has(channel.id)) return true;
+    if (!ignoreDirect && this.hasDirectMention(data, user, ignoreRepliedUser)) {
+      return true;
     }
 
     if (!ignoreRoles) {
       const member = this.guild?.members.resolve(data);
       if (member) {
-        for (const mentionedRole of this.roles.values()) if (member.roles.cache.has(mentionedRole.id)) return true;
+        for (const mentionedRole of this.roles.values()) {
+          if (member.roles.cache.has(mentionedRole.id)) {
+            return true;
+          }
+        }
       }
     }
 
     return false;
   }
 
+  private isRepliedUser(user: User | null, ignoreRepliedUser: boolean) {
+    return Boolean(
+      !ignoreRepliedUser &&
+      user &&
+      this.repliedUser?.id === user.id &&
+      this.users.has(user.id)
+    );
+  }
+
+  private hasDirectMention(
+    data: UserResolvable | RoleResolvable | ChannelResolvable,
+    user: User | null,
+    ignoreRepliedUser: boolean
+  ) {
+    if (
+      user &&
+      (!ignoreRepliedUser || this.parsedUsers.has(user.id)) &&
+      this.users.has(user.id)
+    ) {
+      return true;
+    }
+
+    const role = this.guild?.roles.resolve(data);
+    if (role && this.roles.has(role.id)) {
+      return true;
+    }
+
+    const channel = this.client.channels.resolve(data);
+    return Boolean(channel && this.channels.has(channel.id));
+  }
+
   toJSON() {
     return Util.flatten(this, {
-      members: true,
       channels: true,
+      members: true,
     });
   }
 }
 
-MessageMentions.EVERYONE_PATTERN = /@(everyone|here)/g;
+MessageMentions.EVERYONE_PATTERN = /@(?<everyone>everyone|here)/gu;
 
-MessageMentions.USERS_PATTERN = /<@!?(\d{17,19})>/g;
+MessageMentions.USERS_PATTERN = /<@!?(?<id>\d{17,19})>/gu;
 
-MessageMentions.ROLES_PATTERN = /<@&(\d{17,19})>/g;
+MessageMentions.ROLES_PATTERN = /<@&(?<id>\d{17,19})>/gu;
 
-MessageMentions.CHANNELS_PATTERN = /<#(\d{17,19})>/g;
+MessageMentions.CHANNELS_PATTERN = /<#(?<id>\d{17,19})>/gu;
 
 export default MessageMentions;
 export { MessageMentions };

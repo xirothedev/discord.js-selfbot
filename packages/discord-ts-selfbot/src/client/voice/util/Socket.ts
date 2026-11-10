@@ -1,7 +1,7 @@
-import fs from 'fs';
-import net from 'net';
-import path from 'path';
-import process from 'process';
+import fs from 'node:fs';
+import net from 'node:net';
+import path from 'node:path';
+import process from 'node:process';
 import type { Writable } from 'node:stream';
 /*
 Credit: https://github.com/dank074/Discord-video-stream
@@ -23,8 +23,8 @@ Please use the @dank074/discord-video-stream library for the best support.
 let counter = 0;
 
 interface StreamLike {
-  on(event: 'finish', listener: () => void): unknown;
-  pipe(destination: unknown): unknown;
+  on: (event: 'finish', listener: () => void) => unknown;
+  pipe: (destination: NodeJS.WritableStream) => unknown;
 }
 
 class UnixStream {
@@ -45,7 +45,7 @@ class UnixStream {
     try {
       fs.statSync(this.socketPath);
       fs.unlinkSync(this.socketPath);
-    } catch (err) {
+    } catch {
       // Null
     }
 
@@ -58,12 +58,12 @@ class UnixStream {
 }
 
 function StreamInput(stream: StreamLike) {
-  return new UnixStream(stream, socket => stream.pipe(socket));
+  return new UnixStream(stream, (socket) => stream.pipe(socket));
 }
 
 function StreamOutput(stream: Writable) {
-  return new UnixStream(stream, socket => socket.pipe(stream));
+  return new UnixStream(stream, (socket) => socket.pipe(stream));
 }
 
 export { StreamOutput, StreamInput, UnixStream };
-export default { StreamOutput, StreamInput, UnixStream };
+export default { StreamInput, StreamOutput, UnixStream };

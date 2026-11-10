@@ -1,7 +1,7 @@
 // These are aggregate types that are used in the typings file but do not exist as actual exported values.
 // To prevent them from showing up in an editor, they are imported from here instead of exporting them there directly.
 
-import {
+import type {
   APIApplication,
   APIApplicationCommand,
   APIApplicationCommandInteraction,
@@ -90,7 +90,7 @@ import {
   APIActionRowComponent,
   APIActionRowComponentTypes,
 } from 'discord-api-types/v10';
-import { GuildChannel, Guild, PermissionOverwrites } from '.';
+import type { GuildChannel, Guild, PermissionOverwrites } from '.';
 import type {
   AutoModerationActionTypes,
   AutoModerationRuleEventTypes,
@@ -103,9 +103,15 @@ import type {
 
 export type RawActivityData = GatewayActivity;
 
-export type RawApplicationData = RawClientApplicationData | RawIntegrationApplicationData;
-export type RawClientApplicationData = GatewayReadyDispatchData['application'] | APIMessage['application'];
-export type RawIntegrationApplicationData = APIGuildIntegrationApplication | Partial<APIApplication>;
+export type RawApplicationData =
+  | RawClientApplicationData
+  | RawIntegrationApplicationData;
+export type RawClientApplicationData =
+  | GatewayReadyDispatchData['application']
+  | APIMessage['application'];
+export type RawIntegrationApplicationData =
+  | APIGuildIntegrationApplication
+  | Partial<APIApplication>;
 
 export type RawApplicationCommandData = APIApplicationCommand;
 
@@ -115,9 +121,16 @@ export type RawChannelData =
   | RawDMChannelData
   | RawPartialGroupDMChannelData;
 export type RawDMChannelData = APIChannel | APIInteractionDataResolvedChannel;
-export type RawGuildChannelData = APIChannel | APIInteractionDataResolvedChannel | Required<APIPartialChannel>;
-export type RawPartialGroupDMChannelData = APIChannel | Required<APIPartialChannel>;
-export type RawThreadChannelData = APIChannel | APIInteractionDataResolvedChannel;
+export type RawGuildChannelData =
+  | APIChannel
+  | APIInteractionDataResolvedChannel
+  | Required<APIPartialChannel>;
+export type RawPartialGroupDMChannelData =
+  | APIChannel
+  | Required<APIPartialChannel>;
+export type RawThreadChannelData =
+  | APIChannel
+  | APIInteractionDataResolvedChannel;
 
 export type RawEmojiData =
   | RawGuildEmojiData
@@ -161,7 +174,8 @@ export type RawInteractionData = GatewayInteractionCreateDispatchData;
 export type RawCommandInteractionData = APIApplicationCommandInteraction;
 export type RawMessageComponentInteractionData = APIMessageComponentInteraction;
 export type RawMessageButtonInteractionData = APIMessageButtonInteractionData;
-export type RawMessageSelectMenuInteractionData = APIMessageSelectMenuInteractionData;
+export type RawMessageSelectMenuInteractionData =
+  APIMessageSelectMenuInteractionData;
 
 export type RawTextInputComponentData = APITextInputComponent;
 export type RawModalSubmitInteractionData = APIModalSubmitInteraction;
@@ -202,7 +216,9 @@ export type RawMessagePayloadData =
   | RESTPostAPIInteractionFollowupJSONBody
   | RESTPatchAPIInteractionFollowupJSONBody;
 
-export type RawMessageReactionData = APIReaction | GatewayMessageReactionAddDispatchData;
+export type RawMessageReactionData =
+  | APIReaction
+  | GatewayMessageReactionAddDispatchData;
 
 export type RawPermissionOverwriteData = APIOverwrite | PermissionOverwrites;
 
@@ -214,7 +230,8 @@ export type RawRichPresenceAssets = GatewayActivityAssets;
 
 export type RawStageInstanceData =
   | APIStageInstance
-  | (Partial<APIStageInstance> & Pick<APIStageInstance, 'id' | 'channel_id' | 'guild_id'>);
+  | (Partial<APIStageInstance> &
+      Pick<APIStageInstance, 'id' | 'channel_id' | 'guild_id'>);
 
 export type RawStickerData = APISticker | APIStickerItem;
 
@@ -232,7 +249,9 @@ export type RawUserData =
 
 export type RawVoiceRegionData = APIVoiceRegion;
 
-export type RawVoiceStateData = GatewayVoiceState | Omit<GatewayVoiceState, 'guild_id'>;
+export type RawVoiceStateData =
+  | GatewayVoiceState
+  | Omit<GatewayVoiceState, 'guild_id'>;
 
 export type RawWebhookData =
   | APIWebhook

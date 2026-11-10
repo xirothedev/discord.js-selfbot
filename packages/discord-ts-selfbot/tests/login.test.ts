@@ -1,5 +1,7 @@
-import { startFakeDiscord } from '@discord-ts-selfbot/test-harness';
 import { test, expect } from 'bun:test';
+
+import { startFakeDiscord } from '@discord-ts-selfbot/test-harness';
+
 import { Client } from '../src/index';
 
 test('Client.login connects through a fake Discord server and emits ready', async () => {
@@ -22,4 +24,4 @@ test('Client.login connects through a fake Discord server and emits ready', asyn
     client.destroy();
     fake.stop();
   }
-}, 15000);
+}, 15_000);

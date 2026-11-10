@@ -1,4 +1,5 @@
 import _errorsModule from '../errors';
+
 const { Error, RangeError, TypeError } = _errorsModule;
 import type {
   ApplicationRoleConnectionMetadataTypes,
@@ -8,10 +9,35 @@ import type {
   SortOrderTypes,
 } from '../../typings/enums';
 import type { MessageType } from '../../typings';
-('use strict');
 
-type EnumOf<T extends string, V extends number = number> = { [K in T]: V } & { [key: number]: T };
-type KeyMirrorOf<T extends string> = { [K in T]: K };
+type EnumOf<Key extends string, Value extends number = number> = Record<
+  Key,
+  Value
+> &
+  Record<number, Key>;
+type KeyMirrorOf<Key extends string> = { [Item in Key]: Item };
+
+function keyMirror<Key extends string>(arr: readonly Key[]): KeyMirrorOf<Key> {
+  const tmp: KeyMirrorOf<Key> = Object.create(null);
+  for (const value of arr) {
+    tmp[value] = value;
+  }
+  return tmp;
+}
+
+function createEnum<Key extends string, Value extends number = number>(
+  keys: readonly (Key | null)[]
+): EnumOf<Key, Value> {
+  const obj: EnumOf<Key, Value> = Object.create(Object.prototype);
+  for (const [index, key] of keys.entries()) {
+    if (key === null) {
+      continue;
+    }
+    Object.assign(obj, { [key]: index });
+    obj[index] = key;
+  }
+  return obj;
+}
 
 const Constants: ConstantsShape = Object.create(Object.prototype);
 
@@ -50,7 +76,14 @@ Constants.WSCodes = {
 
 const AllowedImageFormats = ['webp', 'png', 'jpg', 'jpeg', 'gif'];
 
-const AllowedImageSizes = [16, 32, 56, 64, 96, 128, 256, 300, 512, 600, 1024, 2048, 4096];
+const StickerFormatExtensions: Record<string, string> = {
+  GIF: 'gif',
+  LOTTIE: 'json',
+};
+
+const AllowedImageSizes = [
+  16, 32, 56, 64, 96, 128, 256, 300, 512, 600, 1024, 2048, 4096,
+];
 
 interface ImageURLOptions {
   format?: string;
@@ -61,7 +94,13 @@ interface CdnEndpoints {
   Emoji: (emojiId: string, format?: string) => string;
   Asset: (name: string) => string;
   DefaultAvatar: (index: number) => string;
-  Avatar: (userId: string, hash: string, format: string, size?: number, dynamic?: boolean) => string;
+  Avatar: (
+    userId: string,
+    hash: string,
+    format: string,
+    size?: number,
+    dynamic?: boolean
+  ) => string;
   AvatarDecoration: (hash: string) => string;
   GuildTagBadge: (guildId: string, hash: string) => string;
   GuildMemberAvatar: (
@@ -70,7 +109,7 @@ interface CdnEndpoints {
     hash: string,
     format?: string,
     size?: number,
-    dynamic?: boolean,
+    dynamic?: boolean
   ) => string;
   GuildMemberBanner: (
     guildId: string,
@@ -78,58 +117,163 @@ interface CdnEndpoints {
     hash: string,
     format?: string,
     size?: number,
-    dynamic?: boolean,
+    dynamic?: boolean
   ) => string;
-  Banner: (id: string, hash: string, format: string, size?: number, dynamic?: boolean) => string;
-  Icon: (guildId: string, hash: string, format: string, size?: number, dynamic?: boolean) => string;
+  Banner: (
+    id: string,
+    hash: string,
+    format: string,
+    size?: number,
+    dynamic?: boolean
+  ) => string;
+  Icon: (
+    guildId: string,
+    hash: string,
+    format: string,
+    size?: number,
+    dynamic?: boolean
+  ) => string;
   AppIcon: (appId: string, hash: string, options: ImageURLOptions) => string;
   AppAsset: (appId: string, hash: string, options: ImageURLOptions) => string;
-  StickerPackBanner: (bannerId: string, format: string, size?: number) => string;
-  GDMIcon: (channelId: string, hash: string, format: string, size?: number) => string;
-  Splash: (guildId: string, hash: string, format: string, size?: number) => string;
-  DiscoverySplash: (guildId: string, hash: string, format: string, size?: number) => string;
+  StickerPackBanner: (
+    bannerId: string,
+    format: string,
+    size?: number
+  ) => string;
+  GDMIcon: (
+    channelId: string,
+    hash: string,
+    format: string,
+    size?: number
+  ) => string;
+  Splash: (
+    guildId: string,
+    hash: string,
+    format: string,
+    size?: number
+  ) => string;
+  DiscoverySplash: (
+    guildId: string,
+    hash: string,
+    format: string,
+    size?: number
+  ) => string;
   TeamIcon: (teamId: string, hash: string, options: ImageURLOptions) => string;
   Sticker: (stickerId: string, stickerFormat: string) => string;
-  RoleIcon: (roleId: string, hash: string, format?: string, size?: number) => string;
-  GuildScheduledEventCover: (scheduledEventId: string, coverHash: string, format: string, size?: number) => string;
+  RoleIcon: (
+    roleId: string,
+    hash: string,
+    format?: string,
+    size?: number
+  ) => string;
+  GuildScheduledEventCover: (
+    scheduledEventId: string,
+    coverHash: string,
+    format: string,
+    size?: number
+  ) => string;
 }
 
 interface EndpointsShape {
-  CDN(root: string): CdnEndpoints;
-  invite(root: string, code: string, eventId?: string): string;
-  scheduledEvent(root: string, guildId: string, eventId: string): string;
+  CDN: (root: string) => CdnEndpoints;
+  invite: (root: string, code: string, eventId?: string) => string;
+  scheduledEvent: (root: string, guildId: string, eventId: string) => string;
   botGateway: string;
 }
 
-function makeImageUrl(root: string, { format = 'webp', size }: ImageURLOptions = {}) {
-  if (!['undefined', 'number'].includes(typeof size)) throw new TypeError('INVALID_TYPE', 'size', 'number');
-  if (format && !AllowedImageFormats.includes(format)) throw new Error('IMAGE_FORMAT', format);
-  if (size && !AllowedImageSizes.includes(size)) throw new RangeError('IMAGE_SIZE', size);
+function makeImageUrl(
+  root: string,
+  { format = 'webp', size }: ImageURLOptions = {}
+) {
+  if (!['undefined', 'number'].includes(typeof size)) {
+    throw new TypeError('INVALID_TYPE', 'size', 'number');
+  }
+  if (format && !AllowedImageFormats.includes(format)) {
+    throw new Error('IMAGE_FORMAT', format);
+  }
+  if (size && !AllowedImageSizes.includes(size)) {
+    throw new RangeError('IMAGE_SIZE', size);
+  }
   return `${root}.${format}${size ? `?size=${size}` : ''}`;
 }
 
 Constants.Endpoints = {
   CDN(root: string) {
     return {
-      Emoji: (emojiId: string, format = 'webp') => `${root}/emojis/${emojiId}.${format}`,
+      AppAsset: (appId: string, hash: string, options: ImageURLOptions) =>
+        makeImageUrl(`${root}/app-assets/${appId}/${hash}`, options),
+      AppIcon: (appId: string, hash: string, options: ImageURLOptions) =>
+        makeImageUrl(`${root}/app-icons/${appId}/${hash}`, options),
       Asset: (name: string) => `${root}/assets/${name}`,
-      DefaultAvatar: (index: number) => `${root}/embed/avatars/${index}.png`,
-      Avatar: (userId: string, hash: string, format: string, size?: number, dynamic = false) => {
-        if (dynamic && hash.startsWith('a_')) format = 'gif';
-        return makeImageUrl(`${root}/avatars/${userId}/${hash}`, { format, size });
+      Avatar: (
+        userId: string,
+        hash: string,
+        format: string,
+        size?: number,
+        dynamic = false
+      ) => {
+        const resolvedFormat =
+          dynamic && hash.startsWith('a_') ? 'gif' : format;
+        return makeImageUrl(`${root}/avatars/${userId}/${hash}`, {
+          format: resolvedFormat,
+          size,
+        });
       },
-      AvatarDecoration: (hash: string) => makeImageUrl(`${root}/avatar-decoration-presets/${hash}`, { format: 'png' }),
-      GuildTagBadge: (guildId: string, hash: string) => `${root}/guild-tag-badges/${guildId}/${hash}.png`,
+      AvatarDecoration: (hash: string) =>
+        makeImageUrl(`${root}/avatar-decoration-presets/${hash}`, {
+          format: 'png',
+        }),
+      Banner: (
+        id: string,
+        hash: string,
+        format: string,
+        size?: number,
+        dynamic = false
+      ) => {
+        const resolvedFormat =
+          dynamic && hash.startsWith('a_') ? 'gif' : format;
+        return makeImageUrl(`${root}/banners/${id}/${hash}`, {
+          format: resolvedFormat,
+          size,
+        });
+      },
+      DefaultAvatar: (index: number) => `${root}/embed/avatars/${index}.png`,
+      DiscoverySplash: (
+        guildId: string,
+        hash: string,
+        format: string,
+        size?: number
+      ) =>
+        makeImageUrl(`${root}/discovery-splashes/${guildId}/${hash}`, {
+          format,
+          size,
+        }),
+      Emoji: (emojiId: string, format = 'webp') =>
+        `${root}/emojis/${emojiId}.${format}`,
+      GDMIcon: (
+        channelId: string,
+        hash: string,
+        format: string,
+        size?: number
+      ) =>
+        makeImageUrl(`${root}/channel-icons/${channelId}/${hash}`, {
+          format,
+          size,
+        }),
       GuildMemberAvatar: (
         guildId: string,
         memberId: string,
         hash: string,
         format = 'webp',
         size?: number,
-        dynamic = false,
+        dynamic = false
       ) => {
-        if (dynamic && hash.startsWith('a_')) format = 'gif';
-        return makeImageUrl(`${root}/guilds/${guildId}/users/${memberId}/avatars/${hash}`, { format, size });
+        const resolvedFormat =
+          dynamic && hash.startsWith('a_') ? 'gif' : format;
+        return makeImageUrl(
+          `${root}/guilds/${guildId}/users/${memberId}/avatars/${hash}`,
+          { format: resolvedFormat, size }
+        );
       },
       GuildMemberBanner: (
         guildId: string,
@@ -137,240 +281,275 @@ Constants.Endpoints = {
         hash: string,
         format = 'webp',
         size?: number,
-        dynamic = false,
+        dynamic = false
       ) => {
-        if (dynamic && hash.startsWith('a_')) format = 'gif';
-        return makeImageUrl(`${root}/guilds/${guildId}/users/${memberId}/banners/${hash}`, { format, size });
+        const resolvedFormat =
+          dynamic && hash.startsWith('a_') ? 'gif' : format;
+        return makeImageUrl(
+          `${root}/guilds/${guildId}/users/${memberId}/banners/${hash}`,
+          { format: resolvedFormat, size }
+        );
       },
-      Banner: (id: string, hash: string, format: string, size?: number, dynamic = false) => {
-        if (dynamic && hash.startsWith('a_')) format = 'gif';
-        return makeImageUrl(`${root}/banners/${id}/${hash}`, { format, size });
+      GuildScheduledEventCover: (
+        scheduledEventId: string,
+        coverHash: string,
+        format: string,
+        size?: number
+      ) =>
+        makeImageUrl(`${root}/guild-events/${scheduledEventId}/${coverHash}`, {
+          format,
+          size,
+        }),
+      GuildTagBadge: (guildId: string, hash: string) =>
+        `${root}/guild-tag-badges/${guildId}/${hash}.png`,
+      Icon: (
+        guildId: string,
+        hash: string,
+        format: string,
+        size?: number,
+        dynamic = false
+      ) => {
+        const resolvedFormat =
+          dynamic && hash.startsWith('a_') ? 'gif' : format;
+        return makeImageUrl(`${root}/icons/${guildId}/${hash}`, {
+          format: resolvedFormat,
+          size,
+        });
       },
-      Icon: (guildId: string, hash: string, format: string, size?: number, dynamic = false) => {
-        if (dynamic && hash.startsWith('a_')) format = 'gif';
-        return makeImageUrl(`${root}/icons/${guildId}/${hash}`, { format, size });
-      },
-      AppIcon: (appId: string, hash: string, options: ImageURLOptions) =>
-        makeImageUrl(`${root}/app-icons/${appId}/${hash}`, options),
-      AppAsset: (appId: string, hash: string, options: ImageURLOptions) =>
-        makeImageUrl(`${root}/app-assets/${appId}/${hash}`, options),
-      StickerPackBanner: (bannerId: string, format: string, size?: number) =>
-        makeImageUrl(`${root}/app-assets/710982414301790216/store/${bannerId}`, { size, format }),
-      GDMIcon: (channelId: string, hash: string, format: string, size?: number) =>
-        makeImageUrl(`${root}/channel-icons/${channelId}/${hash}`, { size, format }),
+      RoleIcon: (
+        roleId: string,
+        hash: string,
+        format = 'webp',
+        size?: number
+      ) =>
+        makeImageUrl(`${root}/role-icons/${roleId}/${hash}`, { format, size }),
       Splash: (guildId: string, hash: string, format: string, size?: number) =>
-        makeImageUrl(`${root}/splashes/${guildId}/${hash}`, { size, format }),
-      DiscoverySplash: (guildId: string, hash: string, format: string, size?: number) =>
-        makeImageUrl(`${root}/discovery-splashes/${guildId}/${hash}`, { size, format }),
+        makeImageUrl(`${root}/splashes/${guildId}/${hash}`, { format, size }),
+      Sticker: (stickerId: string, stickerFormat: string) =>
+        `${root}/stickers/${stickerId}.${StickerFormatExtensions[stickerFormat] ?? 'png'}`,
+      StickerPackBanner: (bannerId: string, format: string, size?: number) =>
+        makeImageUrl(
+          `${root}/app-assets/710982414301790216/store/${bannerId}`,
+          { format, size }
+        ),
       TeamIcon: (teamId: string, hash: string, options: ImageURLOptions) =>
         makeImageUrl(`${root}/team-icons/${teamId}/${hash}`, options),
-      Sticker: (stickerId: string, stickerFormat: string) =>
-        `${root}/stickers/${stickerId}.${
-          stickerFormat === 'LOTTIE' ? 'json' : stickerFormat === 'GIF' ? 'gif' : 'png'
-        }`,
-      RoleIcon: (roleId: string, hash: string, format = 'webp', size?: number) =>
-        makeImageUrl(`${root}/role-icons/${roleId}/${hash}`, { size, format }),
-      GuildScheduledEventCover: (scheduledEventId: string, coverHash: string, format: string, size?: number) =>
-        makeImageUrl(`${root}/guild-events/${scheduledEventId}/${coverHash}`, { size, format }),
     };
   },
+  botGateway: '/gateway',
   invite: (root: string, code: string, eventId?: string) =>
     eventId ? `${root}/${code}?event=${eventId}` : `${root}/${code}`,
-  scheduledEvent: (root: string, guildId: string, eventId: string) => `${root}/${guildId}/${eventId}`,
-  botGateway: '/gateway',
+  scheduledEvent: (root: string, guildId: string, eventId: string) =>
+    `${root}/${guildId}/${eventId}`,
 };
 
 Constants.Status = {
-  READY: 0,
   CONNECTING: 1,
-  RECONNECTING: 2,
+  DISCONNECTED: 5,
+  IDENTIFYING: 7,
   IDLE: 3,
   NEARLY: 4,
-  DISCONNECTED: 5,
-  WAITING_FOR_GUILDS: 6,
-  IDENTIFYING: 7,
+  READY: 0,
+  RECONNECTING: 2,
   RESUMING: 8,
+  WAITING_FOR_GUILDS: 6,
 };
 
 Constants.VoiceStatus = {
+  AUTHENTICATING: 2,
   CONNECTED: 0,
   CONNECTING: 1,
-  AUTHENTICATING: 2,
-  RECONNECTING: 3,
   DISCONNECTED: 4,
+  RECONNECTING: 3,
 };
 
 Constants.Opcodes = {
   DISPATCH: 0,
-  HEARTBEAT: 1,
-  IDENTIFY: 2,
-  STATUS_UPDATE: 3,
-  VOICE_STATE_UPDATE: 4,
-  VOICE_GUILD_PING: 5,
-  RESUME: 6,
-  RECONNECT: 7,
-  REQUEST_GUILD_MEMBERS: 8,
-  INVALID_SESSION: 9,
-  HELLO: 10,
-  HEARTBEAT_ACK: 11,
-  GUILD_SYNC: 12,
   DM_UPDATE: 13,
+  EMBEDDED_ACTIVITY_CLOSE: 26,
+  EMBEDDED_ACTIVITY_LAUNCH: 25,
+  EMBEDDED_ACTIVITY_UPDATE: 27,
+  // Payload: { guild_id: Snowflake, channel_ids_hash: string[], role_ids_hash: string[], emoji_ids_hash: string[], sticker_ids_hash: string[] }
+  GET_DELETED_ENTITY_IDS_NOT_MATCHING_HASH: 30,
   GUILD_SUBSCRIPTIONS: 14,
+  // Payload: { subscriptions: Object<guild_id, { Payload_op14 - guild_id }> } | Response: Opcode 14
+  GUILD_SUBSCRIPTIONS_BULK: 37,
+  GUILD_SYNC: 12,
+  HEARTBEAT: 1,
+  HEARTBEAT_ACK: 11,
+  HELLO: 10,
+  IDENTIFY: 2,
+  INVALID_SESSION: 9,
   LOBBY_CONNECT: 15,
   LOBBY_DISCONNECT: 16,
   LOBBY_VOICE_STATE_UPDATE: 17,
+  RECONNECT: 7,
+  // Payload: { target_session_id: string, payload: any }
+  REMOTE_COMMAND: 29,
+  // Payload: { guild_id: string } | Response: CHANNEL_STATUSES | { guild_id, channels: { status, id }[] }
+  REQUEST_CHANNEL_STATUSES: 36,
+  // Payload: { guild_id: Snowflake, channel_id: Snowflake, threads: { thread_id: Snowflake, ack_message_id: Snowflake }[] }
+  REQUEST_FORUM_UNREADS: 28,
+  REQUEST_GUILD_APPLICATION_COMMANDS: 24,
+  REQUEST_GUILD_MEMBERS: 8,
+  // Payload: { guild_id: string, channel_ids: string[] }
+  REQUEST_LAST_MESSAGES: 34,
+  // Payload: { guild_ids: string[] }
+  REQUEST_SOUNDBOARD_SOUNDS: 31,
+  RESUME: 6,
+  // Payload: { guild_id: string, query: string, continuation_token?: Snowflake }
+  SEARCH_RECENT_MEMBERS: 35,
+  // Payload: { preferred_region: string }
+  SPEED_TEST_CREATE: 32,
+  // Payload: null
+  SPEED_TEST_DELETE: 33,
+  STATUS_UPDATE: 3,
   STREAM_CREATE: 18,
   STREAM_DELETE: 19,
-  STREAM_WATCH: 20,
   STREAM_PING: 21,
   STREAM_SET_PAUSED: 22,
-  REQUEST_GUILD_APPLICATION_COMMANDS: 24,
-  EMBEDDED_ACTIVITY_LAUNCH: 25,
-  EMBEDDED_ACTIVITY_CLOSE: 26,
-  EMBEDDED_ACTIVITY_UPDATE: 27,
-  REQUEST_FORUM_UNREADS: 28, // Payload: { guild_id: Snowflake, channel_id: Snowflake, threads: { thread_id: Snowflake, ack_message_id: Snowflake }[] }
-  REMOTE_COMMAND: 29, // Payload: { target_session_id: string, payload: any }
-  GET_DELETED_ENTITY_IDS_NOT_MATCHING_HASH: 30, // Payload: { guild_id: Snowflake, channel_ids_hash: string[], role_ids_hash: string[], emoji_ids_hash: string[], sticker_ids_hash: string[] }
-  REQUEST_SOUNDBOARD_SOUNDS: 31, // Payload: { guild_ids: string[] }
-  SPEED_TEST_CREATE: 32, // Payload: { preferred_region: string }
-  SPEED_TEST_DELETE: 33, // Payload: null
-  REQUEST_LAST_MESSAGES: 34, // Payload: { guild_id: string, channel_ids: string[] }
-  SEARCH_RECENT_MEMBERS: 35, // Payload: { guild_id: string, query: string, continuation_token?: Snowflake }
-  REQUEST_CHANNEL_STATUSES: 36, // Payload: { guild_id: string } | Response: CHANNEL_STATUSES | { guild_id, channels: { status, id }[] }
-  GUILD_SUBSCRIPTIONS_BULK: 37, // Payload: { subscriptions: Object<guild_id, { Payload_op14 - guild_id }> } | Response: Opcode 14
-  // Updated: 23/1/2024
+  STREAM_WATCH: 20,
+  VOICE_GUILD_PING: 5,
+  VOICE_STATE_UPDATE: 4,
 };
 
 Constants.VoiceOpcodes = {
-  IDENTIFY: 0,
-  SELECT_PROTOCOL: 1,
-  READY: 2,
-  HEARTBEAT: 3,
-  SESSION_DESCRIPTION: 4,
-  SPEAKING: 5,
-  HEARTBEAT_ACK: 6,
-  RESUME: 7,
-  HELLO: 8,
-  RESUMED: 9,
-  SOURCES: 12,
-  CLIENT_DISCONNECT: 13,
-  SESSION_UPDATE: 14,
-  MEDIA_SINK_WANTS: 15,
-  VOICE_BACKEND_VERSION: 16,
   CHANNEL_OPTIONS_UPDATE: 17,
+  CLIENT_DISCONNECT: 13,
+  HEARTBEAT: 3,
+  HEARTBEAT_ACK: 6,
+  HELLO: 8,
+  IDENTIFY: 0,
+  MEDIA_SINK_WANTS: 15,
+  READY: 2,
+  RESUME: 7,
+  RESUMED: 9,
+  SELECT_PROTOCOL: 1,
+  SESSION_DESCRIPTION: 4,
+  SESSION_UPDATE: 14,
+  SOURCES: 12,
+  SPEAKING: 5,
+  VOICE_BACKEND_VERSION: 16,
 };
 
 Constants.Events = {
-  RATE_LIMIT: 'rateLimit',
-  INVALID_REQUEST_WARNING: 'invalidRequestWarning',
-  API_RESPONSE: 'apiResponse',
   API_REQUEST: 'apiRequest',
-  CLIENT_READY: 'ready',
+  API_RESPONSE: 'apiResponse',
   APPLICATION_COMMAND_CREATE: 'applicationCommandCreate',
   APPLICATION_COMMAND_DELETE: 'applicationCommandDelete',
-  APPLICATION_COMMAND_UPDATE: 'applicationCommandUpdate',
   APPLICATION_COMMAND_PERMISSIONS_UPDATE: 'applicationCommandPermissionsUpdate',
+  APPLICATION_COMMAND_UPDATE: 'applicationCommandUpdate',
   AUTO_MODERATION_ACTION_EXECUTION: 'autoModerationActionExecution',
   AUTO_MODERATION_RULE_CREATE: 'autoModerationRuleCreate',
   AUTO_MODERATION_RULE_DELETE: 'autoModerationRuleDelete',
   AUTO_MODERATION_RULE_UPDATE: 'autoModerationRuleUpdate',
+  CACHE_SWEEP: 'cacheSweep',
+  CALL_CREATE: 'callCreate',
+  CALL_DELETE: 'callDelete',
+  CALL_UPDATE: 'callUpdate',
+  CHANNEL_CREATE: 'channelCreate',
+  CHANNEL_DELETE: 'channelDelete',
+  CHANNEL_PINS_UPDATE: 'channelPinsUpdate',
+  CHANNEL_RECIPIENT_ADD: 'channelRecipientAdd',
+  CHANNEL_RECIPIENT_REMOVE: 'channelRecipientRemove',
+  CHANNEL_UPDATE: 'channelUpdate',
+  CLIENT_READY: 'ready',
+  DEBUG: 'debug',
+  ERROR: 'error',
+  GUILD_AUDIT_LOG_ENTRY_CREATE: 'guildAuditLogEntryCreate',
   GUILD_AVAILABLE: 'guildAvailable',
+  GUILD_BAN_ADD: 'guildBanAdd',
+  GUILD_BAN_REMOVE: 'guildBanRemove',
   GUILD_CREATE: 'guildCreate',
   GUILD_DELETE: 'guildDelete',
-  GUILD_UPDATE: 'guildUpdate',
-  GUILD_UNAVAILABLE: 'guildUnavailable',
-  GUILD_MEMBER_ADD: 'guildMemberAdd',
-  GUILD_MEMBER_REMOVE: 'guildMemberRemove',
-  GUILD_MEMBER_UPDATE: 'guildMemberUpdate',
-  GUILD_MEMBER_AVAILABLE: 'guildMemberAvailable',
-  GUILD_MEMBERS_CHUNK: 'guildMembersChunk',
-  GUILD_INTEGRATIONS_UPDATE: 'guildIntegrationsUpdate',
-  GUILD_ROLE_CREATE: 'roleCreate',
-  GUILD_ROLE_DELETE: 'roleDelete',
-  INVITE_CREATE: 'inviteCreate',
-  INVITE_DELETE: 'inviteDelete',
-  GUILD_ROLE_UPDATE: 'roleUpdate',
   GUILD_EMOJI_CREATE: 'emojiCreate',
   GUILD_EMOJI_DELETE: 'emojiDelete',
   GUILD_EMOJI_UPDATE: 'emojiUpdate',
-  GUILD_BAN_ADD: 'guildBanAdd',
-  GUILD_BAN_REMOVE: 'guildBanRemove',
-  CHANNEL_CREATE: 'channelCreate',
-  CHANNEL_DELETE: 'channelDelete',
-  CHANNEL_UPDATE: 'channelUpdate',
-  CHANNEL_PINS_UPDATE: 'channelPinsUpdate',
+  GUILD_INTEGRATIONS_UPDATE: 'guildIntegrationsUpdate',
+  GUILD_MEMBERS_CHUNK: 'guildMembersChunk',
+  GUILD_MEMBER_ADD: 'guildMemberAdd',
+  GUILD_MEMBER_AVAILABLE: 'guildMemberAvailable',
+  GUILD_MEMBER_REMOVE: 'guildMemberRemove',
+  GUILD_MEMBER_UPDATE: 'guildMemberUpdate',
+  GUILD_ROLE_CREATE: 'roleCreate',
+  GUILD_ROLE_DELETE: 'roleDelete',
+  GUILD_ROLE_UPDATE: 'roleUpdate',
+  GUILD_SCHEDULED_EVENT_CREATE: 'guildScheduledEventCreate',
+  GUILD_SCHEDULED_EVENT_DELETE: 'guildScheduledEventDelete',
+  GUILD_SCHEDULED_EVENT_UPDATE: 'guildScheduledEventUpdate',
+  GUILD_SCHEDULED_EVENT_USER_ADD: 'guildScheduledEventUserAdd',
+  GUILD_SCHEDULED_EVENT_USER_REMOVE: 'guildScheduledEventUserRemove',
+  GUILD_STICKER_CREATE: 'stickerCreate',
+  GUILD_STICKER_DELETE: 'stickerDelete',
+  GUILD_STICKER_UPDATE: 'stickerUpdate',
+  GUILD_UNAVAILABLE: 'guildUnavailable',
+  GUILD_UPDATE: 'guildUpdate',
+  INTERACTION_CREATE: 'interactionCreate',
+  INTERACTION_MODAL_CREATE: 'interactionModalCreate',
+  INVALIDATED: 'invalidated',
+  INVALID_REQUEST_WARNING: 'invalidRequestWarning',
+  INVITE_CREATE: 'inviteCreate',
+  INVITE_DELETE: 'inviteDelete',
+  MESSAGE_BULK_DELETE: 'messageDeleteBulk',
   MESSAGE_CREATE: 'messageCreate',
   MESSAGE_DELETE: 'messageDelete',
-  MESSAGE_UPDATE: 'messageUpdate',
-  MESSAGE_BULK_DELETE: 'messageDeleteBulk',
+  MESSAGE_POLL_VOTE_ADD: 'messagePollVoteAdd',
+  MESSAGE_POLL_VOTE_REMOVE: 'messagePollVoteRemove',
   MESSAGE_REACTION_ADD: 'messageReactionAdd',
   MESSAGE_REACTION_REMOVE: 'messageReactionRemove',
   MESSAGE_REACTION_REMOVE_ALL: 'messageReactionRemoveAll',
   MESSAGE_REACTION_REMOVE_EMOJI: 'messageReactionRemoveEmoji',
-  THREAD_CREATE: 'threadCreate',
-  THREAD_DELETE: 'threadDelete',
-  THREAD_UPDATE: 'threadUpdate',
-  THREAD_LIST_SYNC: 'threadListSync',
-  THREAD_MEMBER_UPDATE: 'threadMemberUpdate',
-  THREAD_MEMBERS_UPDATE: 'threadMembersUpdate',
-  USER_UPDATE: 'userUpdate',
+  MESSAGE_UPDATE: 'messageUpdate',
   PRESENCE_UPDATE: 'presenceUpdate',
-  VOICE_SERVER_UPDATE: 'voiceServerUpdate',
-  VOICE_STATE_UPDATE: 'voiceStateUpdate',
-  TYPING_START: 'typingStart',
-  WEBHOOKS_UPDATE: 'webhookUpdate',
-  ERROR: 'error',
-  WARN: 'warn',
-  DEBUG: 'debug',
-  CACHE_SWEEP: 'cacheSweep',
+  RATE_LIMIT: 'rateLimit',
+  RAW: 'raw',
+  RELATIONSHIP_ADD: 'relationshipAdd',
+  RELATIONSHIP_REMOVE: 'relationshipRemove',
+  RELATIONSHIP_UPDATE: 'relationshipUpdate',
   SHARD_DISCONNECT: 'shardDisconnect',
   SHARD_ERROR: 'shardError',
-  SHARD_RECONNECTING: 'shardReconnecting',
   SHARD_READY: 'shardReady',
+  SHARD_RECONNECTING: 'shardReconnecting',
   SHARD_RESUME: 'shardResume',
-  INVALIDATED: 'invalidated',
-  RAW: 'raw',
   STAGE_INSTANCE_CREATE: 'stageInstanceCreate',
-  STAGE_INSTANCE_UPDATE: 'stageInstanceUpdate',
   STAGE_INSTANCE_DELETE: 'stageInstanceDelete',
-  GUILD_STICKER_CREATE: 'stickerCreate',
-  GUILD_STICKER_DELETE: 'stickerDelete',
-  GUILD_STICKER_UPDATE: 'stickerUpdate',
-  GUILD_SCHEDULED_EVENT_CREATE: 'guildScheduledEventCreate',
-  GUILD_SCHEDULED_EVENT_UPDATE: 'guildScheduledEventUpdate',
-  GUILD_SCHEDULED_EVENT_DELETE: 'guildScheduledEventDelete',
-  GUILD_SCHEDULED_EVENT_USER_ADD: 'guildScheduledEventUserAdd',
-  GUILD_SCHEDULED_EVENT_USER_REMOVE: 'guildScheduledEventUserRemove',
-  GUILD_AUDIT_LOG_ENTRY_CREATE: 'guildAuditLogEntryCreate',
+  STAGE_INSTANCE_UPDATE: 'stageInstanceUpdate',
+  THREAD_CREATE: 'threadCreate',
+  THREAD_DELETE: 'threadDelete',
+  THREAD_LIST_SYNC: 'threadListSync',
+  THREAD_MEMBERS_UPDATE: 'threadMembersUpdate',
+  THREAD_MEMBER_UPDATE: 'threadMemberUpdate',
+  THREAD_UPDATE: 'threadUpdate',
+  TYPING_START: 'typingStart',
   UNHANDLED_PACKET: 'unhandledPacket',
-  RELATIONSHIP_ADD: 'relationshipAdd',
-  RELATIONSHIP_UPDATE: 'relationshipUpdate',
-  RELATIONSHIP_REMOVE: 'relationshipRemove',
-  CHANNEL_RECIPIENT_ADD: 'channelRecipientAdd',
-  CHANNEL_RECIPIENT_REMOVE: 'channelRecipientRemove',
-  INTERACTION_CREATE: 'interactionCreate',
-  INTERACTION_MODAL_CREATE: 'interactionModalCreate',
-  CALL_CREATE: 'callCreate',
-  CALL_UPDATE: 'callUpdate',
-  CALL_DELETE: 'callDelete',
-  MESSAGE_POLL_VOTE_ADD: 'messagePollVoteAdd',
-  MESSAGE_POLL_VOTE_REMOVE: 'messagePollVoteRemove',
-  VOICE_CHANNEL_EFFECT_SEND: 'voiceChannelEffectSend',
+  USER_UPDATE: 'userUpdate',
   // Djs v12
   VOICE_BROADCAST_SUBSCRIBE: 'subscribe',
   VOICE_BROADCAST_UNSUBSCRIBE: 'unsubscribe',
+  VOICE_CHANNEL_EFFECT_SEND: 'voiceChannelEffectSend',
+  VOICE_SERVER_UPDATE: 'voiceServerUpdate',
+  VOICE_STATE_UPDATE: 'voiceStateUpdate',
+  WARN: 'warn',
+  WEBHOOKS_UPDATE: 'webhookUpdate',
 };
 
 Constants.ShardEvents = {
+  ALL_READY: 'allReady',
   CLOSE: 'close',
   DESTROYED: 'destroyed',
   INVALID_SESSION: 'invalidSession',
   READY: 'ready',
   RESUMED: 'resumed',
-  ALL_READY: 'allReady',
 };
 
-Constants.PartialTypes = keyMirror(['USER', 'CHANNEL', 'GUILD_MEMBER', 'MESSAGE', 'REACTION', 'GUILD_SCHEDULED_EVENT']);
+Constants.PartialTypes = keyMirror([
+  'USER',
+  'CHANNEL',
+  'GUILD_MEMBER',
+  'MESSAGE',
+  'REACTION',
+  'GUILD_SCHEDULED_EVENT',
+]);
 
 Constants.WSEvents = keyMirror([
   'READY',
@@ -451,11 +630,12 @@ Constants.InviteScopes = [
   'role_connections.write',
 ];
 
-// TODO: change Integration#expireBehavior to this and clean up Integration
+// Integration#expireBehavior still uses the old strings. Align it with this enum later.
 Constants.IntegrationExpireBehaviors = createEnum(['REMOVE_ROLE', 'KICK']);
 
 Constants.MessageTypes = [
-  'DEFAULT', // 0
+  // 0
+  'DEFAULT',
   'RECIPIENT_ADD',
   'RECIPIENT_REMOVE',
   'CALL',
@@ -468,7 +648,8 @@ Constants.MessageTypes = [
   'USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_2',
   'USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3',
   'CHANNEL_FOLLOW_ADD',
-  null, // 13
+  // 13
+  null,
   'GUILD_DISCOVERY_DISQUALIFIED',
   'GUILD_DISCOVERY_REQUALIFIED',
   'GUILD_DISCOVERY_GRACE_PERIOD_INITIAL_WARNING',
@@ -488,7 +669,8 @@ Constants.MessageTypes = [
   'STAGE_RAISE_HAND',
   'STAGE_TOPIC',
   'GUILD_APPLICATION_PREMIUM_SUBSCRIPTION',
-  null, // 33
+  // 33 and 34 are unused
+  null,
   null,
   'PREMIUM_REFERRAL',
   'GUILD_INCIDENT_ALERT_MODE_ENABLED',
@@ -506,8 +688,12 @@ Constants.MessageTypes = [
   'NITRO_NOTIFICATION',
 ];
 
-Constants.MessageReferenceTypes = createEnum<'DEFAULT' | 'FORWARD', MessageReferenceTypes>([
-  'DEFAULT', // 0
+Constants.MessageReferenceTypes = createEnum<
+  'DEFAULT' | 'FORWARD',
+  MessageReferenceTypes
+>([
+  // 0
+  'DEFAULT',
   'FORWARD',
 ]);
 
@@ -531,10 +717,24 @@ Constants.SweeperKeys = [
 
 Constants.SystemMessageTypes = Constants.MessageTypes.filter(
   (type): type is MessageType =>
-    type !== null && !['DEFAULT', 'REPLY', 'APPLICATION_COMMAND', 'CONTEXT_MENU_COMMAND'].includes(type),
+    type !== null &&
+    ![
+      'DEFAULT',
+      'REPLY',
+      'APPLICATION_COMMAND',
+      'CONTEXT_MENU_COMMAND',
+    ].includes(type)
 );
 
-Constants.ActivityTypes = createEnum(['PLAYING', 'STREAMING', 'LISTENING', 'WATCHING', 'CUSTOM', 'COMPETING', 'HANG']);
+Constants.ActivityTypes = createEnum([
+  'PLAYING',
+  'STREAMING',
+  'LISTENING',
+  'WATCHING',
+  'CUSTOM',
+  'COMPETING',
+  'HANG',
+]);
 
 Constants.ChannelTypes = createEnum<ChannelTypeName>([
   'GUILD_TEXT',
@@ -566,46 +766,50 @@ Constants.TextBasedChannelTypes = [
   'GUILD_STAGE_VOICE',
 ];
 
-Constants.ThreadChannelTypes = ['GUILD_NEWS_THREAD', 'GUILD_PUBLIC_THREAD', 'GUILD_PRIVATE_THREAD'];
+Constants.ThreadChannelTypes = [
+  'GUILD_NEWS_THREAD',
+  'GUILD_PUBLIC_THREAD',
+  'GUILD_PRIVATE_THREAD',
+];
 
 Constants.VoiceBasedChannelTypes = ['GUILD_VOICE', 'GUILD_STAGE_VOICE'];
 
 Constants.ClientApplicationAssetTypes = {
-  SMALL: 1,
   BIG: 2,
+  SMALL: 1,
 };
 
 Constants.Colors = {
-  DEFAULT: 0x000000,
-  WHITE: 0xffffff,
-  AQUA: 0x1abc9c,
-  GREEN: 0x57f287,
-  BLUE: 0x3498db,
-  YELLOW: 0xfee75c,
-  PURPLE: 0x9b59b6,
-  LUMINOUS_VIVID_PINK: 0xe91e63,
-  FUCHSIA: 0xeb459e,
-  GOLD: 0xf1c40f,
-  ORANGE: 0xe67e22,
-  RED: 0xed4245,
-  GREY: 0x95a5a6,
-  NAVY: 0x34495e,
-  DARK_AQUA: 0x11806a,
-  DARK_GREEN: 0x1f8b4c,
-  DARK_BLUE: 0x206694,
-  DARK_PURPLE: 0x71368a,
-  DARK_VIVID_PINK: 0xad1457,
-  DARK_GOLD: 0xc27c0e,
-  DARK_ORANGE: 0xa84300,
-  DARK_RED: 0x992d22,
-  DARK_GREY: 0x979c9f,
-  DARKER_GREY: 0x7f8c8d,
-  LIGHT_GREY: 0xbcc0c0,
-  DARK_NAVY: 0x2c3e50,
-  BLURPLE: 0x5865f2,
-  GREYPLE: 0x99aab5,
-  DARK_BUT_NOT_BLACK: 0x2c2f33,
-  NOT_QUITE_BLACK: 0x23272a,
+  AQUA: 0x1a_bc_9c,
+  BLUE: 0x34_98_db,
+  BLURPLE: 0x58_65_f2,
+  DARKER_GREY: 0x7f_8c_8d,
+  DARK_AQUA: 0x11_80_6a,
+  DARK_BLUE: 0x20_66_94,
+  DARK_BUT_NOT_BLACK: 0x2c_2f_33,
+  DARK_GOLD: 0xc2_7c_0e,
+  DARK_GREEN: 0x1f_8b_4c,
+  DARK_GREY: 0x97_9c_9f,
+  DARK_NAVY: 0x2c_3e_50,
+  DARK_ORANGE: 0xa8_43_00,
+  DARK_PURPLE: 0x71_36_8a,
+  DARK_RED: 0x99_2d_22,
+  DARK_VIVID_PINK: 0xad_14_57,
+  DEFAULT: 0x00_00_00,
+  FUCHSIA: 0xeb_45_9e,
+  GOLD: 0xf1_c4_0f,
+  GREEN: 0x57_f2_87,
+  GREY: 0x95_a5_a6,
+  GREYPLE: 0x99_aa_b5,
+  LIGHT_GREY: 0xbc_c0_c0,
+  LUMINOUS_VIVID_PINK: 0xe9_1e_63,
+  NAVY: 0x34_49_5e,
+  NOT_QUITE_BLACK: 0x23_27_2a,
+  ORANGE: 0xe6_7e_22,
+  PURPLE: 0x9b_59_b6,
+  RED: 0xed_42_45,
+  WHITE: 0xff_ff_ff,
+  YELLOW: 0xfe_e7_5c,
 };
 
 Constants.HolographicStyles = {
@@ -614,179 +818,207 @@ Constants.HolographicStyles = {
   TERTIARY: 16_761_760,
 };
 
-Constants.ExplicitContentFilterLevels = createEnum(['DISABLED', 'MEMBERS_WITHOUT_ROLES', 'ALL_MEMBERS']);
+Constants.ExplicitContentFilterLevels = createEnum([
+  'DISABLED',
+  'MEMBERS_WITHOUT_ROLES',
+  'ALL_MEMBERS',
+]);
 
-Constants.VerificationLevels = createEnum(['NONE', 'LOW', 'MEDIUM', 'HIGH', 'VERY_HIGH']);
+Constants.VerificationLevels = createEnum([
+  'NONE',
+  'LOW',
+  'MEDIUM',
+  'HIGH',
+  'VERY_HIGH',
+]);
 
 Constants.APIErrors = {
-  UNKNOWN_ACCOUNT: 10001,
-  UNKNOWN_APPLICATION: 10002,
-  UNKNOWN_CHANNEL: 10003,
-  UNKNOWN_GUILD: 10004,
-  UNKNOWN_INTEGRATION: 10005,
-  UNKNOWN_INVITE: 10006,
-  UNKNOWN_MEMBER: 10007,
-  UNKNOWN_MESSAGE: 10008,
-  UNKNOWN_OVERWRITE: 10009,
-  UNKNOWN_PROVIDER: 10010,
-  UNKNOWN_ROLE: 10011,
-  UNKNOWN_TOKEN: 10012,
-  UNKNOWN_USER: 10013,
-  UNKNOWN_EMOJI: 10014,
-  UNKNOWN_WEBHOOK: 10015,
-  UNKNOWN_WEBHOOK_SERVICE: 10016,
-  UNKNOWN_SESSION: 10020,
-  UNKNOWN_BAN: 10026,
-  UNKNOWN_SKU: 10027,
-  UNKNOWN_STORE_LISTING: 10028,
-  UNKNOWN_ENTITLEMENT: 10029,
-  UNKNOWN_BUILD: 10030,
-  UNKNOWN_LOBBY: 10031,
-  UNKNOWN_BRANCH: 10032,
-  UNKNOWN_STORE_DIRECTORY_LAYOUT: 10033,
-  UNKNOWN_REDISTRIBUTABLE: 10036,
-  UNKNOWN_GIFT_CODE: 10038,
-  UNKNOWN_STREAM: 10049,
-  UNKNOWN_PREMIUM_SERVER_SUBSCRIBE_COOLDOWN: 10050,
-  UNKNOWN_GUILD_TEMPLATE: 10057,
-  UNKNOWN_DISCOVERABLE_SERVER_CATEGORY: 10059,
-  UNKNOWN_STICKER: 10060,
-  UNKNOWN_INTERACTION: 10062,
-  UNKNOWN_APPLICATION_COMMAND: 10063,
-  UNKNOWN_APPLICATION_COMMAND_PERMISSIONS: 10066,
-  UNKNOWN_STAGE_INSTANCE: 10067,
-  UNKNOWN_GUILD_MEMBER_VERIFICATION_FORM: 10068,
-  UNKNOWN_GUILD_WELCOME_SCREEN: 10069,
-  UNKNOWN_GUILD_SCHEDULED_EVENT: 10070,
-  UNKNOWN_GUILD_SCHEDULED_EVENT_USER: 10071,
-  BOT_PROHIBITED_ENDPOINT: 20001,
-  BOT_ONLY_ENDPOINT: 20002,
-  CANNOT_SEND_EXPLICIT_CONTENT: 20009,
-  NOT_AUTHORIZED: 20012,
-  SLOWMODE_RATE_LIMIT: 20016,
-  ACCOUNT_OWNER_ONLY: 20018,
-  ANNOUNCEMENT_EDIT_LIMIT_EXCEEDED: 20022,
-  CHANNEL_HIT_WRITE_RATELIMIT: 20028,
-  SERVER_HIT_WRITE_RATELIMIT: 20029,
-  CONTENT_NOT_ALLOWED: 20031,
-  GUILD_PREMIUM_LEVEL_TOO_LOW: 20035,
-  MAXIMUM_GUILDS: 30001,
-  MAXIMUM_FRIENDS: 30002,
-  MAXIMUM_PINS: 30003,
-  MAXIMUM_RECIPIENTS: 30004,
-  MAXIMUM_ROLES: 30005,
-  MAXIMUM_WEBHOOKS: 30007,
-  MAXIMUM_EMOJIS: 30008,
-  MAXIMUM_REACTIONS: 30010,
-  MAXIMUM_CHANNELS: 30013,
-  MAXIMUM_ATTACHMENTS: 30015,
-  MAXIMUM_INVITES: 30016,
-  MAXIMUM_ANIMATED_EMOJIS: 30018,
-  MAXIMUM_SERVER_MEMBERS: 30019,
-  MAXIMUM_NUMBER_OF_SERVER_CATEGORIES: 30030,
-  GUILD_ALREADY_HAS_TEMPLATE: 30031,
-  MAXIMUM_THREAD_PARTICIPANTS: 30033,
-  MAXIMUM_NON_GUILD_MEMBERS_BANS: 30035,
-  MAXIMUM_BAN_FETCHES: 30037,
-  MAXIMUM_NUMBER_OF_UNCOMPLETED_GUILD_SCHEDULED_EVENTS_REACHED: 30038,
-  MAXIMUM_NUMBER_OF_STICKERS_REACHED: 30039,
-  MAXIMUM_PRUNE_REQUESTS: 30040,
-  MAXIMUM_GUILD_WIDGET_SETTINGS_UPDATE: 30042,
-  MAXIMUM_NUMBER_OF_PREMIUM_EMOJIS: 30056,
-  UNAUTHORIZED: 40001,
-  ACCOUNT_VERIFICATION_REQUIRED: 40002,
-  DIRECT_MESSAGES_TOO_FAST: 40003,
-  REQUEST_ENTITY_TOO_LARGE: 40005,
-  FEATURE_TEMPORARILY_DISABLED: 40006,
-  USER_BANNED: 40007,
-  TARGET_USER_NOT_CONNECTED_TO_VOICE: 40032,
-  ALREADY_CROSSPOSTED: 40033,
-  MISSING_ACCESS: 50001,
-  INVALID_ACCOUNT_TYPE: 50002,
-  CANNOT_EXECUTE_ON_DM: 50003,
-  EMBED_DISABLED: 50004,
-  CANNOT_EDIT_MESSAGE_BY_OTHER: 50005,
-  CANNOT_SEND_EMPTY_MESSAGE: 50006,
-  CANNOT_MESSAGE_USER: 50007,
-  CANNOT_SEND_MESSAGES_IN_VOICE_CHANNEL: 50008,
-  CHANNEL_VERIFICATION_LEVEL_TOO_HIGH: 50009,
-  OAUTH2_APPLICATION_BOT_ABSENT: 50010,
-  MAXIMUM_OAUTH2_APPLICATIONS: 50011,
-  INVALID_OAUTH_STATE: 50012,
-  MISSING_PERMISSIONS: 50013,
-  INVALID_AUTHENTICATION_TOKEN: 50014,
-  NOTE_TOO_LONG: 50015,
-  INVALID_BULK_DELETE_QUANTITY: 50016,
-  CANNOT_PIN_MESSAGE_IN_OTHER_CHANNEL: 50019,
-  INVALID_OR_TAKEN_INVITE_CODE: 50020,
-  CANNOT_EXECUTE_ON_SYSTEM_MESSAGE: 50021,
-  CANNOT_EXECUTE_ON_CHANNEL_TYPE: 50024,
-  INVALID_OAUTH_TOKEN: 50025,
-  MISSING_OAUTH_SCOPE: 50026,
-  INVALID_WEBHOOK_TOKEN: 50027,
-  INVALID_ROLE: 50028,
-  INVALID_RECIPIENTS: 50033,
-  BULK_DELETE_MESSAGE_TOO_OLD: 50034,
-  INVALID_FORM_BODY: 50035,
-  INVITE_ACCEPTED_TO_GUILD_NOT_CONTAINING_BOT: 50036,
-  INVALID_API_VERSION: 50041,
-  FILE_UPLOADED_EXCEEDS_MAXIMUM_SIZE: 50045,
-  INVALID_FILE_UPLOADED: 50046,
-  CANNOT_SELF_REDEEM_GIFT: 50054,
-  INVALID_GUILD: 50055,
-  INVALID_MESSAGE_TYPE: 50068,
-  PAYMENT_SOURCE_REQUIRED: 50070,
-  CANNOT_DELETE_COMMUNITY_REQUIRED_CHANNEL: 50074,
-  INVALID_STICKER_SENT: 50081,
-  INVALID_OPERATION_ON_ARCHIVED_THREAD: 50083,
-  INVALID_THREAD_NOTIFICATION_SETTINGS: 50084,
-  PARAMETER_EARLIER_THAN_CREATION: 50085,
-  GUILD_NOT_AVAILABLE_IN_LOCATION: 50095,
-  GUILD_MONETIZATION_REQUIRED: 50097,
-  INSUFFICIENT_BOOSTS: 50101,
-  INVALID_JSON: 50109,
-  CANNOT_MIX_SUBSCRIPTION_AND_NON_SUBSCRIPTION_ROLES_FOR_EMOJI: 50144,
-  CANNOT_CONVERT_PREMIUM_EMOJI_TO_NORMAL_EMOJI: 50145,
-  VOICE_MESSAGES_DO_NOT_SUPPORT_ADDITIONAL_CONTENT: 50159,
-  VOICE_MESSAGES_MUST_HAVE_A_SINGLE_AUDIO_ATTACHMENT: 50160,
-  VOICE_MESSAGES_MUST_HAVE_SUPPORTING_METADATA: 50161,
-  VOICE_MESSAGES_CANNOT_BE_EDITED: 50162,
-  YOU_CANNOT_SEND_VOICE_MESSAGES_IN_THIS_CHANNEL: 50173,
-  TWO_FACTOR_REQUIRED: 60003,
-  NO_USERS_WITH_DISCORDTAG_EXIST: 80004,
-  REACTION_BLOCKED: 90001,
-  RESOURCE_OVERLOADED: 130000,
-  STAGE_ALREADY_OPEN: 150006,
-  CANNOT_REPLY_WITHOUT_READ_MESSAGE_HISTORY_PERMISSION: 160002,
-  MESSAGE_ALREADY_HAS_THREAD: 160004,
-  THREAD_LOCKED: 160005,
-  MAXIMUM_ACTIVE_THREADS: 160006,
-  MAXIMUM_ACTIVE_ANNOUNCEMENT_THREADS: 160007,
-  INVALID_JSON_FOR_UPLOADED_LOTTIE_FILE: 170001,
-  UPLOADED_LOTTIES_CANNOT_CONTAIN_RASTERIZED_IMAGES: 170002,
-  STICKER_MAXIMUM_FRAMERATE_EXCEEDED: 170003,
-  STICKER_FRAME_COUNT_EXCEEDS_MAXIMUM_OF_1000_FRAMES: 170004,
-  LOTTIE_ANIMATION_MAXIMUM_DIMENSIONS_EXCEEDED: 170005,
-  STICKER_FRAME_RATE_IS_TOO_SMALL_OR_TOO_LARGE: 170006,
-  STICKER_ANIMATION_DURATION_EXCEEDS_MAXIMUM_OF_5_SECONDS: 170007,
-  CANNOT_UPDATE_A_FINISHED_EVENT: 180000,
-  FAILED_TO_CREATE_STAGE_NEEDED_FOR_STAGE_EVENT: 180002,
+  ACCOUNT_OWNER_ONLY: 20_018,
+  ACCOUNT_VERIFICATION_REQUIRED: 40_002,
+  ALREADY_CROSSPOSTED: 40_033,
+  ANNOUNCEMENT_EDIT_LIMIT_EXCEEDED: 20_022,
+  BOT_ONLY_ENDPOINT: 20_002,
+  BOT_PROHIBITED_ENDPOINT: 20_001,
+  BULK_DELETE_MESSAGE_TOO_OLD: 50_034,
+  CANNOT_CONVERT_PREMIUM_EMOJI_TO_NORMAL_EMOJI: 50_145,
+  CANNOT_DELETE_COMMUNITY_REQUIRED_CHANNEL: 50_074,
+  CANNOT_EDIT_MESSAGE_BY_OTHER: 50_005,
+  CANNOT_EXECUTE_ON_CHANNEL_TYPE: 50_024,
+  CANNOT_EXECUTE_ON_DM: 50_003,
+  CANNOT_EXECUTE_ON_SYSTEM_MESSAGE: 50_021,
+  CANNOT_MESSAGE_USER: 50_007,
+  CANNOT_MIX_SUBSCRIPTION_AND_NON_SUBSCRIPTION_ROLES_FOR_EMOJI: 50_144,
+  CANNOT_PIN_MESSAGE_IN_OTHER_CHANNEL: 50_019,
+  CANNOT_REPLY_WITHOUT_READ_MESSAGE_HISTORY_PERMISSION: 160_002,
+  CANNOT_SELF_REDEEM_GIFT: 50_054,
+  CANNOT_SEND_EMPTY_MESSAGE: 50_006,
+  CANNOT_SEND_EXPLICIT_CONTENT: 20_009,
+  CANNOT_SEND_MESSAGES_IN_VOICE_CHANNEL: 50_008,
+  CANNOT_UPDATE_A_FINISHED_EVENT: 180_000,
+  CHANNEL_HIT_WRITE_RATELIMIT: 20_028,
+  CHANNEL_VERIFICATION_LEVEL_TOO_HIGH: 50_009,
+  CONTENT_NOT_ALLOWED: 20_031,
+  DIRECT_MESSAGES_TOO_FAST: 40_003,
+  EMBED_DISABLED: 50_004,
+  FAILED_TO_CREATE_STAGE_NEEDED_FOR_STAGE_EVENT: 180_002,
+  FEATURE_TEMPORARILY_DISABLED: 40_006,
+  FILE_UPLOADED_EXCEEDS_MAXIMUM_SIZE: 50_045,
+  GUILD_ALREADY_HAS_TEMPLATE: 30_031,
+  GUILD_MONETIZATION_REQUIRED: 50_097,
+  GUILD_NOT_AVAILABLE_IN_LOCATION: 50_095,
+  GUILD_PREMIUM_LEVEL_TOO_LOW: 20_035,
+  INSUFFICIENT_BOOSTS: 50_101,
+  INVALID_ACCOUNT_TYPE: 50_002,
+  INVALID_API_VERSION: 50_041,
+  INVALID_AUTHENTICATION_TOKEN: 50_014,
+  INVALID_BULK_DELETE_QUANTITY: 50_016,
+  INVALID_FILE_UPLOADED: 50_046,
+  INVALID_FORM_BODY: 50_035,
+  INVALID_GUILD: 50_055,
+  INVALID_JSON: 50_109,
+  INVALID_JSON_FOR_UPLOADED_LOTTIE_FILE: 170_001,
+  INVALID_MESSAGE_TYPE: 50_068,
+  INVALID_OAUTH_STATE: 50_012,
+  INVALID_OAUTH_TOKEN: 50_025,
+  INVALID_OPERATION_ON_ARCHIVED_THREAD: 50_083,
+  INVALID_OR_TAKEN_INVITE_CODE: 50_020,
+  INVALID_RECIPIENTS: 50_033,
+  INVALID_ROLE: 50_028,
+  INVALID_STICKER_SENT: 50_081,
+  INVALID_THREAD_NOTIFICATION_SETTINGS: 50_084,
+  INVALID_WEBHOOK_TOKEN: 50_027,
+  INVITE_ACCEPTED_TO_GUILD_NOT_CONTAINING_BOT: 50_036,
+  LOTTIE_ANIMATION_MAXIMUM_DIMENSIONS_EXCEEDED: 170_005,
+  MAXIMUM_ACTIVE_ANNOUNCEMENT_THREADS: 160_007,
+  MAXIMUM_ACTIVE_THREADS: 160_006,
+  MAXIMUM_ANIMATED_EMOJIS: 30_018,
+  MAXIMUM_ATTACHMENTS: 30_015,
+  MAXIMUM_BAN_FETCHES: 30_037,
+  MAXIMUM_CHANNELS: 30_013,
+  MAXIMUM_EMOJIS: 30_008,
+  MAXIMUM_FRIENDS: 30_002,
+  MAXIMUM_GUILDS: 30_001,
+  MAXIMUM_GUILD_WIDGET_SETTINGS_UPDATE: 30_042,
+  MAXIMUM_INVITES: 30_016,
+  MAXIMUM_NON_GUILD_MEMBERS_BANS: 30_035,
+  MAXIMUM_NUMBER_OF_PREMIUM_EMOJIS: 30_056,
+  MAXIMUM_NUMBER_OF_SERVER_CATEGORIES: 30_030,
+  MAXIMUM_NUMBER_OF_STICKERS_REACHED: 30_039,
+  MAXIMUM_NUMBER_OF_UNCOMPLETED_GUILD_SCHEDULED_EVENTS_REACHED: 30_038,
+  MAXIMUM_OAUTH2_APPLICATIONS: 50_011,
+  MAXIMUM_PINS: 30_003,
+  MAXIMUM_PRUNE_REQUESTS: 30_040,
+  MAXIMUM_REACTIONS: 30_010,
+  MAXIMUM_RECIPIENTS: 30_004,
+  MAXIMUM_ROLES: 30_005,
+  MAXIMUM_SERVER_MEMBERS: 30_019,
+  MAXIMUM_THREAD_PARTICIPANTS: 30_033,
+  MAXIMUM_WEBHOOKS: 30_007,
+  MESSAGE_ALREADY_HAS_THREAD: 160_004,
+  MISSING_ACCESS: 50_001,
+  MISSING_OAUTH_SCOPE: 50_026,
+  MISSING_PERMISSIONS: 50_013,
+  NOTE_TOO_LONG: 50_015,
+  NOT_AUTHORIZED: 20_012,
+  NO_USERS_WITH_DISCORDTAG_EXIST: 80_004,
+  OAUTH2_APPLICATION_BOT_ABSENT: 50_010,
+  PARAMETER_EARLIER_THAN_CREATION: 50_085,
+  PAYMENT_SOURCE_REQUIRED: 50_070,
+  REACTION_BLOCKED: 90_001,
+  REQUEST_ENTITY_TOO_LARGE: 40_005,
+  RESOURCE_OVERLOADED: 130_000,
+  SERVER_HIT_WRITE_RATELIMIT: 20_029,
+  SLOWMODE_RATE_LIMIT: 20_016,
+  STAGE_ALREADY_OPEN: 150_006,
+  STICKER_ANIMATION_DURATION_EXCEEDS_MAXIMUM_OF_5_SECONDS: 170_007,
+  STICKER_FRAME_COUNT_EXCEEDS_MAXIMUM_OF_1000_FRAMES: 170_004,
+  STICKER_FRAME_RATE_IS_TOO_SMALL_OR_TOO_LARGE: 170_006,
+  STICKER_MAXIMUM_FRAMERATE_EXCEEDED: 170_003,
+  TARGET_USER_NOT_CONNECTED_TO_VOICE: 40_032,
+  THREAD_LOCKED: 160_005,
+  TWO_FACTOR_REQUIRED: 60_003,
+  UNAUTHORIZED: 40_001,
+  UNKNOWN_ACCOUNT: 10_001,
+  UNKNOWN_APPLICATION: 10_002,
+  UNKNOWN_APPLICATION_COMMAND: 10_063,
+  UNKNOWN_APPLICATION_COMMAND_PERMISSIONS: 10_066,
+  UNKNOWN_BAN: 10_026,
+  UNKNOWN_BRANCH: 10_032,
+  UNKNOWN_BUILD: 10_030,
+  UNKNOWN_CHANNEL: 10_003,
+  UNKNOWN_DISCOVERABLE_SERVER_CATEGORY: 10_059,
+  UNKNOWN_EMOJI: 10_014,
+  UNKNOWN_ENTITLEMENT: 10_029,
+  UNKNOWN_GIFT_CODE: 10_038,
+  UNKNOWN_GUILD: 10_004,
+  UNKNOWN_GUILD_MEMBER_VERIFICATION_FORM: 10_068,
+  UNKNOWN_GUILD_SCHEDULED_EVENT: 10_070,
+  UNKNOWN_GUILD_SCHEDULED_EVENT_USER: 10_071,
+  UNKNOWN_GUILD_TEMPLATE: 10_057,
+  UNKNOWN_GUILD_WELCOME_SCREEN: 10_069,
+  UNKNOWN_INTEGRATION: 10_005,
+  UNKNOWN_INTERACTION: 10_062,
+  UNKNOWN_INVITE: 10_006,
+  UNKNOWN_LOBBY: 10_031,
+  UNKNOWN_MEMBER: 10_007,
+  UNKNOWN_MESSAGE: 10_008,
+  UNKNOWN_OVERWRITE: 10_009,
+  UNKNOWN_PREMIUM_SERVER_SUBSCRIBE_COOLDOWN: 10_050,
+  UNKNOWN_PROVIDER: 10_010,
+  UNKNOWN_REDISTRIBUTABLE: 10_036,
+  UNKNOWN_ROLE: 10_011,
+  UNKNOWN_SESSION: 10_020,
+  UNKNOWN_SKU: 10_027,
+  UNKNOWN_STAGE_INSTANCE: 10_067,
+  UNKNOWN_STICKER: 10_060,
+  UNKNOWN_STORE_DIRECTORY_LAYOUT: 10_033,
+  UNKNOWN_STORE_LISTING: 10_028,
+  UNKNOWN_STREAM: 10_049,
+  UNKNOWN_TOKEN: 10_012,
+  UNKNOWN_USER: 10_013,
+  UNKNOWN_WEBHOOK: 10_015,
+  UNKNOWN_WEBHOOK_SERVICE: 10_016,
+  UPLOADED_LOTTIES_CANNOT_CONTAIN_RASTERIZED_IMAGES: 170_002,
+  USER_BANNED: 40_007,
+  VOICE_MESSAGES_CANNOT_BE_EDITED: 50_162,
+  VOICE_MESSAGES_DO_NOT_SUPPORT_ADDITIONAL_CONTENT: 50_159,
+  VOICE_MESSAGES_MUST_HAVE_A_SINGLE_AUDIO_ATTACHMENT: 50_160,
+  VOICE_MESSAGES_MUST_HAVE_SUPPORTING_METADATA: 50_161,
+  YOU_CANNOT_SEND_VOICE_MESSAGES_IN_THIS_CHANNEL: 50_173,
 };
 
-Constants.DefaultMessageNotificationLevels = createEnum(['ALL_MESSAGES', 'ONLY_MENTIONS']);
+Constants.DefaultMessageNotificationLevels = createEnum([
+  'ALL_MESSAGES',
+  'ONLY_MENTIONS',
+]);
 
 Constants.MembershipStates = createEnum([null, 'INVITED', 'ACCEPTED']);
 
-Constants.WebhookTypes = createEnum([null, 'Incoming', 'Channel Follower', 'Application']);
+Constants.WebhookTypes = createEnum([
+  null,
+  'Incoming',
+  'Channel Follower',
+  'Application',
+]);
 
 Constants.StickerTypes = createEnum([null, 'STANDARD', 'GUILD']);
 
-Constants.StickerFormatTypes = createEnum([null, 'PNG', 'APNG', 'LOTTIE', 'GIF']);
+Constants.StickerFormatTypes = createEnum([
+  null,
+  'PNG',
+  'APNG',
+  'LOTTIE',
+  'GIF',
+]);
 
 Constants.OverwriteTypes = createEnum(['role', 'member']);
 
-/* eslint-disable max-len */
-Constants.ApplicationCommandTypes = createEnum([null, 'CHAT_INPUT', 'USER', 'MESSAGE']);
+Constants.ApplicationCommandTypes = createEnum([
+  null,
+  'CHAT_INPUT',
+  'USER',
+  'MESSAGE',
+]);
 
 Constants.ApplicationCommandOptionTypes = createEnum([
   null,
@@ -803,7 +1035,11 @@ Constants.ApplicationCommandOptionTypes = createEnum([
   'ATTACHMENT',
 ]);
 
-Constants.ApplicationCommandPermissionTypes = createEnum([null, 'ROLE', 'USER']);
+Constants.ApplicationCommandPermissionTypes = createEnum([
+  null,
+  'ROLE',
+  'USER',
+]);
 
 Constants.ApplicationRoleConnectionMetadataTypes = createEnum<
   | 'INTEGER_LESS_THAN_OR_EQUAL'
@@ -836,8 +1072,18 @@ Constants.AutoModerationRuleTriggerTypes = createEnum([
   'MENTION_SPAM',
 ]);
 
-Constants.AutoModerationRuleKeywordPresetTypes = createEnum([null, 'PROFANITY', 'SEXUAL_CONTENT', 'SLURS']);
-Constants.AutoModerationActionTypes = createEnum([null, 'BLOCK_MESSAGE', 'SEND_ALERT_MESSAGE', 'TIMEOUT']);
+Constants.AutoModerationRuleKeywordPresetTypes = createEnum([
+  null,
+  'PROFANITY',
+  'SEXUAL_CONTENT',
+  'SLURS',
+]);
+Constants.AutoModerationActionTypes = createEnum([
+  null,
+  'BLOCK_MESSAGE',
+  'SEND_ALERT_MESSAGE',
+  'TIMEOUT',
+]);
 
 Constants.AutoModerationRuleEventTypes = createEnum([null, 'MESSAGE_SEND']);
 Constants.InteractionTypes = createEnum([
@@ -893,46 +1139,69 @@ Constants.SelectMenuComponentTypes = createEnum([
   'CHANNEL_SELECT',
 ]);
 
-Constants.MessageButtonStyles = createEnum([null, 'PRIMARY', 'SECONDARY', 'SUCCESS', 'DANGER', 'LINK']);
+Constants.MessageButtonStyles = createEnum([
+  null,
+  'PRIMARY',
+  'SECONDARY',
+  'SUCCESS',
+  'DANGER',
+  'LINK',
+]);
 
 Constants.MFALevels = createEnum(['NONE', 'ELEVATED']);
 
-Constants.NSFWLevels = createEnum(['DEFAULT', 'EXPLICIT', 'SAFE', 'AGE_RESTRICTED']);
+Constants.NSFWLevels = createEnum([
+  'DEFAULT',
+  'EXPLICIT',
+  'SAFE',
+  'AGE_RESTRICTED',
+]);
 
 Constants.PrivacyLevels = createEnum([null, 'PUBLIC', 'GUILD_ONLY']);
 
 Constants.TextInputStyles = createEnum([null, 'SHORT', 'PARAGRAPH']);
 
-Constants.GuildScheduledEventPrivacyLevels = createEnum([null, null, 'GUILD_ONLY']);
+Constants.GuildScheduledEventPrivacyLevels = createEnum([
+  null,
+  null,
+  'GUILD_ONLY',
+]);
 
 Constants.PremiumTiers = createEnum(['NONE', 'TIER_1', 'TIER_2', 'TIER_3']);
 
-Constants.GuildScheduledEventStatuses = createEnum([null, 'SCHEDULED', 'ACTIVE', 'COMPLETED', 'CANCELED']);
+Constants.GuildScheduledEventStatuses = createEnum([
+  null,
+  'SCHEDULED',
+  'ACTIVE',
+  'COMPLETED',
+  'CANCELED',
+]);
 
-Constants.GuildScheduledEventEntityTypes = createEnum([null, 'STAGE_INSTANCE', 'VOICE', 'EXTERNAL']);
-/* eslint-enable max-len */
+Constants.GuildScheduledEventEntityTypes = createEnum([
+  null,
+  'STAGE_INSTANCE',
+  'VOICE',
+  'EXTERNAL',
+]);
 
 Constants.VideoQualityModes = createEnum([null, 'AUTO', 'FULL']);
 
 Constants.ReactionTypes = createEnum(['NORMAL', 'BURST']);
 
-Constants.SortOrderTypes = createEnum<'LATEST_ACTIVITY' | 'CREATION_DATE', SortOrderTypes>([
-  null,
-  'LATEST_ACTIVITY',
-  'CREATION_DATE',
-]);
+Constants.SortOrderTypes = createEnum<
+  'LATEST_ACTIVITY' | 'CREATION_DATE',
+  SortOrderTypes
+>([null, 'LATEST_ACTIVITY', 'CREATION_DATE']);
 
-Constants.ForumLayoutTypes = createEnum<'NOT_SET' | 'LIST_VIEW' | 'GALLERY_VIEW', ForumLayoutTypes>([
-  'NOT_SET',
-  'LIST_VIEW',
-  'GALLERY_VIEW',
-]);
+Constants.ForumLayoutTypes = createEnum<
+  'NOT_SET' | 'LIST_VIEW' | 'GALLERY_VIEW',
+  ForumLayoutTypes
+>(['NOT_SET', 'LIST_VIEW', 'GALLERY_VIEW']);
 
-Constants.PollLayoutTypes = createEnum<'DEFAULT' | 'IMAGE_ONLY_ANSWERS', PollLayoutTypes>([
-  null,
-  'DEFAULT',
-  'IMAGE_ONLY_ANSWERS',
-]);
+Constants.PollLayoutTypes = createEnum<
+  'DEFAULT' | 'IMAGE_ONLY_ANSWERS',
+  PollLayoutTypes
+>([null, 'DEFAULT', 'IMAGE_ONLY_ANSWERS']);
 
 Constants.RelationshipTypes = createEnum([
   'NONE',
@@ -947,48 +1216,47 @@ Constants.SeparatorSpacingSizes = createEnum([null, 'SMALL', 'LARGE']);
 
 Constants._cleanupSymbol = Symbol('djsCleanup');
 
-function keyMirror<T extends string>(arr: readonly T[]): KeyMirrorOf<T> {
-  const tmp: KeyMirrorOf<T> = Object.create(null);
-  for (const value of arr) tmp[value] = value;
-  return tmp;
+function isEnumKey<Key extends string>(
+  enumObject: EnumOf<Key>,
+  value: string
+): value is Key {
+  return !/^\d+$/u.test(value) && Object.hasOwn(enumObject, value);
 }
 
-function createEnum<T extends string, V extends number = number>(keys: readonly (T | null)[]): EnumOf<T, V> {
-  const obj: EnumOf<T, V> = Object.create(Object.prototype);
-  for (const [index, key] of keys.entries()) {
-    if (key === null) continue;
-    Object.assign(obj, { [key]: index });
-    obj[index] = key;
-  }
-  return obj;
-}
-
-function isEnumKey<T extends string>(enumObject: EnumOf<T>, value: string): value is T {
-  return !/^\d+$/.test(value) && Object.prototype.hasOwnProperty.call(enumObject, value);
-}
-
-function resolveEnumValue<T extends string>(
-  enumObject: EnumOf<T>,
-  value: string | number | null | undefined,
+function resolveEnumValue<Key extends string>(
+  enumObject: EnumOf<Key>,
+  value: string | number | null | undefined
 ): number | undefined {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string' && isEnumKey(enumObject, value)) return enumObject[value];
+  if (typeof value === 'number') {
+    return value;
+  }
+  if (typeof value === 'string' && isEnumKey(enumObject, value)) {
+    return enumObject[value];
+  }
   return undefined;
 }
 
-function resolveEnumMember<T extends string, V extends number>(
-  enumObject: EnumOf<T, V>,
-  value: string | number | null | undefined,
-): V | undefined {
+function resolveEnumMember<Key extends string, Value extends number>(
+  enumObject: EnumOf<Key, Value>,
+  value: string | number | null | undefined
+): Value | undefined {
   if (typeof value === 'number') {
     const name = enumObject[value];
     return name === undefined ? undefined : enumObject[name];
   }
-  if (typeof value === 'string' && isEnumKey(enumObject, value)) return enumObject[value];
+  if (typeof value === 'string' && isEnumKey(enumObject, value)) {
+    return enumObject[value];
+  }
   return undefined;
 }
 
-type PartialTypeName = 'USER' | 'CHANNEL' | 'GUILD_MEMBER' | 'MESSAGE' | 'REACTION' | 'GUILD_SCHEDULED_EVENT';
+type PartialTypeName =
+  | 'USER'
+  | 'CHANNEL'
+  | 'GUILD_MEMBER'
+  | 'MESSAGE'
+  | 'REACTION'
+  | 'GUILD_SCHEDULED_EVENT';
 
 type WSEventName =
   | 'READY'
@@ -1068,7 +1336,14 @@ type ChannelTypeName =
   | 'GUILD_FORUM'
   | 'GUILD_MEDIA';
 
-type ActivityTypeName = 'PLAYING' | 'STREAMING' | 'LISTENING' | 'WATCHING' | 'CUSTOM' | 'COMPETING' | 'HANG';
+type ActivityTypeName =
+  | 'PLAYING'
+  | 'STREAMING'
+  | 'LISTENING'
+  | 'WATCHING'
+  | 'CUSTOM'
+  | 'COMPETING'
+  | 'HANG';
 
 type ApplicationCommandOptionTypeName =
   | 'SUB_COMMAND'
@@ -1128,7 +1403,9 @@ interface ConstantsShape {
   ClientApplicationAssetTypes: { SMALL: number; BIG: number };
   Colors: Record<string, number>;
   HolographicStyles: { PRIMARY: number; SECONDARY: number; TERTIARY: number };
-  ExplicitContentFilterLevels: EnumOf<'DISABLED' | 'MEMBERS_WITHOUT_ROLES' | 'ALL_MEMBERS'>;
+  ExplicitContentFilterLevels: EnumOf<
+    'DISABLED' | 'MEMBERS_WITHOUT_ROLES' | 'ALL_MEMBERS'
+  >;
   VerificationLevels: EnumOf<'NONE' | 'LOW' | 'MEDIUM' | 'HIGH' | 'VERY_HIGH'>;
   APIErrors: Record<string, number>;
   DefaultMessageNotificationLevels: EnumOf<'ALL_MESSAGES' | 'ONLY_MENTIONS'>;
@@ -1151,12 +1428,22 @@ interface ConstantsShape {
     | 'BOOLEAN_NOT_EQUAL',
     ApplicationRoleConnectionMetadataTypes
   >;
-  AutoModerationRuleTriggerTypes: EnumOf<'KEYWORD' | 'SPAM' | 'KEYWORD_PRESET' | 'MENTION_SPAM'>;
-  AutoModerationRuleKeywordPresetTypes: EnumOf<'PROFANITY' | 'SEXUAL_CONTENT' | 'SLURS'>;
-  AutoModerationActionTypes: EnumOf<'BLOCK_MESSAGE' | 'SEND_ALERT_MESSAGE' | 'TIMEOUT'>;
+  AutoModerationRuleTriggerTypes: EnumOf<
+    'KEYWORD' | 'SPAM' | 'KEYWORD_PRESET' | 'MENTION_SPAM'
+  >;
+  AutoModerationRuleKeywordPresetTypes: EnumOf<
+    'PROFANITY' | 'SEXUAL_CONTENT' | 'SLURS'
+  >;
+  AutoModerationActionTypes: EnumOf<
+    'BLOCK_MESSAGE' | 'SEND_ALERT_MESSAGE' | 'TIMEOUT'
+  >;
   AutoModerationRuleEventTypes: EnumOf<'MESSAGE_SEND'>;
   InteractionTypes: EnumOf<
-    'PING' | 'APPLICATION_COMMAND' | 'MESSAGE_COMPONENT' | 'APPLICATION_COMMAND_AUTOCOMPLETE' | 'MODAL_SUBMIT'
+    | 'PING'
+    | 'APPLICATION_COMMAND'
+    | 'MESSAGE_COMPONENT'
+    | 'APPLICATION_COMMAND_AUTOCOMPLETE'
+    | 'MODAL_SUBMIT'
   >;
   InteractionResponseTypes: EnumOf<
     | 'PONG'
@@ -1169,23 +1456,43 @@ interface ConstantsShape {
   >;
   MessageComponentTypes: EnumOf<MessageComponentTypeName>;
   SelectMenuComponentTypes: EnumOf<
-    'STRING_MENU' | 'USER_SELECT' | 'ROLE_SELECT' | 'MENTIONABLE_SELECT' | 'CHANNEL_SELECT'
+    | 'STRING_MENU'
+    | 'USER_SELECT'
+    | 'ROLE_SELECT'
+    | 'MENTIONABLE_SELECT'
+    | 'CHANNEL_SELECT'
   >;
-  MessageButtonStyles: EnumOf<'PRIMARY' | 'SECONDARY' | 'SUCCESS' | 'DANGER' | 'LINK'>;
+  MessageButtonStyles: EnumOf<
+    'PRIMARY' | 'SECONDARY' | 'SUCCESS' | 'DANGER' | 'LINK'
+  >;
   MFALevels: EnumOf<'NONE' | 'ELEVATED'>;
   NSFWLevels: EnumOf<'DEFAULT' | 'EXPLICIT' | 'SAFE' | 'AGE_RESTRICTED'>;
   PrivacyLevels: EnumOf<'PUBLIC' | 'GUILD_ONLY'>;
   TextInputStyles: EnumOf<'SHORT' | 'PARAGRAPH'>;
   GuildScheduledEventPrivacyLevels: EnumOf<'GUILD_ONLY'>;
   PremiumTiers: EnumOf<'NONE' | 'TIER_1' | 'TIER_2' | 'TIER_3'>;
-  GuildScheduledEventStatuses: EnumOf<'SCHEDULED' | 'ACTIVE' | 'COMPLETED' | 'CANCELED'>;
-  GuildScheduledEventEntityTypes: EnumOf<'STAGE_INSTANCE' | 'VOICE' | 'EXTERNAL'>;
+  GuildScheduledEventStatuses: EnumOf<
+    'SCHEDULED' | 'ACTIVE' | 'COMPLETED' | 'CANCELED'
+  >;
+  GuildScheduledEventEntityTypes: EnumOf<
+    'STAGE_INSTANCE' | 'VOICE' | 'EXTERNAL'
+  >;
   VideoQualityModes: EnumOf<'AUTO' | 'FULL'>;
   ReactionTypes: EnumOf<'NORMAL' | 'BURST'>;
   SortOrderTypes: EnumOf<'LATEST_ACTIVITY' | 'CREATION_DATE', SortOrderTypes>;
-  ForumLayoutTypes: EnumOf<'NOT_SET' | 'LIST_VIEW' | 'GALLERY_VIEW', ForumLayoutTypes>;
+  ForumLayoutTypes: EnumOf<
+    'NOT_SET' | 'LIST_VIEW' | 'GALLERY_VIEW',
+    ForumLayoutTypes
+  >;
   PollLayoutTypes: EnumOf<'DEFAULT' | 'IMAGE_ONLY_ANSWERS', PollLayoutTypes>;
-  RelationshipTypes: EnumOf<'NONE' | 'FRIEND' | 'BLOCKED' | 'PENDING_INCOMING' | 'PENDING_OUTGOING' | 'IMPLICIT'>;
+  RelationshipTypes: EnumOf<
+    | 'NONE'
+    | 'FRIEND'
+    | 'BLOCKED'
+    | 'PENDING_INCOMING'
+    | 'PENDING_OUTGOING'
+    | 'IMPLICIT'
+  >;
   SeparatorSpacingSizes: EnumOf<'SMALL' | 'LARGE'>;
   _cleanupSymbol: symbol;
 }

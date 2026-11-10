@@ -1,5 +1,6 @@
 import Base from './Base';
 import _EmojiModule from './Emoji';
+
 const { Emoji } = _EmojiModule;
 import type { Guild } from './Guild';
 import type InviteGuild from './InviteGuild';
@@ -19,8 +20,8 @@ class WelcomeChannel extends Base {
     this.description = data.description ?? '';
 
     this._emoji = {
-      name: data.emoji_name,
       id: data.emoji_id,
+      name: data.emoji_name,
     };
 
     this.channelId = data.channel_id;
@@ -32,7 +33,8 @@ class WelcomeChannel extends Base {
 
   get emoji() {
     return (
-      (this._emoji.id ? this.client.emojis.cache.get(this._emoji.id) : null) ?? new Emoji(this.client, this._emoji)
+      (this._emoji.id ? this.client.emojis.cache.get(this._emoji.id) : null) ??
+      new Emoji(this.client, this._emoji)
     );
   }
 }

@@ -20,7 +20,7 @@ class Typing extends Base {
 
   _patch(data: RawTypingData) {
     if ('timestamp' in data) {
-      this.startedTimestamp = data.timestamp * 1_000;
+      this.startedTimestamp = data.timestamp * 1000;
     }
   }
 

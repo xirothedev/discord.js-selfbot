@@ -57,8 +57,10 @@ import TypingStart from './TypingStart';
 import UserUpdate from './UserUpdate';
 import VoiceStateUpdate from './VoiceStateUpdate';
 import WebhooksUpdate from './WebhooksUpdate';
+import type Client from '../Client';
+
 class ActionsManager {
-  declare client: import('../Client').default;
+  declare client: Client;
   declare injectedUser: symbol;
   declare injectedChannel: symbol;
   declare injectedMessage: symbol;
@@ -122,7 +124,7 @@ class ActionsManager {
   declare VoiceStateUpdate: VoiceStateUpdate;
   declare WebhooksUpdate: WebhooksUpdate;
 
-  constructor(client: import('../Client').default) {
+  constructor(client: Client) {
     this.client = client;
 
     // These symbols represent fully built data that we inject at times when calling actions manually.
@@ -193,8 +195,12 @@ class ActionsManager {
     this.register(WebhooksUpdate);
   }
 
-  register(action: { name: string; new (client: import('../Client').default): unknown }) {
-    Reflect.set(this, action.name.replace(/Action$/, ''), new action(this.client));
+  register(action: { name: string; new (client: Client): unknown }) {
+    Reflect.set(
+      this,
+      action.name.replace(/Action$/u, ''),
+      new action(this.client)
+    );
   }
 }
 

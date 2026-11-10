@@ -2,6 +2,7 @@ import Action from './Action';
 import type { RawStickerData } from '../../../typings/rawDataTypes';
 import type { Sticker } from '../../structures/Sticker';
 import _ConstantsModule from '../../util/Constants';
+
 const { Events } = _ConstantsModule;
 
 class GuildStickerUpdateAction extends Action {

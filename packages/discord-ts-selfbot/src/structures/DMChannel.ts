@@ -1,9 +1,10 @@
 import { Collection } from '@discordjs/collection';
 import _ChannelModule from './Channel';
+
 const { Channel } = _ChannelModule;
 import TextBasedChannel from './interfaces/TextBasedChannel';
 import MessageManager from '../managers/MessageManager';
-import type { Snowflake } from 'discord-api-types/v10';
+import type { APIUser, Snowflake } from 'discord-api-types/v10';
 import type { User } from './User';
 import type { RawChannelData } from '../../typings/rawDataTypes';
 import type { PatchOf } from '../types/schema';
@@ -11,19 +12,21 @@ import type { Client } from '../client/Client';
 import type { Message } from './Message';
 
 type DMChannelPatch = PatchOf<'Channel'> & {
-  recipients?: import('discord-api-types/v10').APIUser[];
+  recipients?: APIUser[];
   last_message_id?: Snowflake | null;
   last_pin_timestamp?: string | null;
   is_message_request?: boolean;
   is_message_request_timestamp?: string | null;
 };
 
-type VoiceAdapter = {
-  destroy(): void;
-  onVoiceServerUpdate(payload: unknown): void;
-  onVoiceStateUpdate(payload: unknown): void;
-};
+interface VoiceAdapter {
+  destroy: () => void;
+  onVoiceServerUpdate: (payload: unknown) => void;
+  onVoiceStateUpdate: (payload: unknown) => void;
+}
 import _ConstantsModule from '../util/Constants';
+import type { SendOptions, SendResult } from '../types/channels';
+
 const { Opcodes, Status } = _ConstantsModule;
 
 class DMChannel extends Channel {
@@ -54,7 +57,9 @@ class DMChannel extends Channel {
     }
 
     if ('last_pin_timestamp' in data) {
-      this.lastPinTimestamp = data.last_pin_timestamp ? Date.parse(data.last_pin_timestamp) : null;
+      this.lastPinTimestamp = data.last_pin_timestamp
+        ? Date.parse(data.last_pin_timestamp)
+        : null;
     } else {
       this.lastPinTimestamp ??= null;
     }
@@ -72,27 +77,33 @@ class DMChannel extends Channel {
 
   async acceptMessageRequest() {
     if (!this.messageRequest) {
-      throw new Error('NOT_MESSAGE_REQUEST: This channel is not a message request');
+      throw new Error(
+        'NOT_MESSAGE_REQUEST: This channel is not a message request'
+      );
     }
-    const c = await this.client.api.channels[this.id].recipients['@me'].put({
+    const channelData = await this.client.api.channels[this.id].recipients[
+      '@me'
+    ].put({
       data: {
         consent_status: 2,
       },
     });
     this.messageRequest = false;
-    return this.client.channels._add(c, null);
+    return this.client.channels._add(channelData, null);
   }
 
   async cancelMessageRequest() {
     if (!this.messageRequest) {
-      throw new Error('NOT_MESSAGE_REQUEST: This channel is not a message request');
+      throw new Error(
+        'NOT_MESSAGE_REQUEST: This channel is not a message request'
+      );
     }
     await this.client.api.channels[this.id].recipients['@me'].delete();
     return this;
   }
 
   get partial() {
-    return typeof this.lastMessageId === 'undefined';
+    return this.lastMessageId === undefined;
   }
 
   fetch(force = true) {
@@ -105,10 +116,10 @@ class DMChannel extends Channel {
 
   sync() {
     this.client.ws.broadcast({
-      op: Opcodes.DM_UPDATE,
       d: {
         channel_id: this.id,
       },
+      op: Opcodes.DM_UPDATE,
     });
   }
 
@@ -138,35 +149,48 @@ class DMChannel extends Channel {
     return (methods: VoiceAdapter) => {
       this.client.voice.adapters.set(this.id, methods);
       return {
-        sendPayload: (data: unknown) => {
-          if (!this.shard || this.shard.status !== Status.READY) return false;
-          this.shard!.send(data);
-          return true;
-        },
         destroy: () => {
           this.client.voice.adapters.delete(this.id);
+        },
+        sendPayload: (data: unknown) => {
+          const { shard } = this;
+          if (!shard || shard.status !== Status.READY) {
+            return false;
+          }
+          shard.send(data);
+          return true;
         },
       };
     };
   }
 
   // These are here only for documentation purposes - they are implemented by TextBasedChannel
-  /* eslint-disable no-empty-function */
   get lastMessage(): Message | null {
     return null;
   }
   get lastPinAt(): Date | null {
     return null;
   }
-  declare send: (options: import('../types/channels').SendOptions) => import('../types/channels').SendResult;
-  sendTyping() {}
-  createMessageCollector() {}
-  awaitMessages() {}
+  declare send: (options: SendOptions) => SendResult;
+  sendTyping() {
+    // Implemented by the subclass mixin.
+  }
+  createMessageCollector() {
+    // Implemented by the subclass mixin.
+  }
+  awaitMessages() {
+    // Implemented by the subclass mixin.
+  }
   // Doesn't work on DM channels; setRateLimitPerUser() {}
   // Doesn't work on DM channels; setNSFW() {}
 }
 
-TextBasedChannel.applyToClass(DMChannel, true, ['fetchWebhooks', 'createWebhook', 'setRateLimitPerUser', 'setNSFW']);
+TextBasedChannel.applyToClass(DMChannel, true, [
+  'fetchWebhooks',
+  'createWebhook',
+  'setRateLimitPerUser',
+  'setNSFW',
+]);
 
 export default DMChannel;
 export { DMChannel };

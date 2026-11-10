@@ -3,17 +3,29 @@ import { Collection } from '@discordjs/collection';
 import type { Client } from '../client/Client';
 import _ConstantsModule from './Constants';
 import { isTextBasedChannel, isThreadChannel } from '../types/channels';
+
 const { Events, ThreadChannelTypes, SweeperKeys } = _ConstantsModule;
 import _DJSErrorModule from '../errors/DJSError';
+
 const { TypeError } = _DJSErrorModule;
-('use strict');
 
-type SweepFilterFn = (value: unknown, key: unknown, collection: unknown) => boolean;
+type SweepFilterFn = (
+  value: unknown,
+  key: unknown,
+  collection: unknown
+) => boolean;
 
-type SweepableManager = { cache: Collection<string, unknown> };
+interface SweepableManager {
+  cache: Collection<string, unknown>;
+}
 
 function isSweepableManager(value: unknown): value is SweepableManager {
-  return typeof value === 'object' && value !== null && 'cache' in value && value.cache instanceof Collection;
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'cache' in value &&
+    value.cache instanceof Collection
+  );
 }
 
 type SweepableGuildKey =
@@ -38,41 +50,69 @@ class Sweepers {
 
     this.options = options;
 
-    this.intervals = Object.fromEntries(SweeperKeys.map((key: string) => [key, null]));
+    this.intervals = Object.fromEntries(
+      SweeperKeys.map((key: string) => [key, null])
+    );
 
     for (const key of SweeperKeys) {
-      if (!(key in options)) continue;
+      if (!(key in options)) {
+        continue;
+      }
 
       this._validateProperties(key);
 
-      const clonedOptions = { ...(this.options[key] as Record<string, unknown>) };
+      const clonedOptions = {
+        ...(this.options[key] as Record<string, unknown>),
+      };
 
       // Handle cases that have a "lifetime"
       if (!('filter' in clonedOptions)) {
         switch (key) {
-          case 'invites':
-            clonedOptions.filter = Sweepers.expiredInviteSweepFilter(clonedOptions.lifetime as number);
+          case 'invites': {
+            clonedOptions.filter = Sweepers.expiredInviteSweepFilter(
+              clonedOptions.lifetime as number
+            );
             break;
-          case 'messages':
-            clonedOptions.filter = Sweepers.outdatedMessageSweepFilter(clonedOptions.lifetime as number);
+          }
+          case 'messages': {
+            clonedOptions.filter = Sweepers.outdatedMessageSweepFilter(
+              clonedOptions.lifetime as number
+            );
             break;
-          case 'threads':
-            clonedOptions.filter = Sweepers.archivedThreadSweepFilter(clonedOptions.lifetime as number);
+          }
+          case 'threads': {
+            clonedOptions.filter = Sweepers.archivedThreadSweepFilter(
+              clonedOptions.lifetime as number
+            );
+            break;
+          }
+          default: {
+            break;
+          }
         }
       }
 
-      this._initInterval(key, `sweep${key[0].toUpperCase()}${key.slice(1)}`, clonedOptions);
+      this._initInterval(
+        key,
+        `sweep${key[0].toUpperCase()}${key.slice(1)}`,
+        clonedOptions
+      );
     }
   }
 
   sweepApplicationCommands(filter: SweepFilterFn) {
-    const { guilds, items: guildCommands } = this._sweepGuildDirectProp('commands', filter, { emit: false });
+    const { guilds, items: guildCommands } = this._sweepGuildDirectProp(
+      'commands',
+      filter,
+      { emit: false }
+    );
 
-    const globalCommands = this.client.application?.commands.cache.sweep(filter) ?? 0;
+    const globalCommands =
+      this.client.application?.commands.cache.sweep(filter) ?? 0;
 
     this.client.emit(
       Events.CACHE_SWEEP,
-      `Swept ${globalCommands} global application commands and ${guildCommands} guild commands in ${guilds} guilds.`,
+      `Swept ${globalCommands} global application commands and ${guildCommands} guild commands in ${guilds} guilds.`
     );
     return guildCommands + globalCommands;
   }
@@ -94,7 +134,9 @@ class Sweepers {
   }
 
   sweepGuildMembers(filter: SweepFilterFn) {
-    return this._sweepGuildDirectProp('members', filter, { outputName: 'guild members' }).items;
+    return this._sweepGuildDirectProp('members', filter, {
+      outputName: 'guild members',
+    }).items;
   }
 
   sweepMessages(filter: SweepFilterFn) {
@@ -105,12 +147,17 @@ class Sweepers {
     let messages = 0;
 
     for (const channel of this.client.channels.cache.values()) {
-      if (!isTextBasedChannel(channel)) continue;
+      if (!isTextBasedChannel(channel)) {
+        continue;
+      }
 
       channels++;
       messages += channel.messages.cache.sweep(filter);
     }
-    this.client.emit(Events.CACHE_SWEEP, `Swept ${messages} messages in ${channels} text-based channels.`);
+    this.client.emit(
+      Events.CACHE_SWEEP,
+      `Swept ${messages} messages in ${channels} text-based channels.`
+    );
     return messages;
   }
 
@@ -127,7 +174,9 @@ class Sweepers {
     let reactions = 0;
 
     for (const channel of this.client.channels.cache.values()) {
-      if (!isTextBasedChannel(channel)) continue;
+      if (!isTextBasedChannel(channel)) {
+        continue;
+      }
       channels++;
 
       for (const message of channel.messages.cache.values()) {
@@ -137,13 +186,15 @@ class Sweepers {
     }
     this.client.emit(
       Events.CACHE_SWEEP,
-      `Swept ${reactions} reactions on ${messages} messages in ${channels} text-based channels.`,
+      `Swept ${reactions} reactions on ${messages} messages in ${channels} text-based channels.`
     );
     return reactions;
   }
 
   sweepStageInstances(filter: SweepFilterFn) {
-    return this._sweepGuildDirectProp('stageInstances', filter, { outputName: 'stage instances' }).items;
+    return this._sweepGuildDirectProp('stageInstances', filter, {
+      outputName: 'stage instances',
+    }).items;
   }
 
   sweepStickers(filter: SweepFilterFn) {
@@ -158,11 +209,16 @@ class Sweepers {
     let threads = 0;
     let members = 0;
     for (const channel of this.client.channels.cache.values()) {
-      if (!isThreadChannel(channel)) continue;
+      if (!isThreadChannel(channel)) {
+        continue;
+      }
       threads++;
       members += channel.members.cache.sweep(filter);
     }
-    this.client.emit(Events.CACHE_SWEEP, `Swept ${members} thread members in ${threads} threads.`);
+    this.client.emit(
+      Events.CACHE_SWEEP,
+      `Swept ${members} thread members in ${threads} threads.`
+    );
     return members;
   }
 
@@ -173,7 +229,9 @@ class Sweepers {
 
     let threads = 0;
     for (const [key, val] of this.client.channels.cache.entries()) {
-      if (!ThreadChannelTypes.includes(val.type)) continue;
+      if (!ThreadChannelTypes.includes(val.type)) {
+        continue;
+      }
       if (filter(val, key, this.client.channels.cache)) {
         threads++;
         this.client.channels._remove(key);
@@ -196,18 +254,23 @@ class Sweepers {
   }
 
   sweepVoiceStates(filter: SweepFilterFn) {
-    return this._sweepGuildDirectProp('voiceStates', filter, { outputName: 'voice states' }).items;
+    return this._sweepGuildDirectProp('voiceStates', filter, {
+      outputName: 'voice states',
+    }).items;
   }
 
   destroy() {
     for (const key of SweeperKeys) {
-      if (this.intervals[key]) clearInterval(this.intervals[key]);
+      if (this.intervals[key]) {
+        clearInterval(this.intervals[key]);
+      }
     }
   }
 
   static filterByLifetime({
-    lifetime = 14400,
-    getComparisonTimestamp = (e: unknown) => (e as { createdTimestamp?: number } | null)?.createdTimestamp,
+    lifetime = 14_400,
+    getComparisonTimestamp = (e: unknown) =>
+      (e as { createdTimestamp?: number } | null)?.createdTimestamp,
     excludeFromSweep = () => false,
   }: Record<string, unknown> = {}) {
     if (typeof lifetime !== 'number') {
@@ -220,48 +283,60 @@ class Sweepers {
       throw new TypeError('INVALID_TYPE', 'excludeFromSweep', 'function');
     }
     return () => {
-      if (lifetime <= 0) return null;
-      const lifetimeMs = lifetime * 1_000;
+      if (lifetime <= 0) {
+        return null;
+      }
+      const lifetimeMs = lifetime * 1000;
       const now = Date.now();
       return (entry: unknown, key: unknown, coll: unknown) => {
         if (excludeFromSweep(entry, key, coll)) {
           return false;
         }
         const comparisonTimestamp = getComparisonTimestamp(entry, key, coll);
-        if (!comparisonTimestamp || typeof comparisonTimestamp !== 'number') return false;
+        if (!comparisonTimestamp || typeof comparisonTimestamp !== 'number') {
+          return false;
+        }
         return now - comparisonTimestamp > lifetimeMs;
       };
     };
   }
 
-  static archivedThreadSweepFilter(lifetime: number = 14400) {
+  static archivedThreadSweepFilter(lifetime = 14_400) {
     return this.filterByLifetime({
+      excludeFromSweep: (e: unknown) =>
+        !(e as { archived?: boolean } | null)?.archived,
+      getComparisonTimestamp: (e: unknown) =>
+        (e as { archiveTimestamp?: number } | null)?.archiveTimestamp,
       lifetime,
-      getComparisonTimestamp: (e: unknown) => (e as { archiveTimestamp?: number } | null)?.archiveTimestamp,
-      excludeFromSweep: (e: unknown) => !(e as { archived?: boolean } | null)?.archived,
     });
   }
 
-  static expiredInviteSweepFilter(lifetime: number = 14400) {
+  static expiredInviteSweepFilter(lifetime = 14_400) {
     return this.filterByLifetime({
+      getComparisonTimestamp: (invite: unknown) =>
+        (invite as { expiresTimestamp?: number } | null)?.expiresTimestamp,
       lifetime,
-      getComparisonTimestamp: (i: unknown) => (i as { expiresTimestamp?: number } | null)?.expiresTimestamp,
     });
   }
 
-  static outdatedMessageSweepFilter(lifetime: number = 3600) {
+  static outdatedMessageSweepFilter(lifetime = 3600) {
     return this.filterByLifetime({
+      getComparisonTimestamp: (message: unknown) =>
+        (
+          message as {
+            editedTimestamp?: number;
+            createdTimestamp?: number;
+          } | null
+        )?.editedTimestamp ??
+        (message as { createdTimestamp?: number } | null)?.createdTimestamp,
       lifetime,
-      getComparisonTimestamp: (m: unknown) =>
-        (m as { editedTimestamp?: number; createdTimestamp?: number } | null)?.editedTimestamp ??
-        (m as { createdTimestamp?: number } | null)?.createdTimestamp,
     });
   }
 
   _sweepGuildDirectProp(
     key: SweepableGuildKey,
     filter: SweepFilterFn,
-    { emit = true, outputName }: { emit?: boolean; outputName?: string } = {},
+    { emit = true, outputName }: { emit?: boolean; outputName?: string } = {}
   ) {
     if (typeof filter !== 'function') {
       throw new TypeError('INVALID_TYPE', 'filter', 'function');
@@ -272,14 +347,19 @@ class Sweepers {
 
     for (const guild of this.client.guilds.cache.values()) {
       const manager: unknown = Reflect.get(guild, key);
-      if (!isSweepableManager(manager)) continue;
+      if (!isSweepableManager(manager)) {
+        continue;
+      }
 
       guilds++;
       items += manager.cache.sweep(filter);
     }
 
     if (emit) {
-      this.client.emit(Events.CACHE_SWEEP, `Swept ${items} ${outputName ?? key} in ${guilds} guilds.`);
+      this.client.emit(
+        Events.CACHE_SWEEP,
+        `Swept ${items} ${outputName ?? key} in ${guilds} guilds.`
+      );
     }
 
     return { guilds, items };
@@ -294,9 +374,16 @@ class Sweepers {
       throw new TypeError('INVALID_TYPE', `sweepers.${key}.interval`, 'number');
     }
     // Invites, Messages, and Threads can be provided a lifetime parameter, which we use to generate the filter
-    if (['invites', 'messages', 'threads'].includes(key) && !('filter' in props)) {
+    if (
+      ['invites', 'messages', 'threads'].includes(key) &&
+      !('filter' in props)
+    ) {
       if (typeof props.lifetime !== 'number') {
-        throw new TypeError('INVALID_TYPE', `sweepers.${key}.lifetime`, 'number');
+        throw new TypeError(
+          'INVALID_TYPE',
+          `sweepers.${key}.lifetime`,
+          'number'
+        );
       }
       return;
     }
@@ -305,16 +392,28 @@ class Sweepers {
     }
   }
 
-  _initInterval(intervalKey: string, sweepKey: string, opts: Record<string, unknown>) {
+  _initInterval(
+    intervalKey: string,
+    sweepKey: string,
+    opts: Record<string, unknown>
+  ) {
     const interval = opts.interval as number;
-    if (interval <= 0 || interval === Infinity) return;
+    if (interval <= 0 || interval === Infinity) {
+      return;
+    }
     const filter = opts.filter as () => SweepFilterFn | null;
     this.intervals[intervalKey] = setInterval(() => {
       const sweepFn = filter();
-      if (sweepFn === null) return;
-      if (typeof sweepFn !== 'function') throw new TypeError('SWEEP_FILTER_RETURN');
-      (this as unknown as Record<string, (fn: SweepFilterFn) => number>)[sweepKey](sweepFn);
-    }, interval * 1_000).unref();
+      if (sweepFn === null) {
+        return;
+      }
+      if (typeof sweepFn !== 'function') {
+        throw new TypeError('SWEEP_FILTER_RETURN');
+      }
+      (this as unknown as Record<string, (fn: SweepFilterFn) => number>)[
+        sweepKey
+      ](sweepFn);
+    }, interval * 1000).unref();
   }
 }
 

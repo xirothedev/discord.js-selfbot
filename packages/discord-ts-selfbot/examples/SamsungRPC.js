@@ -1,8 +1,8 @@
-const { Client } = require('../src/index');
+import { Client } from '../src/index';
 
 const client = new Client();
 
-client.on('ready', async () => {
+client.on('ready', () => {
   client.user.setSamsungActivity('com.YostarJP.BlueArchive', 'START');
 
   setTimeout(() => {

@@ -25,28 +25,31 @@ Install:
 - ffmpeg (install and add to your system environment)
 */
 
-const { Client } = require('../../src/index');
+import { Client } from '../../src/index';
+
 const client = new Client();
 
-client.on('ready', async client => {
+client.on('ready', async () => {
   console.log(`${client.user.username} is ready!`);
   const channel = client.channels.cache.get('voice_channel');
   const connection = await client.voice.joinChannel(channel, {
-    selfMute: true,
     selfDeaf: true,
-    selfVideo: false, // Turn on the camera? If you turn on the camera, use the connection similar to
+    selfMute: true,
+    // Turn on the camera? If you turn on the camera, use the connection similar to
     // PlayAudio.js, and it will stream video through the camera. This is an implementation of screen sharing.
+    selfVideo: false,
     videoCodec: 'H264',
   });
   const stream = await connection.createStreamConnection();
   // You can also access it by using `connection.streamConnection` (only after it has been initialized by the `createStreamConnection` function).
   // Split it into two separate streams (audio / video)
   // Or with a combined stream that will be automatically processed by FFmpeg.
-  const input = 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+  const input =
+    'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
   // Play
   const dispatcher = stream.playVideo(input, {
-    fps: 60,
     bitrate: 4000,
+    fps: 60,
   });
   const dispatcher2 = stream.playAudio(input);
   dispatcher.on('start', () => {

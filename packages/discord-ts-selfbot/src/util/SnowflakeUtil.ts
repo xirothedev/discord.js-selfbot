@@ -1,32 +1,38 @@
 // Discord epoch (2015-01-01T00:00:00.000Z)
 const EPOCH = 1_420_070_400_000;
-let INCREMENT = BigInt(0);
+let INCREMENT = 0n;
 
 class SnowflakeUtil extends null {
   static generate(timestamp: number | Date = Date.now()) {
-    if (timestamp instanceof Date) timestamp = timestamp.getTime();
-    if (typeof timestamp !== 'number' || isNaN(timestamp)) {
+    const time = timestamp instanceof Date ? timestamp.getTime() : timestamp;
+    if (typeof time !== 'number' || Number.isNaN(time)) {
       throw new TypeError(
-        `"timestamp" argument must be a number (received ${isNaN(timestamp) ? 'NaN' : typeof timestamp})`,
+        `"timestamp" argument must be a number (received ${Number.isNaN(time) ? 'NaN' : typeof time})`
       );
     }
-    if (INCREMENT >= 4095n) INCREMENT = BigInt(0);
+    if (INCREMENT >= 4095n) {
+      INCREMENT = 0n;
+    }
 
     // Assign WorkerId as 1 and ProcessId as 0:
-    return ((BigInt(timestamp - EPOCH) << 22n) | (1n << 17n) | INCREMENT++).toString();
+    return (
+      (BigInt(time - EPOCH) << 22n) |
+      (1n << 17n) |
+      INCREMENT++
+    ).toString();
   }
 
   static deconstruct(snowflake: string | number | bigint) {
     const bigIntSnowflake = BigInt(snowflake);
     return {
-      timestamp: Number(bigIntSnowflake >> 22n) + EPOCH,
+      binary: bigIntSnowflake.toString(2).padStart(64, '0'),
       get date() {
         return new Date(this.timestamp);
       },
-      workerId: Number((bigIntSnowflake >> 17n) & 0b11111n),
-      processId: Number((bigIntSnowflake >> 12n) & 0b11111n),
-      increment: Number(bigIntSnowflake & 0b111111111111n),
-      binary: bigIntSnowflake.toString(2).padStart(64, '0'),
+      increment: Number(bigIntSnowflake & 0b1111_1111_1111n),
+      processId: Number((bigIntSnowflake >> 12n) & 0b1_1111n),
+      timestamp: Number(bigIntSnowflake >> 22n) + EPOCH,
+      workerId: Number((bigIntSnowflake >> 17n) & 0b1_1111n),
     };
   }
 

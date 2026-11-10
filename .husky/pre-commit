@@ -1,3 +1,5 @@
 ROOT="$(git rev-parse --show-toplevel)"
 bunx lint-staged
 (cd /tmp && bun fmt --staged --cwd "$ROOT")
+(cd "$ROOT" && bun run lint)
+(cd "$ROOT" && bun run check)

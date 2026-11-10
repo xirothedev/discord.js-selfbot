@@ -4,12 +4,16 @@ import type { GatewayGuildEmojisUpdateDispatchData } from 'discord-api-types/v10
 class GuildEmojisUpdateAction extends Action {
   handle(data: GatewayGuildEmojisUpdateDispatchData) {
     const guild = this.client.guilds.cache.get(data.guild_id);
-    if (!guild?.emojis) return;
+    if (!guild?.emojis) {
+      return;
+    }
 
     const deletions = new Map(guild.emojis.cache);
 
     for (const emoji of data.emojis) {
-      if (!emoji.id) continue;
+      if (!emoji.id) {
+        continue;
+      }
       // Determine type of emoji event
       const cachedEmoji = guild.emojis.cache.get(emoji.id);
       if (cachedEmoji) {

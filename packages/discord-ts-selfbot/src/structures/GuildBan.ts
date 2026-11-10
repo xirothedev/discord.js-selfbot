@@ -2,10 +2,11 @@ import Base from './Base';
 import type { Client } from '../client/Client';
 import type { Guild } from './Guild';
 import type { RawGuildBanData } from '../../typings/rawDataTypes';
+import type { User } from './User';
 
 class GuildBan extends Base {
-  declare guild: import('./Guild').Guild;
-  declare user: import('./User').User;
+  declare guild: Guild;
+  declare user: User;
   declare reason?: string | null;
   constructor(client: Client, data: RawGuildBanData, guild: Guild) {
     super(client);
@@ -30,7 +31,7 @@ class GuildBan extends Base {
   }
 
   fetch(force = true) {
-    return this.guild.bans.fetch({ user: this.user.id, cache: true, force });
+    return this.guild.bans.fetch({ cache: true, force, user: this.user.id });
   }
 }
 

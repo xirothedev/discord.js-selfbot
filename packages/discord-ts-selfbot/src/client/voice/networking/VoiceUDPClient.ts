@@ -1,21 +1,42 @@
-import udp from 'dgram';
-import EventEmitter from 'events';
-import { isIP } from 'net';
+import udp from 'node:dgram';
+import EventEmitter from 'node:events';
+import { isIP } from 'node:net';
 import { Buffer } from 'node:buffer';
 import _errorsModule from '../../../errors';
+
 const { Error } = _errorsModule;
 import _ConstantsModule from '../../../util/Constants';
+
 const { VoiceOpcodes } = _ConstantsModule;
 import VoiceCodec from '../util/VoiceCodec';
+import type VoiceConnection from '../VoiceConnection';
+
+function parseLocalPacket(
+  message: Buffer | Uint8Array
+):
+  | { address: string; port: number; error?: undefined }
+  | { address?: undefined; port?: undefined; error: unknown } {
+  try {
+    const packet = Buffer.from(message);
+    const address = packet.subarray(8, packet.indexOf(0, 8)).toString('utf-8');
+    if (!isIP(address)) {
+      throw new Error('UDP_ADDRESS_MALFORMED');
+    }
+    const port = packet.readUInt16BE(packet.length - 2);
+    return { address, port };
+  } catch (error) {
+    return { error };
+  }
+}
 
 class VoiceConnectionUDPClient extends EventEmitter {
-  declare voiceConnection: import('../VoiceConnection').default;
+  declare voiceConnection: VoiceConnection;
   declare socket: udp.Socket | null;
   declare discordAddress: string | null;
   declare localAddress: string | null;
   declare localPort: number | null;
 
-  constructor(voiceConnection: import('../VoiceConnection').default) {
+  constructor(voiceConnection: VoiceConnection) {
     super();
 
     this.voiceConnection = voiceConnection;
@@ -48,23 +69,31 @@ class VoiceConnectionUDPClient extends EventEmitter {
   }
 
   send(packet: Buffer): Promise<Buffer> {
-    return new Promise<Buffer>((resolve, reject) => {
-      if (!this.socket) throw new Error('UDP_SEND_FAIL');
-      if (!this.discordAddress || !this.discordPort) throw new Error('UDP_ADDRESS_MALFORMED');
-      this.socket.send(packet, 0, packet.length, this.discordPort, this.discordAddress, error => {
-        if (error) {
-          this.emit('debug', `[UDP] >> ERROR: ${error}`);
-          reject(error);
-        } else {
-          resolve(packet);
-        }
-      });
+    const { socket } = this;
+    const address = this.discordAddress;
+    const port = this.discordPort;
+    if (!socket) {
+      return Promise.reject(new Error('UDP_SEND_FAIL'));
+    }
+    if (!address || !port) {
+      return Promise.reject(new Error('UDP_ADDRESS_MALFORMED'));
+    }
+    const pending = Promise.withResolvers<Buffer>();
+    socket.send(packet, 0, packet.length, port, address, (sendError) => {
+      if (sendError) {
+        this.emit('debug', `[UDP] >> ERROR: ${sendError}`);
+        pending.reject(sendError);
+      } else {
+        pending.resolve(packet);
+      }
     });
+    return pending.promise;
   }
 
   async createUDPSocket(address: string) {
     this.discordAddress = address;
-    const socket = (this.socket = udp.createSocket('udp4'));
+    const socket = udp.createSocket('udp4');
+    this.socket = socket;
     socket.on('error', (e: Error) => {
       this.emit('debug', `[UDP] Error: ${e}`);
       this.emit('error', e);
@@ -79,7 +108,9 @@ class VoiceConnectionUDPClient extends EventEmitter {
         throw new Error('UDP_WRONG_HANDSHAKE');
       }
       // Stop if the sockets have been deleted because the connection has been closed already
-      if (!this.voiceConnection.sockets.ws) return;
+      if (!this.voiceConnection.sockets.ws) {
+        return;
+      }
 
       const packet = parseLocalPacket(message);
       if ('error' in packet) {
@@ -88,22 +119,25 @@ class VoiceConnectionUDPClient extends EventEmitter {
         return;
       }
 
-      this.emit('debug', `[UDP] Parse local packet: ${packet.address}:${packet.port}`);
+      this.emit(
+        'debug',
+        `[UDP] Parse local packet: ${packet.address}:${packet.port}`
+      );
 
       this.localAddress = packet.address;
       this.localPort = packet.port;
 
       this.voiceConnection.sockets.ws.sendPacket({
-        op: VoiceOpcodes.SELECT_PROTOCOL,
         d: {
-          protocol: 'udp',
           codecs: VoiceCodec.getAllPayloadType(),
           data: {
             address: packet.address,
-            port: packet.port,
             mode: this.voiceConnection.authentication.mode,
+            port: packet.port,
           },
+          protocol: 'udp',
         },
+        op: VoiceOpcodes.SELECT_PROTOCOL,
       });
 
       // Write = false
@@ -114,7 +148,9 @@ class VoiceConnectionUDPClient extends EventEmitter {
 
       this.emit('debug', `[UDP] << ${JSON.stringify(packet)}`);
 
-      socket.on('message', (buffer: Buffer) => this.voiceConnection.receiver.packets.push(buffer));
+      socket.on('message', (buffer: Buffer) =>
+        this.voiceConnection.receiver.packets.push(buffer)
+      );
     });
 
     const blankMessage = Buffer.alloc(74);
@@ -124,22 +160,6 @@ class VoiceConnectionUDPClient extends EventEmitter {
     this.emit('debug', `Sending IP discovery packet: [${[...blankMessage]}]`);
     await this.send(blankMessage);
     this.emit('debug', `Successfully sent IP discovery packet`);
-  }
-}
-
-function parseLocalPacket(
-  message: Buffer | Uint8Array,
-): { address: string; port: number; error?: undefined } | { address?: undefined; port?: undefined; error: unknown } {
-  try {
-    const packet = Buffer.from(message);
-    const address = packet.subarray(8, packet.indexOf(0, 8)).toString('utf8');
-    if (!isIP(address)) {
-      throw new Error('UDP_ADDRESS_MALFORMED');
-    }
-    const port = packet.readUInt16BE(packet.length - 2);
-    return { address, port };
-  } catch (error) {
-    return { error };
   }
 }
 

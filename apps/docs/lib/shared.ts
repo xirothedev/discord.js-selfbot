@@ -8,9 +8,9 @@ export const docsImageRoute = '/og/docs';
 export const docsContentRoute = '/llms.mdx/docs';
 
 export const gitConfig = {
-  user: 'xirothedev',
-  repo: 'discord.js-selfbot',
   branch: 'main',
+  repo: 'discord.js-selfbot',
+  user: 'xirothedev',
 };
 
 const getContentUrl = createGetUrl(docsContentRoute);

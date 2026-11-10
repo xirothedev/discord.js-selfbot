@@ -9,11 +9,23 @@ class HTTPError extends Error {
     message: string,
     name: string,
     code: unknown,
-    request: { method: string; path: string; options?: { data?: unknown; files?: unknown[]; headers?: unknown } },
+    request: {
+      method: string;
+      path: string;
+      options?: { data?: unknown; files?: unknown[]; headers?: unknown };
+    }
   ) {
     super(message);
 
-    this.name = name;
+    this.name = 'HTTPError';
+    if (name !== this.name) {
+      Object.defineProperty(this, 'name', {
+        configurable: true,
+        enumerable: true,
+        value: name,
+        writable: true,
+      });
+    }
 
     this.code = (code as number) ?? 500;
 
@@ -22,9 +34,9 @@ class HTTPError extends Error {
     this.path = request.path;
 
     this.requestData = {
-      json: request.options?.data,
       files: request.options?.files ?? [],
       headers: request.options?.headers,
+      json: request.options?.data,
     };
   }
 }

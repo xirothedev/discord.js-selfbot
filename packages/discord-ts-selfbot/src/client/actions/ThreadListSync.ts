@@ -1,11 +1,16 @@
 import { Collection } from '@discordjs/collection';
 import Action from './Action';
 import _ConstantsModule from '../../util/Constants';
+
 const { Events } = _ConstantsModule;
 import type { Snowflake } from 'discord-api-types/v10';
-import type { RawChannelData, RawThreadMemberData } from '../../../typings/rawDataTypes';
+import type {
+  RawChannelData,
+  RawThreadMemberData,
+} from '../../../typings/rawDataTypes';
 import { isThreadChannel, isThreadParentChannel } from '../../types/channels';
 import type { Channel } from '../../structures/Channel';
+import type { ThreadChannel } from '../../structures/ThreadChannel';
 
 interface ThreadListSyncData {
   guild_id: Snowflake;
@@ -16,15 +21,19 @@ interface ThreadListSyncData {
 
 class ThreadListSyncAction extends Action {
   handle(data: ThreadListSyncData) {
-    const client = this.client;
+    const { client } = this;
 
     const guild = client.guilds.cache.get(data.guild_id);
-    if (!guild) return {};
+    if (!guild) {
+      return {};
+    }
 
     if (data.channel_ids) {
       for (const id of data.channel_ids) {
         const channel = client.channels.cache.get(id);
-        if (channel) this.removeStale(channel);
+        if (channel) {
+          this.removeStale(channel);
+        }
       }
     } else {
       for (const channel of guild.channels.cache.values()) {
@@ -32,10 +41,13 @@ class ThreadListSyncAction extends Action {
       }
     }
 
-    const syncedThreads = data.threads.reduce((coll, rawThread) => {
+    const syncedThreads = new Collection<Snowflake, ThreadChannel>();
+    for (const rawThread of data.threads) {
       const thread = client.channels._add(rawThread);
-      return thread && isThreadChannel(thread) ? coll.set(thread.id, thread) : coll;
-    }, new Collection<Snowflake, import('../../structures/ThreadChannel').ThreadChannel>());
+      if (thread && isThreadChannel(thread)) {
+        syncedThreads.set(thread.id, thread);
+      }
+    }
 
     for (const rawMember of Object.values(data.members ?? {})) {
       // Discord sends the thread id as id in this object
@@ -54,12 +66,14 @@ class ThreadListSyncAction extends Action {
   }
 
   removeStale(channel: Channel) {
-    if (!isThreadParentChannel(channel)) return;
-    channel.threads.cache.forEach(thread => {
+    if (!isThreadParentChannel(channel)) {
+      return;
+    }
+    for (const thread of channel.threads.cache.values()) {
       if (!thread.archived) {
         this.client.channels._remove(thread.id);
       }
-    });
+    }
   }
 }
 

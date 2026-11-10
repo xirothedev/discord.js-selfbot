@@ -1,7 +1,8 @@
+import { expect, mock, test } from 'bun:test';
 import { Buffer } from 'node:buffer';
 import { EventEmitter, once } from 'node:events';
 import { PassThrough, Writable } from 'node:stream';
-import { expect, mock, test } from 'bun:test';
+
 import VoiceReceiver from '../src/client/voice/receiver/Receiver';
 import Recorder from '../src/client/voice/receiver/Recorder';
 
@@ -51,9 +52,9 @@ function expectedFfmpegArgs(output) {
 function createFakeChildProcess(args) {
   const stdinChunks = [];
   const stdin = new Writable({
-    write(chunk, _encoding, callback) {
+    write(chunk, _encoding, done) {
       stdinChunks.push(Buffer.from(chunk));
-      callback();
+      done();
     },
   });
   const stderr = new PassThrough();
@@ -80,14 +81,14 @@ async function buildRecorder({
     return child;
   });
   const recorder = new Recorder(receiver, {
-    userId: USER_ID,
-    portUdpH264: 50000,
-    portUdpOpus: 50002,
-    output,
-    spawn,
     findProcess,
     killProcess,
+    output,
+    portUdpH264: 50_000,
+    portUdpOpus: 50_002,
+    spawn,
     streamOutput,
+    userId: USER_ID,
   });
 
   // Let the constructor's init() pass its `await this.promise` tick and call the injected spawn.
@@ -99,7 +100,7 @@ async function buildRecorder({
   child.stderr.write('ffmpeg is ready');
   await ready;
 
-  return { recorder, child, spawn };
+  return { child, recorder, spawn };
 }
 
 test('Recorder builds the expected ffmpeg arguments for an audio output', async () => {
@@ -107,13 +108,13 @@ test('Recorder builds the expected ffmpeg arguments for an audio output', async 
   const { recorder, child, spawn } = await buildRecorder({ output });
 
   expect(spawn).toHaveBeenCalledTimes(1);
-  const [command, args] = spawn.mock.calls[0];
+  const [[command, args]] = spawn.mock.calls;
   expect(command).toBe('ffmpeg');
   expect(args).toEqual(expectedFfmpegArgs(output));
 
   expect(child.stdinChunks.join('')).toContain('m=audio 50002 RTP/AVP');
-  expect(recorder.portUdpH264).toBe(50000);
-  expect(recorder.portUdpOpus).toBe(50002);
+  expect(recorder.portUdpH264).toBe(50_000);
+  expect(recorder.portUdpOpus).toBe(50_002);
   expect(recorder.ready).toBe(true);
 
   recorder.stop();
@@ -123,7 +124,7 @@ test('Recorder builds the expected ffmpeg arguments for a video output', async (
   const output = '/tmp/voice-recording-video.mkv';
   const { recorder, spawn } = await buildRecorder({ output });
 
-  const [command, args] = spawn.mock.calls[0];
+  const [[command, args]] = spawn.mock.calls;
   expect(command).toBe('ffmpeg');
   expect(args).toEqual(expectedFfmpegArgs(output));
 
@@ -133,12 +134,12 @@ test('Recorder builds the expected ffmpeg arguments for a video output', async (
 test('Recorder#stop ends the ffmpeg process and flushes the output stream', async () => {
   let finalized = false;
   const output = new Writable({
-    write(_chunk, _encoding, callback) {
-      callback();
-    },
-    final(callback) {
+    final(done) {
       finalized = true;
-      callback();
+      done();
+    },
+    write(_chunk, _encoding, done) {
+      done();
     },
   });
   const streamOutput = mock(() => ({ url: 'unix:/tmp/fake-recorder.sock' }));
@@ -164,10 +165,10 @@ test('Recorder#destroy routes find-process and tree-kill through the injectable 
   const findProcess = mock(async () => [{ pid: FAKE_PID }]);
   const killProcess = mock(() => {});
   const { recorder } = await buildRecorder({
-    output: '/tmp/voice-recording-video.mkv',
-    receiver,
     findProcess,
     killProcess,
+    output: '/tmp/voice-recording-video.mkv',
+    receiver,
   });
 
   const closed = once(recorder, 'closed');

@@ -1,15 +1,21 @@
 import process from 'node:process';
-import Base from './Base';
+import Base, { patchValue } from './Base';
 import _errorsModule from '../errors';
+
 const { Error } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
+
 const { StickerFormatTypes, StickerTypes } = _ConstantsModule;
 import SnowflakeUtil from '../util/SnowflakeUtil';
-import type { Snowflake } from 'discord-api-types/v10';
-import type { APISticker } from 'discord-api-types/v10';
-import type { GuildStickerEditData, StickerFormatType, StickerType } from '../../typings';
+import type { Snowflake, APISticker } from 'discord-api-types/v10';
+import type {
+  GuildStickerEditData,
+  StickerFormatType,
+  StickerType,
+} from '../../typings';
 import type { RawStickerData } from '../../typings/rawDataTypes';
 import type User from './User';
+import type Client from '../client/Client';
 
 /**
  * @type {WeakSet<StageInstance>}
@@ -32,7 +38,10 @@ class Sticker extends Base {
   declare user: User | null;
   declare sortValue: number | null;
 
-  constructor(client: import('../client/Client').default, sticker: Partial<RawStickerData> & { id: Snowflake }) {
+  constructor(
+    client: Client,
+    sticker: Partial<RawStickerData> & { id: Snowflake }
+  ) {
     super(client);
 
     this._patch(sticker);
@@ -40,66 +49,50 @@ class Sticker extends Base {
 
   _patch(sticker: Partial<RawStickerData> & { id: Snowflake }) {
     this.id = sticker.id;
-
-    if ('description' in sticker) {
-      this.description = sticker.description ?? null;
-    } else {
-      this.description ??= null;
-    }
-
-    if ('type' in sticker) {
-      if (typeof sticker.type === 'number') this.type = StickerTypes[sticker.type];
-    } else {
-      this.type ??= null;
-    }
-
-    if ('format_type' in sticker) {
-      if (typeof sticker.format_type === 'number') this.format = StickerFormatTypes[sticker.format_type];
-    }
-
-    if ('name' in sticker) {
-      if (typeof sticker.name === 'string') this.name = sticker.name;
-    }
-
-    if ('pack_id' in sticker) {
-      this.packId = sticker.pack_id ?? null;
-    } else {
-      this.packId ??= null;
-    }
-
-    if ('tags' in sticker) {
-      if (typeof sticker.tags === 'string') this.tags = sticker.tags.split(', ');
-    } else {
-      this.tags ??= null;
-    }
-
-    if ('available' in sticker) {
-      this.available = sticker.available ?? null;
-    } else {
-      this.available ??= null;
-    }
-
-    if ('guild_id' in sticker) {
-      this.guildId = sticker.guild_id ?? null;
-    } else {
-      this.guildId ??= null;
-    }
-
+    this.description = patchValue(
+      'description' in sticker ? sticker.description : undefined,
+      this.description
+    );
+    this.type =
+      'type' in sticker && typeof sticker.type === 'number'
+        ? StickerTypes[sticker.type]
+        : (this.type ?? null);
+    this.format =
+      'format_type' in sticker && typeof sticker.format_type === 'number'
+        ? StickerFormatTypes[sticker.format_type]
+        : this.format;
+    this.name =
+      'name' in sticker && typeof sticker.name === 'string'
+        ? sticker.name
+        : this.name;
+    this.packId = patchValue(
+      'pack_id' in sticker ? sticker.pack_id : undefined,
+      this.packId
+    );
+    this.tags =
+      'tags' in sticker && typeof sticker.tags === 'string'
+        ? sticker.tags.split(', ')
+        : (this.tags ?? null);
+    this.available = patchValue(
+      'available' in sticker ? sticker.available : undefined,
+      this.available
+    );
+    this.guildId = patchValue(
+      'guild_id' in sticker ? sticker.guild_id : undefined,
+      this.guildId
+    );
     if ('user' in sticker) {
       this.user = sticker.user ? this.client.users._add(sticker.user) : null;
     } else {
       this.user ??= null;
     }
-
-    if ('sort_value' in sticker) {
-      this.sortValue = sticker.sort_value ?? null;
-    } else {
-      this.sortValue ??= null;
-    }
+    this.sortValue = patchValue(
+      'sort_value' in sticker ? sticker.sort_value : undefined,
+      this.sortValue
+    );
   }
-
   get createdTimestamp() {
-    return SnowflakeUtil.timestampFrom(this.id!);
+    return SnowflakeUtil.timestampFrom(this.id);
   }
 
   get createdAt() {
@@ -116,7 +109,7 @@ class Sticker extends Base {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
         'Sticker#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
-        'DeprecationWarning',
+        'DeprecationWarning'
       );
     }
 
@@ -128,12 +121,15 @@ class Sticker extends Base {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
         'Sticker#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
-        'DeprecationWarning',
+        'DeprecationWarning'
       );
     }
 
-    if (value) deletedStickers.add(this);
-    else deletedStickers.delete(this);
+    if (value) {
+      deletedStickers.add(this);
+    } else {
+      deletedStickers.delete(this);
+    }
   }
 
   get partial() {
@@ -155,53 +151,82 @@ class Sticker extends Base {
   }
 
   async fetchPack() {
-    return (this.packId && (await this.client.fetchPremiumStickerPacks()).get(this.packId)) ?? null;
+    if (!this.packId) {
+      return null;
+    }
+    const packs = await this.client.fetchPremiumStickerPacks();
+    return packs.get(this.packId) ?? null;
   }
 
   async fetchUser() {
-    if (this.partial) await this.fetch();
-    if (!this.guildId) throw new Error('NOT_GUILD_STICKER');
-    const guild = this.guild;
-    if (!guild) return null;
+    if (this.partial) {
+      await this.fetch();
+    }
+    if (!this.guildId) {
+      throw new Error('NOT_GUILD_STICKER');
+    }
+    const { guild } = this;
+    if (!guild) {
+      return null;
+    }
     return guild.stickers.fetchUser(this);
   }
 
   edit(data: GuildStickerEditData, reason?: string) {
-    const guild = this.guild;
-    if (!guild) throw new Error('INVALID_TYPE', 'guildId', 'Guild');
+    const { guild } = this;
+    if (!guild) {
+      throw new Error('INVALID_TYPE', 'guildId', 'Guild');
+    }
     return guild.stickers.edit(this, data, reason);
   }
 
   async delete(reason?: string) {
-    const guild = this.guild;
-    if (!guild) throw new Error('INVALID_TYPE', 'guildId', 'Guild');
+    const { guild } = this;
+    if (!guild) {
+      throw new Error('INVALID_TYPE', 'guildId', 'Guild');
+    }
     await guild.stickers.delete(this, reason);
     return this;
   }
 
   equals(other: Sticker | APISticker): boolean {
-    if (other instanceof Sticker) {
-      return (
-        other.id === this.id &&
-        other.description === this.description &&
-        other.type === this.type &&
-        other.format === this.format &&
-        other.name === this.name &&
-        other.packId === this.packId &&
-        (other.tags?.length ?? 0) === (this.tags?.length ?? 0) &&
-        (other.tags ?? []).every(tag => (this.tags ?? []).includes(tag)) &&
-        other.available === this.available &&
-        other.guildId === this.guildId &&
-        other.sortValue === this.sortValue
-      );
-    } else {
-      return (
-        other.id === this.id &&
-        other.description === this.description &&
-        other.name === this.name &&
-        other.tags === this.tags?.join(', ')
-      );
-    }
+    return other instanceof Sticker
+      ? this.equalsSticker(other)
+      : this.equalsRaw(other);
+  }
+
+  private equalsSticker(other: Sticker): boolean {
+    return (
+      other.id === this.id &&
+      other.description === this.description &&
+      other.type === this.type &&
+      other.format === this.format &&
+      other.name === this.name &&
+      other.packId === this.packId &&
+      Sticker.tagsEqual(other.tags, this.tags) &&
+      other.available === this.available &&
+      other.guildId === this.guildId &&
+      other.sortValue === this.sortValue
+    );
+  }
+
+  private equalsRaw(other: APISticker): boolean {
+    return (
+      other.id === this.id &&
+      other.description === this.description &&
+      other.name === this.name &&
+      other.tags === this.tags?.join(', ')
+    );
+  }
+
+  private static tagsEqual(
+    left: string[] | null,
+    right: string[] | null
+  ): boolean {
+    return (
+      (left?.length ?? 0) === (right?.length ?? 0) &&
+      (left ?? []).every((tag) => (right ?? []).includes(tag))
+    );
   }
 }
 

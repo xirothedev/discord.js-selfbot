@@ -10,22 +10,23 @@ Install:
 - ffmpeg (install and add to your system environment)
 */
 
-const { Client } = require('../../src/index');
-const ytdl = require('@distube/ytdl-core'); // better than ytdl-core
+import ytdl from '@distube/ytdl-core';
+import { Client } from '../../src/index';
+
 const client = new Client();
 
-client.on('ready', async client => {
+client.on('ready', async () => {
   console.log(`${client.user.username} is ready!`);
   const channel = client.channels.cache.get('voice_id');
   const connection = await client.voice.joinChannel(channel, {
-    selfMute: true,
     selfDeaf: true,
+    selfMute: true,
     selfVideo: false,
   });
   const dispatcher = connection.playAudio(
     ytdl('https://www.youtube.com/watch?v=3KadWjpqDXs', {
       quality: 'highestaudio',
-    }),
+    })
   );
   dispatcher.on('start', () => {
     console.log('audio is now playing!');
@@ -36,7 +37,7 @@ client.on('ready', async client => {
     setTimeout(() => {
       console.log('resumed');
       dispatcher.resume();
-    }, 5_000);
+    }, 5000);
 
     // Set volume
     dispatcher.setVolume(0.5);

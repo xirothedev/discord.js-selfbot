@@ -14,20 +14,26 @@ import {
 import type { LucideIcon } from 'lucide-react';
 
 export const ICON = {
-  docs: BookOpen,
   api: Boxes,
-  examples: Terminal,
-  voice: Mic,
+  arrowRight: ArrowRight,
   calls: PhoneCall,
+  check: Check,
+  docs: BookOpen,
+  examples: Terminal,
+  github: GitBranch,
+  npm: Package,
   recording: Radio,
   safety: ShieldAlert,
   terminal: Terminal,
-  arrowRight: ArrowRight,
-  check: Check,
-  github: GitBranch,
-  npm: Package,
+  voice: Mic,
 } as const satisfies Record<string, LucideIcon>;
 
-export function Icon({ icon: IconComponent, className }: { icon: LucideIcon; className?: string }) {
-  return <IconComponent aria-hidden="true" focusable="false" className={className} />;
-}
+export const Icon = ({
+  icon: IconComponent,
+  className,
+}: {
+  icon: LucideIcon;
+  className?: string;
+}) => (
+  <IconComponent aria-hidden="true" focusable="false" className={className} />
+);

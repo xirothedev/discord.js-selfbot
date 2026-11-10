@@ -1,13 +1,15 @@
 import EventEmitter from 'node:events';
 import process from 'node:process';
 import RESTManager from '../rest/RESTManager';
-import Options, { type ResolvedClientOptions } from '../util/Options';
+import Options from '../util/Options';
+import type { ResolvedClientOptions } from '../util/Options';
 import Util from '../util/Util';
 import type { ClientOptions } from '../../typings';
+import type { authenticator } from 'otplib';
 
 class BaseClient extends EventEmitter {
   declare options: ResolvedClientOptions;
-  declare authenticator: typeof import('otplib').authenticator;
+  declare authenticator: typeof authenticator;
   declare rest: RESTManager;
 
   constructor(options: ClientOptions = {}) {
@@ -27,7 +29,9 @@ class BaseClient extends EventEmitter {
   }
 
   destroy() {
-    if (this.rest.sweepInterval) clearInterval(this.rest.sweepInterval);
+    if (this.rest.sweepInterval) {
+      clearInterval(this.rest.sweepInterval);
+    }
   }
 
   incrementMaxListeners() {

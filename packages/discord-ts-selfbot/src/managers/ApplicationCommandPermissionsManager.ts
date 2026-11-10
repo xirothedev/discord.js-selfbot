@@ -1,12 +1,13 @@
 import { Collection } from '@discordjs/collection';
 import BaseManager from './BaseManager';
 import _errorsModule from '../errors';
+
 const { Error, TypeError } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
+
 const { ApplicationCommandPermissionTypes, APIErrors } = _ConstantsModule;
 import type {
   APIApplicationCommandPermission,
-  APIGuildApplicationCommandPermissions,
   RESTGetAPIApplicationCommandPermissionsResult,
   RESTGetAPIGuildApplicationCommandsPermissionsResult,
   RESTPutAPIApplicationCommandPermissionsResult,
@@ -39,30 +40,40 @@ export interface FullApplicationCommandPermissionsOptions extends BaseApplicatio
   command?: ApplicationCommandResolvable;
 }
 
-type SetApplicationCommandPermissionsOptions<BaseOptions extends BaseApplicationCommandPermissionsOptions> =
-  BaseOptions & {
-    permissions?: ApplicationCommandPermissionData[];
-    fullPermissions?: GuildApplicationCommandPermissionData[];
-  };
+type SetApplicationCommandPermissionsOptions<
+  BaseOptions extends BaseApplicationCommandPermissionsOptions,
+> = BaseOptions & {
+  permissions?: ApplicationCommandPermissionData[];
+  fullPermissions?: GuildApplicationCommandPermissionData[];
+};
 
-type RemoveApplicationCommandPermissionsOptions<FetchSingleOptions extends BaseApplicationCommandPermissionsOptions> =
-  FetchSingleOptions & {
-    users?: UserResolvable | UserResolvable[];
-    roles?: RoleResolvable | RoleResolvable[];
-  };
+type RemoveApplicationCommandPermissionsOptions<
+  FetchSingleOptions extends BaseApplicationCommandPermissionsOptions,
+> = FetchSingleOptions & {
+  users?: UserResolvable | UserResolvable[];
+  roles?: RoleResolvable | RoleResolvable[];
+};
 
-type HasApplicationCommandPermissionsOptions<FetchSingleOptions extends BaseApplicationCommandPermissionsOptions> =
-  FetchSingleOptions & { permissionId: UserResolvable | RoleResolvable };
+type HasApplicationCommandPermissionsOptions<
+  FetchSingleOptions extends BaseApplicationCommandPermissionsOptions,
+> = FetchSingleOptions & { permissionId: UserResolvable | RoleResolvable };
 
-type AddApplicationCommandPermissionsOptions<FetchSingleOptions extends BaseApplicationCommandPermissionsOptions> =
-  FetchSingleOptions & { permissions: ApplicationCommandPermissionData[] };
+type AddApplicationCommandPermissionsOptions<
+  FetchSingleOptions extends BaseApplicationCommandPermissionsOptions,
+> = FetchSingleOptions & { permissions: ApplicationCommandPermissionData[] };
 
-type GuildPermissionsPayload = { id: Snowflake; permissions: APIApplicationCommandPermission[] };
+interface GuildPermissionsPayload {
+  id: Snowflake;
+  permissions: APIApplicationCommandPermission[];
+}
 
 class ApplicationCommandPermissionsManager<
-  BaseOptions extends BaseApplicationCommandPermissionsOptions = BaseApplicationCommandPermissionsOptions,
-  FetchSingleOptions extends BaseApplicationCommandPermissionsOptions = FetchSingleApplicationCommandPermissionsOptions,
-  FullPermissionsOptions extends BaseApplicationCommandPermissionsOptions = FullApplicationCommandPermissionsOptions,
+  BaseOptions extends BaseApplicationCommandPermissionsOptions =
+    BaseApplicationCommandPermissionsOptions,
+  FetchSingleOptions extends BaseApplicationCommandPermissionsOptions =
+    FetchSingleApplicationCommandPermissionsOptions,
+  FullPermissionsOptions extends BaseApplicationCommandPermissionsOptions =
+    FullApplicationCommandPermissionsOptions,
   GuildType extends Guild | null = Guild | null,
   CommandIdType extends Snowflake | null = Snowflake | null,
 > extends BaseManager {
@@ -85,117 +96,202 @@ class ApplicationCommandPermissionsManager<
   }
 
   permissionsPath(guildId: Snowflake, commandId?: Snowflake) {
-    return this.client.api.applications(this.client.application!.id).guilds(guildId).commands(commandId).permissions;
+    const applicationId = this.client.application?.id;
+    if (!applicationId) {
+      throw new TypeError('INVALID_TYPE', 'application', 'Application');
+    }
+    return this.client.api
+      .applications(applicationId)
+      .guilds(guildId)
+      .commands(commandId).permissions;
   }
 
-  async fetch(options: FetchSingleOptions): Promise<ApplicationCommandPermissions[]>;
-  async fetch(options: BaseOptions): Promise<Collection<Snowflake, ApplicationCommandPermissions[]>>;
+  async fetch(
+    options: FetchSingleOptions
+  ): Promise<ApplicationCommandPermissions[]>;
+  async fetch(
+    options: BaseOptions
+  ): Promise<Collection<Snowflake, ApplicationCommandPermissions[]>>;
   async fetch(options: FetchSingleOptions | BaseOptions) {
     const { guild, command } = options;
     const { guildId, commandId } = this._validateOptions(guild, command);
-    if (commandId) return this.fetchSingle(guildId, commandId);
+    if (commandId) {
+      return this.fetchSingle(guildId, commandId);
+    }
 
-    const data = await this.permissionsPath(guildId).get<RESTGetAPIGuildApplicationCommandsPermissionsResult>();
-    return data.reduce(
-      (coll: Collection<Snowflake, ApplicationCommandPermissions[]>, perm: APIGuildApplicationCommandPermissions) =>
-        coll.set(
-          perm.id,
-          perm.permissions.map(p => ApplicationCommandPermissionsManager.transformPermissions(p, true)),
-        ),
-      new Collection<Snowflake, ApplicationCommandPermissions[]>(),
-    );
+    const data =
+      await this.permissionsPath(
+        guildId
+      ).get<RESTGetAPIGuildApplicationCommandsPermissionsResult>();
+    const permissions = new Collection<
+      Snowflake,
+      ApplicationCommandPermissions[]
+    >();
+    for (const permissionsData of data) {
+      permissions.set(
+        permissionsData.id,
+        permissionsData.permissions.map((permission) =>
+          ApplicationCommandPermissionsManager.transformPermissions(
+            permission,
+            true
+          )
+        )
+      );
+    }
+    return permissions;
   }
 
-  private async fetchSingle(guildId: Snowflake, commandId: Snowflake): Promise<ApplicationCommandPermissions[]> {
-    const data = await this.permissionsPath(guildId, commandId).get<RESTGetAPIApplicationCommandPermissionsResult>();
+  private async fetchSingle(
+    guildId: Snowflake,
+    commandId: Snowflake
+  ): Promise<ApplicationCommandPermissions[]> {
+    const data = await this.permissionsPath(
+      guildId,
+      commandId
+    ).get<RESTGetAPIApplicationCommandPermissionsResult>();
     return data.permissions.map((perm: APIApplicationCommandPermission) =>
-      ApplicationCommandPermissionsManager.transformPermissions(perm, true),
+      ApplicationCommandPermissionsManager.transformPermissions(perm, true)
     );
   }
 
   private async setSingle(
     guildId: Snowflake,
     commandId: Snowflake,
-    permissions: ApplicationCommandPermissionData[],
+    permissions: ApplicationCommandPermissionData[]
   ): Promise<ApplicationCommandPermissions[]> {
-    const data = await this.permissionsPath(guildId, commandId).put<RESTPutAPIApplicationCommandPermissionsResult>({
+    const data = await this.permissionsPath(
+      guildId,
+      commandId
+    ).put<RESTPutAPIApplicationCommandPermissionsResult>({
       data: {
-        permissions: permissions.map(perm => ApplicationCommandPermissionsManager.transformPermissions(perm)),
+        permissions: permissions.map((perm) =>
+          ApplicationCommandPermissionsManager.transformPermissions(perm)
+        ),
       },
     });
     return data.permissions.map((perm: APIApplicationCommandPermission) =>
-      ApplicationCommandPermissionsManager.transformPermissions(perm, true),
+      ApplicationCommandPermissionsManager.transformPermissions(perm, true)
     );
   }
 
   async set(
-    options: FetchSingleOptions & { permissions: ApplicationCommandPermissionData[] },
+    options: FetchSingleOptions & {
+      permissions: ApplicationCommandPermissionData[];
+    }
   ): Promise<ApplicationCommandPermissions[]>;
   async set(
-    options: FullPermissionsOptions & { fullPermissions: GuildApplicationCommandPermissionData[] },
+    options: FullPermissionsOptions & {
+      fullPermissions: GuildApplicationCommandPermissionData[];
+    }
   ): Promise<Collection<Snowflake, ApplicationCommandPermissions[]>>;
   async set(
     options:
       | SetApplicationCommandPermissionsOptions<BaseOptions>
       | SetApplicationCommandPermissionsOptions<FetchSingleOptions>
-      | SetApplicationCommandPermissionsOptions<FullPermissionsOptions>,
+      | SetApplicationCommandPermissionsOptions<FullPermissionsOptions>
   ) {
     const { guild, command, permissions, fullPermissions } = options;
     const { guildId, commandId } = this._validateOptions(guild, command);
 
     if (commandId) {
       if (!Array.isArray(permissions)) {
-        throw new TypeError('INVALID_TYPE', 'permissions', 'Array of ApplicationCommandPermissionData', true);
+        throw new TypeError(
+          'INVALID_TYPE',
+          'permissions',
+          'Array of ApplicationCommandPermissionData',
+          true
+        );
       }
       return this.setSingle(guildId, commandId, permissions);
     }
 
     if (!Array.isArray(fullPermissions)) {
-      throw new TypeError('INVALID_TYPE', 'fullPermissions', 'Array of GuildApplicationCommandPermissionData', true);
+      throw new TypeError(
+        'INVALID_TYPE',
+        'fullPermissions',
+        'Array of GuildApplicationCommandPermissionData',
+        true
+      );
     }
 
     const APIPermissions: GuildPermissionsPayload[] = [];
     for (const perm of fullPermissions) {
-      if (!Array.isArray(perm.permissions)) throw new TypeError('INVALID_ELEMENT', 'Array', 'fullPermissions', perm);
+      if (!Array.isArray(perm.permissions)) {
+        throw new TypeError(
+          'INVALID_ELEMENT',
+          'Array',
+          'fullPermissions',
+          perm
+        );
+      }
       APIPermissions.push({
         id: perm.id,
-        permissions: perm.permissions.map(p => ApplicationCommandPermissionsManager.transformPermissions(p)),
+        permissions: perm.permissions.map((permission) =>
+          ApplicationCommandPermissionsManager.transformPermissions(permission)
+        ),
       });
     }
-    const data = await this.permissionsPath(guildId).put<RESTPutAPIGuildApplicationCommandsPermissionsResult>({
+    const data = await this.permissionsPath(
+      guildId
+    ).put<RESTPutAPIGuildApplicationCommandsPermissionsResult>({
       data: APIPermissions,
     });
-    return data.reduce(
-      (coll: Collection<Snowflake, ApplicationCommandPermissions[]>, perm: GuildPermissionsPayload) =>
-        coll.set(
-          perm.id,
-          perm.permissions.map(p => ApplicationCommandPermissionsManager.transformPermissions(p, true)),
-        ),
-      new Collection<Snowflake, ApplicationCommandPermissions[]>(),
-    );
+    const updatedPermissions = new Collection<
+      Snowflake,
+      ApplicationCommandPermissions[]
+    >();
+    for (const permissionsData of data) {
+      updatedPermissions.set(
+        permissionsData.id,
+        permissionsData.permissions.map((permission) =>
+          ApplicationCommandPermissionsManager.transformPermissions(
+            permission,
+            true
+          )
+        )
+      );
+    }
+    return updatedPermissions;
   }
 
   async add({
     guild,
     command,
     permissions,
-  }: AddApplicationCommandPermissionsOptions<FetchSingleOptions>): Promise<ApplicationCommandPermissions[]> {
+  }: AddApplicationCommandPermissionsOptions<FetchSingleOptions>): Promise<
+    ApplicationCommandPermissions[]
+  > {
     const { guildId, commandId } = this._validateOptions(guild, command);
-    if (!commandId) throw new TypeError('INVALID_TYPE', 'command', 'ApplicationCommandResolvable');
+    if (!commandId) {
+      throw new TypeError(
+        'INVALID_TYPE',
+        'command',
+        'ApplicationCommandResolvable'
+      );
+    }
     if (!Array.isArray(permissions)) {
-      throw new TypeError('INVALID_TYPE', 'permissions', 'Array of ApplicationCommandPermissionData', true);
+      throw new TypeError(
+        'INVALID_TYPE',
+        'permissions',
+        'Array of ApplicationCommandPermissionData',
+        true
+      );
     }
 
     let existing: ApplicationCommandPermissions[] = [];
     try {
       existing = await this.fetchSingle(guildId, commandId);
     } catch (error) {
-      if (!ApplicationCommandPermissionsManager.isUnknownPermissionsError(error)) throw error;
+      if (
+        !ApplicationCommandPermissionsManager.isUnknownPermissionsError(error)
+      ) {
+        throw error;
+      }
     }
 
-    const newPermissions = permissions.slice();
+    const newPermissions = [...permissions];
     for (const perm of existing) {
-      if (!newPermissions.some(x => x.id === perm.id)) {
+      if (!newPermissions.some((permission) => permission.id === perm.id)) {
         newPermissions.push(perm);
       }
     }
@@ -208,19 +304,36 @@ class ApplicationCommandPermissionsManager<
     command,
     users,
     roles,
-  }: RemoveApplicationCommandPermissionsOptions<FetchSingleOptions>): Promise<ApplicationCommandPermissions[]> {
+  }: RemoveApplicationCommandPermissionsOptions<FetchSingleOptions>): Promise<
+    ApplicationCommandPermissions[]
+  > {
     const { guildId, commandId } = this._validateOptions(guild, command);
-    if (!commandId) throw new TypeError('INVALID_TYPE', 'command', 'ApplicationCommandResolvable');
+    if (!commandId) {
+      throw new TypeError(
+        'INVALID_TYPE',
+        'command',
+        'ApplicationCommandResolvable'
+      );
+    }
 
-    if (!users && !roles) throw new TypeError('INVALID_TYPE', 'users OR roles', 'Array or Resolvable', true);
+    if (!users && !roles) {
+      throw new TypeError(
+        'INVALID_TYPE',
+        'users OR roles',
+        'Array or Resolvable',
+        true
+      );
+    }
 
     const resolvedIds: Snowflake[] = [];
     if (Array.isArray(users)) {
-      users.forEach(user => {
+      for (const user of users) {
         const userId = this.client.users.resolveId(user);
-        if (!userId) throw new TypeError('INVALID_ELEMENT', 'Array', 'users', user);
+        if (!userId) {
+          throw new TypeError('INVALID_ELEMENT', 'Array', 'users', user);
+        }
         resolvedIds.push(userId);
-      });
+      }
     } else if (users) {
       const userId = this.client.users.resolveId(users);
       if (!userId) {
@@ -230,24 +343,34 @@ class ApplicationCommandPermissionsManager<
     }
 
     if (Array.isArray(roles)) {
-      roles.forEach(role => {
+      for (const role of roles) {
         if (typeof role === 'string') {
           resolvedIds.push(role);
-          return;
+          continue;
         }
-        if (!this.guild) throw new Error('GUILD_UNCACHED_ROLE_RESOLVE');
+        if (!this.guild) {
+          throw new Error('GUILD_UNCACHED_ROLE_RESOLVE');
+        }
         const roleId = this.guild.roles.resolveId(role);
-        if (!roleId) throw new TypeError('INVALID_ELEMENT', 'Array', 'users', role);
+        if (!roleId) {
+          throw new TypeError('INVALID_ELEMENT', 'Array', 'users', role);
+        }
         resolvedIds.push(roleId);
-      });
+      }
     } else if (roles) {
       if (typeof roles === 'string') {
         resolvedIds.push(roles);
       } else {
-        if (!this.guild) throw new Error('GUILD_UNCACHED_ROLE_RESOLVE');
+        if (!this.guild) {
+          throw new Error('GUILD_UNCACHED_ROLE_RESOLVE');
+        }
         const roleId = this.guild.roles.resolveId(roles);
         if (!roleId) {
-          throw new TypeError('INVALID_TYPE', 'users', 'Array or RoleResolvable');
+          throw new TypeError(
+            'INVALID_TYPE',
+            'users',
+            'Array or RoleResolvable'
+          );
         }
         resolvedIds.push(roleId);
       }
@@ -257,10 +380,16 @@ class ApplicationCommandPermissionsManager<
     try {
       existing = await this.fetchSingle(guildId, commandId);
     } catch (error) {
-      if (!ApplicationCommandPermissionsManager.isUnknownPermissionsError(error)) throw error;
+      if (
+        !ApplicationCommandPermissionsManager.isUnknownPermissionsError(error)
+      ) {
+        throw error;
+      }
     }
 
-    const permissions = existing.filter(perm => !resolvedIds.includes(perm.id));
+    const permissions = existing.filter(
+      (perm) => !resolvedIds.includes(perm.id)
+    );
 
     return this.setSingle(guildId, commandId, permissions);
   }
@@ -271,18 +400,37 @@ class ApplicationCommandPermissionsManager<
     permissionId,
   }: HasApplicationCommandPermissionsOptions<FetchSingleOptions>): Promise<boolean> {
     const { guildId, commandId } = this._validateOptions(guild, command);
-    if (!commandId) throw new TypeError('INVALID_TYPE', 'command', 'ApplicationCommandResolvable');
+    if (!commandId) {
+      throw new TypeError(
+        'INVALID_TYPE',
+        'command',
+        'ApplicationCommandResolvable'
+      );
+    }
 
-    if (!permissionId) throw new TypeError('INVALID_TYPE', 'permissionId', 'UserResolvable or RoleResolvable');
-    let resolvedId: string | null = typeof permissionId === 'string' ? permissionId : null;
+    if (!permissionId) {
+      throw new TypeError(
+        'INVALID_TYPE',
+        'permissionId',
+        'UserResolvable or RoleResolvable'
+      );
+    }
+    let resolvedId: string | null =
+      typeof permissionId === 'string' ? permissionId : null;
     if (typeof permissionId !== 'string') {
       resolvedId = this.client.users.resolveId(permissionId);
       if (!resolvedId) {
-        if (!this.guild) throw new Error('GUILD_UNCACHED_ROLE_RESOLVE');
+        if (!this.guild) {
+          throw new Error('GUILD_UNCACHED_ROLE_RESOLVE');
+        }
         resolvedId = this.guild.roles.resolveId(permissionId);
       }
       if (!resolvedId) {
-        throw new TypeError('INVALID_TYPE', 'permissionId', 'UserResolvable or RoleResolvable');
+        throw new TypeError(
+          'INVALID_TYPE',
+          'permissionId',
+          'UserResolvable or RoleResolvable'
+        );
       }
     }
 
@@ -290,45 +438,63 @@ class ApplicationCommandPermissionsManager<
     try {
       existing = await this.fetchSingle(guildId, commandId);
     } catch (error) {
-      if (!ApplicationCommandPermissionsManager.isUnknownPermissionsError(error)) throw error;
+      if (
+        !ApplicationCommandPermissionsManager.isUnknownPermissionsError(error)
+      ) {
+        throw error;
+      }
     }
 
-    return existing.some(perm => perm.id === resolvedId);
+    return existing.some((perm) => perm.id === resolvedId);
   }
 
   _validateOptions(
     guild?: GuildResolvable,
-    command?: ApplicationCommandResolvable,
+    command?: ApplicationCommandResolvable
   ): { guildId: Snowflake; commandId: Snowflake | null } {
     const guildId = this.guildId ?? this.client.guilds.resolveId(guild);
-    if (!guildId) throw new Error('GLOBAL_COMMAND_PERMISSIONS');
+    if (!guildId) {
+      throw new Error('GLOBAL_COMMAND_PERMISSIONS');
+    }
     let commandId: Snowflake | null = this.commandId;
     if (command && !commandId) {
       if ('id' in this.manager) {
-        const id = this.manager.id;
+        const { id } = this.manager;
         commandId = typeof id === 'string' ? id : null;
       } else if ('resolveId' in this.manager) {
         commandId = this.manager.resolveId(command);
       }
-      commandId = commandId ?? this.client.application?.commands.resolveId(command) ?? null;
+      commandId ??=
+        this.client.application?.commands.resolveId(command) ?? null;
       if (!commandId) {
-        throw new TypeError('INVALID_TYPE', 'command', 'ApplicationCommandResolvable', true);
+        throw new TypeError(
+          'INVALID_TYPE',
+          'command',
+          'ApplicationCommandResolvable',
+          true
+        );
       }
     }
-    return { guildId, commandId };
+    return { commandId, guildId };
   }
 
   static transformPermissions(
-    permissions: ApplicationCommandPermissionData | APIApplicationCommandPermission,
-    received: true,
+    permissions:
+      | ApplicationCommandPermissionData
+      | APIApplicationCommandPermission,
+    received: true
   ): ApplicationCommandPermissions;
   static transformPermissions(
-    permissions: ApplicationCommandPermissionData | APIApplicationCommandPermission,
-    received?: false,
+    permissions:
+      | ApplicationCommandPermissionData
+      | APIApplicationCommandPermission,
+    received?: false
   ): APIApplicationCommandPermission;
   static transformPermissions(
-    permissions: ApplicationCommandPermissionData | APIApplicationCommandPermission,
-    received = false,
+    permissions:
+      | ApplicationCommandPermissionData
+      | APIApplicationCommandPermission,
+    received = false
   ): ApplicationCommandPermissions | APIApplicationCommandPermission {
     return {
       id: permissions.id,
@@ -352,5 +518,3 @@ class ApplicationCommandPermissionsManager<
 
 export default ApplicationCommandPermissionsManager;
 export { ApplicationCommandPermissionsManager };
-
-/* eslint-disable max-len */

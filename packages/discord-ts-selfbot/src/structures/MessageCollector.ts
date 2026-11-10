@@ -1,5 +1,5 @@
 import type { Snowflake } from 'discord-api-types/v10';
-import { Collection } from '@discordjs/collection';
+import type { Collection } from '@discordjs/collection';
 import Collector from './interfaces/Collector';
 import type { CollectorOptions } from '../../typings';
 import type TextBasedChannel from './interfaces/TextBasedChannel';
@@ -8,6 +8,7 @@ import type GuildChannel from './GuildChannel';
 import type { Message } from './Message';
 import type ThreadChannel from './ThreadChannel';
 import _ConstantsModule from '../util/Constants';
+
 const { Events } = _ConstantsModule;
 
 export type MessageCollectorSourceOptions = CollectorOptions<[Message]> & {
@@ -20,7 +21,10 @@ class MessageCollector extends Collector<Snowflake, Message> {
   declare channel: TextBasedChannel;
   declare received: number;
 
-  constructor(channel: TextBasedChannel, options: MessageCollectorSourceOptions = {}) {
+  constructor(
+    channel: TextBasedChannel,
+    options: MessageCollectorSourceOptions = {}
+  ) {
     super(channel.client, options);
 
     this.channel = channel;
@@ -28,7 +32,9 @@ class MessageCollector extends Collector<Snowflake, Message> {
     this.received = 0;
 
     const bulkDeleteListener = (messages: Collection<Snowflake, Message>) => {
-      for (const message of messages.values()) this.handleDispose(message);
+      for (const message of messages.values()) {
+        this.handleDispose(message);
+      }
     };
 
     this._handleChannelDeletion = this._handleChannelDeletion.bind(this);
@@ -46,16 +52,30 @@ class MessageCollector extends Collector<Snowflake, Message> {
     this.once('end', () => {
       this.client.removeListener(Events.MESSAGE_CREATE, this.handleCollect);
       this.client.removeListener(Events.MESSAGE_DELETE, this.handleDispose);
-      this.client.removeListener(Events.MESSAGE_BULK_DELETE, bulkDeleteListener);
-      this.client.removeListener(Events.CHANNEL_DELETE, this._handleChannelDeletion);
-      this.client.removeListener(Events.THREAD_DELETE, this._handleThreadDeletion);
-      this.client.removeListener(Events.GUILD_DELETE, this._handleGuildDeletion);
+      this.client.removeListener(
+        Events.MESSAGE_BULK_DELETE,
+        bulkDeleteListener
+      );
+      this.client.removeListener(
+        Events.CHANNEL_DELETE,
+        this._handleChannelDeletion
+      );
+      this.client.removeListener(
+        Events.THREAD_DELETE,
+        this._handleThreadDeletion
+      );
+      this.client.removeListener(
+        Events.GUILD_DELETE,
+        this._handleGuildDeletion
+      );
       this.client.decrementMaxListeners();
     });
   }
 
   collect(message: Message): Snowflake | null {
-    if (message.channelId !== this.channel.id) return null;
+    if (message.channelId !== this.channel.id) {
+      return null;
+    }
     this.received++;
     return message.id;
   }
@@ -65,13 +85,23 @@ class MessageCollector extends Collector<Snowflake, Message> {
   }
 
   get endReason(): string | null {
-    if (this.options.max && this.collected.size >= this.options.max) return 'limit';
-    if (this.options.maxProcessed && this.received === this.options.maxProcessed) return 'processedLimit';
+    if (this.options.max && this.collected.size >= this.options.max) {
+      return 'limit';
+    }
+    if (
+      this.options.maxProcessed &&
+      this.received === this.options.maxProcessed
+    ) {
+      return 'processedLimit';
+    }
     return null;
   }
 
   _handleChannelDeletion(channel: GuildChannel) {
-    if (channel.id === this.channel.id || ('parentId' in this.channel && channel.id === this.channel.parentId)) {
+    if (
+      channel.id === this.channel.id ||
+      ('parentId' in this.channel && channel.id === this.channel.parentId)
+    ) {
       this.stop('channelDelete');
     }
   }

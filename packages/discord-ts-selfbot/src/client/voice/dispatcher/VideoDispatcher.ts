@@ -6,7 +6,13 @@ class VideoDispatcher extends BaseDispatcher {
   declare fps: number;
   declare mtu: number;
 
-  constructor(player: MediaPlayer, highWaterMark = 12, streams: DispatcherStreams, fps: number, payloadType: number) {
+  constructor(
+    player: MediaPlayer,
+    highWaterMark: number | undefined,
+    streams: DispatcherStreams,
+    fps: number,
+    payloadType: number
+  ) {
     super(player, highWaterMark, payloadType, true, streams);
     this.fps = fps;
 
@@ -14,7 +20,7 @@ class VideoDispatcher extends BaseDispatcher {
   }
 
   get TIMESTAMP_INC() {
-    return 90000 / this.fps;
+    return 90_000 / this.fps;
   }
 
   get FRAME_LENGTH() {
@@ -29,8 +35,8 @@ class VideoDispatcher extends BaseDispatcher {
     const out: Buffer[] = [];
     const dataLength = data.length;
 
-    for (let i = 0; i < dataLength; i += this.mtu) {
-      out.push(data.slice(i, i + this.mtu));
+    for (let index = 0; index < dataLength; index += this.mtu) {
+      out.push(data.slice(index, index + this.mtu));
     }
 
     return out;

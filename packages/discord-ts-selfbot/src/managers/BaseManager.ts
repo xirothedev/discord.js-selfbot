@@ -1,6 +1,8 @@
+import type Client from '../client/Client';
+
 class BaseManager {
-  declare client: import('../client/Client').default;
-  constructor(client: import('../client/Client').default) {
+  declare client: Client;
+  constructor(client: Client) {
     Object.defineProperty(this, 'client', { value: client });
   }
 }

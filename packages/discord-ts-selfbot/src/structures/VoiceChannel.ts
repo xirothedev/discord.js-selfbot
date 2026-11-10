@@ -15,7 +15,7 @@ class VoiceChannel extends BaseGuildVoiceChannel {
     if (!deprecationEmittedForEditable) {
       process.emitWarning(
         'The VoiceChannel#editable getter is deprecated. Use VoiceChannel#manageable instead.',
-        'DeprecationWarning',
+        'DeprecationWarning'
       );
 
       deprecationEmittedForEditable = true;
@@ -25,25 +25,43 @@ class VoiceChannel extends BaseGuildVoiceChannel {
   }
 
   get joinable() {
-    if (!super.joinable) return false;
-    if (this.full && !(this.permissionsFor(this.client.user!)?.has(Permissions.FLAGS.MOVE_MEMBERS, false) ?? false)) {
+    if (!super.joinable) {
+      return false;
+    }
+    const { user } = this.client;
+    if (
+      this.full &&
+      !(
+        user &&
+        (this.permissionsFor(user)?.has(
+          Permissions.FLAGS.MOVE_MEMBERS,
+          false
+        ) ??
+          false)
+      )
+    ) {
       return false;
     }
     return true;
   }
 
   get speakable() {
-    const permissions = this.permissionsFor(this.client.user!);
-    if (!permissions) return false;
+    const { user } = this.client;
+    const permissions = user ? this.permissionsFor(user) : null;
+    if (!permissions) {
+      return false;
+    }
     // This flag allows speaking even if timed out
-    if (permissions.has(Permissions.FLAGS.ADMINISTRATOR, false)) return true;
+    if (permissions.has(Permissions.FLAGS.ADMINISTRATOR, false)) {
+      return true;
+    }
 
-    const me = this.guild.members.me;
+    const { me } = this.guild.members;
     return Boolean(
       me &&
       me.communicationDisabledUntilTimestamp !== null &&
       me.communicationDisabledUntilTimestamp < Date.now() &&
-      permissions.has(Permissions.FLAGS.SPEAK, false),
+      permissions.has(Permissions.FLAGS.SPEAK, false)
     );
   }
 }

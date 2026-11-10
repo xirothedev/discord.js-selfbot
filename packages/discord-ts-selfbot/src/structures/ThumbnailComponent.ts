@@ -4,7 +4,8 @@ import BaseMessageComponent, {
   readComponentString,
 } from './BaseMessageComponent';
 import UnfurledMediaItem from './UnfurledMediaItem';
-import { ComponentType, type APIThumbnailComponent } from 'discord-api-types/v10';
+import { ComponentType } from 'discord-api-types/v10';
+import type { APIThumbnailComponent } from 'discord-api-types/v10';
 
 class ThumbnailComponent extends BaseMessageComponent {
   declare media: UnfurledMediaItem;
@@ -29,10 +30,10 @@ class ThumbnailComponent extends BaseMessageComponent {
 
   toJSON(): APIThumbnailComponent {
     return {
-      type: ComponentType.Thumbnail,
-      media: this.media.toJSON(),
       description: this.description ?? undefined,
+      media: this.media.toJSON(),
       spoiler: this.spoiler,
+      type: ComponentType.Thumbnail,
     };
   }
 }

@@ -1,5 +1,8 @@
-import { startFakeDiscord } from '@discord-ts-selfbot/test-harness';
 import { afterAll, beforeAll, expect, test } from 'bun:test';
+
+import { startFakeDiscord } from '@discord-ts-selfbot/test-harness';
+
+import { ButtonInteraction, Client } from '../src/index';
 import {
   TEST_USER_ID,
   actionRowWithButton,
@@ -8,7 +11,6 @@ import {
   readyPayloadWithDM,
   waitForEvent,
 } from './helpers';
-import { ButtonInteraction, Client } from '../src/index';
 
 let fake;
 let client;
@@ -44,8 +46,8 @@ test('Message#awaitMessageComponent resolves with a button interaction', async (
   expect(message.components[0].components[0].customId).toBe('test-button');
 
   const interactionPromise = message.awaitMessageComponent({
-    filter: interaction => interaction.customId === 'test-button',
-    time: 5_000,
+    filter: (interaction) => interaction.customId === 'test-button',
+    time: 5000,
   });
 
   dispatchButtonInteraction(fake);
@@ -64,13 +66,22 @@ test('Message#createMessageComponentCollector collects button interactions for t
   dispatchMessage(fake, { id: '900000000000000011' });
   const message = await messagePromise;
 
-  const collector = message.createMessageComponentCollector({ max: 1, time: 5_000 });
+  const collector = message.createMessageComponentCollector({
+    max: 1,
+    time: 5000,
+  });
   const collectPromise = waitForEvent(collector, 'collect');
   const endPromise = waitForEvent(collector, 'end');
 
   // An interaction for a different message must not be collected.
-  dispatchButtonInteraction(fake, { id: '900000000000000021', messageId: '900000000000000099' });
-  dispatchButtonInteraction(fake, { id: '900000000000000022', messageId: message.id });
+  dispatchButtonInteraction(fake, {
+    id: '900000000000000021',
+    messageId: '900000000000000099',
+  });
+  dispatchButtonInteraction(fake, {
+    id: '900000000000000022',
+    messageId: message.id,
+  });
 
   const interaction = await collectPromise;
   expect(interaction.message.id).toBe(message.id);

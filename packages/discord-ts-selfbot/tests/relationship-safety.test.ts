@@ -1,5 +1,7 @@
-import { startFakeDiscord } from '@discord-ts-selfbot/test-harness';
 import { afterAll, beforeAll, expect, test } from 'bun:test';
+
+import { startFakeDiscord } from '@discord-ts-selfbot/test-harness';
+
 import { Client } from '../src/index';
 
 const RISKY_ERROR = 'Risky action, not finished yet.';
@@ -28,17 +30,25 @@ async function expectRiskyWithoutRequest(action) {
 }
 
 test('RelationshipManager#deleteRelationship rejects and makes no REST request', async () => {
-  await expectRiskyWithoutRequest(() => client.relationships.deleteRelationship(TARGET_ID));
+  await expectRiskyWithoutRequest(() =>
+    client.relationships.deleteRelationship(TARGET_ID)
+  );
 });
 
 test('RelationshipManager#sendFriendRequest rejects and makes no REST request', async () => {
-  await expectRiskyWithoutRequest(() => client.relationships.sendFriendRequest(TARGET_ID));
+  await expectRiskyWithoutRequest(() =>
+    client.relationships.sendFriendRequest(TARGET_ID)
+  );
 });
 
 test('RelationshipManager#addFriend rejects and makes no REST request', async () => {
-  await expectRiskyWithoutRequest(() => client.relationships.addFriend(TARGET_ID));
+  await expectRiskyWithoutRequest(() =>
+    client.relationships.addFriend(TARGET_ID)
+  );
 });
 
 test('RelationshipManager#addBlocked rejects and makes no REST request', async () => {
-  await expectRiskyWithoutRequest(() => client.relationships.addBlocked(TARGET_ID));
+  await expectRiskyWithoutRequest(() =>
+    client.relationships.addBlocked(TARGET_ID)
+  );
 });

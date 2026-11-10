@@ -1,7 +1,12 @@
-import { DEFAULT_READY, startFakeDiscord } from '@discord-ts-selfbot/test-harness';
 import { afterAll, beforeAll, expect, test } from 'bun:test';
-import { waitForEvent } from './helpers';
+
+import {
+  DEFAULT_READY,
+  startFakeDiscord,
+} from '@discord-ts-selfbot/test-harness';
+
 import { DMChannel, GroupDMChannel, Client } from '../src/index';
+import { gatewayPacket, waitForEvent } from './helpers';
 
 const TEST_USER_ID = '900000000000000101';
 const FRIEND_USER_ID = '900000000000000102';
@@ -13,64 +18,64 @@ const CANCELLED_MESSAGE_REQUEST_ID = '900000000000000203';
 const GROUP_DM_CHANNEL_ID = '900000000000000204';
 
 const TEST_USER = {
-  id: TEST_USER_ID,
-  username: 'test',
-  discriminator: '0',
-  global_name: null,
   avatar: null,
   bot: false,
+  discriminator: '0',
   flags: 0,
+  global_name: null,
+  id: TEST_USER_ID,
+  username: 'test',
 };
 
 const FRIEND = {
-  id: FRIEND_USER_ID,
-  username: 'friend',
+  avatar: null,
   discriminator: '0',
   global_name: null,
-  avatar: null,
+  id: FRIEND_USER_ID,
+  username: 'friend',
 };
 
 const OTHER_FRIEND = {
-  id: OTHER_FRIEND_USER_ID,
-  username: 'other-friend',
+  avatar: null,
   discriminator: '0',
   global_name: null,
-  avatar: null,
+  id: OTHER_FRIEND_USER_ID,
+  username: 'other-friend',
 };
 
 function readyPayloadWithCallChannels() {
   return {
     ...DEFAULT_READY,
-    user: TEST_USER,
     private_channels: [
       {
         id: DM_CHANNEL_ID,
-        type: 1,
-        recipients: [FRIEND],
         last_message_id: null,
+        recipients: [FRIEND],
+        type: 1,
       },
       {
         id: MESSAGE_REQUEST_ID,
-        type: 1,
-        recipients: [FRIEND],
         is_message_request: true,
         is_message_request_timestamp: '2024-01-01T00:00:00.000Z',
+        recipients: [FRIEND],
+        type: 1,
       },
       {
         id: CANCELLED_MESSAGE_REQUEST_ID,
-        type: 1,
-        recipients: [FRIEND],
         is_message_request: true,
         is_message_request_timestamp: '2024-01-01T00:00:00.000Z',
+        recipients: [FRIEND],
+        type: 1,
       },
       {
         id: GROUP_DM_CHANNEL_ID,
-        type: 3,
         name: 'Test group call',
         owner_id: TEST_USER_ID,
         recipients: [FRIEND, OTHER_FRIEND],
+        type: 3,
       },
     ],
+    user: TEST_USER,
   };
 }
 
@@ -117,7 +122,9 @@ test('GroupDMChannel#ring posts the resolved recipient list, or null when empty'
   let request = fake.getLastRequest();
   expect(request.method).toBe('POST');
   expect(request.path).toBe(`/v9/channels/${GROUP_DM_CHANNEL_ID}/call/ring`);
-  expect(request.body).toEqual({ recipients: [FRIEND_USER_ID, OTHER_FRIEND_USER_ID] });
+  expect(request.body).toEqual({
+    recipients: [FRIEND_USER_ID, OTHER_FRIEND_USER_ID],
+  });
 
   await groupChannel.ring([]);
 
@@ -135,7 +142,9 @@ test('DMChannel#acceptMessageRequest consents through the recipients route', asy
 
   const request = fake.getLastRequest();
   expect(request.method).toBe('PUT');
-  expect(request.path).toBe(`/v9/channels/${MESSAGE_REQUEST_ID}/recipients/@me`);
+  expect(request.path).toBe(
+    `/v9/channels/${MESSAGE_REQUEST_ID}/recipients/@me`
+  );
   expect(request.body).toEqual({ consent_status: 2 });
   expect(requestChannel.messageRequest).toBe(false);
 });
@@ -148,24 +157,27 @@ test('DMChannel#cancelMessageRequest deletes through the recipients route', asyn
 
   const request = fake.getLastRequest();
   expect(request.method).toBe('DELETE');
-  expect(request.path).toBe(`/v9/channels/${CANCELLED_MESSAGE_REQUEST_ID}/recipients/@me`);
+  expect(request.path).toBe(
+    `/v9/channels/${CANCELLED_MESSAGE_REQUEST_ID}/recipients/@me`
+  );
   expect(returned).toBe(requestChannel);
 });
 
 test('CALL_CREATE emits callCreate with a CallState for the DM channel', async () => {
   const callPromise = waitForEvent(client, 'callCreate');
 
-  fake.sendGatewayPacket({
-    op: 0,
-    t: 'CALL_CREATE',
-    s: 201,
-    d: {
-      channel_id: DM_CHANNEL_ID,
-      region: 'us-west',
-      ringing: [],
-      voice_states: [],
-    },
-  });
+  fake.sendGatewayPacket(
+    gatewayPacket(
+      {
+        channel_id: DM_CHANNEL_ID,
+        region: 'us-west',
+        ringing: [],
+        voice_states: [],
+      },
+      201,
+      'CALL_CREATE'
+    )
+  );
 
   const call = await callPromise;
   expect(call.channelId).toBe(DM_CHANNEL_ID);
@@ -177,17 +189,18 @@ test('CALL_CREATE emits callCreate with a CallState for the DM channel', async (
 test('CALL_UPDATE emits callUpdate and patches region and ringing users', async () => {
   const callPromise = waitForEvent(client, 'callUpdate');
 
-  fake.sendGatewayPacket({
-    op: 0,
-    t: 'CALL_UPDATE',
-    s: 202,
-    d: {
-      channel_id: DM_CHANNEL_ID,
-      region: 'eu-central',
-      ringing: [FRIEND_USER_ID],
-      voice_states: [],
-    },
-  });
+  fake.sendGatewayPacket(
+    gatewayPacket(
+      {
+        channel_id: DM_CHANNEL_ID,
+        region: 'eu-central',
+        ringing: [FRIEND_USER_ID],
+        voice_states: [],
+      },
+      202,
+      'CALL_UPDATE'
+    )
+  );
 
   const call = await callPromise;
   expect(call.channelId).toBe(DM_CHANNEL_ID);
@@ -199,17 +212,18 @@ test('CALL_UPDATE emits callUpdate and patches region and ringing users', async 
 test('CALL_DELETE emits callDelete with the group DM channel state', async () => {
   const callPromise = waitForEvent(client, 'callDelete');
 
-  fake.sendGatewayPacket({
-    op: 0,
-    t: 'CALL_DELETE',
-    s: 203,
-    d: {
-      channel_id: GROUP_DM_CHANNEL_ID,
-      region: 'brazil',
-      ringing: [],
-      voice_states: [],
-    },
-  });
+  fake.sendGatewayPacket(
+    gatewayPacket(
+      {
+        channel_id: GROUP_DM_CHANNEL_ID,
+        region: 'brazil',
+        ringing: [],
+        voice_states: [],
+      },
+      203,
+      'CALL_DELETE'
+    )
+  );
 
   const call = await callPromise;
   expect(call.channelId).toBe(GROUP_DM_CHANNEL_ID);

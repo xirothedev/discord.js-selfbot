@@ -1,4 +1,5 @@
 import _errorsModule from '../errors';
+
 const { RangeError } = _errorsModule;
 import Util from '../util/Util';
 import type {
@@ -13,22 +14,32 @@ import type {
   MessageEmbedVideo,
 } from '../../typings';
 
-type WebEmbedInput = {
+interface WebEmbedInput {
   title?: string | null;
   description?: string | null;
   url?: string | null;
   timestamp?: Date | number | string | null;
   color?: ColorResolvable | null;
   fields?: EmbedFieldData[];
-  author?: (Partial<MessageEmbedAuthor> & { icon_url?: string; proxy_icon_url?: string }) | null;
+  author?:
+    | (Partial<MessageEmbedAuthor> & {
+        icon_url?: string;
+        proxy_icon_url?: string;
+      })
+    | null;
   thumbnail?: (Partial<MessageEmbedThumbnail> & { proxy_url?: string }) | null;
   image?: (Partial<MessageEmbedImage> & { proxy_url?: string }) | null;
   video?: (Partial<MessageEmbedVideo> & { proxy_url?: string }) | null;
-  footer?: (Partial<MessageEmbedFooter> & { icon_url?: string; proxy_icon_url?: string }) | null;
+  footer?:
+    | (Partial<MessageEmbedFooter> & {
+        icon_url?: string;
+        proxy_icon_url?: string;
+      })
+    | null;
   provider?: Partial<MessageEmbedProvider> | null;
   imageType?: 'thumbnail' | 'image';
   redirect?: string;
-};
+}
 const baseURL = 'https://webembed-sb.onrender.com/embed?';
 const hiddenCharter =
   '||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||';
@@ -49,7 +60,6 @@ class WebEmbed {
 
   declare static hiddenEmbed: string;
   constructor(data: WebEmbed | WebEmbedInput = {}) {
-    // eslint-disable-next-line valid-jsdoc
     this._setup(data);
   }
   _setup(data: WebEmbedInput) {
@@ -64,27 +74,27 @@ class WebEmbed {
 
     this.image = data.image
       ? {
-          url: data.image.url ?? '',
-          proxyURL: data.image.proxyURL ?? data.image.proxy_url,
           height: data.image.height,
+          proxyURL: data.image.proxyURL ?? data.image.proxy_url,
+          url: data.image.url ?? '',
           width: data.image.width,
         }
       : null;
 
     this.thumbnail = data.thumbnail
       ? {
-          url: data.thumbnail.url ?? '',
-          proxyURL: data.thumbnail.proxyURL ?? data.thumbnail.proxy_url,
           height: data.thumbnail.height,
+          proxyURL: data.thumbnail.proxyURL ?? data.thumbnail.proxy_url,
+          url: data.thumbnail.url ?? '',
           width: data.thumbnail.width,
         }
       : null;
 
     this.video = data.video
       ? {
-          url: data.video.url ?? '',
-          proxyURL: data.video.proxyURL ?? data.video.proxy_url,
           height: data.video.height,
+          proxyURL: data.video.proxyURL ?? data.video.proxy_url,
+          url: data.video.url ?? '',
           width: data.video.width,
         }
       : null;
@@ -138,7 +148,11 @@ class WebEmbed {
   }
 
   setDescription(description: string) {
-    this.description = Util.verifyString(description, RangeError, 'EMBED_DESCRIPTION');
+    this.description = Util.verifyString(
+      description,
+      RangeError,
+      'EMBED_DESCRIPTION'
+    );
     return this;
   }
 

@@ -11,19 +11,21 @@ import { Client, CustomStatus, Events } from 'discord-ts-selfbot';
 
 const client = new Client();
 
-client.once(Events.CLIENT_READY, readyClient => {
-  const customStatus = new CustomStatus(readyClient).setEmoji('🎮').setState('discord-ts-selfbot v14 example');
+client.once(Events.CLIENT_READY, (readyClient) => {
+  const customStatus = new CustomStatus(readyClient)
+    .setEmoji('🎮')
+    .setState('discord-ts-selfbot v14 example');
 
   readyClient.user.setPresence({
-    status: 'online',
-    afk: false,
     activities: [customStatus],
+    afk: false,
+    status: 'online',
   });
 
   console.log(`Presence set for ${readyClient.user.tag}.`);
 });
 
-client.on(Events.Error, error => {
+client.on(Events.Error, (error) => {
   console.error('Client error:', error);
 });
 
