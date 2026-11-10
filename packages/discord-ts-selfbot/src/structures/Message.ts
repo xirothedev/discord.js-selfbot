@@ -287,7 +287,6 @@ class Message extends Base {
     }
 
     if ('role_subscription_data' in data && data.role_subscription_data) {
-
       this.roleSubscriptionData = {
         roleSubscriptionListingId: data.role_subscription_data.role_subscription_listing_id,
         tierName: data.role_subscription_data.tier_name,
@@ -489,7 +488,6 @@ class Message extends Base {
     }
 
     if ('interaction_metadata' in data && data.interaction_metadata) {
-
       this.interactionMetadata = transformInteractionMetadata(this.client, data.interaction_metadata);
     } else {
       this.interactionMetadata ??= null;

@@ -263,7 +263,6 @@ class Activity {
     }
 
     if ('timestamps' in data && data.timestamps) {
-
       this.timestamps = {
         start: data.timestamps.start ? new Date(data.timestamps.start).getTime() : null,
         end: data.timestamps.end ? new Date(data.timestamps.end).getTime() : null,
@@ -315,7 +314,6 @@ class Activity {
     }
 
     if ('party' in data) {
-
       this.party = data.party ? { id: data.party.id ?? null, size: data.party.size ?? [0, 0] } : null;
     } else {
       this.party = null;
@@ -502,7 +500,6 @@ class RichPresenceAssets {
 }
 
 class CustomStatus extends Activity {
-
   constructor(client: Client | Presence | Activity, data: Partial<RawActivityData> | CustomStatusOptions = {}) {
     if (!client) throw new Error("Class constructor CustomStatus cannot be invoked without 'client'");
     const { emoji, ...rest } = data;
@@ -750,7 +747,6 @@ class SpotifyRPC extends RichPresence {
     this.setup(options);
   }
   override setup(options: SpotifyRPCOptions) {
-
     const metadata: RichPresenceMetadata = {
       album_id: options.metadata?.album_id || undefined,
       artist_ids: options.metadata?.artist_ids || [],

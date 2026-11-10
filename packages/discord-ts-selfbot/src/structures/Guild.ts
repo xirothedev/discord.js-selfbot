@@ -417,7 +417,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     }
 
     if ('incidents_data' in data && data.incidents_data !== undefined) {
-
       this.incidentsData = data.incidents_data ? Util.transformAPIIncidentsData(data.incidents_data) : null;
     } else {
       this.incidentsData ??= null;

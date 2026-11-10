@@ -12,7 +12,6 @@ import type {
   ChannelLogsQueryOptions,
   EmojiIdentifierResolvable,
   FetchPollAnswerVotersOptions,
-  MessageResolvable,
   MessageSearchOptions,
   TextChannelResolvable,
   UserResolvable,
