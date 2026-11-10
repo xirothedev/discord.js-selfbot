@@ -4,6 +4,10 @@ import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 const { PartialTypes } = _ConstantsModule;
 
+function isUserData(value: unknown): value is import('discord-api-types/v10').APIUser {
+  return typeof value === 'object' && value !== null && 'username' in value && typeof value.username === 'string';
+}
+
 class PresenceUpdateAction extends Action {
   handle(data: GatewayPresenceUpdateDispatchData) {
     let user = this.client.users.cache.get(data.user.id);
@@ -13,7 +17,7 @@ class PresenceUpdateAction extends Action {
     }
     if (!user) return;
 
-    if (data.user?.username) {
+    if (isUserData(data.user)) {
       if (!user._equals(data.user)) this.client.actions.UserUpdate.handle(data.user);
     }
 

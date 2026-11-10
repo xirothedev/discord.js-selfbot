@@ -1,4 +1,5 @@
 import Action from './Action';
+import { isTextBasedChannel } from '../../types/channels';
 import type { GatewayMessagePollVoteDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
@@ -6,7 +7,7 @@ const { Events } = _ConstantsModule;
 class MessagePollVoteRemoveAction extends Action {
   handle(data: GatewayMessagePollVoteDispatchData) {
     const channel = this.getChannel(data);
-    if (!channel?.isText()) return false;
+    if (!channel || !isTextBasedChannel(channel)) return false;
 
     const message = this.getMessage(data, channel);
     if (!message) return false;

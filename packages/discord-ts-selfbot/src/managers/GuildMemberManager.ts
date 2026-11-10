@@ -13,7 +13,7 @@ const { PartialTypes } = _ConstantsModule;
 import DataResolver from '../util/DataResolver';
 import GuildMemberFlags from '../util/GuildMemberFlags';
 import SnowflakeUtil from '../util/SnowflakeUtil';
-import type { APIUser, Snowflake } from 'discord-api-types/v10';
+import type { Snowflake } from 'discord-api-types/v10';
 import type { RawGuildMemberData } from '../../typings/rawDataTypes';
 import type {
   AddGuildMemberOptions,
@@ -100,7 +100,7 @@ class GuildMemberManager extends CachedManager<import('../structures/GuildMember
    * @name GuildMemberManager#cache
    */
 
-  _add(data: RawGuildMemberData | { user: APIUser }, cache = true): GuildMemberType {
+  _add(data: RawGuildMemberData | { user: { id: string } }, cache = true): GuildMemberType {
     const userId = 'user' in data && data.user ? data.user.id : undefined;
     return super._add(data, cache, { id: userId, extras: [this.guild] });
   }

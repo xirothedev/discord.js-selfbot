@@ -1,4 +1,5 @@
 import Action from './Action';
+import { isTextBasedChannel, isGuildBasedChannel } from '../../types/channels';
 import type { GatewayChannelUpdateDispatchData } from 'discord-api-types/v10';
 import _ChannelModule from '../../structures/Channel';
 const { Channel } = _ChannelModule;
@@ -14,19 +15,20 @@ class ChannelUpdateAction extends Action {
       const old = channel._update(data);
 
       if (ChannelTypes[channel.type] !== data.type) {
-        const newChannel = Channel.create(this.client, data, channel.guild);
+        const guild = isGuildBasedChannel(channel) ? channel.guild : undefined;
+        const newChannel = Channel.create(this.client, data, guild);
 
         if (!newChannel) {
           this.client.channels.cache.delete(channel.id);
           return {};
         }
 
-        if (channel.isText() && newChannel.isText()) {
+        if (isTextBasedChannel(channel) && isTextBasedChannel(newChannel)) {
           for (const [id, message] of channel.messages.cache) newChannel.messages.cache.set(id, message);
         }
 
         channel = newChannel;
-        this.client.channels.cache.set(channel.id, channel);
+        this.client.channels.cache.set(newChannel.id, newChannel);
       }
 
       return {

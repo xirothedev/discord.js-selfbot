@@ -1076,7 +1076,8 @@ class Guild extends AnonymousGuild implements GuildEntity {
     }
     if ('premiumProgressBarEnabled' in data) _data.premium_progress_bar_enabled = data.premiumProgressBarEnabled;
     const newData = await this.client.api.guilds(this.id).patch({ data: _data, reason });
-    return this.client.actions.GuildUpdate.handle(newData).updated;
+    this.client.actions.GuildUpdate.handle(newData);
+    return this;
   }
 
   /**
@@ -1444,7 +1445,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
       deprecationEmittedForSetChannelPositions = true;
     }
 
-    return this.channels.setPositions(channelPositions);
+    return this.channels.setPositions(channelPositions).then(() => this);
   }
 
   /**
@@ -1474,7 +1475,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
       deprecationEmittedForSetRolePositions = true;
     }
 
-    return this.roles.setPositions(rolePositions);
+    return this.roles.setPositions(rolePositions).then(() => this);
   }
 
   /**

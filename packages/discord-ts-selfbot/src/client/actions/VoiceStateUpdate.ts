@@ -7,7 +7,7 @@ const { Events } = _ConstantsModule;
 class VoiceStateUpdate extends Action {
   handle(data: GatewayVoiceStateUpdateDispatchData) {
     const client = this.client;
-    const guild = client.guilds.cache.get(data.guild_id);
+    const guild = data.guild_id ? client.guilds.cache.get(data.guild_id) : undefined;
     if (guild) {
       // Update the state
       const oldState =

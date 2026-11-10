@@ -1,4 +1,5 @@
 import Action from './Action';
+import { isTextBasedChannel } from '../../types/channels';
 import type { GatewayTypingStartDispatchData } from 'discord-api-types/v10';
 import Typing from '../../structures/Typing';
 import _ConstantsModule from '../../util/Constants';
@@ -9,7 +10,7 @@ class TypingStart extends Action {
     const channel = this.getChannel({ id: data.channel_id, ...('guild_id' in data && { guild_id: data.guild_id }) });
     if (!channel) return;
 
-    if (!channel.isText()) {
+    if (!isTextBasedChannel(channel)) {
       this.client.emit(Events.WARN, `Discord sent a typing packet to a ${channel.type} channel ${channel.id}`);
       return;
     }

@@ -1,4 +1,5 @@
 import Action from './Action';
+import { isTextBasedChannel } from '../../types/channels';
 import type { APIPartialEmoji, GatewayMessageReactionAddDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
@@ -33,7 +34,7 @@ class MessageReactionAdd extends Action {
       user_id: data.user_id,
       ...('guild_id' in data && { guild_id: data.guild_id }),
     });
-    if (!channel || !channel.isText()) return false;
+    if (!channel || !isTextBasedChannel(channel)) return false;
 
     // Verify message
     const message = this.getMessage(data, channel);

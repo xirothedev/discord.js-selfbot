@@ -264,6 +264,7 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
       guild_id: this.guild.id,
       role: data,
     });
+    if (!role) throw new TypeError('INVALID_TYPE', 'role', 'RoleResolvable');
     if (position) return this.setPosition(role, position, { reason });
     return role;
   }

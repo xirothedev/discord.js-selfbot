@@ -8,6 +8,7 @@ class UserUpdateAction extends Action {
     const client = this.client;
 
     const newUser = data.id === client.user!.id ? client.user : client.users.cache.get(data.id);
+    if (!newUser) return { old: null, updated: null };
     const oldUser = newUser._update(data);
 
     if (!oldUser.equals(newUser)) {

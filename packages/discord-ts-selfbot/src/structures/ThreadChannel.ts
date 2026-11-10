@@ -420,7 +420,8 @@ class ThreadChannel extends Channel {
       reason,
     });
 
-    return this.client.actions.ChannelUpdate.handle(newData).updated;
+    const updated = this.client.actions.ChannelUpdate.handle(newData).updated;
+    return updated instanceof ThreadChannel ? updated : this;
   }
 
   /**

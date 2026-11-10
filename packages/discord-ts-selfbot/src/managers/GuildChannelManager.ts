@@ -278,7 +278,9 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
       },
       reason,
     });
-    return this.client.actions.ChannelCreate.handle(data).channel;
+    const channel = this.client.actions.ChannelCreate.handle(data).channel;
+    if (!(channel instanceof GuildChannel)) throw new TypeError('INVALID_TYPE', 'channel', 'GuildChannel');
+    return channel as T;
   }
 
   /**
@@ -439,7 +441,9 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
       reason,
     });
 
-    return this.client.actions.ChannelUpdate.handle(newData).updated;
+    const updated = this.client.actions.ChannelUpdate.handle(newData).updated;
+    if (!(updated instanceof GuildChannel)) throw new TypeError('INVALID_TYPE', 'channel', 'GuildChannel');
+    return updated as T;
   }
 
   /**

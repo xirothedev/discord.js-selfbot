@@ -19,7 +19,7 @@ class GuildDeleteAction extends Action {
   handle(data: GatewayGuildDeleteDispatchData) {
     const client = this.client;
 
-    let guild = client.guilds.cache.get(data.id);
+    let guild: Guild | null = client.guilds.cache.get(data.id) ?? null;
     if (guild) {
       if (data.unavailable) {
         // Guild is unavailable

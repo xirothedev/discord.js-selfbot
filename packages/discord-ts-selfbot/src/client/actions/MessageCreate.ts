@@ -1,5 +1,6 @@
 import process from 'node:process';
 import Action from './Action';
+import { isTextBasedChannel } from '../../types/channels';
 import type { GatewayMessageCreateDispatchData } from 'discord-api-types/v10';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
@@ -15,7 +16,7 @@ class MessageCreateAction extends Action {
       ...('guild_id' in data && { guild_id: data.guild_id }),
     });
     if (channel) {
-      if (!channel.isText()) return {};
+      if (!isTextBasedChannel(channel)) return {};
 
       const existing = channel.messages.cache.get(data.id);
       if (existing && existing.author?.id !== this.client.user!.id) return { message: existing };

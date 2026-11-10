@@ -11,6 +11,14 @@ import InviteFlags from '../util/InviteFlags';
 import Permissions from '../util/Permissions';
 import InviteGuild from './InviteGuild';
 import type { RawInviteData } from '../../typings/rawDataTypes';
+import type { GatewayInviteCreateDispatchData, GatewayInviteDeleteDispatchData } from 'discord-api-types/v10';
+import { Guild } from './Guild';
+import type { GuildChannel } from './GuildChannel';
+
+export type RawInviteDataSource =
+  | RawInviteData
+  | (GatewayInviteCreateDispatchData & { channel: GuildChannel; guild: Guild })
+  | (GatewayInviteDeleteDispatchData & { channel: GuildChannel; guild: Guild });
 import type { InviteEntity } from '../types/entities/invite';
 import type { PatchOf } from '../types/schema';
 import { isInviteChannel } from '../types/channels';
@@ -44,19 +52,22 @@ class Invite extends Base implements InviteEntity {
   declare flags: InviteEntity['flags'];
   declare _expiresTimestamp: number | null;
   static INVITES_PATTERN: RegExp = /./;
-  constructor(client: import('../client/Client').default, data: RawInviteData) {
+  constructor(client: import('../client/Client').default, data: RawInviteDataSource) {
     super(client);
     this._patch(data);
   }
 
-  _patch(data: PatchOf<'Invite'>) {
+  _patch(data: PatchOf<'Invite'> | RawInviteDataSource) {
     /**
      * The guild the invite is for including welcome screen data if present
      * @type {?(Guild|InviteGuild)}
      */
     this.guild ??= null;
     if (data.guild) {
-      this.guild = this.client.guilds.cache.get(data.guild.id) ?? new InviteGuild(this.client, data.guild);
+      const cached = this.client.guilds.cache.get(data.guild.id);
+      if (cached) this.guild = cached;
+      else if (data.guild instanceof Guild) this.guild = data.guild;
+      else this.guild = new InviteGuild(this.client, data.guild);
     }
 
     if ('code' in data) {

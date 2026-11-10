@@ -4,6 +4,7 @@ const { Error } = _errorsModule;
 import GuildEmojiRoleManager from '../managers/GuildEmojiRoleManager';
 import Permissions from '../util/Permissions';
 import type { RawGuildEmojiData } from '../../typings/rawDataTypes';
+import type { APIEmoji } from 'discord-api-types/v10';
 import type { GuildEmojiEntity } from '../types/entities/guild-emoji';
 import type { PatchOf } from '../types/schema';
 import type { Guild } from './Guild';
@@ -142,7 +143,7 @@ class GuildEmoji extends BaseGuildEmoji implements GuildEmojiEntity {
    * @param {GuildEmoji|APIEmoji} other The emoji to compare it to
    * @returns {boolean}
    */
-  equals(other: GuildEmoji | Record<string, unknown> | null) {
+  equals(other: GuildEmoji | APIEmoji | null) {
     if (other instanceof GuildEmoji) {
       return (
         other.id === this.id &&
@@ -154,12 +155,11 @@ class GuildEmoji extends BaseGuildEmoji implements GuildEmojiEntity {
         other.roles.cache.every((role: unknown) => this.roles.cache.has((role as { id: string }).id))
       );
     } else {
-      const o = other as { id?: unknown; name?: unknown; roles?: unknown[] } | null;
       return (
-        o?.id === this.id &&
-        o?.name === this.name &&
-        (o?.roles?.length ?? 0) === this.roles.cache.size &&
-        (o?.roles ?? []).every((role: unknown) => this.roles.cache.has(role as string))
+        other?.id === this.id &&
+        other?.name === this.name &&
+        (other?.roles?.length ?? 0) === this.roles.cache.size &&
+        (other?.roles ?? []).every(role => this.roles.cache.has(role))
       );
     }
   }

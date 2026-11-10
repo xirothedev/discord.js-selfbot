@@ -6,6 +6,7 @@ import Invite from '../structures/Invite';
 import DataResolver from '../util/DataResolver';
 import type { Snowflake } from 'discord-api-types/v10';
 import type { RawInviteData } from '../../typings/rawDataTypes';
+import type { RawInviteDataSource } from '../structures/Invite';
 import type {
   ApplicationResolvable,
   CreateInviteOptions,
@@ -66,7 +67,7 @@ class GuildInviteManager extends CachedManager<Invite> {
    * @name GuildInviteManager#cache
    */
 
-  _add(data: RawInviteData, cache = true): Invite {
+  _add(data: RawInviteDataSource, cache = true): Invite {
     return super._add(data, cache, { id: data.code, extras: [this.guild] });
   }
 

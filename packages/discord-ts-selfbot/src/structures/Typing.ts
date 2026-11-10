@@ -1,5 +1,5 @@
 import Base from './Base';
-import type TextBasedChannel from './interfaces/TextBasedChannel';
+import type { TextBasedChannel } from '../types/channels';
 import type User from './User';
 import type { RawTypingData } from '../../typings/rawDataTypes';
 
@@ -63,7 +63,7 @@ class Typing extends Base {
    * @readonly
    */
   get guild() {
-    return this.channel.guild ?? null;
+    return 'guild' in this.channel ? this.channel.guild : null;
   }
 
   /**

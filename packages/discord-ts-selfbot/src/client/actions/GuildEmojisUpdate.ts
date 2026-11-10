@@ -9,6 +9,7 @@ class GuildEmojisUpdateAction extends Action {
     const deletions = new Map(guild.emojis.cache);
 
     for (const emoji of data.emojis) {
+      if (!emoji.id) continue;
       // Determine type of emoji event
       const cachedEmoji = guild.emojis.cache.get(emoji.id);
       if (cachedEmoji) {

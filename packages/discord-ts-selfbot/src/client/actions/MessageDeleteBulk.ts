@@ -1,5 +1,6 @@
 import { Collection } from '@discordjs/collection';
 import Action from './Action';
+import { isTextBasedChannel } from '../../types/channels';
 import type { GatewayMessageDeleteBulkDispatchData } from 'discord-api-types/v10';
 import _MessageModule from '../../structures/Message';
 const { deletedMessages } = _MessageModule;
@@ -12,7 +13,7 @@ class MessageDeleteBulkAction extends Action {
     const channel = client.channels.cache.get(data.channel_id);
 
     if (channel) {
-      if (!channel.isText()) return {};
+      if (!isTextBasedChannel(channel)) return {};
 
       const ids = data.ids;
       const messages = new Collection();
