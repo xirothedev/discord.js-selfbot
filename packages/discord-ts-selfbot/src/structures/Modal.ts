@@ -1,15 +1,23 @@
-import BaseMessageComponent from './BaseMessageComponent';
+import BaseMessageComponent, {
+  isComponentDataSource,
+  readComponentArray,
+  readComponentRecord,
+  readComponentString,
+} from './BaseMessageComponent';
+import MessageActionRow from './MessageActionRow';
 import _ConstantsModule from '../util/Constants';
 const { InteractionTypes } = _ConstantsModule;
 import SnowflakeUtil from '../util/SnowflakeUtil';
 import Util from '../util/Util';
 import { isGuildBasedChannel } from '../types/channels';
+import { ComponentType, type APITextInputComponent } from 'discord-api-types/v10';
+import type { Client } from '../client/Client';
 
 /**
  * Represents a modal (form) to be shown in response to an interaction
  */
 class Modal {
-  declare components: import('../../typings').MessageActionRow<import('../../typings').ModalActionRowComponent>[];
+  declare components: MessageActionRow[];
   declare customId: string | null;
   declare title: string | null;
   declare nonce: string;
@@ -17,53 +25,57 @@ class Modal {
   declare applicationId: string;
   declare channelId: string;
   declare replied: boolean;
-  declare client: import('../client/Client').default;
+  declare client: Client;
   /**
    * @param {Object} data Modal to clone or raw data
    * @param {Client} client The client constructing this Modal, if provided
    */
-  constructor(data: any = {}, client: import('../client/Client').default | null = null) {
+  constructor(data: unknown = {}, client: Client | null = null) {
+    const source = isComponentDataSource(data) ? data : {};
     /**
      * A list of MessageActionRows in the modal
      * @type {MessageActionRow[]}
      */
-    this.components = data.components?.map((c: any) => BaseMessageComponent.create(c, client)) ?? [];
+    this.components = readComponentArray(source, 'components')
+      .map(component => BaseMessageComponent.create(component, client))
+      .filter((component): component is MessageActionRow => component instanceof MessageActionRow);
 
     /**
      * A unique string to be sent in the interaction when submitted
      * @type {?string}
      */
-    this.customId = data.custom_id;
+    this.customId = readComponentString(source, 'custom_id', 'customId') ?? null;
 
     /**
      * The title to be displayed on this modal
      * @type {?string}
      */
-    this.title = data.title;
+    this.title = readComponentString(source, 'title') ?? null;
 
     /**
      * Timestamp (Discord epoch) of when this modal was created
      * @type {Snowflake}
      */
-    this.nonce = data.nonce;
+    this.nonce = readComponentString(source, 'nonce') ?? '';
 
     /**
      * ID slash / button / menu when modal is displayed
      * @type {Snowflake}
      */
-    this.id = data.id;
+    this.id = readComponentString(source, 'id') ?? '';
 
     /**
      * Application sending the modal
      * @type {Snowflake}
      */
-    this.applicationId = data.application.id;
+    const application = readComponentRecord(source, 'application');
+    this.applicationId = (application ? readComponentString(application, 'id') : undefined) ?? '';
 
     /**
      * The id of the channel the message was sent in
      * @type {Snowflake}
      */
-    this.channelId = data.channel_id;
+    this.channelId = readComponentString(source, 'channel_id', 'channelId') ?? '';
 
     /**
      * Whether this interaction has already been replied to
@@ -108,7 +120,10 @@ class Modal {
 
   toJSON() {
     return {
-      components: this.components.map((c: any) => c.toJSON()),
+      components: this.components.map(row => ({
+        type: ComponentType.ActionRow,
+        components: row.components.map(component => component.toJSON()),
+      })),
       custom_id: this.customId,
       title: this.title,
       id: this.id,
@@ -130,23 +145,27 @@ class Modal {
     if (!this.applicationId || !this.client || !this.channelId || this.replied) throw new Error('Modal cannot reply');
     // Get Object
     const { title: _title, ...dataFinal } = this.toJSON();
-    dataFinal.components = dataFinal.components
-      .map((c: any) => {
-        c.components[0] = {
-          type: c.components[0].type,
-          value: c.components[0].value,
-          custom_id: c.components[0].custom_id,
+    const components = dataFinal.components
+      .map(row => {
+        const first = row.components[0];
+        if (!first || first.type !== ComponentType.TextInput) return null;
+        const input: APITextInputComponent = {
+          type: first.type,
+          style: first.style,
+          value: first.value,
+          custom_id: first.custom_id,
         };
-        return c;
+        return { type: ComponentType.ActionRow, components: [input] };
       })
-      .filter((c: any) => typeof c.components[0].value == 'string');
+      .filter((row): row is NonNullable<typeof row> => row !== null && typeof row.components[0]?.value === 'string');
+    dataFinal.components = components;
     const nonce = SnowflakeUtil.generate();
     const postData = {
       type: InteractionTypes.MODAL_SUBMIT, // Modal
       application_id: this.applicationId,
       guild_id: this.guildId,
       channel_id: this.channelId,
-      data: dataFinal,
+      data: { ...dataFinal, components },
       nonce,
       session_id: this.client.sessionId,
     };

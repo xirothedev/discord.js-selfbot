@@ -212,6 +212,7 @@ const CONFIG: Record<string, EntityConfig> = {
     fieldTypes: {
       attachments: 'Collection<Snowflake, MessageAttachment>',
       author: 'User | null',
+      components: 'TopLevelComponent[]',
       content: 'string | null',
       guildId: 'Snowflake | null',
       pinned: 'boolean | null',

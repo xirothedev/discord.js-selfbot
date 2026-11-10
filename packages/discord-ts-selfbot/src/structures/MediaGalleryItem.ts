@@ -1,4 +1,5 @@
 import UnfurledMediaItem from './UnfurledMediaItem';
+import { isComponentDataSource, readComponentBoolean, readComponentString } from './BaseMessageComponent';
 
 class MediaGalleryItem {
   declare media: UnfurledMediaItem;
@@ -14,24 +15,25 @@ class MediaGalleryItem {
   /**
    * @param {MediaGalleryItem | APIMediaGalleryItem} [data={}] The data
    */
-  constructor(data: MediaGalleryItem | Partial<import('discord-api-types/v10').APIMediaGalleryItem> = {}) {
+  constructor(data: unknown = {}) {
+    const source = isComponentDataSource(data) ? data : {};
     /**
      * A url or attachment
      * @type {UnfurledMediaItem}
      */
-    this.media = new UnfurledMediaItem(data.media);
+    this.media = new UnfurledMediaItem(source.media);
 
     /**
      * Alt text for the media, max 1024 characters
      * @type {String}
      */
-    this.description = data.description ?? null;
+    this.description = readComponentString(source, 'description') ?? null;
 
     /**
      * Whether the media should be a spoiler (or blurred out). Defaults to false
      * @type {Boolean}
      */
-    this.spoiler = data.spoiler ?? false;
+    this.spoiler = readComponentBoolean(source, 'spoiler') ?? false;
   }
 
   /**

@@ -1,7 +1,10 @@
-import BaseMessageComponent from './BaseMessageComponent';
+import BaseMessageComponent, {
+  isComponentDataSource,
+  readComponentBoolean,
+  readComponentString,
+} from './BaseMessageComponent';
 import UnfurledMediaItem from './UnfurledMediaItem';
-import _ConstantsModule from '../util/Constants';
-const { MessageComponentTypes } = _ConstantsModule;
+import { ComponentType, type APIThumbnailComponent } from 'discord-api-types/v10';
 
 class ThumbnailComponent extends BaseMessageComponent {
   declare media: UnfurledMediaItem;
@@ -16,41 +19,42 @@ class ThumbnailComponent extends BaseMessageComponent {
   /**
    * @param {ThumbnailComponent | APIThumbnailComponent} [data={}] The data
    */
-  constructor(data: any = {}) {
+  constructor(data: unknown = {}) {
     super({ type: 'THUMBNAIL' });
 
     this.setup(data);
   }
 
-  setup(data: any) {
+  setup(data: unknown) {
     super.setup(data);
+    const source = isComponentDataSource(data) ? data : {};
     /**
      * A url or attachment
      * @type {UnfurledMediaItem}
      */
-    this.media = new UnfurledMediaItem(data.media);
+    this.media = new UnfurledMediaItem(source.media);
 
     /**
      * Alt text for the media, max 1024 characters
      * @type {String}
      */
-    this.description = data.description ?? null;
+    this.description = readComponentString(source, 'description') ?? null;
 
     /**
      * Whether the thumbnail should be a spoiler (or blurred out). Defaults to false
      * @type {Boolean}
      */
-    this.spoiler = data.spoiler ?? false;
+    this.spoiler = readComponentBoolean(source, 'spoiler') ?? false;
   }
 
   /**
    * @returns {APIThumbnailComponent}
    */
-  toJSON() {
+  toJSON(): APIThumbnailComponent {
     return {
-      type: MessageComponentTypes[this.type!],
+      type: ComponentType.Thumbnail,
       media: this.media.toJSON(),
-      description: this.description,
+      description: this.description ?? undefined,
       spoiler: this.spoiler,
     };
   }

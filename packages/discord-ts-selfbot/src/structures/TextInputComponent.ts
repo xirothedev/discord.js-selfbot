@@ -1,9 +1,19 @@
-import BaseMessageComponent from './BaseMessageComponent';
+import BaseMessageComponent, {
+  isComponentDataSource,
+  readComponentBoolean,
+  readComponentNumber,
+  readComponentString,
+} from './BaseMessageComponent';
 import _errorsModule from '../errors';
 const { RangeError } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
-const { TextInputStyles, MessageComponentTypes } = _ConstantsModule;
+const { TextInputStyles } = _ConstantsModule;
 import Util from '../util/Util';
+import { ComponentType, TextInputStyle, type APITextInputComponent } from 'discord-api-types/v10';
+
+function isTextInputStyle(value: unknown): value is import('../../typings').TextInputStyle {
+  return typeof value === 'string' && value in TextInputStyles;
+}
 
 /**
  * Represents a text input component in a modal
@@ -34,61 +44,64 @@ class TextInputComponent extends BaseMessageComponent {
   /**
    * @param {TextInputComponent|TextInputComponentOptions} [data={}] TextInputComponent to clone or raw data
    */
-  constructor(data: any = {}) {
+  constructor(data: unknown = {}) {
     super({ type: 'TEXT_INPUT' });
 
     this.setup(data);
   }
 
-  setup(data: any) {
+  setup(data: unknown) {
     super.setup(data);
+    const source = isComponentDataSource(data) ? data : {};
     /**
      * A unique string to be sent in the interaction when submitted
      * @type {?string}
      */
-    this.customId = data.custom_id ?? data.customId ?? null;
+    this.customId = readComponentString(source, 'custom_id', 'customId') ?? null;
 
     /**
      * The text to be displayed above this text input component
      * @type {?string}
      */
-    this.label = data.label ?? null;
+    this.label = readComponentString(source, 'label') ?? null;
 
     /**
      * Maximum length of text that can be entered
      * @type {?number}
      */
-    this.maxLength = data.max_length ?? data.maxLength ?? null;
+    this.maxLength = readComponentNumber(source, 'max_length', 'maxLength') ?? null;
 
     /**
      * Minimum length of text required to be entered
      * @type {?string}
      */
-    this.minLength = data.min_length ?? data.minLength ?? null;
+    this.minLength = readComponentNumber(source, 'min_length', 'minLength') ?? null;
 
     /**
      * Custom placeholder text to display when no text is entered
      * @type {?string}
      */
-    this.placeholder = data.placeholder ?? null;
+    this.placeholder = readComponentString(source, 'placeholder') ?? null;
 
     /**
      * Whether or not this text input component is required
      * @type {?boolean}
      */
-    this.required = data.required ?? false;
+    this.required = readComponentBoolean(source, 'required') ?? false;
 
     /**
      * The style of this text input component
      * @type {?TextInputStyle}
      */
-    this.style = data.style ? TextInputComponent.resolveStyle(data.style) : null;
+    const style = source.style;
+    this.style =
+      typeof style === 'string' || typeof style === 'number' ? (TextInputComponent.resolveStyle(style) ?? null) : null;
 
     /**
      * Value of this text input component
      * @type {?string}
      */
-    this.value = data.value ?? null;
+    this.value = readComponentString(source, 'value') ?? null;
   }
 
   /**
@@ -105,17 +118,17 @@ class TextInputComponent extends BaseMessageComponent {
    * Transforms the text input component into a plain object
    * @returns {APITextInput} The raw data of this text input component
    */
-  toJSON() {
+  toJSON(): APITextInputComponent {
     return {
-      custom_id: this.customId,
-      label: this.label,
-      max_length: this.maxLength,
-      min_length: this.minLength,
-      placeholder: this.placeholder,
+      custom_id: this.customId ?? '',
+      label: this.label ?? undefined,
+      max_length: this.maxLength ?? undefined,
+      min_length: this.minLength ?? undefined,
+      placeholder: this.placeholder ?? undefined,
       required: this.required,
-      style: this.style ? TextInputStyles[this.style] : null,
-      type: MessageComponentTypes[this.type!],
-      value: this.value,
+      style: this.style === 'PARAGRAPH' ? TextInputStyle.Paragraph : TextInputStyle.Short,
+      type: ComponentType.TextInput,
+      value: this.value ?? undefined,
     };
   }
 
@@ -132,8 +145,12 @@ class TextInputComponent extends BaseMessageComponent {
    * @returns {TextInputStyle}
    * @private
    */
-  static resolveStyle(style: any) {
-    return typeof style === 'string' ? style : TextInputStyles[style];
+  static resolveStyle(style: string | number | undefined): import('../../typings').TextInputStyle | undefined {
+    if (typeof style === 'number') {
+      const name = TextInputStyles[style];
+      return isTextInputStyle(name) ? name : undefined;
+    }
+    return isTextInputStyle(style) ? style : undefined;
   }
 }
 

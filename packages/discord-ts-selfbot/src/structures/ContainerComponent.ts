@@ -1,9 +1,20 @@
-import BaseMessageComponent from './BaseMessageComponent';
-import _ConstantsModule from '../util/Constants';
-const { MessageComponentTypes } = _ConstantsModule;
+import BaseMessageComponent, {
+  isComponentDataSource,
+  readComponentArray,
+  readComponentBoolean,
+  readComponentNumber,
+  type ContainerComponentSource,
+} from './BaseMessageComponent';
+import { ComponentType, type APIContainerComponent } from 'discord-api-types/v10';
+
+function isContainerChild(
+  component: import('./BaseMessageComponent').MessageComponentInstance | null,
+): component is ContainerComponentSource {
+  return component !== null && BaseMessageComponent.isContainerComponent(component);
+}
 
 class ContainerComponent extends BaseMessageComponent {
-  declare components: BaseMessageComponent[];
+  declare components: ContainerComponentSource[];
   declare accentColor: number | null;
   declare spoiler: boolean;
   /**
@@ -16,31 +27,34 @@ class ContainerComponent extends BaseMessageComponent {
   /**
    * @param {ContainerComponent | APIContainerComponent} [data={}] The data
    */
-  constructor(data: any = {}) {
+  constructor(data: unknown = {}) {
     super({ type: 'CONTAINER' });
 
     this.setup(data);
   }
 
-  setup(data: any) {
+  setup(data: unknown) {
     super.setup(data);
+    const source = isComponentDataSource(data) ? data : {};
     /**
      * Components of the type action row, text display, section, media gallery, separator, or file
      * @type {ContainerComponents[]}
      */
-    this.components = data.components?.map((c: any) => BaseMessageComponent.create(c)) ?? [];
+    this.components = readComponentArray(source, 'components')
+      .map(component => BaseMessageComponent.create(component))
+      .filter(isContainerChild);
 
     /**
      * Color for the accent on the container as RGB from 0x000000 to 0xFFFFFF
      * @type {Number}
      */
-    this.accentColor = data.accent_color ?? null;
+    this.accentColor = readComponentNumber(source, 'accent_color', 'accentColor') ?? null;
 
     /**
      * Whether the container should be a spoiler (or blurred out). Defaults to false.
      * @type {Boolean}
      */
-    this.spoiler = data.spoiler ?? false;
+    this.spoiler = readComponentBoolean(source, 'spoiler') ?? false;
   }
 
   /**
@@ -57,10 +71,10 @@ class ContainerComponent extends BaseMessageComponent {
   /**
    * @returns {APIContainerComponent}
    */
-  toJSON() {
+  toJSON(): APIContainerComponent {
     return {
-      type: MessageComponentTypes[this.type!],
-      components: this.components.map((c: any) => c.toJSON()),
+      type: ComponentType.Container,
+      components: this.components.map(component => BaseMessageComponent.serializeContainerComponent(component)),
       accent_color: this.accentColor,
       spoiler: this.spoiler,
     };

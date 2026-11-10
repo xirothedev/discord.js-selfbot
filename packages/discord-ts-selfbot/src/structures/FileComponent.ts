@@ -1,7 +1,6 @@
-import BaseMessageComponent from './BaseMessageComponent';
+import BaseMessageComponent, { isComponentDataSource, readComponentBoolean } from './BaseMessageComponent';
 import UnfurledMediaItem from './UnfurledMediaItem';
-import _ConstantsModule from '../util/Constants';
-const { MessageComponentTypes } = _ConstantsModule;
+import { ComponentType, type APIFileComponent } from 'discord-api-types/v10';
 
 class FileComponent extends BaseMessageComponent {
   declare file: UnfurledMediaItem;
@@ -14,33 +13,34 @@ class FileComponent extends BaseMessageComponent {
   /**
    * @param {FileComponent | APIFileComponent} [data={}] The data
    */
-  constructor(data: any = {}) {
+  constructor(data: unknown = {}) {
     super({ type: 'FILE' });
 
     this.setup(data);
   }
 
-  setup(data: any) {
+  setup(data: unknown) {
     super.setup(data);
+    const source = isComponentDataSource(data) ? data : {};
     /**
      * This unfurled media item is unique in that it only supports attachment references using the attachment://<filename> syntax
      * @type {UnfurledMediaItem}
      */
-    this.file = new UnfurledMediaItem(data.file);
+    this.file = new UnfurledMediaItem(source.file);
 
     /**
      * Whether the container should be a spoiler (or blurred out). Defaults to false.
      * @type {Boolean}
      */
-    this.spoiler = data.spoiler ?? false;
+    this.spoiler = readComponentBoolean(source, 'spoiler') ?? false;
   }
 
   /**
    * @returns {APIFileComponent}
    */
-  toJSON() {
+  toJSON(): APIFileComponent {
     return {
-      type: MessageComponentTypes[this.type!],
+      type: ComponentType.File,
       file: this.file.toJSON(),
       spoiler: this.spoiler,
     };

@@ -1,10 +1,24 @@
-import BaseMessageComponent from './BaseMessageComponent';
-import _ConstantsModule from '../util/Constants';
-const { MessageComponentTypes } = _ConstantsModule;
+import { ComponentType, type APIActionRowComponent, type APIComponentInMessageActionRow } from 'discord-api-types/v10';
+import BaseMessageComponent, {
+  isComponentDataSource,
+  readComponentArray,
+  type MessageComponentInstance,
+} from './BaseMessageComponent';
+import MessageButton from './MessageButton';
+import MessageSelectMenu from './MessageSelectMenu';
+import TextInputComponent from './TextInputComponent';
 import type { Client } from '../client/Client';
-import type { MessageActionRowComponentResolvable, MessageActionRowOptions } from '../../typings';
+import type { MessageActionRowComponentResolvable } from '../../typings';
 
-type MessageActionRowData = MessageActionRow | MessageActionRowOptions;
+type ActionRowChild = MessageButton | MessageSelectMenu | TextInputComponent;
+
+function isActionRowChild(component: MessageComponentInstance | null): component is ActionRowChild {
+  return (
+    component instanceof MessageButton ||
+    component instanceof MessageSelectMenu ||
+    component instanceof TextInputComponent
+  );
+}
 
 function flattenComponents(
   components: (MessageActionRowComponentResolvable | MessageActionRowComponentResolvable[])[],
@@ -22,7 +36,7 @@ function flattenComponents(
  * @extends {BaseMessageComponent}
  */
 class MessageActionRow extends BaseMessageComponent {
-  declare components: import('../../typings').MessageActionRowComponent[];
+  declare components: ActionRowChild[];
   /**
    * Components that can be placed in an action row
    * * MessageButton
@@ -56,14 +70,17 @@ class MessageActionRow extends BaseMessageComponent {
    * @param {MessageActionRow|MessageActionRowOptions} [data={}] MessageActionRow to clone or raw data
    * @param {Client} [client] The client constructing this MessageActionRow, if provided
    */
-  constructor(data: MessageActionRowData = { components: [] }, client: Client | null = null) {
+  constructor(data: unknown = { components: [] }, client: Client | null = null) {
     super({ type: 'ACTION_ROW' });
+    const source = isComponentDataSource(data) ? data : {};
 
     /**
      * The components in this action row
      * @type {MessageActionRowComponent[]}
      */
-    this.components = data.components?.map(c => BaseMessageComponent.create(c, client)) ?? [];
+    this.components = readComponentArray(source, 'components')
+      .map(component => BaseMessageComponent.create(component, client))
+      .filter(isActionRowChild);
 
     super.setup(data);
   }
@@ -74,7 +91,11 @@ class MessageActionRow extends BaseMessageComponent {
    * @returns {MessageActionRow}
    */
   addComponents(...components: (MessageActionRowComponentResolvable | MessageActionRowComponentResolvable[])[]) {
-    this.components.push(...flattenComponents(components).map(c => BaseMessageComponent.create(c)));
+    this.components.push(
+      ...flattenComponents(components)
+        .map(component => BaseMessageComponent.create(component))
+        .filter(isActionRowChild),
+    );
     return this;
   }
 
@@ -103,7 +124,9 @@ class MessageActionRow extends BaseMessageComponent {
     this.components.splice(
       index,
       deleteCount,
-      ...flattenComponents(components).map(c => BaseMessageComponent.create(c)),
+      ...flattenComponents(components)
+        .map(component => BaseMessageComponent.create(component))
+        .filter(isActionRowChild),
     );
     return this;
   }
@@ -112,10 +135,12 @@ class MessageActionRow extends BaseMessageComponent {
    * Transforms the action row to a plain object.
    * @returns {APIMessageComponent} The raw data of this action row
    */
-  toJSON() {
+  toJSON(): APIActionRowComponent<APIComponentInMessageActionRow> {
     return {
-      components: this.components.map(c => c.toJSON()),
-      type: MessageComponentTypes[this.type!],
+      components: this.components
+        .map(component => component.toJSON())
+        .filter((component): component is APIComponentInMessageActionRow => component.type !== ComponentType.TextInput),
+      type: ComponentType.ActionRow,
     };
   }
 }

@@ -1,7 +1,6 @@
-import BaseMessageComponent from './BaseMessageComponent';
+import BaseMessageComponent, { isComponentDataSource, readComponentArray } from './BaseMessageComponent';
 import MediaGalleryItem from './MediaGalleryItem';
-import _ConstantsModule from '../util/Constants';
-const { MessageComponentTypes } = _ConstantsModule;
+import { ComponentType, type APIMediaGalleryComponent } from 'discord-api-types/v10';
 
 class MediaGalleryComponent extends BaseMessageComponent {
   declare items: MediaGalleryItem[];
@@ -12,28 +11,29 @@ class MediaGalleryComponent extends BaseMessageComponent {
   /**
    * @param {MediaGalleryComponent | APIMediaGalleryComponent} [data={}] The data
    */
-  constructor(data: any = {}) {
+  constructor(data: unknown = {}) {
     super({ type: 'MEDIA_GALLERY' });
 
     this.setup(data);
   }
 
-  setup(data: any) {
+  setup(data: unknown) {
     super.setup(data);
+    const source = isComponentDataSource(data) ? data : {};
     /**
      * 1 to 10 media gallery items
      * @type {MediaGalleryItem[]}
      */
-    this.items = data.items?.map((item: any) => new MediaGalleryItem(item)) ?? [];
+    this.items = readComponentArray(source, 'items').map(item => new MediaGalleryItem(item));
   }
 
   /**
    * @returns {APIMediaGalleryComponent}
    */
-  toJSON() {
+  toJSON(): APIMediaGalleryComponent {
     return {
-      type: MessageComponentTypes[this.type!],
-      items: this.items.map((c: any) => c.toJSON()),
+      type: ComponentType.MediaGallery,
+      items: this.items.map(item => item.toJSON()),
     };
   }
 }

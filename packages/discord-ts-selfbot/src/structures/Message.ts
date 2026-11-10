@@ -12,7 +12,10 @@ import type {
   Snowflake,
 } from 'discord-api-types/v10';
 import Base from './Base';
-import BaseMessageComponent from './BaseMessageComponent';
+import BaseMessageComponent, {
+  type MessageComponentInstance,
+  type TopLevelComponentSource,
+} from './BaseMessageComponent';
 import InteractionCollector from './InteractionCollector';
 import MessageAttachment from './MessageAttachment';
 import Embed from './MessageEmbed';
@@ -39,7 +42,6 @@ import type { Client } from '../client/Client';
 import type { RawMessageData, RawPartialMessageData } from '../../typings/rawDataTypes';
 import type {
   EmojiIdentifierResolvable,
-  MessageActionRowComponent,
   MessageActivity,
   MessageCall,
   MessageComponentCollectorOptions,
@@ -54,7 +56,6 @@ import type {
   SharedClientTheme,
   StartThreadOptions,
   TextBasedChannelResolvable,
-  TopLevelComponent,
   AwaitMessageComponentOptions,
 } from '../../typings';
 import type { Guild } from './Guild';
@@ -260,7 +261,7 @@ class Message extends Base {
   declare attachments: Collection<Snowflake, MessageAttachment>;
   declare author: User | null;
   declare channelId: Snowflake;
-  declare components: TopLevelComponent[];
+  declare components: TopLevelComponentSource[];
   declare content: string | null;
   declare createdTimestamp: number;
   declare editedTimestamp: number | null;
@@ -459,7 +460,9 @@ class Message extends Base {
        * An array of components in the message
        * @type {TopLevelComponent[]}
        */
-      this.components = data.components.map(c => BaseMessageComponent.create(c, this.client));
+      this.components = data.components
+        .map(c => BaseMessageComponent.create(c, this.client))
+        .filter((c): c is TopLevelComponentSource => BaseMessageComponent.isTopLevelComponent(c));
     } else {
       this.components = this.components?.slice() ?? [];
     }
@@ -1441,14 +1444,14 @@ class Message extends Base {
    * @param {string} customId The custom id to resolve against
    * @returns {?MessageActionRowComponent}
    */
-  resolveComponent(customId: string): MessageActionRowComponent | null {
+  resolveComponent(customId: string): MessageComponentInstance | null {
     return (
       this.components
-        .flatMap(BaseMessageComponent.extractInteractiveComponents)
-        .find(
-          (component: MessageActionRowComponent & { custom_id?: string }) =>
-            (component.customId ?? component.custom_id) === customId,
-        ) ?? null
+        .flatMap(component => BaseMessageComponent.extractInteractiveComponents(component))
+        .find(component => {
+          if ('customId' in component && component.customId === customId) return true;
+          return 'custom_id' in component && component.custom_id === customId;
+        }) ?? null
     );
   }
 
@@ -1473,8 +1476,8 @@ class Message extends Base {
       this.nonce === message.nonce &&
       this.embeds.length === message.embeds.length &&
       this.attachments.size === message.attachments.size &&
-      this.attachments.every((attachment: any) => message.attachments.has(attachment.id)) &&
-      this.embeds.every((embed: any, index: any) => embed.equals(message.embeds[index]));
+      this.attachments.every(attachment => message.attachments.has(attachment.id)) &&
+      this.embeds.every((embed, index) => embed.equals(message.embeds[index]));
 
     if (equal && rawData) {
       equal =
@@ -1541,7 +1544,7 @@ class Message extends Base {
   clickButton(buttonid: string) {
     const button = this.resolveComponent(buttonid);
     if (!button || button.type !== 'BUTTON') throw new TypeError('BUTTON_NOT_FOUND');
-    if (button.disabled) throw new TypeError('BUTTON_CANNOT_CLICK');
+    if ('disabled' in button && button.disabled) throw new TypeError('BUTTON_CANNOT_CLICK');
     const nonce = SnowflakeUtil.generate();
     const data = {
       type: InteractionTypes.MESSAGE_COMPONENT,
@@ -1554,7 +1557,7 @@ class Message extends Base {
       message_flags: this.flags.bitfield,
       data: {
         component_type: MessageComponentTypes.BUTTON,
-        custom_id: button.customId,
+        custom_id: 'customId' in button ? button.customId : null,
       },
     };
     this.client.api.interactions.post({

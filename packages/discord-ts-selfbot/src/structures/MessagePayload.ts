@@ -216,7 +216,11 @@ class MessagePayload {
 
     const components = this.options.components?.map(component => {
       const data = 'toJSON' in component && typeof component.toJSON === 'function' ? component.toJSON() : component;
-      return BaseMessageComponent.create(data)!.toJSON();
+      const created = BaseMessageComponent.create(data);
+      if (!created || !BaseMessageComponent.isTopLevelComponent(created)) {
+        throw new DjsError('INVALID_TYPE: component is not a top-level component');
+      }
+      return BaseMessageComponent.serializeTopLevelComponent(created);
     });
 
     let username;

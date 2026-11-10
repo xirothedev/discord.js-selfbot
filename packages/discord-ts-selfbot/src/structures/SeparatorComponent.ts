@@ -1,9 +1,12 @@
-import BaseMessageComponent from './BaseMessageComponent';
-import _ConstantsModule from '../util/Constants';
-const { MessageComponentTypes, SeparatorSpacingSizes } = _ConstantsModule;
+import BaseMessageComponent, {
+  isComponentDataSource,
+  readComponentBoolean,
+  readComponentNumber,
+} from './BaseMessageComponent';
+import { ComponentType, SeparatorSpacingSize, type APISeparatorComponent } from 'discord-api-types/v10';
 
 class SeparatorComponent extends BaseMessageComponent {
-  declare spacing: import('../../typings/enums').SeparatorSpacingSizes;
+  declare spacing: 1 | 2;
   declare divider: boolean;
   /**
    * @property {SeparatorSpacingSizes} [spacing] Size of separator padding — SeparatorSpacingSizes.SMALL for small padding, SeparatorSpacingSizes.LARGE for large padding. Defaults to SeparatorSpacingSizes.SMALL
@@ -13,33 +16,34 @@ class SeparatorComponent extends BaseMessageComponent {
   /**
    * @param {SeparatorComponent | APISeparatorComponent} [data={}] The data
    */
-  constructor(data: any = {}) {
+  constructor(data: unknown = {}) {
     super({ type: 'SEPARATOR' });
 
     this.setup(data);
   }
 
-  setup(data: any) {
+  setup(data: unknown) {
     super.setup(data);
+    const source = isComponentDataSource(data) ? data : {};
     /**
      * Size of separator padding — SeparatorSpacingSizes.SMALL for small padding, SeparatorSpacingSizes.LARGE for large padding. Defaults to SeparatorSpacingSizes.SMALL
      * @type {SeparatorSpacingSizes}
      */
-    this.spacing = data.spacing ?? SeparatorSpacingSizes.SMALL;
+    this.spacing = readComponentNumber(source, 'spacing') === SeparatorSpacingSize.Large ? 2 : 1;
 
     /**
      * Whether a visual divider should be displayed in the component. Defaults to true
      * @type {Boolean}
      */
-    this.divider = data.divider ?? true;
+    this.divider = readComponentBoolean(source, 'divider') ?? true;
   }
 
   /**
    * @returns {APISeparatorComponent}
    */
-  toJSON() {
+  toJSON(): APISeparatorComponent {
     return {
-      type: MessageComponentTypes[this.type!],
+      type: ComponentType.Separator,
       spacing: this.spacing,
       divider: this.divider,
     };

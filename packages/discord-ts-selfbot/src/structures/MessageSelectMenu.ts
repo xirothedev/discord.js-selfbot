@@ -1,6 +1,46 @@
 import BaseMessageComponent from './BaseMessageComponent';
 import _ConstantsModule from '../util/Constants';
-const { ChannelTypes, MessageComponentTypes } = _ConstantsModule;
+const { ChannelTypes } = _ConstantsModule;
+import {
+  ChannelType,
+  ComponentType,
+  type APISelectMenuComponent,
+  type APISelectMenuOption,
+} from 'discord-api-types/v10';
+
+const SELECT_MENU_TYPES: Record<string, APISelectMenuComponent['type']> = {
+  STRING_SELECT: ComponentType.StringSelect,
+  USER_SELECT: ComponentType.UserSelect,
+  ROLE_SELECT: ComponentType.RoleSelect,
+  MENTIONABLE_SELECT: ComponentType.MentionableSelect,
+  CHANNEL_SELECT: ComponentType.ChannelSelect,
+};
+
+function isChannelType(value: unknown): value is ChannelType {
+  return typeof value === 'number' && value in ChannelType;
+}
+
+function resolveChannelType(value: string | number): ChannelType | undefined {
+  if (typeof value === 'number') return isChannelType(value) ? value : undefined;
+  const resolved = ChannelTypes[value];
+  return typeof resolved === 'number' && isChannelType(resolved) ? resolved : undefined;
+}
+
+function serializeSelectOption(option: MessageSelectOption): APISelectMenuOption {
+  return {
+    label: option.label,
+    value: option.value,
+    description: option.description ?? undefined,
+    emoji: option.emoji
+      ? {
+          id: option.emoji.id ?? undefined,
+          name: option.emoji.name ?? undefined,
+          animated: option.emoji.animated,
+        }
+      : undefined,
+    default: option.default,
+  };
+}
 import Util from '../util/Util';
 import type { MessageSelectOption } from '../../typings';
 
@@ -74,7 +114,7 @@ class MessageSelectMenu extends BaseMessageComponent {
    * @param {MessageSelectMenu|MessageSelectMenuOptions} [data={}] MessageSelectMenu to clone or raw data
    */
   constructor(data: MessageSelectMenuData = {}) {
-    super({ type: BaseMessageComponent.resolveType(data.type) ?? 'STRING_SELECT' });
+    super({ type: BaseMessageComponent.resolveType(data.type ?? undefined) ?? 'STRING_SELECT' });
 
     this.setup(data);
   }
@@ -139,17 +179,30 @@ class MessageSelectMenu extends BaseMessageComponent {
    * Transforms the select menu into a plain object
    * @returns {APIMessageSelectMenu} The raw data of this select menu
    */
-  toJSON() {
-    return {
-      channel_types: this.channelTypes.map(type => (typeof type === 'string' ? ChannelTypes[type] : type)),
-      custom_id: this.customId,
+  toJSON(): APISelectMenuComponent {
+    const type = this.type ? (SELECT_MENU_TYPES[this.type] ?? ComponentType.StringSelect) : ComponentType.StringSelect;
+    const common = {
+      custom_id: this.customId ?? '',
       disabled: this.disabled,
-      placeholder: this.placeholder,
-      min_values: this.minValues,
+      placeholder: this.placeholder ?? undefined,
+      min_values: this.minValues ?? undefined,
       max_values: this.maxValues ?? (this.minValues ? this.options.length : undefined),
-      options: this.options,
-      type: typeof this.type === 'string' ? MessageComponentTypes[this.type] : this.type,
     };
+
+    switch (type) {
+      case ComponentType.StringSelect:
+        return { ...common, type, options: this.options.map(serializeSelectOption) };
+      case ComponentType.ChannelSelect:
+        return {
+          ...common,
+          type,
+          channel_types: this.channelTypes
+            .map(resolveChannelType)
+            .filter((channelType): channelType is ChannelType => channelType !== undefined),
+        };
+      default:
+        return { ...common, type };
+    }
   }
 
   /**
