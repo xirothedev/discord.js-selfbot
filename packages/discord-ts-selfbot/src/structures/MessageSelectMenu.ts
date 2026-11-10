@@ -2,6 +2,32 @@ import BaseMessageComponent from './BaseMessageComponent';
 import _ConstantsModule from '../util/Constants';
 const { ChannelTypes, MessageComponentTypes } = _ConstantsModule;
 import Util from '../util/Util';
+import type { MessageSelectOption } from '../../typings';
+
+interface MessageSelectOptionDataSource {
+  label: string;
+  value: string;
+  description?: string | null;
+  emoji?: unknown;
+  default?: boolean;
+}
+
+interface MessageSelectMenuDataSource {
+  type?: string | number;
+  custom_id?: string;
+  customId?: string;
+  placeholder?: string;
+  min_values?: number;
+  minValues?: number;
+  max_values?: number;
+  maxValues?: number;
+  options?: (MessageSelectOptionDataSource | MessageSelectOptionDataSource[])[];
+  disabled?: boolean;
+  channel_types?: (string | number)[];
+  channelTypes?: (string | number)[];
+}
+
+type MessageSelectMenuData = MessageSelectMenu | MessageSelectMenuDataSource;
 
 /**
  * Represents a select menu message component
@@ -47,19 +73,20 @@ class MessageSelectMenu extends BaseMessageComponent {
   /**
    * @param {MessageSelectMenu|MessageSelectMenuOptions} [data={}] MessageSelectMenu to clone or raw data
    */
-  constructor(data: any = {}) {
+  constructor(data: MessageSelectMenuData = {}) {
     super({ type: BaseMessageComponent.resolveType(data.type) ?? 'STRING_SELECT' });
 
     this.setup(data);
   }
 
-  setup(data: any) {
+  setup(data: MessageSelectMenuData) {
     super.setup(data);
     /**
      * A unique string to be sent in the interaction when clicked
      * @type {?string}
      */
-    this.customId = data.custom_id ?? data.customId ?? null;
+    this.customId =
+      ('custom_id' in data ? data.custom_id : undefined) ?? ('customId' in data ? data.customId : undefined) ?? null;
 
     /**
      * Custom placeholder text to display when nothing is selected
@@ -71,19 +98,25 @@ class MessageSelectMenu extends BaseMessageComponent {
      * The minimum number of selections required
      * @type {?number}
      */
-    this.minValues = data.min_values ?? data.minValues ?? null;
+    this.minValues =
+      ('min_values' in data ? data.min_values : undefined) ??
+      ('minValues' in data ? data.minValues : undefined) ??
+      null;
 
     /**
      * The maximum number of selections allowed
      * @type {?number}
      */
-    this.maxValues = data.max_values ?? data.maxValues ?? null;
+    this.maxValues =
+      ('max_values' in data ? data.max_values : undefined) ??
+      ('maxValues' in data ? data.maxValues : undefined) ??
+      null;
 
     /**
      * Options for the STRING_SELECT menu
      * @type {MessageSelectOption[]}
      */
-    this.options = (this.constructor as any).normalizeOptions(data.options ?? []);
+    this.options = MessageSelectMenu.normalizeOptions(...(data.options ?? []));
 
     /**
      * Whether this select menu is currently disabled
@@ -95,10 +128,11 @@ class MessageSelectMenu extends BaseMessageComponent {
      * Channels that are possible to select in CHANNEL_SELECT menu
      * @type {ChannelType[]}
      */
-    this.channelTypes =
-      data.channel_types?.map((channelType: any) =>
-        typeof channelType === 'string' ? channelType : ChannelTypes[channelType],
-      ) ?? [];
+    const channelTypes =
+      'channel_types' in data ? (data.channel_types ?? []) : 'channelTypes' in data ? (data.channelTypes ?? []) : [];
+    this.channelTypes = channelTypes.map(channelType =>
+      typeof channelType === 'string' ? channelType : ChannelTypes[channelType],
+    );
   }
 
   /**
@@ -107,7 +141,7 @@ class MessageSelectMenu extends BaseMessageComponent {
    */
   toJSON() {
     return {
-      channel_types: this.channelTypes.map((type: any) => (typeof type === 'string' ? ChannelTypes[type] : type)),
+      channel_types: this.channelTypes.map(type => (typeof type === 'string' ? ChannelTypes[type] : type)),
       custom_id: this.customId,
       disabled: this.disabled,
       placeholder: this.placeholder,
@@ -123,15 +157,15 @@ class MessageSelectMenu extends BaseMessageComponent {
    * @param {MessageSelectOptionData} option The select menu option to normalize
    * @returns {MessageSelectOption}
    */
-  static normalizeOption(option: any) {
+  static normalizeOption(option: MessageSelectOptionDataSource): MessageSelectOption {
     let { label, value, description, emoji } = option;
 
     label = Util.verifyString(label, RangeError, 'SELECT_OPTION_LABEL');
     value = Util.verifyString(value, RangeError, 'SELECT_OPTION_VALUE');
-    emoji = emoji ? Util.resolvePartialEmoji(emoji) : null;
+    const resolvedEmoji = emoji ? Util.resolvePartialEmoji(emoji) : null;
     description = description ? Util.verifyString(description, RangeError, 'SELECT_OPTION_DESCRIPTION', true) : null;
 
-    return { label, value, description, emoji, default: option.default ?? false };
+    return { label, value, description, emoji: resolvedEmoji, default: option.default ?? false };
   }
 
   /**
@@ -139,8 +173,15 @@ class MessageSelectMenu extends BaseMessageComponent {
    * @param {...MessageSelectOptionData|MessageSelectOptionData[]} options The select menu options to normalize
    * @returns {MessageSelectOption[]}
    */
-  static normalizeOptions(...options: any[]) {
-    return options.flat(Infinity).map((option: any) => this.normalizeOption(option));
+  static normalizeOptions(
+    ...options: (MessageSelectOptionDataSource | MessageSelectOptionDataSource[])[]
+  ): MessageSelectOption[] {
+    const flattened: MessageSelectOptionDataSource[] = [];
+    for (const option of options) {
+      if (Array.isArray(option)) flattened.push(...option);
+      else flattened.push(option);
+    }
+    return flattened.map(option => this.normalizeOption(option));
   }
 }
 
