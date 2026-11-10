@@ -488,7 +488,7 @@ class Role extends Base implements RoleEntity {
    *   .then(updated => console.log(`Role position: ${updated.position}`))
    *   .catch(console.error);
    */
-  setPosition(position: unknown, options: Record<string, unknown> = {}) {
+  setPosition(position: number, options: import('../../typings').SetRolePositionOptions = {}) {
     return this.guild.roles.setPosition(this, position, options);
   }
 

@@ -11,7 +11,7 @@ export type BitFieldResolvable = number | string | bigint | BitField | BitFieldL
 interface BitFieldStatic {
   defaultBit: number | bigint;
   FLAGS: Record<string, number | bigint>;
-  resolve(bit: BitFieldResolvable): number | bigint;
+  resolve(bit: unknown): number | bigint;
 }
 
 class BitField {
@@ -20,7 +20,7 @@ class BitField {
 
   bitfield: number | bigint;
 
-  constructor(bits: BitFieldResolvable = (this.constructor as unknown as BitFieldStatic).defaultBit) {
+  constructor(bits: unknown = (this.constructor as unknown as BitFieldStatic).defaultBit) {
     this.bitfield = (this.constructor as unknown as BitFieldStatic).resolve(bits) as number | bigint;
   }
 

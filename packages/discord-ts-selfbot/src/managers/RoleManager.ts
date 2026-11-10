@@ -10,6 +10,25 @@ import Permissions from '../util/Permissions';
 import _UtilModule from '../util/Util';
 const { resolveColor } = _UtilModule;
 import Util from '../util/Util';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { RawRoleData } from '../../typings/rawDataTypes';
+import type {
+  BaseFetchOptions,
+  CreateRoleOptions,
+  RoleData,
+  RoleResolvable,
+  SetRolePositionOptions,
+  UserResolvable,
+} from '../../typings';
+import type { Guild } from '../structures/Guild';
+import type { Role as RoleStructure } from '../structures/Role';
+
+type RoleResolvableSource = RoleStructure | RoleResolvable;
+
+interface RolePositionSource {
+  role: RoleResolvableSource;
+  position: number;
+}
 
 let cacheWarningEmitted = false;
 let deprecationEmittedForCreate = false;
@@ -20,8 +39,8 @@ let deprecationEmittedForEdit = false;
  * @extends {CachedManager}
  */
 class RoleManager extends CachedManager<import('../structures/Role').Role> {
-  declare guild: import('../structures/Guild').Guild;
-  constructor(guild: any, iterable?: any) {
+  declare guild: Guild;
+  constructor(guild: Guild, iterable?: Iterable<RoleStructure>) {
     super(guild.client, Role, iterable);
     if (!cacheWarningEmitted && this._cache.constructor.name !== 'Collection') {
       cacheWarningEmitted = true;
@@ -44,7 +63,7 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
    * @name RoleManager#cache
    */
 
-  _add(data: any, cache: any = true) {
+  _add(data: RawRoleData, cache = true): RoleStructure {
     return super._add(data, cache, { extras: [this.guild] });
   }
 
@@ -64,15 +83,20 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
    *   .then(role => console.log(`The role color is: ${role.colors.primaryColor}`))
    *   .catch(console.error);
    */
-  async fetch(id: any, { cache = true, force = false }: any = {}) {
+  async fetch(id: Snowflake, options?: BaseFetchOptions): Promise<RoleStructure | null>;
+  async fetch(id?: undefined, options?: BaseFetchOptions): Promise<Collection<Snowflake, RoleStructure>>;
+  async fetch(
+    id?: Snowflake,
+    { cache = true, force = false }: BaseFetchOptions = {},
+  ): Promise<RoleStructure | Collection<Snowflake, RoleStructure> | null> {
     if (id && !force) {
       const existing = this.cache.get(id);
       if (existing) return existing;
     }
 
     // We cannot fetch a single role, as of this commit's date, Discord API throws with 405
-    const data = await this.client.api.guilds(this.guild.id).roles.get();
-    const roles = new Collection();
+    const data: RawRoleData[] = await this.client.api.guilds(this.guild.id).roles.get();
+    const roles = new Collection<Snowflake, RoleStructure>();
     for (const role of data) roles.set(role.id, this._add(role, cache));
     return id ? (roles.get(id) ?? null) : roles;
   }
@@ -93,11 +117,11 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
    * @param {RoleResolvable} role The role to fetch member ids for
    * @returns {Promise<Snowflake[]>}
    */
-  async fetchMemberIds(role: any) {
+  async fetchMemberIds(role: RoleResolvableSource): Promise<Snowflake[]> {
     const id = this.resolveId(role);
     if (!id) throw new TypeError('INVALID_TYPE', 'role', 'RoleResolvable');
 
-    const data = await this.client.api.guilds(this.guild.id).roles(id, 'member-ids').get();
+    const data: Snowflake[] = await this.client.api.guilds(this.guild.id).roles(id, 'member-ids').get();
 
     return data;
   }
@@ -191,8 +215,9 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
    *   .then(console.log)
    *   .catch(console.error);
    */
-  async create(options: any = {}) {
-    let { permissions, icon } = options;
+  async create(options: CreateRoleOptions = {}): Promise<RoleStructure> {
+    let { icon } = options;
+    let permissions: unknown = options.permissions;
     const { name, color, hoist, position, mentionable, reason, unicodeEmoji } = options;
 
     if (typeof permissions !== 'undefined') permissions = new Permissions(permissions);
@@ -202,11 +227,12 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
       if (typeof icon !== 'string') icon = undefined;
     }
 
-    let colors = options.colors && {
-      primary_color: resolveColor(options.colors.primaryColor),
-      secondary_color: options.colors.secondaryColor && resolveColor(options.colors.secondaryColor),
-      tertiary_color: options.colors.tertiaryColor && resolveColor(options.colors.tertiaryColor),
-    };
+    let colors: { primary_color: number; secondary_color: number | null; tertiary_color: number | null } | undefined =
+      options.colors && {
+        primary_color: resolveColor(options.colors.primaryColor),
+        secondary_color: options.colors.secondaryColor ? resolveColor(options.colors.secondaryColor) : null,
+        tertiary_color: options.colors.tertiaryColor ? resolveColor(options.colors.tertiaryColor) : null,
+      };
 
     if (color !== undefined) {
       if (!deprecationEmittedForCreate) {
@@ -254,11 +280,11 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
    *   .then(updated => console.log(`Edited role name to ${updated.name}`))
    *   .catch(console.error);
    */
-  async edit(role: any, data: any, reason: any) {
-    role = this.resolve(role);
-    if (!role) throw new TypeError('INVALID_TYPE', 'role', 'RoleResolvable');
+  async edit(role: RoleResolvableSource, data: RoleData, reason?: string): Promise<RoleStructure> {
+    const resolved = this.resolve(role);
+    if (!resolved) throw new TypeError('INVALID_TYPE', 'role', 'RoleResolvable');
 
-    if (typeof data.position === 'number') await this.setPosition(role, data.position, { reason });
+    if (typeof data.position === 'number') await this.setPosition(resolved, data.position, { reason });
 
     let icon = data.icon;
     if (icon) {
@@ -267,11 +293,12 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
       if (typeof icon !== 'string') icon = undefined;
     }
 
-    let colors = data.colors && {
-      primary_color: resolveColor(data.colors.primaryColor),
-      secondary_color: data.colors.secondaryColor && resolveColor(data.colors.secondaryColor),
-      tertiary_color: data.colors.tertiaryColor && resolveColor(data.colors.tertiaryColor),
-    };
+    let colors: { primary_color: number; secondary_color: number | null; tertiary_color: number | null } | undefined =
+      data.colors && {
+        primary_color: resolveColor(data.colors.primaryColor),
+        secondary_color: data.colors.secondaryColor ? resolveColor(data.colors.secondaryColor) : null,
+        tertiary_color: data.colors.tertiaryColor ? resolveColor(data.colors.tertiaryColor) : null,
+      };
 
     if (data.color !== undefined) {
       if (!deprecationEmittedForEdit) {
@@ -297,9 +324,9 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
       unicode_emoji: data.unicodeEmoji,
     };
 
-    const d = await this.client.api.guilds(this.guild.id).roles(role.id).patch({ data: _data, reason });
+    const d = await this.client.api.guilds(this.guild.id).roles(resolved.id).patch({ data: _data, reason });
 
-    const clone = role._clone();
+    const clone = resolved._clone();
     clone._patch(d);
     return clone;
   }
@@ -315,7 +342,7 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
    *   .then(() => console.log('Deleted the role.'))
    *   .catch(console.error);
    */
-  async delete(role: any, reason: any) {
+  async delete(role: RoleResolvableSource, reason?: string): Promise<void> {
     const id = this.resolveId(role);
     await this.client.api.guilds[this.guild.id].roles[id!].delete({ reason });
     this.client.actions.GuildRoleDelete.handle({ guild_id: this.guild.id, role_id: id });
@@ -333,13 +360,17 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
    *   .then(updated => console.log(`Role position: ${updated.position}`))
    *   .catch(console.error);
    */
-  async setPosition(role: any, position: any, { relative, reason }: any = {}) {
-    role = this.resolve(role);
-    if (!role) throw new TypeError('INVALID_TYPE', 'role', 'RoleResolvable');
+  async setPosition(
+    role: RoleResolvableSource,
+    position: number,
+    { relative, reason }: SetRolePositionOptions = {},
+  ): Promise<RoleStructure> {
+    const resolved = this.resolve(role);
+    if (!resolved) throw new TypeError('INVALID_TYPE', 'role', 'RoleResolvable');
     const updatedRoles = await Util.setPosition(
-      role,
+      resolved,
       position,
-      relative,
+      Boolean(relative),
       this.guild._sortedRoles(),
       this.client.api.guilds(this.guild.id).roles,
       reason,
@@ -349,7 +380,7 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
       guild_id: this.guild.id,
       roles: updatedRoles,
     });
-    return role;
+    return resolved;
   }
 
   /**
@@ -368,20 +399,20 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
    *  .then(guild => console.log(`Role positions updated for ${guild}`))
    *  .catch(console.error);
    */
-  async setPositions(rolePositions: any) {
+  async setPositions(rolePositions: readonly RolePositionSource[]) {
     // Make sure rolePositions are prepared for API
-    rolePositions = rolePositions.map((o: any) => ({
+    const positions = rolePositions.map(o => ({
       id: this.resolveId(o.role),
       position: o.position,
     }));
 
     // Call the API to update role positions
     await this.client.api.guilds(this.guild.id).roles.patch({
-      data: rolePositions,
+      data: positions,
     });
     return this.client.actions.GuildRolesPositionUpdate.handle({
       guild_id: this.guild.id,
-      roles: rolePositions,
+      roles: positions,
     }).guild;
   }
 
@@ -392,7 +423,7 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
    * @returns {number} Negative number if the first role's position is lower (second role's is higher),
    * positive number if the first's is higher (second's is lower), 0 if equal
    */
-  comparePositions(role1: any, role2: any) {
+  comparePositions(role1: unknown, role2: unknown): number {
     const resolvedRole1 = this.resolve(role1);
     const resolvedRole2 = this.resolve(role2);
     if (!resolvedRole1 || !resolvedRole2) throw new TypeError('INVALID_TYPE', 'role', 'Role nor a Snowflake');
@@ -413,10 +444,10 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
    * @param {UserResolvable} user The user to access the bot role for
    * @returns {?Role}
    */
-  botRoleFor(user: any) {
+  botRoleFor(user: UserResolvable): RoleStructure | null {
     const userId = this.client.users.resolveId(user);
     if (!userId) return null;
-    return this.cache.find((role: any) => role.tags?.botId === userId) ?? null;
+    return this.cache.find(role => role.tags?.botId === userId) ?? null;
   }
 
   /**
@@ -433,8 +464,8 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
    * @type {?Role}
    * @readonly
    */
-  get premiumSubscriberRole() {
-    return this.cache.find((role: any) => role.tags?.premiumSubscriberRole) ?? null;
+  get premiumSubscriberRole(): RoleStructure | null {
+    return this.cache.find(role => role.tags?.premiumSubscriberRole) ?? null;
   }
 
   /**
@@ -442,11 +473,10 @@ class RoleManager extends CachedManager<import('../structures/Role').Role> {
    * @type {Role}
    * @readonly
    */
-  get highest() {
-    return this.cache.reduce(
-      (prev: any, role: any) => (role.comparePositionTo(prev) > 0 ? role : prev),
-      this.cache.first(),
-    );
+  get highest(): RoleStructure {
+    const first = this.cache.first();
+    if (!first) throw new Error('GUILD_UNCACHED_ROLE_RESOLVE');
+    return this.cache.reduce((prev, role) => (role.comparePositionTo(prev) > 0 ? role : prev), first);
   }
 }
 
