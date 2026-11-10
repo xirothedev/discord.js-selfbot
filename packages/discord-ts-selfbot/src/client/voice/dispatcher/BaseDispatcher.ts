@@ -71,7 +71,13 @@ class BaseDispatcher extends Writable {
     throw new Error('The _codecCallback method must be implemented');
   }
 
-  constructor(player: any, highWaterMark = 12, payloadType: any, extensionEnabled: any, streams: any = {}) {
+  constructor(
+    player: import('../player/MediaPlayer').default,
+    highWaterMark = 12,
+    payloadType: number,
+    extensionEnabled: boolean,
+    streams: DispatcherStreams = {},
+  ) {
     super({
       highWaterMark,
     });
@@ -101,23 +107,24 @@ class BaseDispatcher extends Writable {
     this.sequence = 0;
     this.timestamp = 0;
 
-    const streamError = (type?: any, err?: any) => {
+    const streamError = (type?: string, err?: unknown) => {
       /**
        * Emitted when the dispatcher encounters an error.
        * @event BaseDispatcher#error
        */
       if (type && err) {
-        err.message = `${type} stream: ${err.message}`;
-        this.emit(this.player.dispatcher === this ? 'error' : 'debug', err);
+        const error = err instanceof Error ? err : new Error(String(err));
+        error.message = `${type} stream: ${error.message}`;
+        this.emit(this.player.dispatcher === this ? 'error' : 'debug', error);
       }
       this.destroy();
     };
 
     this.on('error', () => streamError());
-    if (this.streams.input) this.streams.input.on('error', (err: any) => streamError('input', err));
-    if (this.streams.ffmpeg) this.streams.ffmpeg.on('error', (err: any) => streamError('ffmpeg', err));
-    if (this.streams.opus) this.streams.opus.on('error', (err: any) => streamError('opus', err));
-    if (this.streams.volume) this.streams.volume.on('error', (err: any) => streamError('volume', err));
+    if (this.streams.input) this.streams.input.on('error', err => streamError('input', err));
+    if (this.streams.ffmpeg) this.streams.ffmpeg.on('error', err => streamError('ffmpeg', err));
+    if (this.streams.opus) this.streams.opus.on('error', err => streamError('opus', err));
+    if (this.streams.volume) this.streams.volume.on('error', err => streamError('volume', err));
 
     this.on('finish', () => {
       this._cleanup();
@@ -145,7 +152,7 @@ class BaseDispatcher extends Writable {
     return currentSeq;
   }
 
-  _write(chunk: any, _enc: any, done: any) {
+  _write(chunk: Buffer, _enc: BufferEncoding, done: (error?: Error | null) => void) {
     if (!this.startTime) {
       /**
        * Emitted once the stream has started to play.
@@ -174,7 +181,7 @@ class BaseDispatcher extends Writable {
     this._step(done);
   }
 
-  _destroy(err: any, cb: any) {
+  _destroy(err: Error | null, cb: (error?: Error | null) => void) {
     this._cleanup();
     super._destroy(err, cb);
   }
@@ -263,7 +270,7 @@ class BaseDispatcher extends Writable {
     return performance.now() - this.startTime;
   }
 
-  _step(done: any) {
+  _step(done: () => void) {
     this._writeCallback = () => {
       this._writeCallback = null;
       done();
@@ -278,12 +285,12 @@ class BaseDispatcher extends Writable {
     if (this.count > MAX_UINT_16) this.count = 0;
   }
 
-  _final(callback: any) {
+  _final(callback: (error?: Error | null) => void) {
     this._writeCallback = null;
     callback();
   }
 
-  _playChunk(chunk: any, isLastPacket = false) {
+  _playChunk(chunk: Buffer, isLastPacket = false) {
     if (
       (this.player.dispatcher !== this && this.player.videoDispatcher !== this) ||
       !this.player.voiceConnection.authentication.secret_key
@@ -355,7 +362,7 @@ class BaseDispatcher extends Writable {
     return Buffer.concat(extensionsData);
   }
 
-  _encrypt(buffer: any, additionalData: any) {
+  _encrypt(buffer: Buffer, additionalData: Buffer): [Buffer, Buffer] {
     const { secret_key, mode } = this.player.voiceConnection.authentication;
     if (!secret_key) throw new Error('VOICE_ENCRYPTION_KEY_MISSING');
     // Both supported encryption methods want the nonce to be an incremental integer
@@ -397,7 +404,7 @@ class BaseDispatcher extends Writable {
     }
   }
 
-  _createPacket(buffer: any, isLastPacket: any) {
+  _createPacket(buffer: Buffer, isLastPacket = false): Buffer | null {
     /*
     // Packet is raw rtp from ffmpeg
     const rtp = webrtc.RtpPacket.deSerialize(buffer);
@@ -444,7 +451,7 @@ class BaseDispatcher extends Writable {
     return Buffer.concat([rtpHeader, ...this._encrypt(buffer, rtpHeader)]);
   }
 
-  _sendPacket(packet: any) {
+  _sendPacket(packet: Buffer) {
     /**
      * Emitted whenever the dispatcher has debug information.
      * @event BaseDispatcher#debug
@@ -460,9 +467,9 @@ class BaseDispatcher extends Writable {
       this.emit('debug', 'Failed to send a packet - no UDP socket');
       return;
     }
-    this.player.voiceConnection.sockets.udp.send(packet).catch((e: any) => {
+    this.player.voiceConnection.sockets.udp.send(packet).catch((e: unknown) => {
       if (this.getTypeDispatcher() === 'audio') {
-        this._setSpeaking(this._setSpeaking(0));
+        this._setSpeaking(0);
       } else if (this.getTypeDispatcher() === 'video') {
         this._setVideoStatus(false);
         this._setStreamStatus(true);
@@ -471,7 +478,7 @@ class BaseDispatcher extends Writable {
     });
   }
 
-  _setSpeaking(value: any) {
+  _setSpeaking(value: number) {
     if (typeof this.player.voiceConnection !== 'undefined') {
       this.player.voiceConnection.setSpeaking(value);
     }
@@ -483,7 +490,7 @@ class BaseDispatcher extends Writable {
     this.emit('speaking', value);
   }
 
-  _setVideoStatus(value: any) {
+  _setVideoStatus(value: boolean) {
     if (typeof this.player.voiceConnection !== 'undefined') {
       this.player.voiceConnection.setVideoStatus(value);
     }
@@ -495,7 +502,7 @@ class BaseDispatcher extends Writable {
     this.emit('videoStatus', value);
   }
 
-  _setStreamStatus(value: any) {
+  _setStreamStatus(value: boolean) {
     const connection = this.player.voiceConnection;
     if ('sendScreenshareState' in connection && typeof connection.sendScreenshareState === 'function') {
       connection.sendScreenshareState(value);
@@ -511,3 +518,4 @@ class BaseDispatcher extends Writable {
 
 export default BaseDispatcher;
 export { BaseDispatcher };
+export type { DispatcherStream, DispatcherStreams };

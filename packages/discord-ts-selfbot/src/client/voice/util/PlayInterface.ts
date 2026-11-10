@@ -65,8 +65,10 @@ class PlayInterface {
       if (type === 'unknown') {
         return this.player.playUnknown(resource, options);
       } else if (type === 'converted') {
+        if (!(resource instanceof Readable)) throw new Error('VOICE_PRISM_DEMUXERS_NEED_STREAM');
         return this.player.playPCMStream(resource, options);
       } else if (type === 'opus') {
+        if (!(resource instanceof Readable)) throw new Error('VOICE_PRISM_DEMUXERS_NEED_STREAM');
         return this.player.playOpusStream(resource, options);
       } else if (type === 'ogg/opus') {
         if (!(resource instanceof Readable)) throw new Error('VOICE_PRISM_DEMUXERS_NEED_STREAM');

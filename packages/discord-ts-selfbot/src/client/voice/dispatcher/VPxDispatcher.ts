@@ -1,5 +1,7 @@
 import { Buffer } from 'node:buffer';
 import VideoDispatcher from './VideoDispatcher';
+import type MediaPlayer from '../player/MediaPlayer';
+import type { DispatcherStreams } from './BaseDispatcher';
 import VoiceCodec from '../util/VoiceCodec';
 /*
 Credit: https://github.com/dank074/Discord-video-stream
@@ -19,11 +21,11 @@ Please use the @dank074/discord-video-stream library for the best support.
 */
 
 class VP8Dispatcher extends VideoDispatcher {
-  constructor(player: any, highWaterMark = 12, streams: any, fps: any) {
+  constructor(player: MediaPlayer, highWaterMark = 12, streams: DispatcherStreams, fps: number) {
     super(player, highWaterMark, streams, fps, VoiceCodec.getPayloadType('VP8'));
   }
 
-  makeChunk(buffer: any, isFirstPacket: any) {
+  makeChunk(buffer: Buffer, isFirstPacket: boolean): Buffer {
     // Vp8 payload descriptor
     const payloadDescriptorBuf = Buffer.alloc(2);
     payloadDescriptorBuf[0] = 0x80;
@@ -38,8 +40,8 @@ class VP8Dispatcher extends VideoDispatcher {
     return Buffer.concat([this.createPayloadExtension(), payloadDescriptorBuf, pictureIdBuf, buffer]);
   }
 
-  _codecCallback(chunk: any) {
-    const chunkSplit = this.partitionMtu(chunk).map((c: any, i: any) => this.makeChunk(c, i === 0));
+  _codecCallback(chunk: Buffer) {
+    const chunkSplit = this.partitionMtu(chunk).map((c, i) => this.makeChunk(c, i === 0));
     for (let i = 0; i < chunkSplit.length; i++) {
       this._playChunk(chunkSplit[i], i + 1 === chunkSplit.length);
     }

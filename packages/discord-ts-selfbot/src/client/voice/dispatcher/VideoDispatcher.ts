@@ -1,4 +1,6 @@
 import BaseDispatcher from './BaseDispatcher';
+import type MediaPlayer from '../player/MediaPlayer';
+import type { DispatcherStreams } from './BaseDispatcher';
 
 /**
  * The class that sends video packet data to the voice connection.
@@ -15,7 +17,7 @@ class VideoDispatcher extends BaseDispatcher {
   declare fps: number;
   declare mtu: number;
 
-  constructor(player: any, highWaterMark = 12, streams: any, fps: any, payloadType: any) {
+  constructor(player: MediaPlayer, highWaterMark = 12, streams: DispatcherStreams, fps: number, payloadType: number) {
     super(player, highWaterMark, payloadType, true, streams);
     /**
      * Video FPS
@@ -42,8 +44,8 @@ class VideoDispatcher extends BaseDispatcher {
     return 'video';
   }
 
-  partitionMtu(data: any) {
-    const out = [];
+  partitionMtu(data: Buffer): Buffer[] {
+    const out: Buffer[] = [];
     const dataLength = data.length;
 
     for (let i = 0; i < dataLength; i += this.mtu) {
@@ -57,11 +59,11 @@ class VideoDispatcher extends BaseDispatcher {
    * Set FPS
    * @param {number} value fps
    */
-  setFPSSource(value: any) {
+  setFPSSource(value: number) {
     this.fps = value;
   }
 
-  _codecCallback(..._args: any[]) {
+  _codecCallback(_chunk: Buffer): void {
     throw new Error('The _codecCallback method must be implemented');
   }
 }

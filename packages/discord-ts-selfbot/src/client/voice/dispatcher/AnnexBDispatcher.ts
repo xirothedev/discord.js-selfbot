@@ -1,5 +1,7 @@
 import { Buffer } from 'buffer';
 import VideoDispatcher from './VideoDispatcher';
+import type MediaPlayer from '../player/MediaPlayer';
+import type { DispatcherStreams } from './BaseDispatcher';
 import VoiceCodec from '../util/VoiceCodec';
 import _AnnexBNalSplitterModule from '../player/processing/AnnexBNalSplitter';
 const { H264Helpers, H265Helpers } = _AnnexBNalSplitterModule;
@@ -31,12 +33,19 @@ class AnnexBDispatcher extends VideoDispatcher {
     throw new Error('The makeFragmentationUnitHeader method must be implemented');
   }
 
-  constructor(player: any, highWaterMark = 12, streams: any, fps: any, nalFunctions: any, payloadType: any) {
+  constructor(
+    player: MediaPlayer,
+    highWaterMark = 12,
+    streams: DispatcherStreams,
+    fps: number,
+    nalFunctions: NalFunctions,
+    payloadType: number,
+  ) {
     super(player, highWaterMark, streams, fps, payloadType);
     this._nalFunctions = nalFunctions;
   }
 
-  _codecCallback(frame: any) {
+  _codecCallback(frame: Buffer) {
     let accessUnit = frame;
     let offset = 0;
 
@@ -74,11 +83,11 @@ class AnnexBDispatcher extends VideoDispatcher {
 }
 
 class H264Dispatcher extends AnnexBDispatcher {
-  constructor(player: any, highWaterMark = 12, streams: any, fps: any) {
+  constructor(player: MediaPlayer, highWaterMark = 12, streams: DispatcherStreams, fps: number) {
     super(player, highWaterMark, streams, fps, H264Helpers, VoiceCodec.getPayloadType('H264'));
   }
 
-  makeFragmentationUnitHeader(isFirstPacket: any, isLastPacket: any, naluHeader: any) {
+  makeFragmentationUnitHeader(isFirstPacket: boolean, isLastPacket: boolean, naluHeader: Buffer): Buffer {
     const nal0 = naluHeader[0];
     const fuPayloadHeader = Buffer.alloc(2);
     const nalType = H264Helpers.getUnitType(naluHeader);
@@ -99,11 +108,11 @@ class H264Dispatcher extends AnnexBDispatcher {
 }
 
 class H265Dispatcher extends AnnexBDispatcher {
-  constructor(player: any, highWaterMark = 12, streams: any, fps: any) {
+  constructor(player: MediaPlayer, highWaterMark = 12, streams: DispatcherStreams, fps: number) {
     super(player, highWaterMark, streams, fps, H265Helpers, VoiceCodec.getPayloadType('H265'));
   }
 
-  makeFragmentationUnitHeader(isFirstPacket: any, isLastPacket: any, naluHeader: any) {
+  makeFragmentationUnitHeader(isFirstPacket: boolean, isLastPacket: boolean, naluHeader: Buffer): Buffer {
     const fuIndicatorHeader = Buffer.allocUnsafe(3);
     naluHeader.copy(fuIndicatorHeader);
     const nalType = H265Helpers.getUnitType(naluHeader);
