@@ -408,7 +408,7 @@ class User extends Base implements UserEntity {
    * @returns {Promise<DMChannel>}
    */
   createDM(force: boolean = false) {
-    return this.client.users.createDM(this.id, force);
+    return this.client.users.createDM(this.id, { force });
   }
 
   /**

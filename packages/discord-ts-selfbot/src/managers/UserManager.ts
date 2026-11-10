@@ -8,13 +8,20 @@ const { Message } = _MessageModule;
 import ThreadMember from '../structures/ThreadMember';
 import User from '../structures/User';
 import { isDMChannel } from '../types/channels';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { BaseFetchOptions, UserResolvable } from '../../typings';
+import type { Client } from '../client/Client';
+import type { DMChannel } from '../structures/DMChannel';
+
+type UserResolvableSource =
+  User | InstanceType<typeof GuildMember> | InstanceType<typeof Message> | ThreadMember | Snowflake | UserResolvable;
 
 /**
  * Manages API methods for users and stores their cache.
  * @extends {CachedManager}
  */
 class UserManager extends CachedManager<User> {
-  constructor(client: any, iterable?: any) {
+  constructor(client: Client, iterable?: Iterable<User>) {
     super(client, User, iterable);
   }
 
@@ -40,7 +47,7 @@ class UserManager extends CachedManager<User> {
    * @returns {?DMChannel}
    * @private
    */
-  dmChannel(userId: any): import('../structures/DMChannel').default | null {
+  dmChannel(userId: Snowflake): DMChannel | null {
     const channel = this.client.channels.cache.find(c => isDMChannel(c) && c.recipient.id === userId);
     return channel && isDMChannel(channel) ? channel : null;
   }
@@ -52,10 +59,11 @@ class UserManager extends CachedManager<User> {
    * @returns {Promise<DMChannel>}
    */
   async createDM(
-    user: any,
-    { cache = true, force = false }: any = {},
-  ): Promise<import('../structures/DMChannel').default> {
+    user: UserResolvableSource,
+    { cache = true, force = false }: BaseFetchOptions = {},
+  ): Promise<DMChannel> {
     const id = this.resolveId(user);
+    if (!id) throw new Error('USER_RESOLVE_ID');
 
     if (!force) {
       const dmChannel = this.dmChannel(id);
@@ -82,8 +90,9 @@ class UserManager extends CachedManager<User> {
    * @param {UserResolvable} user The UserResolvable to identify
    * @returns {Promise<DMChannel>}
    */
-  async deleteDM(user: any) {
+  async deleteDM(user: UserResolvableSource): Promise<DMChannel> {
     const id = this.resolveId(user);
+    if (!id) throw new Error('USER_RESOLVE_ID');
     const dmChannel = this.dmChannel(id);
     if (!dmChannel) throw new Error('USER_NO_DM_CHANNEL');
     await this.client.api.channels(dmChannel.id).delete();
@@ -97,7 +106,10 @@ class UserManager extends CachedManager<User> {
    * @param {BaseFetchOptions} [options] Additional options for this fetch
    * @returns {Promise<User>}
    */
-  async fetch(user: any, { cache = true, force = false }: any = {}) {
+  async fetch(
+    user: UserResolvableSource,
+    { cache = true, force = false }: BaseFetchOptions = {},
+  ): Promise<User | null> {
     const id = this.resolveId(user);
     if (!id) return null;
     if (!force) {
@@ -115,7 +127,7 @@ class UserManager extends CachedManager<User> {
    * @param {string|MessagePayload|MessageOptions} options The options to provide
    * @returns {Promise<Message>}
    */
-  async send(user: any, options: any) {
+  async send(user: UserResolvableSource, options: import('../types/channels').SendOptions) {
     return (await this.createDM(user)).send(options);
   }
 
@@ -124,7 +136,7 @@ class UserManager extends CachedManager<User> {
    * @param {UserResolvable} user The UserResolvable to identify
    * @returns {?User}
    */
-  resolve(user: any): import('../structures/User').default | null {
+  resolve(user: unknown): User | null {
     if (user instanceof GuildMember || user instanceof ThreadMember) return user.user;
     if (user instanceof Message) return user.author;
     return super.resolve(user);
@@ -135,7 +147,7 @@ class UserManager extends CachedManager<User> {
    * @param {UserResolvable} user The UserResolvable to identify
    * @returns {?Snowflake}
    */
-  resolveId(user: any) {
+  resolveId(user: unknown): string | null {
     if (user instanceof ThreadMember) return user.id;
     if (user instanceof GuildMember) return user.user.id;
     if (user instanceof Message) return user.author?.id ?? null;
