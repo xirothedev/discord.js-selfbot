@@ -4,14 +4,53 @@ import _errorsModule from '../errors';
 const { Error } = _errorsModule;
 import Invite from '../structures/Invite';
 import DataResolver from '../util/DataResolver';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { RawInviteData } from '../../typings/rawDataTypes';
+import type {
+  ApplicationResolvable,
+  CreateInviteOptions,
+  GuildInvitableChannelResolvable,
+  InviteResolvable,
+  UserResolvable,
+} from '../../typings';
+import type { Guild } from '../structures/Guild';
+import type { GuildChannel } from '../structures/GuildChannel';
+import type { User } from '../structures/User';
+import type { GuildMember } from '../structures/GuildMember';
+import type { Message } from '../structures/Message';
+import type { ThreadMember } from '../structures/ThreadMember';
+
+type UserResolvableSource = User | GuildMember | Message | ThreadMember | Snowflake | UserResolvable;
+type GuildInvitableChannelSource = GuildChannel | GuildInvitableChannelResolvable;
+
+interface ApplicationResolvableSource {
+  id?: Snowflake;
+  applicationId?: Snowflake;
+}
+
+interface FetchInviteOptionsSource {
+  code: string;
+  cache?: boolean;
+  force?: boolean;
+}
+
+interface FetchInvitesOptionsSource {
+  channelId?: GuildInvitableChannelSource;
+  cache?: boolean;
+}
+
+type CreateInviteOptionsSource = Omit<CreateInviteOptions, 'targetUser' | 'targetApplication'> & {
+  targetUser?: UserResolvableSource;
+  targetApplication?: ApplicationResolvableSource | ApplicationResolvable;
+};
 
 /**
  * Manages API methods for GuildInvites and stores their cache.
  * @extends {CachedManager}
  */
 class GuildInviteManager extends CachedManager<Invite> {
-  declare guild: import('../structures/Guild').Guild;
-  constructor(guild: any, iterable?: any) {
+  declare guild: Guild;
+  constructor(guild: Guild, iterable?: Iterable<Invite>) {
     super(guild.client, Invite, iterable);
 
     /**
@@ -27,7 +66,7 @@ class GuildInviteManager extends CachedManager<Invite> {
    * @name GuildInviteManager#cache
    */
 
-  _add(data: any, cache: any = true) {
+  _add(data: RawInviteData, cache = true): Invite {
     return super._add(data, cache, { id: data.code, extras: [this.guild] });
   }
 
@@ -119,14 +158,18 @@ class GuildInviteManager extends CachedManager<Invite> {
    *   .then(console.log)
    *   .catch(console.error);
    */
-  async fetch(options: any) {
+  fetch(options: InviteResolvable | FetchInviteOptionsSource): Promise<Invite>;
+  fetch(options?: FetchInvitesOptionsSource): Promise<Collection<string, Invite>>;
+  async fetch(
+    options?: InviteResolvable | FetchInviteOptionsSource | FetchInvitesOptionsSource,
+  ): Promise<Invite | Collection<string, Invite>> {
     if (!options) return this._fetchMany();
     if (typeof options === 'string') {
       const code = DataResolver.resolveInviteCode(options);
       if (!code) throw new Error('INVITE_RESOLVE_CODE');
       return this._fetchSingle({ code, cache: true });
     }
-    if (!options.code) {
+    if (!('code' in options)) {
       if (options.channelId) {
         const id = this.guild.channels.resolveId(options.channelId);
         if (!id) throw new Error('GUILD_CHANNEL_RESOLVE');
@@ -136,13 +179,12 @@ class GuildInviteManager extends CachedManager<Invite> {
       if ('cache' in options) return this._fetchMany(options.cache);
       throw new Error('INVITE_RESOLVE_CODE');
     }
-    return this._fetchSingle({
-      ...options,
-      code: DataResolver.resolveInviteCode(options.code),
-    });
+    const code = DataResolver.resolveInviteCode(options.code);
+    if (!code) throw new Error('INVITE_RESOLVE_CODE');
+    return this._fetchSingle({ ...options, code });
   }
 
-  async _fetchSingle({ code, cache, force = false }: any) {
+  async _fetchSingle({ code, cache, force = false }: FetchInviteOptionsSource): Promise<Invite> {
     if (!force) {
       const existing = this.cache.get(code);
       if (existing) return existing;
@@ -154,14 +196,20 @@ class GuildInviteManager extends CachedManager<Invite> {
     return invite;
   }
 
-  async _fetchMany(cache?: any) {
-    const data = await this.client.api.guilds(this.guild.id).invites.get();
-    return data.reduce((col: any, invite: any) => col.set(invite.code, this._add(invite, cache)), new Collection());
+  async _fetchMany(cache?: boolean): Promise<Collection<string, Invite>> {
+    const data: RawInviteData[] = await this.client.api.guilds(this.guild.id).invites.get();
+    return data.reduce(
+      (col, invite) => col.set(invite.code, this._add(invite, cache)),
+      new Collection<string, Invite>(),
+    );
   }
 
-  async _fetchChannelMany(channelId: any, cache: any) {
-    const data = await this.client.api.channels(channelId).invites.get();
-    return data.reduce((col: any, invite: any) => col.set(invite.code, this._add(invite, cache)), new Collection());
+  async _fetchChannelMany(channelId: Snowflake, cache?: boolean): Promise<Collection<string, Invite>> {
+    const data: RawInviteData[] = await this.client.api.channels(channelId).invites.get();
+    return data.reduce(
+      (col, invite) => col.set(invite.code, this._add(invite, cache)),
+      new Collection<string, Invite>(),
+    );
   }
 
   /**
@@ -176,7 +224,7 @@ class GuildInviteManager extends CachedManager<Invite> {
    *   .catch(console.error);
    */
   async create(
-    channel: any,
+    channel: GuildInvitableChannelSource,
     {
       temporary = false,
       maxAge = 86400,
@@ -186,10 +234,23 @@ class GuildInviteManager extends CachedManager<Invite> {
       targetApplication,
       targetType,
       reason,
-    }: any = {},
-  ) {
+    }: CreateInviteOptionsSource = {},
+  ): Promise<Invite> {
     const id = this.guild.channels.resolveId(channel);
     if (!id) throw new Error('GUILD_CHANNEL_RESOLVE');
+
+    const target = targetApplication;
+    const targetApplicationId =
+      typeof target === 'string'
+        ? target
+        : target && typeof target === 'object' && 'id' in target && typeof target.id === 'string'
+          ? target.id
+          : target &&
+              typeof target === 'object' &&
+              'applicationId' in target &&
+              typeof target.applicationId === 'string'
+            ? target.applicationId
+            : undefined;
 
     const invite = await this.client.api.channels(id).invites.post({
       data: {
@@ -198,7 +259,7 @@ class GuildInviteManager extends CachedManager<Invite> {
         max_uses: maxUses,
         unique,
         target_user_id: this.client.users.resolveId(targetUser),
-        target_application_id: targetApplication?.id ?? targetApplication?.applicationId ?? targetApplication,
+        target_application_id: targetApplicationId,
         target_type: targetType,
       },
       reason,
@@ -212,7 +273,7 @@ class GuildInviteManager extends CachedManager<Invite> {
    * @param {string} [reason] Reason for deleting the invite
    * @returns {Promise<void>}
    */
-  async delete(invite: any, reason: any) {
+  async delete(invite: InviteResolvable | Invite, reason?: string): Promise<void> {
     const code = DataResolver.resolveInviteCode(invite);
 
     await this.client.api.invites(code).delete({ reason });
