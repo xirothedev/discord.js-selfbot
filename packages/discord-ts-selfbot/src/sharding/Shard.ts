@@ -495,4 +495,5 @@ class Shard extends EventEmitter {
 }
 
 export default Shard;
+export type { ShardIPCMessage };
 export { Shard };

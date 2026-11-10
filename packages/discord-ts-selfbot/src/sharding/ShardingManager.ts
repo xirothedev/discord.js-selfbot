@@ -7,7 +7,19 @@ import { Collection } from '@discordjs/collection';
 import Shard from './Shard';
 import _errorsModule from '../errors';
 const { Error, TypeError, RangeError } = _errorsModule;
-import Util from '../util/Util';
+import type {
+  MultipleShardRespawnOptions,
+  MultipleShardSpawnOptions,
+  ShardingManagerMode,
+  ShardingManagerOptions,
+} from '../../typings';
+import type { Client } from '../client/Client';
+import type { ShardIPCMessage } from './Shard';
+
+interface BroadcastEvalOptions {
+  shard?: number;
+  context?: unknown;
+}
 
 /**
  * This is a utility class that makes multi-process sharding of a bot an easy and painless experience.
@@ -20,15 +32,15 @@ import Util from '../util/Util';
  * @deprecated
  */
 class ShardingManager extends EventEmitter {
-  file: any;
-  shardList: any;
-  totalShards: any;
-  mode: any;
-  respawn: any;
-  shardArgs: any;
-  execArgv: any;
-  token: any;
-  shards: any;
+  file: string;
+  shardList: number[] | 'auto';
+  totalShards: number | 'auto';
+  mode: ShardingManagerMode;
+  respawn: boolean;
+  shardArgs: string[];
+  execArgv: string[];
+  token: string | null;
+  shards: Collection<number, Shard>;
 
   /**
    * The mode to spawn shards with for a {@link ShardingManager}. Can be either one of:
@@ -55,19 +67,17 @@ class ShardingManager extends EventEmitter {
    * @param {string} file Path to your shard script file
    * @param {ShardingManagerOptions} [options] Options for the sharding manager
    */
-  constructor(file: any, options: any = {}) {
+  constructor(file: string, options: ShardingManagerOptions = {}) {
     super();
-    options = Util.mergeDefault(
-      {
-        totalShards: 'auto',
-        mode: 'process',
-        respawn: true,
-        shardArgs: [],
-        execArgv: [],
-        token: process.env.DISCORD_TOKEN,
-      },
-      options,
-    );
+    const {
+      totalShards = 'auto',
+      shardList = 'auto',
+      mode = 'process',
+      respawn = true,
+      shardArgs = [],
+      execArgv = [],
+      token = process.env.DISCORD_TOKEN,
+    } = options;
 
     /**
      * Path to the shard script file
@@ -83,7 +93,7 @@ class ShardingManager extends EventEmitter {
      * List of shards this sharding manager spawns
      * @type {string|number[]}
      */
-    this.shardList = options.shardList ?? 'auto';
+    this.shardList = shardList;
     if (this.shardList !== 'auto') {
       if (!Array.isArray(this.shardList)) {
         throw new TypeError('CLIENT_INVALID_OPTION', 'shardList', 'an array.');
@@ -92,7 +102,7 @@ class ShardingManager extends EventEmitter {
       if (this.shardList.length < 1) throw new RangeError('CLIENT_INVALID_OPTION', 'shardList', 'at least 1 id.');
       if (
         this.shardList.some(
-          (shardId: any) => typeof shardId !== 'number' || isNaN(shardId) || !Number.isInteger(shardId) || shardId < 0,
+          shardId => typeof shardId !== 'number' || isNaN(shardId) || !Number.isInteger(shardId) || shardId < 0,
         )
       ) {
         throw new TypeError('CLIENT_INVALID_OPTION', 'shardList', 'an array of positive integers.');
@@ -103,7 +113,7 @@ class ShardingManager extends EventEmitter {
      * Amount of shards that all sharding managers spawn in total
      * @type {number}
      */
-    this.totalShards = options.totalShards || 'auto';
+    this.totalShards = totalShards;
     if (this.totalShards !== 'auto') {
       if (typeof this.totalShards !== 'number' || isNaN(this.totalShards)) {
         throw new TypeError('CLIENT_INVALID_OPTION', 'Amount of shards', 'a number.');
@@ -118,7 +128,7 @@ class ShardingManager extends EventEmitter {
      * Mode for shards to spawn with
      * @type {ShardingManagerMode}
      */
-    this.mode = options.mode;
+    this.mode = mode;
     if (this.mode !== 'process' && this.mode !== 'worker') {
       throw new RangeError('CLIENT_INVALID_OPTION', 'Sharding mode', '"process" or "worker"');
     }
@@ -127,25 +137,25 @@ class ShardingManager extends EventEmitter {
      * Whether shards should automatically respawn upon exiting
      * @type {boolean}
      */
-    this.respawn = options.respawn;
+    this.respawn = respawn;
 
     /**
      * An array of arguments to pass to shards (only when {@link ShardingManager#mode} is `process`)
      * @type {string[]}
      */
-    this.shardArgs = options.shardArgs;
+    this.shardArgs = shardArgs;
 
     /**
      * An array of arguments to pass to the executable (only when {@link ShardingManager#mode} is `process`)
      * @type {string[]}
      */
-    this.execArgv = options.execArgv;
+    this.execArgv = execArgv;
 
     /**
      * Token to use for obtaining the automatic shard count, and passing to shards
      * @type {?string}
      */
-    this.token = options.token?.replace(/^Bot\s*/i, '') ?? null;
+    this.token = token?.replace(/^Bot\s*/i, '') ?? null;
 
     /**
      * A collection of shards that this manager has spawned
@@ -155,7 +165,8 @@ class ShardingManager extends EventEmitter {
 
     process.env.SHARDING_MANAGER = 'true';
     process.env.SHARDING_MANAGER_MODE = this.mode;
-    process.env.DISCORD_TOKEN = this.token;
+    if (this.token) process.env.DISCORD_TOKEN = this.token;
+    else delete process.env.DISCORD_TOKEN;
   }
 
   /**
@@ -165,7 +176,7 @@ class ShardingManager extends EventEmitter {
    * <info>This is usually not necessary to manually specify.</info>
    * @returns {Shard} Note that the created shard needs to be explicitly spawned using its spawn method.
    */
-  createShard(id = this.shards.size): any {
+  createShard(id = this.shards.size): Shard {
     const shard = new Shard(this, id);
     this.shards.set(id, shard);
     /**
@@ -190,7 +201,9 @@ class ShardingManager extends EventEmitter {
    * @param {MultipleShardSpawnOptions} [options] Options for spawning shards
    * @returns {Promise<Collection<number, Shard>>}
    */
-  async spawn({ amount = this.totalShards, delay = 5500, timeout = 30_000 } = {}): Promise<any> {
+  async spawn({ amount = this.totalShards, delay = 5500, timeout = 30_000 }: MultipleShardSpawnOptions = {}): Promise<
+    Collection<number, Shard>
+  > {
     // Obtain/verify the number of shards to spawn
     if (amount === 'auto') {
       amount = 1;
@@ -213,7 +226,7 @@ class ShardingManager extends EventEmitter {
       this.totalShards = amount;
     }
 
-    if (this.shardList.some((shardId: any) => shardId >= amount)) {
+    if (this.shardList.some(shardId => shardId >= amount)) {
       throw new RangeError(
         'CLIENT_INVALID_OPTION',
         'Amount of shards',
@@ -223,7 +236,7 @@ class ShardingManager extends EventEmitter {
 
     // Spawn the shards
     for (const shardId of this.shardList) {
-      const promises: any[] = [];
+      const promises: Promise<unknown>[] = [];
       const shard = this.createShard(shardId);
       promises.push(shard.spawn(timeout));
       if (delay > 0 && this.shards.size !== this.shardList.length) promises.push(sleep(delay));
@@ -238,8 +251,8 @@ class ShardingManager extends EventEmitter {
    * @param {*} message Message to be sent to the shards
    * @returns {Promise<Shard[]>}
    */
-  broadcast(message: any): Promise<any> {
-    const promises: any[] = [];
+  broadcast(message: ShardIPCMessage): Promise<Shard[]> {
+    const promises: Promise<Shard>[] = [];
     for (const shard of this.shards.values()) promises.push(shard.send(message));
     return Promise.all(promises);
   }
@@ -257,7 +270,14 @@ class ShardingManager extends EventEmitter {
    * @param {BroadcastEvalOptions} [options={}] The options for the broadcast
    * @returns {Promise<*|Array<*>>} Results of the script execution
    */
-  async broadcastEval(script: any, options: any = {}): Promise<any> {
+  async broadcastEval<T>(fn: (client: Client) => T): Promise<T[]>;
+  async broadcastEval<T>(fn: (client: Client) => T, options: { shard: number }): Promise<T>;
+  async broadcastEval<T, P>(fn: (client: Client, context: P) => T, options: { context: P }): Promise<T[]>;
+  async broadcastEval<T, P>(fn: (client: Client, context: P) => T, options: { context: P; shard: number }): Promise<T>;
+  async broadcastEval(
+    script: (client: Client, context?: unknown) => unknown,
+    options: BroadcastEvalOptions = {},
+  ): Promise<unknown> {
     if (typeof script !== 'function') throw new TypeError('SHARDING_INVALID_EVAL_BROADCAST');
     return this._performOnShards('eval', [`(${script})(this, ${JSON.stringify(options.context)})`], options.shard);
   }
@@ -272,7 +292,9 @@ class ShardingManager extends EventEmitter {
    *   .then(results => console.log(`${results.reduce((prev, val) => prev + val, 0)} total guilds`))
    *   .catch(console.error);
    */
-  fetchClientValues(prop: any, shard?: any): Promise<any> {
+  fetchClientValues(prop: string): Promise<unknown[]>;
+  fetchClientValues(prop: string, shard?: number): Promise<unknown>;
+  fetchClientValues(prop: string, shard?: number): Promise<unknown> {
     return this._performOnShards('fetchClientValue', [prop], shard);
   }
 
@@ -284,18 +306,26 @@ class ShardingManager extends EventEmitter {
    * @returns {Promise<*|Array<*>>} Results of the method execution
    * @private
    */
-  async _performOnShards(method: any, args: any, shard?: any): Promise<any> {
+  async _performOnShards(method: 'eval' | 'fetchClientValue', args: unknown[], shard?: number): Promise<unknown> {
     if (this.shards.size === 0) throw new Error('SHARDING_NO_SHARDS');
 
     if (typeof shard === 'number') {
-      if (this.shards.has(shard)) return this.shards.get(shard)[method](...args);
-      throw new Error('SHARDING_SHARD_NOT_FOUND', shard);
+      const target = this.shards.get(shard);
+      if (!target) throw new Error('SHARDING_SHARD_NOT_FOUND', shard);
+      const fn = Reflect.get(target, method);
+      if (typeof fn !== 'function') throw new Error('SHARDING_SHARD_NOT_FOUND', shard);
+      return Reflect.apply(fn, target, args);
     }
 
-    if (this.shards.size !== this.shardList.length) throw new Error('SHARDING_IN_PROCESS');
+    if (this.shardList === 'auto' || this.shards.size !== this.shardList.length) {
+      throw new Error('SHARDING_IN_PROCESS');
+    }
 
-    const promises: any[] = [];
-    for (const sh of this.shards.values()) promises.push(sh[method](...args));
+    const promises: Promise<unknown>[] = [];
+    for (const sh of this.shards.values()) {
+      const fn = Reflect.get(sh, method);
+      if (typeof fn === 'function') promises.push(Reflect.apply(fn, sh, args));
+    }
     return Promise.all(promises);
   }
 
@@ -314,7 +344,11 @@ class ShardingManager extends EventEmitter {
    * @param {MultipleShardRespawnOptions} [options] Options for respawning shards
    * @returns {Promise<Collection<number, Shard>>}
    */
-  async respawnAll({ shardDelay = 5_000, respawnDelay = 500, timeout = 30_000 } = {}): Promise<any> {
+  async respawnAll({
+    shardDelay = 5_000,
+    respawnDelay = 500,
+    timeout = 30_000,
+  }: MultipleShardRespawnOptions = {}): Promise<Collection<number, Shard>> {
     let s = 0;
     for (const shard of this.shards.values()) {
       const promises = [shard.respawn({ delay: respawnDelay, timeout })];
