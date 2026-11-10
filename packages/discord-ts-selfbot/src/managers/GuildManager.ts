@@ -28,6 +28,78 @@ import SystemChannelFlags from '../util/SystemChannelFlags';
 import _UtilModule from '../util/Util';
 const { resolveColor } = _UtilModule;
 import Util from '../util/Util';
+import type { APIIncidentsData, Snowflake } from 'discord-api-types/v10';
+import type { RawGuildData, RawOAuth2GuildData } from '../../typings/rawDataTypes';
+import type {
+  FetchGuildOptions,
+  FetchGuildsOptions,
+  GuildCreateOptions,
+  GuildResolvable,
+  IncidentActionsEditOptions,
+  PartialOverwriteData,
+  PartialRoleData,
+} from '../../typings';
+import type { Client } from '../client/Client';
+
+type GuildResolvableSource =
+  | InstanceType<typeof Guild>
+  | GuildChannel
+  | InstanceType<typeof GuildMember>
+  | GuildEmoji
+  | InstanceType<typeof Role>
+  | Invite
+  | Snowflake
+  | GuildResolvable;
+
+interface PartialChannelDataSource {
+  id?: Snowflake | number;
+  parentId?: Snowflake | number;
+  parent_id?: Snowflake | number;
+  type?: string | number;
+  name: string;
+  topic?: string;
+  nsfw?: boolean;
+  bitrate?: number;
+  userLimit?: number;
+  user_limit?: number;
+  rtcRegion?: string | null;
+  rtc_region?: string | null;
+  videoQualityMode?: string | number;
+  video_quality_mode?: number;
+  permissionOverwrites?: PartialOverwriteDataSource[];
+  permission_overwrites?: PartialOverwriteDataSource[];
+  rateLimitPerUser?: number;
+  rate_limit_per_user?: number;
+}
+
+interface PartialOverwriteDataSource extends Omit<PartialOverwriteData, 'type' | 'allow' | 'deny'> {
+  type?: string | number;
+  allow?: unknown;
+  deny?: unknown;
+}
+
+interface PartialRoleDataSource extends Omit<PartialRoleData, 'color' | 'permissions'> {
+  color?: unknown;
+  permissions?: unknown;
+}
+
+type GuildCreateOptionsSource = Omit<GuildCreateOptions, 'channels' | 'roles'> & {
+  channels?: PartialChannelDataSource[];
+  roles?: PartialRoleDataSource[];
+};
+
+function resolveEnumValue(
+  enumObject: Record<string, number>,
+  value: string | number | null | undefined,
+): number | undefined {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') return enumObject[value];
+  return undefined;
+}
+
+function isFetchGuildOptions(value: unknown): value is FetchGuildOptions {
+  return typeof value === 'object' && value !== null && 'guild' in value;
+}
 
 let cacheWarningEmitted = false;
 
@@ -35,8 +107,8 @@ let cacheWarningEmitted = false;
  * Manages API methods for Guilds and stores their cache.
  * @extends {CachedManager}
  */
-class GuildManager extends CachedManager<import('../structures/Guild').Guild> {
-  constructor(client: any, iterable?: any) {
+class GuildManager extends CachedManager<InstanceType<typeof Guild>> {
+  constructor(client: Client, iterable?: Iterable<InstanceType<typeof Guild>>) {
     super(client, Guild, iterable);
     if (!cacheWarningEmitted && this._cache.constructor.name !== 'Collection') {
       cacheWarningEmitted = true;
@@ -113,7 +185,7 @@ class GuildManager extends CachedManager<import('../structures/Guild').Guild> {
    * @param {GuildResolvable} guild The guild resolvable to identify
    * @returns {?Guild}
    */
-  resolve(guild: any) {
+  resolve(guild: unknown): InstanceType<typeof Guild> | null {
     if (
       guild instanceof GuildChannel ||
       guild instanceof GuildMember ||
@@ -134,7 +206,7 @@ class GuildManager extends CachedManager<import('../structures/Guild').Guild> {
    * @param {GuildResolvable} guild The guild resolvable to identify
    * @returns {?Snowflake}
    */
-  resolveId(guild: any) {
+  resolveId(guild: unknown): string | null {
     const inviteGuild = guild instanceof Invite ? guild.guild : null;
     if (
       guild instanceof GuildChannel ||
@@ -143,7 +215,13 @@ class GuildManager extends CachedManager<import('../structures/Guild').Guild> {
       guild instanceof Role ||
       inviteGuild
     ) {
-      return super.resolveId(inviteGuild ? inviteGuild.id : guild.guild.id);
+      if (inviteGuild) return super.resolveId(inviteGuild.id);
+      if (typeof guild === 'object' && guild !== null && 'guild' in guild) {
+        const parent = guild.guild;
+        if (typeof parent === 'object' && parent !== null && 'id' in parent && typeof parent.id === 'string') {
+          return super.resolveId(parent.id);
+        }
+      }
     }
     return super.resolveId(guild);
   }
@@ -172,7 +250,7 @@ class GuildManager extends CachedManager<import('../structures/Guild').Guild> {
    * @returns {Promise<Guild>} The guild that was created
    */
   async create(
-    name: any,
+    name: string,
     {
       afkChannelId,
       afkTimeout,
@@ -184,8 +262,8 @@ class GuildManager extends CachedManager<import('../structures/Guild').Guild> {
       systemChannelId,
       systemChannelFlags,
       verificationLevel,
-    }: any = {},
-  ) {
+    }: GuildCreateOptionsSource = {},
+  ): Promise<InstanceType<typeof Guild>> {
     icon = await DataResolver.resolveImage(icon);
     if (typeof verificationLevel === 'string') {
       verificationLevel = VerificationLevels[verificationLevel];
@@ -197,7 +275,7 @@ class GuildManager extends CachedManager<import('../structures/Guild').Guild> {
       explicitContentFilter = ExplicitContentFilterLevels[explicitContentFilter];
     }
     for (const channel of channels) {
-      channel.type &&= typeof channel.type === 'number' ? channel.type : ChannelTypes[channel.type];
+      channel.type &&= resolveEnumValue(ChannelTypes, channel.type);
       channel.parent_id = channel.parentId;
       delete channel.parentId;
       channel.user_limit = channel.userLimit;
@@ -206,10 +284,7 @@ class GuildManager extends CachedManager<import('../structures/Guild').Guild> {
       delete channel.rateLimitPerUser;
       channel.rtc_region = channel.rtcRegion;
       delete channel.rtcRegion;
-      channel.video_quality_mode =
-        typeof channel.videoQualityMode === 'string'
-          ? VideoQualityModes[channel.videoQualityMode]
-          : channel.videoQualityMode;
+      channel.video_quality_mode = resolveEnumValue(VideoQualityModes, channel.videoQualityMode);
       delete channel.videoQualityMode;
 
       if (!channel.permissionOverwrites) continue;
@@ -227,9 +302,9 @@ class GuildManager extends CachedManager<import('../structures/Guild').Guild> {
       role.color &&= resolveColor(role.color);
       role.permissions &&= Permissions.resolve(role.permissions).toString();
     }
-    systemChannelFlags &&= SystemChannelFlags.resolve(systemChannelFlags);
+    const resolvedSystemChannelFlags = systemChannelFlags ? SystemChannelFlags.resolve(systemChannelFlags) : undefined;
 
-    const data = await this.client.api.guilds.post({
+    const data: RawGuildData = await this.client.api.guilds.post({
       data: {
         name,
         icon,
@@ -241,15 +316,16 @@ class GuildManager extends CachedManager<import('../structures/Guild').Guild> {
         afk_channel_id: afkChannelId,
         afk_timeout: afkTimeout,
         system_channel_id: systemChannelId,
-        system_channel_flags: systemChannelFlags,
+        system_channel_flags: resolvedSystemChannelFlags,
         guild_template_code: '2TffvPucqHkN', // From Discord
       },
     });
 
-    if (this.client.guilds.cache.has(data.id)) return this.client.guilds.cache.get(data.id);
+    const existing = this.client.guilds.cache.get(data.id);
+    if (existing) return existing;
 
-    return new Promise((resolve: any) => {
-      const handleGuild = (guild: any) => {
+    return new Promise<InstanceType<typeof Guild>>(resolve => {
+      const handleGuild = (guild: InstanceType<typeof Guild>) => {
         if (guild.id === data.id) {
           clearTimeout(timeout);
           this.client.removeListener(Events.GUILD_CREATE, handleGuild);
@@ -288,23 +364,30 @@ class GuildManager extends CachedManager<import('../structures/Guild').Guild> {
    * @param {GuildResolvable|FetchGuildOptions|FetchGuildsOptions} [options] The guild's id or options
    * @returns {Promise<Guild|Collection<Snowflake, OAuth2Guild>>}
    */
-  async fetch(options: any = {}) {
-    const id = this.resolveId(options) ?? this.resolveId(options.guild);
+  fetch(options: GuildResolvableSource | FetchGuildOptions): Promise<InstanceType<typeof Guild>>;
+  fetch(options?: FetchGuildsOptions): Promise<Collection<Snowflake, OAuth2Guild>>;
+  async fetch(
+    options: GuildResolvableSource | FetchGuildOptions | FetchGuildsOptions = {},
+  ): Promise<InstanceType<typeof Guild> | Collection<Snowflake, OAuth2Guild>> {
+    const fetchOptions = isFetchGuildOptions(options) ? options : undefined;
+    const id = this.resolveId(options) ?? (fetchOptions?.guild ? this.resolveId(fetchOptions.guild) : null);
 
     if (id) {
-      if (!options.force) {
+      if (!fetchOptions?.force) {
         const existing = this.cache.get(id);
         if (existing) return existing;
       }
 
-      const data = await this.client.api.guilds(id).get({ query: { with_counts: options.withCounts ?? true } });
-      return this._add(data, options.cache);
+      const data: RawGuildData = await this.client.api.guilds(id).get({
+        query: { with_counts: fetchOptions?.withCounts ?? true },
+      });
+      return this._add(data, fetchOptions?.cache);
     }
 
-    const data = await this.client.api.users('@me').guilds.get({ query: options });
+    const data: RawOAuth2GuildData[] = await this.client.api.users('@me').guilds.get({ query: options });
     return data.reduce(
-      (coll: any, guild: any) => coll.set(guild.id, new OAuth2Guild(this.client, guild)),
-      new Collection(),
+      (coll, guild) => coll.set(guild.id, new OAuth2Guild(this.client, guild)),
+      new Collection<Snowflake, OAuth2Guild>(),
     );
   }
 
@@ -321,10 +404,13 @@ class GuildManager extends CachedManager<import('../structures/Guild').Guild> {
    * @param {IncidentActionsEditOptions} incidentActions The incident actions to set
    * @returns {Promise<IncidentActions>}
    */
-  async setIncidentActions(guild: any, { invitesDisabledUntil, dmsDisabledUntil }: any) {
+  async setIncidentActions(
+    guild: GuildResolvableSource,
+    { invitesDisabledUntil, dmsDisabledUntil }: IncidentActionsEditOptions,
+  ) {
     const guildId = this.resolveId(guild);
 
-    const data = await this.client.api.guilds(guildId)['incident-actions'].put({
+    const data: APIIncidentsData = await this.client.api.guilds(guildId)['incident-actions'].put({
       data: {
         invites_disabled_until: invitesDisabledUntil && new Date(invitesDisabledUntil).toISOString(),
         dms_disabled_until: dmsDisabledUntil && new Date(dmsDisabledUntil).toISOString(),
