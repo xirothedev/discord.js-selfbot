@@ -109,6 +109,19 @@ export interface PublicExport {
   name: string;
   path: string;
   namedExport?: string;
+  typeOnly?: boolean;
+}
+
+export interface DocgenEventParam {
+  name: string;
+  description?: string;
+  optional?: boolean;
+}
+
+export interface DocgenEvent {
+  name: string;
+  description?: string;
+  params?: DocgenEventParam[];
 }
 
 export interface ParsedExports {

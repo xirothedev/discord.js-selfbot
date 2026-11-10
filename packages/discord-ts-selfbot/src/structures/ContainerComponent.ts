@@ -17,16 +17,7 @@ class ContainerComponent extends BaseMessageComponent {
   declare components: ContainerComponentSource[];
   declare accentColor: number | null;
   declare spoiler: boolean;
-  /**
-   * @typedef {MessageActionRow|TextDisplayComponent|SectionComponent|MediaGalleryComponent|SeparatorComponent|FileComponent} ContainerComponents
-   * @property {ContainerComponents[]} [components] Components of the type action row, text display, section, media gallery, separator, or file
-   * @property {Number} [accent_color] Color for the accent on the container as RGB from 0x000000 to 0xFFFFFF
-   * @property {Boolean} [spoiler] Whether the container should be a spoiler (or blurred out). Defaults to false.
-   */
 
-  /**
-   * @param {ContainerComponent | APIContainerComponent} [data={}] The data
-   */
   constructor(data: unknown = {}) {
     super({ type: 'CONTAINER' });
 
@@ -36,41 +27,21 @@ class ContainerComponent extends BaseMessageComponent {
   setup(data: unknown) {
     super.setup(data);
     const source = isComponentDataSource(data) ? data : {};
-    /**
-     * Components of the type action row, text display, section, media gallery, separator, or file
-     * @type {ContainerComponents[]}
-     */
     this.components = readComponentArray(source, 'components')
       .map(component => BaseMessageComponent.create(component))
       .filter(isContainerChild);
 
-    /**
-     * Color for the accent on the container as RGB from 0x000000 to 0xFFFFFF
-     * @type {Number}
-     */
     this.accentColor = readComponentNumber(source, 'accent_color', 'accentColor') ?? null;
 
-    /**
-     * Whether the container should be a spoiler (or blurred out). Defaults to false.
-     * @type {Boolean}
-     */
     this.spoiler = readComponentBoolean(source, 'spoiler') ?? false;
   }
 
-  /**
-   * The hex accent color of this container
-   * @type {?string}
-   * @readonly
-   */
   get hexAccentColor() {
     return typeof this.accentColor === 'number'
       ? `#${this.accentColor.toString(16).padStart(6, '0')}`
       : (this.accentColor ?? null);
   }
 
-  /**
-   * @returns {APIContainerComponent}
-   */
   toJSON(): APIContainerComponent {
     return {
       type: ComponentType.Container,

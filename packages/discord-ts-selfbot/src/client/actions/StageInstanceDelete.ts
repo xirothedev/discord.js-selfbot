@@ -17,11 +17,6 @@ class StageInstanceDeleteAction extends Action {
         channel.guild.stageInstances.cache.delete(stageInstance.id);
         deletedStageInstances.add(stageInstance);
 
-        /**
-         * Emitted whenever a stage instance is deleted.
-         * @event Client#stageInstanceDelete
-         * @param {StageInstance} stageInstance The deleted stage instance
-         */
         client.emit(Events.STAGE_INSTANCE_DELETE, stageInstance);
 
         return { stageInstance };

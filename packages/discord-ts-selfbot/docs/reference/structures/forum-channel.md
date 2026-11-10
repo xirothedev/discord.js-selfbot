@@ -1,0 +1,750 @@
+# ForumChannel
+
+Represents a forum channel.
+
+```ts
+
+class ForumChannel extends ThreadOnlyChannel
+
+```
+
+## Constructor
+
+### `constructor`
+
+```ts
+
+constructor(args: never[]): ForumChannel
+
+```
+
+- `args: never[]`
+
+**Returns:** `ForumChannel`
+
+## Properties
+
+### `availableTags`
+
+The set of tags that can be used in this channel.
+
+**Type:** `GuildForumTag[]`
+
+### `calculatedPosition`
+
+**Type:** `number` · **Modifiers:** readonly
+
+### `client`
+
+The client that instantiated this
+
+**Type:** `Client` · **Modifiers:** readonly
+
+### `createdAt`
+
+The time the channel was created at
+
+**Type:** `Date` · **Modifiers:** readonly
+
+### `createdTimestamp`
+
+The timestamp the channel was created at
+
+**Type:** `number` · **Modifiers:** readonly
+
+### `defaultAutoArchiveDuration`
+
+The default auto archive duration for newly created threads in this channel.
+
+**Type:** `ThreadAutoArchiveDuration | null`
+
+### `defaultForumLayout`
+
+The default layout type used to display posts
+
+**Type:** `ForumLayoutTypes`
+
+### `defaultReactionEmoji`
+
+The emoji to show in the add reaction button on a thread in a guild forum channel
+
+**Type:** `DefaultReactionEmoji | null`
+
+### `defaultSortOrder`
+
+The default sort order mode used to order posts
+
+**Type:** `SortOrderTypes | null`
+
+### `defaultThreadRateLimitPerUser`
+
+The initial rate limit per user (slowmode) to set on newly created threads in a channel.
+
+**Type:** `number | null`
+
+### `deletable`
+
+Whether the channel is deletable by the client user
+
+**Type:** `boolean` · **Modifiers:** readonly
+
+### `deleted`
+
+Whether or not the structure has been deleted
+
+**Type:** `boolean`
+
+### `flags`
+
+The flags that are applied to the channel.
+
+**Type:** `Readonly<ChannelFlags>`
+
+### `guild`
+
+The guild the channel is in
+
+**Type:** `Guild`
+
+### `guildId`
+
+The id of the guild the channel is in
+
+**Type:** `string`
+
+### `id`
+
+The channel's id
+
+**Type:** `string`
+
+### `lastMessageId`
+
+**Type:** `string | null`
+
+### `lastPinTimestamp`
+
+**Type:** `number | null`
+
+### `manageable`
+
+Whether the channel is manageable by the client user
+
+**Type:** `boolean` · **Modifiers:** readonly
+
+### `members`
+
+A collection of cached members of this channel, mapped by their ids.
+Members that can view this channel, if the channel is text-based.
+Members in the channel, if the channel is voice-based.
+
+**Type:** `Collection<string, GuildMember>` · **Modifiers:** readonly
+
+### `name`
+
+The name of the guild channel
+
+**Type:** `string`
+
+### `nsfw`
+
+If this channel is considered NSFW.
+
+**Type:** `boolean`
+
+### `parent`
+
+The category parent of this channel
+
+**Type:** `CategoryChannel | null` · **Modifiers:** readonly
+
+### `parentId`
+
+The id of the category parent of this channel
+
+**Type:** `string | null`
+
+### `partial`
+
+Whether this Channel is a partial
+This is always false outside of DM channels.
+
+**Type:** `false` · **Modifiers:** readonly
+
+### `permissionOverwrites`
+
+A manager of permission overwrites that belong to this channel
+
+**Type:** `PermissionOverwriteManager`
+
+### `permissionsLocked`
+
+If the permissionOverwrites match the parent channel, null if no parent
+
+**Type:** `boolean | null` · **Modifiers:** readonly
+
+### `position`
+
+The position of the channel
+
+**Type:** `number` · **Modifiers:** readonly
+
+### `rateLimitPerUser`
+
+The rate limit per user (slowmode) for this channel.
+
+**Type:** `number | null`
+
+### `rawPosition`
+
+The raw position of the channel from Discord
+
+**Type:** `number`
+
+### `threads`
+
+A manager of the threads belonging to this channel
+
+**Type:** `GuildForumThreadManager`
+
+### `topic`
+
+The topic of this channel.
+
+**Type:** `string | null`
+
+### `type`
+
+The type of the channel
+
+**Type:** `"GUILD_FORUM"`
+
+### `viewable`
+
+Whether the channel is viewable by the client user
+
+**Type:** `boolean` · **Modifiers:** readonly
+
+## Methods
+
+### `clone`
+
+Clones this channel.
+
+```ts
+
+clone(options?: GuildChannelCloneOptions): Promise<ForumChannel>
+
+```
+
+- `options?: GuildChannelCloneOptions` — The options for cloning this channel
+
+**Returns:** `Promise<ForumChannel>`
+
+### `createInvite`
+
+Creates an invite to this guild channel.
+
+```ts
+
+createInvite(options?: CreateInviteOptions): Promise<Invite>
+
+```
+
+- `options?: CreateInviteOptions` — The options for creating the invite
+
+**Returns:** `Promise<Invite>`
+
+```ts
+// Create an invite to a channel
+channel.createInvite()
+  .then(invite => console.log(`Created an invite with a code of ${invite.code}`))
+  .catch(console.error);
+```
+
+### `createWebhook`
+
+Creates a webhook for the channel.
+
+```ts
+
+createWebhook(name: string, options?: ChannelWebhookCreateOptions): Promise<Webhook>
+
+```
+
+- `name: string` — The name of the webhook
+- `options?: ChannelWebhookCreateOptions` — Options for creating the webhook
+
+**Returns:** `Promise<Webhook>`
+
+```ts
+// Create a webhook for the current channel
+channel.createWebhook('Snek', {
+  avatar: 'https://i.imgur.com/mI8XcpG.jpg',
+  reason: 'Needed a cool new Webhook'
+})
+  .then(console.log)
+  .catch(console.error)
+```
+
+### `delete`
+
+Deletes this channel.
+
+```ts
+
+delete(reason?: string): Promise<ForumChannel>
+
+```
+
+- `reason?: string` — Reason for deleting this channel
+
+**Returns:** `Promise<ForumChannel>`
+
+```ts
+// Delete the channel
+channel.delete('making room for new channels')
+  .then(console.log)
+  .catch(console.error);
+```
+
+### `edit`
+
+```ts
+
+edit(data: ChannelData, reason?: string): Promise<ForumChannel>
+
+```
+
+- `data: ChannelData`
+- `reason?: string`
+
+**Returns:** `Promise<ForumChannel>`
+
+### `equals`
+
+Checks if this channel has the same type, topic, position, name, overwrites, and id as another channel.
+In most cases, a simple `channel.id === channel2.id` will do, and is much faster too.
+
+```ts
+
+equals(channel: GuildChannel): boolean
+
+```
+
+- `channel: GuildChannel` — Channel to compare with
+
+**Returns:** `boolean`
+
+### `fetch`
+
+Fetches this channel.
+
+```ts
+
+fetch(force?: boolean): Promise<ForumChannel>
+
+```
+
+- `force?: boolean` — Whether to skip the cache check and request the API
+
+**Returns:** `Promise<ForumChannel>`
+
+### `fetchInvites`
+
+Fetches a collection of invites to this guild channel.
+Resolves with a collection mapping invites by their codes.
+
+```ts
+
+fetchInvites(cache?: boolean): Promise<Collection<string, Invite>>
+
+```
+
+- `cache?: boolean` — Whether or not to cache the fetched invites
+
+**Returns:** `Promise<Collection<string, Invite>>`
+
+### `fetchWebhooks`
+
+Fetches all webhooks for the channel.
+
+```ts
+
+fetchWebhooks(): Promise<Collection<string, Webhook>>
+
+```
+
+**Returns:** `Promise<Collection<string, Webhook>>`
+
+```ts
+// Fetch webhooks
+channel.fetchWebhooks()
+  .then(hooks => console.log(`This channel has ${hooks.size} hooks`))
+  .catch(console.error);
+```
+
+### `isDirectory`
+
+Indicates whether this channel is a DirectoryChannel
+
+```ts
+
+isDirectory(): this
+
+```
+
+**Returns:** `this`
+
+### `isText`
+
+Indicates whether this channel is TextBasedChannels text-based.
+
+```ts
+
+isText(): this
+
+```
+
+**Returns:** `this`
+
+### `isThread`
+
+Indicates whether this channel is a ThreadChannel.
+
+```ts
+
+isThread(): this
+
+```
+
+**Returns:** `this`
+
+### `isThreadOnly`
+
+Indicates whether this channel is ThreadOnlyChannel.
+
+```ts
+
+isThreadOnly(): this
+
+```
+
+**Returns:** `this`
+
+### `isVoice`
+
+Indicates whether this channel is BaseGuildVoiceChannel voice-based.
+
+```ts
+
+isVoice(): this
+
+```
+
+**Returns:** `this`
+
+### `lockPermissions`
+
+Locks in the permission overwrites from the parent channel.
+
+```ts
+
+lockPermissions(): Promise<ForumChannel>
+
+```
+
+**Returns:** `Promise<ForumChannel>`
+
+### `permissionsFor`
+
+Gets the overall set of permissions for a member or role in this channel, taking into account channel overwrites.
+
+```ts
+
+permissionsFor(memberOrRole: GuildMember | Role, checkAdmin?: boolean): Readonly<Permissions>
+
+```
+
+- `memberOrRole: GuildMember | Role` — The member or role to obtain the overall permissions for
+- `checkAdmin?: boolean` — Whether having `ADMINISTRATOR` will return all permissions
+
+**Returns:** `Readonly<Permissions>`
+
+Gets the overall set of permissions for a member or role in this channel, taking into account channel overwrites.
+
+```ts
+
+permissionsFor(memberOrRole: string | GuildMember | Role | User | Message<boolean> | ThreadMember<boolean>, checkAdmin?: boolean): Readonly<Permissions> | null
+
+```
+
+- `memberOrRole: string | GuildMember | Role | User | Message<boolean> | ThreadMember<boolean>` — The member or role to obtain the overall permissions for
+- `checkAdmin?: boolean` — Whether having `ADMINISTRATOR` will return all permissions
+
+**Returns:** `Readonly<Permissions> | null`
+
+### `sendSlash`
+
+```ts
+
+sendSlash(target: UserResolvable, commandName: string, args: unknown[]): Promise<Modal | Message<boolean>>
+
+```
+
+- `target: UserResolvable`
+- `commandName: string`
+- `args: unknown[]`
+
+**Returns:** `Promise<Modal | Message<boolean>>`
+
+### `setAvailableTags`
+
+Sets the available tags for this forum channel
+
+```ts
+
+setAvailableTags(tags: GuildForumTagData[], reason?: string): Promise<ForumChannel>
+
+```
+
+- `tags: GuildForumTagData[]`
+- `reason?: string` — Reason for changing the available tags
+
+**Returns:** `Promise<ForumChannel>`
+
+### `setDefaultAutoArchiveDuration`
+
+Sets the default auto archive duration for all newly created threads in this channel.
+
+```ts
+
+setDefaultAutoArchiveDuration(defaultAutoArchiveDuration: ThreadAutoArchiveDuration, reason?: string): Promise<ForumChannel>
+
+```
+
+- `defaultAutoArchiveDuration: ThreadAutoArchiveDuration` — The new default auto archive duration
+- `reason?: string` — Reason for changing the channel's default auto archive duration
+
+**Returns:** `Promise<ForumChannel>`
+
+### `setDefaultForumLayout`
+
+Sets the default forum layout type used to display posts
+
+```ts
+
+setDefaultForumLayout(defaultForumLayout: ForumLayoutTypes, reason?: string): Promise<ForumChannel>
+
+```
+
+- `defaultForumLayout: ForumLayoutTypes` — The default forum layout type to set on this channel
+- `reason?: string` — Reason for changing the default forum layout
+
+**Returns:** `Promise<ForumChannel>`
+
+### `setDefaultReactionEmoji`
+
+Sets the default reaction emoji for this channel
+
+```ts
+
+setDefaultReactionEmoji(emojiId: DefaultReactionEmoji | null, reason?: string): Promise<ForumChannel>
+
+```
+
+- `emojiId: DefaultReactionEmoji | null`
+- `reason?: string` — Reason for changing the default reaction emoji
+
+**Returns:** `Promise<ForumChannel>`
+
+### `setDefaultSortOrder`
+
+Sets the default sort order mode used to order posts
+
+```ts
+
+setDefaultSortOrder(defaultSortOrder: SortOrderTypes | null, reason?: string): Promise<ForumChannel>
+
+```
+
+- `defaultSortOrder: SortOrderTypes | null` — The default sort order mode to set on this channel
+- `reason?: string` — Reason for changing the default sort order
+
+**Returns:** `Promise<ForumChannel>`
+
+### `setDefaultThreadRateLimitPerUser`
+
+Sets the default rate limit per user (slowmode) for new threads in this channel
+
+```ts
+
+setDefaultThreadRateLimitPerUser(rateLimit: number, reason?: string): Promise<ForumChannel>
+
+```
+
+- `rateLimit: number`
+- `reason?: string` — Reason for changing the default rate limit
+
+**Returns:** `Promise<ForumChannel>`
+
+### `setName`
+
+Sets a new name for the guild channel.
+
+```ts
+
+setName(name: string, reason?: string): Promise<ForumChannel>
+
+```
+
+- `name: string` — The new name for the guild channel
+- `reason?: string` — Reason for changing the guild channel's name
+
+**Returns:** `Promise<ForumChannel>`
+
+```ts
+// Set a new channel name
+channel.setName('not_general')
+  .then(newChannel => console.log(`Channel's new name is ${newChannel.name}`))
+  .catch(console.error);
+```
+
+### `setNSFW`
+
+Sets whether this channel is flagged as NSFW.
+
+```ts
+
+setNSFW(nsfw?: boolean, reason?: string): Promise<TextBasedChannelFields>
+
+```
+
+- `nsfw?: boolean` — Whether the channel should be considered NSFW
+- `reason?: string` — Reason for changing the channel's NSFW flag
+
+**Returns:** `Promise<TextBasedChannelFields>`
+
+### `setParent`
+
+Sets the parent of this channel.
+
+```ts
+
+setParent(channel: CategoryChannelResolvable | null, options?: SetParentOptions): Promise<ForumChannel>
+
+```
+
+- `channel: CategoryChannelResolvable | null` — The category channel to set as the parent
+- `options?: SetParentOptions` — The options for setting the parent
+
+**Returns:** `Promise<ForumChannel>`
+
+```ts
+// Add a parent to a channel
+message.channel.setParent('355908108431917066', { lockPermissions: false })
+  .then(channel => console.log(`New parent of ${message.channel.name}: ${channel.name}`))
+  .catch(console.error);
+```
+
+### `setPosition`
+
+Sets a new position for the guild channel.
+
+```ts
+
+setPosition(position: number, options?: SetChannelPositionOptions): Promise<ForumChannel>
+
+```
+
+- `position: number` — The new position for the guild channel
+- `options?: SetChannelPositionOptions` — Options for setting position
+
+**Returns:** `Promise<ForumChannel>`
+
+```ts
+// Set a new channel position
+channel.setPosition(2)
+  .then(newChannel => console.log(`Channel's new position is ${newChannel.position}`))
+  .catch(console.error);
+```
+
+### `setRateLimitPerUser`
+
+Sets the rate limit per user (slowmode) for this channel.
+
+```ts
+
+setRateLimitPerUser(rateLimitPerUser: number, reason?: string): Promise<TextBasedChannelFields>
+
+```
+
+- `rateLimitPerUser: number` — The new rate limit in seconds
+- `reason?: string` — Reason for changing the channel's rate limit
+
+**Returns:** `Promise<TextBasedChannelFields>`
+
+### `setTopic`
+
+Sets a new topic for the guild channel.
+
+```ts
+
+setTopic(topic: string | null, reason?: string): Promise<ForumChannel>
+
+```
+
+- `topic: string | null` — The new topic for the guild channel
+- `reason?: string` — Reason for changing the guild channel's topic
+
+**Returns:** `Promise<ForumChannel>`
+
+```ts
+// Set a new channel topic
+channel.setTopic('needs more rate limiting')
+  .then(newChannel => console.log(`Channel's new topic is ${newChannel.topic}`))
+  .catch(console.error);
+```
+
+### `toJSON`
+
+```ts
+
+toJSON(props: Record<string, string | boolean>[]): unknown
+
+```
+
+- `props: Record<string, string | boolean>[]`
+
+**Returns:** `unknown`
+
+### `toString`
+
+Returns a string representation of an object.
+
+```ts
+
+toString(): `${string}`
+
+```
+
+**Returns:** ``${string}``
+
+```ts
+// Logs: Hello from <#123456789012345678>!
+console.log(`Hello from ${channel}!`);
+```
+
+### `valueOf`
+
+```ts
+
+valueOf(): string
+
+```
+
+**Returns:** `string`
+
+---
+
+Source: https://github.com/xirothedev/discord.js-selfbot/blob/main/packages/discord-ts-selfbot/src/structures/ForumChannel.ts#L12

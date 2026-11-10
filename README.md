@@ -18,6 +18,7 @@
 - **Source:** TypeScript only. Bun runs the `.ts` source directly.
 - **Tests:** fake Discord HTTP and WebSocket server, no real token or network.
 - **Docs:** Fumadocs static site at <https://xirothedev.github.io/discord.js-selfbot/>.
+- **Coding agents:** version-matched Markdown in the package at `docs/llms.txt`; setup is at <https://xirothedev.github.io/discord.js-selfbot/docs/getting-started/agents>.
 
 ## Install
 
@@ -37,7 +38,7 @@ client.once(Events.CLIENT_READY, (readyClient) => {
 });
 
 client.on(Events.MessageCreate, async (message) => {
-  if (message.author.id === client.user?.id) return;
+  if (message.author?.id === client.user?.id) return;
 
   if (message.content === '!ping') {
     await message.reply('Pong!');

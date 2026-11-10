@@ -2,10 +2,6 @@ import MessageComponentInteraction from './MessageComponentInteraction';
 import type { CacheType } from '../../typings';
 import type { RawMessageComponentInteractionData } from '../../typings/rawDataTypes';
 
-/**
- * Represents a select menu interaction.
- * @extends {MessageComponentInteraction}
- */
 class SelectMenuInteraction<Cached extends CacheType = CacheType> extends MessageComponentInteraction<Cached> {
   declare values: string[];
 
@@ -15,10 +11,6 @@ class SelectMenuInteraction<Cached extends CacheType = CacheType> extends Messag
   ) {
     super(client, data);
 
-    /**
-     * The values selected, if the component which was interacted with was a select menu
-     * @type {string[]}
-     */
     this.values = data.data.values ?? [];
   }
 }

@@ -73,7 +73,7 @@ export function mergeSignature(source?: Signature, typings?: Signature): MergedS
     });
   }
 
-  const order = (source?.parameters ?? typings?.parameters ?? []).map((parameter) => parameter.name);
+  const order = (source?.parameters ?? typings?.parameters ?? []).map(parameter => parameter.name);
   for (const parameter of typings?.parameters ?? []) {
     if (!order.includes(parameter.name)) order.push(parameter.name);
   }
@@ -81,7 +81,7 @@ export function mergeSignature(source?: Signature, typings?: Signature): MergedS
   return {
     name: source?.name ?? typings?.name ?? '',
     typeParameters: typings?.typeParameters ?? source?.typeParameters,
-    parameters: order.map((name) => byName.get(name)).filter((parameter): parameter is Parameter => Boolean(parameter)),
+    parameters: order.map(name => byName.get(name)).filter((parameter): parameter is Parameter => Boolean(parameter)),
     returnType: typings?.type ?? source?.type,
     comment: source?.comment ?? typings?.comment,
   };
@@ -90,7 +90,7 @@ export function mergeSignature(source?: Signature, typings?: Signature): MergedS
 export function signatureLine(signature: MergedSignature, name: string): string {
   const typeParameters = renderTypeParameters(signature.typeParameters);
   const parameters = signature.parameters
-    .map((parameter) => {
+    .map(parameter => {
       const optional = parameter.flags?.isOptional || parameter.defaultValue !== undefined ? '?' : '';
       return `${parameter.name}${optional}: ${renderType(parameter.type)}`;
     })
@@ -101,7 +101,7 @@ export function signatureLine(signature: MergedSignature, name: string): string 
 
 export function renderParameterList(parameters: Parameter[]): string {
   return parameters
-    .map((parameter) => {
+    .map(parameter => {
       const optional = parameter.flags?.isOptional || parameter.defaultValue !== undefined ? '?' : '';
       const description = plainText(parameter.comment?.summary);
       const code = inlineCode(`${parameter.name}${optional}: ${renderType(parameter.type)}`);

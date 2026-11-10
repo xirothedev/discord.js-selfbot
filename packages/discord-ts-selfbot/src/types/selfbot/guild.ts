@@ -14,14 +14,6 @@ import type {
   Snowflake,
 } from 'discord-api-types/v10';
 
-/**
- * The partial shape that `Guild._patch` accepts.
- *
- * `RawGuildData` is the REST shape and does not include the gateway-only
- * collections (`channels`, `members`, `presences`, and similar). The patch
- * type keeps those optional so the same `_patch` handles `GUILD_CREATE` and
- * REST refreshes.
- */
 export interface GuildPatch {
   id?: Snowflake;
   name?: string;

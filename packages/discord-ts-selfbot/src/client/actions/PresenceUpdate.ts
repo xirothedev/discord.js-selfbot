@@ -40,12 +40,6 @@ class PresenceUpdateAction extends Action {
     const newPresence = (guild || this.client).presences._add(Object.assign(data, { guild }));
 
     if (this.client.listenerCount(Events.PRESENCE_UPDATE) && !newPresence.equals(oldPresence)) {
-      /**
-       * Emitted whenever a guild member's presence (e.g. status, activity) is changed.
-       * @event Client#presenceUpdate
-       * @param {?Presence} oldPresence The presence before the update, if one at all
-       * @param {Presence} newPresence The presence after the update
-       */
       this.client.emit(Events.PRESENCE_UPDATE, oldPresence, newPresence);
     }
   }

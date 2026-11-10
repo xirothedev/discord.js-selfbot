@@ -80,10 +80,6 @@ interface MessageSelectMenuDataSource {
 
 type MessageSelectMenuData = MessageSelectMenu | MessageSelectMenuDataSource;
 
-/**
- * Represents a select menu message component
- * @extends {BaseMessageComponent}
- */
 class MessageSelectMenu extends BaseMessageComponent {
   declare channelTypes: import('../../typings/enums').ChannelTypes[];
   declare customId: string | null;
@@ -92,38 +88,7 @@ class MessageSelectMenu extends BaseMessageComponent {
   declare minValues: number | null;
   declare options: import('../../typings').MessageSelectOption[];
   declare placeholder: string | null;
-  /**
-   * @typedef {BaseMessageComponentOptions} MessageSelectMenuOptions
-   * @property {string} [customId] A unique string to be sent in the interaction when clicked
-   * @property {string} [placeholder] Custom placeholder text to display when nothing is selected
-   * @property {number} [minValues] The minimum number of selections required
-   * @property {number} [maxValues] The maximum number of selections allowed
-   * @property {MessageSelectOption[]} [options] Options for the select menu
-   * @property {boolean} [disabled=false] Disables the select menu to prevent interactions
-   * @property {ChannelType[]} [channelTypes] List of channel types to include in the ChannelSelect component
-   */
 
-  /**
-   * @typedef {Object} MessageSelectOption
-   * @property {string} label The text to be displayed on this option
-   * @property {string} value The value to be sent for this option
-   * @property {?string} description Optional description to show for this option
-   * @property {?RawEmoji} emoji Emoji to display for this option
-   * @property {boolean} default Render this option as the default selection
-   */
-
-  /**
-   * @typedef {Object} MessageSelectOptionData
-   * @property {string} label The text to be displayed on this option
-   * @property {string} value The value to be sent for this option
-   * @property {string} [description] Optional description to show for this option
-   * @property {EmojiIdentifierResolvable} [emoji] Emoji to display for this option
-   * @property {boolean} [default] Render this option as the default selection
-   */
-
-  /**
-   * @param {MessageSelectMenu|MessageSelectMenuOptions} [data={}] MessageSelectMenu to clone or raw data
-   */
   constructor(data: MessageSelectMenuData = {}) {
     super({ type: BaseMessageComponent.resolveType(data.type ?? undefined) ?? 'STRING_SELECT' });
 
@@ -132,53 +97,25 @@ class MessageSelectMenu extends BaseMessageComponent {
 
   setup(data: MessageSelectMenuData) {
     super.setup(data);
-    /**
-     * A unique string to be sent in the interaction when clicked
-     * @type {?string}
-     */
     this.customId =
       ('custom_id' in data ? data.custom_id : undefined) ?? ('customId' in data ? data.customId : undefined) ?? null;
 
-    /**
-     * Custom placeholder text to display when nothing is selected
-     * @type {?string}
-     */
     this.placeholder = data.placeholder ?? null;
 
-    /**
-     * The minimum number of selections required
-     * @type {?number}
-     */
     this.minValues =
       ('min_values' in data ? data.min_values : undefined) ??
       ('minValues' in data ? data.minValues : undefined) ??
       null;
 
-    /**
-     * The maximum number of selections allowed
-     * @type {?number}
-     */
     this.maxValues =
       ('max_values' in data ? data.max_values : undefined) ??
       ('maxValues' in data ? data.maxValues : undefined) ??
       null;
 
-    /**
-     * Options for the STRING_SELECT menu
-     * @type {MessageSelectOption[]}
-     */
     this.options = MessageSelectMenu.normalizeOptions(...(data.options ?? []));
 
-    /**
-     * Whether this select menu is currently disabled
-     * @type {boolean}
-     */
     this.disabled = data.disabled ?? false;
 
-    /**
-     * Channels that are possible to select in CHANNEL_SELECT menu
-     * @type {ChannelType[]}
-     */
     const channelTypes =
       'channel_types' in data ? (data.channel_types ?? []) : 'channelTypes' in data ? (data.channelTypes ?? []) : [];
     this.channelTypes = channelTypes
@@ -186,10 +123,6 @@ class MessageSelectMenu extends BaseMessageComponent {
       .filter((channelType): channelType is PublicChannelType => channelType !== undefined);
   }
 
-  /**
-   * Transforms the select menu into a plain object
-   * @returns {APIMessageSelectMenu} The raw data of this select menu
-   */
   toJSON(): APISelectMenuComponent {
     const type = this.type ? (SELECT_MENU_TYPES[this.type] ?? ComponentType.StringSelect) : ComponentType.StringSelect;
     const common = {
@@ -216,11 +149,6 @@ class MessageSelectMenu extends BaseMessageComponent {
     }
   }
 
-  /**
-   * Normalizes option input and resolves strings and emojis.
-   * @param {MessageSelectOptionData} option The select menu option to normalize
-   * @returns {MessageSelectOption}
-   */
   static normalizeOption(option: MessageSelectOptionDataSource): MessageSelectOption {
     let { label, value, description, emoji } = option;
 
@@ -232,11 +160,6 @@ class MessageSelectMenu extends BaseMessageComponent {
     return { label, value, description, emoji: resolvedEmoji, default: option.default ?? false };
   }
 
-  /**
-   * Normalizes option input and resolves strings and emojis.
-   * @param {...MessageSelectOptionData|MessageSelectOptionData[]} options The select menu options to normalize
-   * @returns {MessageSelectOption[]}
-   */
   static normalizeOptions(
     ...options: (MessageSelectOptionDataSource | MessageSelectOptionDataSource[])[]
   ): MessageSelectOption[] {

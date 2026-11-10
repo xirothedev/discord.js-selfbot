@@ -15,28 +15,10 @@ interface StreamKey {
 }
 import { setImmediate } from 'node:timers';
 
-/**
- * @typedef {Object} InterfaceAddresses
- * @property {string} [udp4] - IPv4 address
- * @property {string} [udp6] - IPv6 address
- */
-
-/**
- * Get the interface address for a given socket type.
- * @param {"udp4"|"udp6"} type - The socket type.
- * @param {InterfaceAddresses} [interfaceAddresses] - The interface addresses mapping.
- * @returns {string|undefined} The interface address if available.
- */
 function interfaceAddress(type: SocketType, interfaceAddresses?: InterfaceAddresses | null): string | undefined {
   return interfaceAddresses ? interfaceAddresses[type] : undefined;
 }
 
-/**
- * Get a random available port.
- * @param {"udp4"|"udp6"} [protocol="udp4"] - The socket type.
- * @param {InterfaceAddresses} [interfaceAddresses] - The interface addresses mapping.
- * @returns {Promise<number>} The assigned random port.
- */
 async function randomPort(
   protocol: SocketType = 'udp4',
   interfaceAddresses?: InterfaceAddresses | null,
@@ -61,13 +43,6 @@ async function randomPort(
   return port;
 }
 
-/**
- * Get multiple random available ports.
- * @param {number} num - Number of ports to find.
- * @param {"udp4"|"udp6"} [protocol="udp4"] - The socket type.
- * @param {InterfaceAddresses} [interfaceAddresses] - The interface addresses mapping.
- * @returns {Promise<number[]>} An array of assigned random ports.
- */
 async function randomPorts(
   num: number,
   protocol: SocketType = 'udp4',
@@ -76,15 +51,6 @@ async function randomPorts(
   return Promise.all(Array.from({ length: num }).map(() => randomPort(protocol, interfaceAddresses)));
 }
 
-/**
- * Find an available port within a given range.
- * @param {number} min - The minimum port number.
- * @param {number} max - The maximum port number.
- * @param {"udp4"|"udp6"} [protocol="udp4"] - The socket type.
- * @param {InterfaceAddresses} [interfaceAddresses] - The interface addresses mapping.
- * @returns {Promise<number>} The available port within range.
- * @throws {Error} If no port is found within the range.
- */
 async function findPort(
   min: number,
   max: number,

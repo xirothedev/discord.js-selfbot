@@ -11,8 +11,8 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 import { frontmatterDescription, renderSummary } from './comment';
-import { enrichClass, enrichType, loadDocgen } from './docgen';
-import type { DocgenClass, DocgenType } from './docgen';
+import { enrichClass, enrichType, loadApiStore } from './enrich';
+import type { DocgenClass, DocgenType } from './enrich';
 import { AREA_ORDER, areaFor, parseIndexExports, slugify } from './exports';
 import { renderClassPage } from './render-class';
 import { renderApiIndex, renderAreaIndex } from './render-index';
@@ -94,12 +94,17 @@ function enumMembers(reflection: Reflection | undefined): Reflection[] | undefin
   if (!reflection || reflection.kind !== Kind.Variable) return undefined;
   const members = reflection.type?.declaration?.children;
   if (!members?.length) return undefined;
-  return members.every((member) => member.type?.type === 'literal') ? members : undefined;
+  return members.every(member => member.type?.type === 'literal') ? members : undefined;
 }
 
-function docgenSourceUrl(entry: DocgenClass | DocgenType | undefined): string | undefined {
+function sourceUrlForExport(exportedPath: string): string {
+  const relative = exportedPath === './index' ? 'src/index.ts' : `src/${exportedPath.slice(2)}.ts`;
+  return `https://github.com/xirothedev/discord.js-selfbot/blob/main/packages/discord-ts-selfbot/${relative}#L1`;
+}
+
+function sourceUrlForEntry(entry: DocgenClass | DocgenType | undefined, exportedPath: string): string {
   const meta = entry?.meta;
-  if (!meta?.file) return undefined;
+  if (!meta?.file) return sourceUrlForExport(exportedPath);
   const full = [meta.path, meta.file].filter(Boolean).join('/').replace(/\.js$/, '.ts');
   return `https://github.com/xirothedev/discord.js-selfbot/blob/main/packages/discord-ts-selfbot/${full}#L${
     meta.line ?? 1
@@ -171,9 +176,9 @@ function collectFiles(root: string, current = root): Map<string, string> {
 
 function compareOutputs(outputs: Map<string, string>): GenerateResult {
   const existing = collectFiles(apiDir);
-  const missing = [...outputs.keys()].filter((file) => !existing.has(file));
-  const extra = [...existing.keys()].filter((file) => !outputs.has(file));
-  const changed = [...outputs.keys()].filter((file) => existing.has(file) && existing.get(file) !== outputs.get(file));
+  const missing = [...outputs.keys()].filter(file => !existing.has(file));
+  const extra = [...existing.keys()].filter(file => !outputs.has(file));
+  const changed = [...outputs.keys()].filter(file => existing.has(file) && existing.get(file) !== outputs.get(file));
 
   if (missing.length || extra.length || changed.length) {
     console.error('API reference is stale.');
@@ -209,15 +214,11 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
   const version = (JSON.parse(readFileSync(path.join(packageDir, 'package.json'), 'utf8')) as { version: string })
     .version;
   const typingsReflections = reflectionsByName(typingsProject);
-  const docgen = loadDocgen({
-    packageDir,
-    docsDir,
-    outputJson: path.join(tempDir, 'docgen.json'),
-  });
+  const store = loadApiStore(path.join(docsDir, 'scripts/agent/api.json'));
   const outputs = new Map<string, string>();
   const areaItems = new Map<string, PageItem[]>();
   const areaCounts = new Map<string, number>();
-  const publicNames = new Set(parsed.public.map((item) => item.name));
+  const publicNames = new Set(parsed.public.map(item => item.name));
   const publicReflections: Reflection[] = [];
   const skipped: string[] = [];
 
@@ -228,21 +229,20 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
       continue;
     }
 
-    const docgenEntry = docgen.get(exported.name);
-    enrichClass(undefined, typings, docgenEntry);
-    enrichType(typings, docgenEntry);
+    const storeEntry = store.get(exported.name);
+    enrichClass(undefined, typings, storeEntry);
+    enrichType(typings, storeEntry);
     const privateMembers =
-      (docgenEntry as DocgenClass | undefined)?.props
-        ?.filter((prop) => prop.access === 'private')
-        .map((prop) => prop.name) ?? [];
-    const sourceUrl = docgenSourceUrl(docgenEntry) ?? sourceUrlFor(typings);
+      typings.children?.filter(child => child.flags?.isPrivate || child.flags?.isProtected).map(child => child.name) ??
+      [];
+    const sourceUrl = sourceUrlForEntry(storeEntry, exported.path);
     const area = areaFor(exported.path);
     const slug = slugify(exported.name);
     const page = renderPublicPage({
       exported,
       typings,
       sourceUrl,
-      docgen: docgenEntry,
+      docgen: storeEntry,
       privateMembers,
     });
     if (!page) {
@@ -267,10 +267,10 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
   for (const reflection of publicReflections) collectReflectionNames(reflection, referencedNames);
 
   const typingsOnly = [...typingsReflections.values()].filter(
-    (reflection) =>
+    reflection =>
       !publicNames.has(reflection.name) && referencedNames.has(reflection.name) && isTypingsKind(reflection.kind),
   );
-  for (const reflection of typingsOnly) enrichType(reflection, docgen.get(reflection.name));
+  for (const reflection of typingsOnly) enrichType(reflection, store.get(reflection.name));
 
   const typingsGroups = new Map<TypingsGroupId, Reflection[]>();
   for (const reflection of typingsOnly) {
@@ -313,13 +313,13 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
     );
     outputs.set(
       'api/typings/meta.json',
-      meta('Typings', ['index', ...typingsItems.map((item) => path.basename(item.href))]),
+      meta('Typings', ['index', ...typingsItems.map(item => path.basename(item.href))]),
     );
   }
 
   for (const [area, items] of areaItems) {
     const sorted = [...items].sort((a, b) => a.title.localeCompare(b.title));
-    const areaMeta = AREA_ORDER.find((entry) => entry.id === area);
+    const areaMeta = AREA_ORDER.find(entry => entry.id === area);
     outputs.set(
       `api/${area}/index.mdx`,
       renderAreaIndex({
@@ -330,16 +330,16 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
     );
     outputs.set(
       `api/${area}/meta.json`,
-      meta(areaMeta?.title ?? area, ['index', ...sorted.map((item) => path.basename(item.href))]),
+      meta(areaMeta?.title ?? area, ['index', ...sorted.map(item => path.basename(item.href))]),
     );
   }
 
-  const indexAreas = AREA_ORDER.map((area) => ({ ...area, count: areaCounts.get(area.id) ?? 0 }));
+  const indexAreas = AREA_ORDER.map(area => ({ ...area, count: areaCounts.get(area.id) ?? 0 }));
   outputs.set(
     'api/index.mdx',
     renderApiIndex({
       areas: indexAreas,
-      aliases: parsed.aliases.map((item) => item.name),
+      aliases: parsed.aliases.map(item => item.name),
       external: parsed.external,
       skipped,
       version,
@@ -347,7 +347,7 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
   );
   outputs.set(
     'api/meta.json',
-    meta('API Reference', ['index', ...indexAreas.filter((area) => area.count > 0).map((area) => area.id)]),
+    meta('API Reference', ['index', ...indexAreas.filter(area => area.count > 0).map(area => area.id)]),
   );
 
   return options.check ? compareOutputs(outputs) : writeOutputs(outputs);

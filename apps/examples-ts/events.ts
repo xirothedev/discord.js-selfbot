@@ -27,7 +27,7 @@ client.once(Events.ClientReady, announceReady);
 client.once(Events.CLIENT_READY, announceReady);
 
 client.on(Events.MessageCreate, async (message: Message) => {
-  if (message.author.id === client.user?.id) return;
+  if (message.author?.id === client.user?.id) return;
 
   if (message.content === '!hello') {
     await message.reply('Hello from the events example!');

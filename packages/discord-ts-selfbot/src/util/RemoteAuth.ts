@@ -46,11 +46,6 @@ const Event = {
   DEBUG: 'debug',
 };
 
-/**
- * Discord Auth QR
- * @extends {EventEmitter}
- * @abstract
- */
 class DiscordAuthWebsocket extends EventEmitter {
   #ws: WebSocket | null = null;
   #heartbeatInterval: number = 0;
@@ -63,31 +58,19 @@ class DiscordAuthWebsocket extends EventEmitter {
 
   token: string;
 
-  /**
-   * Creates a new DiscordAuthWebsocket instance.
-   */
   constructor() {
     super();
     this.token = '';
   }
 
-  /**
-   * @type {string}
-   */
   get AuthURL() {
     return baseURL + this.#fingerprint;
   }
 
-  /**
-   * @type {Date}
-   */
   get exprire(): Date | null {
     return this.#expire;
   }
 
-  /**
-   * @type {UserRaw}
-   */
   get user(): unknown {
     return DiscordAuthWebsocket.decryptUser(this.#userDecryptString);
   }
@@ -104,19 +87,9 @@ class DiscordAuthWebsocket extends EventEmitter {
 
   #handleWebSocket() {
     this.#ws!.on('error', (error: Error) => {
-      /**
-       * WS Error
-       * @event DiscordAuthWebsocket#error
-       * @param {Error} error Error
-       */
       this.emit(Event.ERROR, error);
     });
     this.#ws!.on('open', () => {
-      /**
-       * Debug Event
-       * @event DiscordAuthWebsocket#debug
-       * @param {string} msg Debug msg
-       */
       this.emit(Event.DEBUG, '[WS] Client Connected');
     });
     this.#ws!.on('close', () => {
@@ -140,11 +113,6 @@ class DiscordAuthWebsocket extends EventEmitter {
 
       case receiveEvent.PENDING_REMOTE_INIT: {
         this.#fingerprint = message.fingerprint as string;
-        /**
-         * Ready Event
-         * @event DiscordAuthWebsocket#ready
-         * @param {DiscordAuthWebsocket} client WS
-         */
         this.emit(Event.READY, this);
         break;
       }
@@ -161,11 +129,6 @@ class DiscordAuthWebsocket extends EventEmitter {
       }
 
       case receiveEvent.CANCEL: {
-        /**
-         * Cancel
-         * @event DiscordAuthWebsocket#cancel
-         * @param {DiscordAuthWebsocket} client WS
-         */
         this.emit(Event.CANCEL, this);
         this.destroy();
         break;
@@ -263,19 +226,6 @@ class DiscordAuthWebsocket extends EventEmitter {
     const user_data = this.#decryptPayload(data.encrypted_user_payload);
     this.#userDecryptString = user_data.toString();
 
-    /**
-     * @typedef {Object} UserRaw
-     * @property {Snowflake} id
-     * @property {string} username
-     * @property {number} discriminator
-     * @property {string} avatar
-     */
-
-    /**
-     * Emitted whenever a user is scan QR Code.
-     * @event DiscordAuthWebsocket#pending
-     * @param {UserRaw} user Discord User Raw
-     */
     this.emit(Event.WAIT_SCAN, this.user);
   }
 
@@ -287,11 +237,6 @@ class DiscordAuthWebsocket extends EventEmitter {
     });
   }
 
-  /**
-   * Connect WS
-   * @param {Client} [client] DiscordJS Client
-   * @returns {Promise<void>}
-   */
   connect(client?: unknown) {
     this.#createWebSocket(wsURL);
     if (client) {
@@ -301,25 +246,13 @@ class DiscordAuthWebsocket extends EventEmitter {
     }
   }
 
-  /**
-   * Destroy client
-   * @returns {void}
-   */
   destroy() {
     if (!this.#ws) return;
     this.#ws.close();
     this.emit(Event.DEBUG, 'WebSocket closed.');
-    /**
-     * Emitted whenever a connection is closed.
-     * @event DiscordAuthWebsocket#closed
-     */
     this.emit(Event.CLOSED);
   }
 
-  /**
-   * Generate QR code for user to scan (Terminal)
-   * @returns {void}
-   */
   generateQR() {
     if (!this.#fingerprint) return;
     qrcode.toString(this.AuthURL, { type: 'utf8', errorCorrectionLevel: 'L' }, (err: Error | null, url: string) => {
@@ -360,11 +293,6 @@ class DiscordAuthWebsocket extends EventEmitter {
         if (resObj.encrypted_token) {
           this.token = this.#decryptPayload(resObj.encrypted_token).toString();
         }
-        /**
-         * Emitted whenever a real token is found.
-         * @event DiscordAuthWebsocket#finish
-         * @param {string} token Discord Token
-         */
         this.emit(Event.FINISH, this.token);
         this.destroy();
       })

@@ -31,11 +31,6 @@ interface CloseEventLike {
   wasClean?: boolean;
 }
 
-/**
- * Represents a Voice Connection's WebSocket.
- * @extends {EventEmitter}
- * @private
- */
 class VoiceWebSocket extends EventEmitter {
   declare connection: import('../VoiceConnection').default;
   declare attempts: number;
@@ -46,16 +41,8 @@ class VoiceWebSocket extends EventEmitter {
 
   constructor(connection: import('../VoiceConnection').default) {
     super();
-    /**
-     * The Voice Connection that this WebSocket serves
-     * @type {VoiceConnection}
-     */
     this.connection = connection;
 
-    /**
-     * How many connection attempts have been made
-     * @type {number}
-     */
     this.attempts = 0;
 
     this._sequenceNumber = -1;
@@ -64,11 +51,6 @@ class VoiceWebSocket extends EventEmitter {
     this.connection.on('closing', this.shutdown.bind(this));
   }
 
-  /**
-   * The client of this voice WebSocket
-   * @type {Client}
-   * @readonly
-   */
   get client() {
     return this.connection.client;
   }
@@ -79,9 +61,6 @@ class VoiceWebSocket extends EventEmitter {
     this.reset();
   }
 
-  /**
-   * Resets the current WebSocket.
-   */
   reset() {
     this.emit('debug', `[WS] reset requested`);
     if (this.ws) {
@@ -91,9 +70,6 @@ class VoiceWebSocket extends EventEmitter {
     this.clearHeartbeat();
   }
 
-  /**
-   * Starts connecting to the Voice WebSocket Server.
-   */
   connect() {
     this.emit('debug', `[WS] connect requested`);
     if (this.dead) return;
@@ -105,10 +81,6 @@ class VoiceWebSocket extends EventEmitter {
 
     this.attempts++;
 
-    /**
-     * The actual WebSocket used to connect to the Voice WebSocket Server.
-     * @type {WebSocket}
-     */
     const ws = WebSocket.create(`wss://${this.connection.authentication.endpoint ?? ''}/`, { v: 8 });
     this.ws = ws;
     this.emit('debug', `[WS] connecting, ${this.attempts} attempts, ${ws.url}`);
@@ -118,11 +90,6 @@ class VoiceWebSocket extends EventEmitter {
     ws.onerror = this.onError.bind(this);
   }
 
-  /**
-   * Sends data to the WebSocket if it is open.
-   * @param {string} data The data to send to the WebSocket
-   * @returns {Promise<string>}
-   */
   send(data: string): Promise<string> {
     this.emit('debug', `[WS] >> ${data}`);
     return new Promise<string>((resolve, reject) => {
@@ -134,18 +101,10 @@ class VoiceWebSocket extends EventEmitter {
     });
   }
 
-  /**
-   * JSON.stringify's a packet and then sends it to the WebSocket Server.
-   * @param {Object} packet The packet to send
-   * @returns {Promise<string>}
-   */
   async sendPacket(packet: unknown): Promise<string> {
     return this.send(JSON.stringify(packet));
   }
 
-  /**
-   * Called whenever the WebSocket opens.
-   */
   onOpen() {
     this.emit('debug', `[WS] opened at gateway ${this.connection.authentication.endpoint}`);
     const packet: VoiceGatewayPacket = {
@@ -163,11 +122,6 @@ class VoiceWebSocket extends EventEmitter {
     });
   }
 
-  /**
-   * Called whenever a message is received from the WebSocket.
-   * @param {MessageEvent} event The message event that was received
-   * @returns {void}
-   */
   onMessage(event: { data: unknown }) {
     try {
       const packet = WebSocket.unpack(event.data, 'json');
@@ -178,10 +132,6 @@ class VoiceWebSocket extends EventEmitter {
     }
   }
 
-  /**
-   * Called whenever the connection to the WebSocket server is lost.
-   * @param {CloseEvent} event The WebSocket close event
-   */
   onClose(event: CloseEventLike) {
     this.emit('debug', `[WS] closed with code ${event.code} and reason: ${event.reason}`);
     if (event.code === 4017) {
@@ -197,19 +147,11 @@ class VoiceWebSocket extends EventEmitter {
     if (!this.dead) setTimeout(this.connect.bind(this), this.attempts * 1000).unref();
   }
 
-  /**
-   * Called whenever an error occurs with the WebSocket.
-   * @param {Error} error The error that occurred
-   */
   onError(error: unknown) {
     this.emit('debug', `[WS] Error: ${String(error)}`);
     this.emit('error', error);
   }
 
-  /**
-   * Called whenever a valid packet is received from the WebSocket.
-   * @param {Object} packet The received packet
-   */
   onPacket(packet: VoiceGatewayPacket) {
     this.emit('debug', `[WS] << ${JSON.stringify(packet)}`);
     if (packet.seq) this._sequenceNumber = packet.seq;
@@ -218,22 +160,12 @@ class VoiceWebSocket extends EventEmitter {
         if (typeof packet.d?.heartbeat_interval === 'number') this.setHeartbeat(packet.d.heartbeat_interval);
         break;
       case VoiceOpcodes.READY:
-        /**
-         * Emitted once the voice WebSocket receives the ready packet.
-         * @param {Object} packet The received packet
-         * @event VoiceWebSocket#ready
-         */
         this.emit('ready', packet.d);
         this.connection.setVideoStatus(false);
         break;
       /* eslint-disable no-case-declarations */
       case VoiceOpcodes.SESSION_DESCRIPTION:
         if (packet.d?.secret_key) packet.d.secret_key = new Uint8Array(packet.d.secret_key);
-        /**
-         * Emitted once the Voice Websocket receives a description of this voice session.
-         * @param {Object} packet The received packet
-         * @event VoiceWebSocket#sessionDescription
-         */
         this.emit('sessionDescription', packet.d);
         break;
       case VoiceOpcodes.CLIENT_CONNECT:
@@ -255,56 +187,29 @@ class VoiceWebSocket extends EventEmitter {
         break;
       }
       case VoiceOpcodes.SPEAKING:
-        /**
-         * Emitted whenever a speaking packet is received.
-         * @param {Object} data
-         * @event VoiceWebSocket#startSpeaking
-         */
         this.emit('startSpeaking', packet.d);
         break;
       case VoiceOpcodes.SOURCES:
-        /**
-         * Emitted whenever a streaming packet is received.
-         * @param {Object} data
-         * @event VoiceWebSocket#startStreaming
-         */
         this.emit('startStreaming', packet.d);
         break;
       default:
-        /**
-         * Emitted when an unhandled packet is received.
-         * @param {Object} packet
-         * @event VoiceWebSocket#unknownPacket
-         */
         this.emit('unknownPacket', packet);
         break;
     }
   }
 
-  /**
-   * Sets an interval at which to send a heartbeat packet to the WebSocket.
-   * @param {number} interval The interval at which to send a heartbeat packet
-   */
   setHeartbeat(interval: number) {
     if (!interval || isNaN(interval)) {
       this.onError(new Error('VOICE_INVALID_HEARTBEAT'));
       return;
     }
     if (this.heartbeatInterval) {
-      /**
-       * Emitted whenever the voice WebSocket encounters a non-fatal error.
-       * @param {string} warn The warning
-       * @event VoiceWebSocket#warn
-       */
       this.emit('warn', 'A voice heartbeat interval is being overwritten');
       clearInterval(this.heartbeatInterval);
     }
     this.heartbeatInterval = setInterval(this.sendHeartbeat.bind(this), interval).unref();
   }
 
-  /**
-   * Clears a heartbeat interval, if one exists.
-   */
   clearHeartbeat() {
     if (!this.heartbeatInterval) {
       this.emit('warn', 'Tried to clear a heartbeat interval that does not exist');
@@ -314,9 +219,6 @@ class VoiceWebSocket extends EventEmitter {
     this.heartbeatInterval = null;
   }
 
-  /**
-   * Sends a heartbeat packet.
-   */
   sendHeartbeat() {
     this.sendPacket({
       op: VoiceOpcodes.HEARTBEAT,

@@ -31,11 +31,6 @@ let MediaChannel;
 const deletedChannels = new WeakSet();
 let deprecationEmittedForDeleted = false;
 
-/**
- * Represents any channel on Discord.
- * @extends {Base}
- * @abstract
- */
 class Channel extends Base implements ChannelEntity {
   declare id: ChannelEntity['id'];
   declare type: ChannelEntity['type'];
@@ -44,47 +39,25 @@ class Channel extends Base implements ChannelEntity {
     super(client);
 
     const type = data?.type !== undefined ? ChannelTypes[data.type] : undefined;
-    /**
-     * The type of the channel
-     * @type {ChannelType}
-     */
     this.type = type ?? 'UNKNOWN';
 
     if (data && immediatePatch) this._patch(data);
   }
 
   _patch(data: PatchOf<'Channel'>) {
-    /**
-     * The channel's id
-     * @type {Snowflake}
-     */
     this.id = data.id!;
 
     if ('flags' in data) {
-      /**
-       * The flags that are applied to the channel.
-       * @type {?Readonly<ChannelFlags>}
-       */
       this.flags = new ChannelFlags(data.flags).freeze();
     } else {
       this.flags ??= new ChannelFlags().freeze();
     }
   }
 
-  /**
-   * The timestamp the channel was created at
-   * @type {number}
-   * @readonly
-   */
   get createdTimestamp(): number | null {
     return SnowflakeUtil.timestampFrom(this.id);
   }
 
-  /**
-   * The time the channel was created at
-   * @type {Date}
-   * @readonly
-   */
   get createdAt(): Date | null {
     const timestamp = this.createdTimestamp;
     return timestamp === null ? null : new Date(timestamp);
@@ -120,86 +93,39 @@ class Channel extends Base implements ChannelEntity {
     else deletedChannels.delete(this);
   }
 
-  /**
-   * Whether this Channel is a partial
-   * <info>This is always false outside of DM channels.</info>
-   * @type {boolean}
-   * @readonly
-   */
   get partial() {
     return false;
   }
 
-  /**
-   * When concatenated with a string, this automatically returns the channel's mention instead of the Channel object.
-   * @returns {string}
-   * @example
-   * // Logs: Hello from <#123456789012345678>!
-   * console.log(`Hello from ${channel}!`);
-   */
   toString() {
     return `<#${this.id}>`;
   }
 
-  /**
-   * Deletes this channel.
-   * @returns {Promise<Channel>}
-   * @example
-   * // Delete the channel
-   * channel.delete()
-   *   .then(console.log)
-   *   .catch(console.error);
-   */
   async delete(_reason: string | null = null) {
     await this.client.api.channels(this.id).delete();
     return this;
   }
 
-  /**
-   * Fetches this channel.
-   * @param {boolean} [force=true] Whether to skip the cache check and request the API
-   * @returns {Promise<Channel>}
-   */
   fetch(force = true): Promise<Channel | null> {
     return this.client.channels.fetch(this.id, { force });
   }
 
-  /**
-   * Indicates whether this channel is {@link TextBasedChannels text-based}.
-   * @returns {boolean}
-   */
   isText() {
     return 'messages' in this;
   }
 
-  /**
-   * Indicates whether this channel is {@link BaseGuildVoiceChannel voice-based}.
-   * @returns {boolean}
-   */
   isVoice() {
     return VoiceBasedChannelTypes.includes(this.type);
   }
 
-  /**
-   * Indicates whether this channel is a {@link ThreadChannel}.
-   * @returns {boolean}
-   */
   isThread() {
     return ThreadChannelTypes.includes(this.type);
   }
 
-  /**
-   * Indicates whether this channel is {@link ThreadOnlyChannel}.
-   * @returns {boolean}
-   */
   isThreadOnly() {
     return 'availableTags' in this;
   }
 
-  /**
-   * Indicates whether this channel is a {@link DirectoryChannel}
-   * @returns {boolean}
-   */
   isDirectory() {
     return this.type === 'GUILD_DIRECTORY';
   }
@@ -293,11 +219,6 @@ class Channel extends Base implements ChannelEntity {
     return super.toJSON({ createdTimestamp: true }, ...props);
   }
 }
-
-/**
- * @external APIChannel
- * @see {@link https://discord.com/developers/docs/resources/channel#channel-object}
- */
 
 export { Channel, deletedChannels };
 export default { Channel, deletedChannels };

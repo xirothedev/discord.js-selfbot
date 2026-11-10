@@ -80,6 +80,11 @@ jobs:
           TURBO_UI: '0'
         run: bun run lint:boundaries
 
+      - name: Docs snippets
+        env:
+          TURBO_UI: '0'
+        run: bun run docs:snippets
+
   test:
     name: Tests
     if: ${{ inputs.run_test }}

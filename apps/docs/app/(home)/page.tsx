@@ -118,7 +118,7 @@ await client.login(process.env.DISCORD_TOKEN);`}</code>
 
       <section className="mx-auto max-w-5xl px-6 py-16">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature) => (
+          {features.map(feature => (
             <div key={feature.title} className="border-fd-border bg-fd-card rounded-xl border p-5">
               <Icon icon={feature.icon} className="text-discord-blurple size-5" />
               <h2 className="mt-4 text-base font-semibold">{feature.title}</h2>

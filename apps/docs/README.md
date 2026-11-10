@@ -20,17 +20,22 @@ bun run test
 
 - `app/` — Next.js App Router pages, the landing page, search, OG images, `llms.txt`.
 - `content/docs/` — manual MDX pages. Generated API pages live in `content/docs/api/` and are gitignored.
-- `scripts/generate-api.ts` — TypeDoc + docgen merge into MDX.
+- `scripts/generate-api.ts` — TypeDoc + the API prose store merged into MDX.
+- `scripts/agent/` — the `api.json` prose store, the events extraction, and the plain-Markdown agent docs generator.
 - `components/` — MDX components, search dialog, icon registry.
 - `lib/` — source loader, shared URLs, layout options.
 
 ## API generation
 
-The generator runs TypeDoc over `typings/index.d.ts` for signatures, classes, interfaces, and type aliases.
+The generator runs TypeDoc over `typings/index.d.ts` for signatures, classes, interfaces, and type aliases. It reads descriptions, parameters, examples, and events from `scripts/agent/api.json`.
 
-It also runs the legacy `@discordjs/docgen` parser (with a Node 26 `util` shim) for JSDoc descriptions, events, examples, and parameter docs. Docgen cannot read TypeScript, so the build compiles `src/**/*.ts` to a temporary JavaScript mirror in the system temp directory. Nothing is written into the repository. The merged output is written as MDX and `meta.json` sidebars.
+The prose store was extracted once from the old source JSDoc. The source JSDoc is gone; update `api.json` when a public description changes. The merged output is written as MDX and `meta.json` sidebars.
 
-Do not edit `content/docs/api/` by hand. Edit the source JSDoc or the typings, then run `bun run api`.
+Do not edit `content/docs/api/` by hand. Edit `scripts/agent/api.json` or the typings, then run `bun run api`.
+
+## Agent docs
+
+`scripts/agent/generate.ts` writes the plain-Markdown corpus into `packages/discord-ts-selfbot/docs`. It converts the guides and examples, generates the runtime reference from the typings and `api.json`, and writes `llms.txt`. Run `bun run docs:agent`; `bun run docs:agent:check` fails when the committed corpus is stale. `bun run docs:snippets` type-checks the full example blocks.
 
 ## Deployment
 

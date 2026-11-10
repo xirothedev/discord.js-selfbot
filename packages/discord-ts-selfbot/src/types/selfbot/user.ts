@@ -1,11 +1,5 @@
 import type { RawUserData } from '../../../typings/rawDataTypes';
 
-/**
- * Fields that the user-account API returns but `discord-api-types` does not model.
- *
- * These fields are tagged `selfbot` in `EntitySchema`; they are not part of the
- * public bot API contract.
- */
 export interface SelfbotUserFields {
   banner_color?: string | null;
   phone?: string | null;

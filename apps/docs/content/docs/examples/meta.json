@@ -1,10 +1,4 @@
 {
   "title": "Examples",
-  "pages": [
-    "index",
-    "basic-client",
-    "events",
-    "presence",
-    "slash-commands"
-  ]
+  "pages": ["index", "basic-client", "events", "presence", "slash-commands"]
 }

@@ -1,13 +1,17 @@
 import { describe, expect, test } from 'bun:test';
 import { areaFor, parseIndexExports, slugify } from './exports';
 
-const source = `'use strict';
+const source = `import pkg from '../package.json';
 
-exports.Client = require('./client/Client');
-exports.CustomStatus = require('./structures/Presence').CustomStatus;
-exports.ActionRow = exports.ActionRowBuilder;
-exports.EmbedBuilder = require('@discordjs/builders').EmbedBuilder;
-exports.version = require('../package.json').version;
+export { default as Client } from './client/Client';
+export { CustomStatus } from './structures/Presence';
+export { DefaultClient as ClientAlias } from './client/Client';
+export { ActionRowBuilder as ActionRow } from '@discordjs/builders';
+export const version = pkg.version;
+export {
+  Guild,
+  Message,
+} from './structures/index';
 `;
 
 describe('parseIndexExports', () => {
@@ -17,9 +21,12 @@ describe('parseIndexExports', () => {
     expect(parsed.public).toEqual([
       { name: 'Client', path: './client/Client', namedExport: undefined },
       { name: 'CustomStatus', path: './structures/Presence', namedExport: 'CustomStatus' },
+      { name: 'version', path: './index', namedExport: undefined },
+      { name: 'Guild', path: './structures/index', namedExport: 'Guild' },
+      { name: 'Message', path: './structures/index', namedExport: 'Message' },
     ]);
-    expect(parsed.aliases).toEqual([{ name: 'ActionRow', target: 'ActionRowBuilder' }]);
-    expect(parsed.external).toEqual(['EmbedBuilder']);
+    expect(parsed.aliases).toEqual([{ name: 'ClientAlias', target: 'DefaultClient' }]);
+    expect(parsed.external).toEqual(['ActionRow']);
     expect(parsed.unparsed).toEqual([]);
   });
 });

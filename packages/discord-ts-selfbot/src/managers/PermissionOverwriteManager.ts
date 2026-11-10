@@ -24,10 +24,6 @@ type OverwriteResolvableSource = PermissionOverwrites | OverwriteResolvable;
 
 let cacheWarningEmitted = false;
 
-/**
- * Manages API methods for guild channel permission overwrites and stores their cache.
- * @extends {CachedManager}
- */
 class PermissionOverwriteManager extends CachedManager<PermissionOverwrites> {
   declare channel: GuildChannel;
   constructor(channel: GuildChannel, iterable?: Iterable<PermissionOverwrites>) {
@@ -40,10 +36,6 @@ class PermissionOverwriteManager extends CachedManager<PermissionOverwrites> {
       );
     }
 
-    /**
-     * The channel of the permission overwrite this manager belongs to
-     * @type {GuildChannel}
-     */
     this.channel = channel;
 
     if (iterable) {
@@ -53,30 +45,10 @@ class PermissionOverwriteManager extends CachedManager<PermissionOverwrites> {
     }
   }
 
-  /**
-   * The cache of this Manager
-   * @type {Collection<Snowflake, PermissionOverwrites>}
-   * @name PermissionOverwriteManager#cache
-   */
-
   _add(data: RawPermissionOverwriteData | PermissionOverwrites, cache = true): PermissionOverwrites {
     return super._add(data, cache, { extras: [this.channel] });
   }
 
-  /**
-   * Replaces the permission overwrites in this channel.
-   * @param {OverwriteResolvable[]|Collection<Snowflake, OverwriteResolvable>} overwrites
-   * Permission overwrites the channel gets updated with
-   * @param {string} [reason] Reason for updating the channel overwrites
-   * @returns {Promise<GuildChannel>}
-   * @example
-   * message.channel.permissionOverwrites.set([
-   *   {
-   *      id: message.author.id,
-   *      deny: [Permissions.FLAGS.VIEW_CHANNEL],
-   *   },
-   * ], 'Needed to change permissions');
-   */
   async set(
     overwrites: readonly OverwriteResolvableSource[] | Collection<Snowflake, OverwriteResolvableSource>,
     reason?: string,
@@ -87,23 +59,6 @@ class PermissionOverwriteManager extends CachedManager<PermissionOverwrites> {
     return this.channel.edit({ permissionOverwrites: overwrites }, reason);
   }
 
-  /**
-   * Extra information about the overwrite
-   * @typedef {Object} GuildChannelOverwriteOptions
-   * @property {string} [reason] Reason for creating/editing this overwrite
-   * @property {number} [type] The type of overwrite, either `0` for a role or `1` for a member. Use this to bypass
-   * automatic resolution of type that results in an error for uncached structure
-   */
-
-  /**
-   * Creates or edits permission overwrites for a user or role in this channel.
-   * @param {RoleResolvable|UserResolvable} userOrRole The user or role to update
-   * @param {PermissionOverwriteOptions} options The options for the update
-   * @param {GuildChannelOverwriteOptions} [overwriteOptions] The extra information for the update
-   * @param {PermissionOverwrites} [existing] The existing overwrites to merge with this update
-   * @returns {Promise<GuildChannel>}
-   * @private
-   */
   async upsert(
     userOrRole: UserOrRoleResolvableSource,
     options: PermissionOverwriteOptions,
@@ -130,20 +85,6 @@ class PermissionOverwriteManager extends CachedManager<PermissionOverwrites> {
     return this.channel;
   }
 
-  /**
-   * Creates permission overwrites for a user or role in this channel, or replaces them if already present.
-   * @param {RoleResolvable|UserResolvable} userOrRole The user or role to update
-   * @param {PermissionOverwriteOptions} options The options for the update
-   * @param {GuildChannelOverwriteOptions} [overwriteOptions] The extra information for the update
-   * @returns {Promise<GuildChannel>}
-   * @example
-   * // Create or Replace permission overwrites for a message author
-   * message.channel.permissionOverwrites.create(message.author, {
-   *   SEND_MESSAGES: false
-   * })
-   *   .then(channel => console.log(channel.permissionOverwrites.cache.get(message.author.id)))
-   *   .catch(console.error);
-   */
   create(
     userOrRole: UserOrRoleResolvableSource,
     options: PermissionOverwriteOptions,
@@ -152,20 +93,6 @@ class PermissionOverwriteManager extends CachedManager<PermissionOverwrites> {
     return this.upsert(userOrRole, options, overwriteOptions);
   }
 
-  /**
-   * Edits permission overwrites for a user or role in this channel, or creates an entry if not already present.
-   * @param {RoleResolvable|UserResolvable} userOrRole The user or role to update
-   * @param {PermissionOverwriteOptions} options The options for the update
-   * @param {GuildChannelOverwriteOptions} [overwriteOptions] The extra information for the update
-   * @returns {Promise<GuildChannel>}
-   * @example
-   * // Edit or Create permission overwrites for a message author
-   * message.channel.permissionOverwrites.edit(message.author, {
-   *   SEND_MESSAGES: false
-   * })
-   *   .then(channel => console.log(channel.permissionOverwrites.cache.get(message.author.id)))
-   *   .catch(console.error);
-   */
   edit(
     userOrRole: UserOrRoleResolvableSource,
     options: PermissionOverwriteOptions,
@@ -176,12 +103,6 @@ class PermissionOverwriteManager extends CachedManager<PermissionOverwrites> {
     return this.upsert(userOrRole, options, overwriteOptions, existing);
   }
 
-  /**
-   * Deletes permission overwrites for a user or role in this channel.
-   * @param {UserResolvable|RoleResolvable} userOrRole The user or role to delete
-   * @param {string} [reason] The reason for deleting the overwrite
-   * @returns {Promise<GuildChannel>}
-   */
   async delete(userOrRole: UserOrRoleResolvableSource, reason?: string): Promise<GuildChannel> {
     const userOrRoleId = this.channel.guild.roles.resolveId(userOrRole) ?? this.client.users.resolveId(userOrRole);
     if (!userOrRoleId) throw new TypeError('INVALID_TYPE', 'parameter', 'User nor a Role');

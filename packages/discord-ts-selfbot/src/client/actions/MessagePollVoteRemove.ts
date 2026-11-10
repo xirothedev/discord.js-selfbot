@@ -19,12 +19,6 @@ class MessagePollVoteRemoveAction extends Action {
 
     answer.voteCount--;
 
-    /**
-     * Emitted whenever a user removes their vote in a poll.
-     * @event Client#messagePollVoteRemove
-     * @param {PollAnswer} pollAnswer The answer where the vote was removed
-     * @param {Snowflake} userId The id of the user that removed their vote
-     */
     this.client.emit(Events.MESSAGE_POLL_VOTE_REMOVE, answer, data.user_id);
 
     return { poll };

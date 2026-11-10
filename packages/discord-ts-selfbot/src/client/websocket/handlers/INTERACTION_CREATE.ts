@@ -61,10 +61,5 @@ export default (client: Client, packet: { d?: unknown }, _shard: WebSocketShard)
   const InteractionType = resolveInteractionType(data);
   const interaction = InteractionType ? Reflect.construct(InteractionType, [client, data]) : data;
 
-  /**
-   * Emitted when an interaction is created.
-   * @event Client#interactionCreate
-   * @param {Interaction} interaction The interaction that was created
-   */
   client.emit(Events.INTERACTION_CREATE, interaction);
 };

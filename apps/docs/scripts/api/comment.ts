@@ -13,7 +13,7 @@ export function plainText(parts: CommentPart[] | undefined): string {
   if (!parts) return '';
   return stripJsdocSyntax(
     parts
-      .map((part) => {
+      .map(part => {
         if (part.kind === 'code') return part.text ?? '';
         return part.text ?? '';
       })
@@ -28,7 +28,7 @@ export function escapeMdx(text: string): string {
 }
 
 export function inlineCode(text: string): string {
-  const longestRun = Math.max(0, ...(text.match(/`+/g) ?? []).map((run) => run.length));
+  const longestRun = Math.max(0, ...(text.match(/`+/g) ?? []).map(run => run.length));
   const delimiter = '`'.repeat(longestRun + 1);
   const pad = text.startsWith('`') || text.endsWith('`') ? ' ' : '';
   return `${delimiter}${pad}${text}${pad}${delimiter}`;
@@ -49,7 +49,7 @@ export function renderSummary(comment: Comment | undefined): string {
   if (!parts?.length) return '';
 
   return parts
-    .map((part) => {
+    .map(part => {
       if (part.kind === 'code') {
         const text = part.text ?? '';
         if (text.includes('\n')) return `\n\n\`\`\`ts\n${text}\n\`\`\`\n\n`;
@@ -67,13 +67,13 @@ export function renderSummary(comment: Comment | undefined): string {
 }
 
 export function renderExamples(comment: Comment | undefined): string {
-  const examples = comment?.blockTags?.filter((tag) => tag.tag === '@example') ?? [];
+  const examples = comment?.blockTags?.filter(tag => tag.tag === '@example') ?? [];
   if (!examples.length) return '';
 
   return examples
-    .map((tag) => {
+    .map(tag => {
       const content = tag.content ?? [];
-      const code = content.find((part) => part.kind === 'code')?.text;
+      const code = content.find(part => part.kind === 'code')?.text;
       if (code) return code.trim();
 
       const text = plainText(content);
@@ -84,7 +84,7 @@ export function renderExamples(comment: Comment | undefined): string {
 }
 
 export function renderDeprecated(comment: Comment | undefined): string {
-  const deprecated = comment?.blockTags?.find((tag) => tag.tag === '@deprecated');
+  const deprecated = comment?.blockTags?.find(tag => tag.tag === '@deprecated');
   if (!deprecated) return '';
 
   const text = plainText(deprecated.content);
@@ -92,7 +92,7 @@ export function renderDeprecated(comment: Comment | undefined): string {
 }
 
 export function renderReturns(comment: Comment | undefined): string {
-  const returns = comment?.blockTags?.find((tag) => tag.tag === '@returns' || tag.tag === '@return');
+  const returns = comment?.blockTags?.find(tag => tag.tag === '@returns' || tag.tag === '@return');
   if (!returns) return '';
 
   const text = plainText(returns.content);

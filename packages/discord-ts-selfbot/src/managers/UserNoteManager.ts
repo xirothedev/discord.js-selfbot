@@ -4,19 +4,11 @@ import type { Snowflake } from 'discord-api-types/v10';
 import type { BaseFetchOptions } from '../../typings';
 import type { Client } from '../client/Client';
 
-/**
- * Manages API methods for Client and stores their cache.
- * @extends {BaseManager}
- */
 class UserNoteManager extends BaseManager {
   declare cache: Collection<string, string>;
 
   constructor(client: Client, data: Record<string, string> = {}) {
     super(client);
-    /**
-     * Cache User Note
-     * @type {Collection<Snowflake, string>}
-     */
     this.cache = new Collection(Object.entries(data));
   }
 
@@ -36,12 +28,6 @@ class UserNoteManager extends BaseManager {
     return this;
   }
 
-  /**
-   * Obtains a user from Discord, or the user cache if it's already available.
-   * @param {UserResolvable} user The user to fetch
-   * @param {BaseFetchOptions} [options] Additional options for this fetch
-   * @returns {Promise<string>}
-   */
   async fetch(user: unknown, { cache = true, force = false }: BaseFetchOptions = {}): Promise<string> {
     const id = this.resolveId(user);
     if (!id) return '';

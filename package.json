@@ -22,7 +22,10 @@
     "ratchet:write": "bun run --cwd packages/discord-ts-selfbot ratchet:write",
     "lint:boundaries": "bun run --cwd packages/discord-ts-selfbot lint:boundaries",
     "docs:dev": "bun run --cwd apps/docs dev",
-    "docs:api": "bun run --cwd apps/docs api"
+    "docs:api": "bun run --cwd apps/docs api",
+    "docs:agent": "bun run --cwd packages/discord-ts-selfbot docs:generate",
+    "docs:agent:check": "bun run --cwd packages/discord-ts-selfbot docs:check",
+    "docs:snippets": "bun run --cwd apps/docs snippets"
   },
   "devDependencies": {
     "lint-staged": "^15.2.0",

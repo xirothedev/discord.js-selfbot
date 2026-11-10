@@ -32,5 +32,5 @@ const RULES: Array<{ id: TypingsGroupId; pattern: RegExp }> = [
 ];
 
 export function typingsGroupFor(name: string): TypingsGroupId {
-  return RULES.find((rule) => rule.pattern.test(name))?.id ?? 'utilities';
+  return RULES.find(rule => rule.pattern.test(name))?.id ?? 'utilities';
 }

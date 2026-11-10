@@ -13,12 +13,6 @@ class GuildScheduledEventUserRemoveAction extends Action {
       const user = this.getUser(data);
 
       if (guildScheduledEvent && user) {
-        /**
-         * Emitted whenever a user unsubscribes from a guild scheduled event
-         * @event Client#guildScheduledEventUserRemove
-         * @param {GuildScheduledEvent} guildScheduledEvent The guild scheduled event
-         * @param {User} user The user who unsubscribed
-         */
         client.emit(Events.GUILD_SCHEDULED_EVENT_USER_REMOVE, guildScheduledEvent, user);
 
         return { guildScheduledEvent, user };

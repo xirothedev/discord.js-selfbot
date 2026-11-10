@@ -10,15 +10,7 @@ class ThumbnailComponent extends BaseMessageComponent {
   declare media: UnfurledMediaItem;
   declare description: string | null;
   declare spoiler: boolean;
-  /**
-   * @property {UnfurledMediaItem} [media] A url or attachment
-   * @property {String} [description] Alt text for the media, max 1024 characters
-   * @property {Boolean} [spoiler] Whether the thumbnail should be a spoiler (or blurred out). Defaults to false
-   */
 
-  /**
-   * @param {ThumbnailComponent | APIThumbnailComponent} [data={}] The data
-   */
   constructor(data: unknown = {}) {
     super({ type: 'THUMBNAIL' });
 
@@ -28,28 +20,13 @@ class ThumbnailComponent extends BaseMessageComponent {
   setup(data: unknown) {
     super.setup(data);
     const source = isComponentDataSource(data) ? data : {};
-    /**
-     * A url or attachment
-     * @type {UnfurledMediaItem}
-     */
     this.media = new UnfurledMediaItem(source.media);
 
-    /**
-     * Alt text for the media, max 1024 characters
-     * @type {String}
-     */
     this.description = readComponentString(source, 'description') ?? null;
 
-    /**
-     * Whether the thumbnail should be a spoiler (or blurred out). Defaults to false
-     * @type {Boolean}
-     */
     this.spoiler = readComponentBoolean(source, 'spoiler') ?? false;
   }
 
-  /**
-   * @returns {APIThumbnailComponent}
-   */
   toJSON(): APIThumbnailComponent {
     return {
       type: ComponentType.Thumbnail,

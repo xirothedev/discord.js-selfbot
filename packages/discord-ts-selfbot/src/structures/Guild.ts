@@ -94,12 +94,6 @@ let deprecationEmittedForMe = false;
  */
 const deletedGuilds = new WeakSet();
 
-/**
- * Represents a guild (or a server) on Discord.
- * <info>It's recommended to see if a guild is available before performing operations or reading data from it. You can
- * check this with {@link Guild#available}.</info>
- * @extends {AnonymousGuild}
- */
 class Guild extends AnonymousGuild implements GuildEntity {
   declare client: import('../client/Client').default;
   declare afkChannelId: GuildEntity['afkChannelId'];
@@ -150,88 +144,36 @@ class Guild extends AnonymousGuild implements GuildEntity {
   constructor(client: import('../client/Client').default, data: RawGuildData & { shardId?: number }) {
     super(client, data, false);
 
-    /**
-     * A manager of the members belonging to this guild
-     * @type {GuildMemberManager}
-     */
     this.members = new GuildMemberManager(this);
 
-    /**
-     * A manager of the channels belonging to this guild
-     * @type {GuildChannelManager}
-     */
     this.channels = new GuildChannelManager(this);
 
-    /**
-     * A manager of the bans belonging to this guild
-     * @type {GuildBanManager}
-     */
     this.bans = new GuildBanManager(this);
 
-    /**
-     * A manager of the roles belonging to this guild
-     * @type {RoleManager}
-     */
     this.roles = new RoleManager(this);
 
-    /**
-     * A manager of the presences belonging to this guild
-     * @type {PresenceManager}
-     */
     this.presences = new PresenceManager(this.client);
 
-    /**
-     * A manager of the voice states of this guild
-     * @type {VoiceStateManager}
-     */
     this.voiceStates = new VoiceStateManager(this);
 
-    /**
-     * A manager of the stage instances of this guild
-     * @type {StageInstanceManager}
-     */
     this.stageInstances = new StageInstanceManager(this);
 
-    /**
-     * A manager of the invites of this guild
-     * @type {GuildInviteManager}
-     */
     this.invites = new GuildInviteManager(this);
 
-    /**
-     * A manager of the scheduled events of this guild
-     * @type {GuildScheduledEventManager}
-     */
     this.scheduledEvents = new GuildScheduledEventManager(this);
 
-    /**
-     * A manager of the auto moderation rules of this guild.
-     * @type {AutoModerationRuleManager}
-     */
     this.autoModerationRules = new AutoModerationRuleManager(this);
 
-    /**
-     * All of the settings {@link Object}
-     * @type {GuildSettingManager}
-     */
     this.settings = new GuildSettingManager(this);
 
     if (!data) return;
     if ('unavailable' in data && data.unavailable) {
-      /**
-       * Whether the guild is available to access. If it is not available, it indicates a server outage
-       * @type {boolean}
-       */
       this.available = false;
     } else {
       this._patch(data);
       if (!('channels' in data) || !data.channels) this.available = false;
     }
 
-    /**
-     * The id of the shard this Guild belongs to.
-     * @type {number}
-     */
     this.shardId = data.shardId ?? 0;
   }
 
@@ -265,11 +207,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     else deletedGuilds.delete(this);
   }
 
-  /**
-   * The Shard this Guild belongs to.
-   * @type {WebSocketShard}
-   * @readonly
-   */
   get shard() {
     return this.client.ws.shards.get(this.shardId);
   }
@@ -286,270 +223,120 @@ class Guild extends AnonymousGuild implements GuildEntity {
     }
 
     if ('discovery_splash' in data && data.discovery_splash !== undefined) {
-      /**
-       * The hash of the guild discovery splash image
-       * @type {?string}
-       */
       this.discoverySplash = data.discovery_splash ?? null;
     }
 
     if ('member_count' in data && data.member_count !== undefined) {
-      /**
-       * The full amount of members in this guild
-       * @type {number}
-       */
       this.memberCount = data.member_count;
     }
 
     if ('large' in data && data.large !== undefined) {
-      /**
-       * Whether the guild is "large" (has more than {@link WebsocketOptions large_threshold} members, 50 by default)
-       * @type {boolean}
-       */
       this.large = Boolean(data.large);
     }
 
     if ('premium_progress_bar_enabled' in data && data.premium_progress_bar_enabled !== undefined) {
-      /**
-       * Whether this guild has its premium (boost) progress bar enabled
-       * @type {boolean}
-       */
       this.premiumProgressBarEnabled = data.premium_progress_bar_enabled;
     }
 
-    /**
-     * An array of enabled guild features, here are the possible values:
-     * * ANIMATED_ICON
-     * * AUTO_MODERATION
-     * * BANNER
-     * * COMMERCE
-     * * COMMUNITY
-     * * CREATOR_MONETIZABLE_PROVISIONAL
-     * * CREATOR_STORE_PAGE
-     * * DISCOVERABLE
-     * * FEATURABLE
-     * * INVITES_DISABLED
-     * * INVITE_SPLASH
-     * * MEMBER_VERIFICATION_GATE_ENABLED
-     * * NEWS
-     * * PARTNERED
-     * * PREVIEW_ENABLED
-     * * VANITY_URL
-     * * VERIFIED
-     * * VIP_REGIONS
-     * * WELCOME_SCREEN_ENABLED
-     * * TICKETED_EVENTS_ENABLED
-     * * MONETIZATION_ENABLED
-     * <warn>`MONETIZATION_ENABLED` has been replaced.
-     * See [this pull request](https://github.com/discord/discord-api-docs/pull/5724) for more information.</warn>
-     * * MORE_STICKERS
-     * * THREE_DAY_THREAD_ARCHIVE
-     * * SEVEN_DAY_THREAD_ARCHIVE
-     * * PRIVATE_THREADS
-     * * ROLE_ICONS
-     * * RAID_ALERTS_DISABLED
-     * * ROLE_SUBSCRIPTIONS_AVAILABLE_FOR_PURCHASE
-     * * ROLE_SUBSCRIPTIONS_ENABLED
-     * @typedef {string} Features
-     * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-features}
-     */
-
     if ('application_id' in data && data.application_id !== undefined) {
-      /**
-       * The id of the application that created this guild (if applicable)
-       * @type {?Snowflake}
-       */
       this.applicationId = data.application_id;
     }
 
     if ('afk_timeout' in data && data.afk_timeout !== undefined) {
-      /**
-       * The time in seconds before a user is counted as "away from keyboard"
-       * @type {?number}
-       */
       this.afkTimeout = data.afk_timeout;
     }
 
     if ('afk_channel_id' in data && data.afk_channel_id !== undefined) {
-      /**
-       * The id of the voice channel where AFK members are moved
-       * @type {?Snowflake}
-       */
       this.afkChannelId = data.afk_channel_id;
     }
 
     if ('system_channel_id' in data && data.system_channel_id !== undefined) {
-      /**
-       * The system channel's id
-       * @type {?Snowflake}
-       */
       this.systemChannelId = data.system_channel_id;
     }
 
     if ('premium_tier' in data && data.premium_tier !== undefined) {
-      /**
-       * The premium tier of this guild
-       * @type {PremiumTier}
-       */
       this.premiumTier = PremiumTiers[data.premium_tier];
     }
 
     if ('widget_enabled' in data && data.widget_enabled !== undefined) {
-      /**
-       * Whether widget images are enabled on this guild
-       * @type {?boolean}
-       */
       this.widgetEnabled = data.widget_enabled;
     }
 
     if ('widget_channel_id' in data && data.widget_channel_id !== undefined) {
-      /**
-       * The widget channel's id, if enabled
-       * @type {?string}
-       */
       this.widgetChannelId = data.widget_channel_id;
     }
 
     if ('explicit_content_filter' in data && data.explicit_content_filter !== undefined) {
-      /**
-       * The explicit content filter level of the guild
-       * @type {ExplicitContentFilterLevel}
-       */
       this.explicitContentFilter = ExplicitContentFilterLevels[data.explicit_content_filter];
     }
 
     if ('mfa_level' in data && data.mfa_level !== undefined) {
-      /**
-       * The required MFA level for this guild
-       * @type {MFALevel}
-       */
       this.mfaLevel = MFALevels[data.mfa_level];
     }
 
     if ('joined_at' in data && data.joined_at !== undefined) {
-      /**
-       * The timestamp the client user joined the guild at
-       * @type {number}
-       */
       this.joinedTimestamp = new Date(data.joined_at).getTime();
     }
 
     if ('default_message_notifications' in data && data.default_message_notifications !== undefined) {
-      /**
-       * The default message notification level of the guild
-       * @type {DefaultMessageNotificationLevel}
-       */
       this.defaultMessageNotifications = DefaultMessageNotificationLevels[data.default_message_notifications];
     }
 
     if ('system_channel_flags' in data && data.system_channel_flags !== undefined) {
-      /**
-       * The value set for the guild's system channel flags
-       * @type {Readonly<SystemChannelFlags>}
-       */
       this.systemChannelFlags = new SystemChannelFlags(data.system_channel_flags).freeze();
     }
 
     if ('max_members' in data && data.max_members !== undefined) {
-      /**
-       * The maximum amount of members the guild can have
-       * @type {?number}
-       */
       this.maximumMembers = data.max_members ?? null;
     } else {
       this.maximumMembers ??= null;
     }
 
     if ('max_presences' in data && data.max_presences !== undefined) {
-      /**
-       * The maximum amount of presences the guild can have
-       * <info>You will need to fetch the guild using {@link Guild#fetch} if you want to receive this parameter</info>
-       * @type {?number}
-       */
       this.maximumPresences = data.max_presences ?? 25_000;
     } else {
       this.maximumPresences ??= null;
     }
 
     if ('max_video_channel_users' in data && data.max_video_channel_users !== undefined) {
-      /**
-       * The maximum amount of users allowed in a video channel.
-       * @type {?number}
-       */
       this.maxVideoChannelUsers = data.max_video_channel_users ?? null;
     } else {
       this.maxVideoChannelUsers ??= null;
     }
 
     if ('max_stage_video_channel_users' in data && data.max_stage_video_channel_users !== undefined) {
-      /**
-       * The maximum amount of users allowed in a stage video channel.
-       * @type {?number}
-       */
       this.maxStageVideoChannelUsers = data.max_stage_video_channel_users ?? null;
     } else {
       this.maxStageVideoChannelUsers ??= null;
     }
 
     if ('approximate_member_count' in data && data.approximate_member_count !== undefined) {
-      /**
-       * The approximate amount of members the guild has
-       * <info>You will need to fetch the guild using {@link Guild#fetch} if you want to receive this parameter</info>
-       * @type {?number}
-       */
       this.approximateMemberCount = data.approximate_member_count ?? null;
     } else {
       this.approximateMemberCount ??= null;
     }
 
     if ('approximate_presence_count' in data && data.approximate_presence_count !== undefined) {
-      /**
-       * The approximate amount of presences the guild has
-       * <info>You will need to fetch the guild using {@link Guild#fetch} if you want to receive this parameter</info>
-       * @type {?number}
-       */
       this.approximatePresenceCount = data.approximate_presence_count ?? null;
     } else {
       this.approximatePresenceCount ??= null;
     }
 
-    /**
-     * The use count of the vanity URL code of the guild, if any
-     * <info>You will need to fetch this parameter using {@link Guild#fetchVanityData} if you want to receive it</info>
-     * @type {?number}
-     */
     this.vanityURLUses ??= null;
 
     if ('rules_channel_id' in data && data.rules_channel_id !== undefined) {
-      /**
-       * The rules channel's id for the guild
-       * @type {?Snowflake}
-       */
       this.rulesChannelId = data.rules_channel_id;
     }
 
     if ('public_updates_channel_id' in data && data.public_updates_channel_id !== undefined) {
-      /**
-       * The community updates channel's id for the guild
-       * @type {?Snowflake}
-       */
       this.publicUpdatesChannelId = data.public_updates_channel_id;
     }
 
     if ('preferred_locale' in data && data.preferred_locale !== undefined) {
-      /**
-       * The preferred locale of the guild, defaults to `en-US`
-       * @type {Locale}
-       * @see {@link https://discord.com/developers/docs/reference#locales}
-       */
       this.preferredLocale = data.preferred_locale;
     }
 
     if ('safety_alerts_channel_id' in data && data.safety_alerts_channel_id !== undefined) {
-      /**
-       * The safety alerts channel's id for the guild
-       * @type {?Snowflake}
-       */
       this.safetyAlertsChannelId = data.safety_alerts_channel_id;
     } else {
       this.safetyAlertsChannelId ??= null;
@@ -579,10 +366,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     }
 
     if ('owner_id' in data && data.owner_id !== undefined) {
-      /**
-       * The user id of this guild's owner
-       * @type {Snowflake}
-       */
       this.ownerId = data.owner_id;
     }
 
@@ -614,10 +397,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     }
 
     if (!this.emojis) {
-      /**
-       * A manager of the emojis belonging to this guild
-       * @type {GuildEmojiManager}
-       */
       this.emojis = new GuildEmojiManager(this);
       if (data.emojis) for (const emoji of data.emojis) this.emojis._add(emoji);
     } else if (data.emojis) {
@@ -628,10 +407,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     }
 
     if (!this.stickers) {
-      /**
-       * A manager of the stickers belonging to this guild
-       * @type {GuildStickerManager}
-       */
       this.stickers = new GuildStickerManager(this);
       if (data.stickers) for (const sticker of data.stickers) this.stickers._add(sticker);
     } else if (data.stickers) {
@@ -642,105 +417,44 @@ class Guild extends AnonymousGuild implements GuildEntity {
     }
 
     if ('incidents_data' in data && data.incidents_data !== undefined) {
-      /**
-       * Incident actions of a guild.
-       * @typedef {Object} IncidentActions
-       * @property {?Date} invitesDisabledUntil When invites would be enabled again
-       * @property {?Date} dmsDisabledUntil When direct messages would be enabled again
-       * @property {?Date} dmSpamDetectedAt When direct message spam was detected
-       * @property {?Date} raidDetectedAt When a raid was detected
-       */
-
-      /**
-       * The incidents data of this guild.
-       * <info>You will need to fetch the guild using {@link BaseGuild#fetch} if you want to receive
-       * this property.</info>
-       * @type {?IncidentActions}
-       */
       this.incidentsData = data.incidents_data ? Util.transformAPIIncidentsData(data.incidents_data) : null;
     } else {
       this.incidentsData ??= null;
     }
   }
 
-  /**
-   * The time the client user joined the guild
-   * @type {Date}
-   * @readonly
-   */
   get joinedAt() {
     return new Date(this.joinedTimestamp);
   }
 
-  /**
-   * The URL to this guild's discovery splash image.
-   * @param {StaticImageURLOptions} [options={}] Options for the Image URL
-   * @returns {?string}
-   */
   discoverySplashURL({ format = 'webp', size }: StaticImageURLOptions = {}) {
     return this.discoverySplash && this.client.rest.cdn.DiscoverySplash(this.id, this.discoverySplash, format, size);
   }
 
-  /**
-   * Fetches the owner of the guild.
-   * If the member object isn't needed, use {@link Guild#ownerId} instead.
-   * @param {BaseFetchOptions} [options] The options for fetching the member
-   * @returns {Promise<GuildMember>}
-   */
   fetchOwner(options?: BaseFetchOptions) {
     return this.members.fetch({ ...options, user: this.ownerId });
   }
 
-  /**
-   * AFK voice channel for this guild
-   * @type {?VoiceChannel}
-   * @readonly
-   */
   get afkChannel() {
     return this.client.channels.resolve(this.afkChannelId);
   }
 
-  /**
-   * System channel for this guild
-   * @type {?TextChannel}
-   * @readonly
-   */
   get systemChannel() {
     return this.client.channels.resolve(this.systemChannelId);
   }
 
-  /**
-   * Safety alerts channel for this guild
-   * @type {?TextChannel}
-   * @readonly
-   */
   get safetyAlertsChannel() {
     return this.client.channels.resolve(this.safetyAlertsChannelId);
   }
 
-  /**
-   * Widget channel for this guild
-   * @type {?(TextChannel|NewsChannel|VoiceChannel|StageChannel|ForumChannel|MediaChannel)}
-   * @readonly
-   */
   get widgetChannel() {
     return this.client.channels.resolve(this.widgetChannelId);
   }
 
-  /**
-   * Rules channel for this guild
-   * @type {?TextChannel}
-   * @readonly
-   */
   get rulesChannel() {
     return this.client.channels.resolve(this.rulesChannelId);
   }
 
-  /**
-   * Public updates channel for this guild
-   * @type {?TextChannel}
-   * @readonly
-   */
   get publicUpdatesChannel() {
     return this.client.channels.resolve(this.publicUpdatesChannelId);
   }
@@ -760,11 +474,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     return this.members.me;
   }
 
-  /**
-   * The maximum bitrate available for this guild
-   * @type {number}
-   * @readonly
-   */
   get maximumBitrate() {
     if (this.features.includes(GuildFeature.VIPRegions)) {
       return 384_000;
@@ -782,16 +491,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     }
   }
 
-  /**
-   * Fetches a collection of integrations to this guild.
-   * Resolves with a collection mapping integrations by their ids.
-   * @returns {Promise<Collection<Snowflake|string, Integration>>}
-   * @example
-   * // Fetch integrations
-   * guild.fetchIntegrations()
-   *   .then(integrations => console.log(`Fetched ${integrations.size} integrations`))
-   *   .catch(console.error);
-   */
   async fetchIntegrations() {
     const data = await this.client.api.guilds(this.id).integrations.get<RESTGetAPIGuildIntegrationsResult>();
     return data.reduce(
@@ -801,11 +500,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     );
   }
 
-  /**
-   * Fetches a collection of templates from this guild.
-   * Resolves with a collection mapping templates by their codes.
-   * @returns {Promise<Collection<string, GuildTemplate>>}
-   */
   async fetchTemplates() {
     const templates = await this.client.api.guilds(this.id).templates.get<RESTGetAPIGuildTemplatesResult>();
     return templates.reduce(
@@ -815,21 +509,11 @@ class Guild extends AnonymousGuild implements GuildEntity {
     );
   }
 
-  /**
-   * Fetches the welcome screen for this guild.
-   * @returns {Promise<WelcomeScreen>}
-   */
   async fetchWelcomeScreen() {
     const data = await this.client.api.guilds(this.id, 'welcome-screen').get<RESTGetAPIGuildWelcomeScreenResult>();
     return new WelcomeScreen(this, data);
   }
 
-  /**
-   * Creates a template for the guild.
-   * @param {string} name The name for the template
-   * @param {string} [description] The description for the template
-   * @returns {Promise<GuildTemplate>}
-   */
   async createTemplate(name: string, description?: string) {
     const data = await this.client.api.guilds(this.id).templates.post<RESTPostAPIGuildTemplatesResult>({
       data: { name, description },
@@ -837,34 +521,11 @@ class Guild extends AnonymousGuild implements GuildEntity {
     return new GuildTemplate(this.client, data);
   }
 
-  /**
-   * Obtains a guild preview for this guild from Discord.
-   * @returns {Promise<GuildPreview>}
-   */
   async fetchPreview() {
     const data = await this.client.api.guilds(this.id).preview.get<RESTGetAPIGuildPreviewResult>();
     return new GuildPreview(this.client, data);
   }
 
-  /**
-   * An object containing information about a guild's vanity invite.
-   * @typedef {Object} Vanity
-   * @property {?string} code Vanity invite code
-   * @property {number} uses How many times this invite has been used
-   */
-
-  /**
-   * Fetches the vanity URL invite object to this guild.
-   * Resolves with an object containing the vanity URL invite code and the use count
-   * @returns {Promise<Vanity>}
-   * @example
-   * // Fetch invite data
-   * guild.fetchVanityData()
-   *   .then(res => {
-   *     console.log(`Vanity URL: https://discord.gg/${res.code} with ${res.uses} uses`);
-   *   })
-   *   .catch(console.error);
-   */
   async fetchVanityData() {
     const data = await this.client.api.guilds(this.id, 'vanity-url').get<Vanity>();
     this.vanityURLCode = data.code;
@@ -873,15 +534,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     return data;
   }
 
-  /**
-   * Fetches all webhooks for the guild.
-   * @returns {Promise<Collection<Snowflake, Webhook>>}
-   * @example
-   * // Fetch webhooks
-   * guild.fetchWebhooks()
-   *   .then(webhooks => console.log(`Fetched ${webhooks.size} webhooks`))
-   *   .catch(console.error);
-   */
   async fetchWebhooks() {
     const apiHooks = await this.client.api.guilds(this.id).webhooks.get<RESTGetAPIGuildWebhooksResult>();
     const hooks = new Collection();
@@ -889,42 +541,10 @@ class Guild extends AnonymousGuild implements GuildEntity {
     return hooks;
   }
 
-  /**
-   * Fetches the guild widget data, requires the widget to be enabled.
-   * @returns {Promise<Widget>}
-   * @example
-   * // Fetches the guild widget data
-   * guild.fetchWidget()
-   *   .then(widget => console.log(`The widget shows ${widget.channels.size} channels`))
-   *   .catch(console.error);
-   */
   fetchWidget() {
     return this.client.fetchGuildWidget(this.id);
   }
 
-  /**
-   * Data for the Guild Widget Settings object
-   * @typedef {Object} GuildWidgetSettings
-   * @property {boolean} enabled Whether the widget is enabled
-   * @property {?GuildChannel} channel The widget invite channel
-   */
-
-  /**
-   * The Guild Widget Settings object
-   * @typedef {Object} GuildWidgetSettingsData
-   * @property {boolean} enabled Whether the widget is enabled
-   * @property {?GuildChannelResolvable} channel The widget invite channel
-   */
-
-  /**
-   * Fetches the guild widget settings.
-   * @returns {Promise<GuildWidgetSettings>}
-   * @example
-   * // Fetches the guild widget settings
-   * guild.fetchWidgetSettings()
-   *   .then(widget => console.log(`The widget is ${widget.enabled ? 'enabled' : 'disabled'}`))
-   *   .catch(console.error);
-   */
   async fetchWidgetSettings() {
     const data = await this.client.api.guilds(this.id).widget.get<RESTGetAPIGuildWidgetSettingsResult>();
     this.widgetEnabled = data.enabled;
@@ -935,26 +555,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     };
   }
 
-  /**
-   * Options used to fetch audit logs.
-   * @typedef {Object} GuildAuditLogsFetchOptions
-   * @property {Snowflake|GuildAuditLogsEntry} [before] Consider only entries before this entry
-   * @property {Snowflake|GuildAuditLogsEntry} [after] Consider only entries after this entry
-   * @property {number} [limit] The number of entries to return
-   * @property {UserResolvable} [user] Only return entries for actions made by this user
-   * @property {AuditLogAction|number} [type] Only return entries for this action type
-   */
-
-  /**
-   * Fetches audit logs for this guild.
-   * @param {GuildAuditLogsFetchOptions} [options={}] Options for fetching audit logs
-   * @returns {Promise<GuildAuditLogs>}
-   * @example
-   * // Output audit log entries
-   * guild.fetchAuditLogs()
-   *   .then(audit => console.log(audit.entries.first()))
-   *   .catch(console.error);
-   */
   async fetchAuditLogs<T extends GuildAuditLogsResolvable = 'ALL'>({
     before,
     after,
@@ -975,59 +575,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     return GuildAuditLogs.build<T>(this, data);
   }
 
-  /**
-   * The data for editing a guild.
-   * @typedef {Object} GuildEditData
-   * @property {string} [name] The name of the guild
-   * @property {?(VerificationLevel|number)} [verificationLevel] The verification level of the guild
-   * @property {?(ExplicitContentFilterLevel|number)} [explicitContentFilter] The level of the explicit content filter
-   * @property {?VoiceChannelResolvable} [afkChannel] The AFK channel of the guild
-   * @property {?TextChannelResolvable} [systemChannel] The system channel of the guild
-   * @property {number} [afkTimeout] The AFK timeout of the guild
-   * @property {?(BufferResolvable|Base64Resolvable)} [icon] The icon of the guild
-   * @property {GuildMemberResolvable} [owner] The owner of the guild
-   * @property {?(BufferResolvable|Base64Resolvable)} [splash] The invite splash image of the guild
-   * @property {?(BufferResolvable|Base64Resolvable)} [discoverySplash] The discovery splash image of the guild
-   * @property {?(BufferResolvable|Base64Resolvable)} [banner] The banner of the guild
-   * @property {?(DefaultMessageNotificationLevel|number)} [defaultMessageNotifications] The default message
-   * notification level of the guild
-   * @property {SystemChannelFlagsResolvable} [systemChannelFlags] The system channel flags of the guild
-   * @property {?TextChannelResolvable} [rulesChannel] The rules channel of the guild
-   * @property {?TextChannelResolvable} [publicUpdatesChannel] The community updates channel of the guild
-   * @property {?string} [preferredLocale] The preferred locale of the guild
-   * @property {?TextChannelResolvable} [safetyAlertsChannel] The safety alerts channel of the guild
-   * @property {boolean} [premiumProgressBarEnabled] Whether the guild's premium progress bar is enabled
-   * @property {?string} [description] The discovery description of the guild
-   * @property {Features[]} [features] The features of the guild
-   */
-
-  /**
-   * Data that can be resolved to a Text Channel object. This can be:
-   * * A TextChannel
-   * * A Snowflake
-   * @typedef {TextChannel|Snowflake} TextChannelResolvable
-   */
-
-  /**
-   * Data that can be resolved to a Voice Channel object. This can be:
-   * * A VoiceChannel
-   * * A Snowflake
-   * @typedef {VoiceChannel|Snowflake} VoiceChannelResolvable
-   */
-
-  /**
-   * Updates the guild with new information - e.g. a new name.
-   * @param {GuildEditData} data The data to update the guild with
-   * @param {string} [reason] Reason for editing this guild
-   * @returns {Promise<Guild>}
-   * @example
-   * // Set the guild name
-   * guild.edit({
-   *   name: 'Discord Guild',
-   * })
-   *   .then(updated => console.log(`New guild name ${updated}`))
-   *   .catch(console.error);
-   */
   async edit(data: GuildEditData, reason?: string): Promise<this> {
     const _data: Record<string, unknown> = {};
     if (data.name) _data.name = data.name;
@@ -1094,54 +641,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     return this;
   }
 
-  /**
-   * Welcome channel data
-   * @typedef {Object} WelcomeChannelData
-   * @property {string} description The description to show for this welcome channel
-   * @property {TextChannel|NewsChannel|StoreChannel|Snowflake} channel The channel to link for this welcome channel
-   * @property {EmojiIdentifierResolvable} [emoji] The emoji to display for this welcome channel
-   */
-
-  /**
-   * Welcome screen edit data
-   * @typedef {Object} WelcomeScreenEditData
-   * @property {boolean} [enabled] Whether the welcome screen is enabled
-   * @property {string} [description] The description for the welcome screen
-   * @property {WelcomeChannelData[]} [welcomeChannels] The welcome channel data for the welcome screen
-   */
-
-  /**
-   * Data that can be resolved to a GuildTextChannel object. This can be:
-   * * A TextChannel
-   * * A NewsChannel
-   * * A Snowflake
-   * @typedef {TextChannel|NewsChannel|Snowflake} GuildTextChannelResolvable
-   */
-
-  /**
-   * Data that can be resolved to a GuildVoiceChannel object. This can be:
-   * * A VoiceChannel
-   * * A StageChannel
-   * * A Snowflake
-   * @typedef {VoiceChannel|StageChannel|Snowflake} GuildVoiceChannelResolvable
-   */
-
-  /**
-   * Updates the guild's welcome screen
-   * @param {WelcomeScreenEditData} data Data to edit the welcome screen with
-   * @returns {Promise<WelcomeScreen>}
-   * @example
-   * guild.editWelcomeScreen({
-   *   description: 'Hello World',
-   *   enabled: true,
-   *   welcomeChannels: [
-   *     {
-   *       description: 'foobar',
-   *       channel: '222197033908436994',
-   *     }
-   *   ],
-   * })
-   */
   async editWelcomeScreen(data: WelcomeScreenEditData) {
     const { enabled, description, welcomeChannels } = data;
     const welcome_channels = welcomeChannels?.map((welcomeChannelData: WelcomeChannelData) => {
@@ -1166,12 +665,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     return new WelcomeScreen(this, patchData);
   }
 
-  /**
-   * Edits the level of the explicit content filter.
-   * @param {?(ExplicitContentFilterLevel|number)} explicitContentFilter The new level of the explicit content filter
-   * @param {string} [reason] Reason for changing the level of the guild's explicit content filter
-   * @returns {Promise<Guild>}
-   */
   setExplicitContentFilter(
     explicitContentFilter: ExplicitContentFilterLevel | number | null,
     reason?: string,
@@ -1180,12 +673,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
   }
 
   /* eslint-disable max-len */
-  /**
-   * Edits the setting of the default message notifications of the guild.
-   * @param {?(DefaultMessageNotificationLevel|number)} defaultMessageNotifications The new default message notification level of the guild
-   * @param {string} [reason] Reason for changing the setting of the default message notifications
-   * @returns {Promise<Guild>}
-   */
   setDefaultMessageNotifications(
     defaultMessageNotifications: DefaultMessageNotificationLevel | number | null,
     reason?: string,
@@ -1194,251 +681,69 @@ class Guild extends AnonymousGuild implements GuildEntity {
   }
   /* eslint-enable max-len */
 
-  /**
-   * Edits the flags of the default message notifications of the guild.
-   * @param {SystemChannelFlagsResolvable} systemChannelFlags The new flags for the default message notifications
-   * @param {string} [reason] Reason for changing the flags of the default message notifications
-   * @returns {Promise<Guild>}
-   */
   setSystemChannelFlags(systemChannelFlags: SystemChannelFlagsResolvable, reason?: string): Promise<this> {
     return this.edit({ systemChannelFlags }, reason);
   }
 
-  /**
-   * Edits the name of the guild.
-   * @param {string} name The new name of the guild
-   * @param {string} [reason] Reason for changing the guild's name
-   * @returns {Promise<Guild>}
-   * @example
-   * // Edit the guild name
-   * guild.setName('Discord Guild')
-   *  .then(updated => console.log(`Updated guild name to ${updated.name}`))
-   *  .catch(console.error);
-   */
   setName(name: string, reason?: string): Promise<this> {
     return this.edit({ name }, reason);
   }
 
-  /**
-   * Edits the verification level of the guild.
-   * @param {?(VerificationLevel|number)} verificationLevel The new verification level of the guild
-   * @param {string} [reason] Reason for changing the guild's verification level
-   * @returns {Promise<Guild>}
-   * @example
-   * // Edit the guild verification level
-   * guild.setVerificationLevel(1)
-   *  .then(updated => console.log(`Updated guild verification level to ${guild.verificationLevel}`))
-   *  .catch(console.error);
-   */
   setVerificationLevel(verificationLevel: VerificationLevel | number | null, reason?: string): Promise<this> {
     return this.edit({ verificationLevel }, reason);
   }
 
-  /**
-   * Edits the AFK channel of the guild.
-   * @param {?VoiceChannelResolvable} afkChannel The new AFK channel
-   * @param {string} [reason] Reason for changing the guild's AFK channel
-   * @returns {Promise<Guild>}
-   * @example
-   * // Edit the guild AFK channel
-   * guild.setAFKChannel(channel)
-   *  .then(updated => console.log(`Updated guild AFK channel to ${guild.afkChannel.name}`))
-   *  .catch(console.error);
-   */
   setAFKChannel(afkChannel: VoiceChannelResolvable | null, reason?: string): Promise<this> {
     return this.edit({ afkChannel }, reason);
   }
 
-  /**
-   * Edits the system channel of the guild.
-   * @param {?TextChannelResolvable} systemChannel The new system channel
-   * @param {string} [reason] Reason for changing the guild's system channel
-   * @returns {Promise<Guild>}
-   * @example
-   * // Edit the guild system channel
-   * guild.setSystemChannel(channel)
-   *  .then(updated => console.log(`Updated guild system channel to ${guild.systemChannel.name}`))
-   *  .catch(console.error);
-   */
   setSystemChannel(systemChannel: TextChannelResolvable | null, reason?: string): Promise<this> {
     return this.edit({ systemChannel }, reason);
   }
 
-  /**
-   * Edits the AFK timeout of the guild.
-   * @param {number} afkTimeout The time in seconds that a user must be idle to be considered AFK
-   * @param {string} [reason] Reason for changing the guild's AFK timeout
-   * @returns {Promise<Guild>}
-   * @example
-   * // Edit the guild AFK channel
-   * guild.setAFKTimeout(60)
-   *  .then(updated => console.log(`Updated guild AFK timeout to ${guild.afkTimeout}`))
-   *  .catch(console.error);
-   */
   setAFKTimeout(afkTimeout: number, reason?: string): Promise<this> {
     return this.edit({ afkTimeout }, reason);
   }
 
-  /**
-   * Sets a new guild icon.
-   * @param {?(Base64Resolvable|BufferResolvable)} icon The new icon of the guild
-   * @param {string} [reason] Reason for changing the guild's icon
-   * @returns {Promise<Guild>}
-   * @example
-   * // Edit the guild icon
-   * guild.setIcon('./icon.png')
-   *  .then(updated => console.log('Updated the guild icon'))
-   *  .catch(console.error);
-   */
   setIcon(icon: BufferResolvable | Base64Resolvable | null, reason?: string): Promise<this> {
     return this.edit({ icon }, reason);
   }
 
-  /**
-   * Sets a new owner of the guild.
-   * @param {GuildMemberResolvable} owner The new owner of the guild
-   * @param {string} [reason] Reason for setting the new owner
-   * @returns {Promise<Guild>}
-   * @example
-   * // Edit the guild owner
-   * guild.setOwner(guild.members.cache.first())
-   *  .then(guild => guild.fetchOwner())
-   *  .then(owner => console.log(`Updated the guild owner to ${owner.displayName}`))
-   *  .catch(console.error);
-   */
   setOwner(owner: GuildMemberResolvable, reason?: string): Promise<this> {
     return this.edit({ owner }, reason);
   }
 
-  /**
-   * Sets a new guild invite splash image.
-   * @param {?(Base64Resolvable|BufferResolvable)} splash The new invite splash image of the guild
-   * @param {string} [reason] Reason for changing the guild's invite splash image
-   * @returns {Promise<Guild>}
-   * @example
-   * // Edit the guild splash
-   * guild.setSplash('./splash.png')
-   *  .then(updated => console.log('Updated the guild splash'))
-   *  .catch(console.error);
-   */
   setSplash(splash: BufferResolvable | Base64Resolvable | null, reason?: string): Promise<this> {
     return this.edit({ splash }, reason);
   }
 
-  /**
-   * Sets a new guild discovery splash image.
-   * @param {?(Base64Resolvable|BufferResolvable)} discoverySplash The new discovery splash image of the guild
-   * @param {string} [reason] Reason for changing the guild's discovery splash image
-   * @returns {Promise<Guild>}
-   * @example
-   * // Edit the guild discovery splash
-   * guild.setDiscoverySplash('./discoverysplash.png')
-   *   .then(updated => console.log('Updated the guild discovery splash'))
-   *   .catch(console.error);
-   */
   setDiscoverySplash(discoverySplash: BufferResolvable | Base64Resolvable | null, reason?: string): Promise<this> {
     return this.edit({ discoverySplash }, reason);
   }
 
-  /**
-   * Sets a new guild banner.
-   * @param {?(Base64Resolvable|BufferResolvable)} banner The new banner of the guild
-   * @param {string} [reason] Reason for changing the guild's banner
-   * @returns {Promise<Guild>}
-   * @example
-   * guild.setBanner('./banner.png')
-   *  .then(updated => console.log('Updated the guild banner'))
-   *  .catch(console.error);
-   */
   setBanner(banner: BufferResolvable | Base64Resolvable | null, reason?: string): Promise<this> {
     return this.edit({ banner }, reason);
   }
 
-  /**
-   * Edits the rules channel of the guild.
-   * @param {?TextChannelResolvable} rulesChannel The new rules channel
-   * @param {string} [reason] Reason for changing the guild's rules channel
-   * @returns {Promise<Guild>}
-   * @example
-   * // Edit the guild rules channel
-   * guild.setRulesChannel(channel)
-   *  .then(updated => console.log(`Updated guild rules channel to ${guild.rulesChannel.name}`))
-   *  .catch(console.error);
-   */
   setRulesChannel(rulesChannel: TextChannelResolvable | null, reason?: string): Promise<this> {
     return this.edit({ rulesChannel }, reason);
   }
 
-  /**
-   * Edits the community updates channel of the guild.
-   * @param {?TextChannelResolvable} publicUpdatesChannel The new community updates channel
-   * @param {string} [reason] Reason for changing the guild's community updates channel
-   * @returns {Promise<Guild>}
-   * @example
-   * // Edit the guild community updates channel
-   * guild.setPublicUpdatesChannel(channel)
-   *  .then(updated => console.log(`Updated guild community updates channel to ${guild.publicUpdatesChannel.name}`))
-   *  .catch(console.error);
-   */
   setPublicUpdatesChannel(publicUpdatesChannel: TextChannelResolvable | null, reason?: string): Promise<this> {
     return this.edit({ publicUpdatesChannel }, reason);
   }
 
-  /**
-   * Edits the preferred locale of the guild.
-   * @param {?string} preferredLocale The new preferred locale of the guild
-   * @param {string} [reason] Reason for changing the guild's preferred locale
-   * @returns {Promise<Guild>}
-   * @example
-   * // Edit the guild preferred locale
-   * guild.setPreferredLocale('en-US')
-   *  .then(updated => console.log(`Updated guild preferred locale to ${guild.preferredLocale}`))
-   *  .catch(console.error);
-   */
   setPreferredLocale(preferredLocale: string | null, reason?: string): Promise<this> {
     return this.edit({ preferredLocale }, reason);
   }
 
-  /**
-   * Edits the safety alerts channel of the guild.
-   * @param {?TextChannelResolvable} safetyAlertsChannel The new safety alerts channel
-   * @param {string} [reason] Reason for changing the guild's safety alerts channel
-   * @returns {Promise<Guild>}
-   * @example
-   * // Edit the guild safety alerts channel
-   * guild.setSafetyAlertsChannel(channel)
-   *  .then(updated => console.log(`Updated guild safety alerts channel to ${updated.safetyAlertsChannel.name}`))
-   *  .catch(console.error);
-   */
   setSafetyAlertsChannel(safetyAlertsChannel: TextChannelResolvable | null, reason?: string): Promise<this> {
     return this.edit({ safetyAlertsChannel }, reason);
   }
 
-  /**
-   * Edits the enabled state of the guild's premium progress bar
-   * @param {boolean} [enabled=true] The new enabled state of the guild's premium progress bar
-   * @param {string} [reason] Reason for changing the state of the guild's premium progress bar
-   * @returns {Promise<Guild>}
-   */
   setPremiumProgressBarEnabled(enabled = true, reason?: string): Promise<this> {
     return this.edit({ premiumProgressBarEnabled: enabled }, reason);
   }
-
-  /**
-   * Data that can be resolved to give a Category Channel object. This can be:
-   * * A CategoryChannel object
-   * * A Snowflake
-   * @typedef {CategoryChannel|Snowflake} CategoryChannelResolvable
-   */
-
-  /**
-   * The data needed for updating a channel's position.
-   * @typedef {Object} ChannelPosition
-   * @property {GuildChannel|Snowflake} channel Channel to update
-   * @property {number} [position] New position for the channel
-   * @property {CategoryChannelResolvable} [parent] Parent channel for this channel
-   * @property {boolean} [lockPermissions] If the overwrites should be locked to the parents overwrites
-   */
 
   /**
    * Batch-updates the guild's channels' positions.
@@ -1465,13 +770,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
   }
 
   /**
-   * The data needed for updating a guild role's position
-   * @typedef {Object} GuildRolePosition
-   * @property {RoleResolvable} role The role's id
-   * @property {number} position The position to update
-   */
-
-  /**
    * Batch-updates the guild's role positions
    * @param {GuildRolePosition[]} rolePositions Role positions to update
    * @returns {Promise<Guild>}
@@ -1494,12 +792,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     return this.roles.setPositions(rolePositions).then(() => this);
   }
 
-  /**
-   * Edits the guild's widget settings.
-   * @param {GuildWidgetSettingsData} settings The widget settings for the guild
-   * @param {string} [reason] Reason for changing the guild's widget settings
-   * @returns {Promise<Guild>}
-   */
   async setWidgetSettings(settings: GuildWidgetSettingsData, reason?: string): Promise<this> {
     await this.client.api.guilds(this.id).widget.patch({
       data: {
@@ -1511,62 +803,27 @@ class Guild extends AnonymousGuild implements GuildEntity {
     return this;
   }
 
-  /**
-   * Sets whether this guild's invites are disabled.
-   * @param {boolean} [disabled=true] Whether the invites are disabled
-   * @returns {Promise<Guild>}
-   */
   disableInvites(disabled = true): Promise<this> {
     const features: GuildFeature[] = this.features.filter(feature => feature !== GuildFeature.InvitesDisabled);
     if (disabled) features.push(GuildFeature.InvitesDisabled);
     return this.edit({ features: features.map(feature => String(feature) as import('../../typings').GuildFeatures) });
   }
 
-  /**
-   * Sets the incident actions for a guild.
-   * @param {IncidentActionsEditOptions} incidentActions The incident actions to set
-   * @returns {Promise<IncidentActions>}
-   */
   setIncidentActions(incidentActions: IncidentActionsEditOptions): Promise<IncidentActions> {
     return this.client.guilds.setIncidentActions(this.id, incidentActions);
   }
 
-  /**
-   * Leaves the guild.
-   * @returns {Promise<Guild>}
-   * @example
-   * // Leave a guild
-   * guild.leave()
-   *   .then(guild => console.log(`Left the guild: ${guild.name}`))
-   *   .catch(console.error);
-   */
   async leave() {
     if (this.ownerId === this.client.user!.id) throw new Error('GUILD_OWNED');
     await this.client.api.users('@me').guilds(this.id).delete();
     return this.client.actions.GuildDelete.handle({ id: this.id }).guild;
   }
 
-  /**
-   * Deletes the guild.
-   * @returns {Promise<Guild>}
-   * @example
-   * // Delete a guild
-   * guild.delete()
-   *   .then(g => console.log(`Deleted the guild ${g}`))
-   *   .catch(console.error);
-   */
   async delete() {
     await this.client.api.guilds(this.id).delete();
     return this.client.actions.GuildDelete.handle({ id: this.id }).guild;
   }
 
-  /**
-   * Whether this guild equals another guild. It compares all properties, so for most operations
-   * it is advisable to just compare `guild.id === guild2.id` as it is much faster and is often
-   * what most users need.
-   * @param {Guild} guild The guild to compare with
-   * @returns {boolean}
-   */
   equals(guild: Guild): boolean {
     return (
       guild &&
@@ -1602,25 +859,10 @@ class Guild extends AnonymousGuild implements GuildEntity {
     return json;
   }
 
-  /**
-   * Marks the guild as read.
-   * @returns {Promise<void>}
-   * @example
-   * const guild = client.guilds.cache.get('id');
-   * guild.markAsRead();
-   */
   markAsRead() {
     return this.client.api.guilds(this.id).ack.post();
   }
 
-  /**
-   * Set Community Feature.
-   * @param {boolean} stats True / False to enable / disable Community Feature
-   * @param {GuildTextChannelResolvable} [publicUpdatesChannel] The community updates channel of the guild
-   * @param {GuildTextChannelResolvable} [rulesChannel] The new rules channel
-   * @param {string} [reason] Reason for changing the community feature
-   * @returns {Promise<Guild>}
-   */
   async setCommunity(
     stats = true,
     publicUpdatesChannel?: GuildTextChannelResolvable,
@@ -1663,10 +905,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     }
   }
 
-  /**
-   * Get the top emojis of this guild.
-   * @returns {Promise<Collection<number, GuildEmoji>>}
-   */
   topEmojis(): Promise<Collection<number, GuildEmoji>> {
     return new Promise<Collection<number, GuildEmoji>>((resolve, reject) => {
       this.client.api
@@ -1684,19 +922,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     });
   }
 
-  /**
-   * Set the vanity URL to this guild.
-   * Resolves with an object containing the vanity URL invite code and the use count.
-   * @param {string} [code=''] Vanity URL code
-   * @returns {Promise<Vanity>}
-   * @example
-   * // Set invite code
-   * guild.setVanityCode('elysia', '123456')
-   *   .then(res => {
-   *     console.log(`Vanity URL: https://discord.gg/${res.code} with ${res.uses} uses`);
-   *   })
-   *   .catch(console.error);
-   */
   async setVanityCode(code = ''): Promise<Vanity> {
     if (typeof code !== 'string') throw new TypeError('INVALID_VANITY_URL_CODE');
     const data = await this.client.api.guilds(this.id, 'vanity-url').patch<Vanity>({
@@ -1708,12 +933,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     return data;
   }
 
-  /**
-   * The voice state adapter for this guild that can be used with @discordjs/voice to play audio in voice
-   * and stage channels.
-   * @type {Function}
-   * @readonly
-   */
   get voiceAdapterCreator(): InternalDiscordGatewayAdapterCreator {
     return (methods: InternalDiscordGatewayAdapterLibraryMethods) => {
       this.client.voice.adapters.set(this.id, methods);
@@ -1730,21 +949,10 @@ class Guild extends AnonymousGuild implements GuildEntity {
     };
   }
 
-  /**
-   * Creates a collection of this guild's roles, sorted by their position and ids.
-   * @returns {Collection<Snowflake, Role>}
-   * @private
-   */
   _sortedRoles() {
     return Util.discordSort(this.roles.cache);
   }
 
-  /**
-   * Creates a collection of this guild's or a specific category's channels, sorted by their position and ids.
-   * @param {GuildChannel} [channel] Category to get the channels of
-   * @returns {Collection<Snowflake, GuildChannel>}
-   * @private
-   */
   _sortedChannels(channel: GuildChannel) {
     const category = channel.type === 'GUILD_CATEGORY';
     return Util.discordSort(
@@ -1758,11 +966,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     );
   }
 }
-
-/**
- * @external APIGuild
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object}
- */
 
 export { Guild, deletedGuilds };
 export default { Guild, deletedGuilds };

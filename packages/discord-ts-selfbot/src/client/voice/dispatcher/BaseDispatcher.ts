@@ -10,14 +10,6 @@ const MAX_UINT_32 = 2 ** 32 - 1;
 
 const extensions = [{ id: 5, length: 2, value: 0 }];
 
-/**
- * @external WritableStream
- * @see {@link https://nodejs.org/api/stream.html#stream_class_stream_writable}
- */
-
-/**
- * @extends {Writable}
- */
 type DispatcherStream = {
   on(event: string, listener: (...args: unknown[]) => void): unknown;
   unpipe(destination?: unknown): unknown;
@@ -82,10 +74,6 @@ class BaseDispatcher extends Writable {
       highWaterMark,
     });
     this.streams = streams;
-    /**
-     * The Player that controls this dispatcher
-     * @type {MediaPlayer}
-     */
     this.player = player;
     this.payloadType = payloadType;
     this.extensionEnabled = extensionEnabled;
@@ -93,10 +81,6 @@ class BaseDispatcher extends Writable {
     this._nonce = 0;
     this._nonceBuffer = null;
 
-    /**
-     * The time that the stream was paused at (null if not paused)
-     * @type {?number}
-     */
     this.pausedSince = null;
     this._writeCallback = null;
 
@@ -108,10 +92,6 @@ class BaseDispatcher extends Writable {
     this.timestamp = 0;
 
     const streamError = (type?: string, err?: unknown) => {
-      /**
-       * Emitted when the dispatcher encounters an error.
-       * @event BaseDispatcher#error
-       */
       if (type && err) {
         const error = err instanceof Error ? err : new Error(String(err));
         error.message = `${type} stream: ${error.message}`;
@@ -154,10 +134,6 @@ class BaseDispatcher extends Writable {
 
   _write(chunk: Buffer, _enc: BufferEncoding, done: (error?: Error | null) => void) {
     if (!this.startTime) {
-      /**
-       * Emitted once the stream has started to play.
-       * @event BaseDispatcher#start
-       */
       this.emit('start');
       this.startTime = performance.now();
     }
@@ -200,10 +176,6 @@ class BaseDispatcher extends Writable {
     streams.ffmpeg?.destroy();
   }
 
-  /**
-   * Pauses playback
-   * @param {boolean} [silence=false] Whether to play silence while paused to prevent audio glitches
-   */
   pause(silence = false) {
     if (this.paused) return;
     if (this.streams.opus) this.streams.opus.unpipe(this); // Audio
@@ -222,27 +194,14 @@ class BaseDispatcher extends Writable {
     this.pausedSince = performance.now();
   }
 
-  /**
-   * Whether or not playback is paused
-   * @type {boolean}
-   * @readonly
-   */
   get paused() {
     return Boolean(this.pausedSince);
   }
 
-  /**
-   * Total time that this dispatcher has been paused in milliseconds
-   * @type {number}
-   * @readonly
-   */
   get pausedTime() {
     return this._silentPausedTime + this._pausedTime + (this.paused ? performance.now() - this.pausedSince! : 0);
   }
 
-  /**
-   * Resumes playback
-   */
   resume() {
     if (!this.pausedSince) return;
     if (this.getTypeDispatcher() === 'audio') this.streams.silence!.unpipe(this);
@@ -261,11 +220,6 @@ class BaseDispatcher extends Writable {
     if (typeof this._writeCallback === 'function') this._writeCallback();
   }
 
-  /**
-   * The time (in milliseconds) that the dispatcher has been playing audio for, taking into account skips and pauses
-   * @type {number}
-   * @readonly
-   */
   get totalStreamTime() {
     return performance.now() - this.startTime;
   }
@@ -301,18 +255,7 @@ class BaseDispatcher extends Writable {
     if (packet) this._sendPacket(packet);
   }
 
-  /**
-   * Creates a one-byte extension header
-   * https://www.rfc-editor.org/rfc/rfc5285#section-4.2
-   * @returns {Buffer} <Buffer be de 00 01>
-   */
   createHeaderExtension() {
-    /**
-      *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      |      defined by profile       |           length              |
-      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      */
     const profile = Buffer.alloc(4);
     profile[0] = 0xbe;
     profile[1] = 0xde;
@@ -321,40 +264,13 @@ class BaseDispatcher extends Writable {
     return profile;
   }
 
-  /**
-   * Creates a one-byte extension header & a single extension of type playout-delay
-   * @see https://docs.discord.food/topics/voice-connections#sending-and-receiving-voice
-   * Discord expects a playout delay RTP extension header on every video packet.
-   * @see https://webrtc.googlesource.com/src/+/refs/heads/main/docs/native-code/rtp-hdrext/playout-delay
-   * @returns {Buffer} playout-delay extension <Buffer 51 00 00 00>
-   */
   createPayloadExtension() {
     const extensionsData = [];
     for (let ext of extensions) {
-      /**
-       * EXTENSION DATA - each extension payload is 32 bits
-       */
       const data = Buffer.alloc(4);
 
       // https://webrtc.googlesource.com/src/+/refs/heads/main/docs/native-code/rtp-hdrext/playout-delay
       if (ext.id === 5) {
-        /**
-         *  0 1 2 3 4 5 6 7
-          +-+-+-+-+-+-+-+-+
-          |  ID   |  len  |
-          +-+-+-+-+-+-+-+-+
-
-          where len = actual length - 1
-        /
-        data[0] = (ext.id & 0b00001111) << 4;
-        data[0] |= (ext.len - 1) & 0b00001111;
-
-        /**  Specific to type playout-delay
-          *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4
-            +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-            |       MIN delay       |       MAX delay       |
-            +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        */
         data.writeUIntBE(ext.value, 1, 2); // Not quite but its 0 anyway
       }
       extensionsData.push(data);
@@ -453,11 +369,6 @@ class BaseDispatcher extends Writable {
   }
 
   _sendPacket(packet: Buffer) {
-    /**
-     * Emitted whenever the dispatcher has debug information.
-     * @event BaseDispatcher#debug
-     * @param {string} info The debug info
-     */
     if (this.getTypeDispatcher() === 'audio') {
       this._setSpeaking(this.player.isScreenSharing ? 1 << 1 : 1 << 0); // 1 << 0 = SPEAKING, 1 << 1 = SOUND SHARE
     } else if (this.getTypeDispatcher() === 'video') {
@@ -483,11 +394,6 @@ class BaseDispatcher extends Writable {
     if (typeof this.player.voiceConnection !== 'undefined') {
       this.player.voiceConnection.setSpeaking(value);
     }
-    /**
-     * Emitted when the dispatcher starts/stops speaking.
-     * @event AudioDispatcher#speaking
-     * @param {boolean} value Whether or not the dispatcher is speaking
-     */
     this.emit('speaking', value);
   }
 
@@ -495,11 +401,6 @@ class BaseDispatcher extends Writable {
     if (typeof this.player.voiceConnection !== 'undefined') {
       this.player.voiceConnection.setVideoStatus(value);
     }
-    /**
-     * Emitted when the dispatcher starts/stops video.
-     * @event VideoDispatcher#videoStatus
-     * @param {boolean} value Whether or not the dispatcher is enable video
-     */
     this.emit('videoStatus', value);
   }
 
@@ -508,11 +409,6 @@ class BaseDispatcher extends Writable {
     if ('sendScreenshareState' in connection && typeof connection.sendScreenshareState === 'function') {
       connection.sendScreenshareState(value);
     }
-    /**
-     * Emitted when the dispatcher starts/stops video.
-     * @event VideoDispatcher#streamStatus
-     * @param {boolean} isPaused Whether or not the dispatcher is pause video
-     */
     this.emit('streamStatus', value);
   }
 }

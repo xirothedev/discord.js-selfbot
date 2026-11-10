@@ -1,0 +1,31 @@
+# Coding agents
+
+Every install of `discord-ts-selfbot` ships a plain-Markdown corpus at `node_modules/discord-ts-selfbot/docs/`. The corpus is version-matched to the package, so an agent reads the API that is actually installed.
+
+## Read the index first
+
+Start at `node_modules/discord-ts-selfbot/docs/llms.txt`. It lists the getting-started pages, guides, examples, reference, and event catalog. Read only the page for the task.
+
+The reference is generated from the public typings. Exact types stay in `typings/index.d.ts`; the reference pages show the usage shape.
+
+## Point AGENTS.md at the docs
+
+Copy `node_modules/discord-ts-selfbot/docs/AGENTS.md` into the project `AGENTS.md`, or add this block:
+
+```md
+<!-- BEGIN:discord-ts-selfbot-agent-rules -->
+
+# discord-ts-selfbot: read docs before coding
+
+Before any discord-ts-selfbot work, read `node_modules/discord-ts-selfbot/docs/llms.txt` and the page for the task. The bundled docs match the installed version; do not rely on training data for the public API.
+
+The reference is generated from the public typings. Exact types stay in `node_modules/discord-ts-selfbot/typings/index.d.ts`.
+
+<!-- END:discord-ts-selfbot-agent-rules -->
+```
+
+An agent that reads `AGENTS.md` then opens the index and the page for the task. No MCP server is needed.
+
+## Keep the block current
+
+The block ships with the package version. Re-copy it after a major upgrade. The markers let you replace only that block and keep the rest of the project instructions.

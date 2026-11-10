@@ -14,12 +14,6 @@ class GuildAuditLogEntryCreateAction extends Action {
     if (guild) {
       auditLogEntry = new GuildAuditLogsEntry(guild, data);
 
-      /**
-       * Emitted whenever a guild audit log entry is created.
-       * @event Client#guildAuditLogEntryCreate
-       * @param {GuildAuditLogsEntry} auditLogEntry The entry that was created
-       * @param {Guild} guild The guild where the entry was created
-       */
       client.emit(Events.GUILD_AUDIT_LOG_ENTRY_CREATE, auditLogEntry, guild);
     }
 

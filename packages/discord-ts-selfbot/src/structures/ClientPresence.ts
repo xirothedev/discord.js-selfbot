@@ -53,10 +53,6 @@ function resolveActivityType(type: string | number | undefined): ActivityType {
   return ActivityType.Playing;
 }
 
-/**
- * Represents the client's presence.
- * @extends {Presence}
- */
 class ClientPresence extends Presence {
   constructor(client: Client, data: PresenceDataSource = {}) {
     const { activities, ...rest } = data;
@@ -64,11 +60,6 @@ class ClientPresence extends Presence {
     if (activities) this._patch({ activities: activities.map(toActivityPatch) });
   }
 
-  /**
-   * Sets the client's presence
-   * @param {PresenceData} presence The data to set the presence to
-   * @returns {ClientPresence}
-   */
   set(presence: PresenceDataSource) {
     const packet = this._parse(presence);
     this._patch(packet);
@@ -82,12 +73,6 @@ class ClientPresence extends Presence {
     return this;
   }
 
-  /**
-   * Parses presence data into a packet ready to be sent to Discord
-   * @param {PresenceData} presence The data to parse
-   * @returns {APIPresence}
-   * @private
-   */
   _parse({ status, since, afk, activities }: PresenceDataSource): ClientPresencePacket {
     const data: ClientPresencePacket = {
       activities: [],
@@ -132,7 +117,3 @@ export default ClientPresence;
 export { ClientPresence };
 
 /* eslint-disable max-len */
-/**
- * @external APIPresence
- * @see {@link https://discord.com/developers/docs/rich-presence/how-to#updating-presence-update-presence-payload-fields}
- */

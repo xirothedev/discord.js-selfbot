@@ -43,11 +43,6 @@ export default (client: Client, packet: { d?: unknown }, shard: WebSocketShard) 
     if (!guild.available && !data.unavailable) {
       // A newly available guild
       guild._patch(data);
-      /**
-       * Emitted whenever a guild becomes available.
-       * @event Client#guildAvailable
-       * @param {Guild} guild The guild that became available
-       */
       client.emit(Events.GUILD_AVAILABLE, guild);
     }
   } else {
@@ -55,11 +50,6 @@ export default (client: Client, packet: { d?: unknown }, shard: WebSocketShard) 
     data.shardId = shard.id;
     guild = client.guilds._add(data);
     if (client.ws.status === Status.READY) {
-      /**
-       * Emitted whenever the client joins a guild.
-       * @event Client#guildCreate
-       * @param {Guild} guild The created guild
-       */
       client.emit(Events.GUILD_CREATE, guild);
       run(client, guild);
     }

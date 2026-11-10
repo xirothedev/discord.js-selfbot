@@ -13,9 +13,6 @@ import type TextChannel from '../structures/TextChannel';
 import type ThreadChannel from '../structures/ThreadChannel';
 import type VoiceChannel from '../structures/VoiceChannel';
 
-/**
- * Every channel structure the client can cache.
- */
 export type AnyChannel =
   | CategoryChannel
   | DirectoryChannel
@@ -30,24 +27,12 @@ export type AnyChannel =
   | ThreadChannel
   | VoiceChannel;
 
-/**
- * Channels that carry a message manager.
- */
 export type TextBasedChannel = Exclude<Extract<AnyChannel, { messages: MessageManager }>, ForumChannel | MediaChannel>;
 
-/**
- * Channels that belong to a guild.
- */
 export type GuildBasedChannel = Extract<AnyChannel, { guild: unknown }>;
 
-/**
- * Channels that own threads.
- */
 export type ThreadParentChannel = Extract<AnyChannel, { threads: unknown }>;
 
-/**
- * The options accepted by `TextBasedChannel#send`.
- */
 export type SendOptions =
   | string
   | import('../structures/MessagePayload').default

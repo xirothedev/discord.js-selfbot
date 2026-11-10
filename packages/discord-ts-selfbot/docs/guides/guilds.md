@@ -1,0 +1,93 @@
+# Guilds
+
+## Fetch a guild and its members
+
+```ts
+const guild = client.guilds.cache.get('guild-id');
+if (!guild) throw new Error('Guild not found.');
+
+await guild.members.fetch();
+console.log(`${guild.memberCount} members cached.`);
+```
+
+`guild.members.fetch()` requests the member list. Large guilds return members in chunks and may take time.
+
+## Search members
+
+```ts
+const result = await guild.members.search({
+  query: 'bun',
+  limit: 10,
+});
+
+for (const member of result.values()) {
+  console.log(member.user.tag);
+}
+```
+
+Search is capped by Discord. The result is a collection of `GuildMember` objects.
+
+## Guild metadata
+
+```ts
+await guild.fetchVanityData();
+console.log(guild.vanityURLCode);
+
+const emojis = guild.topEmojis();
+console.log(emojis);
+
+const preview = await guild.fetchPreview();
+console.log(preview.name, preview.memberCount);
+```
+
+`topEmojis()` returns the most-used emojis for the guild. `fetchPreview()` returns a `GuildPreview` without joining the guild.
+
+## Guild settings
+
+```ts
+await guild.settings.edit({
+  // The fields accepted by the guild settings endpoint.
+});
+```
+
+`GuildSettingManager#edit` sends the settings payload. The exact fields depend on the guild type. Read the current API shape before you write a full settings object.
+
+## Community and vanity
+
+```ts
+await guild.setCommunity(true, publicUpdatesChannel, rulesChannel);
+await guild.setVanityCode('my-vanity');
+```
+
+These methods require the account to have the relevant permissions. They change public guild state; test on a small guild first.
+
+## Audit logs
+
+```ts
+const logs = await guild.fetchAuditLogs({ limit: 10, type: 'MEMBER_KICK' });
+for (const entry of logs.entries.values()) {
+  console.log(entry.action, entry.target?.id);
+}
+```
+
+## Mark as read
+
+```ts
+await guild.markAsRead();
+```
+
+Marks the guild's channels as read. This is a selfbot convenience; it does not delete messages.
+
+## Leaving and deleting
+
+```ts
+await guild.leave();
+```
+
+`guild.delete()` permanently deletes a guild the account owns. Both methods are destructive. Do not call them from an automated loop without a confirmation step.
+
+## Next
+
+- [Account and profile](account-profile.md)
+- [API: Guild](../reference/structures/guild.md)
+- [API: GuildManager](../reference/managers/guild-manager.md)

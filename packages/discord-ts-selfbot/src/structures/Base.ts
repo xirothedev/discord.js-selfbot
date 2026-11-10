@@ -1,20 +1,10 @@
 import Util from '../util/Util';
 import type { Client } from '../client/Client';
 
-/**
- * Represents a data model that is identifiable by a Snowflake (i.e. Discord API data models).
- * @abstract
- */
 class Base {
   declare client: Client;
 
   constructor(client: Client) {
-    /**
-     * The client that instantiated this
-     * @name Base#client
-     * @type {Client}
-     * @readonly
-     */
     Object.defineProperty(this, 'client', { value: client });
   }
 

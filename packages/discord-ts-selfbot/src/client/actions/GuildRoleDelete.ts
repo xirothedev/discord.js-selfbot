@@ -16,11 +16,6 @@ class GuildRoleDeleteAction extends Action {
       if (role) {
         guild.roles.cache.delete(data.role_id);
         deletedRoles.add(role);
-        /**
-         * Emitted whenever a guild role is deleted.
-         * @event Client#roleDelete
-         * @param {Role} role The role that was deleted
-         */
         client.emit(Events.GUILD_ROLE_DELETE, role);
       }
     }

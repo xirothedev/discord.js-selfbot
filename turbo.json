@@ -26,6 +26,7 @@
         "src/**",
         "tools/**",
         "typings/**",
+        "docs/**",
         "app/**",
         "components/**",
         "content/**",
@@ -33,7 +34,10 @@
         "scripts/**",
         "next.config.*",
         "tsconfig.json",
-        "package.json"
+        "package.json",
+        "$TURBO_ROOT$/apps/docs/scripts/agent/**",
+        "$TURBO_ROOT$/apps/docs/scripts/api/**",
+        "$TURBO_ROOT$/apps/docs/content/docs/**"
       ],
       "outputs": [],
       "outputLogs": "errors-only"
@@ -97,7 +101,6 @@
         "$TURBO_ROOT$/packages/discord-ts-selfbot/typings/**",
         "$TURBO_ROOT$/packages/discord-ts-selfbot/package.json",
         "$TURBO_ROOT$/packages/discord-ts-selfbot/tsconfig.json",
-        "docgen.yml",
         "package.json"
       ],
       "outputs": ["content/docs/api/**"],

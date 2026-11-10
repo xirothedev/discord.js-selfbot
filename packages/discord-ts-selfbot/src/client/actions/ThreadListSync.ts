@@ -46,11 +46,6 @@ class ThreadListSyncAction extends Action {
       }
     }
 
-    /**
-     * Emitted whenever the client user gains access to a text or news channel that contains threads
-     * @event Client#threadListSync
-     * @param {Collection<Snowflake, ThreadChannel>} threads The threads that were synced
-     */
     client.emit(Events.THREAD_LIST_SYNC, syncedThreads);
 
     return {

@@ -3,13 +3,7 @@ import { ComponentType, type APITextDisplayComponent } from 'discord-api-types/v
 
 class TextDisplayComponent extends BaseMessageComponent {
   declare content: string | null;
-  /**
-   * @property {String} [content] Text that will be displayed similar to a message
-   */
 
-  /**
-   * @param {TextDisplayComponent | APITextDisplayComponent} [data={}] The data
-   */
   constructor(data: unknown = {}) {
     super({ type: 'TEXT_DISPLAY' });
 
@@ -19,16 +13,9 @@ class TextDisplayComponent extends BaseMessageComponent {
   setup(data: unknown) {
     super.setup(data);
     const source = isComponentDataSource(data) ? data : {};
-    /**
-     * Text that will be displayed similar to a message
-     * @type {String}
-     */
     this.content = readComponentString(source, 'content') ?? null;
   }
 
-  /**
-   * @returns {APITextDisplayComponent}
-   */
   toJSON(): APITextDisplayComponent {
     return {
       type: ComponentType.TextDisplay,
