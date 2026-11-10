@@ -2,6 +2,10 @@ import { Readable } from 'stream';
 import prism from 'prism-media';
 import _errorsModule from '../../../errors';
 const { Error } = _errorsModule;
+import type { StreamOptions, VideoOptions } from '../../../../typings';
+import type MediaPlayer from '../player/MediaPlayer';
+import type AudioDispatcher from '../dispatcher/AudioDispatcher';
+import type VideoDispatcher from '../dispatcher/VideoDispatcher';
 
 /**
  * Options that can be passed to stream-playing methods:
@@ -34,9 +38,9 @@ const { Error } = _errorsModule;
  * An interface class to allow you to play audio over VoiceConnections.
  */
 class PlayInterface {
-  declare player: any;
+  declare player: MediaPlayer;
 
-  constructor(player: any) {
+  constructor(player: MediaPlayer) {
     this.player = player;
   }
 
@@ -55,7 +59,7 @@ class PlayInterface {
    * connection.playAudio('http://www.sample-videos.com/audio/mp3/wave.mp3');
    * @returns {AudioDispatcher}
    */
-  playAudio(resource: any, options: any = {}) {
+  playAudio(resource: Readable | string, options: StreamOptions = {}): AudioDispatcher {
     if (resource instanceof Readable || typeof resource === 'string') {
       const type = options.type || 'unknown';
       if (type === 'unknown') {
@@ -106,7 +110,7 @@ class PlayInterface {
    * connection.playVideo('http://www.sample-videos.com/video/mp4/wave.mp4');
    * @returns {VideoDispatcher}
    */
-  playVideo(resource: any, options: any = {}) {
+  playVideo(resource: Readable | string, options: VideoOptions = {}): VideoDispatcher {
     if (resource instanceof Readable || typeof resource === 'string') {
       return this.player.playUnknownVideo(resource, options);
     }
@@ -119,13 +123,14 @@ class PlayInterface {
    * @param {VideoOptions} [options] The options to play.
    * @returns {VideoDispatcher}
    */
-  playStream(resource: any, options: any = {}) {
+  playStream(resource: Readable | string, options: VideoOptions = {}): VideoDispatcher {
     return this.playVideo(resource, options);
   }
 
-  static applyToClass(structure: any) {
+  static applyToClass(structure: { prototype: object }) {
     for (const prop of ['playAudio', 'playVideo', 'playStream']) {
-      Object.defineProperty(structure.prototype, prop, Object.getOwnPropertyDescriptor(PlayInterface.prototype, prop)!);
+      const descriptor = Object.getOwnPropertyDescriptor(PlayInterface.prototype, prop);
+      if (descriptor) Object.defineProperty(structure.prototype, prop, descriptor);
     }
   }
 }

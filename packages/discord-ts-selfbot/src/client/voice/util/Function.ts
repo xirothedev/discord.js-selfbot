@@ -1,4 +1,18 @@
 import dgram from 'dgram';
+
+type SocketType = 'udp4' | 'udp6';
+
+interface InterfaceAddresses {
+  udp4?: string;
+  udp6?: string;
+}
+
+interface StreamKey {
+  type: string;
+  guildId: string | null;
+  channelId: string;
+  userId: string;
+}
 import { setImmediate } from 'node:timers';
 
 /**
@@ -13,7 +27,7 @@ import { setImmediate } from 'node:timers';
  * @param {InterfaceAddresses} [interfaceAddresses] - The interface addresses mapping.
  * @returns {string|undefined} The interface address if available.
  */
-function interfaceAddress(type: any, interfaceAddresses: any) {
+function interfaceAddress(type: SocketType, interfaceAddresses?: InterfaceAddresses | null): string | undefined {
   return interfaceAddresses ? interfaceAddresses[type] : undefined;
 }
 
@@ -23,7 +37,10 @@ function interfaceAddress(type: any, interfaceAddresses: any) {
  * @param {InterfaceAddresses} [interfaceAddresses] - The interface addresses mapping.
  * @returns {Promise<number>} The assigned random port.
  */
-async function randomPort(protocol: any = 'udp4', interfaceAddresses: any) {
+async function randomPort(
+  protocol: SocketType = 'udp4',
+  interfaceAddresses?: InterfaceAddresses | null,
+): Promise<number | undefined> {
   const socket = dgram.createSocket(protocol);
 
   setImmediate(() =>
@@ -38,7 +55,8 @@ async function randomPort(protocol: any = 'udp4', interfaceAddresses: any) {
     socket.once('listening', resolve);
   });
 
-  const port = socket.address()?.port;
+  const address = socket.address();
+  const port = typeof address === 'object' ? address.port : undefined;
   await new Promise(resolve => socket.close(() => resolve(undefined)));
   return port;
 }
@@ -50,7 +68,11 @@ async function randomPort(protocol: any = 'udp4', interfaceAddresses: any) {
  * @param {InterfaceAddresses} [interfaceAddresses] - The interface addresses mapping.
  * @returns {Promise<number[]>} An array of assigned random ports.
  */
-async function randomPorts(num: any, protocol: any = 'udp4', interfaceAddresses: any = null) {
+async function randomPorts(
+  num: number,
+  protocol: SocketType = 'udp4',
+  interfaceAddresses: InterfaceAddresses | null = null,
+): Promise<(number | undefined)[]> {
   return Promise.all(Array.from({ length: num }).map(() => randomPort(protocol, interfaceAddresses)));
 }
 
@@ -63,8 +85,13 @@ async function randomPorts(num: any, protocol: any = 'udp4', interfaceAddresses:
  * @returns {Promise<number>} The available port within range.
  * @throws {Error} If no port is found within the range.
  */
-async function findPort(min: any, max: any, protocol: any = 'udp4', interfaceAddresses: any) {
-  let port;
+async function findPort(
+  min: number,
+  max: number,
+  protocol: SocketType = 'udp4',
+  interfaceAddresses?: InterfaceAddresses | null,
+): Promise<number> {
+  let port: number | undefined;
 
   for (let i = min; i <= max; i++) {
     const socket = dgram.createSocket(protocol);
@@ -96,7 +123,7 @@ async function findPort(min: any, max: any, protocol: any = 'udp4', interfaceAdd
   return port;
 }
 
-function parseStreamKey(key: any) {
+function parseStreamKey(key: string): StreamKey {
   const Arr = key.split(':');
   const type = Arr[0];
   const guildId = type == 'guild' ? Arr[1] : null;

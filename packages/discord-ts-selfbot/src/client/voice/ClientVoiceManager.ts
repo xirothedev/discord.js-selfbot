@@ -1,4 +1,7 @@
 import VoiceConnection from './VoiceConnection';
+import type { VoiceConnectionChannel, SourceVideoCodec } from './VoiceConnection';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { Client } from '../../client/Client';
 import _errorsModule from '../../errors';
 const { Error } = _errorsModule;
 import _ConstantsModule from '../../util/Constants';
@@ -8,6 +11,31 @@ const { Events } = _ConstantsModule;
  * Manages voice connections for the client
  * Feat: Support both lib & djs/voice
  */
+interface VoiceServerUpdatePayload {
+  guild_id?: Snowflake | null;
+  channel_id?: Snowflake | null;
+  token?: string | null;
+  endpoint?: string | null;
+}
+
+interface VoiceStateUpdatePayload {
+  guild_id?: Snowflake | null;
+  session_id?: string;
+  channel_id?: Snowflake | null;
+  user_id?: Snowflake;
+}
+
+interface ClientVoiceManagerOptions {
+  connectionFactory?: (voiceManager: ClientVoiceManager, channel: VoiceConnectionChannel) => VoiceConnection;
+}
+
+interface JoinChannelConfig {
+  selfMute?: boolean;
+  selfDeaf?: boolean;
+  selfVideo?: boolean;
+  videoCodec?: SourceVideoCodec;
+}
+
 type VoiceAdapter = {
   destroy(): void;
   onVoiceServerUpdate(payload: unknown): void;
@@ -15,12 +43,12 @@ type VoiceAdapter = {
 };
 
 class ClientVoiceManager {
-  declare client: import('../../client/Client').default;
-  declare connectionFactory: (voiceManager: ClientVoiceManager, channel: unknown) => VoiceConnection;
+  declare client: Client;
+  declare connectionFactory: (voiceManager: ClientVoiceManager, channel: VoiceConnectionChannel) => VoiceConnection;
   declare connection: VoiceConnection | null;
   declare adapters: Map<string, VoiceAdapter>;
 
-  constructor(client: any, options: any = {}) {
+  constructor(client: Client, options: ClientVoiceManagerOptions = {}) {
     /**
      * The client that instantiated this voice manager
      * @type {Client}
@@ -35,7 +63,7 @@ class ClientVoiceManager {
      * @private
      */
     this.connectionFactory =
-      options.connectionFactory ?? ((voiceManager: any, channel: any) => new VoiceConnection(voiceManager, channel));
+      options.connectionFactory ?? ((voiceManager, channel) => new VoiceConnection(voiceManager, channel));
 
     /**
      * A current connection objects
@@ -49,7 +77,7 @@ class ClientVoiceManager {
      */
     this.adapters = new Map();
 
-    client.on(Events.SHARD_DISCONNECT, (_: any, shardId: any) => {
+    client.on(Events.SHARD_DISCONNECT, (_: unknown, shardId: number) => {
       for (const [guildId, adapter] of this.adapters.entries()) {
         if (client.guilds.cache.get(guildId)?.shardId === shardId) {
           // Because it has 1 shard => adapter.destroy();
@@ -59,7 +87,7 @@ class ClientVoiceManager {
     });
   }
 
-  onVoiceServer(payload: any) {
+  onVoiceServer(payload: VoiceServerUpdatePayload) {
     const { guild_id, channel_id, token, endpoint } = payload;
     this.client.emit(
       'debug',
@@ -68,16 +96,16 @@ class ClientVoiceManager {
       } token: ${token} endpoint: ${endpoint}`,
     );
     const connection = this.connection;
-    if (connection) connection.setTokenAndEndpoint(token, endpoint);
+    if (connection) connection.setTokenAndEndpoint(token ?? null, endpoint ?? null);
     // Djs / voice
     if (payload.guild_id) {
       this.adapters.get(payload.guild_id)?.onVoiceServerUpdate(payload);
-    } else {
+    } else if (payload.channel_id) {
       this.adapters.get(payload.channel_id)?.onVoiceServerUpdate(payload);
     }
   }
 
-  onVoiceStateUpdate(payload: any) {
+  onVoiceStateUpdate(payload: VoiceStateUpdatePayload) {
     const { guild_id, session_id, channel_id } = payload;
     // @discordjs/voice
     if (payload.guild_id && payload.session_id && payload.user_id === this.client.user?.id) {
@@ -97,7 +125,7 @@ class ClientVoiceManager {
     const channel = this.client.channels.cache.get(channel_id);
     if (channel) {
       connection.channel = channel;
-      connection.setSessionId(session_id);
+      connection.setSessionId(session_id ?? null);
     } else {
       this.client.emit('debug', `[VOICE] disconnecting from guild ${guild_id} as channel ${channel_id} is uncached`);
       connection.disconnect();
@@ -118,26 +146,30 @@ class ClientVoiceManager {
    * @param {JoinChannelConfig} config Config to join voice channel
    * @returns {Promise<VoiceConnection>}
    */
-  joinChannel(channel: any, config: any = {}) {
+  joinChannel(channel: VoiceConnectionChannel | Snowflake, config: JoinChannelConfig = {}): Promise<VoiceConnection> {
     return new Promise((resolve, reject) => {
-      channel = this.client.channels.resolve(channel);
-      if (!['DM', 'GROUP_DM'].includes(channel?.type) && !channel.joinable) {
-        throw new Error('VOICE_JOIN_CHANNEL', channel.full);
+      const resolved = this.client.channels.resolve(channel);
+      if (!resolved) throw new Error('VOICE_JOIN_CHANNEL', String(channel));
+      if (!['DM', 'GROUP_DM'].includes(resolved.type) && !('joinable' in resolved && resolved.joinable)) {
+        throw new Error('VOICE_JOIN_CHANNEL', String(resolved));
       }
 
       let connection = this.connection;
 
       if (connection) {
-        if (connection.channel.id !== channel.id) {
-          connection.updateChannel(channel);
+        if (connection.channel.id !== resolved.id) {
+          connection.updateChannel(resolved);
         }
         resolve(connection);
         return;
       } else {
-        connection = this.connectionFactory(this, channel);
+        connection = this.connectionFactory(this, resolved);
         if (config?.videoCodec) connection.setVideoCodec(config.videoCodec);
-        connection.on('debug', (msg: any) =>
-          this.client.emit('debug', `[VOICE (${channel.guild?.id || channel.id}:${connection!.status})]: ${msg}`),
+        connection.on('debug', (msg: string) =>
+          this.client.emit(
+            'debug',
+            `[VOICE (${connection!.channel.guild?.id || connection!.channel.id}:${connection!.status})]: ${msg}`,
+          ),
         );
         connection.authenticate({
           self_mute: Boolean(config.selfMute),
@@ -147,7 +179,7 @@ class ClientVoiceManager {
         this.connection = connection;
       }
 
-      connection.once('failed', (reason: any) => {
+      connection.once('failed', (reason: unknown) => {
         this.connection = null;
         reject(reason);
       });

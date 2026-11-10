@@ -15,7 +15,114 @@ const { Error } = _errorsModule;
 import _ConstantsModule from '../../util/Constants';
 const { Opcodes, VoiceOpcodes, VoiceStatus, Events } = _ConstantsModule;
 import Speaking from '../../util/Speaking';
-import Util from '../../util/Util';
+import type { Snowflake } from 'discord-api-types/v10';
+import type {
+  BitFieldResolvable,
+  SpeakingString,
+  StreamOptions,
+  UserResolvable,
+  VideoCodec,
+  VideoOptions,
+} from '../../../typings';
+import type { Client } from '../../client/Client';
+import type { Guild } from '../../structures/Guild';
+import type AudioDispatcher from './dispatcher/AudioDispatcher';
+import type VideoDispatcher from './dispatcher/VideoDispatcher';
+
+/**
+ * The subset of a channel that a voice connection needs.
+ */
+export interface VoiceConnectionChannel {
+  id: Snowflake;
+  type: string;
+  client: Client;
+  guild?: Guild | null;
+  bitrate?: number;
+}
+
+export type SourceVideoCodec = VideoCodec | 'VP9' | 'H265' | 'AV1';
+
+interface VoiceAuthentication {
+  token: string | null;
+  endpoint: string | null;
+  sessionId: string | null;
+  ssrc: number;
+  mode?: string;
+  secret?: string;
+  ip?: string;
+  port?: number;
+  modes?: string[];
+  secret_key?: Uint8Array;
+}
+
+interface VoiceReadyData {
+  ssrc: number;
+  ip: string;
+  port: number;
+  modes: string[];
+  experiments?: string[];
+  heartbeat_interval: number;
+}
+
+interface VoiceSessionDescriptionData {
+  mode: string;
+  secret: string;
+  media_session_id?: string;
+  audio_codec?: string;
+  video_codec?: string;
+}
+
+interface VoiceSpeakingStartData {
+  user_id: Snowflake;
+  ssrc: number | string;
+  speaking: number;
+}
+
+interface VoiceStreamingStartData {
+  video_ssrc: number | string;
+  user_id: Snowflake;
+  audio_ssrc: number | string;
+}
+
+interface VoiceSpeakingData {
+  user_id: Snowflake;
+  speaking: number;
+  ssrc?: number | string;
+}
+
+interface StreamUpdateData {
+  paused: boolean;
+  region: string | null;
+  viewer_ids: string[];
+}
+
+interface StreamPacketData {
+  stream_key?: string;
+  rtc_server_id?: string;
+  token?: string;
+  endpoint?: string;
+  paused?: boolean;
+  region?: string | null;
+  viewer_ids?: string[];
+}
+
+interface StreamPacket {
+  t?: string;
+  d?: StreamPacketData;
+}
+
+interface VoiceStateUpdateOptions {
+  guild_id?: Snowflake | null;
+  channel_id?: Snowflake | null;
+  self_mute?: boolean;
+  self_deaf?: boolean;
+  self_video?: boolean;
+  flags?: number;
+}
+
+function isStreamPacket(packet: unknown): packet is StreamPacket {
+  return typeof packet === 'object' && packet !== null && 't' in packet && 'd' in packet;
+}
 
 // Workaround for Discord now requiring silence to be sent before being able to receive audio
 class SingleSilence extends Silence {
@@ -34,9 +141,10 @@ if (getCiphers().includes('aes-256-gcm')) {
 
 const SUPPORTED_CODECS = ['VP8', 'H264'];
 
-function routeStreamPacket(connection: any, packet: any) {
-  if (typeof packet !== 'object' || !packet.t || !packet.d || !packet.d?.stream_key) return;
+function routeStreamPacket(connection: VoiceConnection, packet: unknown) {
+  if (!isStreamPacket(packet) || !packet.t || !packet.d?.stream_key) return;
   const { t: event, d: data } = packet;
+  if (!data.stream_key) return;
   const StreamKey = parseStreamKey(data.stream_key);
   if (
     StreamKey.userId === connection.channel.client.user!.id &&
@@ -47,35 +155,44 @@ function routeStreamPacket(connection: any, packet: any) {
     switch (event) {
       case 'STREAM_CREATE':
         sc.setSessionId(connection.authentication.sessionId);
-        sc.serverId = data.rtc_server_id;
+        sc.serverId = data.rtc_server_id ?? null;
         break;
       case 'STREAM_SERVER_UPDATE':
-        sc.setTokenAndEndpoint(data.token, data.endpoint);
+        sc.setTokenAndEndpoint(data.token ?? null, data.endpoint ?? null);
         break;
       case 'STREAM_DELETE':
         sc.disconnect();
         break;
       case 'STREAM_UPDATE':
-        sc.update(data);
+        sc.update({
+          paused: Boolean(data.paused),
+          region: data.region ?? null,
+          viewer_ids: data.viewer_ids ?? [],
+        });
         break;
     }
   }
   if (connection.streamWatchConnection.has(StreamKey.userId) && connection.channel.id == StreamKey.channelId) {
     const sc = connection.streamWatchConnection.get(StreamKey.userId);
+    if (!sc) return;
     switch (event) {
       case 'STREAM_CREATE':
         sc.setSessionId(connection.authentication.sessionId);
-        sc.serverId = data.rtc_server_id;
+        sc.serverId = data.rtc_server_id ?? null;
         break;
       case 'STREAM_SERVER_UPDATE':
-        sc.setTokenAndEndpoint(data.token, data.endpoint);
+        sc.setTokenAndEndpoint(data.token ?? null, data.endpoint ?? null);
         break;
       case 'STREAM_DELETE':
         sc.disconnect();
         sc.receiver.packets.destroyAllStream();
         break;
       case 'STREAM_UPDATE':
-        sc.update(data);
+        sc.update({
+          paused: Boolean(data.paused),
+          region: data.region ?? null,
+          viewer_ids: data.viewer_ids ?? [],
+        });
         break;
     }
   }
@@ -95,11 +212,11 @@ function routeStreamPacket(connection: any, packet: any) {
  */
 class VoiceConnection extends EventEmitter {
   declare voiceManager: import('./ClientVoiceManager').default;
-  declare channel: any;
+  declare channel: VoiceConnectionChannel;
   declare status: number;
   declare speaking: Readonly<Speaking>;
   declare videoStatus: boolean | null;
-  declare authentication: Record<string, any>;
+  declare authentication: VoiceAuthentication;
   declare player: import('./player/MediaPlayer').default;
   declare ssrcMap: Map<number, { userId?: string; speaking?: number; hasVideo?: boolean }>;
   declare _speaking: Map<string, Readonly<Speaking>>;
@@ -112,7 +229,7 @@ class VoiceConnection extends EventEmitter {
     udp?: (connection: VoiceConnection) => import('./networking/VoiceUDPClient').default;
   };
   declare receiver: import('./receiver/Receiver').default;
-  declare videoCodec: string;
+  declare videoCodec: SourceVideoCodec;
   declare _streamConnection: StreamConnection | null;
   declare _streamWatchConnection: Collection<string, StreamConnectionReadonly>;
   declare connectTimeout?: NodeJS.Timeout;
@@ -135,7 +252,11 @@ class VoiceConnection extends EventEmitter {
     this._streamWatchConnection = value;
   }
 
-  constructor(voiceManager: any, channel: any, options: any = {}) {
+  constructor(
+    voiceManager: import('./ClientVoiceManager').default,
+    channel: VoiceConnectionChannel,
+    options: { socketFactory?: VoiceConnection['socketFactory'] } = {},
+  ) {
     super();
 
     /**
@@ -173,7 +294,7 @@ class VoiceConnection extends EventEmitter {
      * @type {Object}
      * @private
      */
-    this.authentication = {};
+    this.authentication = { token: null, endpoint: null, sessionId: null, ssrc: 0 };
 
     /**
      * The audio player for this voice connection
@@ -181,7 +302,7 @@ class VoiceConnection extends EventEmitter {
      */
     this.player = new MediaPlayer(this, this.constructor.name === 'StreamConnection');
 
-    this.player.on('debug', (m: any) => {
+    this.player.on('debug', (m: string) => {
       /**
        * Debug info from the connection.
        * @event VoiceConnection#debug
@@ -190,7 +311,7 @@ class VoiceConnection extends EventEmitter {
       this.emit('debug', `media player - ${m}`);
     });
 
-    this.player.on('error', (e: any) => {
+    this.player.on('error', (e: Error) => {
       /**
        * Warning info from the connection.
        * @event VoiceConnection#warn
@@ -295,7 +416,7 @@ class VoiceConnection extends EventEmitter {
    * Sets whether the voice connection should display as "speaking", "soundshare" or "none".
    * @param {BitFieldResolvable} value The new speaking state
    */
-  setSpeaking(value: any) {
+  setSpeaking(value: BitFieldResolvable<SpeakingString, number>) {
     if (this.speaking.equals(value)) return;
     if (this.status !== VoiceStatus.CONNECTED) return;
     this.speaking = new Speaking(value).freeze();
@@ -308,7 +429,7 @@ class VoiceConnection extends EventEmitter {
           ssrc: this.authentication.ssrc,
         },
       })
-      .catch((e: any) => {
+      .catch((e: unknown) => {
         this.emit('debug', e);
       });
   }
@@ -318,7 +439,7 @@ class VoiceConnection extends EventEmitter {
    * @param {VideoCodec} value Codec
    * @returns {VoiceConnection}
    */
-  setVideoCodec(value: any) {
+  setVideoCodec(value: SourceVideoCodec) {
     if (!SUPPORTED_CODECS.includes(value)) throw new Error('INVALID_VIDEO_CODEC', SUPPORTED_CODECS);
     this.videoCodec = value;
     return this;
@@ -328,7 +449,7 @@ class VoiceConnection extends EventEmitter {
    * Sets video status
    * @param {boolean} value Video on or off
    */
-  setVideoStatus(value: any) {
+  setVideoStatus(value: boolean) {
     if (value === this.videoStatus) return;
     if (this.status !== VoiceStatus.CONNECTED) return;
     this.videoStatus = value;
@@ -343,7 +464,7 @@ class VoiceConnection extends EventEmitter {
             streams: [],
           },
         })
-        .catch((e: any) => {
+        .catch((e: unknown) => {
           this.emit('debug', e);
         });
     } else {
@@ -373,7 +494,7 @@ class VoiceConnection extends EventEmitter {
             ],
           },
         })
-        .catch((e: any) => {
+        .catch((e: unknown) => {
           this.emit('debug', e);
         });
     }
@@ -393,24 +514,22 @@ class VoiceConnection extends EventEmitter {
    * @returns {Promise<Shard>}
    * @private
    */
-  sendVoiceStateUpdate(options: any = {}) {
-    options = Util.mergeDefault(
-      {
-        guild_id: this.channel.guild?.id || null,
-        channel_id: this.channel.id,
-        self_mute: this.voice ? this.voice.selfMute : false,
-        self_deaf: this.voice ? this.voice.selfDeaf : false,
-        self_video: this.voice ? this.voice.selfVideo : false,
-        flags: 2,
-      },
-      options,
-    );
+  sendVoiceStateUpdate(options: VoiceStateUpdateOptions = {}): void {
+    const data: Required<VoiceStateUpdateOptions> = {
+      guild_id: this.channel.guild?.id ?? null,
+      channel_id: this.channel.id,
+      self_mute: this.voice ? Boolean(this.voice.selfMute) : false,
+      self_deaf: this.voice ? Boolean(this.voice.selfDeaf) : false,
+      self_video: this.voice ? Boolean(this.voice.selfVideo) : false,
+      flags: 2,
+      ...options,
+    };
 
-    this.emit('debug', `Sending voice state update: ${JSON.stringify(options)}`);
+    this.emit('debug', `Sending voice state update: ${JSON.stringify(data)}`);
 
-    return this.channel.client.ws.broadcast({
+    this.channel.client.ws.broadcast({
       op: Opcodes.VOICE_STATE_UPDATE,
-      d: options,
+      d: data,
     });
   }
 
@@ -421,7 +540,7 @@ class VoiceConnection extends EventEmitter {
    * @returns {void}
    * @private
    */
-  setTokenAndEndpoint(token: any, endpoint: any) {
+  setTokenAndEndpoint(token: string | null, endpoint: string | null) {
     this.emit('debug', `Token "${token}" and endpoint "${endpoint}"`);
     if (!endpoint) {
       // Signifies awaiting endpoint stage
@@ -433,7 +552,7 @@ class VoiceConnection extends EventEmitter {
       return;
     }
 
-    endpoint = endpoint.match(/([^:]*)/)[0];
+    endpoint = endpoint.match(/^([^:]*)/)?.[0] ?? '';
     this.emit('debug', `Endpoint resolved as ${endpoint}`);
 
     if (!endpoint) {
@@ -455,7 +574,7 @@ class VoiceConnection extends EventEmitter {
    * @param {string} sessionId The voice session ID
    * @private
    */
-  setSessionId(sessionId: any) {
+  setSessionId(sessionId: string | null) {
     this.emit('debug', `Setting sessionId ${sessionId} (stored as "${this.authentication.sessionId}")`);
     if (!sessionId) {
       this.authenticateFailed('VOICE_SESSION_ABSENT');
@@ -499,7 +618,7 @@ class VoiceConnection extends EventEmitter {
    * @param {string} reason The reason for failure
    * @private
    */
-  authenticateFailed(reason: any) {
+  authenticateFailed(reason: string) {
     clearTimeout(this.connectTimeout);
     this.emit('debug', `Authenticate failed - ${reason}`);
     if (this.status === VoiceStatus.AUTHENTICATING) {
@@ -525,7 +644,7 @@ class VoiceConnection extends EventEmitter {
    * @param {VoiceChannel} channel The channel to move to
    * @private
    */
-  updateChannel(channel: any) {
+  updateChannel(channel: VoiceConnectionChannel) {
     this.channel = channel;
     this.sendVoiceStateUpdate();
   }
@@ -535,7 +654,7 @@ class VoiceConnection extends EventEmitter {
    * @param {Object} options Join config
    * @private
    */
-  authenticate(options: any = {}) {
+  authenticate(options: VoiceStateUpdateOptions = {}) {
     this.sendVoiceStateUpdate(options);
     this.connectTimeout = setTimeout(() => this.authenticateFailed('VOICE_CONNECTION_TIMEOUT'), 15_000).unref();
   }
@@ -546,7 +665,7 @@ class VoiceConnection extends EventEmitter {
    * @param {string} endpoint The voice endpoint
    * @private
    */
-  reconnect(token: any, endpoint: any) {
+  reconnect(token: string, endpoint: string) {
     this.authentication.token = token;
     this.authentication.endpoint = endpoint;
     this.speaking = new Speaking().freeze();
@@ -633,10 +752,10 @@ class VoiceConnection extends EventEmitter {
 
     const { ws, udp } = this.sockets;
 
-    ws.on('debug', (msg: any) => this.emit('debug', msg));
-    udp.on('debug', (msg: any) => this.emit('debug', msg));
-    ws.on('error', (err: any) => this.emit('error', err));
-    udp.on('error', (err: any) => this.emit('error', err));
+    ws.on('debug', (msg: string) => this.emit('debug', msg));
+    udp.on('debug', (msg: string) => this.emit('debug', msg));
+    ws.on('error', (err: Error) => this.emit('error', err));
+    udp.on('error', (err: Error) => this.emit('error', err));
     ws.on('ready', this.onReady.bind(this));
     ws.on('sessionDescription', this.onSessionDescription.bind(this));
     ws.on('startSpeaking', this.onStartSpeaking.bind(this));
@@ -650,7 +769,7 @@ class VoiceConnection extends EventEmitter {
    * @param {Object} data The received data
    * @private
    */
-  onReady(data: any) {
+  onReady(data: VoiceReadyData) {
     Object.assign(this.authentication, data);
     for (let mode of data.modes) {
       if (SUPPORTED_MODES.includes(mode)) {
@@ -667,7 +786,7 @@ class VoiceConnection extends EventEmitter {
    * @param {Object} data The received data
    * @private
    */
-  onSessionDescription(data: any) {
+  onSessionDescription(data: VoiceSessionDescriptionData) {
     Object.assign(this.authentication, data);
     this.status = VoiceStatus.CONNECTED;
     const ready = () => {
@@ -689,7 +808,7 @@ class VoiceConnection extends EventEmitter {
     }
   }
 
-  onStartSpeaking({ user_id, ssrc, speaking }: any) {
+  onStartSpeaking({ user_id, ssrc, speaking }: VoiceSpeakingStartData) {
     this.ssrcMap.set(+ssrc, {
       ...(this.ssrcMap.get(+ssrc) || {}),
       userId: user_id,
@@ -697,7 +816,7 @@ class VoiceConnection extends EventEmitter {
     });
   }
 
-  onStartStreaming({ video_ssrc, user_id, audio_ssrc }: any) {
+  onStartStreaming({ video_ssrc, user_id, audio_ssrc }: VoiceStreamingStartData) {
     this.ssrcMap.set(+audio_ssrc, {
       ...(this.ssrcMap.get(+audio_ssrc) || {}),
       userId: user_id,
@@ -728,8 +847,8 @@ class VoiceConnection extends EventEmitter {
    * @param {Object} data The received data
    * @private
    */
-  onSpeaking({ user_id, speaking }: any) {
-    speaking = new Speaking(speaking).freeze();
+  onSpeaking({ user_id, speaking: speakingBits }: VoiceSpeakingData) {
+    const speaking = new Speaking(speakingBits).freeze();
     const guild = this.channel.guild;
     const user = this.client.users.cache.get(user_id);
     const old = this._speaking.get(user_id) || new Speaking(0).freeze();
@@ -748,7 +867,7 @@ class VoiceConnection extends EventEmitter {
     }
 
     if (guild && user && !speaking.equals(old)) {
-      const member = guild.members.cache.get(user);
+      const member = guild.members.cache.get(user_id);
       if (member) {
         /**
          * Emitted once a guild member changes speaking state.
@@ -761,14 +880,14 @@ class VoiceConnection extends EventEmitter {
     }
   }
 
-  playAudio(_resource?: any, _options?: any): any {} // eslint-disable-line no-empty-function
-  playVideo(_resource?: any, _options?: any): any {} // eslint-disable-line no-empty-function
+  declare playAudio: (resource: import('node:stream').Readable | string, options?: StreamOptions) => AudioDispatcher;
+  declare playVideo: (resource: import('node:stream').Readable | string, options?: VideoOptions) => VideoDispatcher;
 
   /**
    * Create new connection to screenshare stream
    * @returns {Promise<StreamConnection>}
    */
-  createStreamConnection() {
+  createStreamConnection(): Promise<StreamConnection> {
     // eslint-disable-next-line consistent-return
     return new Promise((resolve, reject) => {
       if (this.streamConnection) {
@@ -779,7 +898,7 @@ class VoiceConnection extends EventEmitter {
         // Setup event...
         if (!this.eventHook) {
           this.eventHook = true; // Dont listen this event two times :/
-          this.channel.client.on('raw', (packet: any) => {
+          this.channel.client.on('raw', (packet: unknown) => {
             routeStreamPacket(this, packet);
           });
         }
@@ -787,13 +906,13 @@ class VoiceConnection extends EventEmitter {
         connection.sendSignalScreenshare();
         connection.sendScreenshareState(true);
 
-        connection.on('debug', (msg: any) =>
+        connection.on('debug', (msg: string) =>
           this.channel.client.emit(
             'debug',
             `[VOICE STREAM (${this.channel.guild?.id || this.channel.id}:${connection.status})]: ${msg}`,
           ),
         );
-        connection.once('failed', (reason: any) => {
+        connection.once('failed', (reason: unknown) => {
           this.streamConnection = null;
           reject(reason);
         });
@@ -818,7 +937,7 @@ class VoiceConnection extends EventEmitter {
    * @param {UserResolvable} user Discord user
    * @returns {Promise<StreamConnectionReadonly>}
    */
-  async joinStreamConnection(user: any) {
+  async joinStreamConnection(user: UserResolvable): Promise<StreamConnectionReadonly> {
     const userId = this.client.users.resolveId(user);
     // Check if user is streaming
     if (!userId) {
@@ -830,8 +949,9 @@ class VoiceConnection extends EventEmitter {
     }
     // eslint-disable-next-line consistent-return
     return new Promise((resolve, reject) => {
-      if (this.streamWatchConnection.has(userId)) {
-        return resolve(this.streamWatchConnection.get(userId));
+      const existing = this.streamWatchConnection.get(userId);
+      if (existing) {
+        return resolve(existing);
       } else {
         const connection = new StreamConnectionReadonly(this.voiceManager, this.channel, this, userId);
         this.streamWatchConnection.set(userId, connection);
@@ -839,14 +959,14 @@ class VoiceConnection extends EventEmitter {
         // Setup event...
         if (!this.eventHook) {
           this.eventHook = true; // Dont listen this event two times :/
-          this.channel.client.on('raw', (packet: any) => {
+          this.channel.client.on('raw', (packet: unknown) => {
             routeStreamPacket(this, packet);
           });
         }
 
         connection.sendSignalScreenshare();
 
-        connection.on('debug', (msg: any) =>
+        connection.on('debug', (msg: string) =>
           this.channel.client.emit(
             'debug',
             `[VOICE STREAM WATCH (${userId}>${this.channel.guild?.id || this.channel.id}:${
@@ -854,7 +974,7 @@ class VoiceConnection extends EventEmitter {
             })]: ${msg}`,
           ),
         );
-        connection.once('failed', (reason: any) => {
+        connection.once('failed', (reason: unknown) => {
           this.streamWatchConnection.delete(userId);
           reject(reason);
         });
@@ -913,7 +1033,11 @@ class StreamConnection extends VoiceConnection {
    * @param {Channel} channel any channel (joinable)
    * @param {VoiceConnection} voiceConnection parent
    */
-  constructor(voiceManager: any, channel: any, voiceConnection: any) {
+  constructor(
+    voiceManager: import('./ClientVoiceManager').default,
+    channel: VoiceConnectionChannel,
+    voiceConnection: VoiceConnection,
+  ) {
     super(voiceManager, channel);
 
     /**
@@ -956,7 +1080,7 @@ class StreamConnection extends VoiceConnection {
     return Promise.resolve(this);
   }
 
-  override joinStreamConnection(): any {
+  override joinStreamConnection(): never {
     throw new Error('STREAM_CANNOT_JOIN');
   }
 
@@ -964,15 +1088,15 @@ class StreamConnection extends VoiceConnection {
     return this;
   }
 
-  set streamConnection(_value: any) {
+  set streamConnection(_value: StreamConnection | null) {
     // Why ?
   }
 
-  get streamWatchConnection() {
+  get streamWatchConnection(): Collection<string, StreamConnectionReadonly> {
     return new Collection();
   }
 
-  set streamWatchConnection(_value: any) {
+  set streamWatchConnection(_value: Collection<string, StreamConnectionReadonly>) {
     // Why ?
   }
 
@@ -1049,7 +1173,7 @@ class StreamConnection extends VoiceConnection {
     });
   }
 
-  update(data: any) {
+  update(data: StreamUpdateData) {
     this.emit(
       'streamUpdate',
       {
@@ -1072,9 +1196,9 @@ class StreamConnection extends VoiceConnection {
    * @type {string}
    */
   get streamKey() {
-    return `${['DM', 'GROUP_DM'].includes(this.channel.type) ? 'call' : `guild:${this.channel.guild.id}`}:${
-      this.channel.id
-    }:${this.channel.client.user!.id}`;
+    return `${
+      ['DM', 'GROUP_DM'].includes(this.channel.type) ? 'call' : `guild:${this.channel.guild?.id ?? this.channel.id}`
+    }:${this.channel.id}:${this.channel.client.user!.id}`;
   }
 }
 
@@ -1104,7 +1228,12 @@ class StreamConnectionReadonly extends VoiceConnection {
    * @param {VoiceConnection} voiceConnection parent
    * @param {Snowflake} userId User ID
    */
-  constructor(voiceManager: any, channel: any, voiceConnection: any, userId: any) {
+  constructor(
+    voiceManager: import('./ClientVoiceManager').default,
+    channel: VoiceConnectionChannel,
+    voiceConnection: VoiceConnection,
+    userId: Snowflake,
+  ) {
     super(voiceManager, channel);
 
     /**
@@ -1149,11 +1278,11 @@ class StreamConnectionReadonly extends VoiceConnection {
     this.region = null;
   }
 
-  override createStreamConnection(): any {
+  override createStreamConnection(): never {
     throw new Error('STREAM_CONNECTION_READONLY');
   }
 
-  override joinStreamConnection() {
+  override joinStreamConnection(): Promise<this> {
     return Promise.resolve(this);
   }
 
@@ -1165,11 +1294,11 @@ class StreamConnectionReadonly extends VoiceConnection {
     // Why ?
   }
 
-  get streamWatchConnection() {
+  get streamWatchConnection(): Collection<string, StreamConnectionReadonly> {
     return new Collection();
   }
 
-  set streamWatchConnection(_value: any) {
+  set streamWatchConnection(_value: Collection<string, StreamConnectionReadonly>) {
     // Why ?
   }
 
@@ -1212,7 +1341,7 @@ class StreamConnectionReadonly extends VoiceConnection {
     });
   }
 
-  update(data: any) {
+  update(data: StreamUpdateData) {
     this.emit(
       'streamUpdate',
       {
@@ -1236,9 +1365,9 @@ class StreamConnectionReadonly extends VoiceConnection {
    * @type {string}
    */
   get streamKey() {
-    return `${['DM', 'GROUP_DM'].includes(this.channel.type) ? 'call' : `guild:${this.channel.guild.id}`}:${
-      this.channel.id
-    }:${this.userId}`;
+    return `${
+      ['DM', 'GROUP_DM'].includes(this.channel.type) ? 'call' : `guild:${this.channel.guild?.id ?? this.channel.id}`
+    }:${this.channel.id}:${this.userId}`;
   }
 }
 

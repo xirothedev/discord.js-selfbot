@@ -357,6 +357,7 @@ class BaseDispatcher extends Writable {
 
   _encrypt(buffer: any, additionalData: any) {
     const { secret_key, mode } = this.player.voiceConnection.authentication;
+    if (!secret_key) throw new Error('VOICE_ENCRYPTION_KEY_MISSING');
     // Both supported encryption methods want the nonce to be an incremental integer
     this._nonce++;
     if (this._nonce > MAX_UINT_32) this._nonce = 0;
