@@ -51,7 +51,7 @@ class ThreadMember extends Base {
       this.flags = new ThreadMemberFlags(data.flags).freeze();
     }
 
-    if ('member' in data) {
+    if ('member' in data && data.member) {
       /**
        * The guild member associated with this thread member.
        * @type {?GuildMember}

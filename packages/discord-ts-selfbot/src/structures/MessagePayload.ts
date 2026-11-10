@@ -26,10 +26,8 @@ import type {
   BitFieldResolvable,
   BufferResolvable,
   ChannelResolvable,
-  FileOptions,
   GuildResolvable,
   HTTPAttachmentData,
-  MessageAttachment,
   MessageFlagsString,
   MessageMentionOptions,
   MessageOptions,
@@ -41,7 +39,7 @@ import type { Client } from '../client/Client';
 
 type MessageReferenceLike = MessageResolvable | { id: Snowflake; channelId?: Snowflake; guildId?: Snowflake | null };
 
-type MessagePayloadOptions = Omit<MessageOptions, 'reply' | 'forward' | 'flags'> & {
+export type MessagePayloadOptions = Omit<MessageOptions, 'reply' | 'forward' | 'flags'> & {
   reply?: { messageReference: MessageReferenceLike; failIfNotExists?: boolean };
   forward?: { message: MessageReferenceLike; channel?: ChannelResolvable; guild?: GuildResolvable };
   flags?: BitFieldResolvable<MessageFlagsString, number> | MessageOptions['flags'];
@@ -372,13 +370,11 @@ class MessagePayload {
    * @param {BufferResolvable|Stream|FileOptions|MessageAttachment} fileLike Something that could be resolved to a file
    * @returns {Promise<MessageFile>}
    */
-  static async resolveFile(
-    fileLike: BufferResolvable | Stream | FileOptions | MessageAttachment,
-  ): Promise<HTTPAttachmentData> {
+  static async resolveFile(fileLike: unknown): Promise<HTTPAttachmentData> {
     let attachment: BufferResolvable | Stream;
     let name: string;
 
-    const findName = (thing: BufferResolvable | Stream | FileOptions | MessageAttachment) => {
+    const findName = (thing: unknown) => {
       if (typeof thing === 'string') {
         return Util.basename(thing);
       }
@@ -396,9 +392,13 @@ class MessagePayload {
     } else if (isStream(fileLike)) {
       attachment = fileLike;
       name = findName(fileLike);
-    } else if ('attachment' in fileLike) {
-      attachment = fileLike.attachment;
-      name = fileLike.name ?? findName(fileLike);
+    } else if (typeof fileLike === 'object' && fileLike !== null && 'attachment' in fileLike) {
+      const attachmentValue = fileLike.attachment;
+      if (typeof attachmentValue !== 'string' && !Buffer.isBuffer(attachmentValue) && !isStream(attachmentValue)) {
+        throw new DjsError('INVALID_TYPE', 'fileLike', 'BufferResolvable|Stream|FileOptions|MessageAttachment');
+      }
+      attachment = attachmentValue;
+      name = 'name' in fileLike && typeof fileLike.name === 'string' ? fileLike.name : findName(fileLike);
     } else {
       throw new DjsError('INVALID_TYPE', 'fileLike', 'BufferResolvable|Stream|FileOptions|MessageAttachment');
     }

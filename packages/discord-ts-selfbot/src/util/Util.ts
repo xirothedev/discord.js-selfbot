@@ -14,6 +14,7 @@ const { Colors, Events } = _ConstantsModule;
 import _errorsModule from '../errors';
 const { Error: DiscordError, RangeError, TypeError } = _errorsModule;
 import VoiceCodec from '../client/voice/util/VoiceCodec';
+import type { UploadAttachment } from '../types/uploads';
 import { isGuildBasedChannel } from '../types/channels';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
@@ -880,7 +881,7 @@ class Util extends null {
     return Number(BigInt(userId as string | number | bigint) >> 22n) % 6;
   }
 
-  static async getUploadURL(client: unknown, channelId: unknown, files: unknown[]) {
+  static async getUploadURL(client: unknown, channelId: unknown, files: unknown[]): Promise<UploadAttachment[]> {
     if (!(files as unknown[]).length) return [];
     files = files.map((file: unknown, i: number) => ({
       filename: (file as { name?: string }).name,
@@ -889,7 +890,12 @@ class Util extends null {
       id: `${i}`,
     }));
     const c = client as {
-      api: { channels: Record<string, { attachments: { post: (o: unknown) => Promise<{ attachments: unknown[] }> } }> };
+      api: {
+        channels: Record<
+          string,
+          { attachments: { post: (o: unknown) => Promise<{ attachments: UploadAttachment[] }> } }
+        >;
+      };
     };
     const { attachments } = await c.api.channels[String(channelId)].attachments.post({
       data: {

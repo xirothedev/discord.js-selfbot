@@ -1,13 +1,35 @@
 import { Collection } from '@discordjs/collection';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const { Channel } = require('./Channel');
+const { Channel }: typeof import('./Channel') = require('./Channel');
 import Invite from './Invite';
 import TextBasedChannel from './interfaces/TextBasedChannel';
 import MessageManager from '../managers/MessageManager';
 import _ConstantsModule from '../util/Constants';
 const { Status, Opcodes } = _ConstantsModule;
 import DataResolver from '../util/DataResolver';
+import _errorsModule from '../errors';
+const { TypeError } = _errorsModule;
+import type { APIUser, Snowflake } from 'discord-api-types/v10';
+import type { RawChannelData, RawInviteData, RawUserData } from '../../typings/rawDataTypes';
+import type {
+  BufferResolvable,
+  Base64Resolvable,
+  GroupDMChannelEditData,
+  InviteResolvable,
+  StaticImageURLOptions,
+  UserResolvable,
+} from '../../typings';
+import type { PatchOf } from '../types/schema';
+import type { Client } from '../client/Client';
+import type { User } from './User';
+import type { Message } from './Message';
+
+type VoiceAdapter = {
+  destroy(): void;
+  onVoiceServerUpdate(payload: unknown): void;
+  onVoiceStateUpdate(payload: unknown): void;
+};
 
 /**
  * Represents a Group DM Channel on Discord.
@@ -15,7 +37,15 @@ import DataResolver from '../util/DataResolver';
  * @implements {TextBasedChannel}
  */
 class GroupDMChannel extends Channel {
-  constructor(client: any, data: any) {
+  declare messages: MessageManager;
+  declare _recipients: RawUserData[];
+  declare ownerId: Snowflake | null;
+  declare lastMessageId: Snowflake | null;
+  declare lastPinTimestamp: number | null;
+  declare name: string | null;
+  declare icon: string | null;
+
+  constructor(client: Client, data: RawChannelData) {
     super(client, data);
     // Override the channel type so partials have a known type
     this.type = 'GROUP_DM';
@@ -27,12 +57,12 @@ class GroupDMChannel extends Channel {
     this.messages = new MessageManager(this);
   }
 
-  _patch(data: any) {
+  _patch(data: PatchOf<'Channel'>) {
     super._patch(data);
 
     if ('recipients' in data && Array.isArray(data.recipients)) {
       this._recipients = data.recipients;
-      data.recipients.forEach((u: any) => this.client.users._add(u));
+      data.recipients.forEach((u: APIUser) => this.client.users._add(u));
     } else {
       this._recipients = [];
     }
@@ -52,7 +82,7 @@ class GroupDMChannel extends Channel {
        * The channel's last message id, if one was sent
        * @type {?Snowflake}
        */
-      this.lastMessageId = data.last_message_id;
+      this.lastMessageId = data.last_message_id ?? null;
     } else {
       this.lastMessageId ??= null;
     }
@@ -72,7 +102,7 @@ class GroupDMChannel extends Channel {
        * The name of this Group DM Channel
        * @type {?string}
        */
-      this.name = data.name;
+      this.name = data.name ?? null;
     }
 
     if ('icon' in data) {
@@ -89,7 +119,7 @@ class GroupDMChannel extends Channel {
    * @param {StaticImageURLOptions} [options={}] Options for the Image URL
    * @returns {?string}
    */
-  iconURL({ format, size }: any = {}) {
+  iconURL({ format, size }: StaticImageURLOptions = {}) {
     return this.icon && this.client.rest.cdn.GDMIcon(this.id, this.icon, format, size);
   }
 
@@ -98,10 +128,13 @@ class GroupDMChannel extends Channel {
    * @type {Collection<Snowflake, User>}
    * @readonly
    */
-  get recipients() {
-    const collect = new Collection();
-    this._recipients.map((recipient: any) => collect.set(recipient.id, this.client.users.cache.get(recipient.id)));
-    collect.set(this.client.user!.id, this.client.user);
+  get recipients(): Collection<Snowflake, User> {
+    const collect = new Collection<Snowflake, User>();
+    for (const recipient of this._recipients) {
+      const user = this.client.users.cache.get(recipient.id);
+      if (user) collect.set(recipient.id, user);
+    }
+    if (this.client.user) collect.set(this.client.user.id, this.client.user);
     return collect;
   }
 
@@ -133,7 +166,7 @@ class GroupDMChannel extends Channel {
    *   .then(console.log)
    *   .catch(console.error);
    */
-  async delete(slient: any = false) {
+  async delete(slient: string | boolean | null = false) {
     if (typeof slient === 'boolean' && slient) {
       await this.client.api.channels[this.id].delete({
         query: {
@@ -158,8 +191,8 @@ class GroupDMChannel extends Channel {
     return (
       this.name ??
       this._recipients
-        .filter((user: any) => user.id !== this.client.user!.id)
-        .map((user: any) => user.username)
+        .filter(user => user.id !== this.client.user?.id)
+        .map(user => user.username)
         .join(', ')
     );
   }
@@ -192,8 +225,8 @@ class GroupDMChannel extends Channel {
    *   .then(updated => console.log(`New channel name ${updated}`))
    *   .catch(console.error);
    */
-  async edit(data: any) {
-    const _data: any = {};
+  async edit(data: GroupDMChannelEditData) {
+    const _data: { name?: string | null; icon?: string | null; owner?: UserResolvable } = {};
     if ('name' in data) _data.name = data.name?.trim() ?? null;
     if (typeof data.icon !== 'undefined') {
       _data.icon = await DataResolver.resolveImage(data.icon);
@@ -213,7 +246,7 @@ class GroupDMChannel extends Channel {
    * @param {?string} name Name of the channel
    * @returns {Promise<GroupDMChannel>}
    */
-  setName(name: any) {
+  setName(name: string) {
     return this.edit({ name });
   }
 
@@ -222,7 +255,7 @@ class GroupDMChannel extends Channel {
    * @param {?(Base64Resolvable|BufferResolvable)} icon Icon of the channel
    * @returns {Promise<GroupDMChannel>}
    */
-  setIcon(icon: any) {
+  setIcon(icon: BufferResolvable | Base64Resolvable | null) {
     return this.edit({ icon });
   }
 
@@ -231,8 +264,9 @@ class GroupDMChannel extends Channel {
    * @param {UserResolvable} user User to transfer ownership to
    * @returns {Promise<GroupDMChannel>}
    */
-  setOwner(user: any) {
+  setOwner(user: UserResolvable) {
     const id = this.client.users.resolveId(user);
+    if (!id) throw new TypeError('INVALID_TYPE', 'user', 'UserResolvable');
     if (this.ownerId === id) {
       return Promise.resolve(this);
     }
@@ -244,9 +278,10 @@ class GroupDMChannel extends Channel {
    * @param {UserResolvable} user User to add to the group
    * @returns {Promise<GroupDMChannel>}
    */
-  async addUser(user: any) {
-    user = this.client.users.resolveId(user);
-    await this.client.api.channels[this.id].recipients[user].put();
+  async addUser(user: UserResolvable) {
+    const id = this.client.users.resolveId(user);
+    if (!id) throw new TypeError('INVALID_TYPE', 'user', 'UserResolvable');
+    await this.client.api.channels[this.id].recipients[id].put();
     return this;
   }
 
@@ -255,9 +290,10 @@ class GroupDMChannel extends Channel {
    * @param {UserResolvable} user User to remove from the group
    * @returns {Promise<GroupDMChannel>}
    */
-  async removeUser(user: any) {
-    user = this.client.users.resolveId(user);
-    await this.client.api.channels[this.id].recipients[user].delete();
+  async removeUser(user: UserResolvable) {
+    const id = this.client.users.resolveId(user);
+    if (!id) throw new TypeError('INVALID_TYPE', 'user', 'UserResolvable');
+    await this.client.api.channels[this.id].recipients[id].delete();
     return this;
   }
 
@@ -278,9 +314,9 @@ class GroupDMChannel extends Channel {
    * Get all the invites for this Group DM Channel.
    * @returns {Promise<Collection<string, Invite>>}
    */
-  async fetchAllInvite() {
-    const invites = await this.client.api.channels(this.id).invites.get();
-    return new Collection(invites.map((invite: any) => [invite.code, new Invite(this.client, invite)]));
+  async fetchAllInvite(): Promise<Collection<string, Invite>> {
+    const invites: RawInviteData[] = await this.client.api.channels(this.id).invites.get();
+    return new Collection(invites.map(invite => [invite.code, new Invite(this.client, invite)]));
   }
 
   /**
@@ -288,12 +324,12 @@ class GroupDMChannel extends Channel {
    * @param {InviteResolvable} invite Invite to add to the channel
    * @returns {Promise<GroupDMChannel>}
    */
-  async removeInvite(invite: any) {
-    // Resolve
-    let code = invite?.code;
-    if (!code && URL.canParse(invite)) code = new URL(invite).pathname.slice(1);
+  async removeInvite(invite: InviteResolvable) {
+    let code: string | undefined;
+    if (URL.canParse(invite)) code = new URL(invite).pathname.slice(1);
     else code = invite;
-    await this.client.api.channels(this.id).invites[invite].delete();
+    if (!code) throw new TypeError('INVALID_TYPE', 'invite', 'InviteResolvable');
+    await this.client.api.channels(this.id).invites[code].delete();
     return this;
   }
 
@@ -302,17 +338,16 @@ class GroupDMChannel extends Channel {
    * @param {UserResolvable[]} [recipients] Array of recipients
    * @returns {Promise<void>}
    */
-  ring(recipients: any) {
-    if (!recipients || !Array.isArray(recipients) || recipients.length == 0) {
-      recipients = null;
-    } else {
-      recipients = recipients
-        .map((r: any) => this.client.users.resolveId(r))
-        .filter((r: any) => r && this.recipients.get(r));
+  async ring(recipients?: UserResolvable[]): Promise<void> {
+    let recipientIds: Snowflake[] | null = null;
+    if (recipients && recipients.length > 0) {
+      recipientIds = recipients
+        .map(r => this.client.users.resolveId(r))
+        .filter((id): id is Snowflake => id !== null && this.recipients.has(id));
     }
-    return this.client.api.channels(this.id).call.ring.post({
+    await this.client.api.channels(this.id).call.ring.post({
       data: {
-        recipients,
+        recipients: recipientIds,
       },
     });
   }
@@ -335,8 +370,8 @@ class GroupDMChannel extends Channel {
    * @type {Collection<Snowflake, User>}
    * @readonly
    */
-  get voiceUsers() {
-    const coll = new Collection();
+  get voiceUsers(): Collection<Snowflake, User> {
+    const coll = new Collection<Snowflake, User>();
     for (const state of this.client.voiceStates.cache.values()) {
       if (state.channelId === this.id && state.user) {
         coll.set(state.id, state.user);
@@ -360,12 +395,13 @@ class GroupDMChannel extends Channel {
    * @readonly
    */
   get voiceAdapterCreator() {
-    return (methods: any) => {
+    return (methods: VoiceAdapter) => {
       this.client.voice.adapters.set(this.id, methods);
       return {
-        sendPayload: (data: any) => {
-          if (this.shard.status !== Status.READY) return false;
-          this.shard.send(data);
+        sendPayload: (data: unknown) => {
+          const shard = this.shard;
+          if (!shard || shard.status !== Status.READY) return false;
+          shard.send(data);
           return true;
         },
         destroy: () => {
@@ -377,11 +413,11 @@ class GroupDMChannel extends Channel {
 
   // These are here only for documentation purposes - they are implemented by TextBasedChannel
   /* eslint-disable no-empty-function */
-  get lastMessage(): any {
-    return undefined;
+  get lastMessage(): Message | null {
+    return null;
   }
-  get lastPinAt(): any {
-    return undefined;
+  get lastPinAt(): Date | null {
+    return null;
   }
   declare send: (options: import('../types/channels').SendOptions) => import('../types/channels').SendResult;
   sendTyping() {}

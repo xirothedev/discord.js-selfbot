@@ -4,16 +4,70 @@ import _errorsModule from '../errors';
 const { TypeError } = _errorsModule;
 import _MessageModule from '../structures/Message';
 const { Message } = _MessageModule;
-import MessagePayload from '../structures/MessagePayload';
+import MessagePayload, { type MessagePayloadOptions } from '../structures/MessagePayload';
 import Util from '../util/Util';
+import type { Snowflake } from 'discord-api-types/v10';
+import type {
+  BaseFetchOptions,
+  ChannelLogsQueryOptions,
+  EmojiIdentifierResolvable,
+  FetchPollAnswerVotersOptions,
+  MessageResolvable,
+  MessageSearchOptions,
+  TextChannelResolvable,
+  UserResolvable,
+} from '../../typings';
+import type { RawMessageData, RawUserData } from '../../typings/rawDataTypes';
+import type { Message as SourceMessage } from '../structures/Message';
+import type { User } from '../structures/User';
+import type { UploadAttachment } from '../types/uploads';
+
+type MessageResolvableSource = SourceMessage | Snowflake;
+
+interface MessageManagerChannel {
+  client: import('../client/Client').Client;
+  id: Snowflake;
+  guildId?: Snowflake | null;
+  guild?: import('../structures/Guild').Guild | null;
+}
+
+interface MessageSearchDefaults {
+  authors: UserResolvable[];
+  content: string;
+  mentions: UserResolvable[];
+  has: NonNullable<MessageSearchOptions['has']>;
+  maxId: Snowflake | null;
+  minId: Snowflake | null;
+  channels: TextChannelResolvable[];
+  pinned: boolean;
+  nsfw: boolean;
+  offset: number;
+  limit: number;
+  sortBy: NonNullable<MessageSearchOptions['sortBy']>;
+  sortOrder: NonNullable<MessageSearchOptions['sortOrder']>;
+}
+
+interface MessageSearchResultSource {
+  messages: Collection<Snowflake, SourceMessage>;
+  total: number;
+}
+
+interface MessageSearchResponse {
+  messages: [RawMessageData][];
+  total_results: number;
+}
+
+interface PollVotersResponse {
+  users: RawUserData[];
+}
 
 /**
  * Manages API methods for Messages and holds their cache.
  * @extends {CachedManager}
  */
 class MessageManager extends CachedManager<import('../structures/Message').Message> {
-  declare channel: import('../structures/interfaces/TextBasedChannel').default;
-  constructor(channel: any, iterable?: any) {
+  declare channel: MessageManagerChannel;
+  constructor(channel: MessageManagerChannel, iterable?: Iterable<SourceMessage>) {
     super(channel.client, Message, iterable);
 
     /**
@@ -29,7 +83,7 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
    * @name MessageManager#cache
    */
 
-  _add(data: any, cache: any = true) {
+  _add(data: unknown, cache = true): SourceMessage {
     return super._add(data, cache);
   }
 
@@ -69,12 +123,12 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
   fetch(
     message: import('discord-api-types/v10').Snowflake,
     options?: import('../../typings').BaseFetchOptions,
-  ): Promise<import('../structures/Message').Message>;
+  ): Promise<SourceMessage>;
   fetch(
     options?: import('../../typings').ChannelLogsQueryOptions,
     cache?: import('../../typings').BaseFetchOptions,
-  ): Promise<Collection<import('discord-api-types/v10').Snowflake, import('../structures/Message').Message>>;
-  fetch(message: any, { cache = true, force = false }: any = {}) {
+  ): Promise<Collection<Snowflake, SourceMessage>>;
+  fetch(message?: Snowflake | ChannelLogsQueryOptions, { cache = true, force = false }: BaseFetchOptions = {}) {
     return typeof message === 'string' ? this._fetchId(message, cache, force) : this._fetchMany(message, cache);
   }
 
@@ -90,11 +144,11 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
    *   .then(messages => console.log(`Received ${messages.size} messages`))
    *   .catch(console.error);
    */
-  async fetchPinned(cache: any = true) {
+  async fetchPinned(cache = true) {
     const data = await this.client.api.channels[this.channel.id].messages.pins.get({
       query: { limit: 50 },
     });
-    const messages = new Collection();
+    const messages = new Collection<Snowflake, SourceMessage>();
     for (const message of data?.items || []) messages.set(message.id, this._add(message, cache));
     return messages;
   }
@@ -130,7 +184,10 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
    * @param {string|MessageEditOptions|MessagePayload} options The options to edit the message
    * @returns {Promise<Message>}
    */
-  async edit(message: any, options: any) {
+  async edit(
+    message: MessageResolvableSource,
+    options: string | MessagePayload | MessagePayloadOptions,
+  ): Promise<SourceMessage> {
     const messageId = this.resolveId(message);
     if (!messageId) throw new TypeError('INVALID_TYPE', 'message', 'MessageResolvable');
 
@@ -146,19 +203,21 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
 
     // New API
     const attachments = await Util.getUploadURL(this.client, this.channel.id, fileList);
-    const requestPromises = attachments.map(async (attachment: any) => {
-      await Util.uploadFile(fileList[attachment.id].file, attachment.upload_url);
+    const requestPromises = attachments.map(async (attachment: UploadAttachment) => {
+      const file = fileList[Number(attachment.id)];
+      if (!file) throw new TypeError('INVALID_TYPE', 'attachment', 'FileOptions');
+      await Util.uploadFile(file.file, attachment.upload_url);
       return {
         id: attachment.id,
-        filename: fileList[attachment.id].name,
+        filename: file.name,
         uploaded_filename: attachment.upload_filename,
-        description: fileList[attachment.id].description,
-        duration_secs: fileList[attachment.id].duration_secs,
-        waveform: fileList[attachment.id].waveform,
+        description: file.description,
+        duration_secs: file.duration_secs,
+        waveform: file.waveform,
       };
     });
     const attachmentsData = await Promise.all(requestPromises);
-    attachmentsData.sort((a: any, b: any) => parseInt(a.id) - parseInt(b.id));
+    attachmentsData.sort((a, b) => parseInt(a.id) - parseInt(b.id));
     if (data) Object.assign(data, { attachments: attachmentsData });
     // Empty Files
 
@@ -178,11 +237,11 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
    * @param {MessageResolvable} message The message to publish
    * @returns {Promise<Message>}
    */
-  async crosspost(message: any) {
-    message = this.resolveId(message);
-    if (!message) throw new TypeError('INVALID_TYPE', 'message', 'MessageResolvable');
+  async crosspost(message: MessageResolvableSource) {
+    const messageId = this.resolveId(message);
+    if (!messageId) throw new TypeError('INVALID_TYPE', 'message', 'MessageResolvable');
 
-    const data = await this.client.api.channels(this.channel.id).messages(message).crosspost.post();
+    const data = await this.client.api.channels(this.channel.id).messages(messageId).crosspost.post();
     return this.cache.get(data.id) ?? this._add(data);
   }
 
@@ -192,11 +251,11 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
    * @param {string} [reason] Reason for pinning
    * @returns {Promise<void>}
    */
-  async pin(message: any, reason: any) {
-    message = this.resolveId(message);
-    if (!message) throw new TypeError('INVALID_TYPE', 'message', 'MessageResolvable');
+  async pin(message: MessageResolvableSource, reason?: string) {
+    const messageId = this.resolveId(message);
+    if (!messageId) throw new TypeError('INVALID_TYPE', 'message', 'MessageResolvable');
 
-    await this.client.api.channels(this.channel.id).messages.pins(message).put({ reason });
+    await this.client.api.channels(this.channel.id).messages.pins(messageId).put({ reason });
   }
 
   /**
@@ -205,11 +264,11 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
    * @param {string} [reason] Reason for unpinning
    * @returns {Promise<void>}
    */
-  async unpin(message: any, reason: any) {
-    message = this.resolveId(message);
-    if (!message) throw new TypeError('INVALID_TYPE', 'message', 'MessageResolvable');
+  async unpin(message: MessageResolvableSource, reason?: string) {
+    const messageId = this.resolveId(message);
+    if (!messageId) throw new TypeError('INVALID_TYPE', 'message', 'MessageResolvable');
 
-    await this.client.api.channels(this.channel.id).messages.pins(message).delete({ reason });
+    await this.client.api.channels(this.channel.id).messages.pins(messageId).delete({ reason });
   }
 
   /**
@@ -219,21 +278,22 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
    * @param {boolean} [burst=false] Super Reactions (Discord Nitro only)
    * @returns {Promise<void>}
    */
-  async react(message: any, emoji: any, burst: any = false) {
-    message = this.resolveId(message);
-    if (!message) throw new TypeError('INVALID_TYPE', 'message', 'MessageResolvable');
+  async react(message: MessageResolvableSource, emoji: EmojiIdentifierResolvable, burst = false) {
+    const messageId = this.resolveId(message);
+    if (!messageId) throw new TypeError('INVALID_TYPE', 'message', 'MessageResolvable');
 
-    emoji = Util.resolvePartialEmoji(emoji);
-    if (!emoji) throw new TypeError('EMOJI_TYPE', 'emoji', 'EmojiIdentifierResolvable');
+    const resolvedEmoji = Util.resolvePartialEmoji(emoji);
+    if (!resolvedEmoji) throw new TypeError('EMOJI_TYPE', 'emoji', 'EmojiIdentifierResolvable');
 
-    const emojiId = emoji.id
-      ? `${emoji.animated ? 'a:' : ''}${emoji.name}:${emoji.id}`
-      : encodeURIComponent(emoji.name);
+    const emojiName = resolvedEmoji.name ?? '';
+    const emojiId = resolvedEmoji.id
+      ? `${resolvedEmoji.animated ? 'a:' : ''}${emojiName}:${resolvedEmoji.id}`
+      : encodeURIComponent(emojiName);
 
     // eslint-disable-next-line newline-per-chained-call
     await this.client.api
       .channels(this.channel.id)
-      .messages(message)
+      .messages(messageId)
       .reactions(emojiId, '@me')
       .put({
         query: {
@@ -247,35 +307,27 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
    * @param {MessageResolvable} message The message to delete
    * @returns {Promise<void>}
    */
-  async delete(message: any) {
-    message = this.resolveId(message);
-    if (!message) throw new TypeError('INVALID_TYPE', 'message', 'MessageResolvable');
+  async delete(message: MessageResolvableSource) {
+    const messageId = this.resolveId(message);
+    if (!messageId) throw new TypeError('INVALID_TYPE', 'message', 'MessageResolvable');
 
-    await this.client.api.channels(this.channel.id).messages(message).delete();
+    await this.client.api.channels(this.channel.id).messages(messageId).delete();
   }
 
-  _fetchId(
-    messageId: any,
-    cache: any,
-    force: any,
-  ): import('../structures/Message').Message | Promise<import('../structures/Message').Message> {
+  _fetchId(messageId: Snowflake, cache: boolean, force: boolean): SourceMessage | Promise<SourceMessage> {
     if (!force) {
       const existing = this.cache.get(messageId);
       if (existing && !existing.partial) return existing;
     }
 
     // https://discord.com/api/v9/channels/:id/messages?limit=50&around=:msgid
-    return new Promise((resolve: any, reject: any) => {
-      this._fetchMany(
-        {
-          around: messageId,
-          limit: 50,
-        },
-        cache,
-      )
-        .then((data_: any) =>
-          data_.has(messageId) ? resolve(data_.get(messageId)) : reject(new Error('MESSAGE_ID_NOT_FOUND')),
-        )
+    return new Promise<SourceMessage>((resolve, reject) => {
+      this._fetchMany({ around: messageId, limit: 50 }, cache)
+        .then(messages => {
+          const message = messages.get(messageId);
+          if (message) resolve(message);
+          else reject(new Error('MESSAGE_ID_NOT_FOUND'));
+        })
         .catch(reject);
     });
   }
@@ -310,33 +362,36 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
    * @param {MessageSearchOptions} options Performs a search within the channel.
    * @returns {Promise<MessageSearchResult>}
    */
-  async search(options: any = {}) {
+  async search(options: MessageSearchOptions = {}): Promise<MessageSearchResultSource> {
+    const defaults: MessageSearchDefaults = {
+      authors: [],
+      content: '',
+      mentions: [],
+      has: [],
+      maxId: null,
+      minId: null,
+      channels: [],
+      pinned: false,
+      nsfw: false,
+      offset: 0,
+      limit: 25,
+      sortBy: 'timestamp',
+      sortOrder: 'desc',
+    };
     let { authors, content, mentions, has, maxId, minId, channels, pinned, nsfw, offset, limit, sortBy, sortOrder } =
-      Object.assign(
-        {
-          authors: [],
-          content: '',
-          mentions: [],
-          has: [],
-          maxId: null,
-          minId: null,
-          channels: [],
-          pinned: false,
-          nsfw: false,
-          offset: 0,
-          limit: 25,
-          sortBy: 'timestamp',
-          sortOrder: 'desc',
-        },
-        options,
-      );
+      Object.assign(defaults, options);
     // Validate
-    if (authors.length > 0) authors = authors.map((u: any) => this.client.users.resolveId(u));
-    if (mentions.length > 0) mentions = mentions.map((u: any) => this.client.users.resolveId(u));
+    if (authors.length > 0) {
+      authors = authors.map(u => this.client.users.resolveId(u)).filter((id): id is Snowflake => id !== null);
+    }
+    if (mentions.length > 0) {
+      mentions = mentions.map(u => this.client.users.resolveId(u)).filter((id): id is Snowflake => id !== null);
+    }
     if (channels.length > 0) {
       channels = channels
-        .map((c: any) => this.client.channels.resolveId(c))
-        .filter((id: any) => {
+        .map(c => this.client.channels.resolveId(c))
+        .filter((id): id is Snowflake => id !== null)
+        .filter(id => {
           if (this.channel.guildId) {
             const c = this.channel.guild!.channels.cache.get(id);
             if (!c || !c.messages) return false;
@@ -351,14 +406,14 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
         });
     }
     if (limit && limit > 25) throw new RangeError('MESSAGE_SEARCH_LIMIT');
-    let stringQuery: any[] = [];
-    const result = new Collection();
-    let data;
-    if (authors.length > 0) stringQuery.push(authors.map((id: any) => `author_id=${id}`).join('&'));
+    let stringQuery: string[] = [];
+    const result = new Collection<Snowflake, SourceMessage>();
+    let data: MessageSearchResponse;
+    if (authors.length > 0) stringQuery.push(authors.map(id => `author_id=${id}`).join('&'));
     if (content && content.length) stringQuery.push(`content=${encodeURIComponent(content)}`);
-    if (mentions.length > 0) stringQuery.push(mentions.map((id: any) => `mentions=${id}`).join('&'));
-    has = has.filter((v: any) => ['link', 'embed', 'file', 'video', 'image', 'sound', 'sticker'].includes(v));
-    if (has.length > 0) stringQuery.push(has.map((v: any) => `has=${v}`).join('&'));
+    if (mentions.length > 0) stringQuery.push(mentions.map(id => `mentions=${id}`).join('&'));
+    has = has.filter(v => ['link', 'embed', 'file', 'video', 'image', 'sound', 'sticker'].includes(v));
+    if (has.length > 0) stringQuery.push(has.map(v => `has=${v}`).join('&'));
     if (maxId) stringQuery.push(`max_id=${maxId}`);
     if (minId) stringQuery.push(`min_id=${minId}`);
     if (nsfw) stringQuery.push('include_nsfw=true');
@@ -375,7 +430,7 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
       stringQuery.push('sort_order=desc');
     }
     if (this.channel.guildId && channels.length > 0) {
-      stringQuery.push(channels.map((id: any) => `channel_id=${id}`).join('&'));
+      stringQuery.push(channels.map(id => `channel_id=${id}`).join('&'));
     }
     if (typeof pinned == 'boolean') stringQuery.push(`pinned=${pinned}`);
     // Main
@@ -388,7 +443,7 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
     if (this.channel.guildId) {
       data = await this.client.api.guilds[this.channel.guildId].messages[`search?${stringQuery.join('&')}`].get();
     } else {
-      stringQuery = stringQuery.filter((v: any) => !v.startsWith('channel_id') && !v.startsWith('include_nsfw'));
+      stringQuery = stringQuery.filter(v => !v.startsWith('channel_id') && !v.startsWith('include_nsfw'));
       data = await this.client.api.channels[this.channel.id].messages[`search?${stringQuery.join('&')}`].get();
     }
 
@@ -399,9 +454,12 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
     };
   }
 
-  async _fetchMany(options: any = {}, cache: any) {
-    const data = await this.client.api.channels[this.channel.id].messages.get({ query: options });
-    const messages = new Collection();
+  async _fetchMany(
+    options: ChannelLogsQueryOptions = {},
+    cache: boolean,
+  ): Promise<Collection<Snowflake, SourceMessage>> {
+    const data: RawMessageData[] = await this.client.api.channels[this.channel.id].messages.get({ query: options });
+    const messages = new Collection<Snowflake, SourceMessage>();
     for (const message of data) messages.set(message.id, this._add(message, cache));
     return messages;
   }
@@ -411,7 +469,7 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
    * @param {Snowflake} messageId The id of the message
    * @returns {Promise<Message>}
    */
-  async endPoll(messageId: any) {
+  async endPoll(messageId: Snowflake) {
     const message = await this.client.api.channels(this.channel.id).polls(messageId).expire.post();
     return this._add(message, false);
   }
@@ -428,14 +486,23 @@ class MessageManager extends CachedManager<import('../structures/Message').Messa
    * @param {FetchPollAnswerVotersOptions} options The options for fetching the poll answer voters
    * @returns {Promise<Collection<Snowflake, User>>}
    */
-  async fetchPollAnswerVoters({ messageId, answerId, after, limit }: any) {
-    const voters = await this.client.api.channels(this.channel.id).polls(messageId).answers(answerId).get({
-      query: { limit, after },
-    });
+  async fetchPollAnswerVoters({
+    messageId,
+    answerId,
+    after,
+    limit,
+  }: FetchPollAnswerVotersOptions): Promise<Collection<Snowflake, User>> {
+    const voters: PollVotersResponse = await this.client.api
+      .channels(this.channel.id)
+      .polls(messageId)
+      .answers(answerId)
+      .get({
+        query: { limit, after },
+      });
 
     return voters.users.reduce(
-      (acc: any, user: any) => acc.set(user.id, this.client.users._add(user, false)),
-      new Collection(),
+      (acc, user) => acc.set(user.id, this.client.users._add(user, false)),
+      new Collection<Snowflake, User>(),
     );
   }
 }

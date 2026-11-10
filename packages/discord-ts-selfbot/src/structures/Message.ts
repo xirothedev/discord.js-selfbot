@@ -43,7 +43,6 @@ import type {
   MessageActivity,
   MessageCall,
   MessageComponentCollectorOptions,
-  MessageEditOptions,
   MessageComponentInteraction,
   InteractionType,
   MessageReference,
@@ -185,9 +184,9 @@ function transformResolved(
   if (members) {
     result.members = new Collection<Snowflake, GuildMember | APIInteractionDataResolvedGuildMember>();
     for (const [id, member] of Object.entries(members)) {
-      const user = ('user' in member ? member.user : undefined) ?? users?.[id];
+      const user = users?.[id];
       if (!user) continue;
-      result.members.set(id, guild?.members._add({ user, ...member }) ?? member);
+      result.members.set(id, guild?.members._add({ ...member, user }) ?? member);
     }
   }
 
@@ -1177,7 +1176,7 @@ class Message extends Base {
    *   .then(msg => console.log(`Updated the content of a message to ${msg.content}`))
    *   .catch(console.error);
    */
-  async edit(options: string | MessageEditOptions | MessagePayload) {
+  async edit(options: string | import('./MessagePayload').MessagePayloadOptions | MessagePayload) {
     if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
     return this.channel.messages.edit(this, options);
   }
