@@ -882,7 +882,7 @@ class Util extends null {
   }
 
   static async getUploadURL(client: unknown, channelId: unknown, files: unknown[]): Promise<UploadAttachment[]> {
-    if (!(files as unknown[]).length) return [];
+    if (!files.length) return [];
     files = files.map((file: unknown, i: number) => ({
       filename: (file as { name?: string }).name,
       // 25MB = 26_214_400bytes
