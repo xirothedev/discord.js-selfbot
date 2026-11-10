@@ -777,7 +777,7 @@ class Util extends null {
    * @returns {APIGuildForumTag}
    * @ignore
    */
-  static transformGuildForumTag(tag: Record<string, unknown>) {
+  static transformGuildForumTag(tag: { id?: unknown; name?: unknown; moderated?: unknown; emoji?: unknown }) {
     return {
       id: tag.id,
       name: tag.name,
@@ -808,7 +808,7 @@ class Util extends null {
    * @returns {APIGuildForumDefaultReactionEmoji}
    * @ignore
    */
-  static transformGuildDefaultReaction(defaultReaction: Record<string, unknown>) {
+  static transformGuildDefaultReaction(defaultReaction: { id?: unknown; name?: unknown }) {
     return {
       emoji_id: defaultReaction.id,
       emoji_name: defaultReaction.name,

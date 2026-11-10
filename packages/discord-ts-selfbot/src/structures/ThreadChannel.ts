@@ -279,8 +279,8 @@ class ThreadChannel extends Channel {
    * @type {?(NewsChannel|TextChannel|ForumChannel|MediaChannel)}
    * @readonly
    */
-  get parent() {
-    return this.guild.channels.resolve(this.parentId);
+  get parent(): import('./GuildChannel').GuildChannel | null {
+    return this.parentId ? this.guild.channels.resolve(this.parentId) : null;
   }
 
   /**

@@ -136,7 +136,7 @@ class GuildChannel extends Channel implements GuildChannelEntity {
    * @readonly
    */
   get parent(): CategoryChannel | null {
-    const parent = this.guild.channels.resolve(this.parentId);
+    const parent = this.parentId ? this.guild.channels.resolve(this.parentId) : null;
     return parent && isCategoryChannel(parent) ? parent : null;
   }
 
@@ -344,7 +344,7 @@ class GuildChannel extends Channel implements GuildChannelEntity {
    *   .catch(console.error);
    */
   edit(data: ChannelData, reason?: string): Promise<this> {
-    return this.guild.channels.edit(this, data, reason);
+    return this.guild.channels.edit<this>(this, data, reason);
   }
 
   /**
@@ -411,8 +411,9 @@ class GuildChannel extends Channel implements GuildChannelEntity {
    *   .then(newChannel => console.log(`Channel's new position is ${newChannel.position}`))
    *   .catch(console.error);
    */
-  setPosition(position: number, options: SetChannelPositionOptions = {}): Promise<this> {
-    return this.guild.channels.setPosition(this, position, options);
+  async setPosition(position: number, options: SetChannelPositionOptions = {}): Promise<this> {
+    await this.guild.channels.setPosition(this, position, options);
+    return this;
   }
 
   /**
@@ -426,8 +427,8 @@ class GuildChannel extends Channel implements GuildChannelEntity {
    * @param {GuildChannelCloneOptions} [options] The options for cloning this channel
    * @returns {Promise<GuildChannel>}
    */
-  clone(options: GuildChannelCloneOptions = {}): Promise<this> {
-    return this.guild.channels.create(options.name ?? this.name, {
+  async clone(options: GuildChannelCloneOptions = {}): Promise<this> {
+    return this.guild.channels.create<this>(options.name ?? this.name, {
       permissionOverwrites: this.permissionOverwrites.cache,
       topic: this.topic,
       type: this.type,

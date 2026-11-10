@@ -118,18 +118,20 @@ class BitField {
     yield* this.toArray();
   }
 
-  static resolve(bit: BitFieldResolvable): number | bigint {
+  static resolve(bit: unknown): number | bigint {
     const self = this as unknown as BitFieldStatic;
     const { defaultBit } = self;
     if (typeof defaultBit === typeof bit && (bit as number | bigint) >= defaultBit) return bit as number | bigint;
     if (Array.isArray(bit))
       return bit
-        .map((p: BitFieldResolvable) => self.resolve(p))
+        .map(p => self.resolve(p))
         .reduce((prev: number | bigint, p: number | bigint) => {
           if (typeof prev === 'bigint' || typeof p === 'bigint') return (prev as bigint) | (p as bigint);
           return (prev as number) | (p as number);
         }, defaultBit);
-    if (typeof bit === 'object' && bit !== null && 'bitfield' in bit) return bit.bitfield;
+    if (typeof bit === 'object' && bit !== null && 'bitfield' in bit) {
+      if (typeof bit.bitfield === 'number' || typeof bit.bitfield === 'bigint') return bit.bitfield;
+    }
     if (typeof bit === 'string') {
       if (!isNaN(Number(bit))) return typeof defaultBit === 'bigint' ? BigInt(bit) : Number(bit);
       if (self.FLAGS[bit] !== undefined) return self.FLAGS[bit];

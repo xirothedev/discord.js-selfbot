@@ -7,12 +7,7 @@ import _ConstantsModule from '../util/Constants';
 const { OverwriteTypes } = _ConstantsModule;
 import Permissions from '../util/Permissions';
 import type { Snowflake } from 'discord-api-types/v10';
-import type {
-  OverwriteResolvable,
-  OverwriteType,
-  PermissionOverwriteOptions,
-  PermissionResolvable,
-} from '../../typings';
+import type { OverwriteType, PermissionOverwriteOptions, PermissionResolvable } from '../../typings';
 import type GuildChannel from './GuildChannel';
 
 /**
@@ -187,28 +182,42 @@ class PermissionOverwrites extends Base {
    * @param {Guild} [guild] The guild to resolve from
    * @returns {RawOverwriteData}
    */
-  static resolve(overwrite: OverwriteResolvable, guild: import('./Guild').Guild) {
+  static resolve(overwrite: unknown, guild: import('./Guild').Guild) {
     if (overwrite instanceof this) return overwrite.toJSON();
-    if (typeof overwrite.id === 'string' && overwrite.type !== undefined && overwrite.type in OverwriteTypes) {
+    if (typeof overwrite !== 'object' || overwrite === null || !('id' in overwrite)) {
+      throw new TypeError('INVALID_TYPE', 'parameter', 'cached User or Role');
+    }
+
+    const id = typeof overwrite.id === 'string' ? overwrite.id : undefined;
+    const type = 'type' in overwrite ? overwrite.type : undefined;
+    const allow = 'allow' in overwrite ? overwrite.allow : undefined;
+    const deny = 'deny' in overwrite ? overwrite.deny : undefined;
+
+    if (
+      id &&
+      type !== undefined &&
+      (typeof type === 'number' || (typeof type === 'string' && type in OverwriteTypes))
+    ) {
       return {
-        id: overwrite.id,
-        type: OverwriteTypes[overwrite.type],
-        allow: Permissions.resolve(overwrite.allow ?? Permissions.defaultBit).toString(),
-        deny: Permissions.resolve(overwrite.deny ?? Permissions.defaultBit).toString(),
+        id,
+        type: typeof type === 'number' ? type : OverwriteTypes[type],
+        allow: Permissions.resolve(allow ?? Permissions.defaultBit).toString(),
+        deny: Permissions.resolve(deny ?? Permissions.defaultBit).toString(),
       };
     }
 
-    const userOrRole = guild.roles.resolve(overwrite.id) ?? guild.client.users.resolve(overwrite.id);
+    if (!id) throw new TypeError('INVALID_TYPE', 'parameter', 'cached User or Role');
+    const userOrRole = guild.roles.resolve(id) ?? guild.client.users.resolve(id);
     if (!userOrRole) {
       throw new TypeError('INVALID_TYPE', 'parameter', 'cached User or Role');
     }
-    const type = userOrRole instanceof Role ? OverwriteTypes.role : OverwriteTypes.member;
+    const resolvedType = userOrRole instanceof Role ? OverwriteTypes.role : OverwriteTypes.member;
 
     return {
       id: userOrRole.id,
-      type,
-      allow: Permissions.resolve(overwrite.allow ?? Permissions.defaultBit).toString(),
-      deny: Permissions.resolve(overwrite.deny ?? Permissions.defaultBit).toString(),
+      type: resolvedType,
+      allow: Permissions.resolve(allow ?? Permissions.defaultBit).toString(),
+      deny: Permissions.resolve(deny ?? Permissions.defaultBit).toString(),
     };
   }
 }
