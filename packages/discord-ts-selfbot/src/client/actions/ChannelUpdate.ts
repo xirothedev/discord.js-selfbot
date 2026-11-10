@@ -3,7 +3,7 @@ import { isTextBasedChannel, isGuildBasedChannel } from '../../types/channels';
 import type { GatewayChannelUpdateDispatchData, GatewayThreadUpdateDispatchData } from 'discord-api-types/v10';
 import _ChannelModule from '../../structures/Channel';
 const { Channel } = _ChannelModule;
-import _ConstantsModule from '../../util/Constants';
+import _ConstantsModule, { resolveEnumValue } from '../../util/Constants';
 const { ChannelTypes } = _ConstantsModule;
 
 class ChannelUpdateAction extends Action {
@@ -14,7 +14,7 @@ class ChannelUpdateAction extends Action {
     if (channel) {
       const old = channel._update(data);
 
-      if (ChannelTypes[channel.type] !== data.type) {
+      if (resolveEnumValue(ChannelTypes, channel.type) !== data.type) {
         const guild = isGuildBasedChannel(channel) ? channel.guild : undefined;
         const newChannel = Channel.create(this.client, data, guild);
 

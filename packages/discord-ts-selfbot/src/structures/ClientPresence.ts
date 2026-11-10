@@ -2,7 +2,7 @@ import _PresenceModule from './Presence';
 const { Presence } = _PresenceModule;
 import _errorsModule from '../errors';
 const { TypeError } = _errorsModule;
-import _ConstantsModule from '../util/Constants';
+import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
 const { ActivityTypes, Opcodes } = _ConstantsModule;
 import { ActivityType, type GatewayActivityUpdateData } from 'discord-api-types/v10';
 import type { Client } from '../client/Client';
@@ -47,8 +47,8 @@ function toActivityPatch(activity: PresenceActivitySource): Partial<RawActivityD
 function resolveActivityType(type: string | number | undefined): ActivityType {
   if (typeof type === 'number') return isActivityType(type) ? type : ActivityType.Playing;
   if (typeof type === 'string') {
-    const resolved = ActivityTypes[type];
-    return typeof resolved === 'number' && isActivityType(resolved) ? resolved : ActivityType.Playing;
+    const resolved = resolveEnumValue(ActivityTypes, type);
+    return resolved !== undefined && isActivityType(resolved) ? resolved : ActivityType.Playing;
   }
   return ActivityType.Playing;
 }
@@ -99,10 +99,9 @@ class ClientPresence extends Presence {
       for (const [i, activity] of activities.entries()) {
         if (typeof activity.name !== 'string') throw new TypeError('INVALID_TYPE', `activities[${i}].name`, 'string');
 
-        activity.type ??= ActivityTypes.PLAYING;
-        if (typeof activity.type === 'string') activity.type = ActivityTypes[activity.type];
+        const activityType = resolveEnumValue(ActivityTypes, activity.type ?? ActivityTypes.PLAYING);
 
-        if (CustomStatusActivityTypes.includes(activity.type) && !activity.state) {
+        if (activityType !== undefined && CustomStatusActivityTypes.includes(activityType) && !activity.state) {
           activity.state = activity.name;
           activity.name = 'Custom Status';
         }
@@ -110,7 +109,7 @@ class ClientPresence extends Presence {
         data.activities.push({
           name: activity.name,
           state: activity.state ?? undefined,
-          type: resolveActivityType(activity.type),
+          type: resolveActivityType(activityType),
           url: activity.url ?? undefined,
         });
       }

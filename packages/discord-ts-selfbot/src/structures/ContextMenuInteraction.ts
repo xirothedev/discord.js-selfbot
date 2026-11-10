@@ -36,7 +36,7 @@ class ContextMenuInteraction<Cached extends CacheType = CacheType> extends BaseC
      * The type of the target of this interaction; either USER or MESSAGE
      * @type {ApplicationCommandType}
      */
-    this.targetType = ApplicationCommandTypes[data.data.type];
+    this.targetType = data.data.type === ApplicationCommandTypes.MESSAGE ? 'MESSAGE' : 'USER';
   }
 
   /**

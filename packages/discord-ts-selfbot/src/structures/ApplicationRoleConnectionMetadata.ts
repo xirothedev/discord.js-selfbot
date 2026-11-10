@@ -1,4 +1,4 @@
-import _ConstantsModule from '../util/Constants';
+import _ConstantsModule, { resolveEnumMember } from '../util/Constants';
 const { ApplicationRoleConnectionMetadataTypes } = _ConstantsModule;
 import type { APIApplicationRoleConnectionMetadata, LocalizationMap } from 'discord-api-types/v10';
 
@@ -48,7 +48,9 @@ class ApplicationRoleConnectionMetadata {
      * The type of this metadata field
      * @type {ApplicationRoleConnectionMetadataType}
      */
-    this.type = typeof data.type === 'number' ? ApplicationRoleConnectionMetadataTypes[data.type] : data.type;
+    this.type =
+      resolveEnumMember(ApplicationRoleConnectionMetadataTypes, data.type) ??
+      ApplicationRoleConnectionMetadataTypes.INTEGER_LESS_THAN_OR_EQUAL;
   }
 }
 

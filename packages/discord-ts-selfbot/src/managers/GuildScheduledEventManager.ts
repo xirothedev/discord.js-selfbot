@@ -4,7 +4,7 @@ import _errorsModule from '../errors';
 const { TypeError, Error } = _errorsModule;
 import _GuildScheduledEventModule from '../structures/GuildScheduledEvent';
 const { GuildScheduledEvent } = _GuildScheduledEventModule;
-import _ConstantsModule from '../util/Constants';
+import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
 const { PrivacyLevels, GuildScheduledEventEntityTypes, GuildScheduledEventStatuses } = _ConstantsModule;
 import DataResolver from '../util/DataResolver';
 import Util from '../util/Util';
@@ -288,7 +288,7 @@ class GuildScheduledEventManager extends CachedManager<
 
     if (typeof privacyLevel === 'string') privacyLevel = PrivacyLevels[privacyLevel];
     if (typeof entityType === 'string') entityType = GuildScheduledEventEntityTypes[entityType];
-    if (typeof status === 'string') status = GuildScheduledEventStatuses[status];
+    if (typeof status === 'string') status = resolveEnumValue(GuildScheduledEventStatuses, status);
 
     let entity_metadata;
     if (entityMetadata) {

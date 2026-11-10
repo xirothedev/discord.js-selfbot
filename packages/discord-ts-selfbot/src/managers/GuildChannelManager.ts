@@ -8,7 +8,7 @@ import PermissionOverwrites from '../structures/PermissionOverwrites';
 import ThreadChannel from '../structures/ThreadChannel';
 import Webhook from '../structures/Webhook';
 import ChannelFlags from '../util/ChannelFlags';
-import _ConstantsModule from '../util/Constants';
+import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
 const { ThreadChannelTypes, ChannelTypes, VideoQualityModes, SortOrderTypes, ForumLayoutTypes } = _ConstantsModule;
 import DataResolver from '../util/DataResolver';
 import Util from '../util/Util';
@@ -83,15 +83,6 @@ interface ChannelPositionSource {
   position?: number;
   parent?: CategoryChannelResolvableSource | null;
   lockPermissions?: boolean;
-}
-
-function resolveEnumValue(
-  enumObject: Record<string, number>,
-  value: string | number | null | undefined,
-): number | undefined {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string') return enumObject[value];
-  return undefined;
 }
 
 let cacheWarningEmitted = false;
@@ -238,7 +229,7 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
       typeof type === 'number'
         ? type
         : type
-          ? (ChannelTypes[type] ?? ChannelTypes.GUILD_TEXT)
+          ? (resolveEnumValue(ChannelTypes, type) ?? ChannelTypes.GUILD_TEXT)
           : ChannelTypes.GUILD_TEXT;
 
     const videoMode = resolveEnumValue(VideoQualityModes, videoQualityMode);

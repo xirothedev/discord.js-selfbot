@@ -8,6 +8,7 @@ import type { ChannelType, LocalizationMap, Snowflake } from 'discord-api-types/
 import type {
   ApplicationCommandData,
   ApplicationCommandOptionData,
+  ApplicationCommandOptionType,
   ApplicationCommandType,
   PermissionResolvable,
 } from '../../typings';
@@ -29,7 +30,7 @@ interface ApplicationCommandOptionChoiceSource {
 }
 
 export interface ApplicationCommandOptionSource {
-  type: ApplicationCommandType | number;
+  type: ApplicationCommandOptionType | number;
   name: string;
   nameLocalizations?: LocalizationMap | null;
   nameLocalized?: string | null;
@@ -587,7 +588,7 @@ class ApplicationCommand extends Base {
     }
 
     if (existing.channelTypes) {
-      const newTypes = (option.channelTypes ?? option.channel_types ?? []).map(type =>
+      const newTypes: (string | number)[] = (option.channelTypes ?? option.channel_types ?? []).map(type =>
         typeof type === 'number' ? ChannelTypes[type] : type,
       );
       for (const type of existing.channelTypes) {

@@ -10,7 +10,7 @@ const { Error } = _errorsModule;
 import _ConstantsModule from '../../util/Constants';
 const { Events, ShardEvents, Status, WSCodes, WSEvents } = _ConstantsModule;
 
-const BeforeReadyWhitelist = [
+const BeforeReadyWhitelist: readonly string[] = [
   WSEvents.READY,
   WSEvents.RESUMED,
   WSEvents.GUILD_CREATE,

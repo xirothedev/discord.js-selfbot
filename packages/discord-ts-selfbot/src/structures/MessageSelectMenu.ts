@@ -1,5 +1,5 @@
 import BaseMessageComponent from './BaseMessageComponent';
-import _ConstantsModule from '../util/Constants';
+import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
 const { ChannelTypes } = _ConstantsModule;
 import {
   ChannelType,
@@ -7,6 +7,8 @@ import {
   type APISelectMenuComponent,
   type APISelectMenuOption,
 } from 'discord-api-types/v10';
+
+type PublicChannelType = import('../../typings/enums').ChannelTypes;
 
 const SELECT_MENU_TYPES: Record<string, APISelectMenuComponent['type']> = {
   STRING_SELECT: ComponentType.StringSelect,
@@ -22,8 +24,17 @@ function isChannelType(value: unknown): value is ChannelType {
 
 function resolveChannelType(value: string | number): ChannelType | undefined {
   if (typeof value === 'number') return isChannelType(value) ? value : undefined;
-  const resolved = ChannelTypes[value];
+  const resolved = resolveEnumValue(ChannelTypes, value);
   return typeof resolved === 'number' && isChannelType(resolved) ? resolved : undefined;
+}
+
+function isPublicChannelType(value: unknown): value is PublicChannelType {
+  return typeof value === 'number' && value in ChannelType;
+}
+
+function resolvePublicChannelType(value: string | number): PublicChannelType | undefined {
+  const resolved = resolveEnumValue(ChannelTypes, value);
+  return isPublicChannelType(resolved) ? resolved : undefined;
 }
 
 function serializeSelectOption(option: MessageSelectOption): APISelectMenuOption {
@@ -170,9 +181,9 @@ class MessageSelectMenu extends BaseMessageComponent {
      */
     const channelTypes =
       'channel_types' in data ? (data.channel_types ?? []) : 'channelTypes' in data ? (data.channelTypes ?? []) : [];
-    this.channelTypes = channelTypes.map(channelType =>
-      typeof channelType === 'string' ? channelType : ChannelTypes[channelType],
-    );
+    this.channelTypes = channelTypes
+      .map(resolvePublicChannelType)
+      .filter((channelType): channelType is PublicChannelType => channelType !== undefined);
   }
 
   /**

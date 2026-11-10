@@ -2,7 +2,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 import _errorsModule from '../errors';
 const { TypeError } = _errorsModule;
-import _ConstantsModule from '../util/Constants';
+import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
 const { MessageComponentTypes, Events } = _ConstantsModule;
 import type { Client } from '../client/Client';
 import type { MessageComponentType } from '../../typings';
@@ -18,9 +18,6 @@ import type FileComponent from './FileComponent';
 import type SeparatorComponent from './SeparatorComponent';
 import type ContainerComponent from './ContainerComponent';
 
-/**
- * A component of a message or a modal.
- */
 export type MessageComponentInstance =
   | MessageActionRow
   | MessageButton
@@ -34,9 +31,6 @@ export type MessageComponentInstance =
   | SeparatorComponent
   | ContainerComponent;
 
-/**
- * A component that can be placed at the top level of a message.
- */
 export type TopLevelComponentSource =
   | MessageActionRow
   | SectionComponent
@@ -46,9 +40,6 @@ export type TopLevelComponentSource =
   | SeparatorComponent
   | ContainerComponent;
 
-/**
- * A component that can be placed inside a container.
- */
 export type ContainerComponentSource =
   | MessageActionRow
   | SectionComponent
@@ -57,9 +48,6 @@ export type ContainerComponentSource =
   | FileComponent
   | SeparatorComponent;
 
-/**
- * The loose wire shape shared by every component.
- */
 export interface ComponentDataSource {
   type?: string | number;
   id?: number;
@@ -108,73 +96,23 @@ function isMessageComponentType(value: unknown): value is MessageComponentType {
   return typeof value === 'string' && value in MessageComponentTypes;
 }
 
-/**
- * Represents an interactive component of a Message or Modal. It should not be necessary to construct this directly.
- * See {@link MessageComponent}
- */
 class BaseMessageComponent {
   declare type: MessageComponentType | null;
   declare data: ComponentDataSource;
 
-  /**
-   * Options for a BaseMessageComponent
-   * @typedef {Object} BaseMessageComponentOptions
-   * @property {MessageComponentTypeResolvable} type The type of this component
-   */
-
-  /**
-   * Data that can be resolved into options for a component. This can be:
-   * * MessageActionRowOptions
-   * * MessageButtonOptions
-   * * MessageSelectMenuOptions
-   * * TextInputComponentOptions
-   * @typedef {MessageActionRowOptions|MessageButtonOptions|MessageSelectMenuOptions|TextInputComponentOptions} MessageComponentOptions
-   */
-
-  /**
-   * Data that can be resolved to a MessageComponentType. This can be:
-   * * MessageComponentType
-   * * string
-   * * number
-   * @typedef {string|number|MessageComponentType} MessageComponentTypeResolvable
-   */
-
-  /**
-   * @param {BaseMessageComponent|BaseMessageComponentOptions} [data={}] The options for this component
-   */
   constructor(data: unknown) {
     const source = isComponentDataSource(data) ? data : {};
-    /**
-     * The type of this component
-     * @type {?MessageComponentType}
-     */
     this.type = source.type !== undefined ? (BaseMessageComponent.resolveType(source.type) ?? null) : null;
   }
 
   setup(data: unknown) {
-    /**
-     * The data for this component
-     * @type {MessageComponentOptions}
-     */
     this.data = isComponentDataSource(data) ? data : {};
   }
 
-  /**
-   * The id of this component
-   * @type {number}
-   * @readonly
-   */
   get id() {
     return this.data.id!;
   }
 
-  /**
-   * Constructs a component based on the type of the incoming data
-   * @param {MessageComponentOptions} data Data for a MessageComponent
-   * @param {Client|WebhookClient} [client] Client constructing this component
-   * @returns {?(MessageComponent|ModalComponent)}
-   * @private
-   */
   static create(data: unknown, client: Client | null = null): MessageComponentInstance | null {
     let component: MessageComponentInstance | null = null;
     const source = isComponentDataSource(data) ? data : {};
@@ -191,7 +129,7 @@ class BaseMessageComponent {
     const ThumbnailComponent = require('./ThumbnailComponent').default;
     const MediaGalleryComponent = require('./MediaGalleryComponent').default;
 
-    if (typeof type === 'string') type = MessageComponentTypes[type];
+    if (typeof type === 'string') type = resolveEnumValue(MessageComponentTypes, type);
 
     switch (type) {
       case MessageComponentTypes.ACTION_ROW: {
@@ -252,12 +190,6 @@ class BaseMessageComponent {
     return component;
   }
 
-  /**
-   * Resolves the type of a component
-   * @param {MessageComponentTypeResolvable} type The type to resolve
-   * @returns {MessageComponentType}
-   * @private
-   */
   static resolveType(type: string | number | undefined): MessageComponentType | undefined {
     if (typeof type === 'number') {
       const name = MessageComponentTypes[type];
@@ -317,8 +249,8 @@ class BaseMessageComponent {
   }
 
   static extractInteractiveComponents(component: MessageComponentInstance): MessageComponentInstance[] {
-    let type = component.type;
-    if (typeof type === 'string') type = MessageComponentTypes[type];
+    const type =
+      typeof component.type === 'string' ? resolveEnumValue(MessageComponentTypes, component.type) : component.type;
 
     switch (type) {
       case MessageComponentTypes.ACTION_ROW:

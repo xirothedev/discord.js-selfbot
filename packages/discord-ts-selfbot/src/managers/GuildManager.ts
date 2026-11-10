@@ -12,7 +12,7 @@ import Invite from '../structures/Invite';
 import OAuth2Guild from '../structures/OAuth2Guild';
 import _RoleModule from '../structures/Role';
 const { Role } = _RoleModule;
-import _ConstantsModule from '../util/Constants';
+import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
 const {
   ChannelTypes,
   Events,
@@ -87,15 +87,6 @@ type GuildCreateOptionsSource = Omit<GuildCreateOptions, 'channels' | 'roles'> &
   channels?: PartialChannelDataSource[];
   roles?: PartialRoleDataSource[];
 };
-
-function resolveEnumValue(
-  enumObject: Record<string, number>,
-  value: string | number | null | undefined,
-): number | undefined {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string') return enumObject[value];
-  return undefined;
-}
 
 function isFetchGuildOptions(value: unknown): value is FetchGuildOptions {
   return typeof value === 'object' && value !== null && 'guild' in value;
@@ -290,7 +281,7 @@ class GuildManager extends CachedManager<InstanceType<typeof Guild>> {
       if (!channel.permissionOverwrites) continue;
       for (const overwrite of channel.permissionOverwrites) {
         if (typeof overwrite.type === 'string') {
-          overwrite.type = OverwriteTypes[overwrite.type];
+          overwrite.type = resolveEnumValue(OverwriteTypes, overwrite.type);
         }
         overwrite.allow &&= Permissions.resolve(overwrite.allow).toString();
         overwrite.deny &&= Permissions.resolve(overwrite.deny).toString();

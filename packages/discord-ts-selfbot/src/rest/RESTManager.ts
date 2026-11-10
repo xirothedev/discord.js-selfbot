@@ -52,7 +52,7 @@ class RESTManager {
     throw new Error('TOKEN_MISSING');
   }
 
-  get cdn(): string {
+  get cdn(): ReturnType<typeof Endpoints.CDN> {
     return Endpoints.CDN(this.client.options.http.cdn);
   }
 

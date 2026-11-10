@@ -4,7 +4,7 @@ import _PollAnswerModule from './PollAnswer';
 const { PollAnswer } = _PollAnswerModule;
 import _errorsModule from '../errors';
 const { Error } = _errorsModule;
-import _ConstantsModule from '../util/Constants';
+import _ConstantsModule, { resolveEnumMember } from '../util/Constants';
 const { PollLayoutTypes } = _ConstantsModule;
 import type { APIPoll } from 'discord-api-types/v10';
 import type { PollQuestionMedia } from '../../typings';
@@ -74,7 +74,7 @@ class Poll extends Base {
      * The layout type of this poll
      * @type {PollLayoutType}
      */
-    this.layoutType = PollLayoutTypes[data.layout_type];
+    this.layoutType = resolveEnumMember(PollLayoutTypes, data.layout_type) ?? PollLayoutTypes.DEFAULT;
 
     this._patch(data);
   }

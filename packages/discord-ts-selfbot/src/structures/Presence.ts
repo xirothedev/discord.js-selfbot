@@ -122,7 +122,7 @@ class Presence extends Base {
        */
       this.activities = data.activities.map(activity => {
         if (this.userId === this.client.user?.id) {
-          if ([ActivityTypes.CUSTOM, 'CUSTOM'].includes(activity.type)) {
+          if (activity.type !== undefined && [ActivityTypes.CUSTOM, 'CUSTOM'].includes(activity.type)) {
             return new CustomStatus(this.client, activity);
           } else if (activity.id == 'spotify:1') {
             return new SpotifyRPC(this.client, activity);
@@ -336,7 +336,7 @@ class Activity {
       this.name = data.name;
     }
 
-    if ('type' in data) {
+    if ('type' in data && data.type !== undefined) {
       /**
        * The activity status's type
        * @type {ActivityType}
@@ -541,7 +541,7 @@ class Activity {
     return {
       ...Util.flatten(this, ...props),
       name: this.name,
-      type: typeof this.type === 'number' ? this.type : ActivityTypes[this.type],
+      type: this.type,
     };
   }
 }
@@ -808,7 +808,7 @@ class CustomStatus extends Activity {
   override toJSON(): ActivityOptions {
     if (!this.emoji && !this.state) throw new Error('CustomStatus must have at least one of emoji or state');
     return {
-      ...{ name: this.name, type: ActivityTypes.CUSTOM, state: this.state },
+      ...{ name: this.name, type: 'CUSTOM', state: this.state },
       ...(this.emoji ? { emoji: this.emoji } : {}),
     };
   }
@@ -917,7 +917,7 @@ class RichPresence extends Activity {
    * @returns {RichPresence}
    */
   setType(type: ActivityType | number) {
-    this.type = typeof type == 'number' ? type : ActivityTypes[type];
+    this.type = typeof type == 'number' ? (ActivityTypes[type] ?? this.type) : type;
     return this;
   }
 

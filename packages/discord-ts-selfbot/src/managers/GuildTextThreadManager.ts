@@ -1,7 +1,7 @@
 import ThreadManager from './ThreadManager';
 import _errorsModule from '../errors';
 const { TypeError } = _errorsModule;
-import _ConstantsModule from '../util/Constants';
+import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
 const { ChannelTypes } = _ConstantsModule;
 import _UtilModule from '../util/Util';
 import type { GuildTextThreadCreateOptions } from '../../typings';
@@ -78,14 +78,19 @@ class GuildTextThreadManager<AllowedThreadType> extends ThreadManager {
     if (type && typeof type !== 'string' && typeof type !== 'number') {
       throw new TypeError('INVALID_TYPE', 'type', 'ThreadChannelType or Number');
     }
-    let resolvedType =
+    let resolvedType: number | undefined =
       this.channel.type === 'GUILD_NEWS' ? ChannelTypes.GUILD_NEWS_THREAD : ChannelTypes.GUILD_PUBLIC_THREAD;
     if (startMessage) {
       const startMessageId = this.channel.messages!.resolveId(startMessage);
       if (!startMessageId) throw new TypeError('INVALID_TYPE', 'startMessage', 'MessageResolvable');
       path = path.messages(startMessageId);
     } else if (this.channel.type !== 'GUILD_NEWS') {
-      resolvedType = typeof type === 'string' ? ChannelTypes[type] : (type ?? resolvedType);
+      resolvedType =
+        typeof type === 'string'
+          ? resolveEnumValue(ChannelTypes, type)
+          : typeof type === 'number'
+            ? type
+            : resolvedType;
     }
 
     const resolvedAutoArchiveDuration =
