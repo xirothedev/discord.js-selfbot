@@ -11,12 +11,46 @@ import _UtilModule from '../util/Util';
 import { isTextBasedChannel } from '../types/channels';
 const { resolveAutoArchiveMaxLimit } = _UtilModule;
 import type { Snowflake } from 'discord-api-types/v10';
-import type { ThreadAutoArchiveDuration } from '../../typings';
-import type { RawThreadChannelData } from '../../typings/rawDataTypes';
+import type {
+  BaseFetchOptions,
+  ChannelFlagsResolvable,
+  ThreadAutoArchiveDuration,
+  ThreadEditData,
+} from '../../typings';
+import type { BitFieldResolvable } from '../util/BitField';
+import type { RawChannelData, RawMessageData, RawThreadMemberData } from '../../typings/rawDataTypes';
+import type { PatchOf } from '../types/schema';
+import type { GuildMember } from './GuildMember';
+import type { Role } from './Role';
+import type { User } from './User';
+import type { ThreadMember } from './ThreadMember';
 
-type RawThreadChannelSource = RawThreadChannelData & {
+type ThreadChannelPatch = PatchOf<'Channel'> & {
   owner_id?: Snowflake;
   guild_id?: Snowflake;
+  name?: string;
+  parent_id?: Snowflake | null;
+  thread_metadata?: {
+    locked?: boolean;
+    invitable?: boolean;
+    archived?: boolean;
+    auto_archive_duration?: ThreadAutoArchiveDuration;
+    archive_timestamp?: string;
+    create_timestamp?: string;
+  };
+  last_message_id?: Snowflake | null;
+  last_pin_timestamp?: string | null;
+  rate_limit_per_user?: number;
+  message_count?: number;
+  member_count?: number;
+  total_message_sent?: number;
+  applied_tags?: Snowflake[];
+  member?: RawThreadMemberData;
+  messages?: RawMessageData[];
+};
+
+type ThreadEditDataSource = Omit<ThreadEditData, 'flags'> & {
+  flags?: BitFieldResolvable | ChannelFlagsResolvable;
 };
 import type { Guild } from './Guild';
 
@@ -47,7 +81,7 @@ class ThreadChannel extends Channel {
   declare totalMessageSent: number | null;
   declare appliedTags: Snowflake[];
 
-  constructor(guild: Guild, data: RawThreadChannelSource, client?: import('../client/Client').default) {
+  constructor(guild: Guild, data: ThreadChannelPatch & RawChannelData, client?: import('../client/Client').default) {
     super(guild?.client ?? client, data, false);
 
     /**
@@ -82,10 +116,10 @@ class ThreadChannel extends Channel {
     if (data) this._patch(data);
   }
 
-  _patch(data: any, partial: any = false) {
+  _patch(data: ThreadChannelPatch, partial = false) {
     super._patch(data);
 
-    if ('name' in data) {
+    if (typeof data.name === 'string') {
       /**
        * The name of the thread
        * @type {string}
@@ -93,7 +127,7 @@ class ThreadChannel extends Channel {
       this.name = data.name;
     }
 
-    if ('guild_id' in data) {
+    if (data.guild_id) {
       this.guildId = data.guild_id;
     }
 
@@ -102,36 +136,37 @@ class ThreadChannel extends Channel {
        * The id of the parent channel of this thread
        * @type {?Snowflake}
        */
-      this.parentId = data.parent_id;
+      this.parentId = data.parent_id ?? null;
     } else {
       this.parentId ??= null;
     }
 
-    if ('thread_metadata' in data) {
+    if (data.thread_metadata) {
+      const metadata = data.thread_metadata;
       /**
        * Whether the thread is locked
        * @type {?boolean}
        */
-      this.locked = data.thread_metadata.locked ?? false;
+      this.locked = metadata.locked ?? false;
 
       /**
        * Whether members without `MANAGE_THREADS` can invite other members without `MANAGE_THREADS`
        * <info>Always `null` in public threads</info>
        * @type {?boolean}
        */
-      this.invitable = this.type === 'GUILD_PRIVATE_THREAD' ? (data.thread_metadata.invitable ?? false) : null;
+      this.invitable = this.type === 'GUILD_PRIVATE_THREAD' ? (metadata.invitable ?? false) : null;
 
       /**
        * Whether the thread is archived
        * @type {?boolean}
        */
-      this.archived = data.thread_metadata.archived;
+      this.archived = metadata.archived ?? null;
 
       /**
        * The amount of time (in minutes) after which the thread will automatically archive in case of no recent activity
        * @type {?number}
        */
-      this.autoArchiveDuration = data.thread_metadata.auto_archive_duration;
+      this.autoArchiveDuration = metadata.auto_archive_duration ?? null;
 
       /**
        * The timestamp when the thread's archive status was last changed
@@ -139,13 +174,11 @@ class ThreadChannel extends Channel {
        * created</info>
        * @type {?number}
        */
-      this.archiveTimestamp = data.thread_metadata?.archive_timestamp
-        ? Date.parse(data.thread_metadata.archive_timestamp)
-        : null;
+      this.archiveTimestamp = metadata.archive_timestamp ? Date.parse(metadata.archive_timestamp) : null;
 
-      if ('create_timestamp' in data.thread_metadata) {
+      if (metadata.create_timestamp) {
         // Note: this is needed because we can't assign directly to getters
-        this._createdTimestamp = Date.parse(data.thread_metadata.create_timestamp);
+        this._createdTimestamp = Date.parse(metadata.create_timestamp);
       }
     } else {
       this.locked ??= null;
@@ -162,7 +195,7 @@ class ThreadChannel extends Channel {
        * The last message id sent in this thread, if one was sent
        * @type {?Snowflake}
        */
-      this.lastMessageId = data.last_message_id;
+      this.lastMessageId = data.last_message_id ?? null;
     } else {
       this.lastMessageId ??= null;
     }
@@ -193,7 +226,7 @@ class ThreadChannel extends Channel {
        * If you need an approximate value higher than that, use `ThreadChannel#messages.cache.size`</info>
        * @type {?number}
        */
-      this.messageCount = data.message_count;
+      this.messageCount = data.message_count ?? null;
     } else {
       this.messageCount ??= null;
     }
@@ -205,7 +238,7 @@ class ThreadChannel extends Channel {
        * `ThreadChannel#members.cache.size`</info>
        * @type {?number}
        */
-      this.memberCount = data.member_count;
+      this.memberCount = data.member_count ?? null;
     } else {
       this.memberCount ??= null;
     }
@@ -216,7 +249,7 @@ class ThreadChannel extends Channel {
        * will not decrement whenever a message is deleted
        * @type {?number}
        */
-      this.totalMessageSent = data.total_message_sent;
+      this.totalMessageSent = data.total_message_sent ?? null;
     } else {
       this.totalMessageSent ??= null;
     }
@@ -226,7 +259,7 @@ class ThreadChannel extends Channel {
        * The tags applied to this thread
        * @type {Snowflake[]}
        */
-      this.appliedTags = data.applied_tags;
+      this.appliedTags = data.applied_tags ?? [];
     } else {
       this.appliedTags ??= [];
     }
@@ -251,7 +284,7 @@ class ThreadChannel extends Channel {
    * @readonly
    */
   get guildMembers() {
-    return this.members.cache.mapValues((member: any) => member.guildMember);
+    return this.members.cache.mapValues((member: ThreadMember) => member.guildMember);
   }
 
   /**
@@ -308,7 +341,7 @@ class ThreadChannel extends Channel {
    * @param {boolean} [checkAdmin=true] Whether having `ADMINISTRATOR` will return all permissions
    * @returns {?Readonly<Permissions>}
    */
-  permissionsFor(memberOrRole: any, checkAdmin?: any) {
+  permissionsFor(memberOrRole: GuildMember | Role | User | Snowflake, checkAdmin = true) {
     return this.parent?.permissionsFor(memberOrRole, checkAdmin) ?? null;
   }
 
@@ -318,7 +351,7 @@ class ThreadChannel extends Channel {
    * @param {BaseFetchOptions} [options] The options for fetching the member
    * @returns {Promise<?ThreadMember>}
    */
-  async fetchOwner({ cache = true, force = false }: any = {}) {
+  async fetchOwner({ cache = true, force = false }: BaseFetchOptions = {}): Promise<ThreadMember | null> {
     if (!force) {
       const existing = this.members.cache.get(this.ownerId);
       if (existing) return existing;
@@ -338,7 +371,7 @@ class ThreadChannel extends Channel {
    * @returns {Promise<Message|null>}
    */
   // eslint-disable-next-line require-await
-  async fetchStarterMessage(options: any) {
+  async fetchStarterMessage(options?: BaseFetchOptions) {
     const channel = this.parent?.type === 'GUILD_FORUM' ? this : this.parent;
     return channel && isTextBasedChannel(channel) ? (channel.messages.fetch(this.id, options) ?? null) : null;
   }
@@ -369,8 +402,8 @@ class ThreadChannel extends Channel {
    *   .then(editedThread => console.log(editedThread))
    *   .catch(console.error);
    */
-  async edit(data: any, reason: any) {
-    let autoArchiveDuration = data.autoArchiveDuration;
+  async edit(data: ThreadEditDataSource, reason?: string): Promise<ThreadChannel> {
+    let autoArchiveDuration: ThreadAutoArchiveDuration | 'MAX' | number | undefined = data.autoArchiveDuration;
     if (autoArchiveDuration === 'MAX') autoArchiveDuration = resolveAutoArchiveMaxLimit(this.guild);
 
     const newData = await this.client.api.channels(this.id).patch({
@@ -401,7 +434,7 @@ class ThreadChannel extends Channel {
    *   .then(newThread => console.log(`Thread is now ${newThread.archived ? 'archived' : 'active'}`))
    *   .catch(console.error);
    */
-  setArchived(archived: any = true, reason: any) {
+  setArchived(archived = true, reason?: string) {
     return this.edit({ archived }, reason);
   }
 
@@ -419,7 +452,7 @@ class ThreadChannel extends Channel {
    *    });
    *   .catch(console.error);
    */
-  setAutoArchiveDuration(autoArchiveDuration: any, reason: any) {
+  setAutoArchiveDuration(autoArchiveDuration: ThreadAutoArchiveDuration | 'MAX', reason?: string) {
     return this.edit({ autoArchiveDuration }, reason);
   }
 
@@ -430,7 +463,7 @@ class ThreadChannel extends Channel {
    * @param {string} [reason] Reason for changing invite
    * @returns {Promise<ThreadChannel>}
    */
-  async setInvitable(invitable: any = true, reason: any) {
+  async setInvitable(invitable = true, reason?: string) {
     if (this.type !== 'GUILD_PRIVATE_THREAD') throw new RangeError('THREAD_INVITABLE_TYPE', this.type);
     return this.edit({ invitable }, reason);
   }
@@ -447,7 +480,7 @@ class ThreadChannel extends Channel {
    *   .then(newThread => console.log(`Thread is now ${newThread.locked ? 'locked' : 'unlocked'}`))
    *   .catch(console.error);
    */
-  setLocked(locked: any = true, reason: any) {
+  setLocked(locked = true, reason?: string) {
     return this.edit({ locked }, reason);
   }
 
@@ -462,7 +495,7 @@ class ThreadChannel extends Channel {
    *   .then(newThread => console.log(`Thread's new name is ${newThread.name}`))
    *   .catch(console.error);
    */
-  setName(name: any, reason: any) {
+  setName(name: string, reason?: string) {
     return this.edit({ name }, reason);
   }
 
@@ -472,7 +505,7 @@ class ThreadChannel extends Channel {
    * @param {string} [reason] Reason for changing the thread's rate limit
    * @returns {Promise<ThreadChannel>}
    */
-  setRateLimitPerUser(rateLimitPerUser: any, reason: any) {
+  setRateLimitPerUser(rateLimitPerUser: number, reason?: string) {
     return this.edit({ rateLimitPerUser }, reason);
   }
 
@@ -481,7 +514,7 @@ class ThreadChannel extends Channel {
    * @param {string} [reason] Reason for pinning
    * @returns {Promise<ThreadChannel>}
    */
-  pin(reason: any) {
+  pin(reason?: string) {
     return this.edit({ flags: this.flags.add(ChannelFlags.FLAGS.PINNED) }, reason);
   }
 
@@ -490,7 +523,7 @@ class ThreadChannel extends Channel {
    * @param {string} [reason] Reason for unpinning
    * @returns {Promise<ThreadChannel>}
    */
-  unpin(reason: any) {
+  unpin(reason?: string) {
     return this.edit({ flags: this.flags.remove(ChannelFlags.FLAGS.PINNED) }, reason);
   }
 
@@ -500,7 +533,7 @@ class ThreadChannel extends Channel {
    * @param {string} [reason] Reason for changing the thread's applied tags
    * @returns {Promise<ThreadChannel>}
    */
-  setAppliedTags(appliedTags: any, reason: any) {
+  setAppliedTags(appliedTags: Snowflake[], reason?: string) {
     return this.edit({ appliedTags }, reason);
   }
 
@@ -534,7 +567,7 @@ class ThreadChannel extends Channel {
     return (
       !this.archived &&
       !this.joined &&
-      this.permissionsFor(this.client.user)?.has(
+      (this.client.user ? this.permissionsFor(this.client.user) : null)?.has(
         this.type === 'GUILD_PRIVATE_THREAD' ? Permissions.FLAGS.MANAGE_THREADS : Permissions.FLAGS.VIEW_CHANNEL,
         false,
       )
@@ -547,7 +580,7 @@ class ThreadChannel extends Channel {
    * @readonly
    */
   get manageable() {
-    const permissions = this.permissionsFor(this.client.user);
+    const permissions = this.client.user ? this.permissionsFor(this.client.user) : null;
     if (!permissions) return false;
     // This flag allows managing even if timed out
     if (permissions.has(Permissions.FLAGS.ADMINISTRATOR, false)) return true;
@@ -568,7 +601,7 @@ class ThreadChannel extends Channel {
    */
   get viewable() {
     if (this.client.user!.id === this.guild.ownerId) return true;
-    const permissions = this.permissionsFor(this.client.user);
+    const permissions = this.client.user ? this.permissionsFor(this.client.user) : null;
     if (!permissions) return false;
     return permissions.has(Permissions.FLAGS.VIEW_CHANNEL, false);
   }
@@ -579,7 +612,7 @@ class ThreadChannel extends Channel {
    * @readonly
    */
   get sendable() {
-    const permissions = this.permissionsFor(this.client.user);
+    const permissions = this.client.user ? this.permissionsFor(this.client.user) : null;
     if (!permissions) return false;
     // This flag allows sending even if timed out
     if (permissions.has(Permissions.FLAGS.ADMINISTRATOR, false)) return true;
@@ -619,7 +652,7 @@ class ThreadChannel extends Channel {
    *   .then(deletedThread => console.log(deletedThread))
    *   .catch(console.error);
    */
-  async delete(reason: any) {
+  async delete(reason?: string) {
     await this.guild.channels.delete(this.id, reason);
     return this;
   }
