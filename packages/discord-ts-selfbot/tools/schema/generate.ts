@@ -1,6 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 
 type FieldKind = 'api' | 'selfbot' | 'internal' | 'relation';
@@ -47,7 +46,7 @@ interface EntityResult {
   rawType?: { name: string; from: string };
 }
 
-const HERE = dirname(fileURLToPath(import.meta.url));
+const HERE = dirname(Bun.fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..', '..');
 const SRC = join(PKG, 'src');
 const TYPINGS = join(PKG, 'typings');

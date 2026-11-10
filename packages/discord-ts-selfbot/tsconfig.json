@@ -26,7 +26,7 @@
     "forceConsistentCasingInFileNames": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "lib": ["ESNext", "ES2021", "DOM"],
+    "lib": ["ESNext", "ES2021", "DOM", "DOM.Iterable"],
     "target": "ES2020",
     "useDefineForClassFields": true,
     "pretty": false,

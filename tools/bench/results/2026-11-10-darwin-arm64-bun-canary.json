@@ -1,0 +1,586 @@
+{
+  "meta": {
+    "date": "2026-11-10T08:12:03.997Z",
+    "bunVersion": "1.4.4",
+    "bunRevision": "2596ac5d391d47804c93a42bdbe615804aa62387",
+    "nodeCompatVersion": "26.12.1",
+    "platform": "darwin",
+    "arch": "arm64",
+    "rounds": 7,
+    "filters": []
+  },
+  "results": [
+    {
+      "id": "fs.read.1k",
+      "group": "filesystem",
+      "label": "read 1 KiB",
+      "bytes": 1024,
+      "iterations": 5000,
+      "node": {
+        "medianMs": 0.0283777168,
+        "p95Ms": 0.0360468584,
+        "minMs": 0.0218020918,
+        "opsPerSecond": 35238.91675457132,
+        "mibPerSecond": 34.413004643136055
+      },
+      "bun": {
+        "medianMs": 0.02846585,
+        "p95Ms": 0.035946883400000004,
+        "minMs": 0.023224925,
+        "opsPerSecond": 35129.813443125706,
+        "mibPerSecond": 34.30645844055245
+      },
+      "ratio": 0.9969038971258541
+    },
+    {
+      "id": "fs.read.64k",
+      "group": "filesystem",
+      "label": "read 64 KiB",
+      "bytes": 65536,
+      "iterations": 2000,
+      "node": {
+        "medianMs": 0.0351706875,
+        "p95Ms": 0.061789729,
+        "minMs": 0.0256417295,
+        "opsPerSecond": 28432.768054363452,
+        "mibPerSecond": 1777.0480033977158
+      },
+      "bun": {
+        "medianMs": 0.041828041499999996,
+        "p95Ms": 0.12066225,
+        "minMs": 0.025993396000000002,
+        "opsPerSecond": 23907.406709443952,
+        "mibPerSecond": 1494.212919340247
+      },
+      "ratio": 0.8408399303132565
+    },
+    {
+      "id": "fs.read.1m",
+      "group": "filesystem",
+      "label": "read 1 MiB",
+      "bytes": 1048576,
+      "iterations": 300,
+      "node": {
+        "medianMs": 0.09026597333333333,
+        "p95Ms": 0.33213930666666663,
+        "minMs": 0.07038555666666667,
+        "opsPerSecond": 11078.371650712827,
+        "mibPerSecond": 11078.371650712827
+      },
+      "bun": {
+        "medianMs": 0.09224541666666668,
+        "p95Ms": 0.21216139,
+        "minMs": 0.06714264,
+        "opsPerSecond": 10840.647005948804,
+        "mibPerSecond": 10840.647005948804
+      },
+      "ratio": 0.9785415535550546
+    },
+    {
+      "id": "fs.write.1k",
+      "group": "filesystem",
+      "label": "write 1 KiB",
+      "bytes": 1024,
+      "iterations": 1000,
+      "node": {
+        "medianMs": 0.029721334,
+        "p95Ms": 0.037417,
+        "minMs": 0.025253083,
+        "opsPerSecond": 33645.8652898958,
+        "mibPerSecond": 32.85729032216387
+      },
+      "bun": {
+        "medianMs": 0.019281334,
+        "p95Ms": 0.020919791,
+        "minMs": 0.016832375,
+        "opsPerSecond": 51863.63142716163,
+        "mibPerSecond": 50.64807756558753
+      },
+      "ratio": 1.5414563120995675
+    },
+    {
+      "id": "fs.write.1m",
+      "group": "filesystem",
+      "label": "write 1 MiB",
+      "bytes": 1048576,
+      "iterations": 200,
+      "node": {
+        "medianMs": 0.142496455,
+        "p95Ms": 0.1797475,
+        "minMs": 0.14035792,
+        "opsPerSecond": 7017.718440785071,
+        "mibPerSecond": 7017.718440785071
+      },
+      "bun": {
+        "medianMs": 0.276133335,
+        "p95Ms": 0.681087085,
+        "minMs": 0.20113250000000002,
+        "opsPerSecond": 3621.438896538877,
+        "mibPerSecond": 3621.438896538877
+      },
+      "ratio": 0.5160422047559018
+    },
+    {
+      "id": "fs.copy.1m",
+      "group": "filesystem",
+      "label": "copy 1 MiB",
+      "bytes": 1048576,
+      "iterations": 200,
+      "node": {
+        "medianMs": 0.11541417,
+        "p95Ms": 0.124025415,
+        "minMs": 0.104876045,
+        "opsPerSecond": 8664.447355121127,
+        "mibPerSecond": 8664.447355121127
+      },
+      "bun": {
+        "medianMs": 0.35277146000000004,
+        "p95Ms": 0.415567705,
+        "minMs": 0.27743854500000004,
+        "opsPerSecond": 2834.696434910012,
+        "mibPerSecond": 2834.696434910012
+      },
+      "ratio": 0.32716413623709806
+    },
+    {
+      "id": "crypto.sha256.64b",
+      "group": "crypto",
+      "label": "SHA-256 64 B",
+      "bytes": 64,
+      "iterations": 20000,
+      "node": {
+        "medianMs": 0.00014339375,
+        "p95Ms": 0.00018561665,
+        "minMs": 0.00012535,
+        "opsPerSecond": 6973804.646297346,
+        "mibPerSecond": 425.6472562437345
+      },
+      "bun": {
+        "medianMs": 0.00013121665,
+        "p95Ms": 0.0001322375,
+        "minMs": 0.00012775625,
+        "opsPerSecond": 7620984.074810628,
+        "mibPerSecond": 465.14795378482836
+      },
+      "ratio": 1.0928014851773764
+    },
+    {
+      "id": "crypto.sha256.64k",
+      "group": "crypto",
+      "label": "SHA-256 64 KiB",
+      "bytes": 65536,
+      "iterations": 2000,
+      "node": {
+        "medianMs": 0.0202697085,
+        "p95Ms": 0.030865833500000002,
+        "minMs": 0.020050270999999998,
+        "opsPerSecond": 49334.70059522563,
+        "mibPerSecond": 3083.418787201602
+      },
+      "bun": {
+        "medianMs": 0.0202008335,
+        "p95Ms": 0.073654083,
+        "minMs": 0.020064479,
+        "opsPerSecond": 49502.907887439396,
+        "mibPerSecond": 3093.9317429649623
+      },
+      "ratio": 1.0034095127807474
+    },
+    {
+      "id": "crypto.sha256.1m",
+      "group": "crypto",
+      "label": "SHA-256 1 MiB",
+      "bytes": 1048576,
+      "iterations": 200,
+      "node": {
+        "medianMs": 0.319542295,
+        "p95Ms": 0.32203271,
+        "minMs": 0.31921646,
+        "opsPerSecond": 3129.476177793616,
+        "mibPerSecond": 3129.476177793616
+      },
+      "bun": {
+        "medianMs": 0.32003771000000003,
+        "p95Ms": 0.32257083000000003,
+        "minMs": 0.319292085,
+        "opsPerSecond": 3124.631781673478,
+        "mibPerSecond": 3124.631781673478
+      },
+      "ratio": 0.9984520105458821
+    },
+    {
+      "id": "crypto.gzip.1m",
+      "group": "crypto",
+      "label": "gzip 1 MiB",
+      "bytes": 1048576,
+      "iterations": 100,
+      "node": {
+        "medianMs": 0.25171958,
+        "p95Ms": 0.26779041,
+        "minMs": 0.24461458,
+        "opsPerSecond": 3972.674672347697,
+        "mibPerSecond": 3972.674672347697
+      },
+      "bun": {
+        "medianMs": 0.25023333999999997,
+        "p95Ms": 0.26392,
+        "minMs": 0.24469542,
+        "opsPerSecond": 3996.2700413941648,
+        "mibPerSecond": 3996.2700413941648
+      },
+      "ratio": 1.0059394163863218
+    },
+    {
+      "id": "crypto.gunzip.1m",
+      "group": "crypto",
+      "label": "gunzip 1 MiB",
+      "bytes": 1048576,
+      "iterations": 100,
+      "node": {
+        "medianMs": 0.18922292,
+        "p95Ms": 0.20396625000000002,
+        "minMs": 0.1770725,
+        "opsPerSecond": 5284.772056154719,
+        "mibPerSecond": 5284.772056154719
+      },
+      "bun": {
+        "medianMs": 0.13049792,
+        "p95Ms": 0.14426708,
+        "minMs": 0.126675,
+        "opsPerSecond": 7662.957386600492,
+        "mibPerSecond": 7662.957386600492
+      },
+      "ratio": 1.450007172528114
+    },
+    {
+      "id": "crypto.uuid",
+      "group": "crypto",
+      "label": "UUID v4",
+      "bytes": null,
+      "iterations": 50000,
+      "node": {
+        "medianMs": 0.00005060084,
+        "p95Ms": 0.00006788834,
+        "minMs": 0.000045960840000000005,
+        "opsPerSecond": 19762517.77638474,
+        "mibPerSecond": null
+      },
+      "bun": {
+        "medianMs": 0.00004675916,
+        "p95Ms": 0.000062915,
+        "minMs": 0.00004497084,
+        "opsPerSecond": 21386184.01185992,
+        "mibPerSecond": null
+      },
+      "ratio": 1.0821588753946818
+    },
+    {
+      "id": "process.spawnSync",
+      "group": "process",
+      "label": "spawn process sync",
+      "bytes": null,
+      "iterations": 30,
+      "node": {
+        "medianMs": 0.6989778,
+        "p95Ms": 0.8100597333333333,
+        "minMs": 0.6550208333333334,
+        "opsPerSecond": 1430.6606018102434,
+        "mibPerSecond": null
+      },
+      "bun": {
+        "medianMs": 0.6672722,
+        "p95Ms": 0.8248888999999999,
+        "minMs": 0.6316291666666667,
+        "opsPerSecond": 1498.6387863903217,
+        "mibPerSecond": null
+      },
+      "ratio": 1.047515241905777
+    },
+    {
+      "id": "process.spawn",
+      "group": "process",
+      "label": "spawn process async",
+      "bytes": null,
+      "iterations": 30,
+      "node": {
+        "medianMs": 0.7938416666666667,
+        "p95Ms": 1.084525,
+        "minMs": 0.6563083333333334,
+        "opsPerSecond": 1259.697042861192,
+        "mibPerSecond": null
+      },
+      "bun": {
+        "medianMs": 0.6845055666666667,
+        "p95Ms": 0.9231305666666666,
+        "minMs": 0.6403611,
+        "opsPerSecond": 1460.9084990640688,
+        "mibPerSecond": null
+      },
+      "ratio": 1.1597300377445188
+    },
+    {
+      "id": "process.sleep.0",
+      "group": "process",
+      "label": "sleep 0 ms",
+      "bytes": null,
+      "iterations": 2000,
+      "node": {
+        "medianMs": 1.1601581875,
+        "p95Ms": 1.1743946459999999,
+        "minMs": 1.1487974585,
+        "opsPerSecond": 861.9514224649645,
+        "mibPerSecond": null
+      },
+      "bun": {
+        "medianMs": 0.0007633335,
+        "p95Ms": 0.001207458,
+        "minMs": 0.0005218125,
+        "opsPerSecond": 1310043.3820865978,
+        "mibPerSecond": null
+      },
+      "ratio": 1519.8575557079573
+    },
+    {
+      "id": "process.sleep.1",
+      "group": "process",
+      "label": "sleep 1 ms",
+      "bytes": null,
+      "iterations": 200,
+      "node": {
+        "medianMs": 1.144959375,
+        "p95Ms": 1.1959,
+        "minMs": 1.140253335,
+        "opsPerSecond": 873.3934337189911,
+        "mibPerSecond": null
+      },
+      "bun": {
+        "medianMs": 1.1433731249999999,
+        "p95Ms": 1.1758445849999999,
+        "minMs": 1.136456875,
+        "opsPerSecond": 874.6051294497587,
+        "mibPerSecond": null
+      },
+      "ratio": 1.0013873423865898
+    },
+    {
+      "id": "glob.ts",
+      "group": "glob",
+      "label": "find all .ts files",
+      "bytes": null,
+      "iterations": 10,
+      "node": {
+        "medianMs": 15.709299999999999,
+        "p95Ms": 23.4226959,
+        "minMs": 15.220670799999999,
+        "opsPerSecond": 63.656560126803875,
+        "mibPerSecond": null
+      },
+      "bun": {
+        "medianMs": 10.2082542,
+        "p95Ms": 12.835708399999998,
+        "minMs": 9.69895,
+        "opsPerSecond": 97.9599430429544,
+        "mibPerSecond": null
+      },
+      "ratio": 1.5388821332446834
+    },
+    {
+      "id": "http.get.1k",
+      "group": "http",
+      "label": "GET 1 KiB body",
+      "bytes": 1024,
+      "iterations": 500,
+      "node": {
+        "medianMs": 0.035640583999999996,
+        "p95Ms": 0.058828832,
+        "minMs": 0.030030415999999997,
+        "opsPerSecond": 28057.90163258829,
+        "mibPerSecond": 27.400294563074503
+      },
+      "bun": {
+        "medianMs": 0.034060332000000006,
+        "p95Ms": 0.048248666,
+        "minMs": 0.029901499999999998,
+        "opsPerSecond": 29359.666840593327,
+        "mibPerSecond": 28.67154964901692
+      },
+      "ratio": 1.046395672244181
+    },
+    {
+      "id": "http.get.1m",
+      "group": "http",
+      "label": "GET 1 MiB body",
+      "bytes": 1048576,
+      "iterations": 100,
+      "node": {
+        "medianMs": 0.21628792,
+        "p95Ms": 0.3220375,
+        "minMs": 0.18998833999999998,
+        "opsPerSecond": 4623.466719731736,
+        "mibPerSecond": 4623.466719731736
+      },
+      "bun": {
+        "medianMs": 0.21642582999999999,
+        "p95Ms": 0.29677791,
+        "minMs": 0.20290042,
+        "opsPerSecond": 4620.520572798543,
+        "mibPerSecond": 4620.520572798543
+      },
+      "ratio": 0.9993627840078053
+    },
+    {
+      "id": "http.get.1k.x50",
+      "group": "http",
+      "label": "GET 1 KiB, 50 parallel",
+      "bytes": 51200,
+      "iterations": 20,
+      "node": {
+        "medianMs": 0.3680396,
+        "p95Ms": 0.6157353999999999,
+        "minMs": 0.33690205,
+        "opsPerSecond": 2717.0989208769925,
+        "mibPerSecond": 132.6708457459469
+      },
+      "bun": {
+        "medianMs": 0.3649521,
+        "p95Ms": 0.5626708500000001,
+        "minMs": 0.35869585000000004,
+        "opsPerSecond": 2740.08561671518,
+        "mibPerSecond": 133.7932430036709
+      },
+      "ratio": 1.0084600143416083
+    },
+    {
+      "id": "http.upload.1m",
+      "group": "http",
+      "label": "multipart upload 1 MiB",
+      "bytes": 1048576,
+      "iterations": 30,
+      "node": {
+        "medianMs": 0.3092416666666667,
+        "p95Ms": 0.42712916666666667,
+        "minMs": 0.2853291666666667,
+        "opsPerSecond": 3233.716888086448,
+        "mibPerSecond": 3233.716888086448
+      },
+      "bun": {
+        "medianMs": 0.2540402666666667,
+        "p95Ms": 0.3425986,
+        "minMs": 0.2416625,
+        "opsPerSecond": 3936.383838362632,
+        "mibPerSecond": 3936.383838362632
+      },
+      "ratio": 1.217293898814991
+    },
+    {
+      "id": "http.upload.5m",
+      "group": "http",
+      "label": "multipart upload 5 MiB",
+      "bytes": 5242880,
+      "iterations": 10,
+      "node": {
+        "medianMs": 1.70915,
+        "p95Ms": 2.1748541,
+        "minMs": 1.4111375000000002,
+        "opsPerSecond": 585.0861539361671,
+        "mibPerSecond": 2925.4307696808355
+      },
+      "bun": {
+        "medianMs": 1.6080124999999998,
+        "p95Ms": 1.9111958000000002,
+        "minMs": 1.3434958,
+        "opsPerSecond": 621.8857129531021,
+        "mibPerSecond": 3109.4285647655106
+      },
+      "ratio": 1.0628959662937945
+    },
+    {
+      "id": "ws.echo.64b",
+      "group": "websocket",
+      "label": "echo 64 B",
+      "bytes": 64,
+      "iterations": 5000,
+      "node": {
+        "medianMs": 0.016783491799999998,
+        "p95Ms": 0.0225838666,
+        "minMs": 0.016524733399999998,
+        "opsPerSecond": 59582.35699200569,
+        "mibPerSecond": 3.6366184687503473
+      },
+      "bun": {
+        "medianMs": 0.0174008332,
+        "p95Ms": 0.0186502166,
+        "minMs": 0.016766775,
+        "opsPerSecond": 57468.51248479297,
+        "mibPerSecond": 3.5075996389644146
+      },
+      "ratio": 0.9645223080467202
+    },
+    {
+      "id": "ws.echo.1k",
+      "group": "websocket",
+      "label": "echo 1 KiB",
+      "bytes": 1024,
+      "iterations": 3000,
+      "node": {
+        "medianMs": 0.018334375,
+        "p95Ms": 0.029175319333333335,
+        "minMs": 0.017255680333333332,
+        "opsPerSecond": 54542.35554798023,
+        "mibPerSecond": 53.264019089824444
+      },
+      "bun": {
+        "medianMs": 0.018673236333333332,
+        "p95Ms": 0.021239680333333334,
+        "minMs": 0.017190430333333333,
+        "opsPerSecond": 53552.58093182884,
+        "mibPerSecond": 52.2974423162391
+      },
+      "ratio": 0.9818531010219993
+    },
+    {
+      "id": "voice.aesgcm.encrypt",
+      "group": "voice",
+      "label": "AES-GCM encrypt 160 B",
+      "bytes": 160,
+      "iterations": 5000,
+      "node": {
+        "medianMs": 0.0003830166,
+        "p95Ms": 0.0005938416,
+        "minMs": 0.0003484,
+        "opsPerSecond": 2610852.897759523,
+        "mibPerSecond": 398.3845364012944
+      },
+      "bun": {
+        "medianMs": 0.0123956834,
+        "p95Ms": 0.0216981666,
+        "minMs": 0.0082011166,
+        "opsPerSecond": 80673.24468774348,
+        "mibPerSecond": 12.309760236777265
+      },
+      "ratio": 0.03089919189126757
+    },
+    {
+      "id": "voice.aesgcm.decrypt",
+      "group": "voice",
+      "label": "AES-GCM decrypt 160 B",
+      "bytes": 160,
+      "iterations": 5000,
+      "node": {
+        "medianMs": 0.0003465166,
+        "p95Ms": 0.00047249160000000006,
+        "minMs": 0.000329225,
+        "opsPerSecond": 2885864.6310162344,
+        "mibPerSecond": 440.34799667606114
+      },
+      "bun": {
+        "medianMs": 0.008318166600000001,
+        "p95Ms": 0.0094259084,
+        "minMs": 0.0077011,
+        "opsPerSecond": 120218.79917625115,
+        "mibPerSecond": 18.34393297977465
+      },
+      "ratio": 0.041657809546637344
+    }
+  ]
+}
