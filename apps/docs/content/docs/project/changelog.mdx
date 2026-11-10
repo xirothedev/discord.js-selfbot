@@ -1,0 +1,51 @@
+---
+title: Changelog
+description: Release notes for discord-ts-selfbot.
+---
+
+## 14.0.0 — 2026-11-08
+
+The first release of the Bun + Turborepo monorepo.
+
+### Added
+
+- Bun workspaces and Turborepo task graph.
+- TypeScript source for every module under `src/`.
+- `Events`, `Partials`, and `Status` enums.
+- 11 `*BitField` aliases.
+- v14 builder exports and v13 aliases.
+- 20 interaction, component, and manager classes.
+- `Message#awaitMessageComponent` and `Message#createMessageComponentCollector`.
+- `InteractionCollector` and the `INTERACTION_CREATE` gateway wiring.
+- `Client#generateInvite`, `Client#fetchStickerPacks`, and `Client#deleteWebhook`.
+- Message extras: `report`, `markUnread`, `markRead`, `suppressEmbeds`, `removeAttachments`.
+- Account edits: `setBanner`, `setHypeSquad`, `setAccentColor`, `setAboutMe`, `setPronouns`, `setGlobalName`, `setSamsungActivity`, `fetchBurstCredit`.
+- Guild settings, vanity, community, and top emojis.
+- Message and member search.
+- Billing, Nitro/OAuth, sharding, and intents.
+- Friend invites.
+- Voice, DM/group calls, and recording.
+- Fake Discord HTTP and WebSocket test server.
+- Fumadocs documentation site.
+
+### Changed
+
+- Package name is `discord-ts-selfbot`, version `14.0.0`.
+- Runtime is Bun 1.4.4 or newer. Node.js is not supported.
+- The source tree is TypeScript-only. Bun runs the `.ts` source directly.
+- Docs moved to `apps/docs`. The legacy docgen and TypeDoc HTML artifacts are removed from the site.
+
+### Deprecated
+
+- v13 builder aliases: `ActionRow`, `Button`, `SelectMenu`, `Embed`, `Attachment`, `TextInput`.
+- `RelationshipManager#addFriend`, `#deleteRelationship`, `#sendFriendRequest`, and `#addBlocked` remain stubbed and marked `@deprecated` / `@experimental`.
+
+### Security
+
+- User tokens are never needed by the test harness.
+- The release workflow uses SHA-pinned GitHub Actions.
+- `bun publish` runs without `--provenance` because Bun 1.4.4 rejects the flag.
+
+## Full history
+
+Read the [GitHub Releases](https://github.com/xirothedev/discord.js-selfbot/releases) for every tag and commit.

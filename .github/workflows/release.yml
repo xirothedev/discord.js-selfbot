@@ -3,47 +3,47 @@ name: Release
 on:
   push:
     tags:
-      - '3*' # Trigger on version 3.x.x tags
-  workflow_dispatch:
+      - '14*' # Trigger on version 14.x.x tags
 
 permissions:
-  id-token: write
   contents: read
 
-jobs:
-  release:
-    runs-on: ubuntu-latest
+concurrency:
+  group: release-deploy
+  queue: max
+  cancel-in-progress: false
 
+jobs:
+  ci:
+    name: Checks
+    uses: ./.github/workflows/_ci-reusable.yml
+    with:
+      run_check: true
+      run_lint: true
+      run_test: true
+      run_docs: false
+
+  release:
+    name: Publish to NPM
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
-      - name: Install Node.js v22
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          node-version: 22
+          bun-version-file: package.json
 
-      - name: Configure npm for publishing
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
-      - name: Get current published version (if any)
-        id: current_version
-        run: |
-          version=$(npm view discord.js-selfbot-v13 version || echo "none")
-          echo "version=$version" >> $GITHUB_OUTPUT
-
-      - name: Deprecate previous version
-        if: steps.current_version.outputs.version != 'none'
-        run: |
-          echo "Deprecating version ${{ steps.current_version.outputs.version }}"
-          npm deprecate discord.js-selfbot-v13@${{ steps.current_version.outputs.version }} "Deprecated: Please use the latest version."
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
 
       - name: Publish to NPM
-        run: npm publish --provenance --access public
+        working-directory: packages/discord-ts-selfbot
+        run: bun publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}

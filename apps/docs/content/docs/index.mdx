@@ -1,0 +1,63 @@
+---
+title: Introduction
+description: A Bun-first, TypeScript selfbot library with a discord.js v14-compatible API.
+---
+
+<Callout type="warn" title="Selfbots carry account risk">
+  Using a user account with the Discord API is against Discord&apos;s Terms of Service. The library is provided
+  for educational use. Do not run it on an account you cannot afford to lose.
+</Callout>
+
+This documentation covers `discord-ts-selfbot@14.0.0`, a fork of `discord.js-selfbot-v13` re-platformed on Bun with a TypeScript source of truth and a discord.js v14-compatible public surface.
+
+## Start here
+
+<Cards>
+  <Card
+    title="Installation"
+    href="/docs/getting-started/installation"
+    description="Install the package with Bun and create your first client."
+  />
+  <Card
+    title="Token safety"
+    href="/docs/getting-started/token-safety"
+    description="How to store a user token and what can go wrong."
+  />
+  <Card
+    title="API reference"
+    href="/docs/api"
+    description="Generated reference for every public class, type, and enum."
+  />
+  <Card
+    title="Examples"
+    href="/docs/examples/basic-client"
+    description="Runnable TypeScript and JavaScript examples."
+  />
+</Cards>
+
+## What this fork adds
+
+- **discord.js v14 surface:** `Events`, `Partials`, `Status`, builders, interaction classes, collectors, and the v14 client methods.
+- **Selfbot features:** presence, account edits, friend invites, message search, guild settings, billing, voice, calls, and recording.
+- **Bun runtime:** `bun install`, `bun test`, `bun check`, and a Bun-native build. Node.js is not supported.
+- **Test seam:** a fake Discord HTTP and WebSocket server in `packages/test-harness`, with no real token or network.
+- **TypeScript source:** every module under `src/` is TypeScript, and Bun runs it directly.
+
+## Guides
+
+<Cards>
+  <Card title="Client and events" href="/docs/guides/client-events" description="Client options, gateway events, partials, and status." />
+  <Card title="Messages" href="/docs/guides/messages" description="Send, edit, react, search, and manage message state." />
+  <Card title="Interactions" href="/docs/guides/interactions" description="Slash commands, components, modals, and collectors." />
+  <Card title="Voice" href="/docs/guides/voice" description="Join a channel, play media, and disconnect cleanly." />
+  <Card title="Calls" href="/docs/guides/calls" description="DM and group calls, ringing, and message requests." />
+  <Card title="Recording" href="/docs/guides/recording" description="Record audio and video through ffmpeg." />
+</Cards>
+
+## Project
+
+- [v14 parity report](/docs/project/v14-parity)
+- [Changelog](/docs/project/changelog)
+- [Contributing](/docs/project/contributing)
+- [Safety](/docs/project/safety)
+- [License](/docs/project/license)

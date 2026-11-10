@@ -1,0 +1,64 @@
+import Base from './Base';
+import type { Client } from '../client/Client';
+import type { Guild } from './Guild';
+import type { RawGuildBanData } from '../../typings/rawDataTypes';
+
+/**
+ * Represents a ban in a guild on Discord.
+ * @extends {Base}
+ */
+class GuildBan extends Base {
+  declare guild: import('./Guild').Guild;
+  declare user: import('./User').User;
+  declare reason?: string | null;
+  constructor(client: Client, data: RawGuildBanData, guild: Guild) {
+    super(client);
+
+    /**
+     * The guild in which the ban is
+     * @type {Guild}
+     */
+    this.guild = guild;
+
+    this._patch(data);
+  }
+
+  _patch(data: RawGuildBanData) {
+    if ('user' in data) {
+      /**
+       * The user this ban applies to
+       * @type {User}
+       */
+      this.user = this.client.users._add(data.user, true);
+    }
+
+    if ('reason' in data) {
+      /**
+       * The reason for the ban
+       * @type {?string}
+       */
+      this.reason = data.reason;
+    }
+  }
+
+  /**
+   * Whether this GuildBan is partial. If the reason is not provided the value is null
+   * @type {boolean}
+   * @readonly
+   */
+  get partial() {
+    return !('reason' in this);
+  }
+
+  /**
+   * Fetches this GuildBan.
+   * @param {boolean} [force=true] Whether to skip the cache check and request the API
+   * @returns {Promise<GuildBan>}
+   */
+  fetch(force = true) {
+    return this.guild.bans.fetch({ user: this.user.id, cache: true, force });
+  }
+}
+
+export default GuildBan;
+export { GuildBan };

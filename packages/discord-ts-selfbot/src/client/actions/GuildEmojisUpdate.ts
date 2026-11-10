@@ -1,0 +1,35 @@
+import Action from './Action';
+import type { GatewayGuildEmojisUpdateDispatchData } from 'discord-api-types/v10';
+
+class GuildEmojisUpdateAction extends Action {
+  handle(data: GatewayGuildEmojisUpdateDispatchData) {
+    const guild = this.client.guilds.cache.get(data.guild_id);
+    if (!guild?.emojis) return;
+
+    const deletions = new Map(guild.emojis.cache);
+
+    for (const emoji of data.emojis) {
+      if (!emoji.id) continue;
+      // Determine type of emoji event
+      const cachedEmoji = guild.emojis.cache.get(emoji.id);
+      if (cachedEmoji) {
+        deletions.delete(emoji.id);
+        if (!cachedEmoji.equals(emoji)) {
+          // Emoji updated
+          this.client.actions.GuildEmojiUpdate.handle(cachedEmoji, emoji);
+        }
+      } else {
+        // Emoji added
+        this.client.actions.GuildEmojiCreate.handle(guild, emoji);
+      }
+    }
+
+    for (const emoji of deletions.values()) {
+      // Emoji deleted
+      this.client.actions.GuildEmojiDelete.handle(emoji);
+    }
+  }
+}
+
+export default GuildEmojisUpdateAction;
+export { GuildEmojisUpdateAction };

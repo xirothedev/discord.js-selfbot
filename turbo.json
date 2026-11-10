@@ -1,0 +1,129 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "stream",
+  "globalDependencies": ["bunfig.toml", "tsconfig.json"],
+  "tasks": {
+    "build": {
+      "inputs": [
+        "src/**",
+        "tools/**",
+        "typings/**",
+        "app/**",
+        "components/**",
+        "content/**",
+        "lib/**",
+        "scripts/**",
+        "next.config.*",
+        "postcss.config.*",
+        "tsconfig.json",
+        "package.json"
+      ],
+      "outputs": ["dist/**", "out/**"],
+      "outputLogs": "errors-only"
+    },
+    "check": {
+      "inputs": [
+        "src/**",
+        "tools/**",
+        "typings/**",
+        "app/**",
+        "components/**",
+        "content/**",
+        "lib/**",
+        "scripts/**",
+        "next.config.*",
+        "tsconfig.json",
+        "package.json"
+      ],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
+    "lint": {
+      "inputs": ["src/**", "tools/**", "typings/**", "app/**", "components/**", "lib/**", "scripts/**", "package.json"],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
+    "fmt": {
+      "inputs": [
+        "src/**",
+        "tools/**",
+        "typings/**",
+        "app/**",
+        "components/**",
+        "lib/**",
+        "scripts/**",
+        "next.config.*",
+        "postcss.config.*",
+        "package.json",
+        "tsconfig.json"
+      ],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
+    "fmt:check": {
+      "inputs": [
+        "src/**",
+        "tools/**",
+        "typings/**",
+        "app/**",
+        "components/**",
+        "lib/**",
+        "scripts/**",
+        "next.config.*",
+        "postcss.config.*",
+        "package.json",
+        "tsconfig.json"
+      ],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
+    "test": {
+      "inputs": [
+        "src/**",
+        "tools/**",
+        "typings/**",
+        "tests/**",
+        "scripts/**",
+        "package.json",
+        "$TURBO_ROOT$/packages/test-harness/src/**"
+      ],
+      "outputs": ["coverage/**"],
+      "outputLogs": "new-only"
+    },
+    "api": {
+      "inputs": [
+        "scripts/**",
+        "$TURBO_ROOT$/packages/discord-ts-selfbot/src/**",
+        "$TURBO_ROOT$/packages/discord-ts-selfbot/typings/**",
+        "$TURBO_ROOT$/packages/discord-ts-selfbot/package.json",
+        "$TURBO_ROOT$/packages/discord-ts-selfbot/tsconfig.json",
+        "docgen.yml",
+        "package.json"
+      ],
+      "outputs": ["content/docs/api/**"],
+      "outputLogs": "errors-only"
+    },
+    "docs": {
+      "dependsOn": ["api"],
+      "inputs": [
+        "app/**",
+        "components/**",
+        "content/**",
+        "lib/**",
+        "next.config.*",
+        "postcss.config.*",
+        "tsconfig.json",
+        "package.json",
+        "$TURBO_ROOT$/packages/discord-ts-selfbot/src/**",
+        "$TURBO_ROOT$/packages/discord-ts-selfbot/typings/**"
+      ],
+      "outputs": ["out/**"],
+      "outputLogs": "errors-only"
+    },
+    "lint:boundaries": {
+      "inputs": ["src/packages/**", ".dependency-cruiser.cjs"],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    }
+  }
+}

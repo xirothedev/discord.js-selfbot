@@ -1,0 +1,27 @@
+{
+  "name": "@discord-ts-selfbot/examples-ts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "TypeScript examples for discord-ts-selfbot",
+  "type": "module",
+  "scripts": {
+    "check": "bun check",
+    "lint": "bun lint",
+    "fmt": "bun fmt",
+    "fmt:check": "bun fmt --check",
+    "basic": "bun run basic-client.ts",
+    "events": "bun run events.ts",
+    "presence": "bun run presence.ts",
+    "slash-commands": "bun run slash-commands.ts"
+  },
+  "dependencies": {
+    "discord-ts-selfbot": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
+  }
+}

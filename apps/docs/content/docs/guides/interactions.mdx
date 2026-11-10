@@ -1,0 +1,140 @@
+---
+title: Interactions
+description: Register slash commands, handle components and modals, and collect responses.
+---
+
+## Register slash commands
+
+```ts
+import { Client, Events } from 'discord-ts-selfbot';
+import type { ApplicationCommandData } from 'discord-ts-selfbot';
+
+const commands: ApplicationCommandData[] = [
+  { name: 'ping', description: 'Replies with Pong!' },
+];
+
+const client = new Client();
+
+client.once(Events.CLIENT_READY, async (readyClient) => {
+  await readyClient.application.commands.set(commands);
+});
+```
+
+`client.application` is typed as `ClientApplication`. Commands registered here are global. Guild-scoped commands are available through `guild.commands`.
+
+## Handle an interaction
+
+```ts
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isCommand()) return;
+
+  if (interaction.commandName === 'ping') {
+    await interaction.reply('Pong!');
+  }
+});
+```
+
+Use `deferReply()` before work that takes longer than three seconds:
+
+```ts
+await interaction.deferReply();
+const result = await doSlowWork();
+await interaction.editReply(result);
+```
+
+## Buttons and select menus
+
+Build a row with the v14 builders:
+
+```ts
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord-ts-selfbot';
+
+const row = new ActionRowBuilder().addComponents(
+  new ButtonBuilder().setCustomId('confirm').setLabel('Confirm').setStyle(ButtonStyle.Primary),
+);
+
+const message = await channel.send({ content: 'Continue?', components: [row] });
+
+const interaction = await message.awaitMessageComponent({
+  time: 15_000,
+});
+
+await interaction.update({ content: 'Confirmed.', components: [] });
+```
+
+`awaitMessageComponent` rejects when the timeout expires. Catch the timeout and disable the components:
+
+```ts
+try {
+  const interaction = await message.awaitMessageComponent({ time: 15_000 });
+  await interaction.update({ content: 'Confirmed.', components: [] });
+} catch {
+  await message.edit({ components: [] });
+}
+```
+
+## Collect multiple interactions
+
+```ts
+const collector = message.createMessageComponentCollector({ time: 60_000 });
+
+collector.on('collect', async (interaction) => {
+  if (interaction.customId === 'confirm') {
+    await interaction.reply({ content: 'Confirmed.', ephemeral: true });
+    collector.stop();
+  }
+});
+
+collector.on('end', () => {
+  console.log('Collector finished.');
+});
+```
+
+The collector returns an `InteractionCollector`. It listens to `INTERACTION_CREATE` on the gateway; the handler is wired in this fork, so no manual gateway patch is needed.
+
+## Modals
+
+```ts
+import { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord-ts-selfbot';
+
+const modal = new ModalBuilder().setCustomId('feedback').setTitle('Feedback').addComponents(
+  new ActionRowBuilder().addComponents(
+    new TextInputBuilder()
+      .setCustomId('body')
+      .setLabel('Your feedback')
+      .setStyle(TextInputStyle.Paragraph),
+  ),
+);
+
+await interaction.showModal(modal);
+```
+
+Handle the submit with `Events.InteractionCreate` and `interaction.isModalSubmit()`:
+
+```ts
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isModalSubmit()) return;
+  if (interaction.customId !== 'feedback') return;
+
+  await interaction.reply({ content: `Received: ${interaction.fields.getTextInputValue('body')}` });
+});
+```
+
+## Autocomplete
+
+```ts
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isAutocomplete()) return;
+
+  const focused = interaction.options.getFocused();
+  const choices = ['alpha', 'beta', 'gamma'].filter((choice) => choice.startsWith(focused));
+
+  await interaction.respond(choices.map((choice) => ({ name: choice, value: choice })));
+});
+```
+
+## Next
+
+- [Voice](/docs/guides/voice)
+- [API: InteractionCollector](/docs/api/structures/interaction-collector)
+- [API: Structures](/docs/api/structures)

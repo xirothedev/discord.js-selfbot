@@ -1,0 +1,186 @@
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
+const { TypeError, Error } = _errorsModule;
+import _StageInstanceModule from '../structures/StageInstance';
+const { StageInstance } = _StageInstanceModule;
+import _ConstantsModule from '../util/Constants';
+const { PrivacyLevels } = _ConstantsModule;
+import type { RawStageInstanceData } from '../../typings/rawDataTypes';
+import type {
+  BaseFetchOptions,
+  StageChannelResolvable,
+  StageInstanceCreateOptions,
+  StageInstanceEditOptions,
+} from '../../typings';
+import type { Guild } from '../structures/Guild';
+import type { StageChannel } from '../structures/StageChannel';
+
+type StageChannelResolvableSource = StageChannel | StageChannelResolvable;
+
+/**
+ * Manages API methods for {@link StageInstance} objects and holds their cache.
+ * @extends {CachedManager}
+ */
+class StageInstanceManager extends CachedManager<import('../structures/StageInstance').StageInstance> {
+  declare guild: Guild;
+  constructor(guild: Guild, iterable?: Iterable<InstanceType<typeof StageInstance>>) {
+    super(guild.client, StageInstance, iterable);
+
+    /**
+     * The guild this manager belongs to
+     * @type {Guild}
+     */
+    this.guild = guild;
+  }
+
+  /**
+   * The cache of this Manager
+   * @type {Collection<Snowflake, StageInstance>}
+   * @name StageInstanceManager#cache
+   */
+
+  /**
+   * Options used to create a stage instance.
+   * @typedef {Object} StageInstanceCreateOptions
+   * @property {string} topic The topic of the stage instance
+   * @property {PrivacyLevel|number} [privacyLevel] The privacy level of the stage instance
+   * @property {boolean} [sendStartNotification] Whether to notify `@everyone` that the stage instance has started
+   * @property {GuildScheduledEventResolvable} [guildScheduledEvent]
+   * The guild scheduled event associated with the stage instance
+   */
+
+  /**
+   * Data that can be resolved to a Stage Channel object. This can be:
+   * * A StageChannel
+   * * A Snowflake
+   * @typedef {StageChannel|Snowflake} StageChannelResolvable
+   */
+
+  /**
+   * Creates a new stage instance.
+   * @param {StageChannelResolvable} channel The stage channel to associate the created stage instance to
+   * @param {StageInstanceCreateOptions} options The options to create the stage instance
+   * @returns {Promise<StageInstance>}
+   * @example
+   * // Create a stage instance
+   * guild.stageInstances.create('1234567890123456789', {
+   *  topic: 'A very creative topic',
+   *  privacyLevel: 'GUILD_ONLY'
+   * })
+   *  .then(stageInstance => console.log(stageInstance))
+   *  .catch(console.error);
+   */
+  async create(
+    channel: StageChannelResolvableSource,
+    options: StageInstanceCreateOptions,
+  ): Promise<InstanceType<typeof StageInstance>> {
+    const channelId = this.guild.channels.resolveId(channel);
+    if (!channelId) throw new Error('STAGE_CHANNEL_RESOLVE');
+    if (typeof options !== 'object') throw new TypeError('INVALID_TYPE', 'options', 'object', true);
+    let { guildScheduledEvent, topic, privacyLevel, sendStartNotification } = options;
+
+    privacyLevel &&= typeof privacyLevel === 'number' ? privacyLevel : PrivacyLevels[privacyLevel];
+    const guildScheduledEventId = guildScheduledEvent && this.resolveId(guildScheduledEvent);
+
+    const data: RawStageInstanceData = await this.client.api['stage-instances'].post({
+      data: {
+        channel_id: channelId,
+        topic,
+        privacy_level: privacyLevel,
+        send_start_notification: sendStartNotification,
+        guild_scheduled_event_id: guildScheduledEventId,
+      },
+    });
+
+    return this._add(data);
+  }
+
+  /**
+   * Fetches the stage instance associated with a stage channel, if it exists.
+   * @param {StageChannelResolvable} channel The stage channel whose associated stage instance is to be fetched
+   * @param {BaseFetchOptions} [options] Additional options for this fetch
+   * @returns {Promise<StageInstance>}
+   * @example
+   * // Fetch a stage instance
+   * guild.stageInstances.fetch('1234567890123456789')
+   *  .then(stageInstance => console.log(stageInstance))
+   *  .catch(console.error);
+   */
+  async fetch(
+    channel: StageChannelResolvableSource,
+    { cache = true, force = false }: BaseFetchOptions = {},
+  ): Promise<InstanceType<typeof StageInstance>> {
+    const channelId = this.guild.channels.resolveId(channel);
+    if (!channelId) throw new Error('STAGE_CHANNEL_RESOLVE');
+
+    if (!force) {
+      const existing = this.cache.find(stageInstance => stageInstance.channelId === channelId);
+      if (existing) return existing;
+    }
+
+    const data: RawStageInstanceData = await this.client.api('stage-instances', channelId).get();
+    return this._add(data, cache);
+  }
+
+  /**
+   * Options used to edit an existing stage instance.
+   * @typedef {Object} StageInstanceEditOptions
+   * @property {string} [topic] The new topic of the stage instance
+   * @property {PrivacyLevel|number} [privacyLevel] The new privacy level of the stage instance
+   */
+
+  /**
+   * Edits an existing stage instance.
+   * @param {StageChannelResolvable} channel The stage channel whose associated stage instance is to be edited
+   * @param {StageInstanceEditOptions} options The options to edit the stage instance
+   * @returns {Promise<StageInstance>}
+   * @example
+   * // Edit a stage instance
+   * guild.stageInstances.edit('1234567890123456789', { topic: 'new topic' })
+   *  .then(stageInstance => console.log(stageInstance))
+   *  .catch(console.error);
+   */
+  async edit(
+    channel: StageChannelResolvableSource,
+    options: StageInstanceEditOptions,
+  ): Promise<InstanceType<typeof StageInstance>> {
+    if (typeof options !== 'object') throw new TypeError('INVALID_TYPE', 'options', 'object', true);
+    const channelId = this.guild.channels.resolveId(channel);
+    if (!channelId) throw new Error('STAGE_CHANNEL_RESOLVE');
+
+    let { topic, privacyLevel } = options;
+
+    privacyLevel &&= typeof privacyLevel === 'number' ? privacyLevel : PrivacyLevels[privacyLevel];
+
+    const data: RawStageInstanceData = await this.client.api('stage-instances', channelId).patch({
+      data: {
+        topic,
+        privacy_level: privacyLevel,
+      },
+    });
+
+    const existing = this.cache.get(data.id);
+    if (existing) {
+      const clone = existing._clone();
+      clone._patch(data);
+      return clone;
+    }
+
+    return this._add(data);
+  }
+
+  /**
+   * Deletes an existing stage instance.
+   * @param {StageChannelResolvable} channel The stage channel whose associated stage instance is to be deleted
+   * @returns {Promise<void>}
+   */
+  async delete(channel: StageChannelResolvableSource): Promise<void> {
+    const channelId = this.guild.channels.resolveId(channel);
+    if (!channelId) throw new Error('STAGE_CHANNEL_RESOLVE');
+
+    await this.client.api('stage-instances', channelId).delete();
+  }
+}
+
+export default StageInstanceManager;
+export { StageInstanceManager };
