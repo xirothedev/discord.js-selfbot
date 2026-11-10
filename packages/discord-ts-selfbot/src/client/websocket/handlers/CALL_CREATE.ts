@@ -1,14 +1,23 @@
+import type { Client } from '../../Client';
+import type { WebSocketShard } from '../WebSocketShard';
 import CallState from '../../../structures/CallState';
 import _ConstantsModule from '../../../util/Constants';
 const { Events } = _ConstantsModule;
-export default (client: any, packet: any) => {
-  for (const voice of packet.d.voice_states) {
+import type { CallData } from '../../../structures/CallState';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isCallData(value: unknown): value is CallData {
+  return isRecord(value) && typeof value.channel_id === 'string';
+}
+
+export default (client: Client, packet: { d?: unknown }, _shard: WebSocketShard) => {
+  if (!isCallData(packet.d)) return;
+  const data = packet.d;
+  for (const voice of data.voice_states ?? []) {
     client.actions.VoiceStateUpdate.handle(voice);
   }
-  /**
-   * Emitted whenever received a call
-   * @event Client#callCreate
-   * @param {CallState} call Call
-   */
-  client.emit(Events.CALL_CREATE, new CallState(client, packet.d));
+  client.emit(Events.CALL_CREATE, new CallState(client, data));
 };

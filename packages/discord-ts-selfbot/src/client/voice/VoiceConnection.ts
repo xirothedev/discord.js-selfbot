@@ -1290,7 +1290,7 @@ class StreamConnectionReadonly extends VoiceConnection {
     return null;
   }
 
-  set streamConnection(_value: any) {
+  set streamConnection(_value: StreamConnection | null) {
     // Why ?
   }
 

@@ -240,7 +240,7 @@ class H265NalSplitter extends AnnexBNalSplitter {
     super(H265Helpers);
   }
 
-  removeEpbs(frame: any) {
+  removeEpbs(frame: Buffer) {
     return frame; // No specific processing for H265
   }
 }

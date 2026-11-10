@@ -4,11 +4,11 @@ import type { Snowflake } from 'discord-api-types/v10';
 import type { Client } from '../client/Client';
 import type { User } from './User';
 
-interface CallStateData {
+export interface CallData {
   channel_id: Snowflake;
   region?: string;
   ringing?: Snowflake[];
-  voice_states?: unknown[];
+  voice_states?: import('../../typings/rawDataTypes').RawVoiceStateData[];
 }
 
 /**
@@ -19,7 +19,7 @@ class CallState extends Base {
   declare channelId: Snowflake;
   declare region: string;
   declare _ringing: Snowflake[];
-  constructor(client: Client, data: CallStateData) {
+  constructor(client: Client, data: CallData) {
     super(client);
     /**
      * The channel ID of the call
@@ -32,7 +32,7 @@ class CallState extends Base {
     this._patch(data);
   }
 
-  _patch(data: Partial<CallStateData>) {
+  _patch(data: Partial<CallData>) {
     if (typeof data.region === 'string') {
       /**
        * The region of the call

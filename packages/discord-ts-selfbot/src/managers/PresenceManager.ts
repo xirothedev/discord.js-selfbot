@@ -2,6 +2,7 @@ import CachedManager from './CachedManager';
 import _PresenceModule from '../structures/Presence';
 const { Presence } = _PresenceModule;
 import type { RawPresenceData } from '../../typings/rawDataTypes';
+import type { GatewayGuildMembersChunkPresence } from 'discord-api-types/v10';
 import type { Client } from '../client/Client';
 
 /**
@@ -19,7 +20,7 @@ class PresenceManager extends CachedManager<import('../structures/Presence').Pre
    * @name PresenceManager#cache
    */
 
-  _add(data: RawPresenceData, cache = true): InstanceType<typeof Presence> {
+  _add(data: RawPresenceData | GatewayGuildMembersChunkPresence, cache = true): InstanceType<typeof Presence> {
     return super._add(data, cache, { id: data.user.id });
   }
 

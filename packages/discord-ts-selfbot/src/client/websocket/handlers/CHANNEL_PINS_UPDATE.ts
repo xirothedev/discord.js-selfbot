@@ -1,18 +1,30 @@
+import type { Client } from '../../Client';
+import type { WebSocketShard } from '../WebSocketShard';
 import _ConstantsModule from '../../../util/Constants';
 const { Events } = _ConstantsModule;
-export default (client: any, { d: data }: any) => {
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+interface ChannelPinsData {
+  channel_id: string;
+  last_pin_timestamp?: string | null;
+}
+
+function isChannelPinsData(value: unknown): value is ChannelPinsData {
+  return isRecord(value) && typeof value.channel_id === 'string';
+}
+
+export default (client: Client, packet: { d?: unknown }, _shard: WebSocketShard) => {
+  if (!isChannelPinsData(packet.d)) return;
+  const data = packet.d;
   const channel = client.channels.cache.get(data.channel_id);
-  const time = data.last_pin_timestamp ? new Date(data.last_pin_timestamp).getTime() : null;
-  if (channel) {
+  const timestamp = typeof data.last_pin_timestamp === 'string' ? data.last_pin_timestamp : null;
+  const time = timestamp ? new Date(timestamp).getTime() : null;
+  if (channel && 'lastPinTimestamp' in channel) {
     // Discord sends null for last_pin_timestamp if the last pinned message was removed
     channel.lastPinTimestamp = time;
-    /**
-     * Emitted whenever the pins of a channel are updated. Due to the nature of the WebSocket event,
-     * not much information can be provided easily here - you need to manually check the pins yourself.
-     * @event Client#channelPinsUpdate
-     * @param {TextBasedChannels} channel The channel that the pins update occurred in
-     * @param {Date} time The time of the pins update
-     */
     client.emit(Events.CHANNEL_PINS_UPDATE, channel, time);
   }
 };

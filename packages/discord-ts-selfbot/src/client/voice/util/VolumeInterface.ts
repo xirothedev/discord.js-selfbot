@@ -8,7 +8,7 @@ import { Buffer } from 'node:buffer';
 class VolumeInterface extends EventEmitter {
   declare _volume: number;
 
-  constructor({ volume = 1 }: any = {}) {
+  constructor({ volume = 1 }: { volume?: number } = {}) {
     super();
     this.setVolume(volume);
   }
@@ -97,7 +97,7 @@ class VolumeInterface extends EventEmitter {
 
 const props = ['volumeDecibels', 'volumeLogarithmic', 'setVolumeDecibels', 'setVolumeLogarithmic'];
 
-function applyToClass(structure: any) {
+function applyToClass(structure: { prototype: object }) {
   for (const prop of props) {
     Object.defineProperty(structure.prototype, prop, Object.getOwnPropertyDescriptor(VolumeInterface.prototype, prop)!);
   }

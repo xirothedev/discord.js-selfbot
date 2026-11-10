@@ -7,13 +7,13 @@ const { Channel } = _ChannelModule;
  */
 class DirectoryChannel extends Channel {
   declare name: string;
-  _patch(data: any) {
+  _patch(data: Parameters<typeof Channel.prototype._patch>[0] & { name?: string }) {
     super._patch(data);
     /**
      * The channel's name
      * @type {string}
      */
-    this.name = data.name;
+    if (typeof data.name === 'string') this.name = data.name;
   }
 }
 

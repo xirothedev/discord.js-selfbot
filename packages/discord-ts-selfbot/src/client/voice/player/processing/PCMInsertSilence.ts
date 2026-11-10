@@ -1,6 +1,6 @@
 import { Buffer } from 'node:buffer';
 import { Transform } from 'node:stream';
-import type { TransformCallback } from 'node:stream';
+import type { TransformCallback, TransformOptions } from 'node:stream';
 
 class PCMInsertSilence extends Transform {
   declare sampleRate: number;
@@ -9,7 +9,7 @@ class PCMInsertSilence extends Transform {
   declare lastChunkTime: number;
   declare silenceThresholdMs: number;
 
-  constructor(options: any = {}) {
+  constructor(options: TransformOptions = {}) {
     super(options);
     // 48Khz, 2 channels, 16-bit (2 bytes per channel)
     this.sampleRate = 48000;

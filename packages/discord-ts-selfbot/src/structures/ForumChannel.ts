@@ -8,13 +8,14 @@ const { ForumLayoutTypes } = _ConstantsModule;
  */
 class ForumChannel extends ThreadOnlyChannel {
   declare defaultForumLayout: import('../../typings/enums').ForumLayoutTypes;
-  _patch(data: any) {
+  _patch(data: Parameters<typeof ThreadOnlyChannel.prototype._patch>[0] & { default_forum_layout?: number }) {
     super._patch(data);
     /**
      * The default layout type used to display posts
      * @type {ForumLayoutType}
      */
-    this.defaultForumLayout = ForumLayoutTypes[data.default_forum_layout];
+    this.defaultForumLayout =
+      typeof data.default_forum_layout === 'number' ? ForumLayoutTypes[data.default_forum_layout] : null;
   }
 
   /**

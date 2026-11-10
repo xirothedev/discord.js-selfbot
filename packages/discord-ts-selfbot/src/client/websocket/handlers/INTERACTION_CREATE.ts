@@ -7,11 +7,25 @@ import SelectMenuInteraction from '../../../structures/SelectMenuInteraction';
 import UserContextMenuInteraction from '../../../structures/UserContextMenuInteraction';
 import _ConstantsModule from '../../../util/Constants';
 const { ApplicationCommandTypes, Events, InteractionTypes, MessageComponentTypes } = _ConstantsModule;
+import type { Client } from '../../Client';
+import type { WebSocketShard } from '../WebSocketShard';
+import type { RawInteractionData } from '../../../../typings/rawDataTypes';
 
-function resolveInteractionType(data: any): any {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isInteractionData(value: unknown): value is RawInteractionData {
+  return isRecord(value) && typeof value.type === 'number';
+}
+
+type InteractionConstructor = new (...args: never[]) => unknown;
+
+function resolveInteractionType(data: RawInteractionData): InteractionConstructor | null {
+  const payload: unknown = data.data;
   switch (data.type) {
     case InteractionTypes.APPLICATION_COMMAND:
-      switch (data.data?.type) {
+      switch (isRecord(payload) ? payload.type : undefined) {
         case ApplicationCommandTypes.USER:
           return UserContextMenuInteraction;
         case ApplicationCommandTypes.MESSAGE:
@@ -20,7 +34,7 @@ function resolveInteractionType(data: any): any {
           return CommandInteraction;
       }
     case InteractionTypes.MESSAGE_COMPONENT:
-      switch (data.data?.component_type) {
+      switch (isRecord(payload) ? payload.component_type : undefined) {
         case MessageComponentTypes.BUTTON:
           return ButtonInteraction;
         case MessageComponentTypes.STRING_SELECT:
@@ -41,9 +55,11 @@ function resolveInteractionType(data: any): any {
   }
 }
 
-export default (client: any, { d: data }: any) => {
+export default (client: Client, packet: { d?: unknown }, _shard: WebSocketShard) => {
+  if (!isInteractionData(packet.d)) return;
+  const data = packet.d;
   const InteractionType = resolveInteractionType(data);
-  const interaction = InteractionType ? new InteractionType(client, data) : data;
+  const interaction = InteractionType ? Reflect.construct(InteractionType, [client, data]) : data;
 
   /**
    * Emitted when an interaction is created.

@@ -1,15 +1,22 @@
+import type { Client } from '../../Client';
+import type { WebSocketShard } from '../WebSocketShard';
 import _ConstantsModule from '../../../util/Constants';
 const { Events } = _ConstantsModule;
-export default (client: any, { d: data }: any) => {
+import type { RelationshipData } from '../../../managers/RelationshipManager';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isRelationshipData(value: unknown): value is RelationshipData {
+  return isRecord(value) && typeof value.id === 'string';
+}
+
+export default (client: Client, packet: { d?: unknown }, _shard: WebSocketShard) => {
+  if (!isRelationshipData(packet.d)) return;
+  const data = packet.d;
   client.relationships.cache.delete(data.id);
   client.relationships.friendNicknames.delete(data.id);
   client.relationships.sinceCache.delete(data.id);
-  /**
-   * Emitted when a relationship is removed, relevant to the current user.
-   * @event Client#relationshipRemove
-   * @param {Snowflake} user The userID that was updated
-   * @param {RelationshipType} type The type of the old relationship
-   * @param {string | null} nickname The nickname of the user in this relationship (1-32 characters)
-   */
   client.emit(Events.RELATIONSHIP_REMOVE, data.id, data.type, data.nickname);
 };

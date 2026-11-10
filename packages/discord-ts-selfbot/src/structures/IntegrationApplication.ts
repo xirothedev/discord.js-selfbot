@@ -6,7 +6,7 @@ import Application from './interfaces/Application';
  */
 class IntegrationApplication extends Application {
   declare summary: string | null;
-  _patch(data: any) {
+  _patch(data: Parameters<typeof Application.prototype._patch>[0] & { bot?: import('discord-api-types/v10').APIUser }) {
     super._patch(data);
 
     if ('bot' in data) {
@@ -24,7 +24,7 @@ class IntegrationApplication extends Application {
        * The URL of the application's terms of service
        * @type {?string}
        */
-      this.termsOfServiceURL = data.terms_of_service_url;
+      this.termsOfServiceURL = data.terms_of_service_url ?? null;
     } else {
       this.termsOfServiceURL ??= null;
     }
@@ -34,7 +34,7 @@ class IntegrationApplication extends Application {
        * The URL of the application's privacy policy
        * @type {?string}
        */
-      this.privacyPolicyURL = data.privacy_policy_url;
+      this.privacyPolicyURL = data.privacy_policy_url ?? null;
     } else {
       this.privacyPolicyURL ??= null;
     }
@@ -44,7 +44,7 @@ class IntegrationApplication extends Application {
        * The Array of RPC origin URLs
        * @type {string[]}
        */
-      this.rpcOrigins = data.rpc_origins;
+      this.rpcOrigins = data.rpc_origins ?? [];
     } else {
       this.rpcOrigins ??= [];
     }
@@ -55,7 +55,7 @@ class IntegrationApplication extends Application {
        * @type {?string}
        * @deprecated This property is no longer being sent by the API.
        */
-      this.summary = data.summary;
+      this.summary = data.summary ?? null;
     } else {
       this.summary ??= null;
     }
@@ -65,7 +65,7 @@ class IntegrationApplication extends Application {
        * Whether the application can be default hooked by the client
        * @type {?boolean}
        */
-      this.hook = data.hook;
+      this.hook = data.hook ?? null;
     } else {
       this.hook ??= null;
     }
@@ -75,7 +75,7 @@ class IntegrationApplication extends Application {
        * The hash of the application's cover image
        * @type {?string}
        */
-      this.cover = data.cover_image;
+      this.cover = data.cover_image ?? null;
     } else {
       this.cover ??= null;
     }
@@ -85,7 +85,7 @@ class IntegrationApplication extends Application {
        * The hex-encoded key for verification in interactions and the GameSDK's GetTicket
        * @type {?string}
        */
-      this.verifyKey = data.verify_key;
+      this.verifyKey = data.verify_key ?? null;
     } else {
       this.verifyKey ??= null;
     }

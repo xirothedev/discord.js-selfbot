@@ -1,6 +1,6 @@
 import { Buffer } from 'buffer';
 import { Transform } from 'stream';
-import type { TransformCallback } from 'stream';
+import type { TransformCallback, TransformOptions } from 'stream';
 /*
 Credit: https://github.com/dank074/Discord-video-stream
 The use of video streaming in this library is an incomplete implementation with many bugs, primarily aimed at lazy users.
@@ -35,14 +35,14 @@ class IvfTransformer extends Transform {
   declare buf: Buffer | null;
   declare retFullFrame: boolean;
 
-  constructor(options: any = {}) {
+  constructor(options: TransformOptions & { fullframe?: boolean } = {}) {
     super(options);
     this.headerSize = 32;
     this.frameHeaderSize = 12;
 
     this.header = null;
     this.buf = null;
-    this.retFullFrame = options && options.fullframe ? options.fullframe : false;
+    this.retFullFrame = Boolean(options.fullframe);
   }
 
   _parseHeader(header: Buffer) {

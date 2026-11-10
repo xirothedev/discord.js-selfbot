@@ -1,13 +1,13 @@
 import Action from './Action';
 import { isTextBasedChannel, isGuildBasedChannel } from '../../types/channels';
-import type { GatewayChannelUpdateDispatchData } from 'discord-api-types/v10';
+import type { GatewayChannelUpdateDispatchData, GatewayThreadUpdateDispatchData } from 'discord-api-types/v10';
 import _ChannelModule from '../../structures/Channel';
 const { Channel } = _ChannelModule;
 import _ConstantsModule from '../../util/Constants';
 const { ChannelTypes } = _ConstantsModule;
 
 class ChannelUpdateAction extends Action {
-  handle(data: GatewayChannelUpdateDispatchData) {
+  handle(data: GatewayChannelUpdateDispatchData | GatewayThreadUpdateDispatchData) {
     const client = this.client;
     let channel = client.channels.cache.get(data.id);
 

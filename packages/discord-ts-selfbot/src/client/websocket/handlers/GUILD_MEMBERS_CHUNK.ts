@@ -1,30 +1,26 @@
 import { Collection } from '@discordjs/collection';
 import _ConstantsModule from '../../../util/Constants';
 const { Events } = _ConstantsModule;
-export default (client: any, { d: data }: any) => {
+import type { Client } from '../../Client';
+import type { WebSocketShard } from '../WebSocketShard';
+import type { GatewayGuildMembersChunkDispatchData } from 'discord-api-types/v10';
+
+function isChunkData(value: unknown): value is GatewayGuildMembersChunkDispatchData {
+  return typeof value === 'object' && value !== null && 'guild_id' in value && typeof value.guild_id === 'string';
+}
+
+export default (client: Client, packet: { d?: unknown }, _shard: WebSocketShard) => {
+  if (!isChunkData(packet.d)) return;
+  const data = packet.d;
   const guild = client.guilds.cache.get(data.guild_id);
   if (!guild) return;
-  const members = new Collection();
-  for (const member of data.members) members.set(member.user.id, guild.members._add(member));
+  const members = new Collection<string, import('../../../structures/GuildMember').GuildMember>();
+  for (const member of data.members) {
+    if (member.user?.id) members.set(member.user.id, guild.members._add(member));
+  }
   if (data.presences) {
     for (const presence of data.presences) guild.presences._add(Object.assign(presence, { guild }));
   }
-  /**
-   * Represents the properties of a guild members chunk
-   * @typedef {Object} GuildMembersChunk
-   * @property {number} index Index of the received chunk
-   * @property {number} count Number of chunks the client should receive
-   * @property {?string} nonce Nonce for this chunk
-   * @property {Array<*>} notFound An array of whatever could not be found
-   * when using {@link Opcodes.REQUEST_GUILD_MEMBERS}
-   */
-  /**
-   * Emitted whenever a chunk of guild members is received (all members come from the same guild).
-   * @event Client#guildMembersChunk
-   * @param {Collection<Snowflake, GuildMember>} members The members in the chunk
-   * @param {Guild} guild The guild related to the member chunk
-   * @param {GuildMembersChunk} chunk Properties of the received chunk
-   */
   client.emit(Events.GUILD_MEMBERS_CHUNK, members, guild, {
     count: data.chunk_count,
     index: data.chunk_index,

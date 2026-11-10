@@ -170,7 +170,7 @@ class Integration extends Base implements IntegrationEntity {
     }
 
     if ('application' in data) {
-      if (this.application) {
+      if (this.application && data.application) {
         this.application._patch(data.application);
       } else {
         /**

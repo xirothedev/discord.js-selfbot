@@ -10,7 +10,7 @@ const { Error } = _errorsModule;
  * @extends {BaseClient}
  */
 class WebhookClient extends BaseClient {
-  declare id: any;
+  declare id: string | null;
 
   /**
    * The data for the webhook client containing either an id and token or just a URL
@@ -24,10 +24,11 @@ class WebhookClient extends BaseClient {
    * @param {WebhookClientData} data The data of the webhook
    * @param {ClientOptions} [options] Options for the client
    */
-  constructor(data: any, options?: any) {
+  constructor(data: import('../../typings').WebhookClientData, options?: import('../../typings').ClientOptions) {
     super(options);
     Object.defineProperty(this, 'client', { value: this });
-    let { id, token } = data;
+    let id: string | null = null;
+    let token: string | null = null;
 
     if ('url' in data) {
       const url = data.url.match(
@@ -38,6 +39,9 @@ class WebhookClient extends BaseClient {
       if (!url || url.length <= 1) throw new Error('WEBHOOK_URL_INVALID');
 
       [, id, token] = url;
+    } else {
+      id = data.id;
+      token = data.token;
     }
 
     this.id = id;
