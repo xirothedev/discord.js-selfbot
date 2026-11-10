@@ -4,21 +4,19 @@ let INCREMENT = 0n;
 
 class SnowflakeUtil extends null {
   static generate(timestamp: number | Date = Date.now()) {
-    if (timestamp instanceof Date) {
-      timestamp = timestamp.getTime();
-    }
-    if (typeof timestamp !== "number" || Number.isNaN(timestamp)) {
+    const time = timestamp instanceof Date ? timestamp.getTime() : timestamp;
+    if (typeof time !== "number" || Number.isNaN(time)) {
       throw new TypeError(
-        `"timestamp" argument must be a number (received ${Number.isNaN(timestamp) ? "NaN" : typeof timestamp})`
+        `"timestamp" argument must be a number (received ${Number.isNaN(time) ? "NaN" : typeof time})`
       );
     }
     if (INCREMENT >= 4095n) {
-      INCREMENT = BigInt(0);
+      INCREMENT = 0n;
     }
 
     // Assign WorkerId as 1 and ProcessId as 0:
     return (
-      (BigInt(timestamp - EPOCH) << 22n) |
+      (BigInt(time - EPOCH) << 22n) |
       (1n << 17n) |
       INCREMENT++
     ).toString();
@@ -31,10 +29,10 @@ class SnowflakeUtil extends null {
       get date() {
         return new Date(this.timestamp);
       },
-      increment: Number(bigIntSnowflake & 0b111111111111n),
-      processId: Number((bigIntSnowflake >> 12n) & 0b11111n),
+      increment: Number(bigIntSnowflake & 0b1111_1111_1111n),
+      processId: Number((bigIntSnowflake >> 12n) & 0b1_1111n),
       timestamp: Number(bigIntSnowflake >> 22n) + EPOCH,
-      workerId: Number((bigIntSnowflake >> 17n) & 0b11111n),
+      workerId: Number((bigIntSnowflake >> 17n) & 0b1_1111n),
     };
   }
 

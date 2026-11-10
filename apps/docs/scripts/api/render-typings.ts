@@ -104,8 +104,8 @@ export interface TypingsPageInput {
 }
 
 export function renderTypingsPage(input: TypingsPageInput): string {
-  const reflections = [...input.reflections].toSorted((a, b) =>
-    a.name.localeCompare(b.name)
+  const reflections = [...input.reflections].toSorted((left, right) =>
+    left.name.localeCompare(right.name)
   );
 
   return [

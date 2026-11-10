@@ -19,22 +19,22 @@ function isApplicationCommandData(
   );
 }
 
-export default (
+export default function handleApplicationCommandCreate(
   client: Client,
   packet: { d?: unknown },
   _shard: WebSocketShard
-) => {
+) {
   if (!isApplicationCommandData(packet.d)) {
     return;
   }
   const data = packet.d;
-  const commandManager = client.application!.commands;
-  if (!commandManager) {
+  const { application } = client;
+  if (!application) {
     return;
   }
-  const command = commandManager._add(
+  const command = application.commands._add(
     data,
-    data.application_id === client.application!.id
+    data.application_id === application.id
   );
   client.emit(Events.APPLICATION_COMMAND_CREATE, command);
-};
+}

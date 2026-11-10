@@ -9,7 +9,7 @@ import { createVoiceCases } from "./cases/voice";
 import { closeWsSockets, createWsCases } from "./cases/ws";
 import { createContext } from "./context";
 import { printTable, runCase, writeOutputs } from "./harness";
-import type { BenchCase, RunResult } from "./types";
+import type { BenchCase, CaseResult, RunResult } from "./types";
 
 const args = process.argv.slice(2);
 
@@ -46,6 +46,19 @@ let cases: BenchCase[] = [
   ...createVoiceCases(),
 ];
 
+async function* executeCases(
+  benchCases: BenchCase[],
+  caseRounds: number,
+  silent: boolean
+): AsyncGenerator<CaseResult> {
+  for (const benchCase of benchCases) {
+    if (!silent) {
+      console.error(`run ${benchCase.id}`);
+    }
+    yield runCase(benchCase, caseRounds);
+  }
+}
+
 if (filters.length) {
   cases = cases.filter((benchCase) =>
     filters.some((filter) => benchCase.id.includes(filter))
@@ -70,11 +83,8 @@ if (!cases.length) {
 
 const results: RunResult["results"] = [];
 try {
-  for (const benchCase of cases) {
-    if (!quiet) {
-      console.error(`run ${benchCase.id}`);
-    }
-    results.push(await runCase(benchCase, rounds));
+  for await (const result of executeCases(cases, rounds, quiet)) {
+    results.push(result);
   }
 } finally {
   closeWsSockets();

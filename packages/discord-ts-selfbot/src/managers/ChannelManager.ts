@@ -40,6 +40,12 @@ class ChannelManager extends CachedManager<ChannelType> {
     }
   }
 
+  _add(data: unknown, guild?: unknown, options?: unknown): ChannelType | null;
+  _add(
+    data: unknown,
+    cache?: boolean,
+    options?: { id?: string; extras?: unknown[] }
+  ): ChannelType;
   _add(
     data: RawChannelData | ChannelType,
     guildOrCache?: Guild | null | boolean,
@@ -48,12 +54,12 @@ class ChannelManager extends CachedManager<ChannelType> {
       | { id?: string; extras?: unknown[] } = {}
   ): ChannelType | null {
     const guild = typeof guildOrCache === "object" ? guildOrCache : null;
-    const cache =
-      typeof guildOrCache === "boolean"
-        ? guildOrCache
-        : "cache" in options && typeof options.cache === "boolean"
-          ? options.cache
-          : true;
+    let cache = true;
+    if (typeof guildOrCache === "boolean") {
+      cache = guildOrCache;
+    } else if ("cache" in options && typeof options.cache === "boolean") {
+      ({ cache } = options);
+    }
     const allowUnknownGuild =
       "allowUnknownGuild" in options
         ? Boolean(options.allowUnknownGuild)
@@ -143,7 +149,7 @@ class ChannelManager extends CachedManager<ChannelType> {
     recipients: UserResolvable[] = []
   ): Promise<GroupDMChannel> {
     if (!Array.isArray(recipients)) {
-      throw new Error(
+      throw new TypeError(
         `Expected an array of recipients (got ${typeof recipients})`
       );
     }
@@ -174,19 +180,7 @@ class ChannelManager extends CachedManager<ChannelType> {
 }
 
 // `CachedManager#_add` takes `(data, cache, options)`, but this manager takes
-// `(data, guild, options)`. The merged overloads keep the class assignable to
-// its base while callers keep the real channel signature.
-// `CachedManager#_add` takes `(data, cache, options)`, but this manager takes
-// `(data, guild, options)`. The merged overloads keep the class assignable to
-// its base while callers keep the real channel signature.
-interface ChannelManager {
-  _add(data: unknown, guild?: unknown, options?: unknown): ChannelType | null;
-  _add(
-    data: unknown,
-    cache?: boolean,
-    options?: { id?: string; extras?: unknown[] }
-  ): ChannelType;
-}
-
+// `(data, guild, options)`. The overloads keep the class assignable to its base
+// while callers keep the real channel signature.
 export default ChannelManager;
 export { ChannelManager };

@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import path from "node:path";
 
 import { FormData as UndiciFormData, fetch as undiciFetch } from "undici";
 
@@ -10,19 +10,31 @@ const ONE_M = 1024 * 1024;
 const BATCH = 50;
 
 export function createHttpCases(ctx: BenchContext): BenchCase[] {
-  const oneMFile = join(ctx.dir, "one-m.bin");
+  const oneMFile = path.join(ctx.dir, "one-m.bin");
   const small = ctx.url("/small");
   const big = ctx.url("/big");
   const upload = ctx.url("/upload");
 
-  const getSmallNode = async () =>
-    (await (await undiciFetch(small)).arrayBuffer()).byteLength;
-  const getSmallBun = async () =>
-    (await (await fetch(small)).arrayBuffer()).byteLength;
-  const getBigNode = async () =>
-    (await (await undiciFetch(big)).arrayBuffer()).byteLength;
-  const getBigBun = async () =>
-    (await (await fetch(big)).arrayBuffer()).byteLength;
+  const getSmallNode = async () => {
+    const response = await undiciFetch(small);
+    const buffer = await response.arrayBuffer();
+    return buffer.byteLength;
+  };
+  const getSmallBun = async () => {
+    const response = await fetch(small);
+    const buffer = await response.arrayBuffer();
+    return buffer.byteLength;
+  };
+  const getBigNode = async () => {
+    const response = await undiciFetch(big);
+    const buffer = await response.arrayBuffer();
+    return buffer.byteLength;
+  };
+  const getBigBun = async () => {
+    const response = await fetch(big);
+    const buffer = await response.arrayBuffer();
+    return buffer.byteLength;
+  };
 
   return [
     {
@@ -73,7 +85,8 @@ export function createHttpCases(ctx: BenchContext): BenchCase[] {
         const form = new FormData();
         form.append("files[0]", Bun.file(oneMFile), "one-m.bin");
         form.append("payload_json", "{}");
-        return (await fetch(upload, { body: form, method: "POST" })).text();
+        const response = await fetch(upload, { body: form, method: "POST" });
+        return response.text();
       },
       bytes: ONE_M,
       group: "http",
@@ -85,9 +98,11 @@ export function createHttpCases(ctx: BenchContext): BenchCase[] {
         const form = new UndiciFormData();
         form.set("files[0]", new Blob([data]), "one-m.bin");
         form.append("payload_json", "{}");
-        return (
-          await undiciFetch(upload, { body: form as never, method: "POST" })
-        ).text();
+        const response = await undiciFetch(upload, {
+          body: form as never,
+          method: "POST",
+        });
+        return response.text();
       },
     },
     {
@@ -95,7 +110,8 @@ export function createHttpCases(ctx: BenchContext): BenchCase[] {
         const form = new FormData();
         form.append("files[0]", Bun.file(ctx.uploadFile), "five-m.bin");
         form.append("payload_json", "{}");
-        return (await fetch(upload, { body: form, method: "POST" })).text();
+        const response = await fetch(upload, { body: form, method: "POST" });
+        return response.text();
       },
       bytes: 5 * ONE_M,
       group: "http",
@@ -107,9 +123,11 @@ export function createHttpCases(ctx: BenchContext): BenchCase[] {
         const form = new UndiciFormData();
         form.set("files[0]", new Blob([data]), "five-m.bin");
         form.append("payload_json", "{}");
-        return (
-          await undiciFetch(upload, { body: form as never, method: "POST" })
-        ).text();
+        const response = await undiciFetch(upload, {
+          body: form as never,
+          method: "POST",
+        });
+        return response.text();
       },
     },
   ];

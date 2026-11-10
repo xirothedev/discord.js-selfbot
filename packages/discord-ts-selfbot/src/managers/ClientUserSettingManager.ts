@@ -34,6 +34,37 @@ type UserSettingsPatch = Omit<Partial<RawUserSettingsData>, "custom_status"> & {
   custom_status?: CustomStatusData | null;
 };
 
+const SIMPLE_SETTINGS: Record<string, string> = {
+  afk_timeout: "afkTimeout",
+  animate_emoji: "animatedEmoji",
+  animate_stickers: "stickerAnimationMode",
+  convert_emoticons: "convertEmoticons",
+  default_guilds_restricted: "allowDMsFromGuild",
+  developer_mode: "developerMode",
+  enable_tts_command: "allowTTS",
+  explicit_content_filter: "DMScanLevel",
+  gif_auto_play: "autoplayGIF",
+  inline_attachment_media: "displayImage",
+  inline_embed_media: "linkedImageDisplay",
+  locale: "locale",
+  message_display_compact: "compactMode",
+  render_embeds: "previewLink",
+  render_reactions: "showEmojiReactions",
+  show_current_game: "activityDisplay",
+  theme: "theme",
+};
+
+function applySimpleSettings(
+  manager: object,
+  data: Partial<RawUserSettingsData>
+): void {
+  for (const [sourceKey, targetKey] of Object.entries(SIMPLE_SETTINGS)) {
+    if (sourceKey in data) {
+      Reflect.set(manager, targetKey, Reflect.get(data, sourceKey));
+    }
+  }
+}
+
 class ClientUserSettingManager extends BaseManager {
   #rawSetting = {};
   declare addFriendFrom: {
@@ -72,70 +103,20 @@ class ClientUserSettingManager extends BaseManager {
   _patch(data: Partial<RawUserSettingsData> = {}) {
     this.#rawSetting = Object.assign(this.#rawSetting, data);
     this.client.emit("debug", `[SETTING > ClientUser] Sync setting`);
-    if ("locale" in data) {
-      this.locale = data.locale;
-    }
-    if ("show_current_game" in data) {
-      this.activityDisplay = data.show_current_game;
-    }
-    if ("default_guilds_restricted" in data) {
-      this.allowDMsFromGuild = data.default_guilds_restricted;
-    }
-    if ("inline_attachment_media" in data) {
-      this.displayImage = data.inline_attachment_media;
-    }
-    if ("inline_embed_media" in data) {
-      this.linkedImageDisplay = data.inline_embed_media;
-    }
-    if ("gif_auto_play" in data) {
-      this.autoplayGIF = data.gif_auto_play;
-    }
-    if ("render_embeds" in data) {
-      this.previewLink = data.render_embeds;
-    }
-    if ("animate_emoji" in data) {
-      this.animatedEmoji = data.animate_emoji;
-    }
-    if ("enable_tts_command" in data) {
-      this.allowTTS = data.enable_tts_command;
-    }
-    if ("message_display_compact" in data) {
-      this.compactMode = data.message_display_compact;
-    }
-    if ("convert_emoticons" in data) {
-      this.convertEmoticons = data.convert_emoticons;
-    }
-    if ("explicit_content_filter" in data) {
-      this.DMScanLevel = data.explicit_content_filter;
-    }
-    if ("theme" in data) {
-      this.theme = data.theme;
-    }
-    if ("developer_mode" in data) {
-      this.developerMode = data.developer_mode;
-    }
-    if ("afk_timeout" in data) {
-      this.afkTimeout = data.afk_timeout;
-    }
-    if ("animate_stickers" in data) {
-      this.stickerAnimationMode = data.animate_stickers;
-    }
-    if ("render_reactions" in data) {
-      this.showEmojiReactions = data.render_reactions;
-    }
+    applySimpleSettings(this, data);
     if ("status" in data) {
       this.client.presence.status = data.status ?? "offline";
       if (!("custom_status" in data)) {
         this.client.emit("debug", "[SETTING > ClientUser] Sync status");
         if (typeof data.status === "string") {
-          this.client.user!.setStatus(data.status);
+          this.client.user?.setStatus(data.status);
         }
       }
     }
     if ("custom_status" in data) {
       this.customStatus = data.custom_status ?? null;
       const activities = this.client.presence.activities.filter(
-        (a) => ![ActivityTypes.CUSTOM, "CUSTOM"].includes(a.type)
+        (activity) => ![ActivityTypes.CUSTOM, "CUSTOM"].includes(activity.type)
       );
       if (data.custom_status) {
         const custom = new CustomStatus(this.client);
@@ -155,10 +136,10 @@ class ClientUserSettingManager extends BaseManager {
         "debug",
         "[SETTING > ClientUser] Sync activities & status"
       );
-      this.client.user!.setPresence({ activities });
+      this.client.user?.setPresence({ activities });
     }
     if ("friend_source_flags" in data) {
-      // Todo
+      // Not implemented yet.
     }
     if ("restricted_guilds" in data) {
       this.disableDMfromGuilds = new Collection(
@@ -274,7 +255,7 @@ class ClientUserSettingManager extends BaseManager {
     return this.edit({
       default_guilds_restricted: status,
       restricted_guilds: status
-        ? this.client.guilds.cache.map((v) => v.id)
+        ? this.client.guilds.cache.map((guild) => guild.id)
         : [],
     });
   }

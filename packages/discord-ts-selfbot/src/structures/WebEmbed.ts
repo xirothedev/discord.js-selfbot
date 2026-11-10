@@ -60,7 +60,6 @@ class WebEmbed {
 
   declare static hiddenEmbed: string;
   constructor(data: WebEmbed | WebEmbedInput = {}) {
-    // eslint-disable-next-line valid-jsdoc
     this._setup(data);
   }
   _setup(data: WebEmbedInput) {

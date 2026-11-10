@@ -8,7 +8,7 @@ class VideoDispatcher extends BaseDispatcher {
 
   constructor(
     player: MediaPlayer,
-    highWaterMark = 12,
+    highWaterMark: number | undefined,
     streams: DispatcherStreams,
     fps: number,
     payloadType: number
@@ -35,8 +35,8 @@ class VideoDispatcher extends BaseDispatcher {
     const out: Buffer[] = [];
     const dataLength = data.length;
 
-    for (let i = 0; i < dataLength; i += this.mtu) {
-      out.push(data.slice(i, i + this.mtu));
+    for (let index = 0; index < dataLength; index += this.mtu) {
+      out.push(data.slice(index, index + this.mtu));
     }
 
     return out;

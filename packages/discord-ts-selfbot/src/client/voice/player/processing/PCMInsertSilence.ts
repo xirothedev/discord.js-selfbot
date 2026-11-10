@@ -23,7 +23,7 @@ class PCMInsertSilence extends Transform {
   _transform(
     chunk: Buffer,
     _encoding: BufferEncoding,
-    callback: TransformCallback
+    done: TransformCallback
   ) {
     const now = Date.now();
     const gap = now - this.lastChunkTime;
@@ -37,7 +37,7 @@ class PCMInsertSilence extends Transform {
     this.lastChunkTime = now;
 
     this.push(chunk);
-    callback();
+    done();
   }
 }
 

@@ -1,8 +1,6 @@
 import pkg from "../package.json";
 import _GuildAuditLogsModule from "./structures/GuildAuditLogs";
 
-("use strict");
-
 // "Root" classes (starting points)
 export { default as BaseClient } from "./client/BaseClient";
 export { default as Client } from "./client/Client";

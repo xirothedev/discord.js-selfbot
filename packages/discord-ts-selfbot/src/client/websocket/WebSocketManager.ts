@@ -23,7 +23,7 @@ const BeforeReadyWhitelist: readonly string[] = [
 ];
 
 interface GatewayPacket {
-  t?: string;
+  ["t"]?: string;
   d?: unknown;
   op?: number;
   s?: number;
@@ -68,12 +68,9 @@ class WebSocketManager extends EventEmitter {
 
     this.gateway = null;
 
-    this.totalShards =
-      this.client.options.shards === "auto"
-        ? this.client.options.shardCount
-        : Array.isArray(this.client.options.shards)
-          ? this.client.options.shards.length
-          : this.client.options.shardCount;
+    this.totalShards = Array.isArray(this.client.options.shards)
+      ? this.client.options.shards.length
+      : this.client.options.shardCount;
 
     this.shards = new Collection();
 
@@ -92,7 +89,7 @@ class WebSocketManager extends EventEmitter {
   }
 
   get ping() {
-    const sum = this.shards.reduce((a, b) => a + b.ping, 0);
+    const sum = this.shards.reduce((total, shard) => total + shard.ping, 0);
     return sum / this.shards.size;
   }
 
@@ -132,18 +129,21 @@ class WebSocketManager extends EventEmitter {
       this.debug(
         `Using the recommended shard count provided by Discord: ${recommendedShards}`
       );
-      this.totalShards = this.client.options.shardCount = recommendedShards;
-      shards = this.client.options.shards = Array.from(
+      this.totalShards = recommendedShards;
+      this.client.options.shardCount = recommendedShards;
+      shards = Array.from(
         { length: recommendedShards },
-        (_, i) => i
+        (_value, index) => index
       );
+      this.client.options.shards = shards;
     }
 
     if (!Array.isArray(shards)) {
-      shards = this.client.options.shards = Array.from(
+      shards = Array.from(
         { length: this.client.options.shardCount },
-        (_, i) => i
+        (_value, index) => index
       );
+      this.client.options.shards = shards;
     }
 
     this.totalShards = shards.length;
@@ -314,16 +314,18 @@ class WebSocketManager extends EventEmitter {
     this.destroyed = true;
     this.shardQueue.clear();
     for (const shard of this.shards.values()) {
-      shard.destroy({ closeCode: 1_000, reset: true, emit: false, log: false });
+      shard.destroy({ closeCode: 1000, emit: false, log: false, reset: true });
     }
   }
 
   handlePacket(packet?: GatewayPacket, shard?: WebSocketShard) {
-    if (packet && this.status !== Status.READY) {
-      if (!BeforeReadyWhitelist.includes(packet.t ?? "")) {
-        this.packetQueue.push({ packet, shard });
-        return false;
-      }
+    if (
+      packet &&
+      this.status !== Status.READY &&
+      !BeforeReadyWhitelist.includes(packet.t ?? "")
+    ) {
+      this.packetQueue.push({ packet, shard });
+      return false;
     }
 
     if (this.packetQueue.length) {

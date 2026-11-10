@@ -1,5 +1,5 @@
 import process from "node:process";
-import { setInterval, setTimeout } from "node:timers";
+import { setInterval } from "node:timers";
 import { Collection } from "@discordjs/collection";
 import { authenticator } from "otplib";
 import BaseClient from "./BaseClient";
@@ -68,7 +68,6 @@ import type {
 } from "../../typings";
 import type ClientUser from "../structures/ClientUser";
 import type { Sticker as StickerType } from "../structures/Sticker";
-/* eslint-disable no-unreachable */
 
 let deprecationEmitted = false;
 
@@ -121,6 +120,186 @@ interface MemberVerificationField {
 interface MemberVerificationData {
   form_fields: MemberVerificationField[];
   version: string;
+}
+
+function validateBasicOptions(options: ResolvedClientOptions): void {
+  if (typeof options.makeCache !== "function") {
+    throw new TypeError("CLIENT_INVALID_OPTION", "makeCache", "a function");
+  }
+  if (
+    typeof options.messageCacheLifetime !== "number" ||
+    Number.isNaN(options.messageCacheLifetime)
+  ) {
+    throw new TypeError(
+      "CLIENT_INVALID_OPTION",
+      "The messageCacheLifetime",
+      "a number"
+    );
+  }
+  if (
+    typeof options.messageSweepInterval !== "number" ||
+    Number.isNaN(options.messageSweepInterval)
+  ) {
+    throw new TypeError(
+      "CLIENT_INVALID_OPTION",
+      "messageSweepInterval",
+      "a number"
+    );
+  }
+  if (typeof options.sweepers !== "object" || options.sweepers === null) {
+    throw new TypeError("CLIENT_INVALID_OPTION", "sweepers", "an object");
+  }
+  if (
+    typeof options.invalidRequestWarningInterval !== "number" ||
+    Number.isNaN(options.invalidRequestWarningInterval)
+  ) {
+    throw new TypeError(
+      "CLIENT_INVALID_OPTION",
+      "invalidRequestWarningInterval",
+      "a number"
+    );
+  }
+  if (!Array.isArray(options.partials)) {
+    throw new TypeError("CLIENT_INVALID_OPTION", "partials", "an Array");
+  }
+}
+
+function validateTimeoutOptions(options: ResolvedClientOptions): void {
+  if (
+    typeof options.DMChannelVoiceStatusSync !== "number" ||
+    Number.isNaN(options.DMChannelVoiceStatusSync)
+  ) {
+    throw new TypeError(
+      "CLIENT_INVALID_OPTION",
+      "DMChannelVoiceStatusSync",
+      "a number"
+    );
+  }
+  if (
+    typeof options.waitGuildTimeout !== "number" ||
+    Number.isNaN(options.waitGuildTimeout)
+  ) {
+    throw new TypeError(
+      "CLIENT_INVALID_OPTION",
+      "waitGuildTimeout",
+      "a number"
+    );
+  }
+  if (
+    typeof options.restWsBridgeTimeout !== "number" ||
+    Number.isNaN(options.restWsBridgeTimeout)
+  ) {
+    throw new TypeError(
+      "CLIENT_INVALID_OPTION",
+      "restWsBridgeTimeout",
+      "a number"
+    );
+  }
+  if (
+    typeof options.restRequestTimeout !== "number" ||
+    Number.isNaN(options.restRequestTimeout)
+  ) {
+    throw new TypeError(
+      "CLIENT_INVALID_OPTION",
+      "restRequestTimeout",
+      "a number"
+    );
+  }
+  if (
+    typeof options.restGlobalRateLimit !== "number" ||
+    Number.isNaN(options.restGlobalRateLimit)
+  ) {
+    throw new TypeError(
+      "CLIENT_INVALID_OPTION",
+      "restGlobalRateLimit",
+      "a number"
+    );
+  }
+  if (
+    typeof options.restSweepInterval !== "number" ||
+    Number.isNaN(options.restSweepInterval)
+  ) {
+    throw new TypeError(
+      "CLIENT_INVALID_OPTION",
+      "restSweepInterval",
+      "a number"
+    );
+  }
+  if (
+    typeof options.retryLimit !== "number" ||
+    Number.isNaN(options.retryLimit)
+  ) {
+    throw new TypeError("CLIENT_INVALID_OPTION", "retryLimit", "a number");
+  }
+  if (typeof options.failIfNotExists !== "boolean") {
+    throw new TypeError(
+      "CLIENT_INVALID_OPTION",
+      "failIfNotExists",
+      "a boolean"
+    );
+  }
+  if (
+    options.rejectOnRateLimit !== undefined &&
+    !(
+      typeof options.rejectOnRateLimit === "function" ||
+      Array.isArray(options.rejectOnRateLimit)
+    )
+  ) {
+    throw new TypeError(
+      "CLIENT_INVALID_OPTION",
+      "rejectOnRateLimit",
+      "an array or a function"
+    );
+  }
+  if (typeof options.TOTPKey === "string") {
+    // Convert to base32 if not already
+    options.TOTPKey = options.TOTPKey.replaceAll(/ +/gu, "").toUpperCase();
+  }
+}
+
+function validateShardOptions(options: ResolvedClientOptions): void {
+  // Selfbot divergence: a selfbot can shard when configured, but defaults to one shard.
+  // discord.js also validates `intents` here. User accounts never send intents, so the
+  // option is accepted for type parity and ignored below.
+  if (
+    typeof options.shardCount !== "number" ||
+    !Number.isInteger(options.shardCount) ||
+    options.shardCount < 1
+  ) {
+    throw new TypeError(
+      "CLIENT_INVALID_OPTION",
+      "shardCount",
+      "a number greater than or equal to 1"
+    );
+  }
+  if (options.shards === "auto") {
+    // The recommended shard count is resolved on gateway connect.
+  } else if (typeof options.shards === "number") {
+    options.shards = [options.shards];
+  } else if (Array.isArray(options.shards)) {
+    options.shards = [
+      ...new Set(
+        options.shards.filter((id: number) => Number.isInteger(id) && id >= 0)
+      ),
+    ];
+    if (!options.shards.length) {
+      throw new RangeError("CLIENT_INVALID_PROVIDED_SHARDS");
+    }
+    if (options.shardCount === 1) {
+      options.shardCount = options.shards.length;
+    }
+  } else if (options.shards === undefined) {
+    options.shards = Array.from(
+      { length: options.shardCount },
+      (_index, id) => id
+    );
+  } else {
+    throw new TypeError(
+      "CLIENT_INVALID_OPTION",
+      "shards",
+      "'auto', a number or array of numbers"
+    );
+  }
 }
 
 class Client extends BaseClient {
@@ -201,11 +380,10 @@ class Client extends BaseClient {
     this.settings = new ClientUserSettingManager(this);
 
     Object.defineProperty(this, "token", { writable: true });
-    if (!this.token && "DISCORD_TOKEN" in process.env) {
-      this.token = process.env.DISCORD_TOKEN ?? null;
-    } else {
-      this.token = null;
-    }
+    this.token =
+      !this.token && "DISCORD_TOKEN" in process.env
+        ? (process.env.DISCORD_TOKEN ?? null)
+        : null;
 
     this.user = null;
 
@@ -260,7 +438,8 @@ class Client extends BaseClient {
     if (!token || typeof token !== "string") {
       throw new Error("TOKEN_INVALID");
     }
-    this.token = token = token.replace(/^(Bot|Bearer)\s*/i, "");
+    const normalizedToken = token.replace(/^(?:Bot|Bearer)\s*/iu, "");
+    this.token = normalizedToken;
     this.emit(
       Events.DEBUG,
       `
@@ -271,10 +450,10 @@ class Client extends BaseClient {
     );
     this.emit(
       Events.DEBUG,
-      `Provided token: ${token
+      `Provided token: ${normalizedToken
         .split(".")
-        .map((val: string, i: number) =>
-          i > 1 ? val.replaceAll(/./g, "*") : val
+        .map((value: string, index: number) =>
+          index > 1 ? value.replaceAll(/./gu, "*") : value
         )
         .join(".")}`
     );
@@ -287,7 +466,7 @@ class Client extends BaseClient {
 
     try {
       await this.ws.connect();
-      return token;
+      return normalizedToken;
     } catch (error) {
       this.destroy();
       throw error;
@@ -450,9 +629,9 @@ class Client extends BaseClient {
       sticker_packs: RawStickerPackData[];
     }>();
     return new Collection<Snowflake, StickerPack>(
-      data.sticker_packs.map((p: RawStickerPackData) => [
-        p.id,
-        new StickerPack(this, p),
+      data.sticker_packs.map((pack: RawStickerPackData) => [
+        pack.id,
+        new StickerPack(this, pack),
       ])
     );
   }
@@ -620,7 +799,7 @@ class Client extends BaseClient {
   }
 
   sleep(timeout: number): Promise<void> {
-    return new Promise((r) => setTimeout(r, timeout));
+    return Bun.sleep(timeout);
   }
 
   toJSON() {
@@ -633,24 +812,23 @@ class Client extends BaseClient {
     return this.ws.shards.first()?.sessionId;
   }
 
-  async acceptInvite(
-    invite: InviteResolvable,
-    options: AcceptInviteOptions = {
+  async acceptInvite(invite: InviteResolvable, options?: AcceptInviteOptions) {
+    // ! throw new Error('METHOD_WARNING');
+    const resolvedOptions = options ?? {
       bypassOnboarding: true,
       bypassVerify: true,
-    }
-  ) {
-    // ! throw new Error('METHOD_WARNING');
+    };
     const code = DataResolver.resolveInviteCode(invite);
     if (!code) {
       throw new Error("INVITE_RESOLVE_CODE");
     }
-    const i = await this.fetchInvite(code);
-    if (i.guild?.id && this.guilds.cache.has(i.guild?.id)) {
-      return this.guilds.cache.get(i.guild?.id);
+    const inviteInfo = await this.fetchInvite(code);
+    const guildId = inviteInfo.guild?.id;
+    if (guildId && this.guilds.cache.has(guildId)) {
+      return this.guilds.cache.get(guildId);
     }
-    if (i.channelId && this.channels.cache.has(i.channelId)) {
-      return this.channels.cache.get(i.channelId);
+    if (inviteInfo.channelId && this.channels.cache.has(inviteInfo.channelId)) {
+      return this.channels.cache.get(inviteInfo.channelId);
     }
     const data = await this.api.invites(code).post<AcceptInviteResult>({
       DiscordContext: { location: "Markdown Link" },
@@ -658,91 +836,101 @@ class Client extends BaseClient {
         session_id: this.sessionId,
       },
     });
-    this.emit(Events.DEBUG, `[Invite > Guild ${i.guild?.id}] Joined`);
-    // Guild
-    if (i.guild?.id) {
-      const guild = this.guilds.cache.get(i.guild?.id);
-      if (i.flags.has("GUEST")) {
-        this.emit(Events.DEBUG, `[Invite > Guild ${i.guild?.id}] Guest invite`);
-        return guild;
-      }
-      if (options.bypassOnboarding) {
-        const onboardingData =
-          await this.api.guilds[i.guild?.id].onboarding.get<OnboardingData>();
-        // Onboarding
-        if (onboardingData.enabled) {
-          const prompts = onboardingData.prompts.filter((o) => o.in_onboarding);
-          if (prompts.length) {
-            const onboarding_prompts_seen: Record<string, number> = {};
-            const onboarding_responses: Snowflake[] = [];
-            const onboarding_responses_seen: Record<string, number> = {};
+    this.emit(Events.DEBUG, `[Invite > Guild ${guildId}] Joined`);
+    if (!guildId) {
+      const channelId = inviteInfo.channelId || data.channel?.id;
+      return channelId ? this.channels.cache.has(channelId) : false;
+    }
 
-            const currentDate = Date.now();
-
-            prompts.forEach((prompt: OnboardingPrompt) => {
-              onboarding_prompts_seen[prompt.id] = currentDate;
-              if (prompt.required) {
-                onboarding_responses.push(prompt.options[0].id);
-              }
-              prompt.options.forEach((option: OnboardingPromptOption) => {
-                onboarding_responses_seen[option.id] = currentDate;
-              });
-            });
-
-            await this.api.guilds[i.guild?.id]["onboarding-responses"].post({
-              data: {
-                onboarding_prompts_seen,
-                onboarding_responses,
-                onboarding_responses_seen,
-              },
-            });
-            this.emit(
-              Events.DEBUG,
-              `[Invite > Guild ${i.guild?.id}] Bypassed onboarding`
-            );
-          }
-        }
-      }
-      // Read rule
-      if (data.show_verification_form && options.bypassVerify) {
-        // Check Guild
-        if (i.guild.verificationLevel === "VERY_HIGH" && !this.user!.phone) {
-          this.emit(
-            Events.DEBUG,
-            `[Invite > Guild ${i.guild?.id}] Cannot bypass verify (Phone required)`
-          );
-          return this.guilds.cache.get(i.guild?.id);
-        }
-        if (i.guild.verificationLevel !== "NONE" && !this.user!.email) {
-          this.emit(
-            Events.DEBUG,
-            `[Invite > Guild ${i.guild?.id}] Cannot bypass verify (Email required)`
-          );
-          return this.guilds.cache.get(i.guild?.id);
-        }
-        const getForm = await this.api
-          .guilds(i.guild?.id)
-          ["member-verification"].get<MemberVerificationData>({
-            query: { invite_code: this.code, with_guild: false },
-          })
-          .catch(() => {});
-        if (getForm && getForm.form_fields[0]) {
-          const form = Object.assign(getForm.form_fields[0], {
-            response: true,
-          });
-          await this.api.guilds(i.guild?.id).requests["@me"].put({
-            data: { form_fields: [form], version: getForm.version },
-          });
-          this.emit(
-            Events.DEBUG,
-            `[Invite > Guild ${i.guild?.id}] Bypassed verify`
-          );
-        }
-      }
+    const guild = this.guilds.cache.get(guildId);
+    if (inviteInfo.flags.has("GUEST")) {
+      this.emit(Events.DEBUG, `[Invite > Guild ${guildId}] Guest invite`);
       return guild;
     }
-    const channelId = i.channelId || data.channel?.id;
-    return channelId ? this.channels.cache.has(channelId) : false;
+    if (resolvedOptions.bypassOnboarding) {
+      await this.bypassOnboarding(guildId);
+    }
+    if (data.show_verification_form && resolvedOptions.bypassVerify) {
+      await this.bypassVerification(
+        guildId,
+        String(inviteInfo.guild?.verificationLevel ?? "")
+      );
+    }
+    return guild;
+  }
+
+  async bypassOnboarding(guildId: Snowflake) {
+    const onboardingData =
+      await this.api.guilds[guildId].onboarding.get<OnboardingData>();
+    if (!onboardingData.enabled) {
+      return;
+    }
+    const prompts = onboardingData.prompts.filter(
+      (entry) => entry.in_onboarding
+    );
+    if (!prompts.length) {
+      return;
+    }
+    const onboarding_prompts_seen: Record<string, number> = {};
+    const onboarding_responses: Snowflake[] = [];
+    const onboarding_responses_seen: Record<string, number> = {};
+
+    const currentDate = Date.now();
+
+    for (const prompt of prompts) {
+      onboarding_prompts_seen[prompt.id] = currentDate;
+      if (prompt.required) {
+        onboarding_responses.push(prompt.options[0].id);
+      }
+      for (const option of prompt.options) {
+        onboarding_responses_seen[option.id] = currentDate;
+      }
+    }
+
+    await this.api.guilds[guildId]["onboarding-responses"].post({
+      data: {
+        onboarding_prompts_seen,
+        onboarding_responses,
+        onboarding_responses_seen,
+      },
+    });
+    this.emit(Events.DEBUG, `[Invite > Guild ${guildId}] Bypassed onboarding`);
+  }
+
+  async bypassVerification(guildId: Snowflake, verificationLevel: string) {
+    if (verificationLevel === "VERY_HIGH" && !this.user?.phone) {
+      this.emit(
+        Events.DEBUG,
+        `[Invite > Guild ${guildId}] Cannot bypass verify (Phone required)`
+      );
+      return;
+    }
+    if (verificationLevel !== "NONE" && !this.user?.email) {
+      this.emit(
+        Events.DEBUG,
+        `[Invite > Guild ${guildId}] Cannot bypass verify (Email required)`
+      );
+      return;
+    }
+    let getForm: MemberVerificationData | undefined;
+    try {
+      getForm = await this.api
+        .guilds(guildId)
+        ["member-verification"].get<MemberVerificationData>({
+          query: { invite_code: this.code, with_guild: false },
+        });
+    } catch {
+      // A failed form fetch just skips the verification bypass.
+    }
+    if (getForm && getForm.form_fields[0]) {
+      const form = Object.assign(getForm.form_fields[0], {
+        response: true,
+      });
+      await this.api.guilds(guildId).requests["@me"].put({
+        data: { form_fields: [form], version: getForm.version },
+      });
+      this.emit(Events.DEBUG, `[Invite > Guild ${guildId}] Bypassed verify`);
+    }
   }
 
   redeemNitro(
@@ -751,19 +939,22 @@ class Client extends BaseClient {
     paymentSourceId?: Snowflake
   ): Promise<unknown> | false {
     if (typeof nitro !== "string") {
-      throw new Error("INVALID_NITRO");
+      throw new TypeError("INVALID_NITRO");
     }
     const nitroCode =
       nitro.match(
-        /(discord.gift|discord.com|discordapp.com\/gifts)\/(\w{16,25})/
+        /(?:discord.gift|discord.com|discordapp.com\/gifts)\/(?<code>\w{16,25})/u
       ) ||
       nitro.match(
-        /(discord\.gift\/|discord\.com\/gifts\/|discordapp\.com\/gifts\/)(\w+)/
+        /(?:discord\.gift\/|discord\.com\/gifts\/|discordapp\.com\/gifts\/)(?<code>\w+)/u
       );
     if (!nitroCode) {
       return false;
     }
-    const code = nitroCode[2];
+    const code = nitroCode.groups?.code;
+    if (!code) {
+      return false;
+    }
     const channelId = this.channels.resolveId(channel);
     return this.api.entitlements["gift-codes"](code).redeem.post({
       auth: true,
@@ -778,7 +969,7 @@ class Client extends BaseClient {
     // ! throw new Error('METHOD_WARNING');
     const url = new URL(urlOAuth2);
     if (
-      !/^https:\/\/(?:canary\.|ptb\.)?discord\.com(?:\/api(?:\/v\d{1,2})?)?\/oauth2\/authorize\?/.test(
+      !/^https:\/\/(?:canary\.|ptb\.)?discord\.com(?:\/api(?:\/v\d{1,2})?)?\/oauth2\/authorize\?/u.test(
         urlOAuth2
       )
     ) {
@@ -786,12 +977,12 @@ class Client extends BaseClient {
     }
     const searchParams = Object.fromEntries(url.searchParams);
     // Assign options
-    options = {
+    const resolvedOptions = {
       authorize: true,
       integration_type: 0,
       location_context: {
         channel_id: "10000",
-        channel_type: 10000,
+        channel_type: 10_000,
         guild_id: "10000",
       },
       permissions: "0",
@@ -802,7 +993,7 @@ class Client extends BaseClient {
     delete searchParams.integration_type;
     delete searchParams.guild_id;
     return this.api.oauth2.authorize.post<{ location: string }>({
-      data: options,
+      data: resolvedOptions,
       query: searchParams,
     });
   }
@@ -836,18 +1027,19 @@ class Client extends BaseClient {
       );
   }
 
-  deauthorize(id: Snowflake, type: "application" | "token" = "application") {
+  async deauthorize(
+    id: Snowflake,
+    type: "application" | "token" = "application"
+  ): Promise<void> {
     if (type === "application") {
-      return this.api.oauth2.tokens
-        .get<AuthorizedToken[]>()
-        .then((data: AuthorizedToken[]) =>
-          data.find((o) => o.application.id === id)
-        )
-        .then((o: AuthorizedToken | undefined) =>
-          this.api.oauth2.tokens(o!.id).delete<void>()
-        );
+      const tokens = await this.api.oauth2.tokens.get<AuthorizedToken[]>();
+      const token = tokens.find((entry) => entry.application.id === id);
+      if (token) {
+        await this.api.oauth2.tokens(token.id).delete<undefined>();
+      }
+    } else {
+      await this.api.oauth2.tokens(id).delete<undefined>();
     }
-    return this.api.oauth2.tokens(id).delete<void>();
   }
 
   authorizedApplications() {
@@ -865,13 +1057,13 @@ class Client extends BaseClient {
         >();
         for (const o of data) {
           const application = new Application(this, o.application);
-          const data = {
+          const entry = {
             application,
             authorizedApplicationId: o.id,
             deauthorize: () => this.deauthorize(o.id, "token"),
             scopes: o.scopes,
           };
-          results.set(o.application.id, data);
+          results.set(o.application.id, entry);
         }
         return results;
       });
@@ -882,177 +1074,9 @@ class Client extends BaseClient {
   }
 
   _validateOptions(options: ResolvedClientOptions = this.options) {
-    if (typeof options.makeCache !== "function") {
-      throw new TypeError("CLIENT_INVALID_OPTION", "makeCache", "a function");
-    }
-    if (
-      typeof options.messageCacheLifetime !== "number" ||
-      Number.isNaN(options.messageCacheLifetime)
-    ) {
-      throw new TypeError(
-        "CLIENT_INVALID_OPTION",
-        "The messageCacheLifetime",
-        "a number"
-      );
-    }
-    if (
-      typeof options.messageSweepInterval !== "number" ||
-      Number.isNaN(options.messageSweepInterval)
-    ) {
-      throw new TypeError(
-        "CLIENT_INVALID_OPTION",
-        "messageSweepInterval",
-        "a number"
-      );
-    }
-    if (typeof options.sweepers !== "object" || options.sweepers === null) {
-      throw new TypeError("CLIENT_INVALID_OPTION", "sweepers", "an object");
-    }
-    if (
-      typeof options.invalidRequestWarningInterval !== "number" ||
-      Number.isNaN(options.invalidRequestWarningInterval)
-    ) {
-      throw new TypeError(
-        "CLIENT_INVALID_OPTION",
-        "invalidRequestWarningInterval",
-        "a number"
-      );
-    }
-    if (!Array.isArray(options.partials)) {
-      throw new TypeError("CLIENT_INVALID_OPTION", "partials", "an Array");
-    }
-    if (
-      typeof options.DMChannelVoiceStatusSync !== "number" ||
-      Number.isNaN(options.DMChannelVoiceStatusSync)
-    ) {
-      throw new TypeError(
-        "CLIENT_INVALID_OPTION",
-        "DMChannelVoiceStatusSync",
-        "a number"
-      );
-    }
-    if (
-      typeof options.waitGuildTimeout !== "number" ||
-      Number.isNaN(options.waitGuildTimeout)
-    ) {
-      throw new TypeError(
-        "CLIENT_INVALID_OPTION",
-        "waitGuildTimeout",
-        "a number"
-      );
-    }
-    if (
-      typeof options.restWsBridgeTimeout !== "number" ||
-      Number.isNaN(options.restWsBridgeTimeout)
-    ) {
-      throw new TypeError(
-        "CLIENT_INVALID_OPTION",
-        "restWsBridgeTimeout",
-        "a number"
-      );
-    }
-    if (
-      typeof options.restRequestTimeout !== "number" ||
-      Number.isNaN(options.restRequestTimeout)
-    ) {
-      throw new TypeError(
-        "CLIENT_INVALID_OPTION",
-        "restRequestTimeout",
-        "a number"
-      );
-    }
-    if (
-      typeof options.restGlobalRateLimit !== "number" ||
-      Number.isNaN(options.restGlobalRateLimit)
-    ) {
-      throw new TypeError(
-        "CLIENT_INVALID_OPTION",
-        "restGlobalRateLimit",
-        "a number"
-      );
-    }
-    if (
-      typeof options.restSweepInterval !== "number" ||
-      Number.isNaN(options.restSweepInterval)
-    ) {
-      throw new TypeError(
-        "CLIENT_INVALID_OPTION",
-        "restSweepInterval",
-        "a number"
-      );
-    }
-    if (
-      typeof options.retryLimit !== "number" ||
-      Number.isNaN(options.retryLimit)
-    ) {
-      throw new TypeError("CLIENT_INVALID_OPTION", "retryLimit", "a number");
-    }
-    if (typeof options.failIfNotExists !== "boolean") {
-      throw new TypeError(
-        "CLIENT_INVALID_OPTION",
-        "failIfNotExists",
-        "a boolean"
-      );
-    }
-    if (
-      options.rejectOnRateLimit !== undefined &&
-      !(
-        typeof options.rejectOnRateLimit === "function" ||
-        Array.isArray(options.rejectOnRateLimit)
-      )
-    ) {
-      throw new TypeError(
-        "CLIENT_INVALID_OPTION",
-        "rejectOnRateLimit",
-        "an array or a function"
-      );
-    }
-    if (typeof options.TOTPKey === "string") {
-      // Convert to base32 if not already
-      options.TOTPKey = options.TOTPKey.replaceAll(/ +/g, "").toUpperCase();
-    }
-    // Selfbot divergence: a selfbot can shard when configured, but defaults to one shard.
-    // discord.js also validates `intents` here. User accounts never send intents, so the
-    // option is accepted for type parity and ignored below.
-    if (
-      typeof options.shardCount !== "number" ||
-      !Number.isInteger(options.shardCount) ||
-      options.shardCount < 1
-    ) {
-      throw new TypeError(
-        "CLIENT_INVALID_OPTION",
-        "shardCount",
-        "a number greater than or equal to 1"
-      );
-    }
-    if (options.shards === "auto") {
-      // The recommended shard count is resolved on gateway connect.
-    } else if (typeof options.shards === "number") {
-      options.shards = [options.shards];
-    } else if (Array.isArray(options.shards)) {
-      options.shards = [
-        ...new Set(
-          options.shards.filter((id: number) => Number.isInteger(id) && id >= 0)
-        ),
-      ];
-      if (!options.shards.length) {
-        throw new RangeError("CLIENT_INVALID_PROVIDED_SHARDS");
-      }
-      if (options.shardCount === 1) {
-        options.shardCount = options.shards.length;
-      }
-    } else if (options.shards === undefined) {
-      options.shards = Array.from(
-        { length: options.shardCount },
-        (_, id) => id
-      );
-    } else {
-      throw new TypeError(
-        "CLIENT_INVALID_OPTION",
-        "shards",
-        "'auto', a number or array of numbers"
-      );
-    }
+    validateBasicOptions(options);
+    validateTimeoutOptions(options);
+    validateShardOptions(options);
     // Selfbot divergence: user accounts do not use gateway intents. Keep the option for type
     // parity and force full intents so guild-wait behaviour stays the same.
     options.intents = Intents.ALL;

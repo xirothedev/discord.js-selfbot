@@ -5,11 +5,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-export default (
+export default function handleVoiceServerUpdate(
   client: Client,
   packet: { d?: unknown },
   _shard: WebSocketShard
-) => {
+) {
   client.emit(
     "debug",
     `[VOICE] received voice server: ${JSON.stringify(packet)}`
@@ -17,4 +17,4 @@ export default (
   if (isRecord(packet.d)) {
     client.voice.onVoiceServer(packet.d);
   }
-};
+}

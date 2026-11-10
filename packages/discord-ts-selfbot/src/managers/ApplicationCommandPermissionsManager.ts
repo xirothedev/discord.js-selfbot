@@ -8,7 +8,6 @@ import _ConstantsModule from "../util/Constants";
 const { ApplicationCommandPermissionTypes, APIErrors } = _ConstantsModule;
 import type {
   APIApplicationCommandPermission,
-  APIGuildApplicationCommandPermissions,
   RESTGetAPIApplicationCommandPermissionsResult,
   RESTGetAPIGuildApplicationCommandsPermissionsResult,
   RESTPutAPIApplicationCommandPermissionsResult,
@@ -97,8 +96,12 @@ class ApplicationCommandPermissionsManager<
   }
 
   permissionsPath(guildId: Snowflake, commandId?: Snowflake) {
+    const applicationId = this.client.application?.id;
+    if (!applicationId) {
+      throw new TypeError("INVALID_TYPE", "application", "Application");
+    }
     return this.client.api
-      .applications(this.client.application!.id)
+      .applications(applicationId)
       .guilds(guildId)
       .commands(commandId).permissions;
   }
@@ -120,19 +123,22 @@ class ApplicationCommandPermissionsManager<
       await this.permissionsPath(
         guildId
       ).get<RESTGetAPIGuildApplicationCommandsPermissionsResult>();
-    return data.reduce(
-      (
-        coll: Collection<Snowflake, ApplicationCommandPermissions[]>,
-        perm: APIGuildApplicationCommandPermissions
-      ) =>
-        coll.set(
-          perm.id,
-          perm.permissions.map((p) =>
-            ApplicationCommandPermissionsManager.transformPermissions(p, true)
+    const permissions = new Collection<
+      Snowflake,
+      ApplicationCommandPermissions[]
+    >();
+    for (const permissionsData of data) {
+      permissions.set(
+        permissionsData.id,
+        permissionsData.permissions.map((permission) =>
+          ApplicationCommandPermissionsManager.transformPermissions(
+            permission,
+            true
           )
-        ),
-      new Collection<Snowflake, ApplicationCommandPermissions[]>()
-    );
+        )
+      );
+    }
+    return permissions;
   }
 
   private async fetchSingle(
@@ -220,8 +226,8 @@ class ApplicationCommandPermissionsManager<
       }
       APIPermissions.push({
         id: perm.id,
-        permissions: perm.permissions.map((p) =>
-          ApplicationCommandPermissionsManager.transformPermissions(p)
+        permissions: perm.permissions.map((permission) =>
+          ApplicationCommandPermissionsManager.transformPermissions(permission)
         ),
       });
     }
@@ -230,19 +236,22 @@ class ApplicationCommandPermissionsManager<
     ).put<RESTPutAPIGuildApplicationCommandsPermissionsResult>({
       data: APIPermissions,
     });
-    return data.reduce(
-      (
-        coll: Collection<Snowflake, ApplicationCommandPermissions[]>,
-        perm: GuildPermissionsPayload
-      ) =>
-        coll.set(
-          perm.id,
-          perm.permissions.map((p) =>
-            ApplicationCommandPermissionsManager.transformPermissions(p, true)
+    const updatedPermissions = new Collection<
+      Snowflake,
+      ApplicationCommandPermissions[]
+    >();
+    for (const permissionsData of data) {
+      updatedPermissions.set(
+        permissionsData.id,
+        permissionsData.permissions.map((permission) =>
+          ApplicationCommandPermissionsManager.transformPermissions(
+            permission,
+            true
           )
-        ),
-      new Collection<Snowflake, ApplicationCommandPermissions[]>()
-    );
+        )
+      );
+    }
+    return updatedPermissions;
   }
 
   async add({
@@ -282,7 +291,7 @@ class ApplicationCommandPermissionsManager<
 
     const newPermissions = [...permissions];
     for (const perm of existing) {
-      if (!newPermissions.some((x) => x.id === perm.id)) {
+      if (!newPermissions.some((permission) => permission.id === perm.id)) {
         newPermissions.push(perm);
       }
     }
@@ -318,13 +327,13 @@ class ApplicationCommandPermissionsManager<
 
     const resolvedIds: Snowflake[] = [];
     if (Array.isArray(users)) {
-      users.forEach((user) => {
+      for (const user of users) {
         const userId = this.client.users.resolveId(user);
         if (!userId) {
           throw new TypeError("INVALID_ELEMENT", "Array", "users", user);
         }
         resolvedIds.push(userId);
-      });
+      }
     } else if (users) {
       const userId = this.client.users.resolveId(users);
       if (!userId) {
@@ -334,10 +343,10 @@ class ApplicationCommandPermissionsManager<
     }
 
     if (Array.isArray(roles)) {
-      roles.forEach((role) => {
+      for (const role of roles) {
         if (typeof role === "string") {
           resolvedIds.push(role);
-          return;
+          continue;
         }
         if (!this.guild) {
           throw new Error("GUILD_UNCACHED_ROLE_RESOLVE");
@@ -347,7 +356,7 @@ class ApplicationCommandPermissionsManager<
           throw new TypeError("INVALID_ELEMENT", "Array", "users", role);
         }
         resolvedIds.push(roleId);
-      });
+      }
     } else if (roles) {
       if (typeof roles === "string") {
         resolvedIds.push(roles);
@@ -455,10 +464,8 @@ class ApplicationCommandPermissionsManager<
       } else if ("resolveId" in this.manager) {
         commandId = this.manager.resolveId(command);
       }
-      commandId =
-        commandId ??
-        this.client.application?.commands.resolveId(command) ??
-        null;
+      commandId ??=
+        this.client.application?.commands.resolveId(command) ?? null;
       if (!commandId) {
         throw new TypeError(
           "INVALID_TYPE",
@@ -511,5 +518,3 @@ class ApplicationCommandPermissionsManager<
 
 export default ApplicationCommandPermissionsManager;
 export { ApplicationCommandPermissionsManager };
-
-/* eslint-disable max-len */

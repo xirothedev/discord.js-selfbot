@@ -20,13 +20,12 @@ const {
 } = _ConstantsModule;
 import DataResolver from "../util/DataResolver";
 import Util from "../util/Util";
-import _UtilModule from "../util/Util";
 
 const {
   resolveAutoArchiveMaxLimit,
   transformGuildForumTag,
   transformGuildDefaultReaction,
-} = _UtilModule;
+} = Util;
 import type {
   GatewayChannelCreateDispatchData,
   GatewayChannelUpdateDispatchData,
@@ -75,6 +74,7 @@ interface OverwriteDataSource {
 }
 
 type OverwriteResolvableSource = PermissionOverwritesType | OverwriteDataSource;
+type ResolvedOverwrite = ReturnType<typeof PermissionOverwrites.resolve>;
 
 export type ChannelDataSource =
   | ChannelData
@@ -155,12 +155,13 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
   }
 
   get channelCountWithoutThreads() {
-    return this.cache.reduce((acc, channel) => {
-      if (ThreadChannelTypes.includes(channel.type)) {
-        return acc;
+    let count = 0;
+    for (const channel of this.cache.values()) {
+      if (!ThreadChannelTypes.includes(channel.type)) {
+        count++;
       }
-      return acc + 1;
-    }, 0);
+    }
+    return count;
   }
 
   _add(channel: GuildChannel): GuildChannel {
@@ -186,7 +187,7 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
     return super.resolveId(channel);
   }
 
-  async create<T extends GuildChannel = GuildChannel>(
+  async create<Result extends GuildChannel = GuildChannel>(
     name: string,
     {
       type,
@@ -207,7 +208,7 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
       defaultThreadRateLimitPerUser,
       reason,
     }: GuildChannelCreateOptionsSource = {}
-  ): Promise<T> {
+  ): Promise<Result> {
     const parentId = parent
       ? this.client.channels.resolveId(parent)
       : undefined;
@@ -215,14 +216,18 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
       ? (permissionOverwrites instanceof Collection
           ? [...permissionOverwrites.values()]
           : permissionOverwrites
-        ).map((o) => PermissionOverwrites.resolve(o, this.guild))
+        ).map((overwrite) =>
+          PermissionOverwrites.resolve(overwrite, this.guild)
+        )
       : undefined;
-    const intType =
-      typeof type === "number"
-        ? type
-        : type
-          ? (resolveEnumValue(ChannelTypes, type) ?? ChannelTypes.GUILD_TEXT)
-          : ChannelTypes.GUILD_TEXT;
+    let intType: number;
+    if (typeof type === "number") {
+      intType = type;
+    } else if (type) {
+      intType = resolveEnumValue(ChannelTypes, type) ?? ChannelTypes.GUILD_TEXT;
+    } else {
+      intType = ChannelTypes.GUILD_TEXT;
+    }
 
     const videoMode = resolveEnumValue(VideoQualityModes, videoQualityMode);
 
@@ -236,7 +241,6 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
     ) {
       storeChannelDeprecationEmitted = true;
       process.emitWarning(
-        // eslint-disable-next-line max-len
         "Creating store channels is deprecated by Discord and will stop working in March 2022. Check the docs for more info.",
         "DeprecationWarning"
       );
@@ -274,7 +278,7 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
     if (!(channel instanceof GuildChannel)) {
       throw new TypeError("INVALID_TYPE", "channel", "GuildChannel");
     }
-    return channel as T;
+    return channel as Result;
   }
 
   async createWebhook(
@@ -320,11 +324,11 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
     return webhook_id;
   }
 
-  async edit<T extends GuildChannel = GuildChannel>(
+  async edit<Result extends GuildChannel = GuildChannel>(
     channel: GuildChannelResolvableSource,
     data: ChannelDataSource,
     reason?: string
-  ): Promise<T> {
+  ): Promise<Result> {
     const resolved = this.resolve(channel);
     if (!resolved) {
       throw new TypeError("INVALID_TYPE", "channel", "GuildChannelResolvable");
@@ -336,27 +340,11 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
       await this.setPosition(resolved, data.position, { reason });
     }
 
-    let permission_overwrites = data.permissionOverwrites
-      ? (data.permissionOverwrites instanceof Collection
-          ? [...data.permissionOverwrites.values()]
-          : data.permissionOverwrites
-        ).map((o) => PermissionOverwrites.resolve(o, this.guild))
-      : undefined;
-
-    if (data.lockPermissions) {
-      if (parentId) {
-        const newParent = this.cache.get(parentId);
-        if (newParent?.type === "GUILD_CATEGORY") {
-          permission_overwrites = newParent.permissionOverwrites.cache.map(
-            (o) => PermissionOverwrites.resolve(o, this.guild)
-          );
-        }
-      } else if (resolved.parent) {
-        permission_overwrites = resolved.parent.permissionOverwrites.cache.map(
-          (o) => PermissionOverwrites.resolve(o, this.guild)
-        );
-      }
-    }
+    const permission_overwrites = this.resolveEditOverwrites(
+      data,
+      parentId ?? undefined,
+      resolved
+    );
 
     let defaultAutoArchiveDuration:
       | ThreadAutoArchiveDuration
@@ -365,6 +353,13 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
       | undefined = data.defaultAutoArchiveDuration;
     if (defaultAutoArchiveDuration === "MAX") {
       defaultAutoArchiveDuration = resolveAutoArchiveMaxLimit(this.guild);
+    }
+
+    let resolvedRtcRegion: unknown;
+    if ("rtcRegion" in data) {
+      resolvedRtcRegion = data.rtcRegion;
+    } else if ("rtcRegion" in resolved) {
+      resolvedRtcRegion = resolved.rtcRegion;
     }
 
     const newData = await this.client.api
@@ -392,12 +387,7 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
           parent_id: parentId,
           permission_overwrites,
           rate_limit_per_user: data.rateLimitPerUser,
-          rtc_region:
-            "rtcRegion" in data
-              ? data.rtcRegion
-              : "rtcRegion" in resolved
-                ? resolved.rtcRegion
-                : undefined,
+          rtc_region: resolvedRtcRegion,
           topic: data.topic,
           type: data.type,
           user_limit: data.userLimit ?? resolved.userLimit,
@@ -413,7 +403,39 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
     if (!(updated instanceof GuildChannel)) {
       throw new TypeError("INVALID_TYPE", "channel", "GuildChannel");
     }
-    return updated as T;
+    return updated as Result;
+  }
+
+  private resolveEditOverwrites(
+    data: ChannelDataSource,
+    parentId: string | undefined,
+    resolved: GuildChannel
+  ): ResolvedOverwrite[] | undefined {
+    let permissionOverwrites = data.permissionOverwrites
+      ? (data.permissionOverwrites instanceof Collection
+          ? [...data.permissionOverwrites.values()]
+          : data.permissionOverwrites
+        ).map((overwrite) =>
+          PermissionOverwrites.resolve(overwrite, this.guild)
+        )
+      : undefined;
+
+    if (!data.lockPermissions) {
+      return permissionOverwrites;
+    }
+    if (parentId) {
+      const newParent = this.cache.get(parentId);
+      if (newParent?.type === "GUILD_CATEGORY") {
+        permissionOverwrites = newParent.permissionOverwrites.cache.map(
+          (overwrite) => PermissionOverwrites.resolve(overwrite, this.guild)
+        );
+      }
+    } else if (resolved.parent) {
+      permissionOverwrites = resolved.parent.permissionOverwrites.cache.map(
+        (overwrite) => PermissionOverwrites.resolve(overwrite, this.guild)
+      );
+    }
+    return permissionOverwrites;
   }
 
   async setPosition(
@@ -496,19 +518,22 @@ class GuildChannelManager extends CachedManager<GuildChannel> {
     }
     const data: RawWebhookData[] =
       await this.client.api.channels[id].webhooks.get();
-    return data.reduce(
-      (hooks, hook) => hooks.set(hook.id, new Webhook(this.client, hook)),
-      new Collection<Snowflake, Webhook>()
-    );
+    const hooks = new Collection<Snowflake, Webhook>();
+    for (const hook of data) {
+      hooks.set(hook.id, new Webhook(this.client, hook));
+    }
+    return hooks;
   }
 
   async setPositions(channelPositions: readonly ChannelPositionSource[]) {
-    const positions = channelPositions.map((r) => ({
-      id: this.client.channels.resolveId(r.channel),
-      lock_permissions: r.lockPermissions,
+    const positions = channelPositions.map((positionSource) => ({
+      id: this.client.channels.resolveId(positionSource.channel),
+      lock_permissions: positionSource.lockPermissions,
       parent_id:
-        typeof r.parent !== "undefined" ? this.resolveId(r.parent) : undefined,
-      position: r.position,
+        positionSource.parent === undefined
+          ? undefined
+          : this.resolveId(positionSource.parent),
+      position: positionSource.position,
     }));
 
     await this.client.api

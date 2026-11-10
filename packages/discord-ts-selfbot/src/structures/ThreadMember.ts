@@ -24,7 +24,13 @@ class ThreadMember extends Base {
 
     this.joinedTimestamp = null;
 
-    this.id = data?.user_id ?? this.client.user!.id;
+    const userId = data?.user_id ?? this.client.user?.id;
+    if (userId === undefined) {
+      throw new TypeError(
+        "A client user is required to create a thread member"
+      );
+    }
+    this.id = userId;
 
     if (data) {
       this._patch(data, extra);

@@ -41,7 +41,11 @@ class VoiceStateManager extends CachedManager<VoiceState> {
     if (!resolvedId) {
       throw new Error("VOICE_STATE_RESOLVE_MEMBER");
     }
-    const id = resolvedId === "@me" ? this.client.user!.id : resolvedId;
+    const self = resolvedId === "@me" ? this.client.user : null;
+    if (resolvedId === "@me" && !self) {
+      throw new Error("VOICE_STATE_RESOLVE_MEMBER");
+    }
+    const id = self?.id ?? resolvedId;
     if (!force) {
       const existing = this.cache.get(id);
       if (existing) {

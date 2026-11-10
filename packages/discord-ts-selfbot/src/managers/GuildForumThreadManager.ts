@@ -30,13 +30,10 @@ class GuildForumThreadManager extends ThreadManager {
       throw new TypeError("GUILD_FORUM_MESSAGE_REQUIRED");
     }
 
-    let messagePayload;
-
-    if (message instanceof MessagePayload) {
-      messagePayload = message.resolveData();
-    } else {
-      messagePayload = MessagePayload.create(this, message).resolveData();
-    }
+    const messagePayload =
+      message instanceof MessagePayload
+        ? message.resolveData()
+        : MessagePayload.create(this, message).resolveData();
 
     const { data: body, files } = await messagePayload.resolveFiles();
     const fileList = files ?? [];
@@ -65,12 +62,14 @@ class GuildForumThreadManager extends ThreadManager {
     });
     const attachmentsData = await Promise.all(requestPromises);
     attachmentsData.sort(
-      (a, b) => Number.parseInt(a.id) - Number.parseInt(b.id)
+      (left, right) =>
+        Math.trunc(Number(left.id)) - Math.trunc(Number(right.id))
     );
 
+    let archiveDuration = autoArchiveDuration;
     if (autoArchiveDuration === "MAX") {
       resolveAutoArchiveMaxLimit(this.channel.guild);
-      autoArchiveDuration = 10_080;
+      archiveDuration = 10_080;
     }
 
     const post_data = await this.client.api
@@ -79,7 +78,7 @@ class GuildForumThreadManager extends ThreadManager {
         data: {
           applied_tags: appliedTags,
           attachments: attachmentsData,
-          auto_archive_duration: autoArchiveDuration,
+          auto_archive_duration: archiveDuration,
           message: body,
           name,
           rate_limit_per_user: rateLimitPerUser,

@@ -51,9 +51,9 @@ function serializeSelectOption(
     description: option.description ?? undefined,
     emoji: option.emoji
       ? {
+          animated: option.emoji.animated,
           id: option.emoji.id ?? undefined,
           name: option.emoji.name ?? undefined,
-          animated: option.emoji.animated,
         }
       : undefined,
     label: option.label,
@@ -131,12 +131,12 @@ class MessageSelectMenu extends BaseMessageComponent {
 
     this.disabled = data.disabled ?? false;
 
-    const channelTypes =
-      "channel_types" in data
-        ? (data.channel_types ?? [])
-        : "channelTypes" in data
-          ? (data.channelTypes ?? [])
-          : [];
+    let channelTypes: (string | number)[] = [];
+    if ("channel_types" in data) {
+      channelTypes = data.channel_types ?? [];
+    } else if ("channelTypes" in data) {
+      channelTypes = data.channelTypes ?? [];
+    }
     this.channelTypes = channelTypes
       .map(resolvePublicChannelType)
       .filter(
@@ -162,20 +162,20 @@ class MessageSelectMenu extends BaseMessageComponent {
       case ComponentType.StringSelect: {
         return {
           ...common,
-          type,
           options: this.options.map(serializeSelectOption),
+          type,
         };
       }
       case ComponentType.ChannelSelect: {
         return {
           ...common,
-          type,
           channel_types: this.channelTypes
             .map(resolveChannelType)
             .filter(
               (channelType): channelType is ChannelType =>
                 channelType !== undefined
             ),
+          type,
         };
       }
       default: {
@@ -187,7 +187,8 @@ class MessageSelectMenu extends BaseMessageComponent {
   static normalizeOption(
     option: MessageSelectOptionDataSource
   ): MessageSelectOption {
-    let { label, value, description, emoji } = option;
+    const { emoji } = option;
+    let { label, value, description } = option;
 
     label = Util.verifyString(label, RangeError, "SELECT_OPTION_LABEL");
     value = Util.verifyString(value, RangeError, "SELECT_OPTION_VALUE");

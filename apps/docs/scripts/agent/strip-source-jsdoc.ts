@@ -7,7 +7,7 @@ const packageDir = path.resolve(
   "../../../../packages/discord-ts-selfbot"
 );
 const sourceDir = path.join(packageDir, "src");
-const KEEP = /@(?:deprecated|internal|ts-ignore|ts-expect-error|ts-nocheck)\b/;
+const KEEP = /@(?:deprecated|internal|ts-ignore|ts-expect-error|ts-nocheck)\b/u;
 
 function walk(root: string): string[] {
   const files: string[] = [];
@@ -48,8 +48,8 @@ function strip(source: string): { output: string; removed: number } {
   return {
     output: `${kept
       .join("\n")
-      .replaceAll(/\n{3,}/g, "\n\n")
-      .replace(/\n+$/, "")}\n`,
+      .replaceAll(/\n{3,}/gu, "\n\n")
+      .replace(/\n+$/u, "")}\n`,
     removed,
   };
 }

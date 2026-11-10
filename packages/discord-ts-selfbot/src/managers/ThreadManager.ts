@@ -124,18 +124,19 @@ class ThreadManager extends CachedManager<ThreadChannel> {
       cache,
     }: { parent?: GuildChannel; guild?: Guild | null; cache?: boolean }
   ): FetchedThreadsSource {
-    const threads = rawThreads.threads.reduce((coll, raw) => {
+    const threads = new Collection<Snowflake, ThreadChannel>();
+    for (const raw of rawThreads.threads) {
       const thread = client.channels._add(raw, guild ?? parent?.guild ?? null, {
         cache,
       });
       if (!thread || !isThreadChannel(thread)) {
-        return coll;
+        continue;
       }
       if (parent && thread.parentId !== parent.id) {
-        return coll;
+        continue;
       }
-      return coll.set(thread.id, thread);
-    }, new Collection<Snowflake, ThreadChannel>());
+      threads.set(thread.id, thread);
+    }
     // Discord sends the thread id as id in this object
     for (const rawMember of rawThreads.members) {
       const channel = rawMember.id

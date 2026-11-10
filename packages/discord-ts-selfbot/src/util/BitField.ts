@@ -18,7 +18,7 @@ export type BitFieldResolvable =
 interface BitFieldStatic {
   defaultBit: number | bigint;
   FLAGS: Record<string, number | bigint>;
-  resolve(bit: unknown): number | bigint;
+  resolve: (bit: unknown) => number | bigint;
 }
 
 class BitField {
@@ -70,7 +70,7 @@ class BitField {
 
   missing(bits: BitFieldResolvable, ...hasParams: unknown[]): string[] {
     return new (this.constructor as unknown as new (
-      b: BitFieldResolvable
+      value: BitFieldResolvable
     ) => BitField)(bits)
       .remove(this)
       .toArray(...hasParams);
@@ -96,7 +96,7 @@ class BitField {
         : (this.bitfield as number) | (total as number);
     if (Object.isFrozen(this)) {
       return new (this.constructor as unknown as new (
-        b: BitFieldResolvable
+        value: BitFieldResolvable
       ) => BitField)(next) as this;
     }
     this.bitfield = next;
@@ -119,7 +119,7 @@ class BitField {
         : (this.bitfield as number) & ~(total as number);
     if (Object.isFrozen(this)) {
       return new (this.constructor as unknown as new (
-        b: BitFieldResolvable
+        value: BitFieldResolvable
       ) => BitField)(next) as this;
     }
     this.bitfield = next;
@@ -169,21 +169,23 @@ class BitField {
       return bit as number | bigint;
     }
     if (Array.isArray(bit)) {
-      return bit
-        .map((p) => self.resolve(p))
-        .reduce((prev: number | bigint, p: number | bigint) => {
-          if (typeof prev === "bigint" || typeof p === "bigint")
-            return (prev as bigint) | (p as bigint);
-          return (prev as number) | (p as number);
-        }, defaultBit);
-    }
-    if (typeof bit === "object" && bit !== null && "bitfield" in bit) {
-      if (
-        typeof bit.bitfield === "number" ||
-        typeof bit.bitfield === "bigint"
-      ) {
-        return bit.bitfield;
+      let total: number | bigint = defaultBit;
+      for (const item of bit) {
+        const resolved = self.resolve(item);
+        total =
+          typeof total === "bigint" || typeof resolved === "bigint"
+            ? (total as bigint) | (resolved as bigint)
+            : (total as number) | (resolved as number);
       }
+      return total;
+    }
+    if (
+      typeof bit === "object" &&
+      bit !== null &&
+      "bitfield" in bit &&
+      (typeof bit.bitfield === "number" || typeof bit.bitfield === "bigint")
+    ) {
+      return bit.bitfield;
     }
     if (typeof bit === "string") {
       if (!Number.isNaN(Number(bit))) {

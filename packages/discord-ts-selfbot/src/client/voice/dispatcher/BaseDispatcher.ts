@@ -12,16 +12,16 @@ const MAX_UINT_32 = 2 ** 32 - 1;
 const extensions = [{ id: 5, length: 2, value: 0 }];
 
 interface DispatcherStream {
-  on(event: string, listener: (...args: unknown[]) => void): unknown;
-  unpipe(destination?: unknown): unknown;
-  pipe(destination: unknown): unknown;
-  pause(): unknown;
-  resume(): unknown;
-  destroy(): unknown;
-  setBitrate?(bitrate: number): unknown;
-  setPLP?(plp: number): unknown;
-  setFEC?(fec: boolean): unknown;
-  setVolume?(volume: number): unknown;
+  on: (event: string, listener: (...args: unknown[]) => void) => unknown;
+  unpipe: (destination?: NodeJS.WritableStream) => unknown;
+  pipe: (destination: NodeJS.WritableStream) => unknown;
+  pause: () => unknown;
+  resume: () => unknown;
+  destroy: () => unknown;
+  setBitrate?: (bitrate: number) => unknown;
+  setPLP?: (plp: number) => unknown;
+  setFEC?: (fec: boolean) => unknown;
+  setVolume?: (volume: number) => unknown;
   volume?: number;
 }
 
@@ -66,13 +66,13 @@ class BaseDispatcher extends Writable {
 
   constructor(
     player: MediaPlayer,
-    highWaterMark = 12,
+    highWaterMark: number | undefined,
     payloadType: number,
     extensionEnabled: boolean,
     streams: DispatcherStreams = {}
   ) {
     super({
-      highWaterMark,
+      highWaterMark: highWaterMark ?? 12,
     });
     this.streams = streams;
     this.player = player;
@@ -133,6 +133,7 @@ class BaseDispatcher extends Writable {
       "aead_aes256_gcm_rtpsize"
         ? Buffer.alloc(12)
         : Buffer.alloc(24);
+    return this._nonceBuffer;
   }
 
   getNewSequence() {
@@ -155,15 +156,19 @@ class BaseDispatcher extends Writable {
     }
     if (this._syncDispatcher && !this._syncDispatcher.startTime) {
       this.pause();
+      let timedOut = false;
+      const timeout = setTimeout(() => {
+        timedOut = true;
+        this.resume();
+      }, 10_000).unref();
       const cb = () => {
+        if (timedOut) {
+          return;
+        }
         this.resume();
         clearTimeout(timeout);
       };
       this._syncDispatcher.once("start", cb);
-      const timeout = setTimeout(() => {
-        this.removeListener("start", cb);
-        this.resume();
-      }, 10_000).unref();
     }
     if (this.getTypeDispatcher() === "video") {
       this._codecCallback(chunk);
@@ -173,9 +178,9 @@ class BaseDispatcher extends Writable {
     this._step(done);
   }
 
-  _destroy(err: Error | null, cb: (error?: Error | null) => void) {
+  _destroy(err: Error | null, done: (error?: Error | null) => void) {
     this._cleanup();
-    super._destroy(err, cb);
+    super._destroy(err, done);
   }
 
   _cleanup() {
@@ -198,16 +203,17 @@ class BaseDispatcher extends Writable {
     if (this.paused) {
       return;
     }
-    if (this.streams.opus) {
-      this.streams.opus.unpipe(this);
-    } // Audio
+    const { streams } = this;
+    if (streams.opus) {
+      streams.opus.unpipe(this);
+    }
     if (this.streams.video) {
-      this.streams.ffmpeg!.pause();
+      this.streams.ffmpeg?.pause();
       this.streams.video.unpipe(this);
     }
     if (this.getTypeDispatcher() === "audio") {
       if (silence) {
-        this.streams.silence!.pipe(this);
+        this.streams.silence?.pipe(this);
         this._silence = true;
       } else {
         this._setSpeaking(0);
@@ -221,11 +227,10 @@ class BaseDispatcher extends Writable {
   }
 
   get pausedTime() {
-    return (
-      this._silentPausedTime +
-      this._pausedTime +
-      (this.paused ? performance.now() - this.pausedSince! : 0)
-    );
+    const currentPause = this.pausedSince
+      ? performance.now() - this.pausedSince
+      : 0;
+    return this._silentPausedTime + this._pausedTime + currentPause;
   }
 
   resume() {
@@ -233,13 +238,13 @@ class BaseDispatcher extends Writable {
       return;
     }
     if (this.getTypeDispatcher() === "audio") {
-      this.streams.silence!.unpipe(this);
+      this.streams.silence?.unpipe(this);
     }
     if (this.streams.opus) {
       this.streams.opus.pipe(this);
     }
     if (this.streams.video) {
-      this.streams.ffmpeg!.resume();
+      this.streams.ffmpeg?.resume();
       this.streams.video.pipe(this);
     }
     if (this._silence) {
@@ -281,9 +286,9 @@ class BaseDispatcher extends Writable {
     }
   }
 
-  _final(callback: (error?: Error | null) => void) {
+  _final(done: (error?: Error | null) => void) {
     this._writeCallback = null;
-    callback();
+    done();
   }
 
   _playChunk(chunk: Buffer, isLastPacket = false) {
@@ -304,7 +309,8 @@ class BaseDispatcher extends Writable {
     const profile = Buffer.alloc(4);
     profile[0] = 0xbe;
     profile[1] = 0xde;
-    profile.writeInt16BE(extensions.length, 2); // Extension count
+    // Extension count.
+    profile.writeInt16BE(extensions.length, 2);
 
     return profile;
   }
@@ -316,7 +322,8 @@ class BaseDispatcher extends Writable {
 
       // https://webrtc.googlesource.com/src/+/refs/heads/main/docs/native-code/rtp-hdrext/playout-delay
       if (ext.id === 5) {
-        data.writeUIntBE(ext.value, 1, 2); // Not quite but its 0 anyway
+        // Not quite but its 0 anyway.
+        data.writeUIntBE(ext.value, 1, 2);
       }
       extensionsData.push(data);
     }
@@ -336,7 +343,7 @@ class BaseDispatcher extends Writable {
     if (!this._nonceBuffer) {
       this.resetNonceBuffer();
     }
-    const nonceBuffer = this._nonceBuffer!;
+    const nonceBuffer = this._nonceBuffer ?? this.resetNonceBuffer();
     nonceBuffer.writeUInt32BE(this._nonce, 0);
 
     // 4 extra bytes of padding on the end of the encrypted packet
@@ -404,16 +411,18 @@ class BaseDispatcher extends Writable {
       4,
     );
     */
-    // Header
-    let rtpHeader = Buffer.alloc(12); // RTP_HEADER_SIZE
-    rtpHeader[0] = 0x80; // Version + Flags (1 byte)
-    rtpHeader[1] = this.payloadType; // Payload Type (1 byte)
+    // Header layout: [0] version + flags, [1] payload type, [2-3] sequence,
+    // [4-7] timestamp, [8-11] SSRC.
+    let rtpHeader = Buffer.alloc(12);
+    rtpHeader[0] = 0x80;
+    rtpHeader[1] = this.payloadType;
     if (this.extensionEnabled) {
       rtpHeader = Buffer.concat([rtpHeader, this.createHeaderExtension()]);
-      rtpHeader[0] |= 1 << 4; // 0x90
+      rtpHeader[0] |= 1 << 4;
     }
     if (this.getTypeDispatcher() === "video" && isLastPacket) {
-      rtpHeader[1] |= 1 << 7; // Marker bit
+      // Marker bit.
+      rtpHeader[1] |= 1 << 7;
     }
 
     rtpHeader.writeUIntBE(this.getNewSequence(), 2, 2);
@@ -429,18 +438,21 @@ class BaseDispatcher extends Writable {
 
   _sendPacket(packet: Buffer) {
     if (this.getTypeDispatcher() === "audio") {
-      this._setSpeaking(this.player.isScreenSharing ? 1 << 1 : Math.trunc(1)); // 1 << 0 = SPEAKING, 1 << 1 = SOUND SHARE
+      // 1 << 0 = SPEAKING, 1 << 1 = SOUND SHARE.
+      this._setSpeaking(this.player.isScreenSharing ? 1 << 1 : Math.trunc(1));
     } else if (this.getTypeDispatcher() === "video") {
       this._setVideoStatus(true);
       this._setStreamStatus(false);
     }
-    if (!this.player.voiceConnection.sockets.udp) {
+    const { udp } = this.player.voiceConnection.sockets;
+    if (!udp) {
       this.emit("debug", "Failed to send a packet - no UDP socket");
       return;
     }
-    this.player.voiceConnection.sockets.udp
-      .send(packet)
-      .catch((error: unknown) => {
+    const send = async () => {
+      try {
+        await udp.send(packet);
+      } catch (error: unknown) {
         if (this.getTypeDispatcher() === "audio") {
           this._setSpeaking(0);
         } else if (this.getTypeDispatcher() === "video") {
@@ -448,7 +460,9 @@ class BaseDispatcher extends Writable {
           this._setStreamStatus(true);
         }
         this.emit("debug", `Failed to send a packet - ${error}`);
-      });
+      }
+    };
+    void send();
   }
 
   _setSpeaking(value: number) {

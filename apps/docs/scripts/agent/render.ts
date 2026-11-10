@@ -1,13 +1,21 @@
-import { plainText, stripJsdocSyntax } from "../api/comment";
 import {
   mergeMembers,
   mergeSignature,
   signatureLine,
 } from "../api/render-shared";
-import type { MergedMember } from "../api/render-shared";
 import { renderType } from "../api/render-type";
 import { Kind } from "../api/types";
-import type { Comment, DocgenEvent, Reflection } from "../api/types";
+import type { DocgenEvent, Reflection } from "../api/types";
+import {
+  block,
+  deprecated,
+  examples,
+  parameterList,
+  renderEvent,
+  renderMethod,
+  renderProperty,
+  summary,
+} from "./render-members";
 
 const HIDDEN_MEMBERS = new Set([
   "[captureRejectionSymbol]",
@@ -47,159 +55,6 @@ const ERROR_MEMBERS = new Set([
   "stackTraceLimit",
 ]);
 
-function summary(comment: Comment | undefined): string {
-  const parts = comment?.summary;
-  if (!parts?.length) {
-    return "";
-  }
-  return parts
-    .map((part) => {
-      if (part.kind === "code") {
-        return part.text ?? "";
-      }
-      return stripJsdocSyntax(part.text ?? "");
-    })
-    .join("")
-    .trim();
-}
-
-function deprecated(comment: Comment | undefined): string {
-  const tag = comment?.blockTags?.find((item) => item.tag === "@deprecated");
-  if (!tag) {
-    return "";
-  }
-  const text = stripJsdocSyntax(plainText(tag.content)).trim();
-  return `> **Deprecated.** ${text || "This API is deprecated."}`;
-}
-
-function examples(comment: Comment | undefined): string[] {
-  const tags =
-    comment?.blockTags?.filter((item) => item.tag === "@example") ?? [];
-  return tags
-    .map((tag) => {
-      const code = tag.content?.find((part) => part.kind === "code")?.text;
-      if (code) {
-        return code.trim();
-      }
-      const text = stripJsdocSyntax(plainText(tag.content)).trim();
-      return text ? `\`\`\`ts\n${text}\n\`\`\`` : "";
-    })
-    .filter(Boolean);
-}
-
-function parameterList(
-  parameters: ReturnType<typeof mergeSignature>["parameters"]
-): string {
-  return parameters
-    .map((parameter) => {
-      const optional =
-        parameter.flags?.isOptional || parameter.defaultValue !== undefined
-          ? "?"
-          : "";
-      const description = stripJsdocSyntax(
-        plainText(parameter.comment?.summary)
-      ).trim();
-      const code = `\`${parameter.name}${optional}: ${renderType(parameter.type) ?? "unknown"}\``;
-      return description ? `- ${code} — ${description}` : `- ${code}`;
-    })
-    .join("\n");
-}
-
-function block(title: string, body: string): string {
-  return body.trim() ? `## ${title}\n\n${body.trim()}` : "";
-}
-
-function renderMethod(member: MergedMember): string {
-  const sourceSignatures = member.source?.signatures ?? [];
-  const typingsSignatures = member.typings?.signatures ?? [];
-  const count = Math.max(sourceSignatures.length, typingsSignatures.length);
-  const parts: string[] = [];
-
-  for (let index = 0; index < count; index += 1) {
-    const merged = mergeSignature(
-      sourceSignatures[index],
-      typingsSignatures[index]
-    );
-    const isStatic =
-      member.typings?.flags?.isStatic || member.source?.flags?.isStatic;
-    const code = signatureLine(
-      merged,
-      `${isStatic ? "static " : ""}${member.name}`
-    );
-    const description = summary(merged.comment);
-    const deprecatedText = deprecated(merged.comment);
-    const parameters = parameterList(merged.parameters);
-    const returns = merged.returnType
-      ? `**Returns:** \`${renderType(merged.returnType) ?? "unknown"}\``
-      : "";
-    const exampleBlocks = examples(merged.comment);
-
-    parts.push(
-      [
-        description,
-        deprecatedText,
-        "```ts",
-        code,
-        "```",
-        parameters,
-        returns,
-        ...exampleBlocks,
-      ]
-        .filter(Boolean)
-        .join("\n\n")
-    );
-  }
-
-  return [`### \`${member.name}\``, ...parts].join("\n\n");
-}
-
-function renderProperty(member: MergedMember): string {
-  const type =
-    member.typings?.type ??
-    member.source?.type ??
-    member.source?.getSignature?.type;
-  const description = summary(
-    member.typings?.comment ?? member.source?.comment
-  );
-  const flags: string[] = [];
-  if (member.typings?.flags?.isReadonly || member.source?.flags?.isReadonly) {
-    flags.push("readonly");
-  }
-  if (member.typings?.flags?.isStatic || member.source?.flags?.isStatic) {
-    flags.push("static");
-  }
-
-  const meta = [
-    `**Type:** \`${renderType(type) ?? "unknown"}\``,
-    flags.length ? `**Modifiers:** ${flags.join(", ")}` : "",
-  ]
-    .filter(Boolean)
-    .join(" · ");
-
-  return [`### \`${member.name}\``, description, meta]
-    .filter(Boolean)
-    .join("\n\n");
-}
-
-function renderEvent(event: DocgenEvent): string {
-  const description = event.description
-    ? stripJsdocSyntax(event.description).trim()
-    : "";
-  const params = (event.params ?? [])
-    .map((parameter) => {
-      const optional = parameter.optional ? "?" : "";
-      const details = parameter.description
-        ? ` — ${stripJsdocSyntax(parameter.description).trim()}`
-        : "";
-      return `- \`${parameter.name}${optional}\`${details}`;
-    })
-    .join("\n");
-
-  return [`### \`${event.name}\``, description, params]
-    .filter(Boolean)
-    .join("\n\n");
-}
-
 export interface RenderClassInput {
   name: string;
   typings: Reflection;
@@ -227,10 +82,10 @@ export function renderClassPage(input: RenderClassInput): string {
     .filter(
       (member) => member.kind === "property" || member.kind === "accessor"
     )
-    .toSorted((a, b) => a.name.localeCompare(b.name));
+    .toSorted((left, right) => left.name.localeCompare(right.name));
   const methods = members
     .filter((member) => member.kind === "method")
-    .toSorted((a, b) => a.name.localeCompare(b.name));
+    .toSorted((left, right) => left.name.localeCompare(right.name));
 
   const heritage = [
     ...(typings.extendedTypes ?? []).map(

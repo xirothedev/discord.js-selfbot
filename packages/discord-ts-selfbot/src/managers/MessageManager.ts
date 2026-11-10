@@ -69,6 +69,59 @@ interface RawPinnedMessagesResponse {
   items?: RawMessageData[];
 }
 
+function buildSearchQuery(search: MessageSearchDefaults): string[] {
+  const stringQuery: string[] = [];
+  if (search.authors.length > 0) {
+    stringQuery.push(search.authors.map((id) => `author_id=${id}`).join("&"));
+  }
+  if (search.content && search.content.length) {
+    stringQuery.push(`content=${encodeURIComponent(search.content)}`);
+  }
+  if (search.mentions.length > 0) {
+    stringQuery.push(search.mentions.map((id) => `mentions=${id}`).join("&"));
+  }
+  const has = search.has.filter((option) =>
+    ["link", "embed", "file", "video", "image", "sound", "sticker"].includes(
+      option
+    )
+  );
+  if (has.length > 0) {
+    stringQuery.push(has.map((option) => `has=${option}`).join("&"));
+  }
+  if (search.maxId) {
+    stringQuery.push(`max_id=${search.maxId}`);
+  }
+  if (search.minId) {
+    stringQuery.push(`min_id=${search.minId}`);
+  }
+  if (search.nsfw) {
+    stringQuery.push("include_nsfw=true");
+  }
+  if (search.offset !== 0) {
+    stringQuery.push(`offset=${search.offset}`);
+  }
+  if (search.limit !== 25) {
+    stringQuery.push(`limit=${search.limit}`);
+  }
+  if (["timestamp", "relevance"].includes(search.sortBy)) {
+    stringQuery.push(`sort_by=${search.sortBy}`);
+  } else {
+    stringQuery.push("sort_by=timestamp");
+  }
+  if (["asc", "desc"].includes(search.sortOrder)) {
+    stringQuery.push(`sort_order=${search.sortOrder}`);
+  } else {
+    stringQuery.push("sort_order=desc");
+  }
+  if (search.channels.length > 0) {
+    stringQuery.push(search.channels.map((id) => `channel_id=${id}`).join("&"));
+  }
+  if (typeof search.pinned === "boolean") {
+    stringQuery.push(`pinned=${search.pinned}`);
+  }
+  return stringQuery;
+}
+
 class MessageManager extends CachedManager<SourceMessage> {
   declare channel: MessageManagerChannel;
   constructor(
@@ -158,7 +211,8 @@ class MessageManager extends CachedManager<SourceMessage> {
     );
     const attachmentsData = await Promise.all(requestPromises);
     attachmentsData.sort(
-      (a, b) => Number.parseInt(a.id) - Number.parseInt(b.id)
+      (left, right) =>
+        Math.trunc(Number(left.id)) - Math.trunc(Number(right.id))
     );
     if (data) {
       Object.assign(data, { attachments: attachmentsData });
@@ -235,7 +289,6 @@ class MessageManager extends CachedManager<SourceMessage> {
       ? `${resolvedEmoji.animated ? "a:" : ""}${emojiName}:${resolvedEmoji.id}`
       : encodeURIComponent(emojiName);
 
-    // eslint-disable-next-line newline-per-chained-call
     await this.client.api
       .channels(this.channel.id)
       .messages(messageId)
@@ -259,11 +312,11 @@ class MessageManager extends CachedManager<SourceMessage> {
       .delete();
   }
 
-  _fetchId(
+  async _fetchId(
     messageId: Snowflake,
     cache: boolean,
     force: boolean
-  ): SourceMessage | Promise<SourceMessage> {
+  ): Promise<SourceMessage> {
     if (!force) {
       const existing = this.cache.get(messageId);
       if (existing && !existing.partial) {
@@ -272,18 +325,15 @@ class MessageManager extends CachedManager<SourceMessage> {
     }
 
     // https://discord.com/api/v9/channels/:id/messages?limit=50&around=:msgid
-    return new Promise<SourceMessage>((resolve, reject) => {
-      this._fetchMany({ around: messageId, limit: 50 }, cache)
-        .then((messages) => {
-          const message = messages.get(messageId);
-          if (message) {
-            resolve(message);
-          } else {
-            reject(new Error("MESSAGE_ID_NOT_FOUND"));
-          }
-        })
-        .catch(reject);
-    });
+    const messages = await this._fetchMany(
+      { around: messageId, limit: 50 },
+      cache
+    );
+    const message = messages.get(messageId);
+    if (!message) {
+      throw new Error("MESSAGE_ID_NOT_FOUND");
+    }
+    return message;
   }
 
   async search(
@@ -304,113 +354,57 @@ class MessageManager extends CachedManager<SourceMessage> {
       sortBy: "timestamp",
       sortOrder: "desc",
     };
-    let {
-      authors,
+    const merged = Object.assign(defaults, options);
+    let { authors, mentions, channels } = merged;
+    const {
       content,
-      mentions,
       has,
       maxId,
       minId,
-      channels,
       pinned,
       nsfw,
       offset,
       limit,
       sortBy,
       sortOrder,
-    } = Object.assign(defaults, options);
+    } = merged;
     // Validate
     if (authors.length > 0) {
       authors = authors
-        .map((u) => this.client.users.resolveId(u))
+        .map((user) => this.client.users.resolveId(user))
         .filter((id): id is Snowflake => id !== null);
     }
     if (mentions.length > 0) {
       mentions = mentions
-        .map((u) => this.client.users.resolveId(u))
+        .map((user) => this.client.users.resolveId(user))
         .filter((id): id is Snowflake => id !== null);
     }
     if (channels.length > 0) {
       channels = channels
-        .map((c) => this.client.channels.resolveId(c))
+        .map((channel) => this.client.channels.resolveId(channel))
         .filter((id): id is Snowflake => id !== null)
-        .filter((id) => {
-          if (this.channel.guildId) {
-            const c = this.channel.guild!.channels.cache.get(id);
-            if (!c || !c.messages) {
-              return false;
-            }
-            const clientUser = this.client.user;
-            if (!clientUser) {
-              return false;
-            }
-            const perm = c.permissionsFor(clientUser);
-            if (
-              !perm ||
-              !perm.has("READ_MESSAGE_HISTORY") ||
-              !perm.has("VIEW_CHANNEL")
-            ) {
-              return false;
-            }
-            return true;
-          }
-          return true;
-        });
+        .filter((id) => this.isSearchableChannel(id));
     }
     if (limit && limit > 25) {
       throw new RangeError("MESSAGE_SEARCH_LIMIT");
     }
-    let stringQuery: string[] = [];
     const result = new Collection<Snowflake, SourceMessage>();
     let data: MessageSearchResponse;
-    if (authors.length > 0) {
-      stringQuery.push(authors.map((id) => `author_id=${id}`).join("&"));
-    }
-    if (content && content.length) {
-      stringQuery.push(`content=${encodeURIComponent(content)}`);
-    }
-    if (mentions.length > 0) {
-      stringQuery.push(mentions.map((id) => `mentions=${id}`).join("&"));
-    }
-    has = has.filter((v) =>
-      ["link", "embed", "file", "video", "image", "sound", "sticker"].includes(
-        v
-      )
-    );
-    if (has.length > 0) {
-      stringQuery.push(has.map((v) => `has=${v}`).join("&"));
-    }
-    if (maxId) {
-      stringQuery.push(`max_id=${maxId}`);
-    }
-    if (minId) {
-      stringQuery.push(`min_id=${minId}`);
-    }
-    if (nsfw) {
-      stringQuery.push("include_nsfw=true");
-    }
-    if (offset !== 0) {
-      stringQuery.push(`offset=${offset}`);
-    }
-    if (limit !== 25) {
-      stringQuery.push(`limit=${limit}`);
-    }
-    if (["timestamp", "relevance"].includes(sortBy)) {
-      stringQuery.push(`sort_by=${sortBy}`);
-    } else {
-      stringQuery.push("sort_by=timestamp");
-    }
-    if (["asc", "desc"].includes(sortOrder)) {
-      stringQuery.push(`sort_order=${sortOrder}`);
-    } else {
-      stringQuery.push("sort_order=desc");
-    }
-    if (this.channel.guildId && channels.length > 0) {
-      stringQuery.push(channels.map((id) => `channel_id=${id}`).join("&"));
-    }
-    if (typeof pinned === "boolean") {
-      stringQuery.push(`pinned=${pinned}`);
-    }
+    let stringQuery = buildSearchQuery({
+      authors,
+      channels,
+      content,
+      has,
+      limit,
+      maxId,
+      mentions,
+      minId,
+      nsfw,
+      offset,
+      pinned,
+      sortBy,
+      sortOrder,
+    });
     // Main
     if (!stringQuery.length) {
       return {
@@ -425,7 +419,9 @@ class MessageManager extends CachedManager<SourceMessage> {
         ].get();
     } else {
       stringQuery = stringQuery.filter(
-        (v) => !v.startsWith("channel_id") && !v.startsWith("include_nsfw")
+        (queryPart) =>
+          !queryPart.startsWith("channel_id") &&
+          !queryPart.startsWith("include_nsfw")
       );
       data =
         await this.client.api.channels[this.channel.id].messages[
@@ -442,9 +438,36 @@ class MessageManager extends CachedManager<SourceMessage> {
     };
   }
 
+  private isSearchableChannel(id: Snowflake): boolean {
+    if (!this.channel.guildId) {
+      return true;
+    }
+    const { guild } = this.channel;
+    if (!guild) {
+      return false;
+    }
+    const channel = guild.channels.cache.get(id);
+    if (!channel || !channel.messages) {
+      return false;
+    }
+    const clientUser = this.client.user;
+    if (!clientUser) {
+      return false;
+    }
+    const perm = channel.permissionsFor(clientUser);
+    if (
+      !perm ||
+      !perm.has("READ_MESSAGE_HISTORY") ||
+      !perm.has("VIEW_CHANNEL")
+    ) {
+      return false;
+    }
+    return true;
+  }
+
   async _fetchMany(
     options: ChannelLogsQueryOptions = {},
-    cache: boolean
+    cache = true
   ): Promise<Collection<Snowflake, SourceMessage>> {
     const data: RawMessageData[] = await this.client.api.channels[
       this.channel.id
@@ -470,7 +493,7 @@ class MessageManager extends CachedManager<SourceMessage> {
     after,
     limit,
   }: FetchPollAnswerVotersOptions): Promise<Collection<Snowflake, User>> {
-    const voters: PollVotersResponse = await this.client.api
+    const votersResponse: PollVotersResponse = await this.client.api
       .channels(this.channel.id)
       .polls(messageId)
       .answers(answerId)
@@ -478,10 +501,11 @@ class MessageManager extends CachedManager<SourceMessage> {
         query: { after, limit },
       });
 
-    return voters.users.reduce(
-      (acc, user) => acc.set(user.id, this.client.users._add(user, false)),
-      new Collection<Snowflake, User>()
-    );
+    const voters = new Collection<Snowflake, User>();
+    for (const user of votersResponse.users) {
+      voters.set(user.id, this.client.users._add(user, false));
+    }
+    return voters;
   }
 }
 

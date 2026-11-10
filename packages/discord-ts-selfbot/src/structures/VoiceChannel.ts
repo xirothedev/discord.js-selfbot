@@ -28,13 +28,16 @@ class VoiceChannel extends BaseGuildVoiceChannel {
     if (!super.joinable) {
       return false;
     }
+    const { user } = this.client;
     if (
       this.full &&
       !(
-        this.permissionsFor(this.client.user!)?.has(
+        user &&
+        (this.permissionsFor(user)?.has(
           Permissions.FLAGS.MOVE_MEMBERS,
           false
-        ) ?? false
+        ) ??
+          false)
       )
     ) {
       return false;
@@ -43,7 +46,8 @@ class VoiceChannel extends BaseGuildVoiceChannel {
   }
 
   get speakable() {
-    const permissions = this.permissionsFor(this.client.user!);
+    const { user } = this.client;
+    const permissions = user ? this.permissionsFor(user) : null;
     if (!permissions) {
       return false;
     }

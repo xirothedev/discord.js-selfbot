@@ -6,6 +6,7 @@ import _errorsModule from "../errors";
 
 const { RangeError } = _errorsModule;
 import MessageManager from "../managers/MessageManager";
+import { patchValue } from "./Base";
 import ThreadMemberManager from "../managers/ThreadMemberManager";
 import ChannelFlags from "../util/ChannelFlags";
 import Permissions from "../util/Permissions";
@@ -65,8 +66,7 @@ type ThreadEditDataSource = Omit<ThreadEditData, "flags"> & {
 import type { Guild } from "./Guild";
 import type Client from "../client/Client";
 import type { GuildChannel } from "./GuildChannel";
-import type { SendOptions } from "../types/channels";
-import type { SendResult } from "../types/channels";
+import type { SendOptions, SendResult } from "../types/channels";
 
 class ThreadChannel extends Channel {
   declare guild: Guild;
@@ -99,9 +99,12 @@ class ThreadChannel extends Channel {
 
     this.guild = guild;
 
-    this.ownerId = data.owner_id!;
+    if (data.owner_id === undefined) {
+      throw new TypeError("A thread owner id is required");
+    }
+    this.ownerId = data.owner_id;
 
-    this.guildId = guild.id ?? data.guild_id!;
+    this.guildId = guild.id;
 
     this.messages = new MessageManager(this);
 
@@ -122,49 +125,13 @@ class ThreadChannel extends Channel {
       this.guildId = data.guild_id;
     }
 
-    if ("parent_id" in data) {
-      this.parentId = data.parent_id ?? null;
-    } else {
-      this.parentId ??= null;
-    }
-
-    if (data.thread_metadata) {
-      const metadata = data.thread_metadata;
-      this.locked = metadata.locked ?? false;
-
-      this.invitable =
-        this.type === "GUILD_PRIVATE_THREAD"
-          ? (metadata.invitable ?? false)
-          : null;
-
-      this.archived = metadata.archived ?? null;
-
-      this.autoArchiveDuration = metadata.auto_archive_duration ?? null;
-
-      this.archiveTimestamp = metadata.archive_timestamp
-        ? Date.parse(metadata.archive_timestamp)
-        : null;
-
-      if (metadata.create_timestamp) {
-        // Note: this is needed because we can't assign directly to getters
-        this._createdTimestamp = Date.parse(metadata.create_timestamp);
-      }
-    } else {
-      this.locked ??= null;
-      this.archived ??= null;
-      this.autoArchiveDuration ??= null;
-      this.archiveTimestamp ??= null;
-      this.invitable ??= null;
-    }
+    this.parentId = patchValue(data.parent_id, this.parentId);
+    this.patchThreadMetadata(data);
 
     this._createdTimestamp ??=
       this.type === "GUILD_PRIVATE_THREAD" ? super.createdTimestamp : null;
 
-    if ("last_message_id" in data) {
-      this.lastMessageId = data.last_message_id ?? null;
-    } else {
-      this.lastMessageId ??= null;
-    }
+    this.lastMessageId = patchValue(data.last_message_id, this.lastMessageId);
 
     if ("last_pin_timestamp" in data) {
       this.lastPinTimestamp = data.last_pin_timestamp
@@ -180,35 +147,49 @@ class ThreadChannel extends Channel {
       this.rateLimitPerUser ??= null;
     }
 
-    if ("message_count" in data) {
-      this.messageCount = data.message_count ?? null;
-    } else {
-      this.messageCount ??= null;
-    }
-
-    if ("member_count" in data) {
-      this.memberCount = data.member_count ?? null;
-    } else {
-      this.memberCount ??= null;
-    }
-
-    if ("total_message_sent" in data) {
-      this.totalMessageSent = data.total_message_sent ?? null;
-    } else {
-      this.totalMessageSent ??= null;
-    }
-
-    if ("applied_tags" in data) {
-      this.appliedTags = data.applied_tags ?? [];
-    } else {
-      this.appliedTags ??= [];
-    }
+    this.messageCount = patchValue(data.message_count, this.messageCount);
+    this.memberCount = patchValue(data.member_count, this.memberCount);
+    this.totalMessageSent = patchValue(
+      data.total_message_sent,
+      this.totalMessageSent
+    );
+    this.appliedTags = patchValue(data.applied_tags, this.appliedTags, []);
 
     if (data.member && this.client.user) {
-      this.members._add({ user_id: this.client.user!.id, ...data.member });
+      this.members._add({ user_id: this.client.user.id, ...data.member });
     }
     if (data.messages) {
-      for (const message of data.messages) this.messages._add(message);
+      for (const message of data.messages) {
+        this.messages._add(message);
+      }
+    }
+  }
+
+  private patchThreadMetadata(data: ThreadChannelPatch) {
+    if (!data.thread_metadata) {
+      this.locked ??= null;
+      this.archived ??= null;
+      this.autoArchiveDuration ??= null;
+      this.archiveTimestamp ??= null;
+      this.invitable ??= null;
+      return;
+    }
+
+    const metadata = data.thread_metadata;
+    this.locked = metadata.locked ?? false;
+    this.invitable =
+      this.type === "GUILD_PRIVATE_THREAD"
+        ? (metadata.invitable ?? false)
+        : null;
+    this.archived = metadata.archived ?? null;
+    this.autoArchiveDuration = metadata.auto_archive_duration ?? null;
+    this.archiveTimestamp = metadata.archive_timestamp
+      ? Date.parse(metadata.archive_timestamp)
+      : null;
+
+    if (metadata.create_timestamp) {
+      // This is needed because we cannot assign directly to getters.
+      this._createdTimestamp = Date.parse(metadata.create_timestamp);
     }
   }
 
@@ -272,7 +253,6 @@ class ThreadChannel extends Channel {
     return members.get(this.ownerId) ?? null;
   }
 
-  // eslint-disable-next-line require-await
   async fetchStarterMessage(options?: BaseFetchOptions) {
     const channel = this.parent?.type === "GUILD_FORUM" ? this : this.parent;
     return channel && isTextBasedChannel(channel)
@@ -370,7 +350,7 @@ class ThreadChannel extends Channel {
 
   get editable() {
     return (
-      (this.ownerId === this.client.user!.id &&
+      (this.ownerId === this.client.user?.id &&
         (this.type !== "GUILD_PRIVATE_THREAD" || this.joined)) ||
       this.manageable
     );
@@ -411,7 +391,7 @@ class ThreadChannel extends Channel {
   }
 
   get viewable() {
-    if (this.client.user!.id === this.guild.ownerId) {
+    if (this.client.user?.id === this.guild.ownerId) {
       return true;
     }
     const permissions = this.client.user
@@ -459,17 +439,22 @@ class ThreadChannel extends Channel {
   }
 
   // These are here only for documentation purposes - they are implemented by TextBasedChannel
-  /* eslint-disable no-empty-function */
-  get lastMessage() {
-    return;
+  get lastMessage(): never {
+    throw new Error("THREAD_CHANNEL_MIXIN_NOT_APPLIED");
   }
-  get lastPinAt() {
-    return;
+  get lastPinAt(): never {
+    throw new Error("THREAD_CHANNEL_MIXIN_NOT_APPLIED");
   }
   declare send: (options: SendOptions) => SendResult;
-  sendTyping() {}
-  createMessageCollector() {}
-  awaitMessages() {}
+  sendTyping() {
+    // Implemented by the subclass mixin.
+  }
+  createMessageCollector() {
+    // Implemented by the subclass mixin.
+  }
+  awaitMessages() {
+    // Implemented by the subclass mixin.
+  }
   // Doesn't work on Thread channels; setRateLimitPerUser() {}
   // Doesn't work on Thread channels; setNSFW() {}
 }

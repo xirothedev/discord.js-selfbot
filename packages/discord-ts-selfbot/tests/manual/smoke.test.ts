@@ -1,11 +1,16 @@
 import { test, expect, describe } from "bun:test";
+import { setTimeout as sleep } from "node:timers/promises";
 
+import { ActionRowBuilder, ButtonBuilder, EmbedBuilder } from "../../src/index";
 import {
-  Client,
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-} from "../../src/index";
+  deleteChannel,
+  errorMessage,
+  fetchSendableChannel,
+  fetchVoiceChannel,
+  login,
+  makeClient,
+  makeStepRecorder,
+} from "./_helpers";
 
 const token = process.env.DISCORD_TOKEN;
 const guildId = process.env.TEST_GUILD_ID;
@@ -15,58 +20,19 @@ const webhookUrl = process.env.TEST_WEBHOOK_URL;
 
 const skip = !token;
 
-const results: any[] = [];
-
-async function step(name, fn) {
-  const t0 = Date.now();
-  try {
-    await fn();
-    results.push({ ms: Date.now() - t0, name, status: "PASS" });
-    console.log(`[PASS] ${name} (${Date.now() - t0}ms)`);
-  } catch (error) {
-    results.push({
-      error: error?.message ?? String(error),
-      ms: Date.now() - t0,
-      name,
-      status: "FAIL",
-    });
-    console.log(`[FAIL] ${name}: ${error?.message ?? error}`);
-  }
-}
-
 describe.skipIf(skip)("manual smoke (real Discord)", () => {
   test("critical paths", async () => {
-    const client = new Client();
-    // Log every REST request/response for body/shape verification
-    const origRequest = client.rest.request.bind(client.rest);
-    client.rest.request = async (method, url, options = {}) => {
-      const payload = options?.data ?? options?.body;
-      console.log(
-        "[REQ]",
-        method,
-        url,
-        payload ? JSON.stringify(payload).slice(0, 500) : ""
-      );
-      const res = await origRequest(method, url, options);
-      console.log(
-        "[RES]",
-        method,
-        url,
-        "->",
-        typeof res === "object" ? JSON.stringify(res).slice(0, 400) : res
-      );
-      return res;
-    };
-    let createdMessageId = null;
-    let createdThreadId = null;
+    const client = makeClient();
+    const { results, step, summary, writeArtifact } = makeStepRecorder();
+    let createdMessageId: string | null = null;
+    let createdThreadId: string | null = null;
 
     try {
       // 1. login + ready
       await step("login + ready", async () => {
-        await client.login(token!);
-        expect(client.user).not.toBeNull();
-        expect(typeof client.user!.id).toBe("string");
-        console.log("  user:", client.user!.tag ?? client.user!.username);
+        const user = await login(client);
+        expect(typeof user.id).toBe("string");
+        console.log("  user:", user.tag ?? user.username);
       });
 
       if (!guildId || !channelId) {
@@ -74,15 +40,17 @@ describe.skipIf(skip)("manual smoke (real Discord)", () => {
           "[SKIP] guild/channel steps: TEST_GUILD_ID/TEST_CHANNEL_ID not set"
         );
       } else {
+        const targetGuildId = guildId;
+        const targetChannelId = channelId;
+
         // 2. send message
         await step("send message", async () => {
-          const ch = await client.channels.fetch(channelId!);
-          expect(ch).not.toBeNull();
-          const msg = await (ch as any).send("smoke-test: hello");
-          expect(typeof msg.id).toBe("string");
-          expect(msg.content).toBe("smoke-test: hello");
-          createdMessageId = msg.id;
-          console.log("  messageId:", msg.id);
+          const channel = await fetchSendableChannel(client, targetChannelId);
+          const message = await channel.send("smoke-test: hello");
+          expect(typeof message.id).toBe("string");
+          expect(message.content).toBe("smoke-test: hello");
+          createdMessageId = message.id;
+          console.log("  messageId:", message.id);
         });
 
         // 3. edit message
@@ -90,9 +58,9 @@ describe.skipIf(skip)("manual smoke (real Discord)", () => {
           if (!createdMessageId) {
             throw new Error("no message id");
           }
-          const ch = await client.channels.fetch(channelId!);
-          const msg = await (ch as any).messages.fetch(createdMessageId);
-          const edited = await msg.edit("smoke-test: edited");
+          const channel = await fetchSendableChannel(client, targetChannelId);
+          const message = await channel.messages.fetch(createdMessageId);
+          const edited = await message.edit("smoke-test: edited");
           expect(edited.content).toBe("smoke-test: edited");
         });
 
@@ -100,7 +68,7 @@ describe.skipIf(skip)("manual smoke (real Discord)", () => {
         await step(
           "send embed + button (best-effort, may be restricted for user accounts)",
           async () => {
-            const ch = await client.channels.fetch(channelId!);
+            const channel = await fetchSendableChannel(client, targetChannelId);
             const embed = new EmbedBuilder()
               .setTitle("smoke")
               .setDescription("desc");
@@ -111,19 +79,19 @@ describe.skipIf(skip)("manual smoke (real Discord)", () => {
                 .setStyle(1)
             );
             try {
-              const msg = await (ch as any).send({
+              const message = await channel.send({
                 components: [row],
                 embeds: [embed],
               });
               console.log(
                 "  embeds:",
-                msg.embeds.length,
+                message.embeds.length,
                 "components:",
-                msg.components.length
+                message.components.length
               );
-              await msg.delete().catch(() => {});
-            } catch (error: any) {
-              console.log("  (restricted/unsupported):", error?.message);
+              await message.delete().catch(() => {});
+            } catch (error) {
+              console.log("  (restricted/unsupported):", errorMessage(error));
             }
           }
         );
@@ -133,22 +101,33 @@ describe.skipIf(skip)("manual smoke (real Discord)", () => {
           if (!createdMessageId) {
             throw new Error("no message id");
           }
-          const ch = await client.channels.fetch(channelId!);
-          const msg = await (ch as any).messages.fetch(createdMessageId);
-          await msg.react("👍");
-          await new Promise((r) => setTimeout(r, 500));
-          const reaction = msg.reactions.cache.get("👍");
+          const { user } = client;
+          if (!user) {
+            throw new Error("no client user");
+          }
+          const channel = await fetchSendableChannel(client, targetChannelId);
+          const message = await channel.messages.fetch(createdMessageId);
+          await message.react("👍");
+          await sleep(500);
+          const reaction = message.reactions.cache.get("👍");
           expect(reaction).not.toBeUndefined();
-          await reaction!.users.remove(client.user!.id);
+          if (!reaction) {
+            throw new Error("reaction is missing");
+          }
+          await reaction.users.remove(user.id);
         });
 
         // 6. fetch guild + roles + member
         await step("fetch guild/member/roles", async () => {
-          const guild = await client.guilds.fetch(guildId!);
-          expect(guild.id).toBe(guildId);
+          const { user } = client;
+          if (!user) {
+            throw new Error("no client user");
+          }
+          const guild = await client.guilds.fetch(targetGuildId);
+          expect(guild.id).toBe(targetGuildId);
           expect(typeof guild.name).toBe("string");
-          const member = await guild.members.fetch(client.user!.id);
-          expect(member.id).toBe(client.user!.id);
+          const member = await guild.members.fetch(user.id);
+          expect(member.id).toBe(user.id);
           console.log("  guild:", guild.name, "roles:", guild.roles.cache.size);
         });
 
@@ -157,9 +136,9 @@ describe.skipIf(skip)("manual smoke (real Discord)", () => {
           if (!createdMessageId) {
             throw new Error("no message id");
           }
-          const ch = await client.channels.fetch(channelId!);
-          const msg = await (ch as any).messages.fetch(createdMessageId);
-          const thread = await msg.startThread({ name: "smoke-thread" });
+          const channel = await fetchSendableChannel(client, targetChannelId);
+          const message = await channel.messages.fetch(createdMessageId);
+          const thread = await message.startThread({ name: "smoke-thread" });
           expect(typeof thread.id).toBe("string");
           createdThreadId = thread.id;
           console.log("  threadId:", thread.id);
@@ -167,42 +146,54 @@ describe.skipIf(skip)("manual smoke (real Discord)", () => {
 
         // 8. presence update
         await step("presence update", async () => {
-          client.user!.setPresence({
+          const { user } = client;
+          if (!user) {
+            throw new Error("no client user");
+          }
+          user.setPresence({
             activities: [{ name: "smoke", type: 0 }],
             status: "idle",
           });
-          await new Promise((r) => setTimeout(r, 1000));
+          await sleep(1000);
         });
 
         // 9. voice connect
         if (voiceChannelId) {
+          const targetVoiceChannelId = voiceChannelId;
           await step("voice connect + leave", async () => {
-            const vc = await client.channels.fetch(voiceChannelId!);
-            const conn = await client.voice.joinChannel(vc as any, {
+            const voiceChannel = await fetchVoiceChannel(
+              client,
+              targetVoiceChannelId
+            );
+            const connection = await client.voice.joinChannel(voiceChannel, {
               selfDeaf: true,
               selfMute: true,
               selfVideo: false,
             });
-            await new Promise((r) => setTimeout(r, 3000));
-            conn.disconnect();
+            await sleep(3000);
+            connection.disconnect();
             console.log("  voice joined");
           });
         }
 
         // 10. webhook send
         if (webhookUrl) {
+          const url = webhookUrl;
           await step("webhook send", async () => {
-            const parts = webhookUrl!.split("/");
-            const id = parts.at(-2);
-            const tok = parts.at(-1);
-            const wh = await client.fetchWebhook(id, tok);
-            const msg = await wh.send("smoke: webhook hello");
-            expect(typeof msg.id === "string" || typeof msg === "string").toBe(
-              true
-            );
+            const parts = url.split("/");
+            const webhookId = parts.at(-2);
+            const webhookToken = parts.at(-1);
+            if (!webhookId || !webhookToken) {
+              throw new Error("TEST_WEBHOOK_URL is malformed");
+            }
+            const webhook = await client.fetchWebhook(webhookId, webhookToken);
+            const message = await webhook.send("smoke: webhook hello");
+            expect(
+              typeof message.id === "string" || typeof message === "string"
+            ).toBe(true);
             console.log(
               "  webhook msg:",
-              typeof msg === "string" ? msg : msg.id
+              typeof message === "string" ? message : message.id
             );
           });
         }
@@ -212,44 +203,30 @@ describe.skipIf(skip)("manual smoke (real Discord)", () => {
       await step("cleanup", async () => {
         if (createdThreadId) {
           try {
-            const t = await client.channels.fetch(createdThreadId!);
-            await (t as any).delete();
-          } catch {}
+            await deleteChannel(client, createdThreadId);
+          } catch {
+            // Cleanup is best effort.
+          }
         }
         if (createdMessageId && channelId) {
           try {
-            const ch = await client.channels.fetch(channelId!);
-            const msg = await (ch as any).messages.fetch(createdMessageId);
-            await msg.delete();
-          } catch {}
+            const channel = await fetchSendableChannel(client, channelId);
+            const message = await channel.messages.fetch(createdMessageId);
+            await message.delete();
+          } catch {
+            // Cleanup is best effort.
+          }
         }
       });
     } finally {
       client.destroy();
     }
 
-    // summary
-    const pass = results.filter((r) => r.status === "PASS").length;
-    const fail = results.filter((r) => r.status === "FAIL").length;
-    console.log(`\n=== SMOKE SUMMARY: ${pass} pass, ${fail} fail ===`);
-    for (const r of results) {
-      if (r.status === "FAIL") {
-        console.log("  FAIL:", r.name, "-", r.error);
-      }
-    }
+    summary("SMOKE SUMMARY");
+    await writeArtifact("manual-smoke-results");
 
-    // write artifact
-    try {
-      const fs = await import("node:fs");
-      const path =
-        "/private/var/folders/gs/h6f9nkc50716wx9vzfr70mt00000gn/T/opencode/manual-smoke-results.json";
-      fs.writeFileSync(
-        path,
-        JSON.stringify({ ranAt: new Date().toISOString(), results }, null, 2)
-      );
-      console.log("artifact:", path);
-    } catch {}
-
+    const pass = results.filter((result) => result.status === "PASS").length;
+    const fail = results.filter((result) => result.status === "FAIL").length;
     console.log(
       `\\nSmoke finished: ${pass} pass, ${fail} fail (see above for details)`
     );

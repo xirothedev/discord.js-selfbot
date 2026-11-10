@@ -152,12 +152,12 @@ class MessageMentions {
     }
     const members = new Collection<Snowflake, GuildMember>();
     this._members = members;
-    this.users.forEach((user) => {
+    for (const user of this.users.values()) {
       const member = guild.members.resolve(user);
       if (member) {
         members.set(member.user.id, member);
       }
-    });
+    }
     return members;
   }
 
@@ -210,42 +210,57 @@ class MessageMentions {
       return true;
     }
 
-    const userWasRepliedTo = user && this.repliedUser?.id === user.id;
-
-    if (!ignoreRepliedUser && userWasRepliedTo && this.users.has(user.id)) {
+    if (this.isRepliedUser(user, ignoreRepliedUser)) {
       return true;
     }
 
-    if (!ignoreDirect) {
-      if (
-        user &&
-        (!ignoreRepliedUser || this.parsedUsers.has(user.id)) &&
-        this.users.has(user.id)
-      ) {
-        return true;
-      }
-
-      const role = this.guild?.roles.resolve(data);
-      if (role && this.roles.has(role.id)) {
-        return true;
-      }
-
-      const channel = this.client.channels.resolve(data);
-      if (channel && this.channels.has(channel.id)) {
-        return true;
-      }
+    if (!ignoreDirect && this.hasDirectMention(data, user, ignoreRepliedUser)) {
+      return true;
     }
 
     if (!ignoreRoles) {
       const member = this.guild?.members.resolve(data);
       if (member) {
         for (const mentionedRole of this.roles.values()) {
-          if (member.roles.cache.has(mentionedRole.id)) return true;
+          if (member.roles.cache.has(mentionedRole.id)) {
+            return true;
+          }
         }
       }
     }
 
     return false;
+  }
+
+  private isRepliedUser(user: User | null, ignoreRepliedUser: boolean) {
+    return Boolean(
+      !ignoreRepliedUser &&
+      user &&
+      this.repliedUser?.id === user.id &&
+      this.users.has(user.id)
+    );
+  }
+
+  private hasDirectMention(
+    data: UserResolvable | RoleResolvable | ChannelResolvable,
+    user: User | null,
+    ignoreRepliedUser: boolean
+  ) {
+    if (
+      user &&
+      (!ignoreRepliedUser || this.parsedUsers.has(user.id)) &&
+      this.users.has(user.id)
+    ) {
+      return true;
+    }
+
+    const role = this.guild?.roles.resolve(data);
+    if (role && this.roles.has(role.id)) {
+      return true;
+    }
+
+    const channel = this.client.channels.resolve(data);
+    return Boolean(channel && this.channels.has(channel.id));
   }
 
   toJSON() {
@@ -256,13 +271,13 @@ class MessageMentions {
   }
 }
 
-MessageMentions.EVERYONE_PATTERN = /@(everyone|here)/g;
+MessageMentions.EVERYONE_PATTERN = /@(?<everyone>everyone|here)/gu;
 
-MessageMentions.USERS_PATTERN = /<@!?(\d{17,19})>/g;
+MessageMentions.USERS_PATTERN = /<@!?(?<id>\d{17,19})>/gu;
 
-MessageMentions.ROLES_PATTERN = /<@&(\d{17,19})>/g;
+MessageMentions.ROLES_PATTERN = /<@&(?<id>\d{17,19})>/gu;
 
-MessageMentions.CHANNELS_PATTERN = /<#(\d{17,19})>/g;
+MessageMentions.CHANNELS_PATTERN = /<#(?<id>\d{17,19})>/gu;
 
 export default MessageMentions;
 export { MessageMentions };

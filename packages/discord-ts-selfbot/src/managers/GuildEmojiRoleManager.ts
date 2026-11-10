@@ -18,6 +18,24 @@ type RoleOrRolesSource =
   | readonly RoleResolvableSource[]
   | Collection<Snowflake, InstanceType<typeof Role>>;
 
+function isRoleArray(
+  value: RoleOrRolesSource
+): value is readonly RoleResolvableSource[] {
+  return Array.isArray(value);
+}
+
+function toRoleList(
+  roleOrRoles: RoleOrRolesSource
+): readonly RoleResolvableSource[] {
+  if (roleOrRoles instanceof Collection) {
+    return [...roleOrRoles.values()];
+  }
+  if (isRoleArray(roleOrRoles)) {
+    return roleOrRoles;
+  }
+  return [roleOrRoles];
+}
+
 class GuildEmojiRoleManager extends DataManager<RoleType> {
   declare emoji: GuildEmoji;
   declare guild: Guild;
@@ -36,12 +54,7 @@ class GuildEmojiRoleManager extends DataManager<RoleType> {
   }
 
   async add(roleOrRoles: RoleOrRolesSource): Promise<GuildEmoji> {
-    const roles =
-      roleOrRoles instanceof Collection
-        ? [...roleOrRoles.values()]
-        : Array.isArray(roleOrRoles)
-          ? roleOrRoles
-          : [roleOrRoles];
+    const roles = toRoleList(roleOrRoles);
 
     const resolvedRoles: Snowflake[] = [];
     for (const role of roles) {
@@ -62,12 +75,7 @@ class GuildEmojiRoleManager extends DataManager<RoleType> {
   }
 
   async remove(roleOrRoles: RoleOrRolesSource): Promise<GuildEmoji> {
-    const roles =
-      roleOrRoles instanceof Collection
-        ? [...roleOrRoles.values()]
-        : Array.isArray(roleOrRoles)
-          ? roleOrRoles
-          : [roleOrRoles];
+    const roles = toRoleList(roleOrRoles);
 
     const resolvedRoleIds: Snowflake[] = [];
     for (const role of roles) {

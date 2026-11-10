@@ -44,7 +44,8 @@ class GuildTextThreadManager<AllowedThreadType> extends ThreadManager {
         ? ChannelTypes.GUILD_NEWS_THREAD
         : ChannelTypes.GUILD_PUBLIC_THREAD;
     if (startMessage) {
-      const startMessageId = this.channel.messages!.resolveId(startMessage);
+      const { messages } = this.channel;
+      const startMessageId = messages?.resolveId(startMessage);
       if (!startMessageId) {
         throw new TypeError(
           "INVALID_TYPE",
@@ -54,12 +55,11 @@ class GuildTextThreadManager<AllowedThreadType> extends ThreadManager {
       }
       path = path.messages(startMessageId);
     } else if (this.channel.type !== "GUILD_NEWS") {
-      resolvedType =
-        typeof type === "string"
-          ? resolveEnumValue(ChannelTypes, type)
-          : typeof type === "number"
-            ? type
-            : resolvedType;
+      if (typeof type === "string") {
+        resolvedType = resolveEnumValue(ChannelTypes, type);
+      } else if (typeof type === "number") {
+        resolvedType = type;
+      }
     }
 
     const resolvedAutoArchiveDuration =

@@ -29,7 +29,7 @@ that WebSocket events don't clash with REST methods.
 type ActionData = Record<string | symbol, unknown>;
 
 interface ActionManager<Holds> {
-  cache: { get(id: string): Holds | undefined };
+  cache: { get: (id: string) => Holds | undefined };
   _add(data: unknown, cache?: boolean): Holds;
 }
 
@@ -105,7 +105,7 @@ class GenericAction {
       // Try to resolve the recipient, but do not add the client user.
       const recipient = readData(source, "author") ??
         readData(source, "user") ?? { id: readString(source, "user_id") };
-      if (recipient.id !== this.client.user!.id) {
+      if (recipient.id !== this.client.user?.id) {
         payloadData.recipients = [recipient];
       }
     }
@@ -169,7 +169,7 @@ class GenericAction {
       {
         count: message.partial ? null : 0,
         emoji,
-        me: user?.id === this.client.user!.id,
+        me: user?.id === this.client.user?.id,
       },
       message.reactions,
       id,

@@ -1,8 +1,11 @@
 import type { Stream } from "node:stream";
 import Util from "../util/Util";
-import type { AttachmentData, BufferResolvable } from "../../typings";
-import type { MessageAttachment } from "../../typings";
-import type { AttachmentPayload } from "../../typings";
+import type {
+  AttachmentData,
+  AttachmentPayload,
+  BufferResolvable,
+  MessageAttachment,
+} from "../../typings";
 
 class AttachmentBuilder {
   declare attachment: BufferResolvable | Stream;
@@ -65,7 +68,7 @@ class AttachmentBuilder {
 
     if (!spoiler) {
       while (this.spoiler) {
-        this.name = this.name!.slice("SPOILER_".length);
+        this.name = this.name?.slice("SPOILER_".length) ?? null;
       }
       return this;
     }

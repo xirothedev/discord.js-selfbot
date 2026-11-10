@@ -35,8 +35,8 @@ class BaseGuild extends Base implements BaseGuildEntity {
   get nameAcronym() {
     return this.name
       .replaceAll("'s ", " ")
-      .replaceAll(/\w+/g, (e) => e[0])
-      .replaceAll(/\s/g, "");
+      .replaceAll(/\w+/gu, (e) => e[0])
+      .replaceAll(/\s/gu, "");
   }
 
   get partnered() {

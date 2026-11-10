@@ -4,66 +4,64 @@ import type { BenchCase, BenchContext } from "../types";
 
 type Send = () => Promise<void>;
 
+interface PendingState {
+  pending: (() => void) | null;
+}
+
 const sockets: { close: () => void }[] = [];
 
+function createSend(
+  socket: { send: (data: string) => void },
+  payload: string,
+  state: PendingState
+): Send {
+  return () => {
+    const { promise, reject, resolve } = Promise.withResolvers<undefined>();
+    const timer = setTimeout(() => {
+      state.pending = null;
+      reject(new Error("ws echo timeout"));
+    }, 5000);
+    state.pending = () => {
+      clearTimeout(timer);
+      resolve(undefined);
+    };
+    socket.send(payload);
+    return promise;
+  };
+}
+
 function connectNode(url: string, payload: string): Promise<Send> {
-  return new Promise((resolve, reject) => {
-    const socket = new WS(url);
-    sockets.push(socket);
-    socket.once("error", reject);
-    socket.once("open", () => {
-      let pending: (() => void) | null = null;
-      socket.on("message", () => {
-        const done = pending;
-        pending = null;
-        done?.();
-      });
-      resolve(
-        () =>
-          new Promise<void>((done, fail) => {
-            const timer = setTimeout(() => {
-              pending = null;
-              fail(new Error("ws echo timeout"));
-            }, 5000);
-            pending = () => {
-              clearTimeout(timer);
-              done();
-            };
-            socket.send(payload);
-          })
-      );
+  const { promise, reject, resolve } = Promise.withResolvers<Send>();
+  const socket = new WS(url);
+  sockets.push(socket);
+  socket.once("error", reject);
+  socket.once("open", () => {
+    const state: PendingState = { pending: null };
+    socket.on("message", () => {
+      const done = state.pending;
+      state.pending = null;
+      done?.();
     });
+    resolve(createSend(socket, payload, state));
   });
+  return promise;
 }
 
 function connectBun(url: string, payload: string): Promise<Send> {
-  return new Promise((resolve, reject) => {
-    const socket = new WebSocket(url);
-    sockets.push(socket as unknown as { close: () => void });
-    socket.onerror = () => reject(new Error("ws error"));
-    socket.onopen = () => {
-      let pending: (() => void) | null = null;
-      socket.onmessage = () => {
-        const done = pending;
-        pending = null;
-        done?.();
-      };
-      resolve(
-        () =>
-          new Promise<void>((done, fail) => {
-            const timer = setTimeout(() => {
-              pending = null;
-              fail(new Error("ws echo timeout"));
-            }, 5000);
-            pending = () => {
-              clearTimeout(timer);
-              done();
-            };
-            socket.send(payload);
-          })
-      );
-    };
+  const { promise, reject, resolve } = Promise.withResolvers<Send>();
+  const socket = new WebSocket(url);
+  sockets.push(socket as unknown as { close: () => void });
+  socket.addEventListener("error", () => reject(new Error("ws error")));
+  socket.addEventListener("open", () => {
+    const state: PendingState = { pending: null };
+    socket.addEventListener("message", () => {
+      const done = state.pending;
+      state.pending = null;
+      done?.();
+    });
+    resolve(createSend(socket, payload, state));
   });
+  return promise;
 }
 
 export function closeWsSockets(): void {
@@ -82,20 +80,18 @@ export function createWsCases(ctx: BenchContext): BenchCase[] {
   let bunMedium: Promise<Send> | null = null;
 
   const node = (slot: "small" | "medium") => {
-    if (slot === "small") {
-      nodeSmall ??= connectNode(ctx.wsUrl, small);
-    } else {
-      nodeMedium ??= connectNode(ctx.wsUrl, medium);
-    }
-    return (slot === "small" ? nodeSmall : nodeMedium)!.then((send) => send());
+    const connection =
+      slot === "small"
+        ? (nodeSmall ??= connectNode(ctx.wsUrl, small))
+        : (nodeMedium ??= connectNode(ctx.wsUrl, medium));
+    return connection.then((send) => send());
   };
   const bun = (slot: "small" | "medium") => {
-    if (slot === "small") {
-      bunSmall ??= connectBun(ctx.wsUrl, small);
-    } else {
-      bunMedium ??= connectBun(ctx.wsUrl, medium);
-    }
-    return (slot === "small" ? bunSmall : bunMedium)!.then((send) => send());
+    const connection =
+      slot === "small"
+        ? (bunSmall ??= connectBun(ctx.wsUrl, small))
+        : (bunMedium ??= connectBun(ctx.wsUrl, medium));
+    return connection.then((send) => send());
   };
 
   return [

@@ -18,11 +18,11 @@ function isChunkData(
   );
 }
 
-export default (
+export default function handleGuildMembersChunk(
   client: Client,
   packet: { d?: unknown },
   _shard: WebSocketShard
-) => {
+) {
   if (!isChunkData(packet.d)) {
     return;
   }
@@ -48,4 +48,4 @@ export default (
     nonce: data.nonce,
     notFound: data.not_found,
   });
-};
+}

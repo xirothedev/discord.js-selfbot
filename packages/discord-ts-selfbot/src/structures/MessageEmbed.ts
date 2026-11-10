@@ -5,6 +5,8 @@ import _errorsModule from "../errors";
 
 const { RangeError } = _errorsModule;
 import Util from "../util/Util";
+
+const NESTED_ARRAY_FLAT_DEPTH = 2;
 import type {
   ColorResolvable,
   EmbedAuthorData,
@@ -40,7 +42,7 @@ interface MessageEmbedInput {
   url?: string | null;
   timestamp?: Date | number | string | null;
   color?: ColorResolvable | null;
-  fields?: Array<EmbedFieldData | EmbedField>;
+  fields?: (EmbedFieldData | EmbedField)[];
   author?:
     | (Partial<MessageEmbedAuthor> & {
         icon_url?: string;
@@ -63,7 +65,7 @@ let deprecationEmittedForSetAuthor = false;
 let deprecationEmittedForSetFooter = false;
 let deprecationEmittedForAddField = false;
 
-// TODO: Remove the deprecated code for `setAuthor()` and `setFooter()`.
+// The deprecated string forms of `setAuthor()` and `setFooter()` must stay for parity.
 
 class MessageEmbed {
   declare type: string;
@@ -80,7 +82,6 @@ class MessageEmbed {
   declare provider: MessageEmbedProvider | null;
   declare footer: MessageEmbedFooter | null;
 
-  // eslint-disable-next-line valid-jsdoc
   constructor(
     data: MessageEmbed | MessageEmbedInput = {},
     skipValidation = false
@@ -126,6 +127,11 @@ class MessageEmbed {
         : MessageEmbed.normalizeFields(data.fields);
     }
 
+    this.setupMedia(data);
+    this.setupAuthor(data);
+  }
+
+  private setupMedia(data: MessageEmbedInput) {
     this.thumbnail = data.thumbnail
       ? {
           height: data.thumbnail.height,
@@ -152,7 +158,9 @@ class MessageEmbed {
           width: data.video.width,
         }
       : null;
+  }
 
+  private setupAuthor(data: MessageEmbedInput) {
     this.author = data.author
       ? {
           iconURL: data.author.iconURL ?? data.author.icon_url,
@@ -211,6 +219,17 @@ class MessageEmbed {
         ("icon_url" in embed.footer ? embed.footer.icon_url : undefined))
       : undefined;
     return (
+      this.equalsBasics(embed, authorIconURL) &&
+      this.equalsMetadata(embed, footerIconURL) &&
+      this.equalsMedia(embed)
+    );
+  }
+
+  private equalsBasics(
+    embed: MessageEmbed | MessageEmbedInput,
+    authorIconURL: string | undefined
+  ) {
+    return (
       this.type === embed.type &&
       this.author?.name === embed.author?.name &&
       this.author?.url === embed.author?.url &&
@@ -219,13 +238,26 @@ class MessageEmbed {
       this.title === embed.title &&
       this.description === embed.description &&
       this.url === embed.url &&
-      this.timestamp === embed.timestamp &&
+      this.timestamp === embed.timestamp
+    );
+  }
+
+  private equalsMetadata(
+    embed: MessageEmbed | MessageEmbedInput,
+    footerIconURL: string | undefined
+  ) {
+    return (
       this.fields.length === (embed.fields?.length ?? 0) &&
-      this.fields.every((field, i) =>
-        this._fieldEquals(field, embed.fields?.[i])
+      this.fields.every((field, index) =>
+        this._fieldEquals(field, embed.fields?.[index])
       ) &&
       this.footer?.text === embed.footer?.text &&
-      this.footer?.iconURL === footerIconURL &&
+      this.footer?.iconURL === footerIconURL
+    );
+  }
+
+  private equalsMedia(embed: MessageEmbed | MessageEmbedInput) {
+    return (
       this.image?.url === embed.image?.url &&
       this.thumbnail?.url === embed.thumbnail?.url &&
       this.video?.url === embed.video?.url &&
@@ -253,7 +285,6 @@ class MessageEmbed {
   addField(name: string, value: string, inline?: boolean) {
     if (!deprecationEmittedForAddField) {
       process.emitWarning(
-        // eslint-disable-next-line max-len
         "MessageEmbed#addField is deprecated and will be removed in the next major update. Use MessageEmbed#addFields instead.",
         "DeprecationWarning"
       );
@@ -296,6 +327,8 @@ class MessageEmbed {
       return this;
     }
 
+    let resolvedOptions: EmbedAuthorData;
+
     if (typeof options === "string") {
       if (!deprecationEmittedForSetAuthor) {
         process.emitWarning(
@@ -306,14 +339,16 @@ class MessageEmbed {
         deprecationEmittedForSetAuthor = true;
       }
 
-      options = {
+      resolvedOptions = {
         iconURL: deprecatedIconURL,
         name: options,
         url: deprecatedURL,
       };
+    } else {
+      resolvedOptions = options;
     }
 
-    const { name, url, iconURL } = options;
+    const { name, url, iconURL } = resolvedOptions;
     this.author = {
       iconURL,
       name: Util.verifyString(name, RangeError, "EMBED_AUTHOR_NAME"),
@@ -345,6 +380,8 @@ class MessageEmbed {
       return this;
     }
 
+    let resolvedOptions: EmbedFooterData;
+
     if (typeof options === "string") {
       if (!deprecationEmittedForSetFooter) {
         process.emitWarning(
@@ -355,10 +392,12 @@ class MessageEmbed {
         deprecationEmittedForSetFooter = true;
       }
 
-      options = { iconURL: deprecatedIconURL, text: options };
+      resolvedOptions = { iconURL: deprecatedIconURL, text: options };
+    } else {
+      resolvedOptions = options;
     }
 
-    const { text, iconURL } = options;
+    const { text, iconURL } = resolvedOptions;
     this.footer = {
       iconURL,
       text: Util.verifyString(text, RangeError, "EMBED_FOOTER_TEXT"),
@@ -377,10 +416,8 @@ class MessageEmbed {
   }
 
   setTimestamp(timestamp: Date | number | null = Date.now()) {
-    if (timestamp instanceof Date) {
-      timestamp = timestamp.getTime();
-    }
-    this.timestamp = timestamp;
+    this.timestamp =
+      timestamp instanceof Date ? timestamp.getTime() : timestamp;
     return this;
   }
 
@@ -398,9 +435,9 @@ class MessageEmbed {
     return {
       author: this.author
         ? {
+            icon_url: this.author.iconURL,
             name: this.author.name,
             url: this.author.url,
-            icon_url: this.author.iconURL,
           }
         : undefined,
       color: this.color ?? undefined,
@@ -408,15 +445,15 @@ class MessageEmbed {
       fields: this.fields,
       footer: this.footer
         ? {
-            text: this.footer.text,
             icon_url: this.footer.iconURL,
+            text: this.footer.text,
           }
         : undefined,
       image: this.image
         ? {
-            url: this.image.url,
-            proxy_url: this.image.proxyURL,
             height: this.image.height,
+            proxy_url: this.image.proxyURL,
+            url: this.image.url,
             width: this.image.width,
           }
         : undefined,
@@ -428,9 +465,9 @@ class MessageEmbed {
         : undefined,
       thumbnail: this.thumbnail
         ? {
-            url: this.thumbnail.url,
-            proxy_url: this.thumbnail.proxyURL,
             height: this.thumbnail.height,
+            proxy_url: this.thumbnail.proxyURL,
+            url: this.thumbnail.url,
             width: this.thumbnail.width,
           }
         : undefined,
@@ -442,9 +479,9 @@ class MessageEmbed {
       url: this.url ?? undefined,
       video: this.video
         ? {
-            url: this.video.url,
-            proxy_url: this.video.proxyURL,
             height: this.video.height,
+            proxy_url: this.video.proxyURL,
+            url: this.video.url,
             width: this.video.width,
           }
         : undefined,
@@ -467,7 +504,7 @@ class MessageEmbed {
     ...fields: (EmbedFieldData | EmbedFieldData[])[]
   ): EmbedField[] {
     return fields
-      .flat(2)
+      .flat(NESTED_ARRAY_FLAT_DEPTH)
       .map((field) =>
         MessageEmbed.normalizeField(
           field.name,

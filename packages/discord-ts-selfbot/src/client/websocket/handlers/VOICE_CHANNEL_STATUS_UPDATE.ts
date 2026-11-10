@@ -15,11 +15,11 @@ function isStatusData(
   return isRecord(value) && typeof value.id === "string";
 }
 
-export default (
+export default function handleVoiceChannelStatusUpdate(
   client: Client,
   packet: { d?: unknown },
   _shard: WebSocketShard
-) => {
+) {
   if (!isStatusData(packet.d)) {
     return;
   }
@@ -30,4 +30,4 @@ export default (
     channel.status = data.status;
     client.emit(Events.CHANNEL_UPDATE, old, channel);
   }
-};
+}

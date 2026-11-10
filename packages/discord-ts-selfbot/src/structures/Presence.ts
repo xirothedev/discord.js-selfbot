@@ -24,6 +24,8 @@ import Util from "../util/Util";
 import type User from "./User";
 import type { GuildMember } from "./GuildMember";
 
+const NESTED_ARRAY_FLAT_DEPTH = 2;
+
 interface PresencePatch {
   status?: PresenceStatus;
   activities?: Partial<RawActivityData>[];
@@ -45,14 +47,16 @@ class Presence extends Base {
   declare afk: boolean;
   declare since: number;
 
-  constructor(client: Client, data: PresencePatch = { user: { id: "" } }) {
+  constructor(client: Client, data?: PresencePatch) {
     super(client);
 
-    this.userId = data.user?.id ?? "";
+    const source = data ?? { user: { id: "" } };
 
-    this.guild = data.guild ?? null;
+    this.userId = source.user?.id ?? "";
 
-    this._patch(data);
+    this.guild = source.guild ?? null;
+
+    this._patch(source);
   }
 
   get user(): User | null {
@@ -82,9 +86,8 @@ class Presence extends Base {
             return new SpotifyRPC(this.client, activity);
           }
           return new RichPresence(this.client, activity);
-        } else {
-          return new Activity(this, activity);
         }
+        return new Activity(this, activity);
       });
     } else {
       this.activities ??= [];
@@ -213,6 +216,16 @@ function resolvePresence(client: Client | Presence | Activity): Presence {
   return "presence" in client ? client.presence : client;
 }
 
+function resolvePresenceUserId(client: Client | Presence | Activity): string {
+  const { user } = resolvePresence(client).client;
+  if (!user) {
+    throw new TypeError(
+      "A client user is required to create a SpotifyRPC activity"
+    );
+  }
+  return user.id;
+}
+
 class Activity {
   declare readonly presence: Presence;
   declare applicationId: Snowflake | null;
@@ -245,6 +258,13 @@ class Activity {
   }
 
   _patch(data: ActivityPatch) {
+    this._patchIdentity(data);
+    this._patchTimestamps(data);
+    this._patchDetails(data);
+    this._patchPresentation(data);
+  }
+
+  private _patchIdentity(data: ActivityPatch) {
     if (typeof data.id === "string") {
       this.id = data.id;
     }
@@ -258,93 +278,56 @@ class Activity {
         typeof data.type === "number" ? ActivityTypes[data.type] : data.type;
     }
 
-    if ("url" in data) {
-      this.url = data.url ?? null;
-    } else {
-      this.url = null;
-    }
+    this.url = data.url ?? null;
 
     if (data.created_at !== undefined || data.createdTimestamp !== undefined) {
       this.createdTimestamp = data.created_at ?? data.createdTimestamp ?? 0;
     }
 
-    if ("session_id" in data) {
-      this.sessionId = data.session_id ?? null;
-    } else {
-      this.sessionId = this.presence.client?.sessionId ?? null;
-    }
+    this.sessionId =
+      "session_id" in data
+        ? (data.session_id ?? null)
+        : (this.presence.client?.sessionId ?? null);
 
-    if ("platform" in data) {
-      this.platform = isActivityPlatform(data.platform) ? data.platform : null;
-    } else {
-      this.platform = null;
-    }
+    this.platform = isActivityPlatform(data.platform) ? data.platform : null;
+  }
 
-    if ("timestamps" in data && data.timestamps) {
-      this.timestamps = {
-        end: data.timestamps.end
-          ? new Date(data.timestamps.end).getTime()
-          : null,
-        start: data.timestamps.start
-          ? new Date(data.timestamps.start).getTime()
-          : null,
-      };
-    } else {
-      this.timestamps = null;
-    }
+  private _patchTimestamps(data: ActivityPatch) {
+    this.timestamps = data.timestamps
+      ? {
+          end: data.timestamps.end
+            ? new Date(data.timestamps.end).getTime()
+            : null,
+          start: data.timestamps.start
+            ? new Date(data.timestamps.start).getTime()
+            : null,
+        }
+      : null;
+  }
 
-    if ("application_id" in data || "applicationId" in data) {
-      this.applicationId = data.application_id ?? data.applicationId ?? null;
-    } else {
-      this.applicationId = null;
-    }
+  private _patchDetails(data: ActivityPatch) {
+    this.applicationId = data.application_id ?? data.applicationId ?? null;
+    this.details = data.details ?? null;
+    this.state = data.state ?? null;
+    this.syncId = data.sync_id ?? data.syncId ?? null;
+  }
 
-    if ("details" in data) {
-      this.details = data.details ?? null;
-    } else {
-      this.details = null;
-    }
+  private _patchPresentation(data: ActivityPatch) {
+    this.flags =
+      "flags" in data
+        ? new ActivityFlags(data.flags).freeze()
+        : new ActivityFlags().freeze();
 
-    if ("state" in data) {
-      this.state = data.state ?? null;
-    } else {
-      this.state = null;
-    }
+    this.buttons =
+      data.buttons?.map((button) =>
+        typeof button === "string" ? button : button.label
+      ) ?? [];
 
-    if ("sync_id" in data || "syncId" in data) {
-      this.syncId = data.sync_id ?? data.syncId ?? null;
-    } else {
-      this.syncId = null;
-    }
+    this.emoji = data.emoji ? Util.resolvePartialEmoji(data.emoji) : null;
 
-    if ("flags" in data) {
-      this.flags = new ActivityFlags(data.flags).freeze();
-    } else {
-      this.flags = new ActivityFlags().freeze();
-    }
-
-    if ("buttons" in data) {
-      this.buttons =
-        data.buttons?.map((button) =>
-          typeof button === "string" ? button : button.label
-        ) ?? [];
-    } else {
-      this.buttons = [];
-    }
-
-    if ("emoji" in data && data.emoji) {
-      this.emoji = Util.resolvePartialEmoji(data.emoji);
-    } else {
-      this.emoji = null;
-    }
-
-    if ("party" in data) {
-      this.party = data.party
-        ? { id: data.party.id ?? null, size: data.party.size ?? [0, 0] }
-        : null;
-    } else {
-      this.party = null;
-    }
+    this.party = data.party
+      ? { id: data.party.id ?? null, size: data.party.size ?? [0, 0] }
+      : null;
 
     this.assets = new RichPresenceAssets(this, data.assets);
   }
@@ -398,29 +381,25 @@ class RichPresenceAssets {
   }
 
   _patch(assets: RichPresenceAssetData = {}) {
-    if ("large_text" in assets || "largeText" in assets) {
-      this.largeText = assets.large_text ?? assets.largeText ?? null;
-    } else {
-      this.largeText = null;
-    }
+    this.largeText =
+      "large_text" in assets || "largeText" in assets
+        ? (assets.large_text ?? assets.largeText ?? null)
+        : null;
 
-    if ("small_text" in assets || "smallText" in assets) {
-      this.smallText = assets.small_text ?? assets.smallText ?? null;
-    } else {
-      this.smallText = null;
-    }
+    this.smallText =
+      "small_text" in assets || "smallText" in assets
+        ? (assets.small_text ?? assets.smallText ?? null)
+        : null;
 
-    if ("large_image" in assets || "largeImage" in assets) {
-      this.largeImage = assets.large_image ?? assets.largeImage ?? null;
-    } else {
-      this.largeImage = null;
-    }
+    this.largeImage =
+      "large_image" in assets || "largeImage" in assets
+        ? (assets.large_image ?? assets.largeImage ?? null)
+        : null;
 
-    if ("small_image" in assets || "smallImage" in assets) {
-      this.smallImage = assets.small_image ?? assets.smallImage ?? null;
-    } else {
-      this.smallImage = null;
-    }
+    this.smallImage =
+      "small_image" in assets || "smallImage" in assets
+        ? (assets.small_image ?? assets.smallImage ?? null)
+        : null;
   }
 
   smallImageURL({ format, size }: StaticImageURLOptions = {}) {
@@ -448,8 +427,13 @@ class RichPresenceAssets {
       }
     }
 
+    const { applicationId } = this.activity;
+    if (!applicationId) {
+      return null;
+    }
+
     return this.activity.presence.client.rest.cdn.AppAsset(
-      this.activity.applicationId!,
+      applicationId,
       this.smallImage,
       {
         format,
@@ -483,8 +467,13 @@ class RichPresenceAssets {
       }
     }
 
+    const { applicationId } = this.activity;
+    if (!applicationId) {
+      return null;
+    }
+
     return this.activity.presence.client.rest.cdn.AppAsset(
-      this.activity.applicationId!,
+      applicationId,
       this.largeImage,
       {
         format,
@@ -498,32 +487,33 @@ class RichPresenceAssets {
       return null;
     }
     const current = image;
+    let parsed = image;
     if (
       URL.canParse(image) &&
       ["http:", "https:"].includes(new URL(image).protocol)
     ) {
       // Discord URL:
-      image = image
+      parsed = parsed
         .replace("https://cdn.discordapp.com/", "mp:")
         .replace("http://cdn.discordapp.com/", "mp:")
         .replace("https://media.discordapp.net/", "mp:")
         .replace("http://media.discordapp.net/", "mp:");
       //
-      if (!image.startsWith("mp:")) {
+      if (!parsed.startsWith("mp:")) {
         throw new Error("INVALID_URL");
       }
-    } else if (/^[0-9]{17,19}$/.test(image)) {
+    } else if (/^[0-9]{17,19}$/u.test(parsed)) {
       // ID Assets
     } else if (
-      ["mp:", "youtube:", "spotify:", "twitch:"].some((v) =>
-        current.startsWith(v)
+      ["mp:", "youtube:", "spotify:", "twitch:"].some((prefix) =>
+        current.startsWith(prefix)
       )
     ) {
       // Image
-    } else if (image.startsWith("external/")) {
-      image = `mp:${image}`;
+    } else if (parsed.startsWith("external/")) {
+      parsed = `mp:${parsed}`;
     }
-    return image;
+    return parsed;
   }
 
   toJSON() {
@@ -608,8 +598,8 @@ class CustomStatus extends Activity {
     }
     return {
       name: this.name,
-      type: "CUSTOM",
       state: this.state,
+      type: "CUSTOM",
       ...(this.emoji ? { emoji: this.emoji } : {}),
     };
   }
@@ -731,7 +721,7 @@ class RichPresence extends Activity {
 
   setStartTimestamp(timestamp: Date | number | null) {
     if (!this.timestamps) {
-      this.timestamps = { start: null, end: null };
+      this.timestamps = { end: null, start: null };
     }
     this.timestamps.start =
       timestamp instanceof Date ? timestamp.getTime() : timestamp;
@@ -740,7 +730,7 @@ class RichPresence extends Activity {
 
   setEndTimestamp(timestamp: Date | number | null) {
     if (!this.timestamps) {
-      this.timestamps = { start: null, end: null };
+      this.timestamps = { end: null, start: null };
     }
     this.timestamps.end =
       timestamp instanceof Date ? timestamp.getTime() : timestamp;
@@ -760,17 +750,17 @@ class RichPresence extends Activity {
     const buttonUrls: string[] = [];
     this.metadata = { ...this.metadata, button_urls: buttonUrls };
 
-    button.flat(2).forEach((b) => {
-      if (b.name && b.url) {
-        this.buttons.push(b.name);
-        if (!URL.canParse(b.url)) {
+    for (const buttonItem of button.flat(NESTED_ARRAY_FLAT_DEPTH)) {
+      if (buttonItem.name && buttonItem.url) {
+        this.buttons.push(buttonItem.name);
+        if (!URL.canParse(buttonItem.url)) {
           throw new Error("Button url must be a valid url");
         }
-        buttonUrls.push(b.url);
+        buttonUrls.push(buttonItem.url);
       } else {
         throw new Error("Button must have name and url");
       }
-    });
+    }
     return this;
   }
 
@@ -793,7 +783,7 @@ class RichPresence extends Activity {
       throw new Error("Button must have name and url");
     }
     if (typeof name !== "string") {
-      throw new Error("Button name must be a string");
+      throw new TypeError("Button name must be a string");
     }
     if (!URL.canParse(url)) {
       throw new Error("Button url must be a valid url");
@@ -828,7 +818,7 @@ class RichPresence extends Activity {
       throw new Error("Client must be set");
     }
     // Check if applicationId is discord snowflake (17 , 18, 19 numbers)
-    if (!/^[0-9]{17,19}$/.test(applicationId)) {
+    if (!/^[0-9]{17,19}$/u.test(applicationId)) {
       throw new Error("Application id must be a Discord Snowflake");
     }
     // Check if images are 1 or 2
@@ -873,7 +863,7 @@ class SpotifyRPC extends RichPresence {
       id: "spotify:1",
       name: "Spotify",
       party: {
-        id: `spotify:${resolvePresence(client).client.user!.id}`,
+        id: `spotify:${resolvePresenceUserId(client)}`,
       },
       type: ActivityTypes.LISTENING,
       ...options,
@@ -903,7 +893,9 @@ class SpotifyRPC extends RichPresence {
 
   setArtistIds(...ids: (string | string[])[]) {
     const artistIds = ids?.length ? (this.metadata.artist_ids ?? []) : [];
-    ids.flat(2).forEach((id) => artistIds.push(id));
+    for (const id of ids.flat(NESTED_ARRAY_FLAT_DEPTH)) {
+      artistIds.push(id);
+    }
     this.metadata = { ...this.metadata, artist_ids: artistIds };
     return this;
   }

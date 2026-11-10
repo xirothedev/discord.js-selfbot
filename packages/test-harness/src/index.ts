@@ -51,15 +51,18 @@ export interface FakeDiscord {
   server: ReturnType<typeof Bun.serve>;
   url: string;
   port: number;
-  getLastRequest(): FakeRequest | null;
-  getRequests(): FakeRequest[];
-  getIdentifyPayload(): Record<string, unknown> | null;
+  getLastRequest: () => FakeRequest | null;
+  getRequests: () => FakeRequest[];
+  getIdentifyPayload: () => Record<string, unknown> | null;
   /** Sends a raw gateway packet (op 0 dispatch shape) to every connected shard. */
-  sendGatewayPacket(packet: Record<string, unknown>): void;
+  sendGatewayPacket: (packet: Record<string, unknown>) => void;
   /** Resolves when at least one gateway shard is connected. */
-  waitForShard(timeoutMs?: number): Promise<void>;
-  stop(): void;
+  waitForShard: (timeoutMs?: number) => Promise<void>;
+  stop: () => void;
 }
+
+// Gateway dispatch type field, as named by the Discord gateway protocol.
+const GATEWAY_TYPE_FIELD = "t";
 
 const DEFAULT_READY = {
   auth_session_id_hash: "hash",
@@ -95,7 +98,7 @@ export function startFakeDiscord(
   let lastIdentify: Record<string, unknown> | null = null;
 
   interface GatewaySocket {
-    send(data: string): unknown;
+    send: (data: string) => unknown;
   }
 
   const sockets = new Set<GatewaySocket>();
@@ -192,7 +195,13 @@ export function startFakeDiscord(
             if (onIdentify && lastIdentify) {
               onIdentify(lastIdentify);
             }
-            ws.send(JSON.stringify({ d: readyPayload, op: 0, t: "READY" }));
+            ws.send(
+              JSON.stringify({
+                d: readyPayload,
+                op: 0,
+                [GATEWAY_TYPE_FIELD]: "READY",
+              })
+            );
           }
         } catch {
           // ignore non-JSON frames
@@ -201,7 +210,7 @@ export function startFakeDiscord(
       open(ws) {
         sockets.add(ws);
         notifyShardConnected();
-        ws.send(JSON.stringify({ d: { heartbeat_interval: 45000 }, op: 10 }));
+        ws.send(JSON.stringify({ d: { heartbeat_interval: 45_000 }, op: 10 }));
       },
     },
   });
@@ -227,18 +236,16 @@ export function startFakeDiscord(
       if (sockets.size) {
         return Promise.resolve();
       }
-      return new Promise<void>((resolve, reject) => {
-        const waiter = {
-          resolve: () => resolve(),
-          timer: setTimeout(() => {
-            shardWaiters.delete(waiter);
-            reject(
-              new Error("Timed out waiting for a gateway shard connection")
-            );
-          }, timeoutMs),
-        };
-        shardWaiters.add(waiter);
-      });
+      const { promise, reject, resolve } = Promise.withResolvers<undefined>();
+      const waiter = {
+        resolve: () => resolve(undefined),
+        timer: setTimeout(() => {
+          shardWaiters.delete(waiter);
+          reject(new Error("Timed out waiting for a gateway shard connection"));
+        }, timeoutMs),
+      };
+      shardWaiters.add(waiter);
+      return promise;
     },
   };
 }

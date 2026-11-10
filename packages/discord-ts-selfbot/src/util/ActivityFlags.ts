@@ -4,7 +4,7 @@ class ActivityFlags extends BitField {}
 
 ActivityFlags.FLAGS = {
   EMBEDDED: 1 << 8,
-  INSTANCE: 1 << 0,
+  INSTANCE: 1,
   JOIN: 1 << 1,
   JOIN_REQUEST: 1 << 3,
   PARTY_PRIVACY_FRIENDS: 1 << 6,

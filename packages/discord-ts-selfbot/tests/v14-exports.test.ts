@@ -55,25 +55,25 @@ test("v13 builder aliases reference the same builder classes", () => {
 });
 
 test("the 11 v14 BitField aliases reference the same classes as their v13 counterparts", () => {
-  const aliases = {
-    ActivityFlagsBitField: "ActivityFlags",
-    ApplicationFlagsBitField: "ApplicationFlags",
-    AttachmentFlagsBitField: "AttachmentFlags",
-    GuildMemberFlagsBitField: "GuildMemberFlags",
-    IntentsBitField: "Intents",
-    MessageFlagsBitField: "MessageFlags",
-    PermissionsBitField: "Permissions",
-    RoleFlagsBitField: "RoleFlags",
-    SystemChannelFlagsBitField: "SystemChannelFlags",
-    ThreadMemberFlagsBitField: "ThreadMemberFlags",
-    UserFlagsBitField: "UserFlags",
-  };
+  const aliases = [
+    [discord.ActivityFlagsBitField, discord.ActivityFlags],
+    [discord.ApplicationFlagsBitField, discord.ApplicationFlags],
+    [discord.AttachmentFlagsBitField, discord.AttachmentFlags],
+    [discord.GuildMemberFlagsBitField, discord.GuildMemberFlags],
+    [discord.IntentsBitField, discord.Intents],
+    [discord.MessageFlagsBitField, discord.MessageFlags],
+    [discord.PermissionsBitField, discord.Permissions],
+    [discord.RoleFlagsBitField, discord.RoleFlags],
+    [discord.SystemChannelFlagsBitField, discord.SystemChannelFlags],
+    [discord.ThreadMemberFlagsBitField, discord.ThreadMemberFlags],
+    [discord.UserFlagsBitField, discord.UserFlags],
+  ];
 
-  expect(Object.keys(aliases)).toHaveLength(11);
+  expect(aliases).toHaveLength(11);
 
-  for (const [v14Name, v13Name] of Object.entries(aliases)) {
-    expect(typeof discord[v14Name]).toBe("function");
-    expect(typeof discord[v13Name]).toBe("function");
-    expect(discord[v14Name]).toBe(discord[v13Name]);
+  for (const [v14Alias, v13Alias] of aliases) {
+    expect(typeof v14Alias).toBe("function");
+    expect(typeof v13Alias).toBe("function");
+    expect(v14Alias).toBe(v13Alias);
   }
 });

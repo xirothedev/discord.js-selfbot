@@ -24,7 +24,7 @@ Please use the @dank074/discord-video-stream library for the best support.
 */
 
 interface NalFunctions {
-  splitHeader(frame: Buffer): [Buffer, Buffer];
+  splitHeader: (frame: Buffer) => [Buffer, Buffer];
 }
 
 class AnnexBDispatcher extends VideoDispatcher {
@@ -42,7 +42,7 @@ class AnnexBDispatcher extends VideoDispatcher {
 
   constructor(
     player: MediaPlayer,
-    highWaterMark = 12,
+    highWaterMark: number | undefined,
     streams: DispatcherStreams,
     fps: number,
     nalFunctions: NalFunctions,
@@ -103,7 +103,7 @@ class AnnexBDispatcher extends VideoDispatcher {
 class H264Dispatcher extends AnnexBDispatcher {
   constructor(
     player: MediaPlayer,
-    highWaterMark = 12,
+    highWaterMark: number | undefined,
     streams: DispatcherStreams,
     fps: number
   ) {
@@ -122,7 +122,7 @@ class H264Dispatcher extends AnnexBDispatcher {
     isLastPacket: boolean,
     naluHeader: Buffer
   ): Buffer {
-    const nal0 = naluHeader[0];
+    const [nal0] = naluHeader;
     const fuPayloadHeader = Buffer.alloc(2);
     const nalType = H264Helpers.getUnitType(naluHeader);
     const fnri = nal0 & 0xe0;
@@ -144,7 +144,7 @@ class H264Dispatcher extends AnnexBDispatcher {
 class H265Dispatcher extends AnnexBDispatcher {
   constructor(
     player: MediaPlayer,
-    highWaterMark = 12,
+    highWaterMark: number | undefined,
     streams: DispatcherStreams,
     fps: number
   ) {

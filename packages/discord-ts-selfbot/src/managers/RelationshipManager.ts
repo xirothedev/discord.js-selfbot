@@ -127,7 +127,7 @@ class RelationshipManager extends BaseManager {
     if (user instanceof User) {
       return user.id;
     }
-    return user.match(/\d{17,19}/)?.[0] || null;
+    return user.match(/\d{17,19}/u)?.[0] || null;
   }
 
   resolveUsername(user: UserResolvableSource): string | null {
@@ -224,7 +224,7 @@ class RelationshipManager extends BaseManager {
   ): Promise<boolean> {
     const id = this.resolveId(user);
     if (!id || this.cache.get(id) !== RelationshipTypes.FRIEND) {
-      return Promise.resolve(false);
+      return false;
     }
     await this.client.api.users["@me"].relationships[id].patch({
       data: {

@@ -29,10 +29,9 @@ const {
 import DataResolver from "../util/DataResolver";
 import Permissions from "../util/Permissions";
 import SystemChannelFlags from "../util/SystemChannelFlags";
-import _UtilModule from "../util/Util";
-
-const { resolveColor } = _UtilModule;
 import Util from "../util/Util";
+
+const { resolveColor } = Util;
 import type { APIIncidentsData, Snowflake } from "discord-api-types/v10";
 import type {
   RawGuildData,
@@ -178,18 +177,19 @@ class GuildManager extends CachedManager<InstanceType<typeof Guild>> {
       verificationLevel,
     }: GuildCreateOptionsSource = {}
   ): Promise<InstanceType<typeof Guild>> {
-    icon = await DataResolver.resolveImage(icon);
-    if (typeof verificationLevel === "string") {
-      verificationLevel = VerificationLevels[verificationLevel];
-    }
-    if (typeof defaultMessageNotifications === "string") {
-      defaultMessageNotifications =
-        DefaultMessageNotificationLevels[defaultMessageNotifications];
-    }
-    if (typeof explicitContentFilter === "string") {
-      explicitContentFilter =
-        ExplicitContentFilterLevels[explicitContentFilter];
-    }
+    const resolvedIcon = await DataResolver.resolveImage(icon);
+    const resolvedVerificationLevel =
+      typeof verificationLevel === "string"
+        ? VerificationLevels[verificationLevel]
+        : verificationLevel;
+    const resolvedDefaultMessageNotifications =
+      typeof defaultMessageNotifications === "string"
+        ? DefaultMessageNotificationLevels[defaultMessageNotifications]
+        : defaultMessageNotifications;
+    const resolvedExplicitContentFilter =
+      typeof explicitContentFilter === "string"
+        ? ExplicitContentFilterLevels[explicitContentFilter]
+        : explicitContentFilter;
     for (const channel of channels) {
       channel.type &&= resolveEnumValue(ChannelTypes, channel.type);
       channel.parent_id = channel.parentId;
@@ -232,15 +232,16 @@ class GuildManager extends CachedManager<InstanceType<typeof Guild>> {
         afk_channel_id: afkChannelId,
         afk_timeout: afkTimeout,
         channels,
-        default_message_notifications: defaultMessageNotifications,
-        explicit_content_filter: explicitContentFilter,
-        guild_template_code: "2TffvPucqHkN", // From Discord
-        icon,
+        default_message_notifications: resolvedDefaultMessageNotifications,
+        explicit_content_filter: resolvedExplicitContentFilter,
+        // From Discord
+        guild_template_code: "2TffvPucqHkN",
+        icon: resolvedIcon,
         name,
         roles,
         system_channel_flags: resolvedSystemChannelFlags,
         system_channel_id: systemChannelId,
-        verification_level: verificationLevel,
+        verification_level: resolvedVerificationLevel,
       },
     });
 
@@ -249,24 +250,28 @@ class GuildManager extends CachedManager<InstanceType<typeof Guild>> {
       return existing;
     }
 
-    return new Promise<InstanceType<typeof Guild>>((resolve) => {
-      const handleGuild = (guild: InstanceType<typeof Guild>) => {
-        if (guild.id === data.id) {
-          clearTimeout(timeout);
-          this.client.removeListener(Events.GUILD_CREATE, handleGuild);
-          this.client.decrementMaxListeners();
-          resolve(guild);
+    const { promise, resolve } =
+      Promise.withResolvers<InstanceType<typeof Guild>>();
+    const timeoutState: { timer?: ReturnType<typeof setTimeout> } = {};
+    const handleGuild = (guild: InstanceType<typeof Guild>) => {
+      if (guild.id === data.id) {
+        if (timeoutState.timer) {
+          clearTimeout(timeoutState.timer);
         }
-      };
-      this.client.incrementMaxListeners();
-      this.client.on(Events.GUILD_CREATE, handleGuild);
-
-      const timeout = setTimeout(() => {
         this.client.removeListener(Events.GUILD_CREATE, handleGuild);
         this.client.decrementMaxListeners();
-        resolve(this.client.guilds._add(data));
-      }, 10_000).unref();
-    });
+        resolve(guild);
+      }
+    };
+    this.client.incrementMaxListeners();
+    this.client.on(Events.GUILD_CREATE, handleGuild);
+
+    timeoutState.timer = setTimeout(() => {
+      this.client.removeListener(Events.GUILD_CREATE, handleGuild);
+      this.client.decrementMaxListeners();
+      resolve(this.client.guilds._add(data));
+    }, 10_000).unref();
+    return promise;
   }
 
   fetch(
@@ -300,10 +305,11 @@ class GuildManager extends CachedManager<InstanceType<typeof Guild>> {
     const data: RawOAuth2GuildData[] = await this.client.api
       .users("@me")
       .guilds.get({ query: options });
-    return data.reduce(
-      (coll, guild) => coll.set(guild.id, new OAuth2Guild(this.client, guild)),
-      new Collection<Snowflake, OAuth2Guild>()
-    );
+    const guilds = new Collection<Snowflake, OAuth2Guild>();
+    for (const guild of data) {
+      guilds.set(guild.id, new OAuth2Guild(this.client, guild));
+    }
+    return guilds;
   }
 
   async setIncidentActions(

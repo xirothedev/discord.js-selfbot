@@ -142,7 +142,8 @@ function ensureReturns(
   if (!target || !description) {
     return;
   }
-  const comment = target.comment ?? (target.comment = {});
+  target.comment ??= {};
+  const { comment } = target;
   addBlockTag(comment, "@returns", description);
 }
 
@@ -153,7 +154,8 @@ function ensureExamples(
   if (!target || !examples?.length) {
     return;
   }
-  const comment = target.comment ?? (target.comment = {});
+  target.comment ??= {};
+  const { comment } = target;
   if (!comment.blockTags) {
     comment.blockTags = [];
   }
@@ -185,6 +187,58 @@ function findChild(
   return reflection?.children?.find((child) => child.name === name);
 }
 
+function enrichConstructor(
+  constructor: Reflection | undefined,
+  docgenClass: DocgenClass
+): void {
+  if (!docgenClass.construct) {
+    return;
+  }
+  ensureSummary(constructor, docgenClass.construct.description);
+  for (const signature of constructor?.signatures ?? []) {
+    for (const param of docgenClass.construct.params ?? []) {
+      ensureSummary(
+        signature.parameters?.find(
+          (candidate) => candidate.name === param.name
+        ),
+        param.description
+      );
+    }
+  }
+}
+
+function returnsDescription(
+  returns: DocgenMethod["returns"]
+): string | undefined {
+  if (!returns || typeof returns !== "object" || !("description" in returns)) {
+    return undefined;
+  }
+  return returns.description as string | undefined;
+}
+
+function enrichMethod(
+  source: Reflection | undefined,
+  typings: Reflection | undefined,
+  method: DocgenMethod
+): void {
+  const child =
+    findChild(source, method.name) ?? findChild(typings, method.name);
+  ensureSignatureSummary(child, method.description);
+
+  for (const signature of child?.signatures ?? []) {
+    for (const param of method.params ?? []) {
+      ensureSummary(
+        signature.parameters?.find(
+          (candidate) => candidate.name === param.name
+        ),
+        param.description
+      );
+    }
+    ensureReturns(signature, returnsDescription(method.returns));
+    ensureExamples(signature, method.examples);
+  }
+}
+
 export function enrichClass(
   source: Reflection | undefined,
   typings: Reflection | undefined,
@@ -200,19 +254,7 @@ export function enrichClass(
   const constructor =
     source?.children?.find((child) => child.kind === 512) ??
     typings?.children?.find((child) => child.kind === 512);
-  if (docgenClass.construct) {
-    ensureSummary(constructor, docgenClass.construct.description);
-    for (const signature of constructor?.signatures ?? []) {
-      for (const param of docgenClass.construct.params ?? []) {
-        ensureSummary(
-          signature.parameters?.find(
-            (candidate) => candidate.name === param.name
-          ),
-          param.description
-        );
-      }
-    }
-  }
+  enrichConstructor(constructor, docgenClass);
 
   for (const prop of docgenClass.props ?? []) {
     ensureSummary(
@@ -222,28 +264,7 @@ export function enrichClass(
   }
 
   for (const method of docgenClass.methods ?? []) {
-    const child =
-      findChild(source, method.name) ?? findChild(typings, method.name);
-    ensureSignatureSummary(child, method.description);
-
-    for (const signature of child?.signatures ?? []) {
-      for (const param of method.params ?? []) {
-        ensureSummary(
-          signature.parameters?.find(
-            (candidate) => candidate.name === param.name
-          ),
-          param.description
-        );
-      }
-      const returns =
-        method.returns &&
-        typeof method.returns === "object" &&
-        "description" in method.returns
-          ? (method.returns.description as string | undefined)
-          : undefined;
-      ensureReturns(signature, returns);
-      ensureExamples(signature, method.examples);
-    }
+    enrichMethod(source, typings, method);
   }
 }
 

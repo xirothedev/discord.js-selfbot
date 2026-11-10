@@ -20,11 +20,18 @@ class InteractionWebhook {
   }
 
   // These are here only for documentation purposes - they are implemented by Webhook
-  /* eslint-disable no-empty-function, valid-jsdoc */
-  send(..._args: unknown[]) {}
-  fetchMessage(..._args: unknown[]) {}
-  editMessage(..._args: unknown[]) {}
-  deleteMessage(..._args: unknown[]) {}
+  send(..._args: unknown[]) {
+    // Implemented by the subclass mixin.
+  }
+  fetchMessage(..._args: unknown[]) {
+    // Implemented by the subclass mixin.
+  }
+  editMessage(..._args: unknown[]) {
+    // Implemented by the subclass mixin.
+  }
+  deleteMessage(..._args: unknown[]) {
+    // Implemented by the subclass mixin.
+  }
   get url(): string | undefined {
     return undefined;
   }
@@ -43,5 +50,7 @@ setTimeout(() => {
       "createdTimestamp",
       "createdAt",
     ]);
-  } catch {}
+  } catch {
+    // The webhook mixin is optional during early circular imports.
+  }
 }, 0);

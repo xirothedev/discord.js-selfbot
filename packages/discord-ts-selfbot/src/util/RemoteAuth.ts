@@ -12,38 +12,15 @@ import _ConstantsModule from "./Constants";
 
 const { UserAgent } = _ConstantsModule;
 import Options from "./Options";
+import {
+  baseURL,
+  Event,
+  receiveEvent,
+  sendEvent,
+  wsURL,
+} from "./RemoteAuthGateway";
 
 const defaultClientOptions = Options.createDefault();
-
-const baseURL = "https://discord.com/ra/";
-
-const wsURL = "wss://remote-auth-gateway.discord.gg/?v=2";
-
-const receiveEvent = {
-  CANCEL: "cancel",
-  HEARTBEAT_ACK: "heartbeat_ack",
-  HELLO: "hello",
-  NONCE_PROOF: "nonce_proof",
-  PENDING_LOGIN: "pending_login",
-  PENDING_REMOTE_INIT: "pending_remote_init",
-  PENDING_TICKET: "pending_ticket",
-};
-
-const sendEvent = {
-  HEARTBEAT: "heartbeat",
-  INIT: "init",
-  NONCE_PROOF: "nonce_proof",
-};
-
-const Event = {
-  CANCEL: "cancel",
-  CLOSED: "closed",
-  DEBUG: "debug",
-  ERROR: "error",
-  FINISH: "finish",
-  READY: "ready",
-  WAIT_SCAN: "pending",
-};
 
 class DiscordAuthWebsocket extends EventEmitter {
   #ws: WebSocket | null = null;
@@ -55,12 +32,7 @@ class DiscordAuthWebsocket extends EventEmitter {
   #fingerprint = "";
   #userDecryptString = "";
 
-  token: string;
-
-  constructor() {
-    super();
-    this.token = "";
-  }
+  token = "";
 
   get AuthURL() {
     return baseURL + this.#fingerprint;
@@ -85,16 +57,20 @@ class DiscordAuthWebsocket extends EventEmitter {
   }
 
   #handleWebSocket() {
-    this.#ws!.on("error", (error: Error) => {
+    const socket = this.#ws;
+    if (!socket) {
+      return;
+    }
+    socket.on("error", (error: Error) => {
       this.emit(Event.ERROR, error);
     });
-    this.#ws!.on("open", () => {
+    socket.on("open", () => {
       this.emit(Event.DEBUG, "[WS] Client Connected");
     });
-    this.#ws!.on("close", () => {
+    socket.on("close", () => {
       this.emit(Event.DEBUG, "[WS] Connection closed");
     });
-    this.#ws!.on("message", this.#handleMessage.bind(this));
+    socket.on("message", this.#handleMessage.bind(this));
   }
 
   #handleMessage(raw: unknown) {
@@ -136,6 +112,10 @@ class DiscordAuthWebsocket extends EventEmitter {
       case receiveEvent.PENDING_LOGIN: {
         this.#ticket = message.ticket as string;
         this.#findRealToken();
+        break;
+      }
+
+      default: {
         break;
       }
     }
@@ -200,8 +180,8 @@ class DiscordAuthWebsocket extends EventEmitter {
     const proof = Bun.CryptoHasher.hash("sha256", decrypted_nonce, "base64")
       .replaceAll("+", "-")
       .replaceAll("/", "_")
-      .replace(/=+/, "")
-      .replace(/\s+$/, "");
+      .replace(/=+/u, "")
+      .replace(/\s+$/u, "");
     this.#send(sendEvent.NONCE_PROOF, { proof });
   }
 
@@ -227,11 +207,11 @@ class DiscordAuthWebsocket extends EventEmitter {
   }
 
   #awaitLogin(client: unknown) {
-    return new Promise<unknown>((r) => {
-      this.once(Event.FINISH, (token: string) => {
-        r((client as { login: (t: string) => unknown }).login(token));
-      });
+    const { promise, resolve } = Promise.withResolvers<unknown>();
+    this.once(Event.FINISH, (token: string) => {
+      resolve((client as { login: (value: string) => unknown }).login(token));
     });
+    return promise;
   }
 
   connect(client?: unknown) {
@@ -255,61 +235,55 @@ class DiscordAuthWebsocket extends EventEmitter {
     if (!this.#fingerprint) {
       return;
     }
-    qrcode.toString(
-      this.AuthURL,
-      { errorCorrectionLevel: "L", type: "utf8" },
-      (err: Error | null, url: string) => {
-        if (err) {
-          //
-        }
-        console.log(url);
-      }
-    );
-  }
-
-  #findRealToken() {
-    return fetch(`https://discord.com/api/v9/users/@me/remote-auth/login`, {
-      body: JSON.stringify({
-        ticket: this.#ticket,
-      }),
-      headers: {
-        Accept: "*/*",
-        "Accept-Language": "en-US",
-        Connection: "keep-alive",
-        "Content-Type": "application/json",
-        Origin: "https://discord.com",
-        Referer: "https://discord.com/channels/@me",
-        "Sec-Fetch-Dest": "empty",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-origin",
-        "User-Agent": UserAgent,
-        "X-Debug-Options": "bugReporterEnabled",
-        "X-Discord-Locale": "en-US",
-        "X-Super-Properties": `${Buffer.from(
-          JSON.stringify(defaultClientOptions.ws.properties),
-          "ascii"
-        ).toString("base64")}`,
-      },
-      method: "POST",
-    })
-      .then((r) => r.json())
-      .then((res: unknown) => {
-        const resObj = res as Record<string, unknown>;
-        if (resObj.encrypted_token) {
-          this.token = this.#decryptPayload(resObj.encrypted_token).toString();
-        }
-        this.emit(Event.FINISH, this.token);
-        this.destroy();
-      })
+    // The default qrcode renderer prints the QR as UTF-8 text.
+    qrcode
+      .toString(this.AuthURL, { errorCorrectionLevel: "L" })
+      .then((url: string) => console.log(url))
       .catch(() => false);
   }
 
+  async #findRealToken() {
+    try {
+      const response = await fetch(
+        `https://discord.com/api/v9/users/@me/remote-auth/login`,
+        {
+          body: JSON.stringify({
+            ticket: this.#ticket,
+          }),
+          headers: {
+            Accept: "*/*",
+            "Accept-Language": "en-US",
+            Connection: "keep-alive",
+            "Content-Type": "application/json",
+            Origin: "https://discord.com",
+            Referer: "https://discord.com/channels/@me",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "User-Agent": UserAgent,
+            "X-Debug-Options": "bugReporterEnabled",
+            "X-Discord-Locale": "en-US",
+            "X-Super-Properties": `${Buffer.from(
+              JSON.stringify(defaultClientOptions.ws.properties),
+              "ascii"
+            ).toString("base64")}`,
+          },
+          method: "POST",
+        }
+      );
+      const body = (await response.json()) as Record<string, unknown>;
+      if (body.encrypted_token) {
+        this.token = this.#decryptPayload(body.encrypted_token).toString();
+      }
+      this.emit(Event.FINISH, this.token);
+      this.destroy();
+    } catch {
+      // A failed login leaves the token empty; the socket still reports its own errors.
+    }
+  }
+
   static decryptUser(payload: unknown) {
-    const values = String(payload).split(":");
-    const id = values[0];
-    const username = values[3];
-    const discriminator = values[1];
-    const avatar = values[2];
+    const [id, discriminator, avatar, username] = String(payload).split(":");
     return {
       avatar,
       discriminator,

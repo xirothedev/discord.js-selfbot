@@ -13,13 +13,17 @@ class ThreadMembersUpdateAction extends Action {
       const old = thread.members.cache.clone();
       thread.memberCount = data.member_count;
 
-      data.added_members?.forEach((rawMember) => {
-        thread.members._add(rawMember);
-      });
+      if (data.added_members) {
+        for (const rawMember of data.added_members) {
+          thread.members._add(rawMember);
+        }
+      }
 
-      data.removed_member_ids?.forEach((memberId) => {
-        thread.members.cache.delete(memberId);
-      });
+      if (data.removed_member_ids) {
+        for (const memberId of data.removed_member_ids) {
+          thread.members.cache.delete(memberId);
+        }
+      }
 
       client.emit(Events.THREAD_MEMBERS_UPDATE, old, thread.members.cache);
     }

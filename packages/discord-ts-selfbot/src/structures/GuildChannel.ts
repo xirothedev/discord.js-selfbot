@@ -17,8 +17,10 @@ import type {
   CategoryChannelResolvable,
   ChannelData,
   GuildChannelCloneOptions,
+  OverwriteData,
   SetChannelPositionOptions,
   SetParentOptions,
+  ThreadAutoArchiveDuration,
 } from "../../typings";
 import type { RawGuildChannelData } from "../../typings/rawDataTypes";
 import type { GuildChannelEntity } from "../types/entities/guild-channel";
@@ -29,10 +31,8 @@ import type { Role } from "./Role";
 import type { User } from "./User";
 import type { CategoryChannel } from "./CategoryChannel";
 import type PermissionOverwrites from "./PermissionOverwrites";
-import type { ThreadAutoArchiveDuration } from "../../typings";
 import type MessageManager from "../managers/MessageManager";
 import type Client from "../client/Client";
-import type { OverwriteData } from "../../typings";
 import type { ChannelDataSource } from "../managers/GuildChannelManager";
 
 class GuildChannel extends Channel implements GuildChannelEntity {
@@ -62,7 +62,7 @@ class GuildChannel extends Channel implements GuildChannelEntity {
 
     this.guildId = guild.id;
 
-    this.parentId = this.parentId ?? null;
+    this.parentId ??= null;
     this.permissionOverwrites = new PermissionOverwriteManager(this);
 
     if (data && immediatePatch) {
@@ -312,8 +312,6 @@ class GuildChannel extends Channel implements GuildChannelEntity {
     );
   }
 
-  edit(data: ChannelData, reason?: string): Promise<this>;
-  edit(data: ChannelDataSource, reason?: string): Promise<this>;
   edit(data: ChannelData | ChannelDataSource, reason?: string): Promise<this> {
     return this.guild.channels.edit<this>(this, data, reason);
   }
@@ -369,13 +367,12 @@ class GuildChannel extends Channel implements GuildChannelEntity {
       this.name === channel.name;
 
     if (equal) {
-      if (this.permissionOverwrites && channel.permissionOverwrites) {
-        equal = this.permissionOverwrites.cache.equals(
-          channel.permissionOverwrites.cache
-        );
-      } else {
-        equal = !this.permissionOverwrites && !channel.permissionOverwrites;
-      }
+      equal =
+        this.permissionOverwrites && channel.permissionOverwrites
+          ? this.permissionOverwrites.cache.equals(
+              channel.permissionOverwrites.cache
+            )
+          : !this.permissionOverwrites && !channel.permissionOverwrites;
     }
 
     return equal;
@@ -390,10 +387,11 @@ class GuildChannel extends Channel implements GuildChannelEntity {
   }
 
   get manageable(): boolean {
-    if (this.client.user!.id === this.guild.ownerId) {
+    const { user } = this.client;
+    if (user?.id === this.guild.ownerId) {
       return true;
     }
-    const permissions = this.permissionsFor(this.client.user!);
+    const permissions = user ? this.permissionsFor(user) : null;
     if (!permissions) {
       return false;
     }
@@ -420,10 +418,11 @@ class GuildChannel extends Channel implements GuildChannelEntity {
   }
 
   get viewable(): boolean {
-    if (this.client.user!.id === this.guild.ownerId) {
+    const { user } = this.client;
+    if (user?.id === this.guild.ownerId) {
       return true;
     }
-    const permissions = this.permissionsFor(this.client.user!);
+    const permissions = user ? this.permissionsFor(user) : null;
     if (!permissions) {
       return false;
     }

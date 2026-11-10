@@ -2,10 +2,11 @@ import { test, describe } from "bun:test";
 
 import {
   channelId,
-  skip,
-  makeClient,
+  fetchGuildTextChannel,
   login,
+  makeClient,
   makeStepRecorder,
+  skip,
 } from "./_helpers";
 
 describe.skipIf(skip)("manual: polls", () => {
@@ -19,9 +20,10 @@ describe.skipIf(skip)("manual: polls", () => {
         console.log("[SKIP] no TEST_CHANNEL_ID");
         return;
       }
+      const targetChannelId = channelId;
       await step("create poll", async () => {
-        const ch = await client.channels.fetch(channelId!);
-        const msg = await (ch as any).send({
+        const channel = await fetchGuildTextChannel(client, targetChannelId);
+        const message = await channel.send({
           poll: {
             allow_multiselect: false,
             answers: [{ text: "yes" }, { text: "no" }],
@@ -29,16 +31,16 @@ describe.skipIf(skip)("manual: polls", () => {
             question: { text: "manual poll?" },
           },
         });
-        if (typeof msg.id !== "string") {
+        if (typeof message.id !== "string") {
           throw new TypeError("no id");
         }
-        messageId = msg.id;
+        messageId = message.id;
       });
       await step("cleanup", async () => {
         if (messageId) {
-          const ch = await client.channels.fetch(channelId!);
-          const msg = await (ch as any).messages.fetch(messageId);
-          await msg.delete();
+          const channel = await fetchGuildTextChannel(client, targetChannelId);
+          const message = await channel.messages.fetch(messageId);
+          await message.delete();
         }
       });
     } finally {

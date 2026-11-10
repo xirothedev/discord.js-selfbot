@@ -43,8 +43,8 @@ class StageInstanceManager extends CachedManager<StageInstanceType> {
     if (typeof options !== "object") {
       throw new TypeError("INVALID_TYPE", "options", "object", true);
     }
-    let { guildScheduledEvent, topic, privacyLevel, sendStartNotification } =
-      options;
+    let { privacyLevel } = options;
+    const { guildScheduledEvent, topic, sendStartNotification } = options;
 
     privacyLevel &&=
       typeof privacyLevel === "number"
@@ -104,7 +104,8 @@ class StageInstanceManager extends CachedManager<StageInstanceType> {
       throw new Error("STAGE_CHANNEL_RESOLVE");
     }
 
-    let { topic, privacyLevel } = options;
+    let { privacyLevel } = options;
+    const { topic } = options;
 
     privacyLevel &&=
       typeof privacyLevel === "number"

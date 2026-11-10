@@ -23,7 +23,7 @@ Please use the @dank074/discord-video-stream library for the best support.
 class VP8Dispatcher extends VideoDispatcher {
   constructor(
     player: MediaPlayer,
-    highWaterMark = 12,
+    highWaterMark: number | undefined,
     streams: DispatcherStreams,
     fps: number
   ) {
@@ -42,7 +42,8 @@ class VP8Dispatcher extends VideoDispatcher {
     payloadDescriptorBuf[0] = 0x80;
     payloadDescriptorBuf[1] = 0x80;
     if (isFirstPacket) {
-      payloadDescriptorBuf[0] |= 1 << 4; // Mark S bit, indicates start of frame
+      // Mark S bit, indicates start of frame.
+      payloadDescriptorBuf[0] |= 1 << 4;
     }
     // Vp8 pictureid payload extension
     const pictureIdBuf = Buffer.alloc(2);
@@ -57,11 +58,11 @@ class VP8Dispatcher extends VideoDispatcher {
   }
 
   _codecCallback(chunk: Buffer) {
-    const chunkSplit = this.partitionMtu(chunk).map((c, i) =>
-      this.makeChunk(c, i === 0)
+    const chunkSplit = this.partitionMtu(chunk).map((chunkPart, index) =>
+      this.makeChunk(chunkPart, index === 0)
     );
-    for (let i = 0; i < chunkSplit.length; i++) {
-      this._playChunk(chunkSplit[i], i + 1 === chunkSplit.length);
+    for (let index = 0; index < chunkSplit.length; index++) {
+      this._playChunk(chunkSplit[index], index + 1 === chunkSplit.length);
     }
   }
 }

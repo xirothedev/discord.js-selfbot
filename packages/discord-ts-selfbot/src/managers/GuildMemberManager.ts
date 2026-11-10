@@ -90,7 +90,6 @@ interface GuildMemberEditPayload {
   banner?: string | null;
   bio?: string | null;
 }
-/* eslint-disable newline-per-chained-call */
 
 class GuildMemberManager extends CachedManager<GuildMemberType> {
   declare guild: Guild;
@@ -196,18 +195,21 @@ class GuildMemberManager extends CachedManager<GuildMemberType> {
         data: resolvedOptions,
       });
     // Data is an empty buffer if the member is already part of the guild.
-    return data instanceof Buffer
-      ? options.fetchWhenExisting === false
-        ? null
-        : this.fetch(userId)
-      : this._add(data);
+    if (!(data instanceof Buffer)) {
+      return this._add(data);
+    }
+    return options.fetchWhenExisting === false ? null : this.fetch(userId);
   }
 
   get me(): GuildMemberType | null {
+    const userId = this.client.user?.id;
+    if (!userId) {
+      return null;
+    }
     return (
-      this.cache.get(this.client.user!.id) ??
+      this.cache.get(userId) ??
       (this.client.options.partials.includes(PartialTypes.GUILD_MEMBER)
-        ? this._add({ user: { id: this.client.user!.id } }, true)
+        ? this._add({ user: { id: userId } }, true)
         : null)
     );
   }
@@ -238,12 +240,12 @@ class GuildMemberManager extends CachedManager<GuildMemberType> {
     }
     const user = this.client.users.resolveId(options);
     if (user) {
-      return this._fetchSingle({ user, cache: true });
+      return this._fetchSingle({ cache: true, user });
     }
     if (isMemberFetchOptions(options) && options.user) {
       if (Array.isArray(options.user)) {
         const userIds = options.user
-          .map((u) => this.client.users.resolveId(u))
+          .map((userResolvable) => this.client.users.resolveId(userResolvable))
           .filter((id): id is Snowflake => id !== null);
         return this._fetchMany({ ...options, user: userIds });
       }
@@ -265,7 +267,11 @@ class GuildMemberManager extends CachedManager<GuildMemberType> {
   }
 
   fetchMe(options?: BaseFetchOptions): Promise<GuildMemberType> {
-    return this.fetch({ ...options, user: this.client.user!.id });
+    const userId = this.client.user?.id;
+    if (!userId) {
+      throw new TypeError("INVALID_TYPE", "user", "UserResolvable");
+    }
+    return this.fetch({ ...options, user: userId });
   }
 
   async search({
@@ -299,6 +305,30 @@ class GuildMemberManager extends CachedManager<GuildMemberType> {
       throw new TypeError("INVALID_TYPE", "user", "UserResolvable");
     }
 
+    const _data = await this.buildEditPayload(data);
+
+    const selfId = this.client.user?.id;
+    const keys = Object.keys(data);
+    const useMeEndpoint =
+      id === selfId &&
+      keys.length === 1 &&
+      ["nick", "avatar", "banner", "bio"].includes(keys[0]);
+    const endpoint = this.client.api
+      .guilds(this.guild.id)
+      .members(useMeEndpoint ? "@me" : id);
+    const d = await endpoint.patch<RESTPatchAPIGuildMemberResult>({
+      data: _data,
+      reason,
+    });
+
+    const clone = this.cache.get(id)?._clone();
+    clone?._patch(d);
+    return clone ?? this._add(d, false);
+  }
+
+  private async buildEditPayload(
+    data: GuildMemberEditData
+  ): Promise<GuildMemberEditPayload> {
     const _data: GuildMemberEditPayload = {};
     if ("nick" in data) {
       _data.nick = data.nick ?? null;
@@ -344,29 +374,7 @@ class GuildMemberManager extends CachedManager<GuildMemberType> {
     if (data.bio !== undefined) {
       _data.bio = data.bio;
     }
-
-    let endpoint = this.client.api.guilds(this.guild.id);
-    if (id === this.client.user!.id) {
-      const keys = Object.keys(data);
-      if (
-        keys.length === 1 &&
-        ["nick", "avatar", "banner", "bio"].includes(keys[0])
-      ) {
-        endpoint = endpoint.members("@me");
-      } else {
-        endpoint = endpoint.members(id);
-      }
-    } else {
-      endpoint = endpoint.members(id);
-    }
-    const d = await endpoint.patch<RESTPatchAPIGuildMemberResult>({
-      data: _data,
-      reason,
-    });
-
-    const clone = this.cache.get(id)?._clone();
-    clone?._patch(d);
-    return clone ?? this._add(d, false);
+    return _data;
   }
 
   async prune(options: GuildPruneMembersOptions = {}): Promise<number | null> {
@@ -500,50 +508,62 @@ class GuildMemberManager extends CachedManager<GuildMemberType> {
   fetchByMemberSafety(
     timeout = 15_000
   ): Promise<Collection<Snowflake, GuildMemberType>> {
-    return new Promise<Collection<Snowflake, GuildMemberType>>((resolve) => {
-      const nonce = SnowflakeUtil.generate();
-      const fetchedMembers = new Collection<Snowflake, GuildMemberType>();
-      const timeout_ = setTimeout(() => {
-        this.client.removeListener(Events.GUILD_MEMBERS_CHUNK, handler);
-        resolve(fetchedMembers);
-      }, timeout).unref();
-      const handler = (
+    const { promise, resolve } =
+      Promise.withResolvers<Collection<Snowflake, GuildMemberType>>();
+    const nonce = SnowflakeUtil.generate();
+    const fetchedMembers = new Collection<Snowflake, GuildMemberType>();
+    const state: {
+      handler?: (
         members: Collection<Snowflake, GuildMemberType>,
         guild: Guild,
         chunk: GuildMembersChunk
-      ) => {
-        if (guild.id === this.guild.id && chunk.nonce === nonce) {
-          if (members.size > 0) {
-            for (const member of members.values()) {
-              fetchedMembers.set(member.id, member);
-            }
-            this.client.ws.broadcast({
-              d: {
-                continuation_token: members.first()?.id,
-                guild_id: this.guild.id,
-                nonce,
-                query: "",
-              },
-              op: Opcodes.SEARCH_RECENT_MEMBERS,
-            });
-          } else {
-            clearTimeout(timeout_);
-            this.client.removeListener(Events.GUILD_MEMBERS_CHUNK, handler);
-            resolve(fetchedMembers);
+      ) => void;
+      timer?: ReturnType<typeof setTimeout>;
+    } = {};
+    const cleanup = () => {
+      if (state.handler) {
+        this.client.removeListener(Events.GUILD_MEMBERS_CHUNK, state.handler);
+      }
+      if (state.timer) {
+        clearTimeout(state.timer);
+      }
+    };
+    state.timer = setTimeout(() => {
+      cleanup();
+      resolve(fetchedMembers);
+    }, timeout).unref();
+    state.handler = (members, guild, chunk) => {
+      if (guild.id === this.guild.id && chunk.nonce === nonce) {
+        if (members.size > 0) {
+          for (const member of members.values()) {
+            fetchedMembers.set(member.id, member);
           }
+          this.client.ws.broadcast({
+            d: {
+              continuation_token: members.first()?.id,
+              guild_id: this.guild.id,
+              nonce,
+              query: "",
+            },
+            op: Opcodes.SEARCH_RECENT_MEMBERS,
+          });
+        } else {
+          cleanup();
+          resolve(fetchedMembers);
         }
-      };
-      this.client.on(Events.GUILD_MEMBERS_CHUNK, handler);
-      this.client.ws.broadcast({
-        d: {
-          continuation_token: null,
-          guild_id: this.guild.id,
-          nonce,
-          query: "",
-        },
-        op: Opcodes.SEARCH_RECENT_MEMBERS,
-      });
+      }
+    };
+    this.client.on(Events.GUILD_MEMBERS_CHUNK, state.handler);
+    this.client.ws.broadcast({
+      d: {
+        continuation_token: null,
+        guild_id: this.guild.id,
+        nonce,
+        query: "",
+      },
+      op: Opcodes.SEARCH_RECENT_MEMBERS,
     });
+    return promise;
   }
 
   _fetchMany({
@@ -556,67 +576,82 @@ class GuildMemberManager extends CachedManager<GuildMemberType> {
   }: FetchMembersSourceOptions = {}): Promise<
     Collection<Snowflake, GuildMemberType> | GuildMemberType
   > {
-    return new Promise<
+    const { promise, resolve, reject } = Promise.withResolvers<
       Collection<Snowflake, GuildMemberType> | GuildMemberType
-    >((resolve, reject) => {
-      const query = initialQuery || (user_ids ? undefined : "");
-      if (nonce.length > 32) {
-        throw new RangeError("MEMBER_FETCH_NONCE_LENGTH");
-      }
-      this.guild.shard!.send({
-        d: {
-          guild_id: this.guild.id,
-          limit,
-          nonce,
-          presences,
-          query,
-          user_ids,
-        },
-        op: Opcodes.REQUEST_GUILD_MEMBERS,
-      });
-      const fetchedMembers = new Collection<Snowflake, GuildMemberType>();
-      let i = 0;
-      const handler = (
-        members: Collection<Snowflake, GuildMemberType>,
-        _: unknown,
-        chunk: GuildMembersChunk
-      ) => {
-        timeout.refresh();
-        if (chunk.nonce !== nonce) {
-          return;
-        }
-        i++;
-        for (const member of members.values()) {
-          fetchedMembers.set(member.id, member);
-        }
-        if (
-          members.size < 1000 ||
-          (limit && fetchedMembers.size >= limit) ||
-          i === chunk.count
-        ) {
-          clearTimeout(timeout);
-          this.client.removeListener(Events.GUILD_MEMBERS_CHUNK, handler);
-          this.client.decrementMaxListeners();
-          let fetched:
-            | Collection<Snowflake, GuildMemberType>
-            | GuildMemberType = fetchedMembers;
-          if (user_ids && !Array.isArray(user_ids) && fetchedMembers.size) {
-            const first = fetchedMembers.first();
-            if (first) {
-              fetched = first;
-            }
-          }
-          resolve(fetched);
-        }
-      };
-      const timeout = setTimeout(() => {
-        this.client.removeListener(Events.GUILD_MEMBERS_CHUNK, handler);
-        this.client.decrementMaxListeners();
-        reject(new Error("GUILD_MEMBERS_TIMEOUT"));
-      }, time).unref();
-      this.client.incrementMaxListeners();
-      this.client.on(Events.GUILD_MEMBERS_CHUNK, handler);
+    >();
+    const query = initialQuery || (user_ids ? undefined : "");
+    if (nonce.length > 32) {
+      reject(new RangeError("MEMBER_FETCH_NONCE_LENGTH"));
+      return promise;
+    }
+    const { shard } = this.guild;
+    if (!shard) {
+      reject(new Error("GUILD_MEMBERS_TIMEOUT"));
+      return promise;
+    }
+    shard.send({
+      d: {
+        guild_id: this.guild.id,
+        limit,
+        nonce,
+        presences,
+        query,
+        user_ids,
+      },
+      op: Opcodes.REQUEST_GUILD_MEMBERS,
     });
+    const fetchedMembers = new Collection<Snowflake, GuildMemberType>();
+    let chunkIndex = 0;
+    const state: {
+      handler?: (
+        members: Collection<Snowflake, GuildMemberType>,
+        guild: Guild,
+        chunk: GuildMembersChunk
+      ) => void;
+      timer?: ReturnType<typeof setTimeout>;
+    } = {};
+    const cleanup = () => {
+      if (state.handler) {
+        this.client.removeListener(Events.GUILD_MEMBERS_CHUNK, state.handler);
+      }
+      if (state.timer) {
+        clearTimeout(state.timer);
+      }
+      this.client.decrementMaxListeners();
+    };
+    state.handler = (members, _guild, chunk) => {
+      state.timer?.refresh();
+      if (chunk.nonce !== nonce) {
+        return;
+      }
+      chunkIndex++;
+      for (const member of members.values()) {
+        fetchedMembers.set(member.id, member);
+      }
+      if (
+        members.size < 1000 ||
+        (limit && fetchedMembers.size >= limit) ||
+        chunkIndex === chunk.count
+      ) {
+        cleanup();
+        let fetched: Collection<Snowflake, GuildMemberType> | GuildMemberType =
+          fetchedMembers;
+        if (user_ids && !Array.isArray(user_ids) && fetchedMembers.size) {
+          const first = fetchedMembers.first();
+          if (first) {
+            fetched = first;
+          }
+        }
+        resolve(fetched);
+      }
+    };
+    state.timer = setTimeout(() => {
+      cleanup();
+      reject(new Error("GUILD_MEMBERS_TIMEOUT"));
+    }, time).unref();
+    this.client.incrementMaxListeners();
+    this.client.on(Events.GUILD_MEMBERS_CHUNK, state.handler);
+    return promise;
   }
 
   /**

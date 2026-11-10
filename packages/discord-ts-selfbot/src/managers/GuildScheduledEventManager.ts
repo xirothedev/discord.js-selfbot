@@ -15,7 +15,7 @@ const {
 } = _ConstantsModule;
 import DataResolver from "../util/DataResolver";
 import Util from "../util/Util";
-import type { Snowflake } from "discord-api-types/v10";
+import type { APIGuildMember, APIUser, Snowflake } from "discord-api-types/v10";
 import type { RawGuildScheduledEventData } from "../../typings/rawDataTypes";
 import type {
   FetchGuildScheduledEventOptions,
@@ -29,8 +29,6 @@ import type { Guild } from "../structures/Guild";
 import type { GuildMember } from "../structures/GuildMember";
 import type { User } from "../structures/User";
 import type { GuildScheduledEvent as GuildScheduledEventType } from "../structures/GuildScheduledEvent";
-import type { APIUser } from "discord-api-types/v10";
-import type { APIGuildMember } from "discord-api-types/v10";
 
 type GuildScheduledEventResolvableSource =
   | InstanceType<typeof GuildScheduledEvent>
@@ -94,9 +92,8 @@ class GuildScheduledEventManager extends CachedManager<GuildScheduledEventType> 
     if (typeof options !== "object") {
       throw new TypeError("INVALID_TYPE", "options", "object", true);
     }
-    let {
-      privacyLevel,
-      entityType,
+    let { privacyLevel, entityType } = options;
+    const {
       channel,
       name,
       scheduledStartTime,
@@ -115,7 +112,8 @@ class GuildScheduledEventManager extends CachedManager<GuildScheduledEventType> 
       entityType = GuildScheduledEventEntityTypes[entityType];
     }
 
-    let channel_id, entity_metadata;
+    let channel_id;
+    let entity_metadata;
     if (entityType === GuildScheduledEventEntityTypes.EXTERNAL) {
       channel_id = channel === undefined ? channel : null;
       entity_metadata = { location: entityMetadata?.location };
@@ -195,14 +193,17 @@ class GuildScheduledEventManager extends CachedManager<GuildScheduledEventType> 
         query: { with_user_count: eventsOptions?.withUserCount ?? true },
       });
 
-    return data.reduce(
-      (coll, rawGuildScheduledEventData) =>
-        coll.set(
-          rawGuildScheduledEventData.id,
-          this._add(rawGuildScheduledEventData, eventsOptions?.cache)
-        ),
-      new Collection<Snowflake, InstanceType<typeof GuildScheduledEvent>>()
-    );
+    const events = new Collection<
+      Snowflake,
+      InstanceType<typeof GuildScheduledEvent>
+    >();
+    for (const rawGuildScheduledEventData of data) {
+      events.set(
+        rawGuildScheduledEventData.id,
+        this._add(rawGuildScheduledEventData, eventsOptions?.cache)
+      );
+    }
+    return events;
   }
 
   async edit(
@@ -217,11 +218,9 @@ class GuildScheduledEventManager extends CachedManager<GuildScheduledEventType> 
     if (typeof options !== "object") {
       throw new TypeError("INVALID_TYPE", "options", "object", true);
     }
-    let {
-      privacyLevel,
-      entityType,
+    let { privacyLevel, entityType, status } = options;
+    const {
       channel,
-      status,
       name,
       scheduledStartTime,
       description,
@@ -254,7 +253,7 @@ class GuildScheduledEventManager extends CachedManager<GuildScheduledEventType> 
       .patch({
         data: {
           channel_id:
-            typeof channel === "undefined"
+            channel === undefined
               ? channel
               : this.guild.channels.resolveId(channel),
           description,
@@ -314,17 +313,20 @@ class GuildScheduledEventManager extends CachedManager<GuildScheduledEventType> 
         query: { after, before, limit, with_member: withMember },
       });
 
-    return data.reduce(
-      (coll, rawData) =>
-        coll.set(rawData.user.id, {
-          guildScheduledEventId: rawData.guild_scheduled_event_id,
-          member: rawData.member
-            ? this.guild.members._add({ ...rawData.member, user: rawData.user })
-            : null,
-          user: this.client.users._add(rawData.user),
-        }),
-      new Collection<Snowflake, GuildScheduledEventUserSource>()
-    );
+    const subscribers = new Collection<
+      Snowflake,
+      GuildScheduledEventUserSource
+    >();
+    for (const rawData of data) {
+      subscribers.set(rawData.user.id, {
+        guildScheduledEventId: rawData.guild_scheduled_event_id,
+        member: rawData.member
+          ? this.guild.members._add({ ...rawData.member, user: rawData.user })
+          : null,
+        user: this.client.users._add(rawData.user),
+      });
+    }
+    return subscribers;
   }
 }
 

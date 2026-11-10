@@ -3,10 +3,10 @@ import type { Comment, CommentPart } from "./types";
 export function stripJsdocSyntax(text: string): string {
   return text
     .replaceAll(
-      /\{@link(?:code|plain)?\s+([^}|]+)(?:\|([^}]+))?\}/gi,
+      /\{@link(?:code|plain)?\s+(?<url>[^}|]+)(?:\|(?<label>[^}]+))?\}/giu,
       (_match, url: string, label?: string) => label ?? url
     )
-    .replaceAll(/<\/?(?:info|warn|error|note)>/gi, "");
+    .replaceAll(/<\/?(?:info|warn|error|note)>/giu, "");
 }
 
 export function plainText(parts: CommentPart[] | undefined): string {
@@ -23,7 +23,7 @@ export function plainText(parts: CommentPart[] | undefined): string {
       })
       .join("")
   )
-    .replaceAll(/\s+/g, " ")
+    .replaceAll(/\s+/gu, " ")
     .trim();
 }
 
@@ -38,7 +38,7 @@ export function escapeMdx(text: string): string {
 export function inlineCode(text: string): string {
   const longestRun = Math.max(
     0,
-    ...(text.match(/`+/g) ?? []).map((run) => run.length)
+    ...(text.match(/`+/gu) ?? []).map((run) => run.length)
   );
   const delimiter = "`".repeat(longestRun + 1);
   const pad = text.startsWith("`") || text.endsWith("`") ? " " : "";
@@ -54,7 +54,7 @@ export function frontmatterDescription(
   fallback: string
 ): string {
   const text = summaryText(comment) || fallback;
-  const oneLine = text.replaceAll(/\s+/g, " ").trim();
+  const oneLine = text.replaceAll(/\s+/gu, " ").trim();
   return oneLine.length > 160 ? `${oneLine.slice(0, 157)}...` : oneLine;
 }
 

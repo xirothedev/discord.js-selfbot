@@ -1,4 +1,5 @@
 import GuildChannel from "./GuildChannel";
+import { patchValue } from "./Base";
 import TextBasedChannel from "./interfaces/TextBasedChannel";
 import GuildForumThreadManager from "../managers/GuildForumThreadManager";
 import type {
@@ -60,13 +61,12 @@ class ThreadOnlyChannel extends GuildChannel {
 
   _patch(data: ThreadOnlyChannelPatch) {
     super._patch(data);
-    if ("available_tags" in data) {
-      this.availableTags = (data.available_tags ?? []).map((tag) =>
-        transformAPIGuildForumTag(tag)
-      );
-    } else {
-      this.availableTags ??= [];
-    }
+    this.availableTags =
+      "available_tags" in data
+        ? (data.available_tags ?? []).map((tag) =>
+            transformAPIGuildForumTag(tag)
+          )
+        : (this.availableTags ?? []);
 
     if ("default_reaction_emoji" in data) {
       this.defaultReactionEmoji = data.default_reaction_emoji
@@ -76,42 +76,24 @@ class ThreadOnlyChannel extends GuildChannel {
       this.defaultReactionEmoji ??= null;
     }
 
-    if ("default_thread_rate_limit_per_user" in data) {
-      this.defaultThreadRateLimitPerUser =
-        data.default_thread_rate_limit_per_user ?? null;
-    } else {
-      this.defaultThreadRateLimitPerUser ??= null;
-    }
-
-    if ("rate_limit_per_user" in data) {
-      this.rateLimitPerUser = data.rate_limit_per_user ?? null;
-    } else {
-      this.rateLimitPerUser ??= null;
-    }
-
-    if ("default_auto_archive_duration" in data) {
-      this.defaultAutoArchiveDuration =
-        data.default_auto_archive_duration ?? null;
-    } else {
-      this.defaultAutoArchiveDuration ??= null;
-    }
-
-    if ("nsfw" in data) {
-      this.nsfw = data.nsfw ?? false;
-    } else {
-      this.nsfw ??= false;
-    }
-
-    if ("topic" in data) {
-      this.topic = data.topic ?? null;
-    }
-
-    if ("default_sort_order" in data) {
-      this.defaultSortOrder =
-        resolveEnumMember(SortOrderTypes, data.default_sort_order) ?? null;
-    } else {
-      this.defaultSortOrder ??= null;
-    }
+    this.defaultThreadRateLimitPerUser = patchValue(
+      data.default_thread_rate_limit_per_user,
+      this.defaultThreadRateLimitPerUser
+    );
+    this.rateLimitPerUser = patchValue(
+      data.rate_limit_per_user,
+      this.rateLimitPerUser
+    );
+    this.defaultAutoArchiveDuration = patchValue(
+      data.default_auto_archive_duration,
+      this.defaultAutoArchiveDuration
+    );
+    this.nsfw = patchValue(data.nsfw, this.nsfw, false);
+    this.topic = patchValue(data.topic, this.topic);
+    this.defaultSortOrder =
+      "default_sort_order" in data
+        ? (resolveEnumMember(SortOrderTypes, data.default_sort_order) ?? null)
+        : (this.defaultSortOrder ?? null);
   }
 
   setAvailableTags(availableTags: GuildForumTagData[], reason?: string) {
@@ -162,11 +144,18 @@ class ThreadOnlyChannel extends GuildChannel {
   }
 
   // These are here only for documentation purposes - they are implemented by TextBasedChannel
-  /* eslint-disable no-empty-function */
-  createWebhook() {}
-  fetchWebhooks() {}
-  setNSFW() {}
-  setRateLimitPerUser() {}
+  createWebhook() {
+    // Implemented by the subclass mixin.
+  }
+  fetchWebhooks() {
+    // Implemented by the subclass mixin.
+  }
+  setNSFW() {
+    // Implemented by the subclass mixin.
+  }
+  setRateLimitPerUser() {
+    // Implemented by the subclass mixin.
+  }
 }
 
 TextBasedChannel.applyToClass(ThreadOnlyChannel, true, [

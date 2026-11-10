@@ -37,18 +37,17 @@ class VoiceReceiver extends EventEmitter {
     }: ReceiveStreamOptions = {}
   ) {
     const resolvedUser = this.connection.client.users.resolve(user);
-    if (end === "silence") {
-      paddingSilence = false;
-    }
     if (!resolvedUser) {
       throw new Error("VOICE_USER_MISSING");
     }
-    const stream = this.packets.makeStream(resolvedUser.id, end); // Opus stream
-    if (paddingSilence) {
+    const padSilence = end === "silence" ? false : paddingSilence;
+    // Opus stream.
+    const stream = this.packets.makeStream(resolvedUser.id, end);
+    if (padSilence) {
       const decoder = new prism.opus.Decoder({
         channels: 2,
         frameSize: 960,
-        rate: 48000,
+        rate: 48_000,
       });
       const pcmTransformer = new PCMInsertSilence();
       stream.pipe(decoder).pipe(pcmTransformer);
@@ -56,7 +55,7 @@ class VoiceReceiver extends EventEmitter {
         const encoder = new prism.opus.Encoder({
           channels: 2,
           frameSize: 960,
-          rate: 48000,
+          rate: 48_000,
         });
         pcmTransformer.pipe(encoder);
         return encoder;
@@ -66,8 +65,8 @@ class VoiceReceiver extends EventEmitter {
     if (mode === "pcm") {
       const decoder = new prism.opus.Decoder({
         channels: 2,
-        rate: 48000,
         frameSize: 960,
+        rate: 48_000,
       });
       stream.pipe(decoder);
       return decoder;

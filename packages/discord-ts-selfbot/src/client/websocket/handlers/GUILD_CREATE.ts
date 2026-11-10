@@ -23,15 +23,16 @@ function isGuildCreateData(value: unknown): value is GuildCreateData {
 }
 
 const run = (client: Client, guild: GuildLike) => {
-  const subs: Record<string, unknown> = {};
-  subs[guild.id] = {
-    activities: true,
-    channels: {},
-    member_updates: true,
-    members: [],
-    thread_member_lists: [],
-    threads: true,
-    typing: true,
+  const subs: Record<string, unknown> = {
+    [guild.id]: {
+      activities: true,
+      channels: {},
+      member_updates: true,
+      members: [],
+      thread_member_lists: [],
+      threads: true,
+      typing: true,
+    },
   };
   client.ws.broadcast({
     d: {
@@ -40,11 +41,11 @@ const run = (client: Client, guild: GuildLike) => {
     op: Opcodes.GUILD_SUBSCRIPTIONS_BULK,
   });
 };
-export default (
+export default function handleGuildCreate(
   client: Client,
   packet: { d?: unknown },
   shard: WebSocketShard
-) => {
+) {
   if (!isGuildCreateData(packet.d)) {
     return;
   }
@@ -66,4 +67,4 @@ export default (
       run(client, guild);
     }
   }
-};
+}

@@ -20,16 +20,17 @@ class AudioDispatcher extends BaseDispatcher {
 
   constructor(
     player: MediaPlayer,
-    {
+    options: StreamOptions | undefined,
+    streams: DispatcherStreams
+  ) {
+    const {
       seek = 0,
       volume = 1,
       fec,
       plp,
       bitrate = 96,
       highWaterMark = 12,
-    }: StreamOptions = {},
-    streams: DispatcherStreams
-  ) {
+    } = options ?? {};
     const streamOptions = {
       bitrate: typeof bitrate === "number" ? bitrate : 96,
       fec: Boolean(fec),
@@ -73,30 +74,33 @@ class AudioDispatcher extends BaseDispatcher {
   }
 
   setBitrate(value: number | "auto") {
-    if (!value || !this.bitrateEditable) {
+    const { opus } = this.streams;
+    if (!value || !opus?.setBitrate) {
       return false;
     }
     const bitrate =
       value === "auto"
         ? (this.player.voiceConnection.channel.bitrate ?? 96)
         : value;
-    this.streams.opus!.setBitrate!(bitrate * 1000);
+    opus.setBitrate(bitrate * 1000);
     return true;
   }
 
   setPLP(value: number) {
-    if (!this.bitrateEditable) {
+    const { opus } = this.streams;
+    if (!opus?.setPLP) {
       return false;
     }
-    this.streams.opus!.setPLP!(value);
+    opus.setPLP(value);
     return true;
   }
 
   setFEC(enabled: boolean) {
-    if (!this.bitrateEditable) {
+    const { opus } = this.streams;
+    if (!opus?.setFEC) {
       return false;
     }
-    this.streams.opus!.setFEC!(enabled);
+    opus.setFEC(enabled);
     return true;
   }
 
@@ -114,14 +118,15 @@ class AudioDispatcher extends BaseDispatcher {
   }
 
   setVolume(value: number | boolean) {
-    if (!this.streams.volume) {
+    const { volume } = this.streams;
+    if (!volume?.setVolume) {
       return false;
     }
     if (typeof value !== "number") {
       return false;
     }
     this.emit("volumeChange", this.volume, value);
-    this.streams.volume!.setVolume!(value);
+    volume.setVolume(value);
     return true;
   }
 
@@ -132,16 +137,11 @@ class AudioDispatcher extends BaseDispatcher {
     this._syncDispatcher = otherDispatcher;
   }
 
-  // Volume stubs for docs
-  /* eslint-disable no-empty-function*/
-  get volumeDecibels() {
-    return;
-  }
-  get volumeLogarithmic() {
-    return;
-  }
-  setVolumeDecibels() {}
-  setVolumeLogarithmic() {}
+  // Volume stubs for docs; VolumeInterface.applyToClass installs the real ones.
+  declare volumeDecibels: number;
+  declare volumeLogarithmic: number;
+  declare setVolumeDecibels: (value: number) => void;
+  declare setVolumeLogarithmic: (value: number) => void;
 }
 
 VolumeInterface.applyToClass(AudioDispatcher);

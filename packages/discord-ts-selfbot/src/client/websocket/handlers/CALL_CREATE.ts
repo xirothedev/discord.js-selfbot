@@ -14,11 +14,11 @@ function isCallData(value: unknown): value is CallData {
   return isRecord(value) && typeof value.channel_id === "string";
 }
 
-export default (
+export default function handleCallCreate(
   client: Client,
   packet: { d?: unknown },
   _shard: WebSocketShard
-) => {
+) {
   if (!isCallData(packet.d)) {
     return;
   }
@@ -27,4 +27,4 @@ export default (
     client.actions.VoiceStateUpdate.handle(voice);
   }
   client.emit(Events.CALL_CREATE, new CallState(client, data));
-};
+}

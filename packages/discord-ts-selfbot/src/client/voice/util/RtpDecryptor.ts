@@ -17,14 +17,18 @@ const RtpDecryptor = {
     authentication: RtpAuthentication
   ): RtpPacket | Error {
     const { secret_key, mode } = authentication;
-    if (!secret_key) return new Error("secret_key cannot be null or undefined");
+    if (!secret_key) {
+      return new Error("secret_key cannot be null or undefined");
+    }
     const nonce =
       mode === "aead_aes256_gcm_rtpsize" ? Buffer.alloc(12) : Buffer.alloc(24);
     buffer.copy(nonce, 0, buffer.length - UNPADDED_NONCE_LENGTH);
 
     let headerSize = 12;
     const first = buffer.readUint8();
-    if ((first >> 4) & 0x01) headerSize += 4;
+    if ((first >> 4) & 0x01) {
+      headerSize += 4;
+    }
 
     const header = buffer.slice(0, headerSize);
     const encrypted = buffer.slice(

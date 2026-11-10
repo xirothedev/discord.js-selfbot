@@ -43,11 +43,13 @@ class APIRequest {
 
     let queryString = "";
     if (options.query) {
-      const q = options.query as Record<string, unknown>;
-      const query = Object.entries(q)
+      const queryOptions = options.query as Record<string, unknown>;
+      const query = Object.entries(queryOptions)
         .filter(([, value]) => value !== null && value !== undefined)
         .flatMap(([key, value]) =>
-          Array.isArray(value) ? value.map((v) => [key, v]) : [[key, value]]
+          Array.isArray(value)
+            ? value.map((item) => [key, item])
+            : [[key, value]]
         );
       queryString = new URLSearchParams(query as string[][]).toString();
     }
@@ -55,19 +57,7 @@ class APIRequest {
   }
 
   make(captchaKey?: unknown, captchaRqToken?: unknown): Promise<unknown> {
-    if (!agent) {
-      const r_ = Util.checkUndiciProxyAgent(this.client.options.http.agent);
-      if (r_) {
-        agent = new ProxyAgent({
-          ...r_,
-          ciphers: ciphers.join(":"),
-        } as never);
-      } else {
-        agent = new Client("https://discord.com", {
-          connect: buildConnector({ ciphers: ciphers.join(":") }),
-        });
-      }
-    }
+    this.ensureAgent();
 
     const API =
       this.options.versioned === false
@@ -75,9 +65,53 @@ class APIRequest {
         : `${this.client.options.http.api}/v${this.client.options.http.version}`;
     const url = API + this.path;
 
+    const headers = this.buildHeaders(captchaKey, captchaRqToken);
+    const body = this.buildBody(headers);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(
+      () => controller.abort(),
+      (this.client.options as { restRequestTimeout: number }).restRequestTimeout
+    ).unref();
+    return this.rest
+      .fetch(url, {
+        body,
+        credentials: "include",
+        dispatcher: agent as never,
+        headers: headers as never,
+        method: this.method.toUpperCase(),
+        // Undici doesn't normalize "patch" into "PATCH" (which surprisingly follows the spec).
+        redirect: "follow",
+        signal: controller.signal,
+      })
+      .finally(() => clearTimeout(timeout));
+  }
+
+  private ensureAgent(): void {
+    if (agent) {
+      return;
+    }
+    const proxyAgent = Util.checkUndiciProxyAgent(
+      this.client.options.http.agent
+    );
+    agent = proxyAgent
+      ? new ProxyAgent({
+          ...proxyAgent,
+          ciphers: ciphers.join(":"),
+        } as never)
+      : new Client("https://discord.com", {
+          connect: buildConnector({ ciphers: ciphers.join(":") }),
+        });
+  }
+
+  private buildHeaders(
+    captchaKey?: unknown,
+    captchaRqToken?: unknown
+  ): Record<string, unknown> {
     let headers: Record<string, unknown> = {
       accept: "*/*",
       "accept-language": "en-US",
+      origin: "https://discord.com",
       priority: "u=1, i",
       referer: "https://discord.com/channels/@me",
       "sec-ch-ua": '"Not:A-Brand";v="24", "Chromium";v="134"',
@@ -86,14 +120,13 @@ class APIRequest {
       "sec-fetch-dest": "empty",
       "sec-fetch-mode": "cors",
       "sec-fetch-site": "same-origin",
+      "x-debug-options": "bugReporterEnabled",
       "x-discord-locale": "en-US",
       "x-discord-timezone": Intl.DateTimeFormat().resolvedOptions().timeZone,
       "x-super-properties": `${Buffer.from(
         JSON.stringify(this.client.options.ws.properties),
         "ascii"
       ).toString("base64")}`,
-      origin: "https://discord.com",
-      "x-debug-options": "bugReporterEnabled",
       ...this.client.options.http.headers,
       "User-Agent": this.fullUserAgent,
     };
@@ -111,11 +144,9 @@ class APIRequest {
     }
 
     // Delete all headers if undefined
-    for (const [key, value] of Object.entries(headers)) {
-      if (value === undefined) {
-        delete headers[key];
-      }
-    }
+    headers = Object.fromEntries(
+      Object.entries(headers).filter(([, value]) => value !== undefined)
+    );
     if (this.options.webhook === true) {
       headers = {
         "User-Agent": this.client.options.http.headers["User-Agent"],
@@ -142,6 +173,12 @@ class APIRequest {
       headers["X-Captcha-Rqtoken"] = captchaRqToken;
     }
 
+    return headers;
+  }
+
+  private buildBody(
+    headers: Record<string, unknown>
+  ): FormData | string | undefined {
     let body: FormData | string | undefined;
     const files = this.options.files as unknown[] | undefined;
     if (files?.length) {
@@ -149,12 +186,16 @@ class APIRequest {
       for (const [index, file] of files.entries()) {
         // Why undici#FormData doesn't support file stream?
         // Hacky way to support file stream
-        const f = file as { file?: unknown; key?: string; name?: string };
-        if (f.file) {
-          body.set(f.key ?? `files[${index}]`, {
+        const filePart = file as {
+          file?: unknown;
+          key?: string;
+          name?: string;
+        };
+        if (filePart.file) {
+          body.set(filePart.key ?? `files[${index}]`, {
             [Symbol.toStringTag]: "File",
-            name: f.name,
-            stream: () => f.file,
+            name: filePart.name,
+            stream: () => filePart.file,
           });
         }
       }
@@ -169,8 +210,7 @@ class APIRequest {
           body.append("payload_json", JSON.stringify(this.options.data));
         }
       }
-      // eslint-disable-next-line eqeqeq
-    } else if (this.options.data != null) {
+    } else if (this.options.data !== null && this.options.data !== undefined) {
       if (this.options.usePayloadJSON) {
         body = new FormData();
         body.append("payload_json", JSON.stringify(this.options.data));
@@ -179,23 +219,7 @@ class APIRequest {
         headers["Content-Type"] = "application/json";
       }
     }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(
-      () => controller.abort(),
-      (this.client.options as { restRequestTimeout: number }).restRequestTimeout
-    ).unref();
-    return this.rest
-      .fetch(url, {
-        body,
-        credentials: "include",
-        dispatcher: agent as never,
-        headers: headers as never,
-        method: this.method.toUpperCase(), // Undici doesn't normalize "patch" into "PATCH" (which surprisingly follows the spec).
-        redirect: "follow",
-        signal: controller.signal,
-      })
-      .finally(() => clearTimeout(timeout));
+    return body;
   }
 }
 

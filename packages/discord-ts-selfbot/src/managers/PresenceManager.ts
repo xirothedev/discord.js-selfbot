@@ -47,9 +47,9 @@ class PresenceManager extends CachedManager<PresenceType> {
     const data: { presences: RawPresenceData[] } =
       await this.client.api.presences.get();
     // https://docs.discord.food/resources/presence#endpoints
-    data.presences.forEach((presence) => {
+    for (const presence of data.presences) {
       this._add(presence, true);
-    });
+    }
     return this.cache;
   }
 }

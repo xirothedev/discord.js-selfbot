@@ -22,8 +22,11 @@ class Session extends Base {
     if ("id_hash" in data) {
       this.id = data.id_hash;
     }
-    if ("approx_last_used_time" in data) {
-      this.approxLastUsedTime = data.approx_last_used_time!;
+    if (
+      "approx_last_used_time" in data &&
+      data.approx_last_used_time !== undefined
+    ) {
+      this.approxLastUsedTime = data.approx_last_used_time;
     }
     if ("client_info" in data) {
       this.clientInfo = data.client_info;

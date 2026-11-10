@@ -66,7 +66,7 @@ class MessageReactionAdd extends Action {
       ...data,
       count: message.partial ? null : 0,
       emoji: data.emoji,
-      me: user.id === this.client.user!.id,
+      me: user.id === this.client.user?.id,
     });
     if (!reaction) {
       return false;

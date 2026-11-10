@@ -52,10 +52,13 @@ class RESTManager {
   }
 
   getAuth(): string {
-    const c = this.client as { token?: string | null; accessToken?: string };
-    const token = c.token ?? c.accessToken;
+    const authClient = this.client as {
+      token?: string | null;
+      accessToken?: string;
+    };
+    const token = authClient.token ?? authClient.accessToken;
     if (token) {
-      return token?.replace(/Bot /g, "");
+      return token.replaceAll("Bot ", "");
     }
     throw new Error("TOKEN_MISSING");
   }

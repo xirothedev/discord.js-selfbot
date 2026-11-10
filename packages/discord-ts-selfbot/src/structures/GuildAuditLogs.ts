@@ -33,11 +33,11 @@ import type {
 import type {
   RawGuildAuditLogData,
   RawGuildAuditLogEntryData,
+  RawIntegrationData,
+  RawInviteData,
 } from "../../typings/rawDataTypes";
 import type { Guild } from "./Guild";
 import type { User } from "./User";
-import type { RawInviteData } from "../../typings/rawDataTypes";
-import type { RawIntegrationData } from "../../typings/rawDataTypes";
 
 const Targets = {
   ALL: "ALL",
@@ -139,60 +139,97 @@ type AuditLogTarget =
   | "GUILD_ONBOARDING_PROMPT"
   | "GUILD_ONBOARDING";
 
-class GuildAuditLogs<T extends GuildAuditLogsResolvable = "ALL"> {
+function requireTargetId<TValue>(value: TValue | null | undefined): TValue {
+  if (value === null || value === undefined) {
+    throw new TypeError("AUDIT_LOG_TARGET_ID_MISSING");
+  }
+  return value;
+}
+
+const AUDIT_LOG_TARGET_TYPES: [number, AuditLogTarget][] = [
+  [10, Targets.GUILD],
+  [20, Targets.CHANNEL],
+  [30, Targets.USER],
+  [40, Targets.ROLE],
+  [50, Targets.INVITE],
+  [60, Targets.WEBHOOK],
+  [70, Targets.EMOJI],
+  [80, Targets.MESSAGE],
+  [83, Targets.INTEGRATION],
+  [86, Targets.STAGE_INSTANCE],
+  [100, Targets.STICKER],
+  [110, Targets.GUILD_SCHEDULED_EVENT],
+  [120, Targets.THREAD],
+  [130, Targets.APPLICATION_COMMAND],
+  [140, Targets.SOUNDBOARD_SOUND],
+  [143, Targets.AUTO_MODERATION],
+  [146, Targets.USER],
+];
+
+class GuildAuditLogs<TAction extends GuildAuditLogsResolvable = "ALL"> {
   declare webhooks: Collection<Snowflake, Webhook>;
   declare integrations: Collection<Snowflake, Integration>;
   declare applicationCommands: Collection<Snowflake, ApplicationCommand>;
   declare autoModerationRules: Collection<Snowflake, AutoModerationRule>;
-  declare entries: Collection<Snowflake, GuildAuditLogsEntry<T>>;
+  declare entries: Collection<Snowflake, GuildAuditLogsEntry<TAction>>;
 
   constructor(guild: Guild, data: RawGuildAuditLogData) {
-    if (data.users) {
-      for (const user of data.users) guild.client.users._add(user);
+    this.fillUsers(guild, data);
+    this.fillThreads(guild, data);
+    this.fillWebhooks(guild, data);
+    this.fillIntegrations(guild, data);
+    this.fillApplicationCommands(guild, data);
+    this.autoModerationRules = new Collection();
+    for (const rule of data.auto_moderation_rules) {
+      this.autoModerationRules.set(
+        rule.id,
+        guild.autoModerationRules._add(rule)
+      );
     }
-    if (data.threads) {
-      for (const thread of data.threads)
-        guild.client.channels._add(thread, guild);
-    }
-    this.webhooks = new Collection();
-    if (data.webhooks) {
-      for (const hook of data.webhooks) {
-        this.webhooks.set(hook.id, new Webhook(guild.client, hook));
-      }
-    }
-
-    this.integrations = new Collection();
-    if (data.integrations) {
-      for (const integration of data.integrations) {
-        this.integrations.set(
-          integration.id,
-          new Integration(guild.client, integration, guild)
-        );
-      }
-    }
-
-    this.applicationCommands = new Collection();
-    if (data.application_commands) {
-      for (const command of data.application_commands) {
-        this.applicationCommands.set(
-          command.id,
-          new ApplicationCommand(guild.client, command, guild, null)
-        );
-      }
-    }
-    this.autoModerationRules = data.auto_moderation_rules.reduce(
-      (autoModerationRules, autoModerationRule) =>
-        autoModerationRules.set(
-          autoModerationRule.id,
-          guild.autoModerationRules._add(autoModerationRule)
-        ),
-      new Collection<Snowflake, AutoModerationRule>()
-    );
 
     this.entries = new Collection();
     for (const item of data.audit_log_entries) {
-      const entry = new GuildAuditLogsEntry<T>(guild, item, this);
+      const entry = new GuildAuditLogsEntry<TAction>(guild, item, this);
       this.entries.set(entry.id, entry);
+    }
+  }
+
+  private fillUsers(guild: Guild, data: RawGuildAuditLogData) {
+    for (const user of data.users ?? []) {
+      guild.client.users._add(user);
+    }
+  }
+
+  private fillThreads(guild: Guild, data: RawGuildAuditLogData) {
+    for (const thread of data.threads ?? []) {
+      guild.client.channels._add(thread, guild);
+    }
+  }
+
+  private fillWebhooks(guild: Guild, data: RawGuildAuditLogData) {
+    this.webhooks = new Collection();
+    for (const hook of data.webhooks ?? []) {
+      this.webhooks.set(hook.id, new Webhook(guild.client, hook));
+    }
+  }
+
+  private fillIntegrations(guild: Guild, data: RawGuildAuditLogData) {
+    this.integrations = new Collection();
+    for (const integration of data.integrations ?? []) {
+      this.integrations.set(
+        integration.id,
+        new Integration(guild.client, integration, guild)
+      );
+    }
+  }
+
+  private fillApplicationCommands(guild: Guild, data: RawGuildAuditLogData) {
+    this.applicationCommands = new Collection();
+    for (const command of data.application_commands ?? []) {
+      this.applicationCommands.set(
+        command.id,
+        new ApplicationCommand(guild.client, command, guild, null)
+      );
     }
   }
 
@@ -200,73 +237,27 @@ class GuildAuditLogs<T extends GuildAuditLogsResolvable = "ALL"> {
   static Targets: typeof Targets;
   static Entry: typeof GuildAuditLogsEntry;
 
-  static async build<T extends GuildAuditLogsResolvable = "ALL">(
+  static async build<TAction extends GuildAuditLogsResolvable = "ALL">(
     guild: Guild,
     data: RawGuildAuditLogData
   ) {
-    const logs = new GuildAuditLogs<T>(guild, data);
+    const logs = new GuildAuditLogs<TAction>(guild, data);
     await Promise.all(logs.entries.map((e) => e.target));
     return logs;
   }
 
   static targetType(target: number): AuditLogTarget {
-    if (target < 10) {
-      return Targets.GUILD;
-    }
-    if (target < 20) {
-      return Targets.CHANNEL;
-    }
-    if (target < 30) {
-      return Targets.USER;
-    }
-    if (target < 40) {
-      return Targets.ROLE;
-    }
-    if (target < 50) {
-      return Targets.INVITE;
-    }
-    if (target < 60) {
-      return Targets.WEBHOOK;
-    }
-    if (target < 70) {
-      return Targets.EMOJI;
-    }
-    if (target < 80) {
-      return Targets.MESSAGE;
-    }
-    if (target < 83) {
-      return Targets.INTEGRATION;
-    }
-    if (target < 86) {
-      return Targets.STAGE_INSTANCE;
-    }
-    if (target < 100) {
-      return Targets.STICKER;
-    }
-    if (target < 110) {
-      return Targets.GUILD_SCHEDULED_EVENT;
-    }
-    if (target < 120) {
-      return Targets.THREAD;
-    }
-    if (target < 130) {
-      return Targets.APPLICATION_COMMAND;
-    }
-    if (target < 140) {
-      return Targets.SOUNDBOARD_SOUND;
-    } // !Todo
-    if (target < 143) {
-      return Targets.AUTO_MODERATION;
-    }
-    if (target < 146) {
-      return Targets.USER;
+    for (const [limit, targetType] of AUDIT_LOG_TARGET_TYPES) {
+      if (target < limit) {
+        return targetType;
+      }
     }
     if (target >= 163 && target <= 165) {
       return Targets.GUILD_ONBOARDING_PROMPT;
-    } // !Todo
+    }
     if (target >= 160 && target < 170) {
       return Targets.GUILD_ONBOARDING;
-    } // !Todo
+    }
     return Targets.UNKNOWN;
   }
 
@@ -394,11 +385,7 @@ class GuildAuditLogsEntry<
 
     this.executorId = data.user_id;
 
-    this.executor = data.user_id
-      ? guild.client.options.partials.includes(PartialTypes.USER)
-        ? guild.client.users._add({ id: data.user_id })
-        : (guild.client.users.cache.get(data.user_id) ?? null)
-      : null;
+    this.executor = GuildAuditLogsEntry.resolveExecutor(guild, data.user_id);
 
     this.changes =
       data.changes?.map((change) => ({
@@ -411,223 +398,362 @@ class GuildAuditLogsEntry<
 
     const options: APIAuditLogOptions = data.options ?? {};
 
-    this.extra = null;
+    this.extra = this.buildExtra(guild, data, options);
+
+    this.targetId = data.target_id;
+    this.target = this.resolveTarget(guild, data, logs, targetType, options);
+  }
+
+  private resolveTarget(
+    guild: Guild,
+    data: RawGuildAuditLogEntryData,
+    logs: AuditLogsCache | undefined,
+    targetType: AuditLogTarget,
+    options: APIAuditLogOptions
+  ) {
+    if (targetType === Targets.UNKNOWN) {
+      const changesTarget = this.changesObject({});
+      changesTarget.id = data.target_id;
+      // MEMBER_DISCONNECT and similar types do not provide a target_id.
+      return changesTarget;
+    }
+
+    const cached = this.resolveCachedTarget(guild, data, logs, targetType);
+    if (cached.handled) {
+      return cached.target;
+    }
+    return this.resolveConstructedTarget(
+      guild,
+      data,
+      logs,
+      targetType,
+      options
+    );
+  }
+
+  private resolveCachedTarget(
+    guild: Guild,
+    data: RawGuildAuditLogEntryData,
+    logs: AuditLogsCache | undefined,
+    targetType: AuditLogTarget
+  ): { handled: boolean; target: unknown } {
+    const direct = this.resolveDirectTarget(guild, data, logs, targetType);
+    if (direct.handled) {
+      return direct;
+    }
+    return this.resolveLinkedTarget(guild, data, logs, targetType);
+  }
+
+  private resolveDirectTarget(
+    guild: Guild,
+    data: RawGuildAuditLogEntryData,
+    logs: AuditLogsCache | undefined,
+    targetType: AuditLogTarget
+  ): { handled: boolean; target: unknown } {
+    if (targetType === Targets.USER) {
+      if (!data.target_id) {
+        return { handled: false, target: null };
+      }
+      return {
+        handled: true,
+        target: guild.client.options.partials.includes(PartialTypes.USER)
+          ? guild.client.users._add({ id: data.target_id })
+          : (guild.client.users.cache.get(data.target_id) ?? null),
+      };
+    }
+    if (targetType === Targets.GUILD) {
+      return {
+        handled: true,
+        target: guild.client.guilds.cache.get(requireTargetId(data.target_id)),
+      };
+    }
+    if (targetType === Targets.WEBHOOK) {
+      const targetId = requireTargetId(data.target_id);
+      return {
+        handled: true,
+        target:
+          logs?.webhooks.get(targetId) ??
+          new Webhook(
+            guild.client,
+            this.changesObject({ guild_id: guild.id, id: targetId })
+          ),
+      };
+    }
+    if (targetType === Targets.INVITE) {
+      const change = this.changes.find((entry) => entry.key === "code");
+      const code = change?.new ?? change?.old;
+      return {
+        handled: true,
+        target:
+          (typeof code === "string" ? guild.invites.cache.get(code) : null) ??
+          new Invite(
+            guild.client,
+            this.changesObject({ guild }) as unknown as RawInviteData
+          ),
+      };
+    }
+    return { handled: false, target: null };
+  }
+
+  private resolveLinkedTarget(
+    guild: Guild,
+    data: RawGuildAuditLogEntryData,
+    logs: AuditLogsCache | undefined,
+    targetType: AuditLogTarget
+  ): { handled: boolean; target: unknown } {
+    if (targetType === Targets.MESSAGE) {
+      // Discord sends a channel id for the MESSAGE_BULK_DELETE action type.
+      const targetId = requireTargetId(data.target_id);
+      return {
+        handled: true,
+        target:
+          data.action_type === Actions.MESSAGE_BULK_DELETE
+            ? (guild.channels.cache.get(targetId) ?? { id: data.target_id })
+            : (guild.client.users.cache.get(targetId) ?? null),
+      };
+    }
+    if (targetType === Targets.INTEGRATION) {
+      const targetId = requireTargetId(data.target_id);
+      return {
+        handled: true,
+        target:
+          logs?.integrations.get(targetId) ??
+          new Integration(
+            guild.client,
+            this.changesObject({
+              id: targetId,
+            }) as unknown as RawIntegrationData,
+            guild
+          ),
+      };
+    }
+    if (targetType === Targets.CHANNEL || targetType === Targets.THREAD) {
+      const targetId = requireTargetId(data.target_id);
+      return {
+        handled: true,
+        target:
+          guild.channels.cache.get(targetId) ??
+          this.changesObject({ id: targetId }),
+      };
+    }
+    return { handled: false, target: null };
+  }
+
+  private resolveConstructedTarget(
+    guild: Guild,
+    data: RawGuildAuditLogEntryData,
+    logs: AuditLogsCache | undefined,
+    targetType: AuditLogTarget,
+    options: APIAuditLogOptions
+  ) {
+    if (targetType === Targets.STAGE_INSTANCE) {
+      const targetId = requireTargetId(data.target_id);
+      return (
+        guild.stageInstances.cache.get(targetId) ??
+        new StageInstance(
+          guild.client,
+          this.changesObject({
+            channel_id: requireTargetId(options.channel_id),
+            guild_id: guild.id,
+            id: targetId,
+          })
+        )
+      );
+    }
+    if (targetType === Targets.STICKER) {
+      const targetId = requireTargetId(data.target_id);
+      return (
+        guild.stickers.cache.get(targetId) ??
+        new Sticker(guild.client, this.changesObject({ id: targetId }))
+      );
+    }
+    if (targetType === Targets.GUILD_SCHEDULED_EVENT) {
+      const targetId = requireTargetId(data.target_id);
+      return (
+        guild.scheduledEvents.cache.get(targetId) ??
+        new GuildScheduledEvent(
+          guild.client,
+          this.changesObject({ guild_id: guild.id, id: targetId })
+        )
+      );
+    }
+    if (targetType === Targets.APPLICATION_COMMAND) {
+      const targetId = requireTargetId(data.target_id);
+      return logs?.applicationCommands.get(targetId) ?? { id: data.target_id };
+    }
+    if (targetType === Targets.AUTO_MODERATION) {
+      const targetId = requireTargetId(data.target_id);
+      return (
+        guild.autoModerationRules.cache.get(targetId) ??
+        new AutoModerationRule(
+          guild.client,
+          this.changesObject({
+            guild_id: guild.id,
+            id: targetId,
+          }) as unknown as APIAutoModerationRule,
+          guild
+        )
+      );
+    }
+    if (targetType === Targets.ROLE) {
+      return (
+        guild.roles.cache.get(requireTargetId(data.target_id)) ?? {
+          id: data.target_id,
+        }
+      );
+    }
+    if (targetType === Targets.EMOJI) {
+      return (
+        guild.emojis.cache.get(requireTargetId(data.target_id)) ?? {
+          id: data.target_id,
+        }
+      );
+    }
+    if (data.target_id) {
+      // Missing SoundboardSound & Onboarding
+      return { id: data.target_id };
+    }
+    return null;
+  }
+
+  private buildMessageExtra(
+    guild: Guild,
+    data: RawGuildAuditLogEntryData,
+    options: APIAuditLogOptions
+  ) {
+    if (data.action_type === Actions.MEMBER_PRUNE) {
+      return {
+        days: Number(options.delete_member_days),
+        removed: Number(options.members_removed),
+      };
+    }
+    if (
+      data.action_type === Actions.MESSAGE_BULK_DELETE ||
+      data.action_type === Actions.MEMBER_DISCONNECT
+    ) {
+      return { count: Number(options.count) };
+    }
+    if (
+      data.action_type === Actions.MESSAGE_PIN ||
+      data.action_type === Actions.MESSAGE_UNPIN
+    ) {
+      return {
+        channel: guild.client.channels.cache.get(
+          requireTargetId(options.channel_id)
+        ) ?? { id: options.channel_id },
+        messageId: options.message_id,
+      };
+    }
+    return {
+      channel: guild.channels.cache.get(
+        requireTargetId(options.channel_id)
+      ) ?? {
+        id: options.channel_id,
+      },
+      count: Number(options.count),
+    };
+  }
+
+  private buildOverwriteExtra(guild: Guild, options: APIAuditLogOptions) {
+    if (Number(options.type) === OverwriteTypes.role) {
+      return (
+        guild.roles.cache.get(requireTargetId(options.id)) ?? {
+          id: options.id,
+          name: options.role_name,
+          type: OverwriteTypes[OverwriteTypes.role],
+        }
+      );
+    }
+    return (
+      guild.members.cache.get(requireTargetId(options.id)) ?? {
+        id: options.id,
+        type: OverwriteTypes[OverwriteTypes.member],
+      }
+    );
+  }
+
+  private buildAutoModerationExtra(guild: Guild, options: APIAuditLogOptions) {
+    return {
+      autoModerationRuleName: options.auto_moderation_rule_name,
+      autoModerationRuleTriggerType:
+        AutoModerationRuleTriggerTypes[
+          requireTargetId(options.auto_moderation_rule_trigger_type)
+        ],
+      channel: guild.client.channels.cache.get(
+        requireTargetId(options.channel_id)
+      ) ?? {
+        id: options.channel_id,
+      },
+    };
+  }
+
+  private buildExtra(
+    guild: Guild,
+    data: RawGuildAuditLogEntryData,
+    options: APIAuditLogOptions
+  ) {
     switch (data.action_type) {
-      case Actions.MEMBER_PRUNE: {
-        this.extra = {
-          removed: Number(options.members_removed),
-          days: Number(options.delete_member_days),
-        };
-        break;
-      }
-
+      case Actions.MEMBER_PRUNE:
       case Actions.MEMBER_MOVE:
-      case Actions.MESSAGE_DELETE: {
-        this.extra = {
-          channel: guild.channels.cache.get(options.channel_id!) ?? {
-            id: options.channel_id,
-          },
-          count: Number(options.count),
-        };
-        break;
-      }
+      case Actions.MESSAGE_DELETE:
       case Actions.MESSAGE_PIN:
-      case Actions.MESSAGE_UNPIN: {
-        this.extra = {
-          channel: guild.client.channels.cache.get(options.channel_id!) ?? {
-            id: options.channel_id,
-          },
-          messageId: options.message_id,
-        };
-        break;
-      }
-
+      case Actions.MESSAGE_UNPIN:
       case Actions.MESSAGE_BULK_DELETE:
       case Actions.MEMBER_DISCONNECT: {
-        this.extra = {
-          count: Number(options.count),
-        };
-        break;
+        return this.buildMessageExtra(guild, data, options);
       }
 
       case Actions.CHANNEL_OVERWRITE_CREATE:
       case Actions.CHANNEL_OVERWRITE_UPDATE:
       case Actions.CHANNEL_OVERWRITE_DELETE: {
-        switch (Number(options.type)) {
-          case OverwriteTypes.role:
-            this.extra = guild.roles.cache.get(options.id!) ?? {
-              id: options.id,
-              name: options.role_name,
-              type: OverwriteTypes[OverwriteTypes.role],
-            };
-            break;
-
-          case OverwriteTypes.member:
-            this.extra = guild.members.cache.get(options.id!) ?? {
-              id: options.id,
-              type: OverwriteTypes[OverwriteTypes.member],
-            };
-            break;
-
-          default:
-            break;
-        }
-        break;
+        return this.buildOverwriteExtra(guild, options);
       }
 
       case Actions.STAGE_INSTANCE_CREATE:
       case Actions.STAGE_INSTANCE_DELETE:
       case Actions.STAGE_INSTANCE_UPDATE: {
-        this.extra = {
-          channel: guild.client.channels.cache.get(options.channel_id!) ?? {
+        return {
+          channel: guild.client.channels.cache.get(
+            requireTargetId(options.channel_id)
+          ) ?? {
             id: options.channel_id,
           },
         };
-        break;
       }
       case Actions.APPLICATION_COMMAND_PERMISSION_UPDATE: {
-        this.extra = {
+        return {
           applicationId: options.application_id,
         };
-        break;
       }
       case Actions.AUTO_MODERATION_BLOCK_MESSAGE:
       case Actions.AUTO_MODERATION_FLAG_TO_CHANNEL:
       case Actions.AUTO_MODERATION_USER_COMMUNICATION_DISABLED: {
-        this.extra = {
-          autoModerationRuleName: options.auto_moderation_rule_name,
-          autoModerationRuleTriggerType:
-            AutoModerationRuleTriggerTypes[
-              options.auto_moderation_rule_trigger_type!
-            ],
-          channel: guild.client.channels.cache.get(options.channel_id!) ?? {
-            id: options.channel_id,
-          },
-        };
-        break;
+        return this.buildAutoModerationExtra(guild, options);
       }
       default: {
-        break;
+        return null;
       }
-    }
-
-    this.targetId = data.target_id;
-
-    this.target = null;
-    if (targetType === Targets.UNKNOWN) {
-      const target = this.changesObject({});
-      target.id = data.target_id;
-      this.target = target;
-      // MEMBER_DISCONNECT and similar types do not provide a target_id.
-    } else if (targetType === Targets.USER && data.target_id) {
-      this.target = guild.client.options.partials.includes(PartialTypes.USER)
-        ? guild.client.users._add({ id: data.target_id })
-        : (guild.client.users.cache.get(data.target_id) ?? null);
-    } else if (targetType === Targets.GUILD) {
-      this.target = guild.client.guilds.cache.get(data.target_id!);
-    } else if (targetType === Targets.WEBHOOK) {
-      this.target =
-        logs?.webhooks.get(data.target_id!) ??
-        new Webhook(
-          guild.client,
-          this.changesObject({ guild_id: guild.id, id: data.target_id! })
-        );
-    } else if (targetType === Targets.INVITE) {
-      const change = this.changes.find((c) => c.key === "code");
-      const code = change?.new ?? change?.old;
-
-      this.target =
-        (typeof code === "string" ? guild.invites.cache.get(code) : null) ??
-        new Invite(
-          guild.client,
-          this.changesObject({
-            guild,
-          }) as unknown as RawInviteData
-        );
-    } else if (targetType === Targets.MESSAGE) {
-      // Discord sends a channel id for the MESSAGE_BULK_DELETE action type.
-      this.target =
-        data.action_type === Actions.MESSAGE_BULK_DELETE
-          ? (guild.channels.cache.get(data.target_id!) ?? {
-              id: data.target_id,
-            })
-          : (guild.client.users.cache.get(data.target_id!) ?? null);
-    } else if (targetType === Targets.INTEGRATION) {
-      this.target =
-        logs?.integrations.get(data.target_id!) ??
-        new Integration(
-          guild.client,
-          this.changesObject({
-            id: data.target_id!,
-          }) as unknown as RawIntegrationData,
-          guild
-        );
-    } else if (
-      targetType === Targets.CHANNEL ||
-      targetType === Targets.THREAD
-    ) {
-      this.target =
-        guild.channels.cache.get(data.target_id!) ??
-        this.changesObject({ id: data.target_id! });
-    } else if (targetType === Targets.STAGE_INSTANCE) {
-      this.target =
-        guild.stageInstances.cache.get(data.target_id!) ??
-        new StageInstance(
-          guild.client,
-          this.changesObject({
-            channel_id: options.channel_id!,
-            guild_id: guild.id,
-            id: data.target_id!,
-          })
-        );
-    } else if (targetType === Targets.STICKER) {
-      this.target =
-        guild.stickers.cache.get(data.target_id!) ??
-        new Sticker(guild.client, this.changesObject({ id: data.target_id! }));
-    } else if (targetType === Targets.GUILD_SCHEDULED_EVENT) {
-      this.target =
-        guild.scheduledEvents.cache.get(data.target_id!) ??
-        new GuildScheduledEvent(
-          guild.client,
-          this.changesObject({ guild_id: guild.id, id: data.target_id! })
-        );
-    } else if (targetType === Targets.APPLICATION_COMMAND) {
-      this.target = logs?.applicationCommands.get(data.target_id!) ?? {
-        id: data.target_id,
-      };
-    } else if (targetType === Targets.AUTO_MODERATION) {
-      this.target =
-        guild.autoModerationRules.cache.get(data.target_id!) ??
-        new AutoModerationRule(
-          guild.client,
-          this.changesObject({
-            guild_id: guild.id,
-            id: data.target_id!,
-          }) as unknown as APIAutoModerationRule,
-          guild
-        );
-    } else if (targetType === Targets.ROLE) {
-      this.target = guild.roles.cache.get(data.target_id!) ?? {
-        id: data.target_id,
-      };
-    } else if (targetType === Targets.EMOJI) {
-      this.target = guild.emojis.cache.get(data.target_id!) ?? {
-        id: data.target_id,
-      };
-    } else if (data.target_id) {
-      // Missing SoundboardSound & Onboarding
-      this.target = { id: data.target_id };
     }
   }
 
-  private changesObject<T extends Record<string, unknown>>(
-    base: T
-  ): T & Record<string, unknown> {
+  private static resolveExecutor(guild: Guild, userId: Snowflake | null) {
+    if (!userId) {
+      return null;
+    }
+    if (guild.client.options.partials.includes(PartialTypes.USER)) {
+      return guild.client.users._add({ id: userId });
+    }
+    return guild.client.users.cache.get(userId) ?? null;
+  }
+
+  private changesObject<TBase extends Record<string, unknown>>(
+    base: TBase
+  ): TBase & Record<string, unknown> {
     const object: Record<string, unknown> = { ...base };
     for (const change of this.changes) {
       object[change.key] = change.new ?? change.old;
     }
-    return object as T & Record<string, unknown>;
+    return object as TBase & Record<string, unknown>;
   }
 
   get createdTimestamp() {

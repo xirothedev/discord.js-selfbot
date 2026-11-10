@@ -9,6 +9,24 @@ interface DiscordjsErrorConstructor {
   readonly prototype: Error;
 }
 
+function message(key: string, args: unknown[]): string {
+  if (typeof key !== "string") {
+    throw new TypeError("Error message key must be a string");
+  }
+  const msg = messages.get(key);
+  if (!msg) {
+    throw new Error(`An invalid error message key was used: ${key}.`);
+  }
+  if (typeof msg === "function") {
+    return String(Reflect.apply(msg, undefined, args));
+  }
+  if (!args?.length) {
+    return msg;
+  }
+  args.unshift(msg);
+  return String(...args);
+}
+
 function makeDiscordjsError(Base: ErrorConstructor): DiscordjsErrorConstructor {
   return class DiscordjsError extends Base {
     [kCode]: string;
@@ -29,24 +47,6 @@ function makeDiscordjsError(Base: ErrorConstructor): DiscordjsErrorConstructor {
       return this[kCode];
     }
   };
-}
-
-function message(key: string, args: unknown[]): string {
-  if (typeof key !== "string") {
-    throw new Error("Error message key must be a string");
-  }
-  const msg = messages.get(key);
-  if (!msg) {
-    throw new Error(`An invalid error message key was used: ${key}.`);
-  }
-  if (typeof msg === "function") {
-    return String(Reflect.apply(msg, undefined, args));
-  }
-  if (!args?.length) {
-    return msg;
-  }
-  args.unshift(msg);
-  return String(...args);
 }
 
 function register(sym: string, val: string | MessageBuilder): void {

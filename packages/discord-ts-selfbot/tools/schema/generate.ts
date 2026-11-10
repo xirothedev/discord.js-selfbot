@@ -5,7 +5,7 @@ import {
   readdirSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import pathModule from "node:path";
 
 import ts from "typescript";
 
@@ -53,13 +53,13 @@ interface EntityResult {
   rawType?: { name: string; from: string };
 }
 
-const HERE = dirname(Bun.fileURLToPath(import.meta.url));
-const PKG = join(HERE, "..", "..");
-const SRC = join(PKG, "src");
-const TYPINGS = join(PKG, "typings");
-const ENTITIES = join(SRC, "types", "entities");
-const SCHEMA = join(SRC, "types", "schema.ts");
-const TSCONFIG = join(PKG, "tsconfig.json");
+const HERE = pathModule.dirname(Bun.fileURLToPath(import.meta.url));
+const PKG = pathModule.join(HERE, "..", "..");
+const SRC = pathModule.join(PKG, "src");
+const TYPINGS = pathModule.join(PKG, "typings");
+const ENTITIES = pathModule.join(SRC, "types", "entities");
+const SCHEMA = pathModule.join(SRC, "types", "schema.ts");
+const TSCONFIG = pathModule.join(PKG, "tsconfig.json");
 
 /**
  * Per-entity import and provenance configuration.
@@ -751,7 +751,7 @@ const program = ts.createProgram({
 const checker = program.getTypeChecker();
 const isAssignable = (
   checker as unknown as {
-    isTypeAssignableTo(source: ts.Type, target: ts.Type): boolean;
+    isTypeAssignableTo: (source: ts.Type, target: ts.Type) => boolean;
   }
 ).isTypeAssignableTo.bind(checker);
 const sourceFiles = new Map(
@@ -768,7 +768,7 @@ function getSource(file: string): ts.SourceFile {
 
 function walkFiles(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const path = join(dir, entry.name);
+    const path = pathModule.join(dir, entry.name);
     if (entry.isDirectory()) {
       walkFiles(path, out);
     } else if (entry.name.endsWith(".ts")) {
@@ -859,10 +859,10 @@ function collectDeclared(
     const modifiers = ts.getModifiers(member) ?? [];
     if (
       modifiers.some(
-        (m) =>
-          m.kind === ts.SyntaxKind.StaticKeyword ||
-          m.kind === ts.SyntaxKind.PrivateKeyword ||
-          m.kind === ts.SyntaxKind.ProtectedKeyword
+        (modifier) =>
+          modifier.kind === ts.SyntaxKind.StaticKeyword ||
+          modifier.kind === ts.SyntaxKind.PrivateKeyword ||
+          modifier.kind === ts.SyntaxKind.ProtectedKeyword
       )
     ) {
       continue;
@@ -875,7 +875,7 @@ function collectDeclared(
       name,
       optional: Boolean(member.questionToken),
       type: checker.getTypeAtLocation(member.type),
-      typeText: member.type.getText(sf).replaceAll(/\s+/g, " ").trim(),
+      typeText: member.type.getText(sf).replaceAll(/\s+/gu, " ").trim(),
     });
   }
   return out;
@@ -884,7 +884,7 @@ function collectDeclared(
 function safeTypeText(type: ts.Type): string {
   const text = checker
     .typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation)
-    .replaceAll(/\s+/g, " ")
+    .replaceAll(/\s+/gu, " ")
     .trim();
   return text === "any" ? "unknown" : text;
 }
@@ -910,25 +910,36 @@ function splitTopLevelUnion(text: string): string[] {
   return parts;
 }
 
+const unionRank = (value: string): number => {
+  if (value === "null") {
+    return 1;
+  }
+  if (value === "undefined") {
+    return 2;
+  }
+  return 0;
+};
+
 function formatUnion(texts: string[]): string {
   const parts = new Set<string>();
   for (const text of texts) {
     for (const part of splitTopLevelUnion(text)) {
-      if (part.trim()) parts.add(part.trim());
+      if (part.trim()) {
+        parts.add(part.trim());
+      }
     }
   }
   return [...parts]
-    .toSorted((a, b) => {
-      const rank = (value: string): number =>
-        value === "null" ? 1 : value === "undefined" ? 2 : 0;
-      return rank(a) - rank(b) || a.localeCompare(b);
-    })
+    .toSorted(
+      (left, right) =>
+        unionRank(left) - unionRank(right) || left.localeCompare(right)
+    )
     .join(" | ");
 }
 
-const typingsSf = getSource(join(TYPINGS, "index.d.ts"));
-const rawSf = getSource(join(TYPINGS, "rawDataTypes.d.ts"));
-const structureFiles = walkFiles(join(SRC, "structures"));
+const typingsSf = getSource(pathModule.join(TYPINGS, "index.d.ts"));
+const rawSf = getSource(pathModule.join(TYPINGS, "rawDataTypes.d.ts"));
+const structureFiles = walkFiles(pathModule.join(SRC, "structures"));
 const classFiles = new Map<string, string>();
 for (const file of structureFiles) {
   const sf = getSource(file);
@@ -1049,16 +1060,16 @@ function analyze(name: string, file: string): EntityResult | undefined {
 
 function kebab(name: string): string {
   return name
-    .replaceAll(/([a-z0-9])([A-Z])/g, "$1-$2")
-    .replaceAll(/([A-Z])([A-Z][a-z])/g, "$1-$2")
+    .replaceAll(/(?<lower>[a-z0-9])(?<upper>[A-Z])/gu, "$<lower>-$<upper>")
+    .replaceAll(/(?<first>[A-Z])(?<second>[A-Z][a-z])/gu, "$<first>-$<second>")
     .toLowerCase();
 }
 
 function identifiers(type: string): Set<string> {
   const out = new Set<string>();
-  for (const match of type.matchAll(/[A-Za-z_$][\w$]*/g)) {
-    const id = match[0];
-    if (/^[A-Z]/.test(id) && !BUILTIN_TYPES.has(id)) {
+  for (const match of type.matchAll(/[A-Za-z_$][\w$]*/gu)) {
+    const [id] = match;
+    if (/^[A-Z]/u.test(id) && !BUILTIN_TYPES.has(id)) {
       out.add(id);
     }
   }
@@ -1107,14 +1118,14 @@ function renderFields(fields: Record<string, FieldKind> | undefined): string {
 }
 
 function generateEntity(result: EntityResult): string {
-  const file = relative(PKG, result.file).replaceAll("\\", "/");
+  const file = pathModule.relative(PKG, result.file).replaceAll("\\", "/");
   const config = CONFIG[result.name];
   if (!config) {
     throw new Error(`No import config for ${result.name}`);
   }
   const rawType = result.rawType?.name ?? `Raw${result.name}Data`;
   const extendsImport = config.extends
-    ? `import type { ${config.extends} } from './${kebab(config.extends.replace(/Entity$/, ""))}';\n`
+    ? `import type { ${config.extends} } from './${kebab(config.extends.replace(/Entity$/u, ""))}';\n`
     : "";
   const body = result.fields
     .map(
@@ -1139,6 +1150,8 @@ ${body}
 `;
 }
 
+const generatedNames = new Set(Object.keys(CONFIG));
+
 function generateSchema(results: EntityResult[]): string {
   const generated = results
     .filter(
@@ -1147,13 +1160,15 @@ function generateSchema(results: EntityResult[]): string {
         generatedNames.has(result.name) &&
         CONFIG[result.name]?.generate !== false
     )
-    .toSorted((a, b) => a.name.localeCompare(b.name));
+    .toSorted((left, right) => left.name.localeCompare(right.name));
   const rawImports = new Map<string, string[]>();
   const patchImports = new Map<string, string[]>();
   for (const result of generated) {
-    const raw = result.rawType!;
-    const rawNames = new Set(rawImports.get(raw.from));
-    rawNames.add(raw.name);
+    const raw = result.rawType;
+    if (!raw) {
+      continue;
+    }
+    const rawNames = new Set([...(rawImports.get(raw.from) ?? []), raw.name]);
     rawImports.set(raw.from, [...rawNames]);
     const patch = CONFIG[result.name]?.patchType;
     if (patch) {
@@ -1164,12 +1179,12 @@ function generateSchema(results: EntityResult[]): string {
   }
   const imports = [
     ...[...rawImports.entries()]
-      .toSorted(([a], [b]) => a.localeCompare(b))
+      .toSorted(([left], [right]) => left.localeCompare(right))
       .map(
         ([from, names]) => `import type { ${names.join(", ")} } from '${from}';`
       ),
     ...[...patchImports.entries()]
-      .toSorted(([a], [b]) => a.localeCompare(b))
+      .toSorted(([left], [right]) => left.localeCompare(right))
       .map(
         ([from, names]) => `import type { ${names.join(", ")} } from '${from}';`
       ),
@@ -1182,7 +1197,7 @@ function generateSchema(results: EntityResult[]): string {
     .map((result) => {
       const patch = CONFIG[result.name]?.patchType;
       const patchGeneric = patch ? `, Partial<${patch.type}>` : "";
-      return `  ${result.name}: EntityEntry<${result.rawType!.name}, ${result.name}Entity, ${renderFields(
+      return `  ${result.name}: EntityEntry<${result.rawType?.name ?? `Raw${result.name}Data`}, ${result.name}Entity, ${renderFields(
         CONFIG[result.name]?.fields
       )}${patchGeneric}>;`;
     })
@@ -1229,23 +1244,25 @@ export type PatchOf<K extends EntityName> = EntitySchema[K]['patch'];
 `;
 }
 
+function normalize(text: string): string {
+  return text
+    .replaceAll(/import[\s\S]*?from\s+["'][^"']+["'];?/gu, "")
+    .replaceAll(/import\s+["'][^"']+["'];?/gu, "")
+    .replaceAll(/["']/gu, "")
+    .replaceAll(/\s+/gu, "")
+    .replaceAll(":|", ":")
+    .replaceAll(/[,;]+\}/gu, "}");
+}
+
 function checkFile(path: string, content: string): boolean {
   if (!existsSync(path)) {
-    console.error(`missing ${relative(PKG, path)}`);
+    console.error(`missing ${pathModule.relative(PKG, path)}`);
     return false;
   }
   const current = readFileSync(path, "utf-8");
   // `bun fmt` may wrap long type entries and reorder imports; compare tokens,
   // not line breaks, quotes, or import order.
   // Formatting itself is enforced separately by `bun fmt:check`.
-  const normalize = (text: string): string =>
-    text
-      .replaceAll(/import[\s\S]*?from\s+["'][^"']+["'];?/gu, "")
-      .replaceAll(/import\s+["'][^"']+["'];?/gu, "")
-      .replaceAll(/["']/gu, "")
-      .replaceAll(/\s+/gu, "")
-      .replaceAll(":|", ":")
-      .replaceAll(/[,;]+\}/gu, "}");
   const left = normalize(current);
   const right = normalize(content);
   if (left === right) {
@@ -1255,16 +1272,22 @@ function checkFile(path: string, content: string): boolean {
   while (index < left.length && left[index] === right[index]) {
     index += 1;
   }
-  console.error(`normalized mismatch ${relative(PKG, path)} at ${index}`);
+  console.error(
+    `normalized mismatch ${pathModule.relative(PKG, path)} at ${index}`
+  );
   console.error(`  actual:   ${left.slice(index, index + 120)}`);
   console.error(`  expected: ${right.slice(index, index + 120)}`);
   const actual = current.split("\n");
   const expected = content.split("\n");
-  for (let i = 0; i < Math.max(actual.length, expected.length); i += 1) {
-    if (actual[i] !== expected[i]) {
-      console.error(`mismatch ${relative(PKG, path)}:${i + 1}`);
-      console.error(`  actual:   ${actual[i] ?? "<eof>"}`);
-      console.error(`  expected: ${expected[i] ?? "<eof>"}`);
+  for (
+    let offset = 0;
+    offset < Math.max(actual.length, expected.length);
+    offset += 1
+  ) {
+    if (actual[offset] !== expected[offset]) {
+      console.error(`mismatch ${pathModule.relative(PKG, path)}:${offset + 1}`);
+      console.error(`  actual:   ${actual[offset] ?? "<eof>"}`);
+      console.error(`  expected: ${expected[offset] ?? "<eof>"}`);
       break;
     }
   }
@@ -1277,11 +1300,9 @@ const report = args.includes("--report");
 const filter =
   args.find((arg) => arg.startsWith("--entity="))?.slice("--entity=".length) ??
   (args.includes("--entity") ? args[args.indexOf("--entity") + 1] : undefined);
-const generatedNames = new Set(Object.keys(CONFIG));
-
 const results: EntityResult[] = [];
-for (const [name, file] of [...classFiles.entries()].toSorted(([a], [b]) =>
-  a.localeCompare(b)
+for (const [name, file] of [...classFiles.entries()].toSorted(
+  ([left], [right]) => left.localeCompare(right)
 )) {
   if (filter && name !== filter) {
     continue;
@@ -1335,7 +1356,7 @@ if (check) {
     }
     ok =
       checkFile(
-        join(ENTITIES, `${kebab(result.name)}.ts`),
+        pathModule.join(ENTITIES, `${kebab(result.name)}.ts`),
         generateEntity(result)
       ) && ok;
   }
@@ -1357,7 +1378,7 @@ for (const result of results) {
     continue;
   }
   writeFileSync(
-    join(ENTITIES, `${kebab(result.name)}.ts`),
+    pathModule.join(ENTITIES, `${kebab(result.name)}.ts`),
     generateEntity(result)
   );
   written += 1;

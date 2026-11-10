@@ -108,36 +108,38 @@ class Role extends Base implements RoleEntity {
     }
 
     const { tags } = data;
-    if (tags) {
-      const mapped: NonNullable<RoleEntity["tags"]> = {};
-      if (tags.bot_id !== undefined) {
-        mapped.botId = tags.bot_id;
-      }
-      if (tags.integration_id !== undefined) {
-        mapped.integrationId = tags.integration_id;
-      }
-      if (tags.premium_subscriber !== undefined) {
-        mapped.premiumSubscriberRole = true;
-      }
-      if (tags.subscription_listing_id !== undefined) {
-        mapped.subscriptionListingId = tags.subscription_listing_id;
-      }
-      if (tags.available_for_purchase !== undefined) {
-        mapped.availableForPurchase = true;
-      }
-      if (tags.guild_connections !== undefined) {
-        mapped.guildConnections = true;
-      }
-      this.tags = mapped;
-    } else {
-      this.tags = null;
-    }
+    this.tags = tags ? Role.mapTags(tags) : null;
 
     if (data.flags === undefined) {
       this.flags ??= new RoleFlags().freeze();
     } else {
       this.flags = new RoleFlags(data.flags).freeze();
     }
+  }
+
+  static mapTags(
+    tags: NonNullable<PatchOf<"Role">["tags"]>
+  ): NonNullable<RoleEntity["tags"]> {
+    const mapped: NonNullable<RoleEntity["tags"]> = {};
+    if (tags.bot_id !== undefined) {
+      mapped.botId = tags.bot_id;
+    }
+    if (tags.integration_id !== undefined) {
+      mapped.integrationId = tags.integration_id;
+    }
+    if (tags.premium_subscriber !== undefined) {
+      mapped.premiumSubscriberRole = true;
+    }
+    if (tags.subscription_listing_id !== undefined) {
+      mapped.subscriptionListingId = tags.subscription_listing_id;
+    }
+    if (tags.available_for_purchase !== undefined) {
+      mapped.availableForPurchase = true;
+    }
+    if (tags.guild_connections !== undefined) {
+      mapped.guildConnections = true;
+    }
+    return mapped;
   }
 
   get createdTimestamp() {
@@ -186,8 +188,8 @@ class Role extends Base implements RoleEntity {
   }
 
   get members() {
-    return this.guild.members.cache.filter((m: GuildMember) =>
-      m.roles.cache.has(this.id)
+    return this.guild.members.cache.filter((member: GuildMember) =>
+      member.roles.cache.has(this.id)
     );
   }
 

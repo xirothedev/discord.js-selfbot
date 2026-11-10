@@ -17,11 +17,11 @@ function isChannelPinsData(value: unknown): value is ChannelPinsData {
   return isRecord(value) && typeof value.channel_id === "string";
 }
 
-export default (
+export default function handleChannelPinsUpdate(
   client: Client,
   packet: { d?: unknown },
   _shard: WebSocketShard
-) => {
+) {
   if (!isChannelPinsData(packet.d)) {
     return;
   }
@@ -37,4 +37,4 @@ export default (
     channel.lastPinTimestamp = time;
     client.emit(Events.CHANNEL_PINS_UPDATE, channel, time);
   }
-};
+}

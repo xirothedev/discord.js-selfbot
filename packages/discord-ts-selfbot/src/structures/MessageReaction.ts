@@ -161,7 +161,7 @@ class MessageReaction {
     this.users.cache.set(user.id, user);
     if (
       !this.me ||
-      user.id !== this.message.client.user!.id ||
+      user.id !== this.message.client.user?.id ||
       this.count === 0
     ) {
       this.count++;
@@ -171,7 +171,7 @@ class MessageReaction {
         this.countDetails.normal++;
       }
     }
-    if (user.id === this.message.client.user!.id) {
+    if (user.id === this.message.client.user?.id) {
       if (burst) {
         this.meBurst = true;
       } else {
@@ -185,7 +185,7 @@ class MessageReaction {
       return;
     }
     this.users.cache.delete(user.id);
-    if (!this.me || user.id !== this.message.client.user!.id) {
+    if (!this.me || user.id !== this.message.client.user?.id) {
       this.count--;
       if (burst) {
         this.countDetails.burst--;
@@ -193,7 +193,7 @@ class MessageReaction {
         this.countDetails.normal--;
       }
     }
-    if (user.id === this.message.client.user!.id) {
+    if (user.id === this.message.client.user?.id) {
       if (burst) {
         this.meBurst = false;
       } else {

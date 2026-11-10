@@ -12,11 +12,11 @@ function isGuildSettingsData(
   return isRecord(value) && typeof value.guild_id === "string";
 }
 
-export default (
+export default function handleUserGuildSettingsUpdate(
   client: Client,
   packet: { d?: unknown },
   _shard: WebSocketShard
-) => {
+) {
   if (!isGuildSettingsData(packet.d)) {
     return;
   }
@@ -24,4 +24,4 @@ export default (
   if (guild) {
     guild.settings._patch(packet.d);
   }
-};
+}

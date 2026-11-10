@@ -46,10 +46,7 @@ function flattenComponents(
 class MessageActionRow extends BaseMessageComponent {
   declare components: ActionRowChild[];
 
-  constructor(
-    data: unknown = { components: [] },
-    client: Client | null = null
-  ) {
+  constructor(data?: unknown, client: Client | null = null) {
     super({ type: "ACTION_ROW" });
     const source = isComponentDataSource(data) ? data : {};
 

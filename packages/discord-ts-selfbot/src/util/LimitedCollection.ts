@@ -8,17 +8,23 @@ import _DJSErrorModule from "../errors/DJSError";
 
 const { TypeError } = _DJSErrorModule;
 
-class LimitedCollection<K = unknown, V = unknown> extends Collection<K, V> {
+class LimitedCollection<Key = unknown, Value = unknown> extends Collection<
+  Key,
+  Value
+> {
   [key: string]: unknown;
   maxSize: number;
-  keepOverLimit: ((value: V, key: K, collection: this) => boolean) | null;
+  keepOverLimit: ((value: Value, key: Key, collection: this) => boolean) | null;
   sweepFilter:
     | ((
         collection: this
-      ) => ((value: V, key: K, collection: this) => boolean) | null)
+      ) => ((value: Value, key: Key, collection: this) => boolean) | null)
     | null;
   interval: ReturnType<typeof setInterval> | null;
-  constructor(options: unknown = {}, iterable?: Iterable<readonly [K, V]>) {
+  constructor(
+    options: unknown = {},
+    iterable?: Iterable<readonly [Key, Value]>
+  ) {
     if (typeof options !== "object" || options === null) {
       throw new TypeError("INVALID_TYPE", "options", "object", true);
     }
@@ -53,7 +59,7 @@ class LimitedCollection<K = unknown, V = unknown> extends Collection<K, V> {
     this.maxSize = maxSize as number;
 
     this.keepOverLimit = keepOverLimit as
-      | ((value: V, key: K, collection: this) => boolean)
+      | ((value: Value, key: Key, collection: this) => boolean)
       | null;
 
     /**
@@ -64,7 +70,7 @@ class LimitedCollection<K = unknown, V = unknown> extends Collection<K, V> {
     this.sweepFilter = sweepFilter as
       | ((
           collection: this
-        ) => ((value: V, key: K, collection: this) => boolean) | null)
+        ) => ((value: Value, key: Key, collection: this) => boolean) | null)
       | null;
 
     /**
@@ -91,15 +97,15 @@ class LimitedCollection<K = unknown, V = unknown> extends Collection<K, V> {
         : null;
   }
 
-  set(key: K, value: V): this {
+  set(key: Key, value: Value): this {
     if (this.maxSize === 0) {
       return this;
     }
     if (this.size >= this.maxSize && !this.has(key)) {
-      for (const [k, v] of this.entries()) {
-        const keep = this.keepOverLimit?.(v, k, this) ?? false;
+      for (const [entryKey, entryValue] of this.entries()) {
+        const keep = this.keepOverLimit?.(entryValue, entryKey, this) ?? false;
         if (!keep) {
-          this.delete(k);
+          this.delete(entryKey);
           break;
         }
       }

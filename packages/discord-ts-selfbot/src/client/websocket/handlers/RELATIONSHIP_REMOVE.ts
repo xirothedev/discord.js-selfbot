@@ -13,11 +13,11 @@ function isRelationshipData(value: unknown): value is RelationshipData {
   return isRecord(value) && typeof value.id === "string";
 }
 
-export default (
+export default function handleRelationshipRemove(
   client: Client,
   packet: { d?: unknown },
   _shard: WebSocketShard
-) => {
+) {
   if (!isRelationshipData(packet.d)) {
     return;
   }
@@ -26,4 +26,4 @@ export default (
   client.relationships.friendNicknames.delete(data.id);
   client.relationships.sinceCache.delete(data.id);
   client.emit(Events.RELATIONSHIP_REMOVE, data.id, data.type, data.nickname);
-};
+}

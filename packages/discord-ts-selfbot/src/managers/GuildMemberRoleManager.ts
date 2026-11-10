@@ -13,6 +13,18 @@ import type { Guild } from "../structures/Guild";
 
 type RoleResolvableSource = RoleType | Snowflake;
 
+function findHighestRole(
+  roles: Collection<Snowflake, RoleType>
+): RoleType | null {
+  let highest: RoleType | null = null;
+  for (const role of roles.values()) {
+    if (!highest || role.comparePositionTo(highest) > 0) {
+      highest = role;
+    }
+  }
+  return highest;
+}
+
 class GuildMemberRoleManager extends DataManager<RoleType> {
   declare member: GuildMember;
   declare guild: Guild;
@@ -35,45 +47,27 @@ class GuildMemberRoleManager extends DataManager<RoleType> {
 
   get hoist(): RoleType | null {
     const hoistedRoles = this.cache.filter((role) => role.hoist);
-    if (!hoistedRoles.size) {
-      return null;
-    }
-    return hoistedRoles.reduce((prev, role) =>
-      role.comparePositionTo(prev) > 0 ? role : prev
-    );
+    return findHighestRole(hoistedRoles);
   }
 
   get icon(): RoleType | null {
     const iconRoles = this.cache.filter(
       (role) => role.icon || role.unicodeEmoji
     );
-    if (!iconRoles.size) {
-      return null;
-    }
-    return iconRoles.reduce((prev, role) =>
-      role.comparePositionTo(prev) > 0 ? role : prev
-    );
+    return findHighestRole(iconRoles);
   }
 
   get color(): RoleType | null {
     const coloredRoles = this.cache.filter((role) => role.colors.primaryColor);
-    if (!coloredRoles.size) {
-      return null;
-    }
-    return coloredRoles.reduce((prev, role) =>
-      role.comparePositionTo(prev) > 0 ? role : prev
-    );
+    return findHighestRole(coloredRoles);
   }
 
   get highest(): RoleType {
-    const first = this.cache.first();
-    if (!first) {
+    const highest = findHighestRole(this.cache);
+    if (!highest) {
       throw new Error("GUILD_UNCACHED_ROLE_RESOLVE");
     }
-    return this.cache.reduce(
-      (prev, role) => (role.comparePositionTo(prev) > 0 ? role : prev),
-      first
-    );
+    return highest;
   }
 
   get premiumSubscriberRole(): RoleType | null {
@@ -116,7 +110,7 @@ class GuildMemberRoleManager extends DataManager<RoleType> {
         resolvedRoles.push(resolvedRole);
       }
 
-      const newRoles = [...new Set(resolvedRoles.concat(...this.cache.keys()))];
+      const newRoles = [...new Set([...resolvedRoles, ...this.cache.keys()])];
       return this.set(newRoles, reason);
     }
     const roleId = this.guild.roles.resolveId(roles);

@@ -17,14 +17,16 @@ class DiscordAPIError extends Error {
       retries?: number;
     }
   ) {
-    super();
     const errMsg = error.message as string | undefined;
-    const flattened = (this.constructor as typeof DiscordAPIError)
-      .flattenErrors((error.errors ?? error) as unknown)
-      .join("\n");
+    const ErrorClass = new.target as typeof DiscordAPIError;
+    const flattened = ErrorClass.flattenErrors(
+      (error.errors ?? error) as unknown
+    ).join("\n");
+    super(
+      errMsg && flattened ? `${errMsg}\n${flattened}` : (errMsg ?? flattened)
+    );
+
     this.name = "DiscordAPIError";
-    this.message =
-      errMsg && flattened ? `${errMsg}\n${flattened}` : (errMsg ?? flattened);
 
     this.method = request.method;
 
@@ -50,31 +52,36 @@ class DiscordAPIError extends Error {
   }
 
   static flattenErrors(obj: unknown, key = ""): string[] {
-    let messages: string[] = [];
+    const messages: string[] = [];
 
-    for (const [k, v] of Object.entries(
+    for (const [entryKey, value] of Object.entries(
       (obj ?? {}) as Record<string, unknown>
     )) {
-      if (k === "message") {
+      if (entryKey === "message") {
         continue;
       }
-      const newKey = key
-        ? Number.isNaN(Number(k))
-          ? `${key}.${k}`
-          : `${key}[${k}]`
-        : k;
+      let newKey = entryKey;
+      if (key) {
+        newKey = Number.isNaN(Number(entryKey))
+          ? `${key}.${entryKey}`
+          : `${key}[${entryKey}]`;
+      }
 
-      const vo = v as Record<string, unknown> | null;
-      if (vo && Array.isArray(vo._errors)) {
+      const nested = value as Record<string, unknown> | null;
+      if (nested && Array.isArray(nested._errors)) {
         messages.push(
-          `${newKey}: ${(vo._errors as { message: string }[]).map((e) => e.message).join(" ")}`
+          `${newKey}: ${(nested._errors as { message: string }[])
+            .map((entry) => entry.message)
+            .join(" ")}`
         );
-      } else if (vo && (vo.code ?? vo.message)) {
-        messages.push(`${vo.code ? `${vo.code}: ` : ""}${vo.message}`.trim());
-      } else if (typeof v === "string") {
-        messages.push(v);
+      } else if (nested && (nested.code ?? nested.message)) {
+        messages.push(
+          `${nested.code ? `${nested.code}: ` : ""}${nested.message}`.trim()
+        );
+      } else if (typeof value === "string") {
+        messages.push(value);
       } else {
-        messages = messages.concat(this.flattenErrors(v, newKey));
+        messages.push(...this.flattenErrors(value, newKey));
       }
     }
 

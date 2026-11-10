@@ -133,9 +133,9 @@ const epbPrefix = Buffer.from([0x00, 0x00, 0x03]);
 const nalSuffix = Buffer.from([0x00, 0x00, 0x01]);
 
 interface NalFunctions {
-  getUnitType(frame: Buffer): number;
-  splitHeader(frame: Buffer): [Buffer, Buffer];
-  isAUD(unitType: number): boolean;
+  getUnitType: (frame: Buffer) => number;
+  splitHeader: (frame: Buffer) => [Buffer, Buffer];
+  isAUD: (unitType: number) => boolean;
 }
 
 class AnnexBNalSplitter extends Transform {
@@ -153,11 +153,11 @@ class AnnexBNalSplitter extends Transform {
     this._nalFunctions = nalFunctions;
   }
 
-  rbsp(data: Buffer) {
-    const newData = Buffer.allocUnsafe(data.length);
+  rbsp(input: Buffer) {
+    const newData = Buffer.allocUnsafe(input.length);
     let newLength = 0;
+    let data = input;
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const epbsPos = data.indexOf(epbPrefix);
       if (epbsPos === -1) {
@@ -198,12 +198,12 @@ class AnnexBNalSplitter extends Transform {
       const accessUnitBuf = Buffer.allocUnsafe(sizeOfAccessUnit);
 
       let offset = 0;
-      this._accessUnit.forEach((nalu) => {
+      for (const nalu of this._accessUnit) {
         accessUnitBuf.writeUint32BE(nalu.length, offset);
         offset += 4;
         nalu.copy(accessUnitBuf, offset);
         offset += nalu.length;
-      });
+      }
 
       this.push(accessUnitBuf);
       this._accessUnit = [];
@@ -215,26 +215,27 @@ class AnnexBNalSplitter extends Transform {
   _transform(
     chunk: Buffer,
     _encoding: BufferEncoding,
-    callback: TransformCallback
+    done: TransformCallback
   ) {
-    let nalStart = this.findNalStart(chunk);
+    let data = chunk;
+    let nalStart = this.findNalStart(data);
     if (!this._buffer) {
       if (!nalStart) {
-        callback();
+        done();
         return;
       }
-      chunk = chunk.subarray(nalStart.index + nalStart.length);
+      data = data.subarray(nalStart.index + nalStart.length);
       this._buffer = emptyBuffer;
     }
 
-    chunk = Buffer.concat([this._buffer, chunk]);
-    while ((nalStart = this.findNalStart(chunk))) {
-      const frame = chunk.subarray(0, nalStart.index);
+    data = Buffer.concat([this._buffer, data]);
+    while ((nalStart = this.findNalStart(data))) {
+      const frame = data.subarray(0, nalStart.index);
       this.processFrame(frame);
-      chunk = chunk.subarray(nalStart.index + nalStart.length);
+      data = data.subarray(nalStart.index + nalStart.length);
     }
-    this._buffer = chunk;
-    callback();
+    this._buffer = data;
+    done();
   }
 }
 
@@ -257,7 +258,8 @@ class H265NalSplitter extends AnnexBNalSplitter {
   }
 
   removeEpbs(frame: Buffer) {
-    return frame; // No specific processing for H265
+    // No specific processing for H265.
+    return frame;
   }
 }
 

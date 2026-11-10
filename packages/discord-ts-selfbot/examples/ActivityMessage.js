@@ -1,4 +1,4 @@
-const { Client } = require("../src/index");
+import { Client } from "../src/index";
 
 const client = new Client();
 
@@ -8,7 +8,8 @@ client.on("ready", () => {
   channel.send({
     activity: {
       partyId: `spotify:${client.user.id}`,
-      type: 3, // MessageActivityType.Listen,
+      // MessageActivityType.Listen
+      type: 3,
     },
   });
 });

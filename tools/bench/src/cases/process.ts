@@ -21,12 +21,13 @@ export function createProcessCases(): BenchCase[] {
       id: "process.spawn",
       iterations: 30,
       label: "spawn process async",
-      node: () =>
-        new Promise<number>((resolve, reject) => {
-          const child = spawn(TRUE);
-          child.on("exit", (code) => resolve(code ?? 0));
-          child.on("error", reject);
-        }),
+      node: () => {
+        const { promise, reject, resolve } = Promise.withResolvers<number>();
+        const child = spawn(TRUE);
+        child.on("exit", (code) => resolve(code ?? 0));
+        child.on("error", reject);
+        return promise;
+      },
     },
     {
       bun: () => Bun.sleep(0),

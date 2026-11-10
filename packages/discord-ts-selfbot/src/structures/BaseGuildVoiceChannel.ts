@@ -18,8 +18,7 @@ import type { Guild } from "./Guild";
 import type { Client } from "../client/Client";
 import type { Message } from "./Message";
 import type { CreateInviteOptionsSource } from "../managers/GuildInviteManager";
-import type { SendOptions } from "../types/channels";
-import type { SendResult } from "../types/channels";
+import type { SendOptions, SendResult } from "../types/channels";
 
 type BaseGuildVoiceChannelPatch = PatchOf<"GuildChannel"> & {
   bitrate?: number;
@@ -121,7 +120,8 @@ class BaseGuildVoiceChannel extends GuildChannel {
     if (!this.viewable) {
       return false;
     }
-    const permissions = this.permissionsFor(this.client.user!);
+    const { user } = this.client;
+    const permissions = user ? this.permissionsFor(user) : null;
     if (!permissions) {
       return false;
     }
@@ -168,18 +168,31 @@ class BaseGuildVoiceChannel extends GuildChannel {
   }
 
   // These are here only for documentation purposes - they are implemented by TextBasedChannel
-  /* eslint-disable no-empty-function */
   get lastMessage(): Message | null {
     return null;
   }
   declare send: (options: SendOptions) => SendResult;
-  sendTyping() {}
-  createMessageCollector() {}
-  awaitMessages() {}
-  fetchWebhooks() {}
-  createWebhook() {}
-  setRateLimitPerUser() {}
-  setNSFW() {}
+  sendTyping() {
+    // Implemented by the subclass mixin.
+  }
+  createMessageCollector() {
+    // Implemented by the subclass mixin.
+  }
+  awaitMessages() {
+    // Implemented by the subclass mixin.
+  }
+  fetchWebhooks() {
+    // Implemented by the subclass mixin.
+  }
+  createWebhook() {
+    // Implemented by the subclass mixin.
+  }
+  setRateLimitPerUser() {
+    // Implemented by the subclass mixin.
+  }
+  setNSFW() {
+    // Implemented by the subclass mixin.
+  }
 }
 
 TextBasedChannel.applyToClass(BaseGuildVoiceChannel, true, ["lastPinAt"]);

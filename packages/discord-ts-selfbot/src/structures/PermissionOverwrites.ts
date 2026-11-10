@@ -130,18 +130,18 @@ class PermissionOverwrites extends Base {
     const type = "type" in overwrite ? overwrite.type : undefined;
     const allow = "allow" in overwrite ? overwrite.allow : undefined;
     const deny = "deny" in overwrite ? overwrite.deny : undefined;
-    let resolvedType =
+    const resolvedType =
       typeof type === "string" || typeof type === "number"
         ? resolveEnumValue(OverwriteTypes, type)
         : undefined;
 
     if (id && resolvedType !== undefined) {
-      return {
-        allow: Permissions.resolve(allow ?? Permissions.defaultBit).toString(),
-        deny: Permissions.resolve(deny ?? Permissions.defaultBit).toString(),
+      return PermissionOverwrites.toJSON({
+        allow,
+        deny,
         id,
         type: resolvedType,
-      };
+      });
     }
 
     if (!id) {
@@ -152,14 +152,34 @@ class PermissionOverwrites extends Base {
     if (!userOrRole) {
       throw new TypeError("INVALID_TYPE", "parameter", "cached User or Role");
     }
-    resolvedType =
-      userOrRole instanceof Role ? OverwriteTypes.role : OverwriteTypes.member;
 
+    return PermissionOverwrites.toJSON({
+      allow,
+      deny,
+      id: userOrRole.id,
+      type:
+        userOrRole instanceof Role
+          ? OverwriteTypes.role
+          : OverwriteTypes.member,
+    });
+  }
+
+  private static toJSON({
+    allow,
+    deny,
+    id,
+    type,
+  }: {
+    allow: unknown;
+    deny: unknown;
+    id: string;
+    type: number;
+  }) {
     return {
       allow: Permissions.resolve(allow ?? Permissions.defaultBit).toString(),
       deny: Permissions.resolve(deny ?? Permissions.defaultBit).toString(),
-      id: userOrRole.id,
-      type: resolvedType,
+      id,
+      type,
     };
   }
 }

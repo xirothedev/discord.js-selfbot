@@ -16,8 +16,6 @@ import type {
   WebSocketOptions,
 } from "../../typings";
 
-("use strict");
-
 export interface ResolvedWebSocketOptions extends Omit<
   WebSocketOptions,
   "agent"
@@ -82,6 +80,7 @@ class Options extends null {
   static createDefault(): ResolvedClientOptions {
     return {
       DMChannelVoiceStatusSync: 0,
+      TOTPKey: null,
       captchaRetryLimit: 3,
       captchaSolver: () => {
         const err = new Error("CAPTCHA_SOLVER_NOT_IMPLEMENTED");
@@ -89,64 +88,8 @@ class Options extends null {
           "You need to provide a captcha solver to use this feature\nExample: const client = new Client({ captchaSolver: yourAsyncFunction })";
         throw err;
       },
-      TOTPKey: null,
       closeTimeout: 5000,
-      waitGuildTimeout: 15_000,
-      // Selfbot divergence: shard defaults are resolved in Client#_validateOptions. `shards` is intentionally
-      // absent so an explicit `shardCount` is not overridden by the default single-shard list.
-      shardCount: 1,
-      makeCache: this.cacheWithLimits(this.defaultMakeCacheSettings),
-      messageCacheLifetime: 0,
-      messageSweepInterval: 0,
-      invalidRequestWarningInterval: 0,
-      intents: Intents.ALL,
-      partials: [
-        "USER",
-        "CHANNEL",
-        "GUILD_MEMBER",
-        "MESSAGE",
-        "REACTION",
-        "GUILD_SCHEDULED_EVENT",
-      ], // Enable the partials
-      restWsBridgeTimeout: 5000,
-      restRequestTimeout: 15_000,
-      restGlobalRateLimit: 0,
-      retryLimit: 1,
-      restTimeOffset: 500,
-      restSweepInterval: 60,
       failIfNotExists: true,
-      presence: { activities: [], afk: true, since: 0, status: "online" },
-      sweepers: {},
-      ws: {
-        agent: {},
-        capabilities: 0, // https://discord-userdoccers.vercel.app/topics/gateway#gateway-capabilities
-        client_state: {
-          guild_versions: {},
-        },
-        compress: false,
-        properties: {
-          app_arch: "x64",
-          browser: "Discord Client",
-          browser_user_agent: UserAgent,
-          browser_version: "35.3.0",
-          client_app_state: "focused",
-          client_build_number: 455964,
-          client_event_source: null,
-          client_heartbeat_session_id: crypto.randomUUID(),
-          client_launch_id: crypto.randomUUID(),
-          client_version: "1.0.9210",
-          has_client_mods: false,
-          launch_signature: crypto.randomUUID(),
-          native_build_number: 69976,
-          os: "Windows",
-          os_arch: "x64",
-          os_sdk_version: "19044",
-          os_version: "10.0.19044",
-          release_channel: "stable",
-          system_locale: "en-US",
-        },
-        version: 9,
-      },
       http: {
         agent: {},
         api: "https://discord.com/api",
@@ -159,13 +102,70 @@ class Options extends null {
         template: "https://discord.new",
         version: 9,
       },
+      intents: Intents.ALL,
+      invalidRequestWarningInterval: 0,
+      makeCache: this.cacheWithLimits(this.defaultMakeCacheSettings),
+      messageCacheLifetime: 0,
+      messageSweepInterval: 0,
+      // Enable the partials
+      partials: [
+        "USER",
+        "CHANNEL",
+        "GUILD_MEMBER",
+        "MESSAGE",
+        "REACTION",
+        "GUILD_SCHEDULED_EVENT",
+      ],
+      presence: { activities: [], afk: true, since: 0, status: "online" },
+      restGlobalRateLimit: 0,
+      restRequestTimeout: 15_000,
+      restSweepInterval: 60,
+      restTimeOffset: 500,
+      restWsBridgeTimeout: 5000,
+      retryLimit: 1,
+      // Selfbot divergence: shard defaults are resolved in Client#_validateOptions. `shards` is intentionally
+      // absent so an explicit `shardCount` is not overridden by the default single-shard list.
+      shardCount: 1,
+      sweepers: {},
+      waitGuildTimeout: 15_000,
+      ws: {
+        agent: {},
+        // https://discord-userdoccers.vercel.app/topics/gateway#gateway-capabilities
+        capabilities: 0,
+        client_state: {
+          guild_versions: {},
+        },
+        compress: false,
+        properties: {
+          app_arch: "x64",
+          browser: "Discord Client",
+          browser_user_agent: UserAgent,
+          browser_version: "35.3.0",
+          client_app_state: "focused",
+          client_build_number: 455_964,
+          client_event_source: null,
+          client_heartbeat_session_id: crypto.randomUUID(),
+          client_launch_id: crypto.randomUUID(),
+          client_version: "1.0.9210",
+          has_client_mods: false,
+          launch_signature: crypto.randomUUID(),
+          native_build_number: 69_976,
+          os: "Windows",
+          os_arch: "x64",
+          os_sdk_version: "19044",
+          os_version: "10.0.19044",
+          release_channel: "stable",
+          system_locale: "en-US",
+        },
+        version: 9,
+      },
     };
   }
 
   static cacheWithLimits(settings: Record<string, unknown> = {}) {
     return (manager: { name: string }) => {
       const setting = settings[manager.name];
-      if (setting == null) {
+      if (setting === null || setting === undefined) {
         return new Collection();
       }
       if (typeof setting === "number") {
@@ -176,11 +176,14 @@ class Options extends null {
       }
       const s = setting as Record<string, unknown>;
       const noSweeping =
-        s.sweepFilter == null ||
-        s.sweepInterval == null ||
+        s.sweepFilter === null ||
+        s.sweepFilter === undefined ||
+        s.sweepInterval === null ||
+        s.sweepInterval === undefined ||
         (s.sweepInterval as number) <= 0 ||
         s.sweepInterval === Infinity;
-      const noLimit = s.maxSize == null || s.maxSize === Infinity;
+      const noLimit =
+        s.maxSize === null || s.maxSize === undefined || s.maxSize === Infinity;
       if (noSweeping && noLimit) {
         return new Collection();
       }

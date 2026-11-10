@@ -116,8 +116,8 @@ class ClientUser extends User implements ClientUserEntity {
   }
 
   async setAvatar(avatar: unknown) {
-    avatar = avatar && (await DataResolver.resolveImage(avatar));
-    return this.edit({ avatar });
+    const resolvedAvatar = avatar && (await DataResolver.resolveImage(avatar));
+    return this.edit({ avatar: resolvedAvatar });
   }
 
   setPresence(data: Record<string, unknown>) {
@@ -144,39 +144,43 @@ class ClientUser extends User implements ClientUserEntity {
     });
   }
 
-  setAFK(afk: unknown = true, shardId: unknown) {
+  setAFK(afk: unknown = true, shardId?: unknown) {
     return this.setPresence({ afk, shardId });
   }
 
   async setBanner(banner: unknown) {
-    banner = banner && (await DataResolver.resolveImage(banner));
-    return this.edit({ banner });
+    const resolvedBanner = banner && (await DataResolver.resolveImage(banner));
+    return this.edit({ banner: resolvedBanner });
   }
 
   setHypeSquad(type: unknown) {
+    let houseId = type;
     switch (type) {
       case "LEAVE": {
-        type = 0;
+        houseId = 0;
         break;
       }
       case "HOUSE_BRAVERY": {
-        type = 1;
+        houseId = 1;
         break;
       }
       case "HOUSE_BRILLIANCE": {
-        type = 2;
+        houseId = 2;
         break;
       }
       case "HOUSE_BALANCE": {
-        type = 3;
+        houseId = 3;
+        break;
+      }
+      default: {
         break;
       }
     }
-    if (type === 0) {
+    if (houseId === 0) {
       return this.client.api.hypesquad.online.delete();
     }
     return this.client.api.hypesquad.online.post({
-      data: { house_id: type },
+      data: { house_id: houseId },
     });
   }
 
@@ -215,24 +219,20 @@ class ClientUser extends User implements ClientUserEntity {
     packageName: string,
     type: "START" | "UPDATE" | "STOP" = "START"
   ) {
-    const t = type.toUpperCase();
+    const normalizedType = type.toUpperCase();
     if (!packageName) {
       throw new Error("Package name is required.");
     }
-    if (!["START", "UPDATE", "STOP"].includes(t)) {
+    if (!["START", "UPDATE", "STOP"].includes(normalizedType)) {
       throw new Error("Invalid type (Must be START, UPDATE, or STOP)");
     }
     await this.client.api.presences.post({
       data: {
         package_name: packageName,
-        update: t,
+        update: normalizedType,
       },
     });
-    if (t === "STOP") {
-      this.#packageName = null;
-    } else {
-      this.#packageName = packageName;
-    }
+    this.#packageName = normalizedType === "STOP" ? null : packageName;
     return this;
   }
 

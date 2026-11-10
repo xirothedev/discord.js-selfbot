@@ -18,14 +18,16 @@ import {
 } from "@/lib/shared";
 import { source } from "@/lib/source";
 
-export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
+const ANCHOR_TAG = "a";
+
+const Page = async (props: PageProps<"/docs/[[...slug]]">) => {
   const params = await props.params;
   const page = source.getPage(params.slug);
   if (!page) {
     notFound();
   }
 
-  const MDX = page.data.body;
+  const PageContent = page.data.body;
   const toc = page.url.startsWith("/docs/api")
     ? page.data.toc.filter((item) => item.depth <= 2)
     : page.data.toc;
@@ -44,15 +46,15 @@ export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
         <ViewOptionsPopover markdownUrl={markdownUrl} githubUrl={githubUrl} />
       </div>
       <DocsBody>
-        <MDX
+        <PageContent
           components={getMDXComponents({
-            a: createRelativeLink(source, page),
+            [ANCHOR_TAG]: createRelativeLink(source, page),
           })}
         />
       </DocsBody>
     </DocsPage>
   );
-}
+};
 
 export async function generateStaticParams() {
   return source.generateParams();
@@ -75,3 +77,5 @@ export async function generateMetadata(
     title: page.data.title,
   };
 }
+
+export default Page;

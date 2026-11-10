@@ -1,4 +1,4 @@
-import Base from "./Base";
+import Base, { patchValue } from "./Base";
 import _errorsModule from "../errors";
 
 const { Error } = _errorsModule;
@@ -57,37 +57,14 @@ class GuildScheduledEvent extends Base implements GuildScheduledEventEntity {
   }
 
   _patch(data: PatchOf<"GuildScheduledEvent">) {
-    if (data.channel_id === undefined) {
-      this.channelId ??= null;
-    } else {
-      this.channelId = data.channel_id;
-    }
-
-    if (data.creator_id === undefined) {
-      this.creatorId ??= null;
-    } else {
-      this.creatorId = data.creator_id;
-    }
-
-    if (data.name === undefined) {
-      // Only if partial.
-      this.name ??= null;
-    } else {
-      this.name = data.name;
-    }
-
-    if (data.description === undefined) {
-      this.description ??= null;
-    } else {
-      this.description = data.description;
-    }
-
-    if (data.scheduled_start_time === undefined) {
-      this.scheduledStartTimestamp ??= null;
-    } else {
-      this.scheduledStartTimestamp = Date.parse(data.scheduled_start_time);
-    }
-
+    this.channelId = patchValue(data.channel_id, this.channelId);
+    this.creatorId = patchValue(data.creator_id, this.creatorId);
+    this.name = patchValue(data.name, this.name);
+    this.description = patchValue(data.description, this.description);
+    this.scheduledStartTimestamp =
+      data.scheduled_start_time === undefined
+        ? (this.scheduledStartTimestamp ?? null)
+        : Date.parse(data.scheduled_start_time);
     if (data.scheduled_end_time === undefined) {
       this.scheduledEndTimestamp ??= null;
     } else {
@@ -95,39 +72,20 @@ class GuildScheduledEvent extends Base implements GuildScheduledEventEntity {
         ? Date.parse(data.scheduled_end_time)
         : null;
     }
-
-    if (data.privacy_level === undefined) {
-      // Only if partial.
-      this.privacyLevel ??= null;
-    } else {
-      this.privacyLevel = GuildScheduledEventPrivacyLevels[data.privacy_level];
-    }
-
-    if (data.status === undefined) {
-      // Only if partial.
-      this.status ??= null;
-    } else {
-      this.status = GuildScheduledEventStatuses[data.status];
-    }
-
-    if (data.entity_type === undefined) {
-      // Only if partial.
-      this.entityType ??= null;
-    } else {
-      this.entityType = GuildScheduledEventEntityTypes[data.entity_type];
-    }
-
-    if (data.entity_id === undefined) {
-      this.entityId ??= null;
-    } else {
-      this.entityId = data.entity_id;
-    }
-
-    if (data.user_count === undefined) {
-      this.userCount ??= null;
-    } else {
-      this.userCount = data.user_count;
-    }
+    this.privacyLevel =
+      data.privacy_level === undefined
+        ? (this.privacyLevel ?? null)
+        : GuildScheduledEventPrivacyLevels[data.privacy_level];
+    this.status =
+      data.status === undefined
+        ? (this.status ?? null)
+        : GuildScheduledEventStatuses[data.status];
+    this.entityType =
+      data.entity_type === undefined
+        ? (this.entityType ?? null)
+        : GuildScheduledEventEntityTypes[data.entity_type];
+    this.entityId = patchValue(data.entity_id, this.entityId);
+    this.userCount = patchValue(data.user_count, this.userCount);
 
     if (data.creator === undefined) {
       this.creator ??= this.client.users.resolve(this.creatorId);
@@ -135,54 +93,51 @@ class GuildScheduledEvent extends Base implements GuildScheduledEventEntity {
       this.creator = this.client.users._add(data.creator);
     }
 
-    /* eslint-disable max-len */
-    /* eslint-enable max-len */
+    this._patchEntityMetadata(data);
+    this._patchRecurrenceRule(data);
+    this.image = patchValue(data.image, this.image);
+  }
 
+  private _patchEntityMetadata(data: PatchOf<"GuildScheduledEvent">) {
     if (data.entity_metadata === undefined) {
       this.entityMetadata ??= null;
-    } else {
-      if (data.entity_metadata) {
-        this.entityMetadata = {
+      return;
+    }
+    this.entityMetadata = data.entity_metadata
+      ? {
           location:
             data.entity_metadata.location ??
             this.entityMetadata?.location ??
             null,
-        };
-      } else {
-        this.entityMetadata = null;
-      }
-    }
+        }
+      : null;
+  }
 
-    if (data.image === undefined) {
-      this.image ??= null;
-    } else {
-      this.image = data.image;
-    }
-
+  private _patchRecurrenceRule(data: PatchOf<"GuildScheduledEvent">) {
     if (data.recurrence_rule === undefined) {
       this.recurrenceRule ??= null;
-    } else {
-      this.recurrenceRule = data.recurrence_rule && {
-        startTimestamp: Date.parse(data.recurrence_rule.start),
-        get startAt() {
-          return new Date(this.startTimestamp);
-        },
-        endTimestamp: data.recurrence_rule.end
-          ? Date.parse(data.recurrence_rule.end)
-          : null,
-        get endAt() {
-          return this.endTimestamp ? new Date(this.endTimestamp) : null;
-        },
-        frequency: data.recurrence_rule.frequency,
-        interval: data.recurrence_rule.interval,
-        byWeekday: data.recurrence_rule.by_weekday,
-        byNWeekday: data.recurrence_rule.by_n_weekday,
-        byMonth: data.recurrence_rule.by_month,
-        byMonthDay: data.recurrence_rule.by_month_day,
-        byYearDay: data.recurrence_rule.by_year_day,
-        count: data.recurrence_rule.count,
-      };
+      return;
     }
+    this.recurrenceRule = data.recurrence_rule && {
+      byMonth: data.recurrence_rule.by_month,
+      byMonthDay: data.recurrence_rule.by_month_day,
+      byNWeekday: data.recurrence_rule.by_n_weekday,
+      byWeekday: data.recurrence_rule.by_weekday,
+      byYearDay: data.recurrence_rule.by_year_day,
+      count: data.recurrence_rule.count,
+      get endAt() {
+        return this.endTimestamp ? new Date(this.endTimestamp) : null;
+      },
+      endTimestamp: data.recurrence_rule.end
+        ? Date.parse(data.recurrence_rule.end)
+        : null,
+      frequency: data.recurrence_rule.frequency,
+      interval: data.recurrence_rule.interval,
+      get startAt() {
+        return new Date(this.startTimestamp);
+      },
+      startTimestamp: Date.parse(data.recurrence_rule.start),
+    };
   }
 
   coverImageURL({ format = "webp", size }: StaticImageURLOptions = {}) {
@@ -292,7 +247,7 @@ class GuildScheduledEvent extends Base implements GuildScheduledEventEntity {
     return this.edit({ reason, scheduledStartTime });
   }
 
-  // TODO: scheduledEndTime gets reset on passing null but it hasn't been documented
+  // scheduledEndTime resets on passing null, which is not documented.
   setScheduledEndTime(scheduledEndTime: DateResolvable, reason?: string) {
     return this.edit({ reason, scheduledEndTime });
   }

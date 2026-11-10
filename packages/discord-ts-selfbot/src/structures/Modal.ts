@@ -78,8 +78,8 @@ class Modal {
   toJSON() {
     return {
       components: this.components.map((row) => ({
-        type: ComponentType.ActionRow,
         components: row.components.map((component) => component.toJSON()),
+        type: ComponentType.ActionRow,
       })),
       custom_id: this.customId,
       id: this.id,
@@ -100,7 +100,7 @@ class Modal {
     const { title: _title, ...dataFinal } = this.toJSON();
     const components = dataFinal.components
       .map((row) => {
-        const first = row.components[0];
+        const [first] = row.components;
         if (!first || first.type !== ComponentType.TextInput) {
           return null;
         }
@@ -125,7 +125,8 @@ class Modal {
       guild_id: this.guildId,
       nonce,
       session_id: this.client.sessionId,
-      type: InteractionTypes.MODAL_SUBMIT, // Modal,
+      // Modal
+      type: InteractionTypes.MODAL_SUBMIT,
     };
     this.client.api.interactions.post({
       data: postData,

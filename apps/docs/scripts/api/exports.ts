@@ -21,6 +21,114 @@ function isExported(statement: ts.Statement): boolean {
   );
 }
 
+type NamedDeclaration =
+  | ts.ClassDeclaration
+  | ts.EnumDeclaration
+  | ts.FunctionDeclaration
+  | ts.InterfaceDeclaration
+  | ts.TypeAliasDeclaration;
+
+function isNamedDeclaration(
+  statement: ts.Statement
+): statement is NamedDeclaration {
+  return (
+    ts.isClassDeclaration(statement) ||
+    ts.isFunctionDeclaration(statement) ||
+    ts.isEnumDeclaration(statement) ||
+    ts.isInterfaceDeclaration(statement) ||
+    ts.isTypeAliasDeclaration(statement)
+  );
+}
+
+function parseExportDeclaration(
+  statement: ts.ExportDeclaration,
+  file: ts.SourceFile,
+  result: ParsedExports
+): void {
+  const specifier = statement.moduleSpecifier;
+  if (!specifier || !ts.isStringLiteral(specifier)) {
+    result.unparsed.push(statement.getText(file));
+    return;
+  }
+
+  const path = specifier.text;
+  if (isMetadata(path)) {
+    return;
+  }
+
+  const clause = statement.exportClause;
+  if (!clause || !ts.isNamedExports(clause)) {
+    result.unparsed.push(statement.getText(file));
+    return;
+  }
+
+  for (const element of clause.elements) {
+    const name = element.name.text;
+    const target = element.propertyName?.text;
+
+    if (isExternal(path)) {
+      result.external.push(name);
+      continue;
+    }
+
+    // `export { Target as Alias }` is the v13 alias shape. `default as X`
+    // names the class itself, so it stays public.
+    if (target && target !== "default" && target !== name) {
+      result.aliases.push({ name, target });
+      continue;
+    }
+
+    const namedExport: string | undefined =
+      target === "default" ? undefined : (target ?? name);
+    result.public.push({
+      name,
+      namedExport,
+      path,
+      ...(statement.isTypeOnly ? { typeOnly: true } : {}),
+    });
+  }
+}
+
+function parseVariableStatement(
+  statement: ts.VariableStatement,
+  file: ts.SourceFile,
+  result: ParsedExports
+): void {
+  for (const declaration of statement.declarationList.declarations) {
+    if (!ts.isIdentifier(declaration.name)) {
+      result.unparsed.push(declaration.getText(file));
+      continue;
+    }
+
+    result.public.push({
+      name: declaration.name.text,
+      namedExport: undefined,
+      path: "./index",
+    });
+  }
+}
+
+function parseNamedDeclaration(
+  statement: NamedDeclaration,
+  file: ts.SourceFile,
+  result: ParsedExports
+): void {
+  const name = statement.name?.text;
+  const typeOnly =
+    ts.isInterfaceDeclaration(statement) ||
+    ts.isTypeAliasDeclaration(statement);
+  if (name) {
+    result.public.push({
+      name,
+      namedExport: undefined,
+      path: "./index",
+      ...(typeOnly ? { typeOnly: true } : {}),
+    });
+  } else {
+    result.unparsed.push(statement.getText(file));
+  }
+}
+
 export function parseIndexExports(source: string): ParsedExports {
   const result: ParsedExports = {
     aliases: [],
@@ -38,89 +146,17 @@ export function parseIndexExports(source: string): ParsedExports {
 
   for (const statement of file.statements) {
     if (ts.isExportDeclaration(statement)) {
-      const specifier = statement.moduleSpecifier;
-      if (!specifier || !ts.isStringLiteral(specifier)) {
-        result.unparsed.push(statement.getText(file));
-        continue;
-      }
-
-      const path = specifier.text;
-      if (isMetadata(path)) {
-        continue;
-      }
-
-      const clause = statement.exportClause;
-      if (!clause || !ts.isNamedExports(clause)) {
-        result.unparsed.push(statement.getText(file));
-        continue;
-      }
-
-      for (const element of clause.elements) {
-        const name = element.name.text;
-        const target = element.propertyName?.text;
-
-        if (isExternal(path)) {
-          result.external.push(name);
-          continue;
-        }
-
-        // `export { Target as Alias }` is the v13 alias shape. `default as X`
-        // names the class itself, so it stays public.
-        if (target && target !== "default" && target !== name) {
-          result.aliases.push({ name, target });
-          continue;
-        }
-
-        const namedExport: string | undefined =
-          target === "default" ? undefined : (target ?? name);
-        result.public.push({
-          name,
-          namedExport,
-          path,
-          ...(statement.isTypeOnly ? { typeOnly: true } : {}),
-        });
-      }
+      parseExportDeclaration(statement, file, result);
       continue;
     }
 
     if (ts.isVariableStatement(statement) && isExported(statement)) {
-      for (const declaration of statement.declarationList.declarations) {
-        if (!ts.isIdentifier(declaration.name)) {
-          result.unparsed.push(declaration.getText(file));
-          continue;
-        }
-
-        result.public.push({
-          name: declaration.name.text,
-          namedExport: undefined,
-          path: "./index",
-        });
-      }
+      parseVariableStatement(statement, file, result);
       continue;
     }
 
-    const named =
-      ts.isClassDeclaration(statement) ||
-      ts.isFunctionDeclaration(statement) ||
-      ts.isEnumDeclaration(statement) ||
-      ts.isInterfaceDeclaration(statement) ||
-      ts.isTypeAliasDeclaration(statement);
-
-    if (named && isExported(statement)) {
-      const name = statement.name?.text;
-      const typeOnly =
-        ts.isInterfaceDeclaration(statement) ||
-        ts.isTypeAliasDeclaration(statement);
-      if (name) {
-        result.public.push({
-          name,
-          namedExport: undefined,
-          path: "./index",
-          ...(typeOnly ? { typeOnly: true } : {}),
-        });
-      } else {
-        result.unparsed.push(statement.getText(file));
-      }
+    if (isNamedDeclaration(statement) && isExported(statement)) {
+      parseNamedDeclaration(statement, file, result);
       continue;
     }
 
@@ -180,13 +216,15 @@ export function areaFor(path: string): AreaId {
 
 export function slugify(name: string): string {
   return name
-    .replaceAll(/([a-z0-9])([A-Z])/g, "$1-$2")
-    .replaceAll(/([A-Z]+)([A-Z][a-z])/g, "$1-$2")
+    .replaceAll(/(?<lower>[a-z0-9])(?<upper>[A-Z])/gu, "$1-$2")
+    .replaceAll(/(?<acronym>[A-Z]+)(?<word>[A-Z][a-z])/gu, "$1-$2")
     .toLowerCase()
-    .replaceAll(/[^a-z0-9]+/g, "-")
-    .replaceAll(/^-+|-+$/g, "");
+    .replaceAll(/[^a-z0-9]+/gu, "-")
+    .replaceAll(/^-+|-+$/gu, "");
 }
 
 export function sortByName(exports: PublicExport[]): PublicExport[] {
-  return [...exports].toSorted((a, b) => a.name.localeCompare(b.name));
+  return [...exports].toSorted((left, right) =>
+    left.name.localeCompare(right.name)
+  );
 }

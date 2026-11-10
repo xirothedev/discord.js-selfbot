@@ -80,11 +80,11 @@ function buildSubscriptions(
   return subscriptions;
 }
 
-export default (
+export default function handleReady(
   client: Client,
   packet: { d?: unknown },
   shard: WebSocketShard
-) => {
+) {
   if (!isReadyData(packet.d)) {
     return;
   }
@@ -128,7 +128,7 @@ export default (
       guild.settings._patch(gSetting);
     }
   }
-  // Todo: data.auth_session_id_hash
+  // Session hash is tracked below.
   client.sessions.currentSessionIdHash = data.auth_session_id_hash;
   if (data.guilds.length) {
     if (data.guilds.length > 80) {
@@ -150,7 +150,7 @@ export default (
       });
     }
   }
-  Promise.all(
+  return Promise.all(
     data.private_channels.map(async (channel, index) => {
       if (client.options.DMChannelVoiceStatusSync < 1) {
         return;
@@ -164,4 +164,4 @@ export default (
       await client.sleep(client.options.DMChannelVoiceStatusSync * index);
     })
   ).then(() => shard.checkReady());
-};
+}

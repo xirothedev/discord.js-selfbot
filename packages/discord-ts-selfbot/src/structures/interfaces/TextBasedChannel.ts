@@ -30,7 +30,8 @@ import type { RawMessageData } from "../../../typings/rawDataTypes";
 import type { UploadAttachment } from "../../types/uploads";
 import type ClientType from "../../client/Client";
 import type { Guild } from "../Guild";
-/* eslint-disable import/order */
+
+const NESTED_ARRAY_FLAT_DEPTH = 2;
 const validateName = (stringName: unknown): string =>
   s
     .string()
@@ -39,6 +40,539 @@ const validateName = (stringName: unknown): string =>
     .regex(/^[\p{Ll}\p{Lm}\p{Lo}\p{N}\p{sc=Devanagari}\p{sc=Thai}_-]+$/u)
     .setValidationEnabled(true)
     .parse(stringName);
+
+// Fixes Circular
+
+interface ApplicationCommandIndexChoice {
+  name: string;
+  value: string | number;
+}
+
+interface ApplicationCommandIndexOption {
+  type: number;
+  name: string;
+  name_default?: string | null;
+  required?: boolean;
+  autocomplete?: boolean;
+  choices?: ApplicationCommandIndexChoice[] | null;
+  options?: ApplicationCommandIndexOption[];
+}
+
+interface ApplicationCommandIndexCommand {
+  id: Snowflake;
+  application_id: Snowflake;
+  guild_id?: Snowflake | null;
+  name: string;
+  name_default?: string | null;
+  version: Snowflake;
+  type: number;
+  options?: ApplicationCommandIndexOption[];
+}
+
+interface ApplicationIndexApplication {
+  id: Snowflake;
+  bot_id?: Snowflake | null;
+}
+
+interface ApplicationCommandIndex {
+  applications: ApplicationIndexApplication[];
+  application_commands: ApplicationCommandIndexCommand[];
+  version: string;
+}
+
+interface SlashCommandOptionData {
+  type: number;
+  name: string;
+  value?: unknown;
+  focused?: boolean;
+  options?: SlashCommandOptionData[];
+}
+
+interface SlashCommandAttachment {
+  id: number;
+  filename: string;
+  uploaded_filename: string;
+  description?: string;
+  duration_secs?: number;
+  waveform?: string;
+}
+
+interface InteractionPacket {
+  d?: {
+    nonce?: string;
+    choices?: { value?: unknown }[];
+  };
+}
+
+interface InteractionPostData {
+  type: number;
+  application_id: Snowflake;
+  guild_id: Snowflake | undefined;
+  channel_id: Snowflake;
+  session_id: string | null | undefined;
+  data: {
+    version: Snowflake;
+    id: Snowflake;
+    name: string;
+    type: number;
+    options: SlashCommandOptionData[];
+    attachments: SlashCommandAttachment[];
+    guild_id?: Snowflake;
+  };
+  nonce: Snowflake;
+}
+
+type AwaitMessagesSourceOptions = MessageCollectorSourceOptions & {
+  errors?: string[];
+};
+
+interface SlashCommandContext {
+  applicationId: Snowflake;
+  channelId: Snowflake;
+  client: Client;
+  command: ApplicationCommandIndexCommand;
+  guildId: Snowflake | undefined;
+  subCommand?: ApplicationCommandIndexOption;
+  subGroup?: ApplicationCommandIndexOption;
+}
+
+function isInteractionPacket(value: unknown): value is InteractionPacket {
+  return (
+    typeof value === "object" && value !== null && "t" in value && "d" in value
+  );
+}
+
+function parseChoices(
+  parent: string,
+  list_choices: ApplicationCommandIndexChoice[] | null | undefined,
+  value: unknown
+): unknown {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!Array.isArray(list_choices) || list_choices.length === 0) {
+    return value;
+  }
+  const choice = list_choices.find(
+    (choiceItem) => choiceItem.name === value || choiceItem.value === value
+  );
+  if (choice) {
+    return choice.value;
+  }
+  throw new Error("INVALID_SLASH_COMMAND_CHOICES", parent, value);
+}
+
+async function addDataFromAttachment(
+  value: unknown,
+  client: Client,
+  channelId: Snowflake,
+  attachments: SlashCommandAttachment[]
+): Promise<{ id: number; attachments: SlashCommandAttachment[] }> {
+  const file = await MessagePayload.resolveFile(value);
+  const data = await Util.getUploadURL(client, channelId, [file]);
+  const [upload] = data;
+  if (!upload) {
+    throw new Error("INVALID_TYPE", "attachment", "FileOptions");
+  }
+  await Util.uploadFile(file.file, upload.upload_url);
+  const id = attachments.length;
+  attachments.push({
+    filename: file.name,
+    id,
+    uploaded_filename: upload.upload_filename,
+  });
+  return {
+    attachments,
+    id,
+  };
+}
+
+function buildAutocompletePostData(
+  subGroup: ApplicationCommandIndexOption | undefined,
+  subCommand: ApplicationCommandIndexOption | undefined,
+  optionCommand: ApplicationCommandIndexOption,
+  value: unknown
+) {
+  if (subGroup) {
+    if (!subCommand) {
+      throw new Error("SLASH_COMMAND_SUB_COMMAND_INVALID", subGroup.name);
+    }
+    return [
+      {
+        name: subGroup.name,
+        options: [
+          {
+            name: subCommand.name,
+            options: [
+              {
+                focused: true,
+                name: optionCommand.name,
+                type: optionCommand.type,
+                value,
+              },
+            ],
+            type: ApplicationCommandOptionTypes.SUB_COMMAND,
+          },
+        ],
+        type: ApplicationCommandOptionTypes.SUB_COMMAND_GROUP,
+      },
+    ];
+  }
+  if (subCommand) {
+    return [
+      {
+        name: subCommand.name,
+        options: [
+          {
+            focused: true,
+            name: optionCommand.name,
+            type: optionCommand.type,
+            value,
+          },
+        ],
+        type: ApplicationCommandOptionTypes.SUB_COMMAND,
+      },
+    ];
+  }
+  return [
+    {
+      focused: true,
+      name: optionCommand.name,
+      type: optionCommand.type,
+      value,
+    },
+  ];
+}
+
+function awaitAutocomplete(
+  client: Client,
+  nonce: Snowflake,
+  defaultValue: unknown
+): Promise<unknown> {
+  const { promise, resolve } = Promise.withResolvers<unknown>();
+  const state: {
+    handler: (packet: unknown) => void;
+    timeout?: NodeJS.Timeout;
+  } = { handler: () => null };
+  state.handler = (packet: unknown) => {
+    if (!isInteractionPacket(packet)) {
+      return;
+    }
+    const payload = packet.d;
+    if (!payload || payload.nonce !== nonce) {
+      return;
+    }
+    if (state.timeout) {
+      clearTimeout(state.timeout);
+    }
+    client.removeListener(Events.UNHANDLED_PACKET, state.handler);
+    client.decrementMaxListeners();
+    if (payload.choices && payload.choices.length >= 1) {
+      resolve(payload.choices[0]?.value);
+    } else {
+      resolve(defaultValue);
+    }
+  };
+  state.timeout = setTimeout(() => {
+    client.removeListener(Events.UNHANDLED_PACKET, state.handler);
+    client.decrementMaxListeners();
+    resolve(defaultValue);
+  }, 5000).unref();
+  client.incrementMaxListeners();
+  client.on(Events.UNHANDLED_PACKET, state.handler);
+  return promise;
+}
+
+function createPostData(
+  client: Client,
+  applicationId: Snowflake,
+  nonce: Snowflake,
+  guildId: Snowflake | undefined,
+  isGuildCommand: boolean,
+  channelId: Snowflake,
+  commandVersion: Snowflake,
+  commandId: Snowflake,
+  commandName: string,
+  commandType: number,
+  postData: SlashCommandOptionData[],
+  attachments: SlashCommandAttachment[] = [],
+  isAutocomplete = false
+): InteractionPostData {
+  const data: InteractionPostData = {
+    application_id: applicationId,
+    channel_id: channelId,
+    data: {
+      attachments,
+      id: commandId,
+      name: commandName,
+      options: postData,
+      type: commandType,
+      version: commandVersion,
+    },
+    guild_id: guildId,
+    nonce,
+    session_id: client.sessionId,
+    type: isAutocomplete
+      ? InteractionTypes.APPLICATION_COMMAND_AUTOCOMPLETE
+      : InteractionTypes.APPLICATION_COMMAND,
+  };
+  if (isGuildCommand) {
+    data.data.guild_id = guildId;
+  }
+  return data;
+}
+
+async function parseOption(
+  client: Client,
+  optionCommand: ApplicationCommandIndexOption,
+  value: unknown,
+  optionFormat: SlashCommandOptionData[],
+  attachmentsInput: SlashCommandAttachment[],
+  command: ApplicationCommandIndexCommand,
+  applicationId: Snowflake,
+  guildId: Snowflake | undefined,
+  channelId: Snowflake,
+  subGroup: ApplicationCommandIndexOption | undefined,
+  subCommand: ApplicationCommandIndexOption | undefined
+): Promise<{
+  optionFormat: SlashCommandOptionData[];
+  attachments: SlashCommandAttachment[];
+}> {
+  const data: SlashCommandOptionData = {
+    name: optionCommand.name,
+    type: optionCommand.type,
+  };
+  let attachments = attachmentsInput;
+  if (value !== undefined) {
+    switch (optionCommand.type) {
+      case ApplicationCommandOptionTypes.BOOLEAN: {
+        data.value = Boolean(value);
+        break;
+      }
+      case ApplicationCommandOptionTypes.INTEGER: {
+        data.value = Number(value);
+        break;
+      }
+      case ApplicationCommandOptionTypes.ATTACHMENT: {
+        const { attachments: nextAttachments, id } =
+          await addDataFromAttachment(value, client, channelId, attachments);
+        data.value = id;
+        attachments = nextAttachments;
+        break;
+      }
+      case ApplicationCommandOptionTypes.SUB_COMMAND_GROUP: {
+        break;
+      }
+      default: {
+        const resolvedValue = parseChoices(
+          optionCommand.name,
+          optionCommand.choices,
+          value
+        );
+        if (optionCommand.autocomplete) {
+          const nonce = SnowflakeUtil.generate();
+          const body = createPostData(
+            client,
+            applicationId,
+            nonce,
+            guildId,
+            Boolean(command.guild_id),
+            channelId,
+            command.version,
+            command.id,
+            command.name_default || command.name,
+            command.type,
+            buildAutocompletePostData(
+              subGroup,
+              subCommand,
+              optionCommand,
+              resolvedValue
+            ),
+            [],
+            true
+          );
+          await client.api.interactions.post({
+            data: body,
+          });
+          data.value = await awaitAutocomplete(client, nonce, resolvedValue);
+        } else {
+          data.value = resolvedValue;
+        }
+      }
+    }
+    optionFormat.push(data);
+  }
+  return {
+    attachments,
+    optionFormat,
+  };
+}
+
+async function parseSlashArguments(
+  context: SlashCommandContext,
+  args: unknown[],
+  optionsMaxdepth: ApplicationCommandIndexOption[]
+): Promise<{
+  attachments: SlashCommandAttachment[];
+  optionFormat: SlashCommandOptionData[];
+}> {
+  const parseAtIndex = async (
+    index: number,
+    optionFormat: SlashCommandOptionData[],
+    attachments: SlashCommandAttachment[]
+  ): Promise<{
+    attachments: SlashCommandAttachment[];
+    optionFormat: SlashCommandOptionData[];
+  }> => {
+    if (index >= Math.min(args.length, optionsMaxdepth.length)) {
+      return { attachments, optionFormat };
+    }
+    const parseData = await parseOption(
+      context.client,
+      optionsMaxdepth[index],
+      args[index],
+      optionFormat,
+      attachments,
+      context.command,
+      context.applicationId,
+      context.guildId,
+      context.channelId,
+      context.subGroup,
+      context.subCommand
+    );
+    return parseAtIndex(
+      index + 1,
+      parseData.optionFormat,
+      parseData.attachments
+    );
+  };
+  return parseAtIndex(0, [], []);
+}
+
+// Utils
+function parseCommandName(commandNameString: string) {
+  const cmd = commandNameString.trim().split(" ");
+  const commandName = validateName(cmd[0]);
+  const sub = cmd.slice(1);
+  for (const part of sub) {
+    if (sub.length > 2) {
+      throw new Error("INVALID_COMMAND_NAME", cmd);
+    }
+    validateName(part);
+  }
+  return { commandName, sub };
+}
+
+function findSlashCommand(
+  client: Client,
+  data: Pick<ApplicationCommandIndex, "applications" | "application_commands">,
+  commandName: string,
+  botOrApplicationId: UserResolvable
+) {
+  const filterCommand = data.application_commands.filter(
+    (obj: ApplicationCommandIndexCommand) =>
+      [obj.name, obj.name_default].includes(commandName)
+  );
+  const resolvedId = client.users.resolveId(botOrApplicationId);
+  const application = data.applications.find(
+    (obj: ApplicationIndexApplication) =>
+      obj.id === resolvedId || obj.bot_id === resolvedId
+  );
+  if (!application) {
+    throw new Error(
+      "INVALID_APPLICATION_COMMAND",
+      "Bot/Application doesn't exist"
+    );
+  }
+  const command = filterCommand.find(
+    (candidate: ApplicationCommandIndexCommand) =>
+      candidate.application_id === application.id
+  );
+  if (!command) {
+    throw new Error("INVALID_APPLICATION_COMMAND", application.id);
+  }
+  return { application, command };
+}
+
+function resolveSubcommandOptions(
+  command: ApplicationCommandIndexCommand,
+  sub: string[]
+) {
+  if (sub.length === 2) {
+    const subGroup = (command.options ?? []).find(
+      (obj: ApplicationCommandIndexOption) =>
+        obj.type === ApplicationCommandOptionTypes.SUB_COMMAND_GROUP &&
+        [obj.name, obj.name_default].includes(sub[0])
+    );
+    if (!subGroup) {
+      throw new Error("SLASH_COMMAND_SUB_COMMAND_GROUP_INVALID", sub[0]);
+    }
+    const subCommand = (subGroup.options ?? []).find(
+      (obj: ApplicationCommandIndexOption) =>
+        obj.type === ApplicationCommandOptionTypes.SUB_COMMAND &&
+        [obj.name, obj.name_default].includes(sub[1])
+    );
+    if (!subCommand) {
+      throw new Error("SLASH_COMMAND_SUB_COMMAND_INVALID", sub[1]);
+    }
+    return { optionsMaxdepth: subCommand.options ?? [], subCommand, subGroup };
+  }
+  if (sub.length === 1) {
+    const subCommand = (command.options ?? []).find(
+      (obj: ApplicationCommandIndexOption) =>
+        obj.type === ApplicationCommandOptionTypes.SUB_COMMAND &&
+        [obj.name, obj.name_default].includes(sub[0])
+    );
+    if (!subCommand) {
+      throw new Error("SLASH_COMMAND_SUB_COMMAND_INVALID", sub[0]);
+    }
+    return {
+      optionsMaxdepth: subCommand.options ?? [],
+      subCommand,
+      subGroup: undefined,
+    };
+  }
+  return {
+    optionsMaxdepth: command.options ?? [],
+    subCommand: undefined,
+    subGroup: undefined,
+  };
+}
+
+function buildSlashPostData(
+  subGroup: ApplicationCommandIndexOption | undefined,
+  subCommand: ApplicationCommandIndexOption | undefined,
+  optionFormat: SlashCommandOptionData[]
+) {
+  if (subGroup) {
+    if (!subCommand) {
+      throw new Error("SLASH_COMMAND_SUB_COMMAND_INVALID", subGroup.name);
+    }
+    return [
+      {
+        name: subGroup.name,
+        options: [
+          {
+            name: subCommand.name,
+            options: optionFormat,
+            type: ApplicationCommandOptionTypes.SUB_COMMAND,
+          },
+        ],
+        type: ApplicationCommandOptionTypes.SUB_COMMAND_GROUP,
+      },
+    ];
+  }
+  if (subCommand) {
+    return [
+      {
+        name: subCommand.name,
+        options: optionFormat,
+        type: ApplicationCommandOptionTypes.SUB_COMMAND,
+      },
+    ];
+  }
+  return optionFormat;
+}
 
 class TextBasedChannel {
   declare client: ClientType;
@@ -75,13 +609,10 @@ class TextBasedChannel {
       return dm.send(options);
     }
 
-    let messagePayload;
-
-    if (options instanceof MessagePayload) {
-      messagePayload = options.resolveData();
-    } else {
-      messagePayload = MessagePayload.create(this, options).resolveData();
-    }
+    const messagePayload =
+      options instanceof MessagePayload
+        ? options.resolveData()
+        : MessagePayload.create(this, options).resolveData();
 
     const { data, files } = await messagePayload.resolveFiles();
     const fileList = files ?? [];
@@ -106,7 +637,8 @@ class TextBasedChannel {
     );
     const attachmentsData = await Promise.all(requestPromises);
     attachmentsData.sort(
-      (a, b) => Number.parseInt(a.id) - Number.parseInt(b.id)
+      (left, right) =>
+        Math.trunc(Number(left.id)) - Math.trunc(Number(right.id))
     );
     if (data) {
       Object.assign(data, { attachments: attachmentsData });
@@ -167,113 +699,35 @@ class TextBasedChannel {
     commandNameString: string,
     ...args: unknown[]
   ) {
-    // Parse commandName /role add user
-    const cmd = commandNameString.trim().split(" ");
-    // Ex: role add user => [role, add, user]
-    // Parse:               name, subGr, sub
-    const commandName = validateName(cmd[0]);
-    // Parse: role
-    const sub = cmd.slice(1);
-    // Parse: [add, user]
-    for (let i = 0; i < sub.length; i++) {
-      if (sub.length > 2) {
-        throw new Error("INVALID_COMMAND_NAME", cmd);
-      }
-      validateName(sub[i]);
-    }
-    // Search all
+    const { commandName, sub } = parseCommandName(commandNameString);
     const data = await this.searchInteraction();
-    // Find command...
-    const filterCommand = data.application_commands.filter(
-      (obj: ApplicationCommandIndexCommand) =>
-        // Filter: name | name_default
-        [obj.name, obj.name_default].includes(commandName)
+    const { application, command } = findSlashCommand(
+      this.client,
+      data,
+      commandName,
+      botOrApplicationId
     );
-    // Filter Bot
-    const resolvedId = this.client.users.resolveId(botOrApplicationId);
-    const application = data.applications.find(
-      (obj: ApplicationIndexApplication) =>
-        obj.id === resolvedId || obj.bot_id === resolvedId
+    const { subGroup, subCommand, optionsMaxdepth } = resolveSubcommandOptions(
+      command,
+      sub
     );
-    if (!application) {
-      throw new Error(
-        "INVALID_APPLICATION_COMMAND",
-        "Bot/Application doesn't exist"
-      );
-    }
-    // Find Command with application
-    const command = filterCommand.find(
-      (command: ApplicationCommandIndexCommand) =>
-        command.application_id === application.id
+    const context: SlashCommandContext = {
+      applicationId: application.id,
+      channelId: this.id,
+      client: this.client,
+      command,
+      guildId: this.guild?.id,
+      subCommand,
+      subGroup,
+    };
+    const { attachments, optionFormat } = await parseSlashArguments(
+      context,
+      args.flat(NESTED_ARRAY_FLAT_DEPTH),
+      optionsMaxdepth
     );
-    if (!command) {
-      throw new Error("INVALID_APPLICATION_COMMAND", application.id);
-    }
-    args = args.flat(2);
-    let optionFormat: SlashCommandOptionData[] = [];
-    let attachments: SlashCommandAttachment[] = [];
-    let optionsMaxdepth: ApplicationCommandIndexOption[] = [];
-    let subGroup: ApplicationCommandIndexOption | undefined;
-    let subCommand: ApplicationCommandIndexOption | undefined;
-    if (sub.length === 2) {
-      // Subcommand Group > Subcommand
-      // Find Sub group
-      subGroup = (command.options ?? []).find(
-        (obj: ApplicationCommandIndexOption) =>
-          obj.type === ApplicationCommandOptionTypes.SUB_COMMAND_GROUP &&
-          [obj.name, obj.name_default].includes(sub[0])
-      );
-      if (!subGroup) {
-        throw new Error("SLASH_COMMAND_SUB_COMMAND_GROUP_INVALID", sub[0]);
-      }
-      // Find Sub
-      subCommand = (subGroup.options ?? []).find(
-        (obj: ApplicationCommandIndexOption) =>
-          obj.type === ApplicationCommandOptionTypes.SUB_COMMAND &&
-          [obj.name, obj.name_default].includes(sub[1])
-      );
-      if (!subCommand) {
-        throw new Error("SLASH_COMMAND_SUB_COMMAND_INVALID", sub[1]);
-      }
-      // Options
-      optionsMaxdepth = subCommand.options ?? [];
-    } else if (sub.length === 1) {
-      // Subcommand
-      subCommand = (command.options ?? []).find(
-        (obj: ApplicationCommandIndexOption) =>
-          obj.type === ApplicationCommandOptionTypes.SUB_COMMAND &&
-          [obj.name, obj.name_default].includes(sub[0])
-      );
-      if (!subCommand) {
-        throw new Error("SLASH_COMMAND_SUB_COMMAND_INVALID", sub[0]);
-      }
-      // Options
-      optionsMaxdepth = subCommand.options ?? [];
-    } else {
-      optionsMaxdepth = command.options ?? [];
-    }
     const valueRequired = optionsMaxdepth.filter(
-      (o: ApplicationCommandIndexOption) => o.required
+      (option) => option.required
     ).length;
-    for (let i = 0; i < Math.min(args.length, optionsMaxdepth.length); i++) {
-      const optionInput = optionsMaxdepth[i];
-      const value = args[i];
-      const parseData = await parseOption(
-        this.client,
-        optionInput,
-        value,
-        optionFormat,
-        attachments,
-        command,
-        application.id,
-        this.guild?.id,
-        this.id,
-        subGroup,
-        subCommand
-      );
-      optionFormat = parseData.optionFormat;
-      attachments = parseData.attachments;
-    }
     if (valueRequired > args.length) {
       throw new Error(
         "SLASH_COMMAND_REQUIRED_OPTIONS_MISSING",
@@ -281,40 +735,10 @@ class TextBasedChannel {
         optionFormat.length
       );
     }
-    // Post
-    let postData: SlashCommandOptionData[];
-    if (subGroup) {
-      if (!subCommand) {
-        throw new Error("SLASH_COMMAND_SUB_COMMAND_INVALID", subGroup.name);
-      }
-      postData = [
-        {
-          name: subGroup.name,
-          options: [
-            {
-              type: ApplicationCommandOptionTypes.SUB_COMMAND,
-              name: subCommand.name,
-              options: optionFormat,
-            },
-          ],
-          type: ApplicationCommandOptionTypes.SUB_COMMAND_GROUP,
-        },
-      ];
-    } else if (subCommand) {
-      postData = [
-        {
-          name: subCommand.name,
-          options: optionFormat,
-          type: ApplicationCommandOptionTypes.SUB_COMMAND,
-        },
-      ];
-    } else {
-      postData = optionFormat;
-    }
+    const postData = buildSlashPostData(subGroup, subCommand, optionFormat);
     const nonce = SnowflakeUtil.generate();
     const body = createPostData(
       this.client,
-      false,
       application.id,
       nonce,
       this.guild?.id,
@@ -325,7 +749,8 @@ class TextBasedChannel {
       command.name_default || command.name,
       command.type,
       postData,
-      attachments
+      attachments,
+      false
     );
     this.client.api.interactions.post({
       data: body,
@@ -343,27 +768,36 @@ class TextBasedChannel {
   }
 
   awaitMessages(options: AwaitMessagesSourceOptions = {}) {
-    return new Promise<Collection<Snowflake, Message>>((resolve, reject) => {
-      const collector = this.createMessageCollector(options);
-      collector.once(
-        "end",
-        (collection: Collection<Snowflake, Message>, reason: string) => {
-          if (options.errors?.includes(reason)) {
-            reject(collection);
-          } else {
-            resolve(collection);
-          }
+    const { promise, reject, resolve } =
+      Promise.withResolvers<Collection<Snowflake, Message>>();
+    const collector = this.createMessageCollector(options);
+    collector.once(
+      "end",
+      (collection: Collection<Snowflake, Message>, reason: string) => {
+        if (options.errors?.includes(reason)) {
+          reject(collection);
+        } else {
+          resolve(collection);
         }
-      );
-    });
+      }
+    );
+    return promise;
   }
 
   fetchWebhooks() {
-    return this.guild!.channels.fetchWebhooks(this.id);
+    const { guild } = this;
+    if (!guild) {
+      throw new Error("GUILD_NOT_FOUND");
+    }
+    return guild.channels.fetchWebhooks(this.id);
   }
 
   createWebhook(name: string, options: ChannelWebhookCreateOptions = {}) {
-    return this.guild!.channels.createWebhook(this.id, name, options);
+    const { guild } = this;
+    if (!guild) {
+      throw new Error("GUILD_NOT_FOUND");
+    }
+    return guild.channels.createWebhook(this.id, name, options);
   }
 
   setRateLimitPerUser(rateLimitPerUser: number, reason?: string) {
@@ -414,350 +848,3 @@ class TextBasedChannel {
 
 export default TextBasedChannel;
 export { TextBasedChannel };
-
-// Fixes Circular
-
-interface ApplicationCommandIndexChoice {
-  name: string;
-  value: string | number;
-}
-
-interface ApplicationCommandIndexOption {
-  type: number;
-  name: string;
-  name_default?: string | null;
-  required?: boolean;
-  autocomplete?: boolean;
-  choices?: ApplicationCommandIndexChoice[] | null;
-  options?: ApplicationCommandIndexOption[];
-}
-
-interface ApplicationCommandIndexCommand {
-  id: Snowflake;
-  application_id: Snowflake;
-  guild_id?: Snowflake | null;
-  name: string;
-  name_default?: string | null;
-  version: Snowflake;
-  type: number;
-  options?: ApplicationCommandIndexOption[];
-}
-
-interface ApplicationIndexApplication {
-  id: Snowflake;
-  bot_id?: Snowflake | null;
-}
-
-interface ApplicationCommandIndex {
-  applications: ApplicationIndexApplication[];
-  application_commands: ApplicationCommandIndexCommand[];
-  version: string;
-}
-
-interface SlashCommandOptionData {
-  type: number;
-  name: string;
-  value?: unknown;
-  focused?: boolean;
-  options?: SlashCommandOptionData[];
-}
-
-interface SlashCommandAttachment {
-  id: number;
-  filename: string;
-  uploaded_filename: string;
-  description?: string;
-  duration_secs?: number;
-  waveform?: string;
-}
-
-interface InteractionPacket {
-  t?: string;
-  d?: {
-    nonce?: string;
-    choices?: { value?: unknown }[];
-  };
-}
-
-interface InteractionPostData {
-  type: number;
-  application_id: Snowflake;
-  guild_id: Snowflake | undefined;
-  channel_id: Snowflake;
-  session_id: string | null | undefined;
-  data: {
-    version: Snowflake;
-    id: Snowflake;
-    name: string;
-    type: number;
-    options: SlashCommandOptionData[];
-    attachments: SlashCommandAttachment[];
-    guild_id?: Snowflake;
-  };
-  nonce: Snowflake;
-}
-
-type AwaitMessagesSourceOptions = MessageCollectorSourceOptions & {
-  errors?: string[];
-};
-
-function isInteractionPacket(value: unknown): value is InteractionPacket {
-  return (
-    typeof value === "object" && value !== null && "t" in value && "d" in value
-  );
-}
-
-// Utils
-function parseChoices(
-  parent: string,
-  list_choices: ApplicationCommandIndexChoice[] | null | undefined,
-  value: unknown
-): unknown {
-  if (value === undefined) {
-    return undefined;
-  } else {
-    if (Array.isArray(list_choices) && list_choices.length) {
-      const choice = list_choices.find(
-        (c) => c.name === value || c.value === value
-      );
-      if (choice) {
-        return choice.value;
-      } else {
-        throw new Error("INVALID_SLASH_COMMAND_CHOICES", parent, value);
-      }
-    } else {
-      return value;
-    }
-  }
-}
-
-async function addDataFromAttachment(
-  value: unknown,
-  client: Client,
-  channelId: Snowflake,
-  attachments: SlashCommandAttachment[]
-): Promise<{ id: number; attachments: SlashCommandAttachment[] }> {
-  const file = await MessagePayload.resolveFile(value);
-  const data = await Util.getUploadURL(client, channelId, [file]);
-  const upload = data[0];
-  if (!upload) {
-    throw new Error("INVALID_TYPE", "attachment", "FileOptions");
-  }
-  await Util.uploadFile(file.file, upload.upload_url);
-  const id = attachments.length;
-  attachments.push({
-    filename: file.name,
-    id,
-    uploaded_filename: upload.upload_filename,
-  });
-  return {
-    attachments,
-    id,
-  };
-}
-
-async function parseOption(
-  client: Client,
-  optionCommand: ApplicationCommandIndexOption,
-  value: unknown,
-  optionFormat: SlashCommandOptionData[],
-  attachments: SlashCommandAttachment[],
-  command: ApplicationCommandIndexCommand,
-  applicationId: Snowflake,
-  guildId: Snowflake | undefined,
-  channelId: Snowflake,
-  subGroup: ApplicationCommandIndexOption | undefined,
-  subCommand: ApplicationCommandIndexOption | undefined
-): Promise<{
-  optionFormat: SlashCommandOptionData[];
-  attachments: SlashCommandAttachment[];
-}> {
-  const data: SlashCommandOptionData = {
-    name: optionCommand.name,
-    type: optionCommand.type,
-  };
-  if (value !== undefined) {
-    switch (optionCommand.type) {
-      case ApplicationCommandOptionTypes.BOOLEAN: {
-        data.value = Boolean(value);
-        break;
-      }
-      case ApplicationCommandOptionTypes.INTEGER: {
-        data.value = Number(value);
-        break;
-      }
-      case ApplicationCommandOptionTypes.ATTACHMENT: {
-        const parseData = await addDataFromAttachment(
-          value,
-          client,
-          channelId,
-          attachments
-        );
-        data.value = parseData.id;
-        attachments = parseData.attachments;
-        break;
-      }
-      case ApplicationCommandOptionTypes.SUB_COMMAND_GROUP: {
-        break;
-      }
-      default: {
-        value = parseChoices(optionCommand.name, optionCommand.choices, value);
-        if (optionCommand.autocomplete) {
-          const nonce = SnowflakeUtil.generate();
-          // Post
-          let postData: SlashCommandOptionData[];
-          if (subGroup) {
-            if (!subCommand) {
-              throw new Error(
-                "SLASH_COMMAND_SUB_COMMAND_INVALID",
-                subGroup.name
-              );
-            }
-            postData = [
-              {
-                name: subGroup.name,
-                options: [
-                  {
-                    type: ApplicationCommandOptionTypes.SUB_COMMAND,
-                    name: subCommand.name,
-                    options: [
-                      {
-                        type: optionCommand.type,
-                        name: optionCommand.name,
-                        value,
-                        focused: true,
-                      },
-                    ],
-                  },
-                ],
-                type: ApplicationCommandOptionTypes.SUB_COMMAND_GROUP,
-              },
-            ];
-          } else if (subCommand) {
-            postData = [
-              {
-                name: subCommand.name,
-                options: [
-                  {
-                    type: optionCommand.type,
-                    name: optionCommand.name,
-                    value,
-                    focused: true,
-                  },
-                ],
-                type: ApplicationCommandOptionTypes.SUB_COMMAND,
-              },
-            ];
-          } else {
-            postData = [
-              {
-                focused: true,
-                name: optionCommand.name,
-                type: optionCommand.type,
-                value,
-              },
-            ];
-          }
-          const body = createPostData(
-            client,
-            true,
-            applicationId,
-            nonce,
-            guildId,
-            Boolean(command.guild_id),
-            channelId,
-            command.version,
-            command.id,
-            command.name_default || command.name,
-            command.type,
-            postData,
-            []
-          );
-          await client.api.interactions.post({
-            data: body,
-          });
-          data.value = await awaitAutocomplete(client, nonce, value);
-        } else {
-          data.value = value;
-        }
-      }
-    }
-    optionFormat.push(data);
-  }
-  return {
-    attachments,
-    optionFormat,
-  };
-}
-
-function awaitAutocomplete(
-  client: Client,
-  nonce: Snowflake,
-  defaultValue: unknown
-): Promise<unknown> {
-  return new Promise<unknown>((resolve) => {
-    const handler = (packet: unknown) => {
-      if (!isInteractionPacket(packet)) {
-        return;
-      }
-      const payload = packet.d;
-      if (!payload || payload.nonce !== nonce) {
-        return;
-      }
-      clearTimeout(timeout);
-      client.removeListener(Events.UNHANDLED_PACKET, handler);
-      client.decrementMaxListeners();
-      if (payload.choices && payload.choices.length >= 1) {
-        resolve(payload.choices[0]?.value);
-      } else {
-        resolve(defaultValue);
-      }
-    };
-    const timeout = setTimeout(() => {
-      client.removeListener(Events.UNHANDLED_PACKET, handler);
-      client.decrementMaxListeners();
-      resolve(defaultValue);
-    }, 5000).unref();
-    client.incrementMaxListeners();
-    client.on(Events.UNHANDLED_PACKET, handler);
-  });
-}
-
-function createPostData(
-  client: Client,
-  isAutocomplete = false,
-  applicationId: Snowflake,
-  nonce: Snowflake,
-  guildId: Snowflake | undefined,
-  isGuildCommand: boolean,
-  channelId: Snowflake,
-  commandVersion: Snowflake,
-  commandId: Snowflake,
-  commandName: string,
-  commandType: number,
-  postData: SlashCommandOptionData[],
-  attachments: SlashCommandAttachment[] = []
-): InteractionPostData {
-  const data: InteractionPostData = {
-    application_id: applicationId,
-    channel_id: channelId,
-    data: {
-      attachments: attachments,
-      id: commandId,
-      name: commandName,
-      options: postData,
-      type: commandType,
-      version: commandVersion,
-    },
-    guild_id: guildId,
-    nonce,
-    session_id: client.sessionId,
-    type: isAutocomplete
-      ? InteractionTypes.APPLICATION_COMMAND_AUTOCOMPLETE
-      : InteractionTypes.APPLICATION_COMMAND,
-  };
-  if (isGuildCommand) {
-    data.data.guild_id = guildId;
-  }
-  return data;
-}

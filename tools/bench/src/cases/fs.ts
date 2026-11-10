@@ -1,5 +1,5 @@
 import { copyFile, readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import path from "node:path";
 
 import type { BenchCase, BenchContext } from "../types";
 
@@ -8,15 +8,15 @@ const SIXTY_FOUR_K = 64 * 1024;
 const ONE_M = 1024 * 1024;
 
 export function createFsCases(ctx: BenchContext): BenchCase[] {
-  const oneK = join(ctx.dir, "one-k.bin");
-  const sixtyFourK = join(ctx.dir, "sixty-four-k.bin");
-  const oneM = join(ctx.dir, "one-m.bin");
-  const nodeWriteOneK = join(ctx.dir, "node-write-one-k.bin");
-  const bunWriteOneK = join(ctx.dir, "bun-write-one-k.bin");
-  const nodeWriteOneM = join(ctx.dir, "node-write-one-m.bin");
-  const bunWriteOneM = join(ctx.dir, "bun-write-one-m.bin");
-  const nodeCopy = join(ctx.dir, "node-copy.bin");
-  const bunCopy = join(ctx.dir, "bun-copy.bin");
+  const oneK = path.join(ctx.dir, "one-k.bin");
+  const sixtyFourK = path.join(ctx.dir, "sixty-four-k.bin");
+  const oneM = path.join(ctx.dir, "one-m.bin");
+  const nodeWriteOneK = path.join(ctx.dir, "node-write-one-k.bin");
+  const bunWriteOneK = path.join(ctx.dir, "bun-write-one-k.bin");
+  const nodeWriteOneM = path.join(ctx.dir, "node-write-one-m.bin");
+  const bunWriteOneM = path.join(ctx.dir, "bun-write-one-m.bin");
+  const nodeCopy = path.join(ctx.dir, "node-copy.bin");
+  const bunCopy = path.join(ctx.dir, "bun-copy.bin");
   const oneKWrite = Buffer.alloc(ONE_K, 1);
   const oneMWrite = Buffer.alloc(ONE_M, 1);
 

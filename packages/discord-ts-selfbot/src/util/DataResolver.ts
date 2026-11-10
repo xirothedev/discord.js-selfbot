@@ -9,11 +9,11 @@ const { Error: DiscordError, TypeError } = _errorsModule;
 import Invite from "../structures/Invite";
 import GuildTemplate from "../structures/GuildTemplate";
 
-("use strict");
-
 class DataResolver extends null {
   static resolveCode(data: unknown, regex: RegExp) {
-    return new RegExp(regex.source).exec(String(data))?.[1] ?? (data as string);
+    return (
+      new RegExp(regex.source, "u").exec(String(data))?.[1] ?? (data as string)
+    );
   }
 
   static resolveInviteCode(data: unknown) {
@@ -47,27 +47,20 @@ class DataResolver extends null {
       return resource;
     }
     if (typeof resource === "string") {
-      if (/^https?:\/\//.test(resource)) {
+      if (/^https?:\/\//u.test(resource)) {
         const res = await fetch(resource);
         if (res.ok) {
           return res.body;
-        } else {
-          throw new DiscordError("FILE_NOT_FOUND", resource);
         }
+        throw new DiscordError("FILE_NOT_FOUND", resource);
       }
 
-      return new Promise<stream.Readable>((resolve, reject) => {
-        const file = path.resolve(resource);
-        fs.stat(file, (err: NodeJS.ErrnoException | null, stats: fs.Stats) => {
-          if (err) {
-            return reject(err);
-          }
-          if (!stats.isFile()) {
-            return reject(new DiscordError("FILE_NOT_FOUND", file));
-          }
-          return resolve(fs.createReadStream(file));
-        });
-      });
+      const file = path.resolve(resource);
+      const stats = await fs.promises.stat(file);
+      if (!stats.isFile()) {
+        throw new DiscordError("FILE_NOT_FOUND", file);
+      }
+      return fs.createReadStream(file);
     }
 
     throw new TypeError("REQ_RESOURCE_TYPE");

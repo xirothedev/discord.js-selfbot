@@ -135,12 +135,12 @@ class GuildBanManager extends CachedManager<GuildBan> {
         query: options,
       });
 
-    return data.reduce(
-      (col, ban) => col.set(ban.user.id, this._add(ban, options.cache)),
-      new Collection<Snowflake, GuildBan>()
-    );
+    const bans = new Collection<Snowflake, GuildBan>();
+    for (const ban of data) {
+      bans.set(ban.user.id, this._add(ban, options.cache));
+    }
+    return bans;
   }
-
   async create(
     user: UserResolvableSource,
     options: BanOptions = {}
@@ -168,9 +168,9 @@ class GuildBanManager extends CachedManager<GuildBan> {
       .put({
         data: {
           delete_message_seconds:
-            options.deleteMessageSeconds !== undefined
-              ? options.deleteMessageSeconds
-              : (options.days ?? 0) * 24 * 60 * 60,
+            options.deleteMessageSeconds === undefined
+              ? (options.days ?? 0) * 24 * 60 * 60
+              : options.deleteMessageSeconds,
         },
         reason: options.reason,
       });

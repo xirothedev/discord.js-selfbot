@@ -8,7 +8,6 @@ const { Events, ThreadChannelTypes, SweeperKeys } = _ConstantsModule;
 import _DJSErrorModule from "../errors/DJSError";
 
 const { TypeError } = _DJSErrorModule;
-("use strict");
 
 type SweepFilterFn = (
   value: unknown,
@@ -85,6 +84,10 @@ class Sweepers {
             clonedOptions.filter = Sweepers.archivedThreadSweepFilter(
               clonedOptions.lifetime as number
             );
+            break;
+          }
+          default: {
+            break;
           }
         }
       }
@@ -310,18 +313,22 @@ class Sweepers {
 
   static expiredInviteSweepFilter(lifetime = 14_400) {
     return this.filterByLifetime({
-      getComparisonTimestamp: (i: unknown) =>
-        (i as { expiresTimestamp?: number } | null)?.expiresTimestamp,
+      getComparisonTimestamp: (invite: unknown) =>
+        (invite as { expiresTimestamp?: number } | null)?.expiresTimestamp,
       lifetime,
     });
   }
 
   static outdatedMessageSweepFilter(lifetime = 3600) {
     return this.filterByLifetime({
-      getComparisonTimestamp: (m: unknown) =>
-        (m as { editedTimestamp?: number; createdTimestamp?: number } | null)
-          ?.editedTimestamp ??
-        (m as { createdTimestamp?: number } | null)?.createdTimestamp,
+      getComparisonTimestamp: (message: unknown) =>
+        (
+          message as {
+            editedTimestamp?: number;
+            createdTimestamp?: number;
+          } | null
+        )?.editedTimestamp ??
+        (message as { createdTimestamp?: number } | null)?.createdTimestamp,
       lifetime,
     });
   }

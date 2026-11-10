@@ -55,16 +55,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Layout({ children }: LayoutProps<"/">) {
-  return (
-    <html
-      lang="en"
-      className={`${geist.variable} ${mono.variable}`}
-      suppressHydrationWarning
-    >
-      <body className="flex min-h-screen flex-col">
-        <Provider>{children}</Provider>
-      </body>
-    </html>
-  );
-}
+const Layout = ({ children }: LayoutProps<"/">) => (
+  <html
+    lang="en"
+    className={`${geist.variable} ${mono.variable}`}
+    suppressHydrationWarning
+  >
+    <body className="flex min-h-screen flex-col">
+      <Provider>{children}</Provider>
+    </body>
+  </html>
+);
+
+export default Layout;

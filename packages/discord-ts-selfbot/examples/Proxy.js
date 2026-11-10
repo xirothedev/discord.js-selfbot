@@ -1,7 +1,5 @@
-"use strict";
-
-const Discord = require("../src/index");
-const { ProxyAgent } = require("proxy-agent");
+import { ProxyAgent } from "proxy-agent";
+import * as Discord from "../src/index";
 
 const proxy = new ProxyAgent({
   getProxyForUrl() {
@@ -19,7 +17,8 @@ const client = new Discord.Client({
     // or { uri: 'my.proxy.server' }
   },
   ws: {
-    agent: proxy, // WebSocket Proxy
+    // WebSocket Proxy
+    agent: proxy,
     // Do not use the `proxy` option if you don't need to use the WebSocket Proxy
   },
 });

@@ -3,7 +3,7 @@ import BitField from "./BitField";
 class MessageFlags extends BitField {}
 
 MessageFlags.FLAGS = {
-  CROSSPOSTED: 1 << 0,
+  CROSSPOSTED: 1,
   EPHEMERAL: 1 << 6,
   FAILED_TO_MENTION_SOME_ROLES_IN_THREAD: 1 << 8,
   GUILD_FEED_HIDDEN: 1 << 9,

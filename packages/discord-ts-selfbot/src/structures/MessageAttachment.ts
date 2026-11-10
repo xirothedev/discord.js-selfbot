@@ -1,4 +1,5 @@
 import type { Stream } from "node:stream";
+import { patchValue } from "./Base";
 import AttachmentFlags from "../util/AttachmentFlags";
 import Util from "../util/Util";
 import type { Snowflake } from "discord-api-types/v10";
@@ -71,69 +72,25 @@ class MessageAttachment {
   }
 
   _patch(data: MessageAttachmentPatch) {
-    this.id = data.id!;
-
-    if ("size" in data) {
-      this.size = data.size!;
+    if (data.id !== undefined) {
+      this.id = data.id;
     }
 
-    if ("url" in data) {
-      this.url = data.url!;
-    }
-
-    if ("proxy_url" in data) {
-      this.proxyURL = data.proxy_url!;
-    }
-
-    if ("height" in data) {
-      this.height = data.height ?? null;
-    } else {
-      this.height ??= null;
-    }
-
-    if ("width" in data) {
-      this.width = data.width ?? null;
-    } else {
-      this.width ??= null;
-    }
-
-    if ("content_type" in data) {
-      this.contentType = data.content_type ?? null;
-    } else {
-      this.contentType ??= null;
-    }
-
-    if ("description" in data) {
-      this.description = data.description ?? null;
-    } else {
-      this.description ??= null;
-    }
-
-    this.ephemeral = data.ephemeral ?? false;
-
-    if ("duration_secs" in data) {
-      this.duration = data.duration_secs ?? null;
-    } else {
-      this.duration ??= null;
-    }
-
-    if ("waveform" in data) {
-      this.waveform = data.waveform ?? null;
-    } else {
-      this.waveform ??= null;
-    }
-
-    if ("flags" in data) {
-      this.flags = new AttachmentFlags(data.flags).freeze();
-    } else {
-      this.flags ??= new AttachmentFlags().freeze();
-    }
-
-    if ("title" in data) {
-      this.title = data.title ?? null;
-    } else {
-      this.title ??= null;
-    }
+    this.size = patchValue(data.size, this.size);
+    this.url = patchValue(data.url, this.url);
+    this.proxyURL = patchValue(data.proxy_url, this.proxyURL);
+    this.height = patchValue(data.height, this.height);
+    this.width = patchValue(data.width, this.width);
+    this.contentType = patchValue(data.content_type, this.contentType);
+    this.description = patchValue(data.description, this.description);
+    this.ephemeral = patchValue(data.ephemeral, this.ephemeral, false);
+    this.duration = patchValue(data.duration_secs, this.duration);
+    this.waveform = patchValue(data.waveform, this.waveform);
+    this.flags =
+      "flags" in data
+        ? new AttachmentFlags(data.flags).freeze()
+        : (this.flags ?? new AttachmentFlags().freeze());
+    this.title = patchValue(data.title, this.title);
   }
 
   get spoiler() {

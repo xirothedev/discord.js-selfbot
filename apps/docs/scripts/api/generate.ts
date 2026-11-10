@@ -1,49 +1,26 @@
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  readdirSync,
-  rmSync,
-  statSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { frontmatterDescription, renderSummary } from "./comment";
+import { collectReflectionNames } from "./collect-names";
+import { frontmatterDescription } from "./comment";
 import { enrichClass, enrichType, loadApiStore } from "./enrich";
 import type { DocgenClass, DocgenType } from "./enrich";
 import { AREA_ORDER, areaFor, parseIndexExports, slugify } from "./exports";
-import { renderClassPage } from "./render-class";
+import { compareOutputs, meta, writeOutputs } from "./output-files";
+import type { GenerateResult } from "./output-files";
 import { renderApiIndex, renderAreaIndex } from "./render-index";
-import {
-  renderEnumMembersPage,
-  renderFunctionPage,
-  renderVariablePage,
-} from "./render-misc";
+import { renderPublicPage } from "./render-public-page";
 import { renderTypingsPage } from "./render-typings";
 import { reflectionsByName, runTypeDoc, sourceUrlFor } from "./typedoc";
 import { Kind } from "./types";
-import type {
-  PublicExport,
-  Reflection,
-  Signature,
-  TypeNode,
-  TypeParameter,
-} from "./types";
+import type { Reflection } from "./types";
 import { TYPINGS_GROUPS, typingsGroupFor } from "./typings-groups";
 import type { TypingsGroupId } from "./typings-groups";
 
 const docsDir = path.resolve(import.meta.dir, "../..");
 const repoRoot = path.resolve(docsDir, "../..");
 const packageDir = path.join(repoRoot, "packages/discord-ts-selfbot");
-const apiDir = path.join(docsDir, "content/docs/api");
-
-interface GenerateResult {
-  ok: boolean;
-  files: string[];
-}
 
 interface PageItem {
   title: string;
@@ -51,100 +28,9 @@ interface PageItem {
   description?: string;
 }
 
-interface ReflectionLike {
-  type?: TypeNode;
-  children?: Reflection[];
-  signatures?: Signature[];
-  typeParameters?: TypeParameter[];
-  extendedTypes?: TypeNode[];
-  implementedTypes?: TypeNode[];
-  getSignature?: Signature;
-  setSignature?: Signature;
-}
-
-function meta(title: string, pages: string[]): string {
-  return `${JSON.stringify({ pages, title }, null, 2)}\n`;
-}
-
-function collectTypeNode(node: TypeNode | undefined, out: Set<string>): void {
-  if (!node) {
-    return;
-  }
-
-  if (node.type === "reference" && node.name) {
-    out.add(node.name);
-  }
-  for (const type of node.types ?? []) {
-    collectTypeNode(type, out);
-  }
-  for (const type of node.typeArguments ?? []) {
-    collectTypeNode(type, out);
-  }
-  for (const type of node.elements ?? []) {
-    collectTypeNode(type, out);
-  }
-  collectTypeNode(node.elementType, out);
-  collectTypeNode(node.objectType, out);
-  collectTypeNode(node.indexType, out);
-  collectTypeNode(node.queryType, out);
-  collectTypeNode(node.checkType, out);
-  collectTypeNode(node.extendsType, out);
-  collectTypeNode(node.trueType, out);
-  collectTypeNode(node.falseType, out);
-
-  if (node.declaration) {
-    collectReflectionNames(node.declaration, out);
-  }
-}
-
-function collectReflectionNames(
-  reflection: ReflectionLike,
-  out: Set<string>
-): void {
-  collectTypeNode(reflection.type, out);
-
-  for (const child of reflection.children ?? []) {
-    collectReflectionNames(child, out);
-  }
-  for (const signature of reflection.signatures ?? []) {
-    collectTypeNode(signature.type, out);
-    for (const parameter of signature.parameters ?? []) {
-      collectTypeNode(parameter.type, out);
-    }
-    for (const typeParameter of signature.typeParameters ?? []) {
-      collectTypeNode(typeParameter.type, out);
-    }
-  }
-  for (const typeParameter of reflection.typeParameters ?? []) {
-    collectTypeNode(typeParameter.type, out);
-  }
-  for (const type of reflection.extendedTypes ?? []) {
-    collectTypeNode(type, out);
-  }
-  for (const type of reflection.implementedTypes ?? []) {
-    collectTypeNode(type, out);
-  }
-  if (reflection.getSignature) {
-    collectReflectionNames(reflection.getSignature, out);
-  }
-  if (reflection.setSignature) {
-    collectReflectionNames(reflection.setSignature, out);
-  }
-}
-
-function enumMembers(
-  reflection: Reflection | undefined
-): Reflection[] | undefined {
-  if (!reflection || reflection.kind !== Kind.Variable) {
-    return undefined;
-  }
-  const members = reflection.type?.declaration?.children;
-  if (!members?.length) {
-    return undefined;
-  }
-  return members.every((member) => member.type?.type === "literal")
-    ? members
-    : undefined;
+interface TypingsSection {
+  items: PageItem[];
+  count: number;
 }
 
 function sourceUrlForExport(exportedPath: string): string {
@@ -159,69 +45,17 @@ function sourceUrlForEntry(
   entry: DocgenClass | DocgenType | undefined,
   exportedPath: string
 ): string {
-  const meta = entry?.meta;
-  if (!meta?.file) {
+  const entryMeta = entry?.meta;
+  if (!entryMeta?.file) {
     return sourceUrlForExport(exportedPath);
   }
-  const full = [meta.path, meta.file]
+  const full = [entryMeta.path, entryMeta.file]
     .filter(Boolean)
     .join("/")
-    .replace(/\.js$/, ".ts");
+    .replace(/\.js$/u, ".ts");
   return `https://github.com/xirothedev/discord.js-selfbot/blob/main/packages/discord-ts-selfbot/${full}#L${
-    meta.line ?? 1
+    entryMeta.line ?? 1
   }`;
-}
-
-function renderPublicPage(input: {
-  exported: PublicExport;
-  typings?: Reflection;
-  sourceUrl?: string;
-  docgen?: DocgenClass | DocgenType;
-  privateMembers?: string[];
-}): string | undefined {
-  const { typings } = input;
-  if (!typings) {
-    return undefined;
-  }
-
-  const pageInput = {
-    name: input.exported.name,
-    sourceUrl: input.sourceUrl,
-    typings,
-  };
-
-  const members = enumMembers(typings);
-  if (members) {
-    return renderEnumMembersPage({
-      description: renderSummary(typings.comment),
-      members,
-      name: input.exported.name,
-      sourceUrl: input.sourceUrl,
-    });
-  }
-
-  if (typings.kind === Kind.Class) {
-    return renderClassPage({
-      events: (input.docgen as DocgenClass | undefined)?.events,
-      name: input.exported.name,
-      privateMembers: input.privateMembers,
-      sourceUrl: input.sourceUrl,
-      typings,
-    });
-  }
-
-  if (typings.kind === Kind.Interface || typings.kind === Kind.TypeAlias) {
-    return renderTypingsPage({
-      reflections: [typings],
-      sourceUrl: input.sourceUrl,
-      title: input.exported.name,
-    });
-  }
-
-  if (typings.signatures?.length) {
-    return renderFunctionPage(pageInput);
-  }
-  return renderVariablePage(pageInput);
 }
 
 function isTypingsKind(kind: number): boolean {
@@ -233,58 +67,54 @@ function isTypingsKind(kind: number): boolean {
   );
 }
 
-function collectFiles(root: string, current = root): Map<string, string> {
-  const files = new Map<string, string>();
-  if (!existsSync(current)) {
-    return files;
-  }
-
-  for (const entry of readdirSync(current)) {
-    const full = path.join(current, entry);
-    if (statSync(full).isDirectory()) {
-      for (const [file, content] of collectFiles(root, full)) {
-        files.set(file, content);
-      }
-    } else {
-      files.set(path.relative(root, full), readFileSync(full, "utf-8"));
-    }
-  }
-  return files;
-}
-
-function compareOutputs(outputs: Map<string, string>): GenerateResult {
-  const existing = collectFiles(apiDir);
-  const missing = [...outputs.keys()].filter((file) => !existing.has(file));
-  const extra = [...existing.keys()].filter((file) => !outputs.has(file));
-  const changed = [...outputs.keys()].filter(
-    (file) => existing.has(file) && existing.get(file) !== outputs.get(file)
+function addTypingsGroups(input: {
+  typingsReflections: Map<string, Reflection>;
+  publicNames: Set<string>;
+  referencedNames: Set<string>;
+  store: Map<string, DocgenClass | DocgenType>;
+  outputs: Map<string, string>;
+}): TypingsSection {
+  const typingsOnly = [...input.typingsReflections.values()].filter(
+    (reflection) =>
+      !input.publicNames.has(reflection.name) &&
+      input.referencedNames.has(reflection.name) &&
+      isTypingsKind(reflection.kind)
   );
-
-  if (missing.length || extra.length || changed.length) {
-    console.error("API reference is stale.");
-    if (missing.length) {
-      console.error(`Missing: ${missing.slice(0, 10).join(", ")}`);
-    }
-    if (extra.length) {
-      console.error(`Extra: ${extra.slice(0, 10).join(", ")}`);
-    }
-    if (changed.length) {
-      console.error(`Changed: ${changed.slice(0, 10).join(", ")}`);
-    }
-    return { files: [...outputs.keys()], ok: false };
+  for (const reflection of typingsOnly) {
+    enrichType(reflection, input.store.get(reflection.name));
   }
 
-  return { files: [...outputs.keys()], ok: true };
-}
-
-function writeOutputs(outputs: Map<string, string>): GenerateResult {
-  rmSync(apiDir, { force: true, recursive: true });
-  for (const [file, content] of outputs) {
-    const full = path.join(docsDir, "content/docs", file);
-    mkdirSync(path.dirname(full), { recursive: true });
-    writeFileSync(full, content.endsWith("\n") ? content : `${content}\n`);
+  const typingsGroups = new Map<TypingsGroupId, Reflection[]>();
+  for (const reflection of typingsOnly) {
+    const group = typingsGroupFor(reflection.name);
+    typingsGroups.set(group, [...(typingsGroups.get(group) ?? []), reflection]);
   }
-  return { files: [...outputs.keys()], ok: true };
+
+  const items: PageItem[] = [];
+  let count = 0;
+  for (const group of TYPINGS_GROUPS) {
+    const reflections = typingsGroups.get(group.id);
+    if (!reflections?.length) {
+      continue;
+    }
+
+    input.outputs.set(
+      `api/typings/${group.id}.mdx`,
+      renderTypingsPage({
+        reflections,
+        sourceUrl: sourceUrlFor(reflections[0]),
+        title: group.title,
+      })
+    );
+    items.push({
+      description: `${reflections.length} public types.`,
+      href: `/docs/api/typings/${group.id}`,
+      title: group.title,
+    });
+    count += reflections.length;
+  }
+
+  return { count, items };
 }
 
 export function generateApi(options: { check?: boolean } = {}): GenerateResult {
@@ -365,55 +195,23 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
     collectReflectionNames(reflection, referencedNames);
   }
 
-  const typingsOnly = [...typingsReflections.values()].filter(
-    (reflection) =>
-      !publicNames.has(reflection.name) &&
-      referencedNames.has(reflection.name) &&
-      isTypingsKind(reflection.kind)
-  );
-  for (const reflection of typingsOnly) {
-    enrichType(reflection, store.get(reflection.name));
-  }
+  const typingsSection = addTypingsGroups({
+    outputs,
+    publicNames,
+    referencedNames,
+    store,
+    typingsReflections,
+  });
 
-  const typingsGroups = new Map<TypingsGroupId, Reflection[]>();
-  for (const reflection of typingsOnly) {
-    const group = typingsGroupFor(reflection.name);
-    typingsGroups.set(group, [...(typingsGroups.get(group) ?? []), reflection]);
-  }
-
-  const typingsItems: PageItem[] = [];
-  let typingsCount = 0;
-  for (const group of TYPINGS_GROUPS) {
-    const reflections = typingsGroups.get(group.id);
-    if (!reflections?.length) {
-      continue;
-    }
-
-    outputs.set(
-      `api/typings/${group.id}.mdx`,
-      renderTypingsPage({
-        reflections,
-        sourceUrl: sourceUrlFor(reflections[0]),
-        title: group.title,
-      })
-    );
-    typingsItems.push({
-      description: `${reflections.length} public types.`,
-      href: `/docs/api/typings/${group.id}`,
-      title: group.title,
-    });
-    typingsCount += reflections.length;
-  }
-
-  if (typingsItems.length) {
-    areaItems.set("typings", typingsItems);
-    areaCounts.set("typings", typingsCount);
+  if (typingsSection.items.length) {
+    areaItems.set("typings", typingsSection.items);
+    areaCounts.set("typings", typingsSection.count);
     outputs.set(
       "api/typings/index.mdx",
       renderAreaIndex({
         description:
           "Public interfaces, type aliases, variables, and functions from typings/index.d.ts.",
-        items: typingsItems,
+        items: typingsSection.items,
         title: "Typings",
       })
     );
@@ -421,14 +219,14 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
       "api/typings/meta.json",
       meta("Typings", [
         "index",
-        ...typingsItems.map((item) => path.basename(item.href)),
+        ...typingsSection.items.map((item) => path.basename(item.href)),
       ])
     );
   }
 
   for (const [area, items] of areaItems) {
-    const sorted = [...items].toSorted((a, b) =>
-      a.title.localeCompare(b.title)
+    const sorted = [...items].toSorted((left, right) =>
+      left.title.localeCompare(right.title)
     );
     const areaMeta = AREA_ORDER.find((entry) => entry.id === area);
     outputs.set(

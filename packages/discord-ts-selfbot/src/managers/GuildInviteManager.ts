@@ -137,12 +137,12 @@ class GuildInviteManager extends CachedManager<Invite> {
     const data: RawInviteData[] = await this.client.api
       .guilds(this.guild.id)
       .invites.get();
-    return data.reduce(
-      (col, invite) => col.set(invite.code, this._add(invite, cache)),
-      new Collection<string, Invite>()
-    );
+    const invites = new Collection<string, Invite>();
+    for (const invite of data) {
+      invites.set(invite.code, this._add(invite, cache));
+    }
+    return invites;
   }
-
   async _fetchChannelMany(
     channelId: Snowflake,
     cache?: boolean
@@ -150,10 +150,11 @@ class GuildInviteManager extends CachedManager<Invite> {
     const data: RawInviteData[] = await this.client.api
       .channels(channelId)
       .invites.get();
-    return data.reduce(
-      (col, invite) => col.set(invite.code, this._add(invite, cache)),
-      new Collection<string, Invite>()
-    );
+    const invites = new Collection<string, Invite>();
+    for (const invite of data) {
+      invites.set(invite.code, this._add(invite, cache));
+    }
+    return invites;
   }
 
   async create(
@@ -175,20 +176,19 @@ class GuildInviteManager extends CachedManager<Invite> {
     }
 
     const target = targetApplication;
-    const targetApplicationId =
-      typeof target === "string"
-        ? target
-        : target &&
-            typeof target === "object" &&
-            "id" in target &&
-            typeof target.id === "string"
-          ? target.id
-          : target &&
-              typeof target === "object" &&
-              "applicationId" in target &&
-              typeof target.applicationId === "string"
-            ? target.applicationId
-            : undefined;
+    let targetApplicationId: string | undefined;
+    if (typeof target === "string") {
+      targetApplicationId = target;
+    } else if (target && typeof target === "object") {
+      if ("id" in target && typeof target.id === "string") {
+        targetApplicationId = target.id;
+      } else if (
+        "applicationId" in target &&
+        typeof target.applicationId === "string"
+      ) {
+        targetApplicationId = target.applicationId;
+      }
+    }
 
     const invite = await this.client.api
       .channels(id)

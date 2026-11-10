@@ -6,7 +6,7 @@ import {
 } from "@discord-ts-selfbot/test-harness";
 
 import { DMChannel, GroupDMChannel, Client } from "../src/index";
-import { waitForEvent } from "./helpers";
+import { gatewayPacket, waitForEvent } from "./helpers";
 
 const TEST_USER_ID = "900000000000000101";
 const FRIEND_USER_ID = "900000000000000102";
@@ -166,17 +166,18 @@ test("DMChannel#cancelMessageRequest deletes through the recipients route", asyn
 test("CALL_CREATE emits callCreate with a CallState for the DM channel", async () => {
   const callPromise = waitForEvent(client, "callCreate");
 
-  fake.sendGatewayPacket({
-    d: {
-      channel_id: DM_CHANNEL_ID,
-      region: "us-west",
-      ringing: [],
-      voice_states: [],
-    },
-    op: 0,
-    s: 201,
-    t: "CALL_CREATE",
-  });
+  fake.sendGatewayPacket(
+    gatewayPacket(
+      {
+        channel_id: DM_CHANNEL_ID,
+        region: "us-west",
+        ringing: [],
+        voice_states: [],
+      },
+      201,
+      "CALL_CREATE"
+    )
+  );
 
   const call = await callPromise;
   expect(call.channelId).toBe(DM_CHANNEL_ID);
@@ -188,17 +189,18 @@ test("CALL_CREATE emits callCreate with a CallState for the DM channel", async (
 test("CALL_UPDATE emits callUpdate and patches region and ringing users", async () => {
   const callPromise = waitForEvent(client, "callUpdate");
 
-  fake.sendGatewayPacket({
-    d: {
-      channel_id: DM_CHANNEL_ID,
-      region: "eu-central",
-      ringing: [FRIEND_USER_ID],
-      voice_states: [],
-    },
-    op: 0,
-    s: 202,
-    t: "CALL_UPDATE",
-  });
+  fake.sendGatewayPacket(
+    gatewayPacket(
+      {
+        channel_id: DM_CHANNEL_ID,
+        region: "eu-central",
+        ringing: [FRIEND_USER_ID],
+        voice_states: [],
+      },
+      202,
+      "CALL_UPDATE"
+    )
+  );
 
   const call = await callPromise;
   expect(call.channelId).toBe(DM_CHANNEL_ID);
@@ -210,17 +212,18 @@ test("CALL_UPDATE emits callUpdate and patches region and ringing users", async 
 test("CALL_DELETE emits callDelete with the group DM channel state", async () => {
   const callPromise = waitForEvent(client, "callDelete");
 
-  fake.sendGatewayPacket({
-    d: {
-      channel_id: GROUP_DM_CHANNEL_ID,
-      region: "brazil",
-      ringing: [],
-      voice_states: [],
-    },
-    op: 0,
-    s: 203,
-    t: "CALL_DELETE",
-  });
+  fake.sendGatewayPacket(
+    gatewayPacket(
+      {
+        channel_id: GROUP_DM_CHANNEL_ID,
+        region: "brazil",
+        ringing: [],
+        voice_states: [],
+      },
+      203,
+      "CALL_DELETE"
+    )
+  );
 
   const call = await callPromise;
   expect(call.channelId).toBe(GROUP_DM_CHANNEL_ID);

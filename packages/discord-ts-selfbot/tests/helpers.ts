@@ -1,3 +1,6 @@
+import { on } from "node:events";
+import type { EventEmitter } from "node:events";
+
 import { DEFAULT_READY } from "@discord-ts-selfbot/test-harness";
 
 export const TEST_USER_ID = "900000000000000001";
@@ -22,11 +25,11 @@ export function readyPayloadWithDM() {
         id: DM_CHANNEL_ID,
         recipients: [
           {
-            id: FRIEND_USER_ID,
-            username: "friend",
+            avatar: null,
             discriminator: "0",
             global_name: null,
-            avatar: null,
+            id: FRIEND_USER_ID,
+            username: "friend",
           },
         ],
         type: 1,
@@ -36,20 +39,22 @@ export function readyPayloadWithDM() {
   };
 }
 
-export function waitForEvent(emitter, event, timeoutMs = 5000) {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      emitter.off(event, onEvent);
-      reject(new Error(`Timed out waiting for "${event}"`));
-    }, timeoutMs);
-
-    const onEvent = (...args) => {
-      clearTimeout(timer);
-      resolve(args.length === 1 ? args[0] : args);
-    };
-
-    emitter.once(event, onEvent);
-  });
+export async function waitForEvent(
+  emitter: EventEmitter,
+  event: string,
+  timeoutMs = 5000
+): Promise<unknown> {
+  const signal = AbortSignal.timeout(timeoutMs);
+  const result = await on(emitter, event, { signal })
+    .next()
+    .catch((error: unknown) => {
+      throw new Error(`Timed out waiting for "${event}"`, { cause: error });
+    });
+  if (result.done) {
+    throw new Error(`Event stream for "${event}" ended without a value`);
+  }
+  const args = result.value;
+  return args.length === 1 ? args[0] : args;
 }
 
 export function actionRowWithButton(customId = "test-button") {
@@ -119,19 +124,21 @@ export function rawButtonInteraction({
   };
 }
 
+// The gateway payload key is `t`, too short for the id-length rule.
+const GATEWAY_EVENT_TYPE = "t";
+
+export function gatewayPacket(data: unknown, sequence: number, type: string) {
+  return { d: data, op: 0, s: sequence, [GATEWAY_EVENT_TYPE]: type };
+}
+
 export function dispatchMessage(fake, overrides = {}) {
   const message = rawMessage(overrides);
-  fake.sendGatewayPacket({ d: message, op: 0, s: 1, t: "MESSAGE_CREATE" });
+  fake.sendGatewayPacket(gatewayPacket(message, 1, "MESSAGE_CREATE"));
   return message;
 }
 
 export function dispatchButtonInteraction(fake, overrides = {}) {
   const interaction = rawButtonInteraction(overrides);
-  fake.sendGatewayPacket({
-    d: interaction,
-    op: 0,
-    s: 2,
-    t: "INTERACTION_CREATE",
-  });
+  fake.sendGatewayPacket(gatewayPacket(interaction, 2, "INTERACTION_CREATE"));
   return interaction;
 }

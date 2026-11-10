@@ -84,7 +84,8 @@ class PermissionOverwriteManager extends CachedManager<PermissionOverwrites> {
     const userOrRoleId =
       this.channel.guild.roles.resolveId(userOrRole) ??
       this.client.users.resolveId(userOrRole);
-    let { type, reason } = overwriteOptions;
+    let { type } = overwriteOptions;
+    const { reason } = overwriteOptions;
     if (typeof type !== "number") {
       const resolved =
         this.channel.guild.roles.resolve(userOrRole) ??

@@ -10,9 +10,9 @@ class InviteGuild extends AnonymousGuild {
     super(client, data);
 
     this.welcomeScreen =
-      data.welcome_screen !== undefined
-        ? new WelcomeScreen(this, data.welcome_screen)
-        : null;
+      data.welcome_screen === undefined
+        ? null
+        : new WelcomeScreen(this, data.welcome_screen);
   }
 }
 

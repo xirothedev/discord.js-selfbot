@@ -91,10 +91,7 @@ export function mergeMembers(
   return [...members.values()];
 }
 
-export function mergeSignature(
-  source?: Signature,
-  typings?: Signature
-): MergedSignature {
+function mergeParameters(source?: Signature, typings?: Signature): Parameter[] {
   const byName = new Map<string, Parameter>();
 
   for (const parameter of source?.parameters ?? []) {
@@ -120,12 +117,19 @@ export function mergeSignature(
     }
   }
 
+  return order
+    .map((name) => byName.get(name))
+    .filter((parameter): parameter is Parameter => Boolean(parameter));
+}
+
+export function mergeSignature(
+  source?: Signature,
+  typings?: Signature
+): MergedSignature {
   return {
     comment: source?.comment ?? typings?.comment,
     name: source?.name ?? typings?.name ?? "",
-    parameters: order
-      .map((name) => byName.get(name))
-      .filter((parameter): parameter is Parameter => Boolean(parameter)),
+    parameters: mergeParameters(source, typings),
     returnType: typings?.type ?? source?.type,
     typeParameters: typings?.typeParameters ?? source?.typeParameters,
   };

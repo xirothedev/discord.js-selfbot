@@ -1,7 +1,9 @@
 import Action from "./Action";
-import type { GatewayPresenceUpdateDispatchData } from "discord-api-types/v10";
+import type {
+  GatewayPresenceUpdateDispatchData,
+  APIUser,
+} from "discord-api-types/v10";
 import _ConstantsModule from "../../util/Constants";
-import type { APIUser } from "discord-api-types/v10";
 
 const { Events } = _ConstantsModule;
 const { PartialTypes } = _ConstantsModule;
@@ -32,10 +34,8 @@ class PresenceUpdateAction extends Action {
       return;
     }
 
-    if (isUserData(data.user)) {
-      if (!user._equals(data.user)) {
-        this.client.actions.UserUpdate.handle(data.user);
-      }
+    if (isUserData(data.user) && !user._equals(data.user)) {
+      this.client.actions.UserUpdate.handle(data.user);
     }
 
     const guild = this.client.guilds.cache.get(data.guild_id);

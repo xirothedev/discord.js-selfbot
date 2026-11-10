@@ -34,11 +34,13 @@ class Poll extends Base {
       text: data.question.text ?? "",
     };
 
-    this.answers = data.answers.reduce<Collection<number, PollAnswerType>>(
-      (acc, answer) =>
-        acc.set(answer.answer_id, new PollAnswer(this.client, answer, this)),
-      new Collection<number, PollAnswerType>()
-    );
+    this.answers = new Collection<number, PollAnswerType>();
+    for (const answer of data.answers) {
+      this.answers.set(
+        answer.answer_id,
+        new PollAnswer(this.client, answer, this)
+      );
+    }
 
     this.expiresTimestamp = data.expiry ? Date.parse(data.expiry) : 0;
 

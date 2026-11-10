@@ -23,8 +23,8 @@ Please use the @dank074/discord-video-stream library for the best support.
 let counter = 0;
 
 interface StreamLike {
-  on(event: "finish", listener: () => void): unknown;
-  pipe(destination: unknown): unknown;
+  on: (event: "finish", listener: () => void) => unknown;
+  pipe: (destination: NodeJS.WritableStream) => unknown;
 }
 
 class UnixStream {

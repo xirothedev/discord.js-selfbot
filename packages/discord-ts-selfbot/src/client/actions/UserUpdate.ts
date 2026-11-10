@@ -9,7 +9,7 @@ class UserUpdateAction extends Action {
     const { client } = this;
 
     const newUser =
-      data.id === client.user!.id
+      data.id === client.user?.id
         ? client.user
         : client.users.cache.get(data.id);
     if (!newUser) {

@@ -14,14 +14,14 @@ function isCallData(value: unknown): value is CallData {
   return isRecord(value) && typeof value.channel_id === "string";
 }
 
-export default (
+export default function handleCallDelete(
   client: Client,
   packet: { d?: unknown },
   _shard: WebSocketShard
-) => {
+) {
   if (!isCallData(packet.d)) {
     return;
   }
   const data = packet.d;
   client.emit(Events.CALL_DELETE, new CallState(client, data));
-};
+}

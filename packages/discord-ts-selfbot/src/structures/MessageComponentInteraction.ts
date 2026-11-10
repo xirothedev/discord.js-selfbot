@@ -93,17 +93,36 @@ class MessageComponentInteraction<
   }
 
   // These are here only for documentation purposes - they are implemented by InteractionResponses
-  /* eslint-disable no-empty-function */
-  deferReply() {}
-  reply() {}
-  fetchReply() {}
-  editReply() {}
-  deleteReply() {}
-  followUp() {}
-  deferUpdate() {}
-  update() {}
-  showModal() {}
-  awaitModalSubmit() {}
+  deferReply() {
+    // Implemented by the subclass mixin.
+  }
+  reply() {
+    // Implemented by the subclass mixin.
+  }
+  fetchReply() {
+    // Implemented by the subclass mixin.
+  }
+  editReply() {
+    // Implemented by the subclass mixin.
+  }
+  deleteReply() {
+    // Implemented by the subclass mixin.
+  }
+  followUp() {
+    // Implemented by the subclass mixin.
+  }
+  deferUpdate() {
+    // Implemented by the subclass mixin.
+  }
+  update() {
+    // Implemented by the subclass mixin.
+  }
+  showModal() {
+    // Implemented by the subclass mixin.
+  }
+  awaitModalSubmit() {
+    // Implemented by the subclass mixin.
+  }
 }
 
 InteractionResponses.applyToClass(MessageComponentInteraction);

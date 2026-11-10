@@ -32,7 +32,9 @@ class UserManager extends CachedManager<User> {
 
   dmChannel(userId: Snowflake): DMChannel | null {
     const channel = this.client.channels.cache.find(
-      (c) => isDMChannel(c) && c.recipient.id === userId
+      (channelCandidate) =>
+        isDMChannel(channelCandidate) &&
+        channelCandidate.recipient.id === userId
     );
     return channel && isDMChannel(channel) ? channel : null;
   }
@@ -102,7 +104,8 @@ class UserManager extends CachedManager<User> {
   }
 
   async send(user: UserResolvableSource, options: SendOptions) {
-    return (await this.createDM(user)).send(options);
+    const dmChannel = await this.createDM(user);
+    return dmChannel.send(options);
   }
 
   resolve(user: unknown): User | null {

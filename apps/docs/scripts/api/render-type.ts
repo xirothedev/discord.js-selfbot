@@ -1,107 +1,24 @@
 import type { Parameter, Signature, TypeNode, TypeParameter } from "./types";
 
+const WRAPPED_TYPES = new Set([
+  "union",
+  "intersection",
+  "conditional",
+  "function",
+]);
+
+type Render = (node?: TypeNode) => string;
+
 function isTypeNode(value: unknown): value is TypeNode {
   return typeof value === "object" && value !== null && "type" in value;
 }
 
-function wrap(node: TypeNode | undefined): string {
-  const rendered = renderType(node);
-  return node &&
-    ["union", "intersection", "conditional", "function"].includes(node.type)
-    ? `(${rendered})`
-    : rendered;
+function wrap(node: TypeNode | undefined, render: Render): string {
+  const rendered = render(node);
+  return node && WRAPPED_TYPES.has(node.type) ? `(${rendered})` : rendered;
 }
 
-export function renderType(node?: TypeNode): string {
-  if (!node) {
-    return "unknown";
-  }
-
-  switch (node.type) {
-    case "intrinsic": {
-      return node.name ?? "unknown";
-    }
-    case "reference": {
-      const args = node.typeArguments?.length
-        ? `<${node.typeArguments.map((argument) => renderType(argument)).join(", ")}>`
-        : "";
-      return `${node.name ?? "unknown"}${args}`;
-    }
-    case "array": {
-      return `${wrap(node.elementType)}[]`;
-    }
-    case "union": {
-      return (
-        node.types?.map((type) => renderType(type)).join(" | ") ?? "unknown"
-      );
-    }
-    case "intersection": {
-      return (
-        node.types?.map((type) => renderType(type)).join(" & ") ?? "unknown"
-      );
-    }
-    case "literal": {
-      if (typeof node.value === "string") {
-        return JSON.stringify(node.value);
-      }
-      if (node.value === null) {
-        return "null";
-      }
-      return String(node.value ?? "unknown");
-    }
-    case "tuple": {
-      return `[${(node.elements ?? []).map((element) => renderType(element)).join(", ")}]`;
-    }
-    case "reflection": {
-      return renderReflectionType(node);
-    }
-    case "typeOperator": {
-      return `${node.operator ?? "keyof"} ${wrap(isTypeNode(node.target) ? node.target : undefined)}`;
-    }
-    case "indexedAccess": {
-      return `${renderType(node.objectType)}[${renderType(node.indexType)}]`;
-    }
-    case "query": {
-      return `typeof ${renderType(node.queryType)}`;
-    }
-    case "conditional": {
-      return `${renderType(node.checkType)} extends ${renderType(node.extendsType)} ? ${renderType(
-        node.trueType
-      )} : ${renderType(node.falseType)}`;
-    }
-    case "mapped": {
-      return node.name
-        ? `{ [${node.name} in ...]: ... }`
-        : "Record<string, unknown>";
-    }
-    case "templateLiteral": {
-      return "`${string}`";
-    }
-    case "optional": {
-      return `${renderType(node.elementType)}?`;
-    }
-    case "rest": {
-      return `...${renderType(node.elementType)}`;
-    }
-    case "namedTupleMember": {
-      return `${node.name ?? "value"}: ${renderType(node.elementType)}`;
-    }
-    case "inferred": {
-      return `infer ${node.name ?? "T"}`;
-    }
-    case "typeParameter": {
-      return node.name ?? "T";
-    }
-    case "unknown": {
-      return "unknown";
-    }
-    default: {
-      return node.name ?? "unknown";
-    }
-  }
-}
-
-function renderReflectionType(node: TypeNode): string {
+function renderReflectionType(node: TypeNode, render: Render): string {
   const children = node.declaration?.children;
   if (!children?.length) {
     return "unknown";
@@ -111,10 +28,66 @@ function renderReflectionType(node: TypeNode): string {
     .filter((child) => child.name !== "__call" && child.name !== "__construct")
     .map(
       (child) =>
-        `${child.name}${child.flags?.isOptional ? "?" : ""}: ${renderType(child.type)}`
+        `${child.name}${child.flags?.isOptional ? "?" : ""}: ${render(child.type)}`
     );
 
   return fields.length ? `{ ${fields.join("; ")} }` : "unknown";
+}
+
+type Renderer = (node: TypeNode, render: Render) => string;
+
+const RENDERERS: Partial<Record<string, Renderer>> = {
+  array: (node, render) => `${wrap(node.elementType, render)}[]`,
+  conditional: (node, render) =>
+    `${render(node.checkType)} extends ${render(node.extendsType)} ? ${render(
+      node.trueType
+    )} : ${render(node.falseType)}`,
+  indexedAccess: (node, render) =>
+    `${render(node.objectType)}[${render(node.indexType)}]`,
+  inferred: (node) => `infer ${node.name ?? "T"}`,
+  intersection: (node, render) =>
+    node.types?.map((type) => render(type)).join(" & ") ?? "unknown",
+  intrinsic: (node) => node.name ?? "unknown",
+  literal: (node) => {
+    if (typeof node.value === "string") {
+      return JSON.stringify(node.value);
+    }
+    if (node.value === null) {
+      return "null";
+    }
+    return String(node.value ?? "unknown");
+  },
+  mapped: (node) =>
+    node.name ? `{ [${node.name} in ...]: ... }` : "Record<string, unknown>",
+  namedTupleMember: (node, render) =>
+    `${node.name ?? "value"}: ${render(node.elementType)}`,
+  optional: (node, render) => `${render(node.elementType)}?`,
+  query: (node, render) => `typeof ${render(node.queryType)}`,
+  reference: (node, render) => {
+    const args = node.typeArguments?.length
+      ? `<${node.typeArguments.map((argument) => render(argument)).join(", ")}>`
+      : "";
+    return `${node.name ?? "unknown"}${args}`;
+  },
+  reflection: (node, render) => renderReflectionType(node, render),
+  rest: (node, render) => `...${render(node.elementType)}`,
+  templateLiteral: () => `\`\${string}\``,
+  tuple: (node, render) =>
+    `[${(node.elements ?? []).map((element) => render(element)).join(", ")}]`,
+  typeOperator: (node, render) =>
+    `${node.operator ?? "keyof"} ${wrap(isTypeNode(node.target) ? node.target : undefined, render)}`,
+  typeParameter: (node) => node.name ?? "T",
+  union: (node, render) =>
+    node.types?.map((type) => render(type)).join(" | ") ?? "unknown",
+  unknown: () => "unknown",
+};
+
+export function renderType(node?: TypeNode): string {
+  if (!node) {
+    return "unknown";
+  }
+  const renderer = RENDERERS[node.type];
+  return renderer ? renderer(node, renderType) : (node.name ?? "unknown");
 }
 
 export function renderTypeParameters(parameters?: TypeParameter[]): string {

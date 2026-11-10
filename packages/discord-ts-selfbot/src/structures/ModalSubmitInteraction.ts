@@ -73,15 +73,30 @@ class ModalSubmitInteraction<
   }
 
   // These are here only for documentation purposes - they are implemented by InteractionResponses
-  /* eslint-disable no-empty-function */
-  deferReply() {}
-  reply() {}
-  fetchReply() {}
-  editReply() {}
-  deleteReply() {}
-  followUp() {}
-  update() {}
-  deferUpdate() {}
+  deferReply() {
+    // Implemented by the subclass mixin.
+  }
+  reply() {
+    // Implemented by the subclass mixin.
+  }
+  fetchReply() {
+    // Implemented by the subclass mixin.
+  }
+  editReply() {
+    // Implemented by the subclass mixin.
+  }
+  deleteReply() {
+    // Implemented by the subclass mixin.
+  }
+  followUp() {
+    // Implemented by the subclass mixin.
+  }
+  update() {
+    // Implemented by the subclass mixin.
+  }
+  deferUpdate() {
+    // Implemented by the subclass mixin.
+  }
 }
 
 InteractionResponses.applyToClass(ModalSubmitInteraction, [

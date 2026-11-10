@@ -4,10 +4,12 @@ import BaseMessageComponent, {
   readComponentBoolean,
   readComponentNumber,
 } from "./BaseMessageComponent";
-import type { ContainerComponentSource } from "./BaseMessageComponent";
+import type {
+  ContainerComponentSource,
+  MessageComponentInstance,
+} from "./BaseMessageComponent";
 import { ComponentType } from "discord-api-types/v10";
 import type { APIContainerComponent } from "discord-api-types/v10";
-import type { MessageComponentInstance } from "./BaseMessageComponent";
 
 function isContainerChild(
   component: MessageComponentInstance | null

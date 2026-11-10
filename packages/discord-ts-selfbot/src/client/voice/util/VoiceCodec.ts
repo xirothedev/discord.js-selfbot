@@ -65,7 +65,9 @@ const VoiceCodec = {
     const payloadType = payloadTypes.find(
       (payload) => payload.name === codecName
     );
-    if (!payloadType) throw new Error(`Unknown codec: ${codecName}`);
+    if (!payloadType) {
+      throw new Error(`Unknown codec: ${codecName}`);
+    }
     return payloadType.payload_type;
   },
   getSDPCodecName(
@@ -76,7 +78,7 @@ const VoiceCodec = {
     const payloadTypeH264 = VoiceCodec.getPayloadType("H264");
     const payloadTypeH265 = VoiceCodec.getPayloadType("H265");
     const payloadTypeOpus = VoiceCodec.getPayloadType("opus");
-    let sdpData = `v=0
+    const sdpData = `v=0
 o=- 0 0 IN IP4 0.0.0.0
 s=-
 c=IN IP4 0.0.0.0

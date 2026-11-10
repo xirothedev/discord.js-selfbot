@@ -9,10 +9,9 @@ import _RoleModule from "../structures/Role";
 const { Role } = _RoleModule;
 import DataResolver from "../util/DataResolver";
 import Permissions from "../util/Permissions";
-import _UtilModule from "../util/Util";
-
-const { resolveColor } = _UtilModule;
 import Util from "../util/Util";
+
+const { resolveColor } = Util;
 import type {
   RESTPostAPIGuildRoleResult,
   Snowflake,
@@ -254,7 +253,7 @@ class RoleManager extends CachedManager<RoleStructure> {
       mentionable: data.mentionable,
       name: data.name,
       permissions:
-        typeof data.permissions === "undefined"
+        data.permissions === undefined
           ? undefined
           : new Permissions(data.permissions),
       unicode_emoji: data.unicodeEmoji,
@@ -358,14 +357,17 @@ class RoleManager extends CachedManager<RoleStructure> {
   }
 
   get highest(): RoleStructure {
-    const first = this.cache.first();
-    if (!first) {
+    const highest = this.cache.first();
+    if (!highest) {
       throw new Error("GUILD_UNCACHED_ROLE_RESOLVE");
     }
-    return this.cache.reduce(
-      (prev, role) => (role.comparePositionTo(prev) > 0 ? role : prev),
-      first
-    );
+    let result = highest;
+    for (const role of this.cache.values()) {
+      if (role.comparePositionTo(result) > 0) {
+        result = role;
+      }
+    }
+    return result;
   }
 }
 

@@ -15,7 +15,6 @@ import _errorsModule from "../errors";
 
 const { TypeError } = _errorsModule;
 import type {
-  APIUser,
   GatewayChannelUpdateDispatchData,
   Snowflake,
 } from "discord-api-types/v10";
@@ -37,13 +36,12 @@ import type { Client } from "../client/Client";
 import type { User } from "./User";
 import type { Message } from "./Message";
 import type * as ChannelModule from "./Channel";
-import type { SendOptions } from "../types/channels";
-import type { SendResult } from "../types/channels";
+import type { SendOptions, SendResult } from "../types/channels";
 
 interface VoiceAdapter {
-  destroy(): void;
-  onVoiceServerUpdate(payload: unknown): void;
-  onVoiceStateUpdate(payload: unknown): void;
+  destroy: () => void;
+  onVoiceServerUpdate: (payload: unknown) => void;
+  onVoiceStateUpdate: (payload: unknown) => void;
 }
 
 class GroupDMChannel extends Channel {
@@ -68,7 +66,9 @@ class GroupDMChannel extends Channel {
 
     if ("recipients" in data && Array.isArray(data.recipients)) {
       this._recipients = data.recipients;
-      data.recipients.forEach((u: APIUser) => this.client.users._add(u));
+      for (const recipient of data.recipients) {
+        this.client.users._add(recipient);
+      }
     } else {
       this._recipients = [];
     }
@@ -134,15 +134,13 @@ class GroupDMChannel extends Channel {
   }
 
   async delete(slient: string | boolean | null = false) {
-    if (typeof slient === "boolean" && slient) {
-      await this.client.api.channels[this.id].delete({
-        query: {
-          silent: true,
-        },
-      });
-    } else {
-      await this.client.api.channels[this.id].delete();
-    }
+    await (typeof slient === "boolean" && slient
+      ? this.client.api.channels[this.id].delete({
+          query: {
+            silent: true,
+          },
+        })
+      : this.client.api.channels[this.id].delete());
     return this;
   }
 
@@ -246,12 +244,9 @@ class GroupDMChannel extends Channel {
   }
 
   async removeInvite(invite: InviteResolvable) {
-    let code: string | undefined;
-    if (URL.canParse(invite)) {
-      code = new URL(invite).pathname.slice(1);
-    } else {
-      code = invite;
-    }
+    const code = URL.canParse(invite)
+      ? new URL(invite).pathname.slice(1)
+      : invite;
     if (!code) {
       throw new TypeError("INVALID_TYPE", "invite", "InviteResolvable");
     }
@@ -306,8 +301,10 @@ class GroupDMChannel extends Channel {
           this.client.voice.adapters.delete(this.id);
         },
         sendPayload: (data: unknown) => {
-          const shard = this.shard;
-          if (!shard || shard.status !== Status.READY) return false;
+          const { shard } = this;
+          if (!shard || shard.status !== Status.READY) {
+            return false;
+          }
           shard.send(data);
           return true;
         },
@@ -316,7 +313,6 @@ class GroupDMChannel extends Channel {
   }
 
   // These are here only for documentation purposes - they are implemented by TextBasedChannel
-  /* eslint-disable no-empty-function */
   get lastMessage(): Message | null {
     return null;
   }
@@ -324,9 +320,15 @@ class GroupDMChannel extends Channel {
     return null;
   }
   declare send: (options: SendOptions) => SendResult;
-  sendTyping() {}
-  createMessageCollector() {}
-  awaitMessages() {}
+  sendTyping() {
+    // Implemented by the subclass mixin.
+  }
+  createMessageCollector() {
+    // Implemented by the subclass mixin.
+  }
+  awaitMessages() {
+    // Implemented by the subclass mixin.
+  }
   // Doesn't work on DM channels; setRateLimitPerUser() {}
   // Doesn't work on DM channels; setNSFW() {}
 }

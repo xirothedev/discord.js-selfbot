@@ -108,24 +108,35 @@ function renderEvent(event: DocgenEvent): string {
   return `### \`${event.name}\`\n\n${[description, params].filter(Boolean).join("\n\n")}`;
 }
 
-function renderProperty(member: MergedMember): string {
-  const type =
+function propertyType(member: MergedMember) {
+  return (
     member.typings?.type ??
     member.source?.type ??
-    member.source?.getSignature?.type;
+    member.source?.getSignature?.type
+  );
+}
+
+function memberFlags(member: MergedMember): string[] {
+  const flags: string[] = [];
+  const typingsFlags = member.typings?.flags;
+  const sourceFlags = member.source?.flags;
+  if (typingsFlags?.isReadonly || sourceFlags?.isReadonly) {
+    flags.push("readonly");
+  }
+  if (typingsFlags?.isStatic || sourceFlags?.isStatic) {
+    flags.push("static");
+  }
+  return flags;
+}
+
+function renderProperty(member: MergedMember): string {
   const description = renderSummary(
     member.source?.comment ?? member.typings?.comment
   );
-  const flags: string[] = [];
-  if (member.typings?.flags?.isReadonly || member.source?.flags?.isReadonly) {
-    flags.push("readonly");
-  }
-  if (member.typings?.flags?.isStatic || member.source?.flags?.isStatic) {
-    flags.push("static");
-  }
+  const flags = memberFlags(member);
 
   const meta = [
-    `**Type:** ${inlineCode(renderType(type))}`,
+    `**Type:** ${inlineCode(renderType(propertyType(member)))}`,
     flags.length ? `**Modifiers:** ${flags.join(", ")}` : "",
   ]
     .filter(Boolean)
@@ -134,17 +145,95 @@ function renderProperty(member: MergedMember): string {
   return [description, meta].filter(Boolean).join("\n\n");
 }
 
-export function renderClassPage(input: ClassPageInput): string {
+function sortByName(members: MergedMember[]): MergedMember[] {
+  return members.toSorted((left, right) => left.name.localeCompare(right.name));
+}
+
+function constructorSection(
+  constructor: MergedMember | undefined,
+  name: string
+): string {
+  if (!constructor) {
+    return "";
+  }
+  const sourceSignature = constructor.source?.signatures?.[0];
+  const typingsSignature = constructor.typings?.signatures?.[0];
+  const merged = mergeSignature(sourceSignature, typingsSignature);
+  const code = signatureLine(merged, `new ${name}`);
+  const constructorDescription = renderSummary(merged.comment);
+  const parameters = renderParameterList(merged.parameters);
+  return [
+    "## Constructor",
+    constructorDescription,
+    "```ts",
+    code,
+    "```",
+    parameters,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+function propertySection(members: MergedMember[]): string {
+  const properties = sortByName(
+    members.filter(
+      (member) => member.kind === "property" || member.kind === "accessor"
+    )
+  );
+  if (!properties.length) {
+    return "";
+  }
+  return [
+    "## Properties",
+    ...properties.map(
+      (property) => `### \`${property.name}\`\n\n${renderProperty(property)}`
+    ),
+  ].join("\n\n");
+}
+
+function methodSection(members: MergedMember[]): string {
+  const methods = sortByName(
+    members.filter((member) => member.kind === "method")
+  );
+  if (!methods.length) {
+    return "";
+  }
+  return [
+    "## Methods",
+    ...methods.map(
+      (method) => `### \`${method.name}\`\n\n${renderMethod(method)}`
+    ),
+  ].join("\n\n");
+}
+
+function eventSection(events: DocgenEvent[] | undefined): string {
+  const sorted = [...(events ?? [])].toSorted((left, right) =>
+    left.name.localeCompare(right.name)
+  );
+  if (!sorted.length) {
+    return "";
+  }
+  return ["## Events", ...sorted.map((event) => renderEvent(event))].join(
+    "\n\n"
+  );
+}
+
+function classDeclaration(input: ClassPageInput): string {
   const { name, source, typings } = input;
-  const description = source?.comment ?? typings?.comment;
   const typeParameters = source?.typeParameters ?? typings?.typeParameters;
   const heritage = renderHeritage(
     source?.extendedTypes ?? typings?.extendedTypes,
     source?.implementedTypes ?? typings?.implementedTypes
   );
-  const classLine = `${source?.flags?.isAbstract || typings?.flags?.isAbstract ? "abstract " : ""}class ${name}${renderTypeParameters(
-    typeParameters
-  )}${heritage ? ` ${heritage}` : ""}`;
+  const prefix =
+    source?.flags?.isAbstract || typings?.flags?.isAbstract ? "abstract " : "";
+  return `${prefix}class ${name}${renderTypeParameters(typeParameters)}${heritage ? ` ${heritage}` : ""}`;
+}
+
+export function renderClassPage(input: ClassPageInput): string {
+  const { name, source, typings } = input;
+  const description = source?.comment ?? typings?.comment;
+  const classLine = classDeclaration(input);
 
   const hidden = new Set([
     ...INHERITED_MEMBERS,
@@ -153,70 +242,16 @@ export function renderClassPage(input: ClassPageInput): string {
   const members = mergeMembers(source, typings).filter(
     (member) => !member.name.startsWith("_") && !hidden.has(member.name)
   );
-  const constructor = members.find((member) => member.kind === "constructor");
-  const properties = members
-    .filter(
-      (member) => member.kind === "property" || member.kind === "accessor"
-    )
-    .toSorted((a, b) => a.name.localeCompare(b.name));
-  const methods = members
-    .filter((member) => member.kind === "method")
-    .toSorted((a, b) => a.name.localeCompare(b.name));
 
-  const sections: string[] = [];
-
-  if (constructor) {
-    const sourceSignature = constructor.source?.signatures?.[0];
-    const typingsSignature = constructor.typings?.signatures?.[0];
-    const merged = mergeSignature(sourceSignature, typingsSignature);
-    const code = signatureLine(merged, `new ${name}`);
-    const constructorDescription = renderSummary(merged.comment);
-    const parameters = renderParameterList(merged.parameters);
-    sections.push(
-      [
-        "## Constructor",
-        constructorDescription,
-        "```ts",
-        code,
-        "```",
-        parameters,
-      ]
-        .filter(Boolean)
-        .join("\n\n")
-    );
-  }
-
-  if (properties.length) {
-    sections.push(
-      [
-        "## Properties",
-        ...properties.map(
-          (property) =>
-            `### \`${property.name}\`\n\n${renderProperty(property)}`
-        ),
-      ].join("\n\n")
-    );
-  }
-
-  if (methods.length) {
-    sections.push(
-      [
-        "## Methods",
-        ...methods.map(
-          (method) => `### \`${method.name}\`\n\n${renderMethod(method)}`
-        ),
-      ].join("\n\n")
-    );
-  }
-
-  const events = [...(input.events ?? [])].toSorted((a, b) =>
-    a.name.localeCompare(b.name)
-  );
-  if (events.length) {
-    sections.push(
-      ["## Events", ...events.map((event) => renderEvent(event))].join("\n\n")
-    );
-  }
+  const sections = [
+    constructorSection(
+      members.find((member) => member.kind === "constructor"),
+      name
+    ),
+    propertySection(members),
+    methodSection(members),
+    eventSection(input.events),
+  ];
 
   return [
     frontmatter({

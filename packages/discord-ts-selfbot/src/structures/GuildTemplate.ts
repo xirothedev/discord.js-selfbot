@@ -30,52 +30,37 @@ class GuildTemplate extends Base implements GuildTemplateEntity {
   declare guildId: GuildTemplateEntity["guildId"];
   declare serializedGuild: GuildTemplateEntity["serializedGuild"];
   declare unSynced: GuildTemplateEntity["unSynced"];
-  static GUILD_TEMPLATES_PATTERN = /./;
+  static GUILD_TEMPLATES_PATTERN = /./u;
   constructor(client: Client, data: RawGuildTemplateData) {
     super(client);
     this._patch(data);
   }
 
   _patch(data: PatchOf<"GuildTemplate">) {
-    if ("code" in data) {
-      this.code = data.code!;
-    }
-
-    if ("name" in data) {
-      this.name = data.name!;
-    }
+    this.code = data.code ?? this.code;
+    this.name = data.name ?? this.name;
 
     if ("description" in data) {
       this.description = data.description ?? null;
     }
 
-    if ("usage_count" in data) {
-      this.usageCount = data.usage_count!;
-    }
-
-    if ("creator_id" in data) {
-      this.creatorId = data.creator_id!;
-    }
+    this.usageCount = data.usage_count ?? this.usageCount;
+    this.creatorId = data.creator_id ?? this.creatorId;
 
     if ("creator" in data) {
       this.creator = this.client.users._add(data.creator);
     }
 
-    if ("created_at" in data) {
-      this.createdAt = new Date(data.created_at!);
+    if (data.created_at !== undefined) {
+      this.createdAt = new Date(data.created_at);
     }
 
-    if ("updated_at" in data) {
-      this.updatedAt = new Date(data.updated_at!);
+    if (data.updated_at !== undefined) {
+      this.updatedAt = new Date(data.updated_at);
     }
 
-    if ("source_guild_id" in data) {
-      this.guildId = data.source_guild_id!;
-    }
-
-    if ("serialized_source_guild" in data) {
-      this.serializedGuild = data.serialized_source_guild!;
-    }
+    this.guildId = data.source_guild_id ?? this.guildId;
+    this.serializedGuild = data.serialized_source_guild ?? this.serializedGuild;
 
     this.unSynced = "is_dirty" in data ? Boolean(data.is_dirty) : null;
 
@@ -101,28 +86,35 @@ class GuildTemplate extends Base implements GuildTemplateEntity {
       return existing;
     }
 
-    return new Promise<Guild>((resolve) => {
-      const resolveGuild = (guild: Guild) => {
-        client.off(Events.GUILD_CREATE, handleGuild);
-        client.decrementMaxListeners();
-        resolve(guild);
-      };
+    const { promise, resolve } = Promise.withResolvers<Guild>();
+    const state: {
+      handleGuild: (guild: Guild) => void;
+      timeout?: NodeJS.Timeout;
+    } = { handleGuild: () => null };
+    const resolveGuild = (guild: Guild) => {
+      if (state.timeout) {
+        clearTimeout(state.timeout);
+      }
+      client.off(Events.GUILD_CREATE, state.handleGuild);
+      client.decrementMaxListeners();
+      resolve(guild);
+    };
 
-      const handleGuild = (guild: Guild) => {
-        if (guild.id === data.id) {
-          clearTimeout(timeout);
-          resolveGuild(guild);
-        }
-      };
+    state.handleGuild = (guild: Guild) => {
+      if (guild.id === data.id) {
+        resolveGuild(guild);
+      }
+    };
 
-      client.incrementMaxListeners();
-      client.on(Events.GUILD_CREATE, handleGuild);
+    client.incrementMaxListeners();
+    client.on(Events.GUILD_CREATE, state.handleGuild);
 
-      const timeout = setTimeout(
-        () => resolveGuild(client.guilds._add(data)),
-        10_000
-      ).unref();
-    });
+    state.timeout = setTimeout(
+      () => resolveGuild(client.guilds._add(data)),
+      10_000
+    ).unref();
+
+    return promise;
   }
 
   async edit({ name, description }: EditGuildTemplateOptions = {}) {
@@ -170,7 +162,7 @@ class GuildTemplate extends Base implements GuildTemplateEntity {
 }
 
 GuildTemplate.GUILD_TEMPLATES_PATTERN =
-  /discord(?:app)?\.(?:com\/template|new)\/([\w-]{2,255})/gi;
+  /discord(?:app)?\.(?:com\/template|new)\/(?<code>[\w-]{2,255})/giu;
 
 export default GuildTemplate;
 export { GuildTemplate };

@@ -101,7 +101,7 @@ interface AuthorizingIntegrationOwners {
   userId: Snowflake | null;
   readonly guild: Guild | null;
   readonly user: User | null;
-  toJSON(): Record<string, Snowflake>;
+  toJSON: () => Record<string, Snowflake>;
 }
 
 export interface MessageInteraction {
@@ -135,8 +135,11 @@ function transformAuthorizingIntegrationOwners(
     guildId: data[0] ?? null,
     toJSON() {
       const out: Record<string, Snowflake> = {};
-      for (const [key, value] of Object.entries(data))
-        if (value !== undefined) out[key] = value;
+      for (const [key, value] of Object.entries(data)) {
+        if (value !== undefined) {
+          out[key] = value;
+        }
+      }
       return out;
     },
     get user() {
@@ -190,12 +193,101 @@ interface ResolvedData {
   attachments?: Collection<Snowflake, MessageAttachment>;
 }
 
+function transformResolvedMembers(
+  guild: Guild | null,
+  members: NonNullable<ResolvedMessageData["members"]>,
+  users: ResolvedMessageData["users"]
+) {
+  const result = new Collection<
+    Snowflake,
+    GuildMember | APIInteractionDataResolvedGuildMember
+  >();
+  for (const [id, member] of Object.entries(members)) {
+    const user = users?.[id];
+    if (!user) {
+      continue;
+    }
+    result.set(id, guild?.members._add({ ...member, user }) ?? member);
+  }
+  return result;
+}
+
+function transformResolvedUsers(
+  client: Client,
+  users: NonNullable<ResolvedMessageData["users"]>
+) {
+  const result = new Collection<Snowflake, User>();
+  for (const user of Object.values(users)) {
+    result.set(user.id, client.users._add(user));
+  }
+  return result;
+}
+
+function transformResolvedRoles(
+  guild: Guild | null,
+  roles: NonNullable<ResolvedMessageData["roles"]>
+) {
+  const result = new Collection<Snowflake, Role | APIRole>();
+  for (const role of Object.values(roles)) {
+    result.set(role.id, guild?.roles._add(role) ?? role);
+  }
+  return result;
+}
+
+function transformResolvedChannels(
+  client: Client,
+  guild: Guild | null,
+  channels: NonNullable<ResolvedMessageData["channels"]>
+) {
+  const result = new Collection<
+    Snowflake,
+    Channel | APIInteractionDataResolvedChannel
+  >();
+  for (const apiChannel of Object.values(channels)) {
+    result.set(
+      apiChannel.id,
+      client.channels._add(apiChannel, guild) ?? apiChannel
+    );
+  }
+  return result;
+}
+
+function transformResolvedMessages(
+  channel: Channel | null,
+  messages: NonNullable<ResolvedMessageData["messages"]>,
+  createMessage: (data: APIMessage) => Message
+) {
+  const result = new Collection<Snowflake, Message | APIMessage>();
+  for (const message of Object.values(messages)) {
+    const added =
+      channel && isTextBasedChannel(channel)
+        ? channel.messages.cache.get(message.id)
+        : null;
+    result.set(message.id, added ?? createMessage(message));
+  }
+  return result;
+}
+
+function transformResolvedAttachments(
+  attachments: NonNullable<ResolvedMessageData["attachments"]>
+) {
+  const result = new Collection<Snowflake, MessageAttachment>();
+  for (const attachment of Object.values(attachments)) {
+    result.set(
+      attachment.id,
+      new MessageAttachment(attachment.url, attachment.filename, attachment)
+    );
+  }
+  return result;
+}
+
 function transformResolved(
   {
     client,
     guild,
     channel,
   }: { client: Client; guild: Guild | null; channel: Channel | null },
+  createMessage: (data: APIMessage) => Message,
   {
     members,
     users,
@@ -208,71 +300,26 @@ function transformResolved(
   const result: ResolvedData = {};
 
   if (members) {
-    result.members = new Collection<
-      Snowflake,
-      GuildMember | APIInteractionDataResolvedGuildMember
-    >();
-    for (const [id, member] of Object.entries(members)) {
-      const user = users?.[id];
-      if (!user) {
-        continue;
-      }
-      result.members.set(
-        id,
-        guild?.members._add({ ...member, user }) ?? member
-      );
-    }
+    result.members = transformResolvedMembers(guild, members, users);
   }
-
   if (users) {
-    result.users = new Collection<Snowflake, User>();
-    for (const user of Object.values(users)) {
-      result.users.set(user.id, client.users._add(user));
-    }
+    result.users = transformResolvedUsers(client, users);
   }
-
   if (roles) {
-    result.roles = new Collection<Snowflake, Role | APIRole>();
-    for (const role of Object.values(roles)) {
-      result.roles.set(role.id, guild?.roles._add(role) ?? role);
-    }
+    result.roles = transformResolvedRoles(guild, roles);
   }
-
   if (channels) {
-    result.channels = new Collection<
-      Snowflake,
-      Channel | APIInteractionDataResolvedChannel
-    >();
-    for (const apiChannel of Object.values(channels)) {
-      result.channels.set(
-        apiChannel.id,
-        client.channels._add(apiChannel, guild) ?? apiChannel
-      );
-    }
+    result.channels = transformResolvedChannels(client, guild, channels);
   }
-
   if (messages) {
-    result.messages = new Collection<Snowflake, Message | APIMessage>();
-    for (const message of Object.values(messages)) {
-      const added =
-        channel && isTextBasedChannel(channel)
-          ? channel.messages.cache.get(message.id)
-          : null;
-      result.messages.set(
-        message.id,
-        added instanceof Message ? added : new Message(client, message)
-      );
-    }
+    result.messages = transformResolvedMessages(
+      channel,
+      messages,
+      createMessage
+    );
   }
-
   if (attachments) {
-    result.attachments = new Collection<Snowflake, MessageAttachment>();
-    for (const attachment of Object.values(attachments)) {
-      result.attachments.set(
-        attachment.id,
-        new MessageAttachment(attachment.url, attachment.filename, attachment)
-      );
-    }
+    result.attachments = transformResolvedAttachments(attachments);
   }
 
   return result;
@@ -365,6 +412,15 @@ class Message extends Base {
   }
 
   _patch(data: MessagePatchData) {
+    this.patchCore(data);
+    this.patchCollections(data);
+    this.patchMentions(data);
+    this.patchMetadata(data);
+    this.patchReferences(data);
+    this.patchCallAndTheme(data);
+  }
+
+  private patchCore(data: MessagePatchData) {
     this.id = data.id;
 
     if ("position" in data) {
@@ -389,6 +445,7 @@ class Message extends Base {
     if ("resolved" in data) {
       this.resolved = transformResolved(
         { channel: this.channel, client: this.client, guild: this.guild },
+        (message) => new Message(this.client, message),
         data.resolved
       );
     } else {
@@ -409,6 +466,10 @@ class Message extends Base {
       this.type ??= null;
     }
 
+    this.patchCoreContent(data);
+  }
+
+  private patchCoreContent(data: MessagePatchData) {
     if ("content" in data) {
       this.content = data.content;
     } else {
@@ -438,59 +499,54 @@ class Message extends Base {
     } else {
       this.nonce ??= null;
     }
+  }
 
+  private patchCollections(data: MessagePatchData) {
     if ("embeds" in data) {
-      this.embeds = data.embeds.map((e) => new Embed(e, true));
+      this.embeds = data.embeds.map((embed) => new Embed(embed, true));
     } else {
       this.embeds = this.embeds ? [...this.embeds] : [];
     }
 
     if ("components" in data && data.components) {
       this.components = data.components
-        .map((c) => BaseMessageComponent.create(c, this.client))
-        .filter((c): c is TopLevelComponentSource =>
-          BaseMessageComponent.isTopLevelComponent(c)
+        .map((component) => BaseMessageComponent.create(component, this.client))
+        .filter((component): component is TopLevelComponentSource =>
+          BaseMessageComponent.isTopLevelComponent(component)
         );
     } else {
       this.components = this.components ? [...this.components] : [];
     }
 
-    if ("attachments" in data) {
-      this.attachments = new Collection<Snowflake, MessageAttachment>();
-      if (data.attachments) {
-        for (const attachment of data.attachments) {
-          this.attachments.set(
-            attachment.id,
-            new MessageAttachment(
-              attachment.url,
-              attachment.filename,
-              attachment
-            )
+    this.attachments =
+      "attachments" in data
+        ? new Collection<Snowflake, MessageAttachment>(
+            data.attachments?.map((attachment) => [
+              attachment.id,
+              new MessageAttachment(
+                attachment.url,
+                attachment.filename,
+                attachment
+              ),
+            ])
+          )
+        : new Collection(this.attachments);
+
+    this.stickers =
+      "sticker_items" in data || "stickers" in data
+        ? new Collection<Snowflake, InstanceType<typeof Sticker>>(
+            (data.sticker_items ?? data.stickers)?.map((sticker) => [
+              sticker.id,
+              new Sticker(this.client, sticker),
+            ])
+          )
+        : new Collection<Snowflake, InstanceType<typeof Sticker>>(
+            this.stickers
           );
-        }
-      }
-    } else {
-      this.attachments = new Collection(this.attachments);
-    }
 
-    if ("sticker_items" in data || "stickers" in data) {
-      this.stickers = new Collection<Snowflake, InstanceType<typeof Sticker>>(
-        (data.sticker_items ?? data.stickers)?.map((s) => [
-          s.id,
-          new Sticker(this.client, s),
-        ])
-      );
-    } else {
-      this.stickers = new Collection<Snowflake, InstanceType<typeof Sticker>>(
-        this.stickers
-      );
-    }
-
-    // Discord sends null if the message has not been edited
+    // Discord sends null if the message has not been edited.
     if (data.edited_timestamp) {
-      this.editedTimestamp = data.edited_timestamp
-        ? Date.parse(data.edited_timestamp)
-        : null;
+      this.editedTimestamp = Date.parse(data.edited_timestamp);
     } else {
       this.editedTimestamp ??= null;
     }
@@ -505,7 +561,9 @@ class Message extends Base {
     } else {
       this.reactions ??= new ReactionManager(this);
     }
+  }
 
+  private patchMentions(data: MessagePatchData) {
     const mentionEveryone =
       "mention_everyone" in data ? data.mention_everyone : undefined;
     const mentionChannels =
@@ -515,26 +573,26 @@ class Message extends Base {
         ? data.referenced_message?.author
         : undefined;
 
-    if (this.mentions) {
-      this.mentions = new Mentions(
-        this,
-        data.mentions ?? this.mentions.users,
-        data.mention_roles ?? this.mentions.roles,
-        mentionEveryone ?? this.mentions.everyone,
-        mentionChannels ?? this.mentions.crosspostedChannels,
-        referencedAuthor ?? this.mentions.repliedUser
-      );
-    } else {
-      this.mentions = new Mentions(
-        this,
-        data.mentions,
-        data.mention_roles,
-        mentionEveryone,
-        mentionChannels,
-        referencedAuthor
-      );
-    }
+    this.mentions = this.mentions
+      ? new Mentions(
+          this,
+          data.mentions ?? this.mentions.users,
+          data.mention_roles ?? this.mentions.roles,
+          mentionEveryone ?? this.mentions.everyone,
+          mentionChannels ?? this.mentions.crosspostedChannels,
+          referencedAuthor ?? this.mentions.repliedUser
+        )
+      : new Mentions(
+          this,
+          data.mentions,
+          data.mention_roles,
+          mentionEveryone,
+          mentionChannels,
+          referencedAuthor
+        );
+  }
 
+  private patchMetadata(data: MessagePatchData) {
     if ("webhook_id" in data && data.webhook_id !== undefined) {
       this.webhookId = data.webhook_id;
     } else {
@@ -575,6 +633,10 @@ class Message extends Base {
       this.client.channels._add(data.thread, this.guild);
     }
 
+    this.patchMemberState(data);
+  }
+
+  private patchMemberState(data: MessagePatchData) {
     if (this.member && "member" in data && data.member) {
       this.member._patch(data.member);
     } else if ("member" in data && data.member && this.guild && this.author) {
@@ -583,12 +645,12 @@ class Message extends Base {
       );
     }
 
-    if ("flags" in data) {
-      this.flags = new MessageFlags(data.flags).freeze();
-    } else {
-      this.flags = new MessageFlags(this.flags).freeze();
-    }
+    this.flags = new MessageFlags(
+      "flags" in data ? data.flags : this.flags
+    ).freeze();
+  }
 
+  private patchReferences(data: MessagePatchData) {
     if ("message_reference" in data && data.message_reference) {
       this.reference = {
         channelId: data.message_reference.channel_id,
@@ -630,7 +692,6 @@ class Message extends Base {
      * @property {User} user The user that invoked the interaction
      * @deprecated Use {@link Message#interactionMetadata} instead.
      */
-
     if ("interaction" in data && data.interaction) {
       /**
        * Partial data of the interaction that this message is a reply to
@@ -648,39 +709,43 @@ class Message extends Base {
       this.interaction ??= null;
     }
 
-    if (
-      "message_snapshots" in data &&
-      data.message_snapshots &&
-      this.reference
-    ) {
-      const { reference } = this;
-      this.messageSnapshots = data.message_snapshots.reduce(
-        (coll: Collection<Snowflake, Message>, snapshot) => {
-          if (!reference.messageId) {
-            return coll;
-          }
-          const snapshotId = reference.messageId;
-          const channel = this.client.channels.cache.get(reference.channelId);
-          const snapshotData: MessagePatchData = {
-            ...snapshot.message,
-            channel_id: reference.channelId,
-            guild_id: reference.guildId ?? undefined,
-            id: snapshotId,
-          };
+    this.patchMessageSnapshots(data);
+  }
 
-          return coll.set(
-            snapshotId,
-            channel && isTextBasedChannel(channel)
-              ? channel.messages._add(snapshotData)
-              : new Message(this.client, snapshotData)
-          );
-        },
-        new Collection<Snowflake, Message>()
-      );
-    } else {
+  private patchMessageSnapshots(data: MessagePatchData) {
+    if (
+      !("message_snapshots" in data) ||
+      !data.message_snapshots ||
+      !this.reference
+    ) {
       this.messageSnapshots ??= new Collection<Snowflake, Message>();
+      return;
     }
 
+    const { reference } = this;
+    this.messageSnapshots = new Collection<Snowflake, Message>();
+    for (const snapshot of data.message_snapshots) {
+      if (!reference.messageId) {
+        continue;
+      }
+      const snapshotId = reference.messageId;
+      const channel = this.client.channels.cache.get(reference.channelId);
+      const snapshotData: MessagePatchData = {
+        ...snapshot.message,
+        channel_id: reference.channelId,
+        guild_id: reference.guildId ?? undefined,
+        id: snapshotId,
+      };
+      this.messageSnapshots.set(
+        snapshotId,
+        channel && isTextBasedChannel(channel)
+          ? channel.messages._add(snapshotData)
+          : new Message(this.client, snapshotData)
+      );
+    }
+  }
+
+  private patchCallAndTheme(data: MessagePatchData) {
     if ("call" in data && data.call) {
       this.call = {
         get endedAt() {
@@ -788,8 +853,7 @@ class Message extends Base {
   }
 
   get cleanContent() {
-    // eslint-disable-next-line eqeqeq
-    return this.content != null && this.channel
+    return this.content !== null && this.content !== undefined && this.channel
       ? Util.cleanContent(this.content, this.channel)
       : null;
   }
@@ -801,22 +865,23 @@ class Message extends Base {
   awaitReactions(
     options: ReactionCollectorSourceOptions & { errors?: string[] } = {}
   ): Promise<Collection<Snowflake | string, MessageReaction>> {
-    return new Promise((resolve, reject) => {
-      const collector = this.createReactionCollector(options);
-      collector.once(
-        "end",
-        (
-          reactions: Collection<Snowflake | string, MessageReaction>,
-          reason: string
-        ) => {
-          if (options.errors?.includes(reason)) {
-            reject(reactions);
-          } else {
-            resolve(reactions);
-          }
+    const { promise, reject, resolve } =
+      Promise.withResolvers<Collection<Snowflake | string, MessageReaction>>();
+    const collector = this.createReactionCollector(options);
+    collector.once(
+      "end",
+      (
+        reactions: Collection<Snowflake | string, MessageReaction>,
+        reason: string
+      ) => {
+        if (options.errors?.includes(reason)) {
+          reject(reactions);
+        } else {
+          resolve(reactions);
         }
-      );
-    });
+      }
+    );
+    return promise;
   }
 
   createMessageComponentCollector(
@@ -833,31 +898,33 @@ class Message extends Base {
     options: AwaitMessageComponentOptions<MessageComponentInteraction> = {}
   ): Promise<MessageComponentInteraction> {
     const _options = { ...options, max: 1 };
-    return new Promise((resolve, reject) => {
-      const collector = this.createMessageComponentCollector(_options);
-      collector.once(
-        "end",
-        (
-          interactions: Collection<Snowflake, MessageComponentInteraction>,
-          reason: string
-        ) => {
-          const interaction = interactions.first();
-          if (interaction) {
-            resolve(interaction);
-          } else {
-            reject(new Error("INTERACTION_COLLECTOR_ERROR", reason));
-          }
+    const { promise, reject, resolve } =
+      Promise.withResolvers<MessageComponentInteraction>();
+    const collector = this.createMessageComponentCollector(_options);
+    collector.once(
+      "end",
+      (
+        interactions: Collection<Snowflake, MessageComponentInteraction>,
+        reason: string
+      ) => {
+        const interaction = interactions.first();
+        if (interaction) {
+          resolve(interaction);
+        } else {
+          reject(new Error("INTERACTION_COLLECTOR_ERROR", reason));
         }
-      );
-    });
+      }
+    );
+    return promise;
   }
 
   get editable() {
     const { channel } = this;
+    const { user } = this.client;
     const guildChannel =
       channel && isGuildBasedChannel(channel) ? channel : null;
     const precheck = Boolean(
-      this.author?.id === this.client.user!.id &&
+      this.author?.id === user?.id &&
       !deletedMessages.has(this) &&
       (!this.guild || guildChannel?.viewable) &&
       this.reference?.type !== MessageReferenceTypes.FORWARD
@@ -870,7 +937,7 @@ class Message extends Base {
         return false;
       }
       if (channel.locked) {
-        const permissions = channel.permissionsFor(this.client.user!);
+        const permissions = user ? channel.permissionsFor(user) : null;
         if (!permissions?.has(Permissions.FLAGS.MANAGE_THREADS, true)) {
           return false;
         }
@@ -881,11 +948,12 @@ class Message extends Base {
   }
 
   get deletable() {
+    const { user } = this.client;
     if (deletedMessages.has(this)) {
       return false;
     }
     if (!this.guild) {
-      return this.author?.id === this.client.user!.id;
+      return this.author?.id === user?.id;
     }
     // DMChannel does not have viewable property, so check viewable after proved that message is on a guild.
     const { channel } = this;
@@ -893,7 +961,7 @@ class Message extends Base {
       return false;
     }
 
-    const permissions = channel.permissionsFor(this.client.user!);
+    const permissions = user ? channel.permissionsFor(user) : null;
     if (!permissions) {
       return false;
     }
@@ -905,7 +973,7 @@ class Message extends Base {
     const { me } = this.guild.members;
     const timedOut = me?.isCommunicationDisabled() ?? false;
     return Boolean(
-      this.author?.id === this.client.user!.id ||
+      this.author?.id === user?.id ||
       (permissions.has(Permissions.FLAGS.MANAGE_MESSAGES, false) && !timedOut)
     );
   }
@@ -916,6 +984,7 @@ class Message extends Base {
 
   get pinnable() {
     const { channel } = this;
+    const { user } = this.client;
     const guildChannel =
       channel && isGuildBasedChannel(channel) ? channel : null;
     return Boolean(
@@ -923,9 +992,11 @@ class Message extends Base {
       !deletedMessages.has(this) &&
       (!this.guild ||
         (guildChannel?.viewable &&
-          guildChannel
-            ?.permissionsFor(this.client.user!)
-            ?.has(Permissions.FLAGS.MANAGE_MESSAGES, false)))
+          (user
+            ? guildChannel
+                ?.permissionsFor(user)
+                ?.has(Permissions.FLAGS.MANAGE_MESSAGES, false)
+            : false)))
     );
   }
 
@@ -946,10 +1017,11 @@ class Message extends Base {
   }
 
   get crosspostable() {
+    const { user } = this.client;
     const bitfield =
       Number(Permissions.FLAGS.SEND_MESSAGES) |
       Number(
-        this.author?.id === this.client.user!.id
+        this.author?.id === user?.id
           ? Permissions.defaultBit
           : Permissions.FLAGS.MANAGE_MESSAGES
       );
@@ -962,7 +1034,7 @@ class Message extends Base {
       this.type === "DEFAULT" &&
       !this.poll &&
       channel.viewable &&
-      channel.permissionsFor(this.client.user!)?.has(bitfield, false) &&
+      (user ? channel.permissionsFor(user)?.has(bitfield, false) : false) &&
       !deletedMessages.has(this)
     );
   }
@@ -1028,21 +1100,18 @@ class Message extends Base {
     if (!this.channel) {
       throw new Error("CHANNEL_NOT_CACHED");
     }
-    let data;
-
-    if (options instanceof MessagePayload) {
-      data = options;
-    } else {
-      data = MessagePayload.create(this, options, {
-        reply: {
-          failIfNotExists:
-            (typeof options === "object"
-              ? options.failIfNotExists
-              : undefined) ?? this.client.options.failIfNotExists,
-          messageReference: this,
-        },
-      });
-    }
+    const data =
+      options instanceof MessagePayload
+        ? options
+        : MessagePayload.create(this, options, {
+            reply: {
+              failIfNotExists:
+                (typeof options === "object"
+                  ? options.failIfNotExists
+                  : undefined) ?? this.client.options.failIfNotExists,
+              messageReference: this,
+            },
+          });
     return this.channel.send(data);
   }
 
@@ -1224,6 +1293,13 @@ class Message extends Base {
     return Util.createPromiseInteraction(this.client, nonce, 5000, true, this);
   }
 
+  private static resolveMenuIndex(menu: string | number) {
+    if (typeof menu === "number") {
+      return menu;
+    }
+    return /^[0-4]$/u.test(menu) ? Number(menu) : undefined;
+  }
+
   selectMenu(
     menu: number | string,
     values: unknown[] = []
@@ -1247,12 +1323,7 @@ class Message extends Base {
         }
       }
     }
-    const index =
-      typeof menu === "number"
-        ? menu
-        : /^[0-4]$/.test(menu)
-          ? Number(menu)
-          : undefined;
+    const index = Message.resolveMenuIndex(menu);
     let selectMenu: MessageSelectMenu | undefined;
     if (index === undefined) {
       selectMenu = components.find(
@@ -1263,7 +1334,9 @@ class Message extends Base {
       );
     } else {
       const component = components[index];
-      if (component && isSelectMenu(component)) selectMenu = component;
+      if (component && isSelectMenu(component)) {
+        selectMenu = component;
+      }
     }
     if (!selectMenu) {
       throw new RangeError(

@@ -4,7 +4,7 @@ import _ChannelModule from "./Channel";
 const { Channel } = _ChannelModule;
 import TextBasedChannel from "./interfaces/TextBasedChannel";
 import MessageManager from "../managers/MessageManager";
-import type { Snowflake } from "discord-api-types/v10";
+import type { APIUser, Snowflake } from "discord-api-types/v10";
 import type { User } from "./User";
 import type { RawChannelData } from "../../typings/rawDataTypes";
 import type { PatchOf } from "../types/schema";
@@ -20,14 +20,12 @@ type DMChannelPatch = PatchOf<"Channel"> & {
 };
 
 interface VoiceAdapter {
-  destroy(): void;
-  onVoiceServerUpdate(payload: unknown): void;
-  onVoiceStateUpdate(payload: unknown): void;
+  destroy: () => void;
+  onVoiceServerUpdate: (payload: unknown) => void;
+  onVoiceStateUpdate: (payload: unknown) => void;
 }
 import _ConstantsModule from "../util/Constants";
-import type { APIUser } from "discord-api-types/v10";
-import type { SendOptions } from "../types/channels";
-import type { SendResult } from "../types/channels";
+import type { SendOptions, SendResult } from "../types/channels";
 
 const { Opcodes, Status } = _ConstantsModule;
 
@@ -83,13 +81,15 @@ class DMChannel extends Channel {
         "NOT_MESSAGE_REQUEST: This channel is not a message request"
       );
     }
-    const c = await this.client.api.channels[this.id].recipients["@me"].put({
+    const channelData = await this.client.api.channels[this.id].recipients[
+      "@me"
+    ].put({
       data: {
         consent_status: 2,
       },
     });
     this.messageRequest = false;
-    return this.client.channels._add(c, null);
+    return this.client.channels._add(channelData, null);
   }
 
   async cancelMessageRequest() {
@@ -153,8 +153,11 @@ class DMChannel extends Channel {
           this.client.voice.adapters.delete(this.id);
         },
         sendPayload: (data: unknown) => {
-          if (!this.shard || this.shard.status !== Status.READY) return false;
-          this.shard!.send(data);
+          const { shard } = this;
+          if (!shard || shard.status !== Status.READY) {
+            return false;
+          }
+          shard.send(data);
           return true;
         },
       };
@@ -162,7 +165,6 @@ class DMChannel extends Channel {
   }
 
   // These are here only for documentation purposes - they are implemented by TextBasedChannel
-  /* eslint-disable no-empty-function */
   get lastMessage(): Message | null {
     return null;
   }
@@ -170,9 +172,15 @@ class DMChannel extends Channel {
     return null;
   }
   declare send: (options: SendOptions) => SendResult;
-  sendTyping() {}
-  createMessageCollector() {}
-  awaitMessages() {}
+  sendTyping() {
+    // Implemented by the subclass mixin.
+  }
+  createMessageCollector() {
+    // Implemented by the subclass mixin.
+  }
+  awaitMessages() {
+    // Implemented by the subclass mixin.
+  }
   // Doesn't work on DM channels; setRateLimitPerUser() {}
   // Doesn't work on DM channels; setNSFW() {}
 }

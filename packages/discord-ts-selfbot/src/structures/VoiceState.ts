@@ -1,4 +1,4 @@
-import Base from "./Base";
+import Base, { patchValue } from "./Base";
 import _errorsModule from "../errors";
 
 const { Error, TypeError } = _errorsModule;
@@ -39,41 +39,12 @@ class VoiceState extends Base implements VoiceStateEntity {
   }
 
   _patch(data: PatchOf<"VoiceState">) {
-    if (data.deaf === undefined) {
-      this.serverDeaf ??= null;
-    } else {
-      this.serverDeaf = data.deaf;
-    }
-
-    if (data.mute === undefined) {
-      this.serverMute ??= null;
-    } else {
-      this.serverMute = data.mute;
-    }
-
-    if (data.self_deaf === undefined) {
-      this.selfDeaf ??= null;
-    } else {
-      this.selfDeaf = data.self_deaf;
-    }
-
-    if (data.self_mute === undefined) {
-      this.selfMute ??= null;
-    } else {
-      this.selfMute = data.self_mute;
-    }
-
-    if (data.self_video === undefined) {
-      this.selfVideo ??= null;
-    } else {
-      this.selfVideo = data.self_video;
-    }
-
-    if (data.session_id === undefined) {
-      this.sessionId ??= null;
-    } else {
-      this.sessionId = data.session_id;
-    }
+    this.serverDeaf = patchValue(data.deaf, this.serverDeaf);
+    this.serverMute = patchValue(data.mute, this.serverMute);
+    this.selfDeaf = patchValue(data.self_deaf, this.selfDeaf);
+    this.selfMute = patchValue(data.self_mute, this.selfMute);
+    this.selfVideo = patchValue(data.self_video, this.selfVideo);
+    this.sessionId = patchValue(data.session_id, this.sessionId);
 
     // The self_stream property is omitted if false, check another property
     // here to avoid incorrectly clearing this when partial data is specified
@@ -83,17 +54,8 @@ class VoiceState extends Base implements VoiceStateEntity {
       this.streaming = data.self_stream ?? false;
     }
 
-    if (data.channel_id === undefined) {
-      this.channelId ??= null;
-    } else {
-      this.channelId = data.channel_id;
-    }
-
-    if (data.suppress === undefined) {
-      this.suppress ??= false;
-    } else {
-      this.suppress = data.suppress;
-    }
+    this.channelId = patchValue(data.channel_id, this.channelId);
+    this.suppress = patchValue(data.suppress, this.suppress, false);
 
     if (data.request_to_speak_timestamp === undefined) {
       this.requestToSpeakTimestamp ??= null;
@@ -164,7 +126,7 @@ class VoiceState extends Base implements VoiceStateEntity {
       throw new Error("VOICE_GUILD_NOT_FOUND");
     }
 
-    if (this.client.user!.id !== this.id) {
+    if (this.client.user?.id !== this.id) {
       throw new Error("VOICE_STATE_NOT_OWN");
     }
 
@@ -188,7 +150,7 @@ class VoiceState extends Base implements VoiceStateEntity {
       throw new Error("VOICE_NOT_STAGE_CHANNEL");
     }
 
-    const target = this.client.user!.id === this.id ? "@me" : this.id;
+    const target = this.client.user?.id === this.id ? "@me" : this.id;
 
     await this.client.api.guilds(this.guild.id, "voice-states", target).patch({
       data: {
@@ -227,7 +189,7 @@ class VoiceState extends Base implements VoiceStateEntity {
   }
 
   postPreview(base64Image: string) {
-    if (this.client.user!.id !== this.id || !this.streaming) {
+    if (this.client.user?.id !== this.id || !this.streaming) {
       throw new Error("USER_NOT_STREAMING");
     }
     // URL: https://discord.com/api/v9/streams/guild:guildid:voicechannelid:userid/preview

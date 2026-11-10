@@ -26,21 +26,21 @@ class VolumeInterface extends EventEmitter {
   }
 
   applyVolume(buffer: Buffer, volume?: number) {
-    volume = volume || this._volume;
-    if (volume === 1) {
+    const targetVolume = volume || this._volume;
+    if (targetVolume === 1) {
       return buffer;
     }
 
     const out = Buffer.alloc(buffer.length);
-    for (let i = 0; i < buffer.length; i += 2) {
-      if (i >= buffer.length - 1) {
+    for (let index = 0; index < buffer.length; index += 2) {
+      if (index >= buffer.length - 1) {
         break;
       }
       const uint = Math.min(
         32_767,
-        Math.max(-32_767, Math.floor(volume * buffer.readInt16LE(i)))
+        Math.max(-32_767, Math.floor(targetVolume * buffer.readInt16LE(index)))
       );
-      out.writeInt16LE(uint, i);
+      out.writeInt16LE(uint, index);
     }
 
     return out;
@@ -69,11 +69,14 @@ const props = [
 
 function applyToClass(structure: { prototype: object }) {
   for (const prop of props) {
-    Object.defineProperty(
-      structure.prototype,
-      prop,
-      Object.getOwnPropertyDescriptor(VolumeInterface.prototype, prop)!
+    const descriptor = Object.getOwnPropertyDescriptor(
+      VolumeInterface.prototype,
+      prop
     );
+    if (!descriptor) {
+      continue;
+    }
+    Object.defineProperty(structure.prototype, prop, descriptor);
   }
 }
 

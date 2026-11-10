@@ -1,4 +1,4 @@
-const { Client, WebEmbed } = require("../src/index");
+import { Client, WebEmbed } from "../src/index";
 
 const client = new Client();
 

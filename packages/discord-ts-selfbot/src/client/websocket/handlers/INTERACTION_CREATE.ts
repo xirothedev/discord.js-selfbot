@@ -34,26 +34,32 @@ function resolveInteractionType(
   switch (data.type) {
     case InteractionTypes.APPLICATION_COMMAND: {
       switch (isRecord(payload) ? payload.type : undefined) {
-        case ApplicationCommandTypes.USER:
+        case ApplicationCommandTypes.USER: {
           return UserContextMenuInteraction;
-        case ApplicationCommandTypes.MESSAGE:
+        }
+        case ApplicationCommandTypes.MESSAGE: {
           return MessageContextMenuInteraction;
-        default:
+        }
+        default: {
           return CommandInteraction;
+        }
       }
     }
     case InteractionTypes.MESSAGE_COMPONENT: {
       switch (isRecord(payload) ? payload.component_type : undefined) {
-        case MessageComponentTypes.BUTTON:
+        case MessageComponentTypes.BUTTON: {
           return ButtonInteraction;
+        }
         case MessageComponentTypes.STRING_SELECT:
         case MessageComponentTypes.USER_SELECT:
         case MessageComponentTypes.ROLE_SELECT:
         case MessageComponentTypes.MENTIONABLE_SELECT:
-        case MessageComponentTypes.CHANNEL_SELECT:
+        case MessageComponentTypes.CHANNEL_SELECT: {
           return SelectMenuInteraction;
-        default:
+        }
+        default: {
           return null;
+        }
       }
     }
     case InteractionTypes.APPLICATION_COMMAND_AUTOCOMPLETE: {
@@ -68,11 +74,11 @@ function resolveInteractionType(
   }
 }
 
-export default (
+export default function handleInteractionCreate(
   client: Client,
   packet: { d?: unknown },
   _shard: WebSocketShard
-) => {
+) {
   if (!isInteractionData(packet.d)) {
     return;
   }
@@ -83,4 +89,4 @@ export default (
     : data;
 
   client.emit(Events.INTERACTION_CREATE, interaction);
-};
+}

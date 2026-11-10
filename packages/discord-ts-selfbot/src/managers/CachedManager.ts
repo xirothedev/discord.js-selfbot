@@ -11,6 +11,18 @@ type ManagerCache<Holds> = Collection<string, Holds> & {
   sweepFilter?: { isDefault?: boolean };
 };
 
+function patch(hold: object, data: unknown): void {
+  const method = Reflect.get(hold, "_patch");
+  if (typeof method === "function") {
+    Reflect.apply(method, hold, [data]);
+  }
+}
+
+function cloneOf<Holds extends DataHold>(hold: Holds): Holds {
+  const method = Reflect.get(hold, "_clone");
+  return typeof method === "function" ? Reflect.apply(method, hold, []) : hold;
+}
+
 class CachedManager<
   Holds extends DataHold = DataHold,
 > extends DataManager<Holds> {
@@ -85,18 +97,6 @@ class CachedManager<
     }
     return entry;
   }
-}
-
-function patch(hold: object, data: unknown): void {
-  const method = Reflect.get(hold, "_patch");
-  if (typeof method === "function") {
-    Reflect.apply(method, hold, [data]);
-  }
-}
-
-function cloneOf<Holds extends DataHold>(hold: Holds): Holds {
-  const method = Reflect.get(hold, "_clone");
-  return typeof method === "function" ? Reflect.apply(method, hold, []) : hold;
 }
 
 export default CachedManager;

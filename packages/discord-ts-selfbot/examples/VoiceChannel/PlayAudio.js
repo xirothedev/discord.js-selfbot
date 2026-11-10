@@ -10,12 +10,12 @@ Install:
 - ffmpeg (install and add to your system environment)
 */
 
-const { Client } = require("../../src/index");
-const ytdl = require("@distube/ytdl-core");
-// better than ytdl-core
+import ytdl from "@distube/ytdl-core";
+import { Client } from "../../src/index";
+
 const client = new Client();
 
-client.on("ready", async (client) => {
+client.on("ready", async () => {
   console.log(`${client.user.username} is ready!`);
   const channel = client.channels.cache.get("voice_id");
   const connection = await client.voice.joinChannel(channel, {

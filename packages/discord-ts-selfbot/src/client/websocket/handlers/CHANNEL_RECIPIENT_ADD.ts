@@ -20,11 +20,11 @@ function isRecipientData(
   );
 }
 
-export default (
+export default function handleChannelRecipientAdd(
   client: Client,
   packet: { d?: unknown },
   shard: WebSocketShard
-) => {
+) {
   if (!isRecipientData(packet.d)) {
     return;
   }
@@ -40,4 +40,4 @@ export default (
       client.emit(Events.CHANNEL_RECIPIENT_ADD, channel, user);
     }
   }
-};
+}

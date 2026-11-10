@@ -1,5 +1,7 @@
 import process from "node:process";
 import type {
+  APIMessage,
+  APIUser,
   APIWebhookSourceChannel,
   APIWebhookSourceGuild,
   Snowflake,
@@ -31,10 +33,9 @@ import _ConstantsModule from "../util/Constants";
 
 const { WebhookTypes } = _ConstantsModule;
 import DataResolver from "../util/DataResolver";
+import { patchValue } from "./Base";
 import SnowflakeUtil from "../util/SnowflakeUtil";
-import type { APIUser } from "discord-api-types/v10";
 import type { Guild } from "./Guild";
-import type { APIMessage } from "discord-api-types/v10";
 
 let deprecationEmittedForFetchMessage = false;
 
@@ -59,9 +60,7 @@ class Webhook {
   }
 
   _patch(data: RawWebhookData) {
-    if ("name" in data) {
-      this.name = data.name ?? null;
-    }
+    this.name = patchValue(data.name, this.name);
 
     Object.defineProperty(this, "token", {
       configurable: true,
@@ -69,48 +68,45 @@ class Webhook {
       writable: true,
     });
 
-    if ("avatar" in data) {
-      this.avatar = data.avatar ?? null;
-    }
+    this.avatar = patchValue(data.avatar, this.avatar);
 
     this.id = data.id;
 
-    if ("type" in data && data.type !== undefined) {
+    if (data.type !== undefined) {
       const type: WebhookType = WebhookTypes[data.type];
       this.type = type;
     }
 
-    if ("guild_id" in data) {
-      this.guildId = data.guild_id ?? null;
-    }
-
-    if ("channel_id" in data) {
-      this.channelId = data.channel_id ?? null;
-    }
+    this.guildId = patchValue(data.guild_id, this.guildId);
+    this.channelId = patchValue(data.channel_id, this.channelId);
 
     if ("user" in data) {
-      const owner: User | APIUser | null =
-        this.client.users?._add(data.user) ?? data.user ?? null;
+      const added = this.client.users
+        ? this.client.users._add(data.user)
+        : null;
+      const owner: User | APIUser | null = added ?? data.user ?? null;
       this.owner = owner;
     } else {
       this.owner ??= null;
     }
 
-    if ("source_guild" in data && data.source_guild) {
+    if (data.source_guild) {
       const sourceGuild: Guild | APIWebhookSourceGuild =
-        this.client.guilds?.cache.get(data.source_guild.id) ??
-        data.source_guild;
+        this.client.guilds.cache.get(data.source_guild.id) ?? data.source_guild;
       this.sourceGuild = sourceGuild;
     } else {
       this.sourceGuild ??= null;
     }
 
     if ("source_channel" in data) {
-      const sourceChannel: Channel | APIWebhookSourceChannel | null = data
-        .source_channel?.id
-        ? (this.client.channels?.cache.get(data.source_channel.id) ??
-          data.source_channel)
-        : (data.source_channel ?? null);
+      const sourceChannelData = data.source_channel;
+      let sourceChannel: Channel | APIWebhookSourceChannel | null = null;
+      if (sourceChannelData) {
+        sourceChannel = sourceChannelData.id
+          ? (this.client.channels.cache.get(sourceChannelData.id) ??
+            sourceChannelData)
+          : sourceChannelData;
+      }
       this.sourceChannel = sourceChannel;
     } else {
       this.sourceChannel ??= null;
@@ -124,13 +120,10 @@ class Webhook {
       throw new Error("WEBHOOK_TOKEN_UNAVAILABLE");
     }
 
-    let messagePayload;
-
-    if (options instanceof MessagePayload) {
-      messagePayload = options.resolveData();
-    } else {
-      messagePayload = MessagePayload.create(this, options).resolveData();
-    }
+    const messagePayload =
+      options instanceof MessagePayload
+        ? options.resolveData()
+        : MessagePayload.create(this, options).resolveData();
 
     const { data, files } = await messagePayload.resolveFiles();
     const d = await this.client.api
@@ -186,11 +179,13 @@ class Webhook {
     ) {
       resolvedAvatar = await DataResolver.resolveImage(resolvedAvatar);
     }
-    const channelId = channel
-      ? typeof channel === "object" && channel !== null && "id" in channel
-        ? channel.id
-        : channel
-      : undefined;
+    let channelId;
+    if (channel) {
+      channelId =
+        typeof channel === "object" && channel !== null && "id" in channel
+          ? channel.id
+          : channel;
+    }
     const data = await this.client.api
       .webhooks(this.id, channel ? undefined : this.token)
       .patch<RawWebhookData>({
@@ -212,8 +207,9 @@ class Webhook {
 
   async fetchMessage(
     message: Snowflake | "@original",
-    cacheOrOptions: WebhookFetchMessageOptions | boolean = { cache: true }
+    cacheOrOptions?: WebhookFetchMessageOptions | boolean
   ): Promise<Message | APIMessage> {
+    let options: WebhookFetchMessageOptions;
     if (typeof cacheOrOptions === "boolean") {
       if (!deprecationEmittedForFetchMessage) {
         process.emitWarning(
@@ -224,7 +220,9 @@ class Webhook {
         deprecationEmittedForFetchMessage = true;
       }
 
-      cacheOrOptions = { cache: cacheOrOptions };
+      options = { cache: cacheOrOptions };
+    } else {
+      options = cacheOrOptions ?? { cache: true };
     }
 
     if (!this.token) {
@@ -237,7 +235,7 @@ class Webhook {
       .get<RawMessageData>({
         auth: false,
         query: {
-          thread_id: cacheOrOptions.threadId,
+          thread_id: options.threadId,
         },
         webhook: true,
       });
@@ -257,13 +255,10 @@ class Webhook {
       throw new Error("WEBHOOK_TOKEN_UNAVAILABLE");
     }
 
-    let messagePayload;
-
-    if (options instanceof MessagePayload) {
-      messagePayload = options;
-    } else {
-      messagePayload = MessagePayload.create(this, options);
-    }
+    const messagePayload =
+      options instanceof MessagePayload
+        ? options
+        : MessagePayload.create(this, options);
 
     const { data, files } = await messagePayload.resolveData().resolveFiles();
 

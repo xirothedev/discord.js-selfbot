@@ -52,9 +52,9 @@ function expectedFfmpegArgs(output) {
 function createFakeChildProcess(args) {
   const stdinChunks = [];
   const stdin = new Writable({
-    write(chunk, _encoding, callback) {
+    write(chunk, _encoding, done) {
       stdinChunks.push(Buffer.from(chunk));
-      callback();
+      done();
     },
   });
   const stderr = new PassThrough();
@@ -108,7 +108,7 @@ test("Recorder builds the expected ffmpeg arguments for an audio output", async 
   const { recorder, child, spawn } = await buildRecorder({ output });
 
   expect(spawn).toHaveBeenCalledTimes(1);
-  const [command, args] = spawn.mock.calls[0];
+  const [[command, args]] = spawn.mock.calls;
   expect(command).toBe("ffmpeg");
   expect(args).toEqual(expectedFfmpegArgs(output));
 
@@ -124,7 +124,7 @@ test("Recorder builds the expected ffmpeg arguments for a video output", async (
   const output = "/tmp/voice-recording-video.mkv";
   const { recorder, spawn } = await buildRecorder({ output });
 
-  const [command, args] = spawn.mock.calls[0];
+  const [[command, args]] = spawn.mock.calls;
   expect(command).toBe("ffmpeg");
   expect(args).toEqual(expectedFfmpegArgs(output));
 
@@ -134,12 +134,12 @@ test("Recorder builds the expected ffmpeg arguments for a video output", async (
 test("Recorder#stop ends the ffmpeg process and flushes the output stream", async () => {
   let finalized = false;
   const output = new Writable({
-    final(callback) {
+    final(done) {
       finalized = true;
-      callback();
+      done();
     },
-    write(_chunk, _encoding, callback) {
-      callback();
+    write(_chunk, _encoding, done) {
+      done();
     },
   });
   const streamOutput = mock(() => ({ url: "unix:/tmp/fake-recorder.sock" }));

@@ -1,4 +1,5 @@
 import { test, describe } from "bun:test";
+import { setTimeout as sleep } from "node:timers/promises";
 
 import { skip, makeClient, login, makeStepRecorder } from "./_helpers";
 
@@ -7,21 +8,21 @@ describe.skipIf(skip)("manual: presence", () => {
     const client = makeClient();
     const { step, summary, writeArtifact } = makeStepRecorder();
     try {
-      await login(client);
+      const user = await login(client);
       await step("set idle presence", async () => {
-        client.user!.setPresence({
+        user.setPresence({
           activities: [{ name: "manual", type: 0 }],
           status: "idle",
         });
-        await new Promise((r) => setTimeout(r, 1000));
+        await sleep(1000);
       });
       await step("set dnd presence", async () => {
-        client.user!.setPresence({ status: "dnd" });
-        await new Promise((r) => setTimeout(r, 1000));
+        user.setPresence({ status: "dnd" });
+        await sleep(1000);
       });
       await step("set online presence", async () => {
-        client.user!.setPresence({ activities: [], status: "online" });
-        await new Promise((r) => setTimeout(r, 1000));
+        user.setPresence({ activities: [], status: "online" });
+        await sleep(1000);
       });
     } finally {
       client.destroy();

@@ -1,11 +1,11 @@
 import Sweepers from "./Sweepers";
 import { Agent } from "node:http";
-import { parse } from "node:path";
+import nodePath from "node:path";
 import process from "node:process";
 import { setTimeout } from "node:timers";
 import { Collection } from "@discordjs/collection";
 import { fetch } from "undici";
-import type { APIPartialEmoji } from "discord-api-types/v10";
+import type { APIIncidentsData, APIPartialEmoji } from "discord-api-types/v10";
 import type Client from "../client/Client";
 import type { Message } from "../structures/Message";
 import type { Modal } from "../structures/Modal";
@@ -20,14 +20,14 @@ import type { UploadAttachment } from "../types/uploads";
 import { isGuildBasedChannel } from "../types/channels";
 import { createRequire } from "node:module";
 import type { Channel } from "../structures/Channel";
-import type { APIIncidentsData } from "discord-api-types/v10";
 
 const require = createRequire(import.meta.url);
-("use strict");
 
 const has = (o: unknown, k: unknown) =>
   Object.hasOwn(o as object, k as PropertyKey);
 const isObject = (d: unknown) => typeof d === "object" && d !== null;
+const isCodeChunk = (index: number, array: unknown[]) =>
+  index % 2 > 0 && index !== array.length - 1;
 
 let deprecationEmittedForSplitMessage = false;
 let deprecationEmittedForRemoveMentions = false;
@@ -48,16 +48,16 @@ class Util extends null {
     }
 
     const objProps = Object.keys(obj as Record<string, unknown>)
-      .filter((k) => !k.startsWith("_"))
-      .map((k) => ({ [k]: true }));
+      .filter((key) => !key.startsWith("_"))
+      .map((key) => ({ [key]: true }));
 
     props = (
       objProps.length
-        ? (Object as { assign: (...a: unknown[]) => unknown }).assign(
+        ? (Object as { assign: (...args: unknown[]) => unknown }).assign(
             ...objProps,
             ...props
           )
-        : (Object as { assign: (...a: unknown[]) => unknown }).assign(
+        : (Object as { assign: (...args: unknown[]) => unknown }).assign(
             {},
             ...props
           )
@@ -65,13 +65,13 @@ class Util extends null {
 
     const out: Record<string, unknown> = {};
 
-    for (let [prop, newProp] of Object.entries(
+    for (const [prop, entry] of Object.entries(
       props as unknown as Record<string, unknown>
     )) {
-      if (!newProp) {
+      if (!entry) {
         continue;
       }
-      newProp = newProp === true ? prop : newProp;
+      const newProp = entry === true ? prop : entry;
 
       const element = (obj as Record<string, unknown>)[prop];
       const elemIsObj = isObject(element);
@@ -87,11 +87,11 @@ class Util extends null {
       // If it's a Collection, make the array of keys
       const key = newProp as string;
       if (element instanceof Collection) {
-        out[key] = Array.from(element.keys());
+        out[key] = [...element.keys()];
       }
       // If the valueOf is a Collection, use its array of keys
       else if (valueOf instanceof Collection) {
-        out[key] = Array.from(valueOf.keys());
+        out[key] = [...valueOf.keys()];
       }
       // If it's an array, call toJSON function on each element if present, otherwise flatten each element
       else if (Array.isArray(element)) {
@@ -150,29 +150,25 @@ class Util extends null {
       deprecationEmittedForSplitMessage = true;
     }
 
-    text = Util.verifyString(text);
-    if (text.length <= maxLength) {
-      return [text];
+    const content = Util.verifyString(text);
+    if (content.length <= maxLength) {
+      return [content];
     }
-    let splitText = [text];
+    let splitText = [content];
     if (Array.isArray(char)) {
       while (
         char.length > 0 &&
         splitText.some((elem) => elem.length > maxLength)
       ) {
         const currentChar = char.shift();
-        if (currentChar instanceof RegExp) {
-          splitText = splitText.flatMap(
-            (chunk) => chunk.match(currentChar) ?? []
-          ) as string[];
-        } else {
-          splitText = splitText.flatMap((chunk) =>
-            chunk.split(currentChar as string)
-          );
-        }
+        splitText = splitText.flatMap((chunk) =>
+          currentChar instanceof RegExp
+            ? (chunk.match(currentChar) ?? [])
+            : chunk.split(currentChar as string)
+        ) as string[];
       }
     } else {
-      splitText = text.split(char as string | RegExp);
+      splitText = content.split(char as string | RegExp);
     }
     if (splitText.some((elem) => elem.length > maxLength)) {
       throw new RangeError("SPLIT_MAX_LEN");
@@ -186,27 +182,12 @@ class Util extends null {
       }
       msg += (msg && msg !== prepend ? char : "") + chunk;
     }
-    return messages.concat(msg).filter((m) => m);
+    return [...messages, msg].filter(Boolean);
   }
 
   static escapeMarkdown(
     text: string,
-    {
-      codeBlock = true,
-      inlineCode = true,
-      bold = true,
-      italic = true,
-      underline = true,
-      strikethrough = true,
-      spoiler = true,
-      codeBlockContent = true,
-      inlineCodeContent = true,
-      escape = true,
-      heading = false,
-      bulletedList = false,
-      numberedList = false,
-      maskedLink = false,
-    }: {
+    options: {
       codeBlock?: boolean;
       inlineCode?: boolean;
       bold?: boolean;
@@ -223,11 +204,27 @@ class Util extends null {
       maskedLink?: boolean;
     } = {}
   ): string {
+    const {
+      codeBlock = true,
+      inlineCode = true,
+      bold = true,
+      italic = true,
+      underline = true,
+      strikethrough = true,
+      spoiler = true,
+      escape = true,
+      heading = false,
+      bulletedList = false,
+      numberedList = false,
+      maskedLink = false,
+    } = options;
+    const codeBlockContent = options.codeBlockContent !== false;
+    const inlineCodeContent = options.inlineCodeContent !== false;
     if (!codeBlockContent) {
       return text
         .split("```")
         .map((subString: unknown, index: number, array: unknown[]): unknown => {
-          if (index % 2 && index !== array.length - 1) {
+          if (isCodeChunk(index, array)) {
             return subString;
           }
           return Util.escapeMarkdown(subString as string, {
@@ -249,9 +246,9 @@ class Util extends null {
     }
     if (!inlineCodeContent) {
       return text
-        .split(/(?<=^|[^`])`(?=[^`]|$)/g)
+        .split(/(?<=^|[^`])`(?=[^`]|$)/gu)
         .map((subString: unknown, index: number, array: unknown[]): unknown => {
-          if (index % 2 && index !== array.length - 1) {
+          if (isCodeChunk(index, array)) {
             return subString;
           }
           return Util.escapeMarkdown(subString as string, {
@@ -270,43 +267,25 @@ class Util extends null {
         })
         .join(inlineCode ? "\\`" : "`");
     }
-    if (escape) {
-      text = Util.escapeEscape(text);
+    const escapers: [boolean, (value: string) => string][] = [
+      [escape, Util.escapeEscape],
+      [inlineCode, Util.escapeInlineCode],
+      [codeBlock, Util.escapeCodeBlock],
+      [italic, Util.escapeItalic],
+      [bold, Util.escapeBold],
+      [underline, Util.escapeUnderline],
+      [strikethrough, Util.escapeStrikethrough],
+      [spoiler, Util.escapeSpoiler],
+      [heading, Util.escapeHeading],
+      [bulletedList, Util.escapeBulletedList],
+      [numberedList, Util.escapeNumberedList],
+      [maskedLink, Util.escapeMaskedLink],
+    ];
+    let content = text;
+    for (const [, escapeFn] of escapers.filter(([enabled]) => enabled)) {
+      content = escapeFn(content);
     }
-    if (inlineCode) {
-      text = Util.escapeInlineCode(text);
-    }
-    if (codeBlock) {
-      text = Util.escapeCodeBlock(text);
-    }
-    if (italic) {
-      text = Util.escapeItalic(text);
-    }
-    if (bold) {
-      text = Util.escapeBold(text);
-    }
-    if (underline) {
-      text = Util.escapeUnderline(text);
-    }
-    if (strikethrough) {
-      text = Util.escapeStrikethrough(text);
-    }
-    if (spoiler) {
-      text = Util.escapeSpoiler(text);
-    }
-    if (heading) {
-      text = Util.escapeHeading(text);
-    }
-    if (bulletedList) {
-      text = Util.escapeBulletedList(text);
-    }
-    if (numberedList) {
-      text = Util.escapeNumberedList(text);
-    }
-    if (maskedLink) {
-      text = Util.escapeMaskedLink(text);
-    }
-    return text;
+    return content;
   }
 
   static escapeCodeBlock(text: string) {
@@ -314,43 +293,49 @@ class Util extends null {
   }
 
   static escapeInlineCode(text: string) {
-    return text.replaceAll(/(?<=^|[^`])``?(?=[^`]|$)/g, (match) =>
+    return text.replaceAll(/(?<=^|[^`])``?(?=[^`]|$)/gu, (match) =>
       match.length === 2 ? "\\`\\`" : "\\`"
     );
   }
 
   static escapeItalic(text: string) {
-    let i = 0;
-    text = text.replaceAll(/(?<=^|[^*])\*([^*]|\*\*|$)/g, (_, match) => {
-      if (match === "**") {
-        return ++i % 2 ? `\\*${match}` : `${match}\\*`;
+    let count = 0;
+    const withItalic = text.replaceAll(
+      /(?<=^|[^*])\*(?<body>[^*]|\*\*|$)/gu,
+      (_full, match) => {
+        if (match === "**") {
+          return ++count % 2 ? `\\*${match}` : `${match}\\*`;
+        }
+        return `\\*${match}`;
       }
-      return `\\*${match}`;
-    });
-    i = 0;
-    return text.replaceAll(/(?<=^|[^_])_([^_]|__|$)/g, (_, match) => {
-      if (match === "__") {
-        return ++i % 2 ? `\\_${match}` : `${match}\\_`;
+    );
+    count = 0;
+    return withItalic.replaceAll(
+      /(?<=^|[^_])_(?<body>[^_]|__|$)/gu,
+      (_full, match) => {
+        if (match === "__") {
+          return ++count % 2 ? `\\_${match}` : `${match}\\_`;
+        }
+        return `\\_${match}`;
       }
-      return `\\_${match}`;
-    });
+    );
   }
 
   static escapeBold(text: string) {
-    let i = 0;
-    return text.replaceAll(/\*\*(\*)?/g, (_, match) => {
+    let count = 0;
+    return text.replaceAll(/\*\*(?<body>\*)?/gu, (_full, match) => {
       if (match) {
-        return ++i % 2 ? `${match}\\*\\*` : `\\*\\*${match}`;
+        return ++count % 2 ? `${match}\\*\\*` : `\\*\\*${match}`;
       }
       return "\\*\\*";
     });
   }
 
   static escapeUnderline(text: string) {
-    let i = 0;
-    return text.replaceAll(/__(_)?/g, (_, match) => {
+    let count = 0;
+    return text.replaceAll(/__(?<body>_)?/gu, (_full, match) => {
       if (match) {
-        return ++i % 2 ? `${match}\\_\\_` : `\\_\\_${match}`;
+        return ++count % 2 ? `${match}\\_\\_` : `\\_\\_${match}`;
       }
       return "\\_\\_";
     });
@@ -369,19 +354,22 @@ class Util extends null {
   }
 
   static escapeHeading(text: string) {
-    return text.replaceAll(/^( {0,2}[*-] +)?(#{1,3} )/gm, "$1\\$2");
+    return text.replaceAll(
+      /^(?<prefix> {0,2}[*-] +)?(?<heading>#{1,3} )/gmu,
+      "$1\\$2"
+    );
   }
 
   static escapeBulletedList(text: string) {
-    return text.replaceAll(/^( *)[*-]( +)/gm, "$1\\-$2");
+    return text.replaceAll(/^(?<indent> *)[*-](?<spaces> +)/gmu, "$1\\-$2");
   }
 
   static escapeNumberedList(text: string) {
-    return text.replaceAll(/^( *\d+)\./gm, "$1\\.");
+    return text.replaceAll(/^(?<indent> *\d+)\./gmu, "$1\\.");
   }
 
   static escapeMaskedLink(text: string) {
-    return text.replaceAll(/\[.+\]\(.+\)/gm, "\\$&");
+    return text.replaceAll(/\[(?<text>.+)\]\((?<url>.+)\)/gmu, "\\$&");
   }
 
   static fetchRecommendedShards() {
@@ -389,13 +377,13 @@ class Util extends null {
   }
 
   static parseEmoji(text: string) {
-    if (text.includes("%")) {
-      text = decodeURIComponent(text);
+    const content = text.includes("%") ? decodeURIComponent(text) : text;
+    if (!content.includes(":")) {
+      return { animated: false, id: null, name: content };
     }
-    if (!text.includes(":")) {
-      return { animated: false, name: text, id: null };
-    }
-    const match = text.match(/<?(?:(a):)?(\w{2,32}):(\d{17,19})?>?/);
+    const match = content.match(
+      /<?(?:(?<animated>a):)?(?<name>\w{2,32}):(?<id>\d{17,19})?>?/u
+    );
     return (
       match && {
         animated: Boolean(match[1]),
@@ -410,7 +398,7 @@ class Util extends null {
       return null;
     }
     if (typeof emoji === "string") {
-      if (/^\d{17,19}$/.test(emoji)) {
+      if (/^\d{17,19}$/u.test(emoji)) {
         return { id: emoji, name: null };
       }
       const parsed = Util.parseEmoji(emoji);
@@ -443,23 +431,23 @@ class Util extends null {
     return Object.assign(Object.create(obj as object), obj);
   }
 
-  static mergeDefault<T extends object>(def: T, given?: object): T;
+  static mergeDefault<Shape extends object>(def: Shape, given?: object): Shape;
   static mergeDefault(def: unknown, given?: unknown): unknown;
   static mergeDefault(def: unknown, given?: unknown): unknown {
     if (!given) {
       return def;
     }
-    const d = def as Record<string, unknown>;
-    const g = given as Record<string, unknown>;
-    for (const key in d) {
-      if (!has(g, key) || g[key] === undefined) {
-        g[key] = d[key];
-      } else if (g[key] === Object(g[key])) {
-        g[key] = Util.mergeDefault(d[key], g[key]);
+    const defaults = def as Record<string, unknown>;
+    const target = given as Record<string, unknown>;
+    for (const key in defaults) {
+      if (!has(target, key) || target[key] === undefined) {
+        target[key] = defaults[key];
+      } else if (target[key] === Object(target[key])) {
+        target[key] = Util.mergeDefault(defaults[key], target[key]);
       }
     }
 
-    return g;
+    return target;
   }
 
   static makeError(obj: unknown) {
@@ -487,10 +475,10 @@ class Util extends null {
     offset = false
   ) {
     const index = array.indexOf(element);
-    newIndex = (offset ? index : 0) + newIndex;
-    if (newIndex > -1 && newIndex < array.length) {
-      const removedElement = array.splice(index, 1)[0];
-      array.splice(newIndex, 0, removedElement);
+    const targetIndex = (offset ? index : 0) + newIndex;
+    if (targetIndex > -1 && targetIndex < array.length) {
+      const [removedElement] = array.splice(index, 1);
+      array.splice(targetIndex, 0, removedElement);
     }
     return array.indexOf(element);
   }
@@ -511,64 +499,65 @@ class Util extends null {
   }
 
   static resolveColor(color: unknown) {
+    let resolved = color;
     if (typeof color === "string") {
       if (color === "RANDOM") {
-        return Math.floor(Math.random() * (0xffffff + 1));
+        return Math.floor(Math.random() * (0xff_ff_ff + 1));
       }
       if (color === "DEFAULT") {
         return 0;
       }
-      color =
+      resolved =
         Colors[color as string] ??
         Number.parseInt((color as string).replace("#", ""), 16);
     } else if (Array.isArray(color)) {
-      color = (color[0] << 16) + (color[1] << 8) + color[2];
+      resolved = (color[0] << 16) + (color[1] << 8) + color[2];
     }
 
-    if ((color as number) < 0 || (color as number) > 0xff_ff_ff) {
+    if ((resolved as number) < 0 || (resolved as number) > 0xff_ff_ff) {
       throw new RangeError("COLOR_RANGE");
-    } else if (Number.isNaN(color)) {
+    } else if (Number.isNaN(resolved)) {
       throw new TypeError("COLOR_CONVERT");
     }
 
-    return color as number;
+    return resolved as number;
   }
 
   static discordSort(
     collection: unknown
   ): Collection<string, { id: string; rawPosition: number }> {
     const GuildChannel = require("../structures/GuildChannel");
-    const c = collection as {
+    const sortable = collection as {
       first: () => unknown;
       toSorted: (
-        fn: (a: unknown, b: unknown) => number
+        fn: (first: unknown, second: unknown) => number
       ) => Collection<string, { id: string; rawPosition: number }>;
     };
-    const isGuildChannel = c.first() instanceof GuildChannel;
-    return c.toSorted(
+    const isGuildChannel = sortable.first() instanceof GuildChannel;
+    return sortable.toSorted(
       isGuildChannel
-        ? (a: unknown, b: unknown) =>
-            (a as { rawPosition: number; id: string }).rawPosition -
-              (b as { rawPosition: number; id: string }).rawPosition ||
+        ? (first: unknown, second: unknown) =>
+            (first as { rawPosition: number; id: string }).rawPosition -
+              (second as { rawPosition: number; id: string }).rawPosition ||
             Number(
-              BigInt((a as { id: string }).id) -
-                BigInt((b as { id: string }).id)
+              BigInt((first as { id: string }).id) -
+                BigInt((second as { id: string }).id)
             )
-        : (a: unknown, b: unknown) =>
-            (a as { rawPosition: number; id: string }).rawPosition -
-              (b as { rawPosition: number; id: string }).rawPosition ||
+        : (first: unknown, second: unknown) =>
+            (first as { rawPosition: number; id: string }).rawPosition -
+              (second as { rawPosition: number; id: string }).rawPosition ||
             Number(
-              BigInt((b as { id: string }).id) -
-                BigInt((a as { id: string }).id)
+              BigInt((second as { id: string }).id) -
+                BigInt((first as { id: string }).id)
             )
     );
   }
 
-  static async setPosition<T extends { id: unknown }>(
-    item: T,
+  static async setPosition<Item extends { id: unknown }>(
+    item: Item,
     position: number,
     relative: boolean,
-    sorted: { values: () => Iterable<T> },
+    sorted: { values: () => Iterable<Item> },
     route: { patch: (o: unknown) => Promise<unknown> },
     reason?: string
   ) {
@@ -583,7 +572,7 @@ class Util extends null {
   }
 
   static basename(path: unknown, ext?: unknown) {
-    const res = parse(path as string);
+    const res = nodePath.parse(path as string);
     return ext && res.ext.startsWith(ext as string)
       ? res.name
       : res.base.split("?")[0];
@@ -614,9 +603,9 @@ class Util extends null {
 
   static cleanContent(str: string, channel: Channel) {
     const guild = isGuildBasedChannel(channel) ? channel.guild : null;
-    str = str
-      .replaceAll(/<@!?[0-9]+>/g, (input) => {
-        const id = input.replaceAll(/<|!|>|@/g, "");
+    const content = str
+      .replaceAll(/<@!?[0-9]+>/gu, (input) => {
+        const id = input.replaceAll(/<|!|>|@/gu, "");
         if (channel.type === "DM") {
           const user = channel.client.users.cache.get(id);
           return user ? Util._removeMentions(`@${user.username}`) : input;
@@ -629,9 +618,9 @@ class Util extends null {
         const user = channel.client.users.cache.get(id);
         return user ? Util._removeMentions(`@${user.username}`) : input;
       })
-      .replaceAll(/<#[0-9]+>/g, (input) => {
+      .replaceAll(/<#[0-9]+>/gu, (input) => {
         const mentionedChannel = channel.client.channels.cache.get(
-          input.replaceAll(/<|#|>/g, "")
+          input.replaceAll(/<|#|>/gu, "")
         );
         if (
           !mentionedChannel ||
@@ -642,14 +631,14 @@ class Util extends null {
         }
         return `#${mentionedChannel.name}`;
       })
-      .replaceAll(/<@&[0-9]+>/g, (input) => {
+      .replaceAll(/<@&[0-9]+>/gu, (input) => {
         if (channel.type === "DM" || !guild) {
           return input;
         }
-        const role = guild.roles.cache.get(input.replaceAll(/<|@|>|&/g, ""));
+        const role = guild.roles.cache.get(input.replaceAll(/<|@|>|&/gu, ""));
         return role ? `@${role.name}` : input;
       });
-    return str;
+    return content;
   }
 
   static cleanCodeBlockContent(text: string) {
@@ -677,7 +666,6 @@ class Util extends null {
   static resolveAutoArchiveMaxLimit(_guild: unknown = null) {
     if (!deprecationEmittedForResolveAutoArchiveMaxLimit) {
       process.emitWarning(
-        // eslint-disable-next-line max-len
         "The Util.resolveAutoArchiveMaxLimit method and the 'MAX' option are deprecated and will be removed in the next major version.",
         "DeprecationWarning"
       );
@@ -819,13 +807,13 @@ class Util extends null {
     if (!files.length) {
       return [];
     }
-    files = files.map((file: unknown, i: number) => ({
-      filename: (file as { name?: string }).name,
+    const uploadFiles = files.map((file: unknown, index: number) => ({
       // 25MB = 26_214_400bytes
       file_size: Math.floor((26_214_400 / 10) * Math.random()),
-      id: `${i}`,
+      filename: (file as { name?: string }).name,
+      id: `${index}`,
     }));
-    const c = client as {
+    const clientApi = client as {
       api: {
         channels: Record<
           string,
@@ -839,38 +827,32 @@ class Util extends null {
         >;
       };
     };
-    const { attachments } = await c.api.channels[
+    const { attachments } = await clientApi.api.channels[
       String(channelId)
     ].attachments.post({
       data: {
-        files,
+        files: uploadFiles,
       },
     });
     return attachments;
   }
 
-  static uploadFile(data: unknown, url: unknown) {
-    return new Promise((resolve, reject) => {
-      fetch(url as string, {
-        body: data as never,
-        duplex: "half", // Node.js v20
-        method: "PUT",
-      })
-        .then((res: unknown) => {
-          const r = res as { ok: boolean };
-          if (r.ok) {
-            resolve(res);
-          } else {
-            reject(res);
-          }
-        })
-        .catch(reject);
+  static async uploadFile(data: unknown, url: unknown) {
+    const response = await fetch(url as string, {
+      body: data as never,
+      // Node.js v20 requires the half duplex option for streamed bodies.
+      duplex: "half",
+      method: "PUT",
     });
+    if (!response.ok) {
+      throw response;
+    }
+    return response;
   }
 
-  static lazy(cb: unknown) {
+  static lazy(factory: unknown) {
     let defaultValue: unknown;
-    return () => (defaultValue ??= (cb as () => unknown)());
+    return () => (defaultValue ??= (factory as () => unknown)());
   }
 
   static verifyProxyAgent(object: unknown): object is Agent {
@@ -924,61 +906,61 @@ class Util extends null {
     isHandlerDeferUpdate = false,
     parent?: Message | Modal
   ): Promise<unknown> {
-    return new Promise((resolve, reject) => {
-      // Waiting for MsgCreate / ModalCreate
-      let dataFromInteractionSuccess: unknown;
-      let dataFromNormalEvent: unknown;
-      const handler = (data: unknown) => {
-        // UnhandledPacket
-        const dd = data as {
-          d?: { nonce?: unknown };
-          t?: string;
-          nonce?: unknown;
-        };
-        if (
-          isHandlerDeferUpdate &&
-          dd.d?.nonce === nonce &&
-          dd.t === "INTERACTION_SUCCESS"
-        ) {
-          // Interaction#deferUpdate
-          client.removeListener(Events.MESSAGE_CREATE, handler);
-          client.removeListener(Events.UNHANDLED_PACKET, handler);
-          client.removeListener(Events.INTERACTION_MODAL_CREATE, handler);
-          dataFromInteractionSuccess = parent;
-        }
-        if (dd.nonce !== nonce) {
-          return;
-        }
-        clearTimeout(timeout);
+    const { promise, reject, resolve } = Promise.withResolvers<unknown>();
+    // Waiting for MsgCreate / ModalCreate
+    let dataFromInteractionSuccess: unknown;
+    let dataFromNormalEvent: unknown;
+    const timer = {} as { id: ReturnType<typeof setTimeout> };
+    const handler = (data: unknown) => {
+      // UnhandledPacket
+      const packet = data as {
+        d?: { nonce?: unknown };
+        nonce?: unknown;
+      } & Record<string, unknown>;
+      if (
+        isHandlerDeferUpdate &&
+        packet.d?.nonce === nonce &&
+        packet["t"] === "INTERACTION_SUCCESS"
+      ) {
+        // Interaction#deferUpdate
         client.removeListener(Events.MESSAGE_CREATE, handler);
+        client.removeListener(Events.UNHANDLED_PACKET, handler);
         client.removeListener(Events.INTERACTION_MODAL_CREATE, handler);
-        if (isHandlerDeferUpdate) {
-          client.removeListener(Events.UNHANDLED_PACKET, handler);
-        }
-        client.decrementMaxListeners();
-        dataFromNormalEvent = data;
-        resolve(data);
-      };
-      const timeout = setTimeout(() => {
-        if (dataFromInteractionSuccess || dataFromNormalEvent) {
-          resolve(dataFromNormalEvent || dataFromInteractionSuccess);
-          return;
-        }
-        client.removeListener(Events.MESSAGE_CREATE, handler);
-        client.removeListener(Events.INTERACTION_MODAL_CREATE, handler);
-        if (isHandlerDeferUpdate) {
-          client.removeListener(Events.UNHANDLED_PACKET, handler);
-        }
-        client.decrementMaxListeners();
-        reject(new DiscordError("INTERACTION_FAILED"));
-      }, timeoutMs).unref();
-      client.incrementMaxListeners();
-      client.on(Events.MESSAGE_CREATE, handler);
-      client.on(Events.INTERACTION_MODAL_CREATE, handler);
-      if (isHandlerDeferUpdate) {
-        client.on(Events.UNHANDLED_PACKET, handler);
+        dataFromInteractionSuccess = parent;
       }
-    });
+      if (packet.nonce !== nonce) {
+        return;
+      }
+      clearTimeout(timer.id);
+      client.removeListener(Events.MESSAGE_CREATE, handler);
+      client.removeListener(Events.INTERACTION_MODAL_CREATE, handler);
+      if (isHandlerDeferUpdate) {
+        client.removeListener(Events.UNHANDLED_PACKET, handler);
+      }
+      client.decrementMaxListeners();
+      dataFromNormalEvent = data;
+      resolve(data);
+    };
+    timer.id = setTimeout(() => {
+      if (dataFromInteractionSuccess || dataFromNormalEvent) {
+        resolve(dataFromNormalEvent || dataFromInteractionSuccess);
+        return;
+      }
+      client.removeListener(Events.MESSAGE_CREATE, handler);
+      client.removeListener(Events.INTERACTION_MODAL_CREATE, handler);
+      if (isHandlerDeferUpdate) {
+        client.removeListener(Events.UNHANDLED_PACKET, handler);
+      }
+      client.decrementMaxListeners();
+      reject(new DiscordError("INTERACTION_FAILED"));
+    }, timeoutMs).unref();
+    client.incrementMaxListeners();
+    client.on(Events.MESSAGE_CREATE, handler);
+    client.on(Events.INTERACTION_MODAL_CREATE, handler);
+    if (isHandlerDeferUpdate) {
+      client.on(Events.UNHANDLED_PACKET, handler);
+    }
+    return promise;
   }
 
   static clearNullOrUndefinedObject(object: unknown) {

@@ -47,16 +47,21 @@ class ReactionUserManager extends CachedManager<User> {
     return users;
   }
 
-  async remove(user: UserResolvableSource = this.client.user!) {
-    const userId = this.client.users.resolveId(user);
+  async remove(user?: UserResolvableSource) {
+    const target = user ?? this.client.user;
+    if (!target) {
+      throw new Error("REACTION_RESOLVE_USER");
+    }
+    const userId = this.client.users.resolveId(target);
     if (!userId) {
       throw new Error("REACTION_RESOLVE_USER");
     }
+    const selfId = this.client.user?.id;
     const { message } = this.reaction;
     await this.client.api.channels[message.channelId].messages[
       message.id
     ].reactions[this.reaction.emoji.identifier][
-      userId === this.client.user!.id ? "@me" : userId
+      userId === selfId ? "@me" : userId
     ].delete();
     return this.reaction;
   }

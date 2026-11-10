@@ -43,7 +43,7 @@ function collect(): Snippet[] {
     let index = 0;
 
     for (const line of lines) {
-      const open = line.match(/^\s*```(\S.*)?$/);
+      const open = line.match(/^\s*```(?<info>\S.*)?$/u);
       if (!inFence && open) {
         inFence = true;
         info = (open[1] ?? "").trim();
@@ -51,7 +51,7 @@ function collect(): Snippet[] {
         continue;
       }
 
-      if (inFence && /^\s*```\s*$/.test(line)) {
+      if (inFence && /^\s*```\s*$/u.test(line)) {
         const marked = info.startsWith("ts check");
         const example =
           relative.startsWith("examples/") && info.startsWith("ts");
@@ -106,7 +106,7 @@ function main(): void {
     );
 
     for (const snippet of snippets) {
-      const name = `${snippet.file.replaceAll("/", "__").replace(/\.md$/, "")}-${snippet.index}.ts`;
+      const name = `${snippet.file.replaceAll("/", "__").replace(/\.md$/u, "")}-${snippet.index}.ts`;
       writeFileSync(path.join(temp, name), `${snippet.code}\n`);
     }
 

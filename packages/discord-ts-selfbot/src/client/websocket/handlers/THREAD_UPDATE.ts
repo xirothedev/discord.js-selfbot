@@ -13,11 +13,11 @@ function isData(value: unknown): value is GatewayThreadUpdateDispatchData {
   return isRecord(value) && typeof value.id === "string";
 }
 
-export default (
+export default function handleThreadUpdate(
   client: Client,
   packet: { d?: unknown },
   _shard: WebSocketShard
-) => {
+) {
   if (!isData(packet.d)) {
     return;
   }
@@ -25,4 +25,4 @@ export default (
   if (old && updated) {
     client.emit(Events.THREAD_UPDATE, old, updated);
   }
-};
+}

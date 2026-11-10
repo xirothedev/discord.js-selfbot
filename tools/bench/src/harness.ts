@@ -1,5 +1,5 @@
 import { mkdir } from "node:fs/promises";
-import { dirname } from "node:path";
+import path from "node:path";
 
 import type { Api, BenchCase, CaseResult, RunResult, Stats } from "./types";
 
@@ -25,11 +25,11 @@ export function consume(value: unknown): void {
 }
 
 function stats(samples: number[], bytes: number | null): Stats {
-  const sorted = [...samples].toSorted((a, b) => a - b);
+  const sorted = [...samples].toSorted((left, right) => left - right);
   const median = sorted[Math.floor(sorted.length / 2)];
   const p95 =
     sorted[Math.min(sorted.length - 1, Math.ceil(sorted.length * 0.95) - 1)];
-  const min = sorted[0];
+  const [min] = sorted;
   const opsPerSecond = 1000 / median;
   return {
     medianMs: median,
@@ -48,24 +48,24 @@ export async function runCase(
     1,
     Math.min(50, Math.floor(benchCase.iterations / 10))
   );
-  for (let i = 0; i < warmup; i += 1) {
+  await Array.fromAsync({ length: warmup }, async () => {
     consume(await benchCase.node());
     consume(await benchCase.bun());
-  }
+  });
 
   const nodeSamples: number[] = [];
   const bunSamples: number[] = [];
-  for (let round = 0; round < rounds; round += 1) {
+  await Array.fromAsync({ length: rounds }, async (_value, round) => {
     const order: Api[] = round % 2 === 0 ? ["node", "bun"] : ["bun", "node"];
-    for (const api of order) {
+    await Array.fromAsync(order, async (api) => {
       const samples = api === "node" ? nodeSamples : bunSamples;
       const start = Bun.nanoseconds();
-      for (let i = 0; i < benchCase.iterations; i += 1) {
+      await Array.fromAsync({ length: benchCase.iterations }, async () => {
         consume(await benchCase[api]());
-      }
+      });
       samples.push((Bun.nanoseconds() - start) / 1e6 / benchCase.iterations);
-    }
-  }
+    });
+  });
 
   const bytes = benchCase.bytes ?? null;
   const node = stats(nodeSamples, bytes);
@@ -112,8 +112,9 @@ export function printTable(results: CaseResult[]): void {
   );
   let group = "";
   for (const result of results) {
-    if (result.group !== group) {
-      group = result.group;
+    const { group: resultGroup } = result;
+    if (resultGroup !== group) {
+      group = resultGroup;
       console.log(`\n[${group}]`);
     }
     console.log(
@@ -169,12 +170,12 @@ export function toMarkdown(run: RunResult): string {
   );
   if (faster.length) {
     lines.push(
-      `- Fastest Bun win: ${faster.toSorted((a, b) => b.ratio - a.ratio)[0].id}`
+      `- Fastest Bun win: ${faster.toSorted((left, right) => right.ratio - left.ratio)[0].id}`
     );
   }
   if (slower.length) {
     lines.push(
-      `- Largest Bun loss: ${slower.toSorted((a, b) => a.ratio - b.ratio)[0].id}`
+      `- Largest Bun loss: ${slower.toSorted((left, right) => left.ratio - right.ratio)[0].id}`
     );
   }
   lines.push("");
@@ -187,11 +188,11 @@ export async function writeOutputs(
   markdownPath?: string
 ): Promise<void> {
   if (jsonPath) {
-    await mkdir(dirname(jsonPath), { recursive: true });
+    await mkdir(path.dirname(jsonPath), { recursive: true });
     await Bun.write(jsonPath, `${JSON.stringify(run, null, 2)}\n`);
   }
   if (markdownPath) {
-    await mkdir(dirname(markdownPath), { recursive: true });
+    await mkdir(path.dirname(markdownPath), { recursive: true });
     await Bun.write(markdownPath, toMarkdown(run));
   }
 }

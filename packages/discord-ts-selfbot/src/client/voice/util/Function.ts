@@ -35,14 +35,16 @@ async function randomPort(
     })
   );
 
-  await new Promise((resolve, reject) => {
-    socket.once("error", reject);
-    socket.once("listening", resolve);
-  });
+  const bound = Promise.withResolvers<unknown>();
+  socket.once("error", bound.reject);
+  socket.once("listening", bound.resolve);
+  await bound.promise;
 
   const address = socket.address();
   const port = typeof address === "object" ? address.port : undefined;
-  await new Promise((resolve) => socket.close(() => resolve(undefined)));
+  const closed = Promise.withResolvers<undefined>();
+  socket.close(() => closed.resolve(undefined));
+  await closed.promise;
   return port;
 }
 
@@ -58,41 +60,64 @@ async function randomPorts(
   );
 }
 
+async function probePort(
+  candidate: number,
+  protocol: SocketType,
+  interfaceAddresses?: InterfaceAddresses | null
+): Promise<number | undefined> {
+  const socket = dgram.createSocket(protocol);
+
+  setImmediate(() =>
+    socket.bind({
+      address: interfaceAddress(protocol, interfaceAddresses),
+      port: candidate,
+    })
+  );
+
+  const bound = Promise.withResolvers<unknown>();
+  socket.once("error", bound.reject);
+  socket.once("listening", () => bound.resolve(null));
+  const error = await bound.promise;
+
+  const closed = Promise.withResolvers<undefined>();
+  socket.close(() => closed.resolve(undefined));
+  await closed.promise;
+
+  if (error) {
+    return undefined;
+  }
+
+  const addressInfo = socket.address();
+  return addressInfo.port;
+}
+
+async function findAvailablePort(
+  min: number,
+  max: number,
+  protocol: SocketType,
+  interfaceAddresses?: InterfaceAddresses | null
+): Promise<number | undefined> {
+  const attempt = async (candidate: number): Promise<number | undefined> => {
+    if (candidate > max) {
+      return undefined;
+    }
+    const port = await probePort(candidate, protocol, interfaceAddresses);
+    if (port !== undefined && port >= min && port <= max) {
+      return port;
+    }
+    return attempt(candidate + 1);
+  };
+
+  return attempt(min);
+}
+
 async function findPort(
   min: number,
   max: number,
   protocol: SocketType = "udp4",
   interfaceAddresses?: InterfaceAddresses | null
 ): Promise<number> {
-  let port: number | undefined;
-
-  for (let i = min; i <= max; i++) {
-    const socket = dgram.createSocket(protocol);
-
-    setImmediate(() =>
-      socket.bind({
-        address: interfaceAddress(protocol, interfaceAddresses),
-        port: i,
-      })
-    );
-
-    const error = await new Promise((resolve) => {
-      socket.once("error", resolve);
-      socket.once("listening", () => resolve(null));
-    });
-
-    await new Promise((resolve) => socket.close(() => resolve(undefined)));
-
-    if (error) {
-      continue;
-    }
-
-    const addressInfo = socket.address();
-    if (addressInfo && addressInfo.port >= min && addressInfo.port <= max) {
-      port = addressInfo.port;
-      break;
-    }
-  }
+  const port = await findAvailablePort(min, max, protocol, interfaceAddresses);
 
   if (!port) {
     throw new Error("port not found");
@@ -101,11 +126,10 @@ async function findPort(
 }
 
 function parseStreamKey(key: string): StreamKey {
-  const Arr = key.split(":");
-  const type = Arr[0];
-  const guildId = type === "guild" ? Arr[1] : null;
-  const channelId = type === "guild" ? Arr[2] : Arr[1];
-  const userId = type === "guild" ? Arr[3] : Arr[2];
+  const [type, first, second, third] = key.split(":");
+  const guildId = type === "guild" ? first : null;
+  const channelId = type === "guild" ? second : first;
+  const userId = type === "guild" ? third : second;
   return { channelId, guildId, type, userId };
 }
 

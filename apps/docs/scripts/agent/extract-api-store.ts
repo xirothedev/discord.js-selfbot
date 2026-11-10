@@ -12,7 +12,7 @@ import type {
   DocgenType,
 } from "../api/enrich";
 
-const docgenPath = process.argv[2];
+const docgenPath = process.argv.at(2);
 if (!docgenPath) {
   throw new Error("Usage: bun run extract-api-store.ts <docgen.json>");
 }

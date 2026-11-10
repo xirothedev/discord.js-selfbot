@@ -9,7 +9,7 @@ import _ApplicationRoleConnectionMetadataModule from "../ApplicationRoleConnecti
 
 const { ApplicationRoleConnectionMetadata } =
   _ApplicationRoleConnectionMetadataModule;
-import Base from "../Base";
+import Base, { patchValue } from "../Base";
 import Team from "../Team";
 import ApplicationCommandManager from "../../managers/ApplicationCommandManager";
 import type {
@@ -120,206 +120,82 @@ class Application extends Base implements ApplicationEntity {
   }
 
   _patch(data: ApplicationPatch) {
-    this.id = data.id!;
-
-    if ("name" in data) {
-      this.name = data.name ?? null;
-    } else {
-      this.name ??= null;
+    if (data.id !== undefined) {
+      this.id = data.id;
     }
 
-    if ("description" in data) {
-      this.description = data.description ?? null;
-    } else {
-      this.description ??= null;
-    }
-
-    if ("icon" in data) {
-      this.icon = data.icon ?? null;
-    } else {
-      this.icon ??= null;
-    }
-
-    if ("terms_of_service_url" in data) {
-      this.termsOfServiceURL = data.terms_of_service_url ?? null;
-    } else {
-      this.termsOfServiceURL ??= null;
-    }
-
-    if ("privacy_policy_url" in data) {
-      this.privacyPolicyURL = data.privacy_policy_url ?? null;
-    } else {
-      this.privacyPolicyURL ??= null;
-    }
-
-    if ("verify_key" in data) {
-      this.verifyKey = data.verify_key ?? null;
-    } else {
-      this.verifyKey ??= null;
-    }
-
-    if ("role_connections_verification_url" in data) {
-      this.roleConnectionsVerificationURL =
-        data.role_connections_verification_url ?? null;
-    } else {
-      this.roleConnectionsVerificationURL ??= null;
-    }
+    this.name = patchValue(data.name, this.name);
+    this.description = patchValue(data.description, this.description);
+    this.icon = patchValue(data.icon, this.icon);
+    this.termsOfServiceURL = patchValue(
+      data.terms_of_service_url,
+      this.termsOfServiceURL
+    );
+    this.privacyPolicyURL = patchValue(
+      data.privacy_policy_url,
+      this.privacyPolicyURL
+    );
+    this.verifyKey = patchValue(data.verify_key, this.verifyKey);
+    this.roleConnectionsVerificationURL = patchValue(
+      data.role_connections_verification_url,
+      this.roleConnectionsVerificationURL
+    );
 
     this.tags =
       data.tags?.filter((tag): tag is string => typeof tag === "string") ?? [];
 
     if ("install_params" in data && data.install_params) {
-      const installParams: {
-        scopes: string[];
-        permissions: Readonly<Permissions>;
-      } = {
+      this.installParams = {
         permissions: new Permissions(data.install_params.permissions).freeze(),
         scopes: data.install_params.scopes,
       };
-      this.installParams = installParams;
     } else {
       this.installParams ??= null;
     }
 
-    if ("custom_install_url" in data) {
-      this.customInstallURL = data.custom_install_url ?? null;
+    this.customInstallURL = data.custom_install_url ?? null;
+    this.flags =
+      "flags" in data ? new ApplicationFlags(data.flags).freeze() : this.flags;
+    this.approximateGuildCount = patchValue(
+      data.approximate_guild_count,
+      this.approximateGuildCount
+    );
+    this.guildId = patchValue(data.guild_id, this.guildId);
+    this.cover = patchValue(data.cover_image, this.cover);
+    this.rpcOrigins = patchValue(data.rpc_origins, this.rpcOrigins, []);
+    this.botRequireCodeGrant = patchValue(
+      data.bot_require_code_grant,
+      this.botRequireCodeGrant
+    );
+    this.botPublic = patchValue(data.bot_public, this.botPublic);
+
+    if (data.team) {
+      this.owner = new Team(this.client, data.team);
+    } else if (data.owner) {
+      this.owner = this.client.users._add(data.owner);
     } else {
-      this.customInstallURL = null;
+      this.owner ??= null;
     }
 
-    if ("flags" in data) {
-      this.flags = new ApplicationFlags(data.flags).freeze();
-    }
-
-    if ("approximate_guild_count" in data) {
-      this.approximateGuildCount = data.approximate_guild_count ?? null;
-    } else {
-      this.approximateGuildCount ??= null;
-    }
-
-    if ("guild_id" in data) {
-      this.guildId = data.guild_id ?? null;
-    } else {
-      this.guildId ??= null;
-    }
-
-    if ("cover_image" in data) {
-      this.cover = data.cover_image ?? null;
-    } else {
-      this.cover ??= null;
-    }
-
-    if ("rpc_origins" in data) {
-      this.rpcOrigins = data.rpc_origins ?? [];
-    } else {
-      this.rpcOrigins ??= [];
-    }
-
-    if ("bot_require_code_grant" in data) {
-      /**
-       * If this application's bot requires a code grant when using the OAuth2 flow
-       * @deprecated
-       * @type {?boolean}
-       */
-      this.botRequireCodeGrant = data.bot_require_code_grant ?? null;
-    } else {
-      this.botRequireCodeGrant ??= null;
-    }
-
-    if ("bot_public" in data) {
-      /**
-       * If this application's bot is public
-       * @deprecated
-       * @type {?boolean}
-       */
-      this.botPublic = data.bot_public ?? null;
-    } else {
-      this.botPublic ??= null;
-    }
-
-    this.owner = data.team
-      ? new Team(this.client, data.team)
-      : data.owner
-        ? this.client.users._add(data.owner)
-        : (this.owner ?? null);
-
-    if ("splash" in data) {
-      this.splash = data.splash ?? null;
-    } else {
-      this.splash ??= null;
-    }
-
-    if ("type" in data) {
-      this.type = data.type ?? null;
-    } else {
-      this.type = null;
-    }
-
-    if ("primary_sku_id" in data) {
-      this.primarySkuId = data.primary_sku_id ?? null;
-    } else {
-      this.primarySkuId = null;
-    }
-
-    if ("eula_id" in data) {
-      this.eulaId = data.eula_id ?? null;
-    } else {
-      this.eulaId = null;
-    }
-
-    if ("slug" in data) {
-      this.slug = data.slug ?? null;
-    } else {
-      this.slug = null;
-    }
-
-    if ("aliases" in data) {
-      this.aliases = data.aliases ?? [];
-    } else {
-      this.aliases = [];
-    }
-
-    if ("executables" in data) {
-      this.executables = data.executables ?? null;
-    } else {
-      this.executables ??= null;
-    }
-
-    if ("third_party_skus" in data) {
-      this.thirdPartySkus = data.third_party_skus ?? null;
-    } else {
-      this.thirdPartySkus ??= null;
-    }
-
-    if ("hook" in data) {
-      this.hook = data.hook ?? null;
-    } else {
-      this.hook ??= null;
-    }
-
-    if ("overlay" in data) {
-      this.overlay = data.overlay ?? null;
-    } else {
-      this.overlay ??= null;
-    }
-
-    if ("overlay_methods" in data) {
-      this.overlayMethods = data.overlay_methods ?? null;
-    } else {
-      this.overlayMethods ??= null;
-    }
-
-    if ("overlay_warn" in data) {
-      this.overlayWarn = data.overlay_warn ?? null;
-    } else {
-      this.overlayWarn ??= null;
-    }
-
-    if ("overlay_compatibility_hook" in data) {
-      this.overlayCompatibilityHook = data.overlay_compatibility_hook ?? null;
-    } else {
-      this.overlayCompatibilityHook ??= null;
-    }
+    this.splash = patchValue(data.splash, this.splash);
+    this.type = data.type ?? null;
+    this.primarySkuId = data.primary_sku_id ?? null;
+    this.eulaId = data.eula_id ?? null;
+    this.slug = data.slug ?? null;
+    this.aliases = data.aliases ?? [];
+    this.executables = patchValue(data.executables, this.executables);
+    this.thirdPartySkus = patchValue(
+      data.third_party_skus,
+      this.thirdPartySkus
+    );
+    this.hook = patchValue(data.hook, this.hook);
+    this.overlay = patchValue(data.overlay, this.overlay);
+    this.overlayMethods = patchValue(data.overlay_methods, this.overlayMethods);
+    this.overlayWarn = patchValue(data.overlay_warn, this.overlayWarn);
+    this.overlayCompatibilityHook = patchValue(
+      data.overlay_compatibility_hook,
+      this.overlayCompatibilityHook
+    );
 
     if ("bot" in data) {
       this.bot = data.bot ? this.client.users._add(data.bot) : null;
@@ -327,201 +203,107 @@ class Application extends Base implements ApplicationEntity {
       this.bot ??= null;
     }
 
-    if ("developers" in data) {
-      this.developers = data.developers ?? null;
-    } else {
-      this.developers ??= null;
-    }
-
-    if ("publishers" in data) {
-      this.publishers = data.publishers ?? null;
-    } else {
-      this.publishers ??= null;
-    }
-
-    if ("redirect_uris" in data) {
-      this.redirectUris = data.redirect_uris ?? null;
-    } else {
-      this.redirectUris ??= null;
-    }
-
-    if ("deeplink_uri" in data) {
-      this.deeplinkUri = data.deeplink_uri ?? null;
-    } else {
-      this.deeplinkUri ??= null;
-    }
-
-    if ("integration_public" in data) {
-      this.integrationPublic = data.integration_public ?? null;
-    } else {
-      this.integrationPublic ??= null;
-    }
-
-    if ("integration_require_code_grant" in data) {
-      this.integrationRequireCodeGrant =
-        data.integration_require_code_grant ?? null;
-    } else {
-      this.integrationRequireCodeGrant ??= null;
-    }
-
-    if ("bot_disabled" in data) {
-      this.botDisabled = data.bot_disabled ?? null;
-    } else {
-      this.botDisabled ??= null;
-    }
-
-    if ("bot_quarantined" in data) {
-      this.botQuarantined = data.bot_quarantined ?? null;
-    } else {
-      this.botQuarantined ??= null;
-    }
-
-    if ("approximate_user_install_count" in data) {
-      this.approximateUserInstallCount =
-        data.approximate_user_install_count ?? null;
-    } else {
-      this.approximateUserInstallCount ??= null;
-    }
-
-    if ("approximate_user_authorization_count" in data) {
-      this.approximateUserAuthorizationCount =
-        data.approximate_user_authorization_count ?? null;
-    } else {
-      this.approximateUserAuthorizationCount ??= null;
-    }
-
-    if ("internal_guild_restriction" in data) {
-      this.internalGuildRestriction = data.internal_guild_restriction ?? null;
-    } else {
-      this.internalGuildRestriction ??= null;
-    }
-
-    if ("interactions_endpoint_url" in data) {
-      this.interactionsEndpointUrl = data.interactions_endpoint_url ?? null;
-    } else {
-      this.interactionsEndpointUrl ??= null;
-    }
-
-    if ("interactions_version" in data) {
-      this.interactionsVersion = data.interactions_version ?? null;
-    } else {
-      this.interactionsVersion ??= null;
-    }
-
-    if ("interactions_event_types" in data) {
-      this.interactionsEventTypes = data.interactions_event_types ?? null;
-    } else {
-      this.interactionsEventTypes ??= null;
-    }
-
-    if ("event_webhooks_status" in data) {
-      this.eventWebhooksStatus = data.event_webhooks_status ?? null;
-    } else {
-      this.eventWebhooksStatus ??= null;
-    }
-
-    if ("event_webhooks_url" in data) {
-      this.eventWebhooksUrl = data.event_webhooks_url ?? null;
-    } else {
-      this.eventWebhooksUrl ??= null;
-    }
-
-    if ("event_webhooks_types" in data) {
-      this.eventWebhooksTypes = data.event_webhooks_types ?? null;
-    } else {
-      this.eventWebhooksTypes ??= null;
-    }
-
-    if ("explicit_content_filter" in data) {
-      this.explicitContentFilter = data.explicit_content_filter ?? null;
-    } else {
-      this.explicitContentFilter ??= null;
-    }
-
-    if ("integration_types_config" in data) {
-      this.integrationTypesConfig = data.integration_types_config ?? null;
-    } else {
-      this.integrationTypesConfig ??= null;
-    }
-
-    if ("is_verified" in data) {
-      this.isVerified = data.is_verified ?? null;
-    } else {
-      this.isVerified ??= null;
-    }
-
-    if ("verification_state" in data) {
-      this.verificationState = data.verification_state ?? null;
-    } else {
-      this.verificationState ??= null;
-    }
-
-    if ("store_application_state" in data) {
-      this.storeApplicationState = data.store_application_state ?? null;
-    } else {
-      this.storeApplicationState ??= null;
-    }
-
-    if ("rpc_application_state" in data) {
-      this.rpcApplicationState = data.rpc_application_state ?? null;
-    } else {
-      this.rpcApplicationState ??= null;
-    }
-
-    if ("creator_monetization_state" in data) {
-      this.creatorMonetizationState = data.creator_monetization_state ?? null;
-    } else {
-      this.creatorMonetizationState ??= null;
-    }
-
-    if ("is_discoverable" in data) {
-      this.isDiscoverable = data.is_discoverable ?? null;
-    } else {
-      this.isDiscoverable ??= null;
-    }
-
-    if ("discoverability_state" in data) {
-      this.discoverabilityState = data.discoverability_state ?? null;
-    } else {
-      this.discoverabilityState ??= null;
-    }
-
-    if ("discovery_eligibility_flags" in data) {
-      this.discoveryEligibilityFlags = data.discovery_eligibility_flags ?? null;
-    } else {
-      this.discoveryEligibilityFlags ??= null;
-    }
-
-    if ("is_monetized" in data) {
-      this.isMonetized = data.is_monetized ?? null;
-    } else {
-      this.isMonetized ??= null;
-    }
-
-    if ("storefront_available" in data) {
-      this.storefrontAvailable = data.storefront_available ?? null;
-    } else {
-      this.storefrontAvailable ??= null;
-    }
-
-    if ("monetization_state" in data) {
-      this.monetizationState = data.monetization_state ?? null;
-    } else {
-      this.monetizationState ??= null;
-    }
-
-    if ("monetization_eligibility_flags" in data) {
-      this.monetizationEligibilityFlags =
-        data.monetization_eligibility_flags ?? null;
-    } else {
-      this.monetizationEligibilityFlags ??= null;
-    }
-
-    if ("max_participants" in data) {
-      this.maxParticipants = data.max_participants ?? null;
-    } else {
-      this.maxParticipants ??= null;
-    }
+    this.developers = patchValue(data.developers, this.developers);
+    this.publishers = patchValue(data.publishers, this.publishers);
+    this.redirectUris = patchValue(data.redirect_uris, this.redirectUris);
+    this.deeplinkUri = patchValue(data.deeplink_uri, this.deeplinkUri);
+    this.integrationPublic = patchValue(
+      data.integration_public,
+      this.integrationPublic
+    );
+    this.integrationRequireCodeGrant = patchValue(
+      data.integration_require_code_grant,
+      this.integrationRequireCodeGrant
+    );
+    this.botDisabled = patchValue(data.bot_disabled, this.botDisabled);
+    this.botQuarantined = patchValue(data.bot_quarantined, this.botQuarantined);
+    this.approximateUserInstallCount = patchValue(
+      data.approximate_user_install_count,
+      this.approximateUserInstallCount
+    );
+    this.approximateUserAuthorizationCount = patchValue(
+      data.approximate_user_authorization_count,
+      this.approximateUserAuthorizationCount
+    );
+    this.internalGuildRestriction = patchValue(
+      data.internal_guild_restriction,
+      this.internalGuildRestriction
+    );
+    this.interactionsEndpointUrl = patchValue(
+      data.interactions_endpoint_url,
+      this.interactionsEndpointUrl
+    );
+    this.interactionsVersion = patchValue(
+      data.interactions_version,
+      this.interactionsVersion
+    );
+    this.interactionsEventTypes = patchValue(
+      data.interactions_event_types,
+      this.interactionsEventTypes
+    );
+    this.eventWebhooksStatus = patchValue(
+      data.event_webhooks_status,
+      this.eventWebhooksStatus
+    );
+    this.eventWebhooksUrl = patchValue(
+      data.event_webhooks_url,
+      this.eventWebhooksUrl
+    );
+    this.eventWebhooksTypes = patchValue(
+      data.event_webhooks_types,
+      this.eventWebhooksTypes
+    );
+    this.explicitContentFilter = patchValue(
+      data.explicit_content_filter,
+      this.explicitContentFilter
+    );
+    this.integrationTypesConfig = patchValue(
+      data.integration_types_config,
+      this.integrationTypesConfig
+    );
+    this.isVerified = patchValue(data.is_verified, this.isVerified);
+    this.verificationState = patchValue(
+      data.verification_state,
+      this.verificationState
+    );
+    this.storeApplicationState = patchValue(
+      data.store_application_state,
+      this.storeApplicationState
+    );
+    this.rpcApplicationState = patchValue(
+      data.rpc_application_state,
+      this.rpcApplicationState
+    );
+    this.creatorMonetizationState = patchValue(
+      data.creator_monetization_state,
+      this.creatorMonetizationState
+    );
+    this.isDiscoverable = patchValue(data.is_discoverable, this.isDiscoverable);
+    this.discoverabilityState = patchValue(
+      data.discoverability_state,
+      this.discoverabilityState
+    );
+    this.discoveryEligibilityFlags = patchValue(
+      data.discovery_eligibility_flags,
+      this.discoveryEligibilityFlags
+    );
+    this.isMonetized = patchValue(data.is_monetized, this.isMonetized);
+    this.storefrontAvailable = patchValue(
+      data.storefront_available,
+      this.storefrontAvailable
+    );
+    this.monetizationState = patchValue(
+      data.monetization_state,
+      this.monetizationState
+    );
+    this.monetizationEligibilityFlags = patchValue(
+      data.monetization_eligibility_flags,
+      this.monetizationEligibilityFlags
+    );
+    this.maxParticipants = patchValue(
+      data.max_participants,
+      this.maxParticipants
+    );
   }
 
   get guild() {

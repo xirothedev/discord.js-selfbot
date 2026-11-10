@@ -42,17 +42,6 @@ function isActivityType(value: unknown): value is ActivityType {
   return typeof value === "number" && value in ActivityType;
 }
 
-function toActivityPatch(
-  activity: PresenceActivitySource
-): Partial<RawActivityData> {
-  return {
-    name: activity.name,
-    state: activity.state ?? undefined,
-    type: resolveActivityType(activity.type),
-    url: activity.url ?? undefined,
-  };
-}
-
 function resolveActivityType(type: string | number | undefined): ActivityType {
   if (typeof type === "number") {
     return isActivityType(type) ? type : ActivityType.Playing;
@@ -64,6 +53,17 @@ function resolveActivityType(type: string | number | undefined): ActivityType {
       : ActivityType.Playing;
   }
   return ActivityType.Playing;
+}
+
+function toActivityPatch(
+  activity: PresenceActivitySource
+): Partial<RawActivityData> {
+  return {
+    name: activity.name,
+    state: activity.state ?? undefined,
+    type: resolveActivityType(activity.type),
+    url: activity.url ?? undefined,
+  };
 }
 
 class ClientPresence extends Presence {
@@ -107,11 +107,11 @@ class ClientPresence extends Presence {
       status: status ?? this.status,
     };
     if (activities?.length) {
-      for (const [i, activity] of activities.entries()) {
+      for (const [index, activity] of activities.entries()) {
         if (typeof activity.name !== "string") {
           throw new TypeError(
             "INVALID_TYPE",
-            `activities[${i}].name`,
+            `activities[${index}].name`,
             "string"
           );
         }
@@ -158,5 +158,3 @@ class ClientPresence extends Presence {
 
 export default ClientPresence;
 export { ClientPresence };
-
-/* eslint-disable max-len */

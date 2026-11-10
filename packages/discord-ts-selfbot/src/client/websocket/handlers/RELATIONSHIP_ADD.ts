@@ -23,11 +23,11 @@ function isRelationshipData(value: unknown): value is RelationshipAddData {
   );
 }
 
-export default (
+export default function handleRelationshipAdd(
   client: Client,
   packet: { d?: unknown },
   _shard: WebSocketShard
-) => {
+) {
   if (!isRelationshipData(packet.d)) {
     return;
   }
@@ -39,4 +39,4 @@ export default (
   client.relationships.friendNicknames.set(data.id, data.nickname);
   client.relationships.sinceCache.set(data.id, new Date(data.since ?? 0));
   client.emit(Events.RELATIONSHIP_ADD, data.id, Boolean(data.should_notify));
-};
+}

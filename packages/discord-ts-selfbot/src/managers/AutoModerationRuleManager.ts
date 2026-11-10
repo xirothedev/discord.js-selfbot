@@ -49,6 +49,25 @@ const {
   AutoModerationRuleKeywordPresetTypes,
 } = _ConstantsModule;
 
+function mapAction(
+  action: AutoModerationActionOptions,
+  guild: Guild
+): Record<string, unknown> {
+  return {
+    metadata: {
+      channel_id:
+        action.metadata?.channel &&
+        guild.channels.resolveId(action.metadata.channel),
+      custom_message: action.metadata?.customMessage,
+      duration_seconds: action.metadata?.durationSeconds,
+    },
+    type:
+      typeof action.type === "number"
+        ? action.type
+        : AutoModerationActionTypes[action.type],
+  };
+}
+
 class AutoModerationRuleManager extends CachedManager<AutoModerationRule> {
   declare guild: Guild;
   constructor(guild: Guild, iterable?: Iterable<AutoModerationRule>) {
@@ -75,19 +94,9 @@ class AutoModerationRuleManager extends CachedManager<AutoModerationRule> {
     const { rules } = this.client.api.guilds(this.guild.id)["auto-moderation"];
     const data = await rules.post<RESTPostAPIAutoModerationRuleResult>({
       data: {
-        actions: actions.map((action: AutoModerationActionOptions) => ({
-          type:
-            typeof action.type === "number"
-              ? action.type
-              : AutoModerationActionTypes[action.type],
-          metadata: {
-            duration_seconds: action.metadata?.durationSeconds,
-            channel_id:
-              action.metadata?.channel &&
-              this.guild.channels.resolveId(action.metadata.channel),
-            custom_message: action.metadata?.customMessage,
-          },
-        })),
+        actions: actions.map((action: AutoModerationActionOptions) =>
+          mapAction(action, this.guild)
+        ),
         enabled,
         event_type:
           typeof eventType === "number"
@@ -103,17 +112,17 @@ class AutoModerationRuleManager extends CachedManager<AutoModerationRule> {
         )?.map((exemptRole) => this.guild.roles.resolveId(exemptRole)),
         name,
         trigger_metadata: triggerMetadata && {
+          allow_list: triggerMetadata.allowList,
           keyword_filter: triggerMetadata.keywordFilter,
-          regex_patterns: triggerMetadata.regexPatterns,
+          mention_raid_protection_enabled:
+            triggerMetadata.mentionRaidProtectionEnabled,
+          mention_total_limit: triggerMetadata.mentionTotalLimit,
           presets: triggerMetadata.presets?.map((preset) =>
             typeof preset === "number"
               ? preset
               : AutoModerationRuleKeywordPresetTypes[preset]
           ),
-          allow_list: triggerMetadata.allowList,
-          mention_total_limit: triggerMetadata.mentionTotalLimit,
-          mention_raid_protection_enabled:
-            triggerMetadata.mentionRaidProtectionEnabled,
+          regex_patterns: triggerMetadata.regexPatterns,
         },
         trigger_type:
           typeof triggerType === "number"
@@ -141,31 +150,23 @@ class AutoModerationRuleManager extends CachedManager<AutoModerationRule> {
   ): Promise<AutoModerationRule> {
     const autoModerationRuleId = this.resolveId(autoModerationRule);
 
+    let resolvedEventType: number | string | undefined;
+    if (typeof eventType === "number") {
+      resolvedEventType = eventType;
+    } else if (eventType) {
+      resolvedEventType = AutoModerationRuleEventTypes[eventType];
+    }
+
     const data = await this.client.api
       .guilds(this.guild.id)("auto-moderation")
       .rules(autoModerationRuleId)
       .patch<RESTPatchAPIAutoModerationRuleResult>({
         data: {
-          actions: actions?.map((action: AutoModerationActionOptions) => ({
-            type:
-              typeof action.type === "number"
-                ? action.type
-                : AutoModerationActionTypes[action.type],
-            metadata: {
-              duration_seconds: action.metadata?.durationSeconds,
-              channel_id:
-                action.metadata?.channel &&
-                this.guild.channels.resolveId(action.metadata.channel),
-              custom_message: action.metadata?.customMessage,
-            },
-          })),
+          actions: actions?.map((action: AutoModerationActionOptions) =>
+            mapAction(action, this.guild)
+          ),
           enabled,
-          event_type:
-            typeof eventType === "number"
-              ? eventType
-              : eventType
-                ? AutoModerationRuleEventTypes[eventType]
-                : undefined,
+          event_type: resolvedEventType,
           exempt_channels: (exemptChannels instanceof Collection
             ? [...exemptChannels.values()]
             : exemptChannels
@@ -178,17 +179,17 @@ class AutoModerationRuleManager extends CachedManager<AutoModerationRule> {
           )?.map((exemptRole) => this.guild.roles.resolveId(exemptRole)),
           name,
           trigger_metadata: triggerMetadata && {
+            allow_list: triggerMetadata.allowList,
             keyword_filter: triggerMetadata.keywordFilter,
-            regex_patterns: triggerMetadata.regexPatterns,
+            mention_raid_protection_enabled:
+              triggerMetadata.mentionRaidProtectionEnabled,
+            mention_total_limit: triggerMetadata.mentionTotalLimit,
             presets: triggerMetadata.presets?.map((preset) =>
               typeof preset === "number"
                 ? preset
                 : AutoModerationRuleKeywordPresetTypes[preset]
             ),
-            allow_list: triggerMetadata.allowList,
-            mention_total_limit: triggerMetadata.mentionTotalLimit,
-            mention_raid_protection_enabled:
-              triggerMetadata.mentionRaidProtectionEnabled,
+            regex_patterns: triggerMetadata.regexPatterns,
           },
         },
         reason,
@@ -252,14 +253,14 @@ class AutoModerationRuleManager extends CachedManager<AutoModerationRule> {
       .guilds(this.guild.id)("auto-moderation")
       .rules.get();
 
-    return data.reduce(
-      (col, autoModerationRule) =>
-        col.set(
-          autoModerationRule.id,
-          this._add(autoModerationRule, options.cache)
-        ),
-      new Collection<Snowflake, AutoModerationRule>()
-    );
+    const rules = new Collection<Snowflake, AutoModerationRule>();
+    for (const autoModerationRule of data) {
+      rules.set(
+        autoModerationRule.id,
+        this._add(autoModerationRule, options.cache)
+      );
+    }
+    return rules;
   }
 
   async delete(

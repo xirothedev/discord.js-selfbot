@@ -1,58 +1,16 @@
 import { expect, test } from "bun:test";
 import { Buffer } from "node:buffer";
-import { EventEmitter } from "node:events";
+import { EventEmitter, once } from "node:events";
 
 import VoiceConnection from "../src/client/voice/VoiceConnection";
+import FakeVoiceUdp from "./fake-voice-udp";
+import FakeVoiceWebSocket from "./fake-voice-websocket";
 import { ClientVoiceManager, Constants } from "../src/index";
 
 const GUILD_ID = "900000000000000300";
 const CHANNEL_ID = "900000000000000301";
 const USER_ID = "900000000000000001";
 const SESSION_MODE = "aead_xchacha20poly1305_rtpsize";
-
-class FakeVoiceWebSocket extends EventEmitter {
-  constructor(connection) {
-    super();
-    this.connection = connection;
-    this.connectCalls = 0;
-    this.shutdownCalls = 0;
-    this.packets = [];
-  }
-
-  connect() {
-    this.connectCalls += 1;
-  }
-
-  sendPacket(packet) {
-    this.packets.push(packet);
-    return Promise.resolve(packet);
-  }
-
-  shutdown() {
-    this.shutdownCalls += 1;
-  }
-}
-
-class FakeVoiceUdp extends EventEmitter {
-  constructor(connection) {
-    super();
-    this.connection = connection;
-    this.addresses = [];
-    this.shutdownCalls = 0;
-  }
-
-  createUDPSocket(address) {
-    this.addresses.push(address);
-  }
-
-  send(packet) {
-    return Promise.resolve(packet);
-  }
-
-  shutdown() {
-    this.shutdownCalls += 1;
-  }
-}
 
 function createVoiceHarness() {
   const client = new EventEmitter();
@@ -129,15 +87,15 @@ function emitVoiceReady(harness) {
 }
 
 function expectPlayError(call) {
-  let error;
+  let thrown: unknown;
   try {
     call();
-  } catch (caught) {
-    error = caught;
+  } catch (error) {
+    thrown = error;
   }
-  expect(error).toBeInstanceOf(Error);
-  expect(error.code).toBe("VOICE_PLAY_INTERFACE_BAD_TYPE");
-  expect(error.message).toBe("Unknown stream type");
+  expect(thrown).toBeInstanceOf(Error);
+  expect(thrown).toHaveProperty("code", "VOICE_PLAY_INTERFACE_BAD_TYPE");
+  expect(thrown).toHaveProperty("message", "Unknown stream type");
 }
 
 test("ClientVoiceManager#joinChannel broadcasts the expected VOICE_STATE_UPDATE payload", async () => {
@@ -245,9 +203,7 @@ test("disconnect destroys the voice connection and clears manager state", async 
     },
   };
 
-  const disconnected = new Promise((resolve) =>
-    connection.once("disconnect", resolve)
-  );
+  const disconnected = once(connection, "disconnect");
   connection.disconnect();
   await disconnected;
 

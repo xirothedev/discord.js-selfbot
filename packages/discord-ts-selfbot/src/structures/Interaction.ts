@@ -64,7 +64,11 @@ class Interaction<Cached extends CacheType = CacheType> extends Base {
 
     this.guildId = data.guild_id ?? null;
 
-    this.user = this.client.users._add(data.user ?? data.member!.user);
+    const user = data.user ?? data.member?.user;
+    if (!user) {
+      throw new TypeError("An interaction user is required");
+    }
+    this.user = this.client.users._add(user);
 
     this.member = data.member
       ? (this.guild?.members._add(data.member) ?? data.member)

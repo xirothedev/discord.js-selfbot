@@ -16,11 +16,11 @@ function isEffectData(
   return isRecord(value) && typeof value.guild_id === "string";
 }
 
-export default (
+export default function handleVoiceChannelEffectSend(
   client: Client,
   packet: { d?: unknown },
   _shard: WebSocketShard
-) => {
+) {
   if (!isEffectData(packet.d)) {
     return;
   }
@@ -33,4 +33,4 @@ export default (
     Events.VOICE_CHANNEL_EFFECT_SEND,
     new VoiceChannelEffect(data, guild)
   );
-};
+}

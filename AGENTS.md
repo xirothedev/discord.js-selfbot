@@ -33,9 +33,12 @@ The corpus source is `apps/docs/scripts/agent/api.json` plus the Markdown under 
 
 - `bun install` — install all workspaces
 - `bun run check` — type check (turbo)
-- `bun run lint` — lint (turbo)
-- `bun run fmt` — format
-- `bun run fmt:check` — format check (turbo)
+- `bun run lint` — lint the whole repo with Bun and Ultracite Oxlint
+- `bun run lint:packages` — lint each workspace with turbo
+- `bun run fmt` — format the whole repo with Bun's native formatter
+- `bun run fmt:check` — check formatting
+- `bun run fmt:packages` — format each workspace with turbo
+- `bun run fmt:check:packages` — check each workspace format with turbo
 - `bun run test` — tests (turbo)
 - `bun run build` — build (turbo)
 - `bun run docs` — build the docs site (turbo)
@@ -46,6 +49,14 @@ The corpus source is `apps/docs/scripts/agent/api.json` plus the Markdown under 
 - `bun run docs:snippets` — type-check the full example snippets
 - `bun run lint:boundaries` — deep-module boundary check
 - `bun run bench` — Node API vs Bun API benchmarks; see `tools/bench/README.md`
+
+## Lint and format
+
+- One root `oxlint.config.ts` holds the Ultracite preset. It adds the Next.js and React presets for `apps/docs`.
+- One root `.oxfmtrc.json` holds the formatter settings. Do not add a `oxfmt.config.*` file or the `oxfmt` package.
+- Fix findings in code. Do not add `oxlint-disable`, `eslint-disable`, `@ts-ignore`, or `@ts-expect-error` comments.
+- `packages/discord-ts-selfbot/typings/**` and the generated schema types are ignored. `bun run schema:check` and `bun run docs:agent:check` keep them current.
+- The only lint and format tools are `bun lint` and `bun fmt`. Do not add ESLint, Prettier, or per-app config files.
 
 ## Issue tracker
 

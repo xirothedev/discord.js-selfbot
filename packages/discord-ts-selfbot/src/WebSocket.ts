@@ -5,8 +5,8 @@ import WebSocket from "ws";
 const require = createRequire(import.meta.url);
 
 interface ErlpackModule {
-  pack(data: unknown): Buffer;
-  unpack(data: Buffer): unknown;
+  pack: (data: unknown) => Buffer;
+  unpack: (data: Buffer) => unknown;
 }
 
 interface WebSocketModule {
@@ -54,7 +54,9 @@ try {
   if (isErlpack(candidate)) {
     erlpack = candidate;
   }
-} catch {} // eslint-disable-line no-empty
+} catch {
+  // erlpack is optional; fall back to JSON encoding.
+}
 
 const ab = new TextDecoder();
 
@@ -69,14 +71,18 @@ const websocket: WebSocketModule = {
     query: Record<string, unknown> = {},
     options?: WebSocket.ClientOptions
   ) => {
-    const [g, q] = gateway.split("?");
+    const [gatewayPath, queryString] = gateway.split("?");
     const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(query))
+    for (const [key, value] of Object.entries(query)) {
       params.set(key, String(value));
+    }
     params.set("encoding", websocket.encoding);
-    if (q)
-      new URLSearchParams(q).forEach((value, key) => params.set(key, value));
-    return new WebSocket(`${g}?${params}`, options);
+    if (queryString) {
+      for (const [key, value] of new URLSearchParams(queryString)) {
+        params.set(key, value);
+      }
+    }
+    return new WebSocket(`${gatewayPath}?${params}`, options);
   },
   encoding: erlpack ? "etf" : "json",
   pack: erlpack ? erlpack.pack : (data) => JSON.stringify(data) ?? "",

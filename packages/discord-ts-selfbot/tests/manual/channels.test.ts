@@ -2,10 +2,14 @@ import { test, describe } from "bun:test";
 
 import {
   channelId,
-  skip,
-  makeClient,
+  deleteChannel,
+  fetchGuildTextChannel,
+  fetchSendableChannel,
+  guildId,
   login,
+  makeClient,
   makeStepRecorder,
+  skip,
 } from "./_helpers";
 
 describe.skipIf(skip)("manual: channels", () => {
@@ -19,47 +23,50 @@ describe.skipIf(skip)("manual: channels", () => {
         console.log("[SKIP] no TEST_CHANNEL_ID");
         return;
       }
+      const targetChannelId = channelId;
       await step("fetch channel", async () => {
-        const ch = await client.channels.fetch(channelId!);
-        if (ch.id !== channelId) {
+        const channel = await fetchSendableChannel(client, targetChannelId);
+        if (channel.id !== targetChannelId) {
           throw new Error("id mismatch");
         }
       });
       await step("edit channel topic", async () => {
-        const ch = await client.channels.fetch(channelId!);
-        await (ch as any).edit({ topic: "manual smoke topic" });
+        const channel = await fetchGuildTextChannel(client, targetChannelId);
+        await channel.edit({ topic: "manual smoke topic" });
       });
       await step("fetch permissions", async () => {
-        const ch = await client.channels.fetch(channelId!);
-        if (!(ch as any).permissionOverwrites) {
+        const channel = await fetchGuildTextChannel(client, targetChannelId);
+        if (!channel.permissionOverwrites) {
           throw new Error("no overwrites");
         }
       });
       await step("create text channel", async () => {
-        if (!process.env.TEST_GUILD_ID) {
+        if (!guildId) {
           throw new Error("no guild");
         }
-        const g = await client.guilds.fetch(process.env.TEST_GUILD_ID!);
-        const ch = await g.channels.create("manual-smoke-ch", { type: 0 });
-        if (typeof ch.id !== "string") {
+        const guild = await client.guilds.fetch(guildId);
+        const channel = await guild.channels.create("manual-smoke-ch", {
+          type: 0,
+        });
+        if (typeof channel.id !== "string") {
           throw new TypeError("no id");
         }
-        createdChannelId = ch.id;
+        createdChannelId = channel.id;
       });
       await step("delete channel", async () => {
         if (!createdChannelId) {
           throw new Error("no channel");
         }
-        const ch = await client.channels.fetch(createdChannelId);
-        await (ch as any).delete();
+        await deleteChannel(client, createdChannelId);
         createdChannelId = null;
       });
     } finally {
       if (createdChannelId) {
         try {
-          const ch = await client.channels.fetch(createdChannelId);
-          await (ch as any).delete();
-        } catch {}
+          await deleteChannel(client, createdChannelId);
+        } catch {
+          // Cleanup is best effort.
+        }
       }
       client.destroy();
     }

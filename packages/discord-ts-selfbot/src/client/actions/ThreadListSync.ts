@@ -41,12 +41,13 @@ class ThreadListSyncAction extends Action {
       }
     }
 
-    const syncedThreads = data.threads.reduce((coll, rawThread) => {
+    const syncedThreads = new Collection<Snowflake, ThreadChannel>();
+    for (const rawThread of data.threads) {
       const thread = client.channels._add(rawThread);
-      return thread && isThreadChannel(thread)
-        ? coll.set(thread.id, thread)
-        : coll;
-    }, new Collection<Snowflake, ThreadChannel>());
+      if (thread && isThreadChannel(thread)) {
+        syncedThreads.set(thread.id, thread);
+      }
+    }
 
     for (const rawMember of Object.values(data.members ?? {})) {
       // Discord sends the thread id as id in this object
@@ -68,11 +69,11 @@ class ThreadListSyncAction extends Action {
     if (!isThreadParentChannel(channel)) {
       return;
     }
-    channel.threads.cache.forEach((thread) => {
+    for (const thread of channel.threads.cache.values()) {
       if (!thread.archived) {
         this.client.channels._remove(thread.id);
       }
-    });
+    }
   }
 }
 

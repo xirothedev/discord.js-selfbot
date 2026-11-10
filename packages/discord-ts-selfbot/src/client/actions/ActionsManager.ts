@@ -198,7 +198,7 @@ class ActionsManager {
   register(action: { name: string; new (client: Client): unknown }) {
     Reflect.set(
       this,
-      action.name.replace(/Action$/, ""),
+      action.name.replace(/Action$/u, ""),
       new action(this.client)
     );
   }

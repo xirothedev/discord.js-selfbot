@@ -10,7 +10,7 @@ Install:
 - ffmpeg (install and add to your system environment)
 */
 
-const { Client } = require("../../src/index");
+import { Client } from "../../src/index";
 
 const client = new Client();
 

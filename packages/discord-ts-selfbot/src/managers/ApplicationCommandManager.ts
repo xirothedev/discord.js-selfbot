@@ -25,15 +25,15 @@ type ApplicationCommandResolvableSource =
   | ApplicationCommandResolvable;
 
 interface CommandPath {
-  get<T = unknown>(options?: unknown): Promise<T>;
-  post<T = unknown>(options?: unknown): Promise<T>;
-  put<T = unknown>(options?: unknown): Promise<T>;
-  patch<T = unknown>(options?: unknown): Promise<T>;
-  delete<T = unknown>(options?: unknown): Promise<T>;
+  get: <Result = unknown>(options?: unknown) => Promise<Result>;
+  post: <Result = unknown>(options?: unknown) => Promise<Result>;
+  put: <Result = unknown>(options?: unknown) => Promise<Result>;
+  patch: <Result = unknown>(options?: unknown) => Promise<Result>;
+  delete: <Result = unknown>(options?: unknown) => Promise<Result>;
 }
 
 interface ApplicationCommandTransformable {
-  toJSON?(): unknown;
+  toJSON?: () => unknown;
   name?: string;
   nameLocalizations?: Record<string, string> | null;
   name_localizations?: Record<string, string> | null;
@@ -82,15 +82,16 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
     id,
     guildId,
   }: { id?: Snowflake; guildId?: Snowflake } = {}): CommandPath {
-    let path = this.client.api.applications(this.client.application!.id);
+    const applicationId = this.client.application?.id;
+    if (!applicationId) {
+      throw new TypeError("INVALID_TYPE", "application", "Application");
+    }
+    let path = this.client.api.applications(applicationId);
     if (this.guild ?? guildId) {
       path = path.guilds(this.guild?.id ?? guildId);
     }
     return id ? path.commands(id) : path.commands;
   }
-
-  /* eslint-disable max-len */
-  /* eslint-enable max-len */
 
   async fetch(
     id: Snowflake,
@@ -142,11 +143,11 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
           ? { with_localizations: withLocalizations }
           : undefined,
     });
-    return data.reduce(
-      (coll, command) =>
-        coll.set(command.id, this._add(command, cache, guildId)),
-      new Collection<Snowflake, ApplicationCommand>()
-    );
+    const commands = new Collection<Snowflake, ApplicationCommand>();
+    for (const command of data) {
+      commands.set(command.id, this._add(command, cache, guildId));
+    }
+    return commands;
   }
 
   async create(
@@ -168,13 +169,15 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
     const data = await this.commandPath({ guildId }).put<
       RawApplicationCommandData[]
     >({
-      data: commands.map((c) => ApplicationCommandManager.transformCommand(c)),
+      data: commands.map((commandData) =>
+        ApplicationCommandManager.transformCommand(commandData)
+      ),
     });
-    return data.reduce(
-      (coll, command) =>
-        coll.set(command.id, this._add(command, true, guildId)),
-      new Collection<Snowflake, ApplicationCommand>()
-    );
+    const savedCommands = new Collection<Snowflake, ApplicationCommand>();
+    for (const command of data) {
+      savedCommands.set(command.id, this._add(command, true, guildId));
+    }
+    return savedCommands;
   }
 
   async edit(
@@ -251,6 +254,13 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
             ).bitfield.toString();
     }
 
+    let type: number | string | undefined;
+    if (typeof command.type === "number") {
+      ({ type } = command);
+    } else if (typeof command.type === "string") {
+      type = resolveEnumValue(ApplicationCommandTypes, command.type);
+    }
+
     return {
       default_member_permissions,
       default_permission:
@@ -262,15 +272,10 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
       name: command.name,
       name_localizations:
         command.nameLocalizations ?? command.name_localizations,
-      options: command.options?.map((o) =>
-        ApplicationCommand.transformOption(o)
+      options: command.options?.map((option) =>
+        ApplicationCommand.transformOption(option)
       ),
-      type:
-        typeof command.type === "number"
-          ? command.type
-          : typeof command.type === "string"
-            ? resolveEnumValue(ApplicationCommandTypes, command.type)
-            : undefined,
+      type,
     };
   }
 }

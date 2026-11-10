@@ -13,7 +13,7 @@ import _FunctionModule from "../util/Function";
 const { randomPorts } = _FunctionModule;
 import _SocketModule from "../util/Socket";
 import type PacketHandler from "./PacketHandler";
-import type { Socket } from "dgram";
+import type { Socket } from "node:dgram";
 import type { UnixStream } from "../util/Socket";
 
 const { StreamOutput } = _SocketModule;
@@ -78,13 +78,7 @@ class Recorder extends EventEmitter {
     this.promise = null;
 
     if (!portUdpH264 || !portUdpOpus) {
-      this.promise = randomPorts(6, "udp4").then((ports) => {
-        const evenPorts = ports.filter(
-          (port): port is number => typeof port === "number" && port % 2 === 0
-        );
-        this.portUdpH264 ??= evenPorts[0] ?? null;
-        this.portUdpOpus ??= evenPorts[1] ?? null;
-      });
+      this.promise = this.loadRandomPorts();
     }
 
     this.output = output;
@@ -95,6 +89,15 @@ class Recorder extends EventEmitter {
 
     this.init(output);
   }
+  async loadRandomPorts() {
+    const ports = await randomPorts(6, "udp4");
+    const evenPorts = ports.filter(
+      (port): port is number => typeof port === "number" && port % 2 === 0
+    );
+    this.portUdpH264 ??= evenPorts[0] ?? null;
+    this.portUdpOpus ??= evenPorts[1] ?? null;
+  }
+
   async init(output: string | Writable) {
     await this.promise;
     const sdpData = VoiceCodec.getSDPCodecName(
@@ -102,9 +105,12 @@ class Recorder extends EventEmitter {
       this.portUdpH265,
       this.portUdpOpus
     );
-    const isStream = output instanceof Writable;
-    if (isStream) {
+    let outputTarget: string;
+    if (output instanceof Writable) {
       this.outputStream = this.streamOutput(output);
+      outputTarget = this.outputStream.url;
+    } else {
+      outputTarget = output;
     }
     const stream = this.spawn("ffmpeg", [
       "-reorder_queue_size",
@@ -128,11 +134,13 @@ class Recorder extends EventEmitter {
       "-protocol_whitelist",
       "file,udp,rtp,pipe,fd",
       "-i",
-      "-", // Read from stdin
+      // Read from stdin.
+      "-",
       "-buffer_size",
       "4M",
       "-max_delay",
-      "500000", // 500ms
+      // 500ms.
+      "500000",
       "-rtbufsize",
       "4M",
       "-c",
@@ -140,7 +148,7 @@ class Recorder extends EventEmitter {
       "-y",
       "-f",
       "matroska",
-      isStream ? this.outputStream!.url : output,
+      outputTarget,
     ]);
 
     this.stream = stream;
@@ -154,7 +162,7 @@ class Recorder extends EventEmitter {
   }
   feed(
     payload: RtpPacket | string | Buffer,
-    callback: (error?: Error | null) => void = (error) => {
+    done: (error?: Error | null) => void = (error) => {
       if (error) {
         console.error("Error sending packet:", error);
       }
@@ -185,7 +193,7 @@ class Recorder extends EventEmitter {
     if (!port) {
       return;
     }
-    this.socket.send(message, 0, message.length, port, "127.0.0.1", callback);
+    this.socket.send(message, 0, message.length, port, "127.0.0.1", done);
   }
 
   stop() {
@@ -205,19 +213,25 @@ class Recorder extends EventEmitter {
     if (!this.stream) {
       return;
     }
-    const ffmpegPid = this.stream.pid; // But it is ppid ;-;
-    const args = this.stream.spawnargs.slice(1).join(" "); // Skip ffmpeg
-    this.findProcess("name", "ffmpeg", true).then((list) => {
+    // The pid is actually the parent pid here.
+    const ffmpegPid = this.stream.pid;
+    // Skip the ffmpeg binary itself.
+    const args = this.stream.spawnargs.slice(1).join(" ");
+    const killMatching = async () => {
+      const list = await this.findProcess("name", "ffmpeg", true);
       const process = list.find(
-        (o) =>
-          o.pid === ffmpegPid || o.ppid === ffmpegPid || o.cmd.includes(args)
+        (item) =>
+          item.pid === ffmpegPid ||
+          item.ppid === ffmpegPid ||
+          item.cmd.includes(args)
       );
       if (process) {
         this.killProcess(process.pid);
         this.receiver?.videoStreams?.delete(this.userId);
         this.emit("closed");
       }
-    });
+    };
+    void killMatching();
   }
 }
 

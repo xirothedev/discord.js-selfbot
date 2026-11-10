@@ -71,48 +71,41 @@ class IvfTransformer extends Transform {
     }
 
     const out = {
+      data: frame.subarray(12, 12 + size),
       size,
       timestamp: frame.readBigUInt64LE(4),
-      data: frame.subarray(12, 12 + size),
     };
 
     return this.push(out.data);
   }
 
   _appendChunkToBuf(chunk: Buffer) {
-    if (this.buf) {
-      this.buf = Buffer.concat([this.buf, chunk]);
-    } else {
-      this.buf = chunk;
-    }
+    this.buf = this.buf ? Buffer.concat([this.buf, chunk]) : chunk;
   }
 
   _updateBufLen(size: number) {
-    if (!this.buf) {
+    const { buf } = this;
+    if (!buf) {
       return;
     }
-    if (this.buf.length > size) {
-      this.buf = this.buf.subarray(size, this.buf.length);
-    } else {
-      this.buf = null;
-    }
+    this.buf = buf.length > size ? buf.subarray(size, buf.length) : null;
   }
 
   _transform(
     chunk: Buffer,
     _encoding: BufferEncoding,
-    callback: TransformCallback
+    done: TransformCallback
   ) {
     this._appendChunkToBuf(chunk);
 
     if (!this.header) {
-      if (this.buf!.length >= this.headerSize) {
-        this._parseHeader(this.buf!.subarray(0, this.headerSize));
-        this._updateBufLen(this.headerSize);
-      } else {
-        callback();
+      const { buf } = this;
+      if (!buf || buf.length < this.headerSize) {
+        done();
         return;
       }
+      this._parseHeader(buf.subarray(0, this.headerSize));
+      this._updateBufLen(this.headerSize);
     }
 
     while (this.buf && this.buf.length >= this.frameHeaderSize) {
@@ -126,7 +119,7 @@ class IvfTransformer extends Transform {
       }
     }
 
-    callback();
+    done();
   }
 }
 

@@ -34,11 +34,11 @@ const {
   PremiumTiers,
 } = _ConstantsModule;
 import DataResolver from "../util/DataResolver";
+import { patchValue } from "./Base";
 import SystemChannelFlags from "../util/SystemChannelFlags";
 import Util from "../util/Util";
 import { GuildFeature } from "discord-api-types/v10";
 import type {
-  APIGuildIntegration,
   RESTGetAPIAuditLogResult,
   RESTGetAPIGuildIntegrationsResult,
   RESTGetAPIGuildPreviewResult,
@@ -51,10 +51,7 @@ import type {
   RESTPostAPIGuildTemplatesResult,
   Snowflake,
 } from "discord-api-types/v10";
-import type {
-  RawGuildData,
-  RawGuildTemplateData,
-} from "../../typings/rawDataTypes";
+import type { RawGuildData } from "../../typings/rawDataTypes";
 import type {
   Base64Resolvable,
   BaseFetchOptions,
@@ -65,6 +62,7 @@ import type {
   GuildAuditLogsFetchOptions,
   GuildAuditLogsResolvable,
   GuildEditData,
+  GuildFeatures,
   GuildMemberResolvable,
   GuildTextChannelResolvable,
   GuildWidgetSettingsData,
@@ -87,7 +85,6 @@ import type { GuildEntity } from "../types/entities/guild";
 import type { PatchOf } from "../types/schema";
 import type { GuildEmoji } from "./GuildEmoji";
 import type Client from "../client/Client";
-import type { GuildFeatures } from "../../typings";
 
 let deprecationEmittedForSetChannelPositions = false;
 let deprecationEmittedForSetRolePositions = false;
@@ -100,6 +97,35 @@ let deprecationEmittedForMe = false;
  * @internal
  */
 const deletedGuilds = new WeakSet();
+
+function resolveGuildVerificationLevel(
+  value: GuildEditData["verificationLevel"]
+) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  return typeof value === "number" ? value : VerificationLevels[value];
+}
+
+function resolveExplicitContentFilter(
+  value: GuildEditData["explicitContentFilter"]
+) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  return typeof value === "number" ? value : ExplicitContentFilterLevels[value];
+}
+
+function resolveDefaultMessageNotificationLevel(
+  value: GuildEditData["defaultMessageNotifications"]
+) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  return typeof value === "number"
+    ? value
+    : DefaultMessageNotificationLevels[value];
+}
 
 class Guild extends AnonymousGuild implements GuildEntity {
   declare client: Client;
@@ -227,236 +253,202 @@ class Guild extends AnonymousGuild implements GuildEntity {
 
   _patch(data: PatchOf<"Guild">) {
     super._patch(data);
-    this.id = data.id!;
-    if ("name" in data && data.name !== undefined) {
-      this.name = data.name;
+    if (data.id !== undefined) {
+      this.id = data.id;
     }
-    if ("icon" in data && data.icon !== undefined) {
-      this.icon = data.icon;
-    }
+    this.patchCoreFields(data);
+    this.patchCounters(data);
+    this.patchCollections(data);
+    this.patchAssets(data);
+  }
+
+  private patchCoreFields(data: PatchOf<"Guild">) {
+    this.name = patchValue(data.name, this.name);
+    this.icon = patchValue(data.icon, this.icon);
     if ("unavailable" in data && data.unavailable) {
       this.available = !data.unavailable;
     } else {
       this.available ??= true;
     }
 
-    if ("discovery_splash" in data && data.discovery_splash !== undefined) {
+    if (data.discovery_splash !== undefined) {
       this.discoverySplash = data.discovery_splash ?? null;
     }
-
-    if ("member_count" in data && data.member_count !== undefined) {
+    if (data.member_count !== undefined) {
       this.memberCount = data.member_count;
     }
-
-    if ("large" in data && data.large !== undefined) {
+    if (data.large !== undefined) {
       this.large = Boolean(data.large);
     }
-
-    if (
-      "premium_progress_bar_enabled" in data &&
-      data.premium_progress_bar_enabled !== undefined
-    ) {
+    if (data.premium_progress_bar_enabled !== undefined) {
       this.premiumProgressBarEnabled = data.premium_progress_bar_enabled;
     }
-
-    if ("application_id" in data && data.application_id !== undefined) {
+    if (data.application_id !== undefined) {
       this.applicationId = data.application_id;
     }
-
-    if ("afk_timeout" in data && data.afk_timeout !== undefined) {
+    if (data.afk_timeout !== undefined) {
       this.afkTimeout = data.afk_timeout;
     }
-
-    if ("afk_channel_id" in data && data.afk_channel_id !== undefined) {
+    if (data.afk_channel_id !== undefined) {
       this.afkChannelId = data.afk_channel_id;
     }
-
-    if ("system_channel_id" in data && data.system_channel_id !== undefined) {
+    if (data.system_channel_id !== undefined) {
       this.systemChannelId = data.system_channel_id;
     }
-
-    if ("premium_tier" in data && data.premium_tier !== undefined) {
+    if (data.premium_tier !== undefined) {
       this.premiumTier = PremiumTiers[data.premium_tier];
     }
-
-    if ("widget_enabled" in data && data.widget_enabled !== undefined) {
+    if (data.widget_enabled !== undefined) {
       this.widgetEnabled = data.widget_enabled;
     }
-
-    if ("widget_channel_id" in data && data.widget_channel_id !== undefined) {
+    if (data.widget_channel_id !== undefined) {
       this.widgetChannelId = data.widget_channel_id;
     }
+    this.patchCoreSettings(data);
+  }
 
-    if (
-      "explicit_content_filter" in data &&
-      data.explicit_content_filter !== undefined
-    ) {
+  private patchCoreSettings(data: PatchOf<"Guild">) {
+    if (data.explicit_content_filter !== undefined) {
       this.explicitContentFilter =
         ExplicitContentFilterLevels[data.explicit_content_filter];
     }
-
-    if ("mfa_level" in data && data.mfa_level !== undefined) {
+    if (data.mfa_level !== undefined) {
       this.mfaLevel = MFALevels[data.mfa_level];
     }
-
-    if ("joined_at" in data && data.joined_at !== undefined) {
+    if (data.joined_at !== undefined) {
       this.joinedTimestamp = new Date(data.joined_at).getTime();
     }
-
-    if (
-      "default_message_notifications" in data &&
-      data.default_message_notifications !== undefined
-    ) {
+    if (data.default_message_notifications !== undefined) {
       this.defaultMessageNotifications =
         DefaultMessageNotificationLevels[data.default_message_notifications];
     }
-
-    if (
-      "system_channel_flags" in data &&
-      data.system_channel_flags !== undefined
-    ) {
+    if (data.system_channel_flags !== undefined) {
       this.systemChannelFlags = new SystemChannelFlags(
         data.system_channel_flags
       ).freeze();
     }
+  }
 
-    if ("max_members" in data && data.max_members !== undefined) {
-      this.maximumMembers = data.max_members ?? null;
-    } else {
-      this.maximumMembers ??= null;
-    }
+  private patchCounters(data: PatchOf<"Guild">) {
+    this.patchLimits(data);
 
-    if ("max_presences" in data && data.max_presences !== undefined) {
-      this.maximumPresences = data.max_presences ?? 25_000;
-    } else {
-      this.maximumPresences ??= null;
-    }
-
-    if (
-      "max_video_channel_users" in data &&
-      data.max_video_channel_users !== undefined
-    ) {
-      this.maxVideoChannelUsers = data.max_video_channel_users ?? null;
-    } else {
-      this.maxVideoChannelUsers ??= null;
-    }
-
-    if (
-      "max_stage_video_channel_users" in data &&
-      data.max_stage_video_channel_users !== undefined
-    ) {
-      this.maxStageVideoChannelUsers =
-        data.max_stage_video_channel_users ?? null;
-    } else {
-      this.maxStageVideoChannelUsers ??= null;
-    }
-
-    if (
-      "approximate_member_count" in data &&
-      data.approximate_member_count !== undefined
-    ) {
-      this.approximateMemberCount = data.approximate_member_count ?? null;
-    } else {
-      this.approximateMemberCount ??= null;
-    }
-
-    if (
-      "approximate_presence_count" in data &&
-      data.approximate_presence_count !== undefined
-    ) {
-      this.approximatePresenceCount = data.approximate_presence_count ?? null;
-    } else {
-      this.approximatePresenceCount ??= null;
-    }
-
-    this.vanityURLUses ??= null;
-
-    if ("rules_channel_id" in data && data.rules_channel_id !== undefined) {
+    if (data.rules_channel_id !== undefined) {
       this.rulesChannelId = data.rules_channel_id;
     }
-
-    if (
-      "public_updates_channel_id" in data &&
-      data.public_updates_channel_id !== undefined
-    ) {
+    if (data.public_updates_channel_id !== undefined) {
       this.publicUpdatesChannelId = data.public_updates_channel_id;
     }
-
-    if ("preferred_locale" in data && data.preferred_locale !== undefined) {
+    if (data.preferred_locale !== undefined) {
       this.preferredLocale = data.preferred_locale;
     }
-
-    if (
-      "safety_alerts_channel_id" in data &&
-      data.safety_alerts_channel_id !== undefined
-    ) {
-      this.safetyAlertsChannelId = data.safety_alerts_channel_id;
-    } else {
+    if (data.safety_alerts_channel_id === undefined) {
       this.safetyAlertsChannelId ??= null;
+    } else {
+      this.safetyAlertsChannelId = data.safety_alerts_channel_id;
     }
+    if (data.incidents_data === undefined) {
+      this.incidentsData ??= null;
+    } else {
+      this.incidentsData = data.incidents_data
+        ? Util.transformAPIIncidentsData(data.incidents_data)
+        : null;
+    }
+  }
 
+  private patchLimits(data: PatchOf<"Guild">) {
+    if (data.max_members === undefined) {
+      this.maximumMembers ??= null;
+    } else {
+      this.maximumMembers = data.max_members ?? null;
+    }
+    if (data.max_presences === undefined) {
+      this.maximumPresences ??= null;
+    } else {
+      this.maximumPresences = data.max_presences ?? 25_000;
+    }
+    if (data.max_video_channel_users === undefined) {
+      this.maxVideoChannelUsers ??= null;
+    } else {
+      this.maxVideoChannelUsers = data.max_video_channel_users ?? null;
+    }
+    if (data.max_stage_video_channel_users === undefined) {
+      this.maxStageVideoChannelUsers ??= null;
+    } else {
+      this.maxStageVideoChannelUsers =
+        data.max_stage_video_channel_users ?? null;
+    }
+    if (data.approximate_member_count === undefined) {
+      this.approximateMemberCount ??= null;
+    } else {
+      this.approximateMemberCount = data.approximate_member_count ?? null;
+    }
+    if (data.approximate_presence_count === undefined) {
+      this.approximatePresenceCount ??= null;
+    } else {
+      this.approximatePresenceCount = data.approximate_presence_count ?? null;
+    }
+    this.vanityURLUses ??= null;
+  }
+
+  private patchCollections(data: PatchOf<"Guild">) {
     if (data.channels) {
       this.channels.cache.clear();
       for (const rawChannel of data.channels) {
         this.client.channels._add(rawChannel, this);
       }
     }
-
     if (data.threads) {
       for (const rawThread of data.threads) {
         this.client.channels._add(rawThread, this);
       }
     }
-
     if (data.roles) {
       this.roles.cache.clear();
       for (const role of data.roles) {
         this.roles._add(role);
       }
     }
-
     if (data.members) {
       this.members.cache.clear();
       for (const guildUser of data.members) {
         this.members._add(guildUser);
       }
     }
-
-    if ("owner_id" in data && data.owner_id !== undefined) {
+    if (data.owner_id !== undefined) {
       this.ownerId = data.owner_id;
     }
-
     if (data.presences) {
       for (const presence of data.presences) {
         this.presences._add(Object.assign(presence, { guild: this }));
       }
     }
-
     if (data.stage_instances) {
       this.stageInstances.cache.clear();
       for (const stageInstance of data.stage_instances) {
         this.stageInstances._add(stageInstance);
       }
     }
-
     if (data.guild_scheduled_events) {
       this.scheduledEvents.cache.clear();
       for (const scheduledEvent of data.guild_scheduled_events) {
         this.scheduledEvents._add(scheduledEvent);
       }
     }
-
     if (data.voice_states) {
       this.voiceStates.cache.clear();
       for (const voiceState of data.voice_states) {
         this.voiceStates._add(voiceState);
       }
     }
+  }
 
+  private patchAssets(data: PatchOf<"Guild">) {
     if (!this.emojis) {
       this.emojis = new GuildEmojiManager(this);
       if (data.emojis) {
-        for (const emoji of data.emojis) this.emojis._add(emoji);
+        for (const emoji of data.emojis) {
+          this.emojis._add(emoji);
+        }
       }
     } else if (data.emojis) {
       this.client.actions.GuildEmojisUpdate.handle({
@@ -468,21 +460,15 @@ class Guild extends AnonymousGuild implements GuildEntity {
     if (!this.stickers) {
       this.stickers = new GuildStickerManager(this);
       if (data.stickers) {
-        for (const sticker of data.stickers) this.stickers._add(sticker);
+        for (const sticker of data.stickers) {
+          this.stickers._add(sticker);
+        }
       }
     } else if (data.stickers) {
       this.client.actions.GuildStickersUpdate.handle({
         guild_id: this.id,
         stickers: data.stickers,
       });
-    }
-
-    if ("incidents_data" in data && data.incidents_data !== undefined) {
-      this.incidentsData = data.incidents_data
-        ? Util.transformAPIIncidentsData(data.incidents_data)
-        : null;
-    } else {
-      this.incidentsData ??= null;
     }
   }
 
@@ -573,28 +559,25 @@ class Guild extends AnonymousGuild implements GuildEntity {
     const data = await this.client.api
       .guilds(this.id)
       .integrations.get<RESTGetAPIGuildIntegrationsResult>();
-    return data.reduce(
-      (
-        collection: Collection<Snowflake | string, Integration>,
-        integration: APIGuildIntegration
-      ) =>
-        collection.set(
-          integration.id,
-          new Integration(this.client, integration, this)
-        ),
-      new Collection<Snowflake | string, Integration>()
-    );
+    const integrations = new Collection<Snowflake | string, Integration>();
+    for (const integration of data) {
+      integrations.set(
+        integration.id,
+        new Integration(this.client, integration, this)
+      );
+    }
+    return integrations;
   }
 
   async fetchTemplates() {
     const templates = await this.client.api
       .guilds(this.id)
       .templates.get<RESTGetAPIGuildTemplatesResult>();
-    return templates.reduce(
-      (col: Collection<string, GuildTemplate>, data: RawGuildTemplateData) =>
-        col.set(data.code, new GuildTemplate(this.client, data)),
-      new Collection<string, GuildTemplate>()
-    );
+    const collection = new Collection<string, GuildTemplate>();
+    for (const template of templates) {
+      collection.set(template.code, new GuildTemplate(this.client, template));
+    }
+    return collection;
   }
 
   async fetchWelcomeScreen() {
@@ -659,13 +642,15 @@ class Guild extends AnonymousGuild implements GuildEntity {
     };
   }
 
-  async fetchAuditLogs<T extends GuildAuditLogsResolvable = "ALL">({
+  async fetchAuditLogs<TResolvable extends GuildAuditLogsResolvable = "ALL">({
     before,
     after,
     limit,
     user,
     type,
-  }: GuildAuditLogsFetchOptions<T> = {}): Promise<GuildAuditLogs<T>> {
+  }: GuildAuditLogsFetchOptions<TResolvable> = {}): Promise<
+    GuildAuditLogs<TResolvable>
+  > {
     const data = await this.client.api
       .guilds(this.id)
       ["audit-logs"].get<RESTGetAPIAuditLogResult>({
@@ -679,21 +664,31 @@ class Guild extends AnonymousGuild implements GuildEntity {
         },
       });
 
-    return GuildAuditLogs.build<T>(this, data);
+    return GuildAuditLogs.build<TResolvable>(this, data);
   }
 
   async edit(data: GuildEditData, reason?: string): Promise<this> {
+    const _data: Record<string, unknown> = {
+      ...this.resolveEditFields(data),
+      ...(await this.resolveEditImages(data)),
+    };
+
+    const newData = await this.client.api
+      .guilds(this.id)
+      .patch<RESTPatchAPIGuildResult>({ data: _data, reason });
+    this.client.actions.GuildUpdate.handle(newData);
+    return this;
+  }
+
+  private resolveEditFields(data: GuildEditData) {
     const _data: Record<string, unknown> = {};
     if (data.name) {
       _data.name = data.name;
     }
     if (data.verificationLevel !== undefined) {
-      _data.verification_level =
-        typeof data.verificationLevel === "number"
-          ? data.verificationLevel
-          : data.verificationLevel === null
-            ? null
-            : VerificationLevels[data.verificationLevel];
+      _data.verification_level = resolveGuildVerificationLevel(
+        data.verificationLevel
+      );
     }
     if (data.afkChannel !== undefined) {
       _data.afk_channel_id = this.client.channels.resolveId(data.afkChannel);
@@ -706,40 +701,19 @@ class Guild extends AnonymousGuild implements GuildEntity {
     if (data.afkTimeout) {
       _data.afk_timeout = Number(data.afkTimeout);
     }
-    if (data.icon !== undefined) {
-      _data.icon = await DataResolver.resolveImage(data.icon);
-    }
     if (data.owner) {
       _data.owner_id = this.client.users.resolveId(data.owner);
     }
-    if (data.splash !== undefined) {
-      _data.splash = await DataResolver.resolveImage(data.splash);
-    }
-    if (data.discoverySplash !== undefined) {
-      _data.discovery_splash = await DataResolver.resolveImage(
-        data.discoverySplash
-      );
-    }
-    if (data.banner !== undefined) {
-      _data.banner = await DataResolver.resolveImage(data.banner);
-    }
     if (data.explicitContentFilter !== undefined) {
-      _data.explicit_content_filter =
-        typeof data.explicitContentFilter === "number"
-          ? data.explicitContentFilter
-          : data.explicitContentFilter === null
-            ? null
-            : ExplicitContentFilterLevels[data.explicitContentFilter];
+      _data.explicit_content_filter = resolveExplicitContentFilter(
+        data.explicitContentFilter
+      );
     }
     if (data.defaultMessageNotifications !== undefined) {
       _data.default_message_notifications =
-        typeof data.defaultMessageNotifications === "number"
-          ? data.defaultMessageNotifications
-          : data.defaultMessageNotifications === null
-            ? null
-            : DefaultMessageNotificationLevels[
-                data.defaultMessageNotifications
-              ];
+        resolveDefaultMessageNotificationLevel(
+          data.defaultMessageNotifications
+        );
     }
     if (data.systemChannelFlags !== undefined) {
       _data.system_channel_flags = SystemChannelFlags.resolve(
@@ -773,11 +747,26 @@ class Guild extends AnonymousGuild implements GuildEntity {
     if ("premiumProgressBarEnabled" in data) {
       _data.premium_progress_bar_enabled = data.premiumProgressBarEnabled;
     }
-    const newData = await this.client.api
-      .guilds(this.id)
-      .patch<RESTPatchAPIGuildResult>({ data: _data, reason });
-    this.client.actions.GuildUpdate.handle(newData);
-    return this;
+    return _data;
+  }
+
+  private async resolveEditImages(data: GuildEditData) {
+    const _data: Record<string, unknown> = {};
+    if (data.icon !== undefined) {
+      _data.icon = await DataResolver.resolveImage(data.icon);
+    }
+    if (data.splash !== undefined) {
+      _data.splash = await DataResolver.resolveImage(data.splash);
+    }
+    if (data.discoverySplash !== undefined) {
+      _data.discovery_splash = await DataResolver.resolveImage(
+        data.discoverySplash
+      );
+    }
+    if (data.banner !== undefined) {
+      _data.banner = await DataResolver.resolveImage(data.banner);
+    }
+    return _data;
   }
 
   async editWelcomeScreen(data: WelcomeScreenEditData) {
@@ -813,7 +802,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
     return this.edit({ explicitContentFilter }, reason);
   }
 
-  /* eslint-disable max-len */
   setDefaultMessageNotifications(
     defaultMessageNotifications:
       | DefaultMessageNotificationLevel
@@ -823,7 +811,6 @@ class Guild extends AnonymousGuild implements GuildEntity {
   ): Promise<this> {
     return this.edit({ defaultMessageNotifications }, reason);
   }
-  /* eslint-enable max-len */
 
   setSystemChannelFlags(
     systemChannelFlags: SystemChannelFlagsResolvable,
@@ -1007,7 +994,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
   }
 
   async leave() {
-    if (this.ownerId === this.client.user!.id) {
+    if (this.ownerId === this.client.user?.id) {
       throw new Error("GUILD_OWNED");
     }
     await this.client.api.users("@me").guilds(this.id).delete();
@@ -1036,7 +1023,8 @@ class Guild extends AnonymousGuild implements GuildEntity {
       (this.features === guild.features ||
         (this.features.length === guild.features.length &&
           this.features.every(
-            (feat: GuildFeature, i: number) => feat === guild.features[i]
+            (feat: GuildFeature, index: number) =>
+              feat === guild.features[index]
           )))
     );
   }
@@ -1083,47 +1071,41 @@ class Guild extends AnonymousGuild implements GuildEntity {
           publicUpdatesChannel:
             this.channels.resolveId(publicUpdatesChannel) || "1",
           rulesChannel: this.channels.resolveId(rulesChannel) || "1",
+          // Email verification level fallback.
           verificationLevel:
             VerificationLevels[this.verificationLevel] < 1
               ? "LOW"
-              : this.verificationLevel, // Email
+              : this.verificationLevel,
         },
         reason
       );
     }
     return this.edit(
       {
-        publicUpdatesChannel: null,
-        rulesChannel: null,
+        description: this.description,
         features: this.features
           .filter((feature) => feature !== GuildFeature.Community)
           .map((feature) => String(feature) as GuildFeatures),
         preferredLocale: this.preferredLocale,
-        description: this.description,
+        publicUpdatesChannel: null,
+        rulesChannel: null,
       },
       reason
     );
   }
 
-  topEmojis(): Promise<Collection<number, GuildEmoji>> {
-    return new Promise<Collection<number, GuildEmoji>>((resolve, reject) => {
-      this.client.api
-        .guilds(this.id)
-        ["top-emojis"].get<{
-          items: { emoji_rank: number; emoji_id: Snowflake }[];
-        }>()
-        .then((data) => {
-          const emojis = new Collection<number, GuildEmoji>();
-          for (const emoji of data.items) {
-            const resolved = this.emojis.cache.get(emoji.emoji_id);
-            if (resolved) {
-              emojis.set(emoji.emoji_rank, resolved);
-            }
-          }
-          resolve(emojis);
-        })
-        .catch(reject);
-    });
+  async topEmojis(): Promise<Collection<number, GuildEmoji>> {
+    const data = await this.client.api.guilds(this.id)["top-emojis"].get<{
+      items: { emoji_rank: number; emoji_id: Snowflake }[];
+    }>();
+    const emojis = new Collection<number, GuildEmoji>();
+    for (const emoji of data.items) {
+      const resolved = this.emojis.cache.get(emoji.emoji_id);
+      if (resolved) {
+        emojis.set(emoji.emoji_rank, resolved);
+      }
+    }
+    return emojis;
   }
 
   async setVanityCode(code = ""): Promise<Vanity> {
@@ -1149,8 +1131,11 @@ class Guild extends AnonymousGuild implements GuildEntity {
           this.client.voice.adapters.delete(this.id);
         },
         sendPayload: (data: unknown) => {
-          if (!this.shard || this.shard.status !== Status.READY) return false;
-          this.shard!.send(data);
+          const { shard } = this;
+          if (!shard || shard.status !== Status.READY) {
+            return false;
+          }
+          shard.send(data);
           return true;
         },
       };
@@ -1165,15 +1150,15 @@ class Guild extends AnonymousGuild implements GuildEntity {
     const category = channel.type === "GUILD_CATEGORY";
     return Util.discordSort(
       this.channels.cache.filter(
-        (c: GuildChannel) =>
+        (channelItem: GuildChannel) =>
           (["GUILD_TEXT", "GUILD_NEWS", "GUILD_STORE"].includes(
             String(channel.type)
           )
             ? ["GUILD_TEXT", "GUILD_NEWS", "GUILD_STORE"].includes(
-                String(c.type)
+                String(channelItem.type)
               )
-            : c.type === channel.type) &&
-          (category || c.parent === channel.parent)
+            : channelItem.type === channel.type) &&
+          (category || channelItem.parent === channel.parent)
       )
     );
   }

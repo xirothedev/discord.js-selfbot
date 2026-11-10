@@ -88,11 +88,10 @@ class GuildPreview extends Base implements GuildPreviewEntity {
       );
     }
 
-    this.stickers = (data.stickers ?? []).reduce(
-      (stickers, sticker) =>
-        stickers.set(sticker.id, new Sticker(this.client, sticker)),
-      new Collection<string, InstanceType<typeof Sticker>>()
-    );
+    this.stickers = new Collection<string, InstanceType<typeof Sticker>>();
+    for (const sticker of data.stickers ?? []) {
+      this.stickers.set(sticker.id, new Sticker(this.client, sticker));
+    }
   }
   get createdTimestamp() {
     return SnowflakeUtil.timestampFrom(this.id);

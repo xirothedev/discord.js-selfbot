@@ -25,7 +25,9 @@ const DISCORD_SPEAKING_DELAY = 250;
 // Unused: const HEADER_EXTENSION_BYTE = Buffer.from([0xbe, 0xde]);
 
 class Readable extends ReadableStream {
-  _read() {} // eslint-disable-line no-empty-function
+  _read() {
+    // The stream is fed manually by the packet handler.
+  }
 }
 
 class PacketHandler extends EventEmitter {
@@ -62,23 +64,25 @@ class PacketHandler extends EventEmitter {
   }
 
   makeStream(user: string, end: string) {
-    if (this.streams.has(user)) {
-      return this.streams.get(user)!.stream;
+    const stream = this.streams.get(user)?.stream;
+    if (stream) {
+      return stream;
     }
-    const stream = new Readable();
-    stream.on("end", () => this.streams.delete(user));
-    this.streams.set(user, { end, stream });
-    return stream;
+    const newStream = new Readable();
+    newStream.on("end", () => this.streams.delete(user));
+    this.streams.set(user, { end, stream: newStream });
+    return newStream;
   }
 
   makeVideoStream(user: string, output: Writable | string) {
-    if (this.videoStreams.has(user)) {
-      return this.videoStreams.get(user)!;
+    const existing = this.videoStreams.get(user);
+    if (existing) {
+      return existing;
     }
     const stream = new Recorder(this, {
       output,
-      portUdpH264: 65506,
-      portUdpOpus: 65510,
+      portUdpH264: 65_506,
+      portUdpOpus: 65_510,
       userId: user,
     });
     stream.on("ready", () => {
@@ -131,14 +135,14 @@ class PacketHandler extends EventEmitter {
       }
       this.connection.onSpeaking({
         speaking: userStat.speaking ?? 0,
-        ssrc: ssrc,
+        ssrc,
         user_id: userStat.userId,
       });
       speakingTimeout = setTimeout(() => {
         try {
           this.connection.onSpeaking({
             speaking: 0,
-            ssrc: ssrc,
+            ssrc,
             user_id: userStat.userId,
           });
           clearTimeout(speakingTimeout);
@@ -206,14 +210,16 @@ class PacketHandler extends EventEmitter {
     let userStat: UserStat | undefined;
     let packet: RtpPacket | Error | undefined;
     if (this.connection.ssrcMap.has(ssrc)) {
-      userStat = this.connection.ssrcMap.get(ssrc); // Audio_ssrc
+      // Audio_ssrc.
+      userStat = this.connection.ssrcMap.get(ssrc);
       packet = this.parseBuffer(buffer);
       if (userStat) {
         this.audioReceiver(ssrc, userStat, packet);
         this.audioReceiverForStream(ssrc, userStat, packet);
       }
     } else if (this.connection.ssrcMap.has(ssrc - 1)) {
-      userStat = this.connection.ssrcMap.get(ssrc - 1); // Video_ssrc
+      // Video_ssrc.
+      userStat = this.connection.ssrcMap.get(ssrc - 1);
       packet = this.parseBuffer(buffer);
       if (userStat) {
         this.videoReceiver(ssrc, userStat, packet);

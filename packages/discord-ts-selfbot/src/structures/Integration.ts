@@ -49,11 +49,7 @@ class Integration extends Base implements IntegrationEntity {
       this.enableEmoticons ??= null;
     }
 
-    if (data.user) {
-      this.user = this.client.users._add(data.user);
-    } else {
-      this.user = null;
-    }
+    this.user = data.user ? this.client.users._add(data.user) : null;
 
     this.account = data.account;
 

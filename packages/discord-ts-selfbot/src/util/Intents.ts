@@ -1,7 +1,5 @@
 import BitField from "./BitField";
 
-("use strict");
-
 class Intents extends BitField {
   static FLAGS: Record<string, number> = {};
   static ALL = 0;
@@ -13,7 +11,7 @@ Intents.FLAGS = {
   DIRECT_MESSAGES: 1 << 12,
   DIRECT_MESSAGE_REACTIONS: 1 << 13,
   DIRECT_MESSAGE_TYPING: 1 << 14,
-  GUILDS: 1 << 0,
+  GUILDS: 1,
   GUILD_BANS: 1 << 2,
   GUILD_EMOJIS_AND_STICKERS: 1 << 3,
   GUILD_INTEGRATIONS: 1 << 4,
@@ -30,7 +28,7 @@ Intents.FLAGS = {
 };
 
 Intents.ALL = Object.values(Intents.FLAGS).reduce(
-  (all: number, p: number) => all | p,
+  (all: number, part: number) => all | part,
   0
 );
 

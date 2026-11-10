@@ -21,6 +21,106 @@ interface BroadcastEvalOptions {
   context?: unknown;
 }
 
+function resolveShardList(shardList: number[] | "auto"): number[] | "auto" {
+  if (shardList === "auto") {
+    return shardList;
+  }
+  if (!Array.isArray(shardList)) {
+    throw new TypeError("CLIENT_INVALID_OPTION", "shardList", "an array.");
+  }
+  const uniqueShards = [...new Set(shardList)];
+  if (uniqueShards.length < 1) {
+    throw new RangeError(
+      "CLIENT_INVALID_OPTION",
+      "shardList",
+      "at least 1 id."
+    );
+  }
+  if (
+    uniqueShards.some(
+      (shardId) =>
+        typeof shardId !== "number" ||
+        Number.isNaN(shardId) ||
+        !Number.isInteger(shardId) ||
+        shardId < 0
+    )
+  ) {
+    throw new TypeError(
+      "CLIENT_INVALID_OPTION",
+      "shardList",
+      "an array of positive integers."
+    );
+  }
+  return uniqueShards;
+}
+
+function resolveTotalShards(totalShards: number | "auto"): number | "auto" {
+  if (totalShards === "auto") {
+    return totalShards;
+  }
+  if (typeof totalShards !== "number" || Number.isNaN(totalShards)) {
+    throw new TypeError(
+      "CLIENT_INVALID_OPTION",
+      "Amount of shards",
+      "a number."
+    );
+  }
+  if (totalShards < 1) {
+    throw new RangeError(
+      "CLIENT_INVALID_OPTION",
+      "Amount of shards",
+      "at least 1."
+    );
+  }
+  if (!Number.isInteger(totalShards)) {
+    throw new RangeError(
+      "CLIENT_INVALID_OPTION",
+      "Amount of shards",
+      "an integer."
+    );
+  }
+  return totalShards;
+}
+
+function resolveMode(mode: ShardingManagerMode): ShardingManagerMode {
+  if (mode !== "process" && mode !== "worker") {
+    throw new RangeError(
+      "CLIENT_INVALID_OPTION",
+      "Sharding mode",
+      '"process" or "worker"'
+    );
+  }
+  return mode;
+}
+
+function resolveShardAmount(amount: number | "auto"): number {
+  if (amount === "auto") {
+    return 1;
+  }
+  if (typeof amount !== "number" || Number.isNaN(amount)) {
+    throw new TypeError(
+      "CLIENT_INVALID_OPTION",
+      "Amount of shards",
+      "a number."
+    );
+  }
+  if (amount < 1) {
+    throw new RangeError(
+      "CLIENT_INVALID_OPTION",
+      "Amount of shards",
+      "at least 1."
+    );
+  }
+  if (!Number.isInteger(amount)) {
+    throw new TypeError(
+      "CLIENT_INVALID_OPTION",
+      "Amount of shards",
+      "an integer."
+    );
+  }
+  return amount;
+}
+
 /**
  * This is a utility class that makes multi-process sharding of a bot an easy and painless experience.
  * It works by spawning a self-contained {@link ChildProcess} or {@link Worker} for each individual shard, each
@@ -66,72 +166,11 @@ class ShardingManager extends EventEmitter {
       throw new Error("CLIENT_INVALID_OPTION", "File", "a file");
     }
 
-    this.shardList = shardList;
-    if (this.shardList !== "auto") {
-      if (!Array.isArray(this.shardList)) {
-        throw new TypeError("CLIENT_INVALID_OPTION", "shardList", "an array.");
-      }
-      this.shardList = [...new Set(this.shardList)];
-      if (this.shardList.length < 1) {
-        throw new RangeError(
-          "CLIENT_INVALID_OPTION",
-          "shardList",
-          "at least 1 id."
-        );
-      }
-      if (
-        this.shardList.some(
-          (shardId) =>
-            typeof shardId !== "number" ||
-            Number.isNaN(shardId) ||
-            !Number.isInteger(shardId) ||
-            shardId < 0
-        )
-      ) {
-        throw new TypeError(
-          "CLIENT_INVALID_OPTION",
-          "shardList",
-          "an array of positive integers."
-        );
-      }
-    }
+    this.shardList = resolveShardList(shardList);
 
-    this.totalShards = totalShards;
-    if (this.totalShards !== "auto") {
-      if (
-        typeof this.totalShards !== "number" ||
-        Number.isNaN(this.totalShards)
-      ) {
-        throw new TypeError(
-          "CLIENT_INVALID_OPTION",
-          "Amount of shards",
-          "a number."
-        );
-      }
-      if (this.totalShards < 1) {
-        throw new RangeError(
-          "CLIENT_INVALID_OPTION",
-          "Amount of shards",
-          "at least 1."
-        );
-      }
-      if (!Number.isInteger(this.totalShards)) {
-        throw new RangeError(
-          "CLIENT_INVALID_OPTION",
-          "Amount of shards",
-          "an integer."
-        );
-      }
-    }
+    this.totalShards = resolveTotalShards(totalShards);
 
-    this.mode = mode;
-    if (this.mode !== "process" && this.mode !== "worker") {
-      throw new RangeError(
-        "CLIENT_INVALID_OPTION",
-        "Sharding mode",
-        '"process" or "worker"'
-      );
-    }
+    this.mode = resolveMode(mode);
 
     this.respawn = respawn;
 
@@ -139,7 +178,7 @@ class ShardingManager extends EventEmitter {
 
     this.execArgv = execArgv;
 
-    this.token = token?.replace(/^Bot\s*/i, "") ?? null;
+    this.token = token?.replace(/^Bot\s*/iu, "") ?? null;
 
     this.shards = new Collection();
 
@@ -165,48 +204,27 @@ class ShardingManager extends EventEmitter {
     timeout = 30_000,
   }: MultipleShardSpawnOptions = {}): Promise<Collection<number, Shard>> {
     // Obtain/verify the number of shards to spawn
-    if (amount === "auto") {
-      amount = 1;
-    } else {
-      if (typeof amount !== "number" || Number.isNaN(amount)) {
-        throw new TypeError(
-          "CLIENT_INVALID_OPTION",
-          "Amount of shards",
-          "a number."
-        );
-      }
-      if (amount < 1) {
-        throw new RangeError(
-          "CLIENT_INVALID_OPTION",
-          "Amount of shards",
-          "at least 1."
-        );
-      }
-      if (!Number.isInteger(amount)) {
-        throw new TypeError(
-          "CLIENT_INVALID_OPTION",
-          "Amount of shards",
-          "an integer."
-        );
-      }
-    }
+    const resolvedAmount = resolveShardAmount(amount);
 
     // Make sure this many shards haven't already been spawned
-    if (this.shards.size >= amount) {
+    if (this.shards.size >= resolvedAmount) {
       throw new Error("SHARDING_ALREADY_SPAWNED", this.shards.size);
     }
     if (
       this.shardList === "auto" ||
       this.totalShards === "auto" ||
-      this.totalShards !== amount
+      this.totalShards !== resolvedAmount
     ) {
-      this.shardList = [...Array(amount).keys()];
+      this.shardList = Array.from(
+        { length: resolvedAmount },
+        (_unused, index) => index
+      );
     }
-    if (this.totalShards === "auto" || this.totalShards !== amount) {
-      this.totalShards = amount;
+    if (this.totalShards === "auto" || this.totalShards !== resolvedAmount) {
+      this.totalShards = resolvedAmount;
     }
 
-    if (this.shardList.some((shardId) => shardId >= amount)) {
+    if (this.shardList.some((shardId) => shardId >= resolvedAmount)) {
       throw new RangeError(
         "CLIENT_INVALID_OPTION",
         "Amount of shards",
@@ -215,17 +233,36 @@ class ShardingManager extends EventEmitter {
     }
 
     // Spawn the shards
-    for (const shardId of this.shardList) {
-      const promises: Promise<unknown>[] = [];
-      const shard = this.createShard(shardId);
-      promises.push(shard.spawn(timeout));
-      if (delay > 0 && this.shards.size !== this.shardList.length) {
-        promises.push(Bun.sleep(delay));
-      }
-      await Promise.all(promises); // eslint-disable-line no-await-in-loop
-    }
+    await this.spawnShards([...this.shardList], 0, timeout, delay);
 
     return this.shards;
+  }
+
+  private async spawnShards(
+    shardIds: number[],
+    index: number,
+    timeout: number,
+    delay: number
+  ): Promise<void> {
+    if (index >= shardIds.length) {
+      return;
+    }
+    await this.spawnShard(shardIds[index], timeout, delay);
+    await this.spawnShards(shardIds, index + 1, timeout, delay);
+  }
+
+  private async spawnShard(
+    shardId: number,
+    timeout: number,
+    delay: number
+  ): Promise<void> {
+    const promises: Promise<unknown>[] = [];
+    const shard = this.createShard(shardId);
+    promises.push(shard.spawn(timeout));
+    if (delay > 0 && this.shards.size !== this.shardList.length) {
+      promises.push(Bun.sleep(delay));
+    }
+    await Promise.all(promises);
   }
 
   broadcast(message: ShardIPCMessage): Promise<Shard[]> {
@@ -236,19 +273,21 @@ class ShardingManager extends EventEmitter {
     return Promise.all(promises);
   }
 
-  async broadcastEval<T>(fn: (client: Client) => T): Promise<T[]>;
-  async broadcastEval<T>(
-    fn: (client: Client) => T,
+  async broadcastEval<Result>(
+    fn: (client: Client) => Result
+  ): Promise<Result[]>;
+  async broadcastEval<Result>(
+    fn: (client: Client) => Result,
     options: { shard: number }
-  ): Promise<T>;
-  async broadcastEval<T, P>(
-    fn: (client: Client, context: P) => T,
-    options: { context: P }
-  ): Promise<T[]>;
-  async broadcastEval<T, P>(
-    fn: (client: Client, context: P) => T,
-    options: { context: P; shard: number }
-  ): Promise<T>;
+  ): Promise<Result>;
+  async broadcastEval<Result, Payload>(
+    fn: (client: Client, context: Payload) => Result,
+    options: { context: Payload }
+  ): Promise<Result[]>;
+  async broadcastEval<Result, Payload>(
+    fn: (client: Client, context: Payload) => Result,
+    options: { context: Payload; shard: number }
+  ): Promise<Result>;
   async broadcastEval(
     script: (client: Client, context?: unknown) => unknown,
     options: BroadcastEvalOptions = {}
@@ -285,7 +324,7 @@ class ShardingManager extends EventEmitter {
       }
       const fn = Reflect.get(target, method);
       if (typeof fn !== "function") {
-        throw new Error("SHARDING_SHARD_NOT_FOUND", shard);
+        throw new TypeError("SHARDING_SHARD_NOT_FOUND", shard);
       }
       return Reflect.apply(fn, target, args);
     }
@@ -312,17 +351,56 @@ class ShardingManager extends EventEmitter {
     respawnDelay = 500,
     timeout = 30_000,
   }: MultipleShardRespawnOptions = {}): Promise<Collection<number, Shard>> {
-    let s = 0;
-    for (const shard of this.shards.values()) {
-      const promises: Promise<unknown>[] = [
-        shard.respawn({ delay: respawnDelay, timeout }),
-      ];
-      if (++s < this.shards.size && shardDelay > 0) {
-        promises.push(Bun.sleep(shardDelay));
-      }
-      await Promise.all(promises); // eslint-disable-line no-await-in-loop
-    }
+    await this.respawnShards(
+      [...this.shards.values()],
+      1,
+      shardDelay,
+      respawnDelay,
+      timeout
+    );
     return this.shards;
+  }
+
+  private async respawnShards(
+    shards: Shard[],
+    position: number,
+    shardDelay: number,
+    respawnDelay: number,
+    timeout: number
+  ): Promise<void> {
+    if (position > shards.length) {
+      return;
+    }
+    await this.respawnShard(
+      shards[position - 1],
+      position,
+      shardDelay,
+      respawnDelay,
+      timeout
+    );
+    await this.respawnShards(
+      shards,
+      position + 1,
+      shardDelay,
+      respawnDelay,
+      timeout
+    );
+  }
+
+  private async respawnShard(
+    shard: Shard,
+    position: number,
+    shardDelay: number,
+    respawnDelay: number,
+    timeout: number
+  ): Promise<void> {
+    const promises: Promise<unknown>[] = [
+      shard.respawn({ delay: respawnDelay, timeout }),
+    ];
+    if (position < this.shards.size && shardDelay > 0) {
+      promises.push(Bun.sleep(shardDelay));
+    }
+    await Promise.all(promises);
   }
 }
 

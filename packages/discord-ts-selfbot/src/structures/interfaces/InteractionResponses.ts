@@ -1,6 +1,6 @@
 import _errorsModule from "../../errors";
 
-const { Error } = _errorsModule;
+const { Error, TypeError } = _errorsModule;
 import _ConstantsModule from "../../util/Constants";
 
 const { InteractionResponseTypes, InteractionTypes } = _ConstantsModule;
@@ -70,12 +70,10 @@ class InteractionResponses {
         : options;
     this.ephemeral = replyOptions.ephemeral ?? false;
 
-    let messagePayload;
-    if (options instanceof MessagePayload) {
-      messagePayload = options;
-    } else {
-      messagePayload = MessagePayload.create(this, options);
-    }
+    const messagePayload =
+      options instanceof MessagePayload
+        ? options
+        : MessagePayload.create(this, options);
 
     const { data, files } = await messagePayload.resolveData().resolveFiles();
 
@@ -150,12 +148,10 @@ class InteractionResponses {
         ? {}
         : options;
 
-    let messagePayload;
-    if (options instanceof MessagePayload) {
-      messagePayload = options;
-    } else {
-      messagePayload = MessagePayload.create(this, options);
-    }
+    const messagePayload =
+      options instanceof MessagePayload
+        ? options
+        : MessagePayload.create(this, options);
 
     const { data, files } = await messagePayload.resolveData().resolveFiles();
 
@@ -191,33 +187,34 @@ class InteractionResponses {
     options: AwaitModalSubmitOptions<ModalSubmitInteraction>
   ): Promise<ModalSubmitInteraction> {
     if (typeof options.time !== "number") {
-      throw new Error("INVALID_TYPE", "time", "number");
+      throw new TypeError("INVALID_TYPE", "time", "number");
     }
     const _options = {
       ...options,
       interactionType: InteractionTypes.MODAL_SUBMIT,
       max: 1,
     };
-    return new Promise<ModalSubmitInteraction>((resolve, reject) => {
-      const collector = new InteractionCollector<ModalSubmitInteraction>(
-        this.client,
-        _options
-      );
-      collector.once(
-        "end",
-        (
-          interactions: Collection<Snowflake, ModalSubmitInteraction>,
-          reason: string
-        ) => {
-          const interaction = interactions.first();
-          if (interaction) {
-            resolve(interaction);
-          } else {
-            reject(new Error("INTERACTION_COLLECTOR_ERROR", reason));
-          }
+    const { promise, reject, resolve } =
+      Promise.withResolvers<ModalSubmitInteraction>();
+    const collector = new InteractionCollector<ModalSubmitInteraction>(
+      this.client,
+      _options
+    );
+    collector.once(
+      "end",
+      (
+        interactions: Collection<Snowflake, ModalSubmitInteraction>,
+        reason: string
+      ) => {
+        const interaction = interactions.first();
+        if (interaction) {
+          resolve(interaction);
+        } else {
+          reject(new Error("INTERACTION_COLLECTOR_ERROR", reason));
         }
-      );
-    });
+      }
+    );
+    return promise;
   }
 
   static applyToClass(structure: { prototype: object }, ignore: string[] = []) {

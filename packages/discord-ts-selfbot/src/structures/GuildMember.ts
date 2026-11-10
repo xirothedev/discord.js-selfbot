@@ -107,14 +107,12 @@ class GuildMember extends Base implements GuildMemberEntity {
       this.flags = new GuildMemberFlags(data.flags).freeze();
     }
 
-    if (data.avatar_decoration_data) {
-      this.avatarDecorationData = {
-        asset: data.avatar_decoration_data.asset,
-        skuId: data.avatar_decoration_data.sku_id,
-      };
-    } else {
-      this.avatarDecorationData = null;
-    }
+    this.avatarDecorationData = data.avatar_decoration_data
+      ? {
+          asset: data.avatar_decoration_data.asset,
+          skuId: data.avatar_decoration_data.sku_id,
+        }
+      : null;
   }
 
   _clone() {
@@ -270,10 +268,10 @@ class GuildMember extends Base implements GuildMemberEntity {
     if (this.user.id === this.guild.ownerId) {
       return false;
     }
-    if (this.user.id === this.client.user!.id) {
+    if (this.user.id === this.client.user?.id) {
       return false;
     }
-    if (this.client.user!.id === this.guild.ownerId) {
+    if (this.client.user?.id === this.guild.ownerId) {
       return true;
     }
     if (!this.guild.members.me) {
@@ -392,7 +390,7 @@ class GuildMember extends Base implements GuildMemberEntity {
       this.flags.bitfield === member.flags.bitfield &&
       (this._roles === member._roles ||
         (this._roles.length === member._roles.length &&
-          this._roles.every((role, i) => role === member._roles[i]))) &&
+          this._roles.every((role, index) => role === member._roles[index]))) &&
       this.avatarDecorationData?.asset === member.avatarDecorationData?.asset &&
       this.avatarDecorationData?.skuId === member.avatarDecorationData?.skuId
     );
@@ -437,5 +435,7 @@ setTimeout(() => {
   try {
     const TextBasedChannel = require("./interfaces/TextBasedChannel");
     TextBasedChannel.applyToClass(GuildMember);
-  } catch {}
+  } catch {
+    // The channel mixin is optional during early circular imports.
+  }
 }, 0);

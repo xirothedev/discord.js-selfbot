@@ -17,7 +17,7 @@ describe.skipIf(skip)("manual: relationships", () => {
       });
       await step("fetch friends", () => {
         const friends = client.relationships?.cache?.filter?.(
-          (r: any) => r.type === 1
+          (relationshipType) => relationshipType === 1
         );
         console.log("  friends:", friends?.size ?? "n/a");
       });

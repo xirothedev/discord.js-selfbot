@@ -4,6 +4,7 @@ import EventEmitter from "node:events";
 import path from "node:path";
 import process from "node:process";
 import { setTimeout } from "node:timers";
+import { promisify } from "node:util";
 import _errorsModule from "../errors";
 
 const { Error } = _errorsModule;
@@ -32,13 +33,13 @@ interface ShardIPCMessage {
 }
 
 interface ListenerEmitter {
-  getMaxListeners(): number;
-  setMaxListeners(n: number): unknown;
-  on(event: "message", listener: (message: unknown) => void): unknown;
-  removeListener(
+  getMaxListeners: () => number;
+  setMaxListeners: (n: number) => unknown;
+  on: (event: "message", listener: (message: unknown) => void) => unknown;
+  removeListener: (
     event: "message",
     listener: (message: unknown) => void
-  ): unknown;
+  ) => unknown;
 }
 
 /**
@@ -143,39 +144,53 @@ class Shard extends EventEmitter {
     if (timeout === -1 || timeout === Infinity) {
       return Promise.resolve(child);
     }
-    return new Promise<ChildProcess | WorkerType>((resolve, reject) => {
-      const cleanup = () => {
-        clearTimeout(spawnTimeoutTimer);
-        this.off("ready", onReady);
-        this.off("disconnect", onDisconnect);
-        this.off("death", onDeath);
-      };
+    const { promise, resolve, reject } = Promise.withResolvers<
+      ChildProcess | WorkerType
+    >();
+    const timeoutState: { timer?: ReturnType<typeof setTimeout> } = {};
+    const handlers: {
+      ready?: () => void;
+      disconnect?: () => void;
+      death?: () => void;
+      timeout?: () => void;
+    } = {};
+    const cleanup = () => {
+      if (timeoutState.timer) {
+        clearTimeout(timeoutState.timer);
+      }
+      if (handlers.ready) {
+        this.off("ready", handlers.ready);
+      }
+      if (handlers.disconnect) {
+        this.off("disconnect", handlers.disconnect);
+      }
+      if (handlers.death) {
+        this.off("death", handlers.death);
+      }
+    };
 
-      const onReady = () => {
-        cleanup();
-        resolve(child);
-      };
+    handlers.ready = () => {
+      cleanup();
+      resolve(child);
+    };
+    handlers.disconnect = () => {
+      cleanup();
+      reject(new Error("SHARDING_READY_DISCONNECTED", this.id));
+    };
+    handlers.death = () => {
+      cleanup();
+      reject(new Error("SHARDING_READY_DIED", this.id));
+    };
+    handlers.timeout = () => {
+      cleanup();
+      reject(new Error("SHARDING_READY_TIMEOUT", this.id));
+    };
 
-      const onDisconnect = () => {
-        cleanup();
-        reject(new Error("SHARDING_READY_DISCONNECTED", this.id));
-      };
-
-      const onDeath = () => {
-        cleanup();
-        reject(new Error("SHARDING_READY_DIED", this.id));
-      };
-
-      const onTimeout = () => {
-        cleanup();
-        reject(new Error("SHARDING_READY_TIMEOUT", this.id));
-      };
-
-      const spawnTimeoutTimer = setTimeout(onTimeout, timeout);
-      this.once("ready", onReady);
-      this.once("disconnect", onDisconnect);
-      this.once("death", onDeath);
-    });
+    timeoutState.timer = setTimeout(handlers.timeout, timeout);
+    this.once("ready", handlers.ready);
+    this.once("disconnect", handlers.disconnect);
+    this.once("death", handlers.death);
+    return promise;
   }
 
   kill(): void {
@@ -208,26 +223,29 @@ class Shard extends EventEmitter {
     return this.spawn(timeout);
   }
 
-  send(message: ShardIPCMessage): Promise<Shard> {
-    return new Promise<Shard>((resolve, reject) => {
-      if (this.process) {
-        this.process.send(message, (error) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve(this);
-          }
-        });
-      } else if (this.worker) {
-        this.worker.postMessage(message);
-        resolve(this);
-      }
-    });
+  async send(message: ShardIPCMessage): Promise<Shard> {
+    if (this.process) {
+      const sendAsync = promisify(
+        this.process.send.bind(this.process) as (
+          payload: ShardIPCMessage,
+          callback: (error: Error | null) => void
+        ) => boolean
+      );
+      await sendAsync(message);
+      return this;
+    }
+    if (this.worker) {
+      this.worker.postMessage(message, undefined);
+      return this;
+    }
+    const { promise } = Promise.withResolvers<Shard>();
+    return promise;
   }
 
   async fetchClientValue(prop: string): Promise<unknown> {
     // Shard is dead (maybe respawning), don't cache anything and error immediately
-    if (!this.process && !this.worker) {
+    const child = this.process ?? this.worker;
+    if (!child) {
       throw new Error("SHARDING_NO_CHILD_EXISTS", this.id);
     }
 
@@ -237,97 +255,95 @@ class Shard extends EventEmitter {
       return cached;
     }
 
-    const promise = new Promise<unknown>((resolve, reject) => {
-      const child = this.process ?? this.worker;
-      if (!child) {
-        return reject(new Error("SHARDING_NO_CHILD_EXISTS", this.id));
+    const { promise, resolve, reject } = Promise.withResolvers<unknown>();
+
+    const listener = (message: ShardIPCMessage) => {
+      if (message?._fetchProp !== prop) {
+        return;
       }
+      child.removeListener("message", listener);
+      this.decrementMaxListeners(child);
+      this._fetches.delete(prop);
+      if (message._error) {
+        reject(Util.makeError(message._error));
+      } else {
+        resolve(message._result);
+      }
+    };
 
-      const listener = (message: ShardIPCMessage) => {
-        if (message?._fetchProp !== prop) {
-          return;
-        }
-        child.removeListener("message", listener);
-        this.decrementMaxListeners(child);
-        this._fetches.delete(prop);
-        if (message._error) {
-          reject(Util.makeError(message._error));
-        } else {
-          resolve(message._result);
-        }
-      };
-
-      this.incrementMaxListeners(child);
-      child.on("message", listener);
-
-      this.send({ _fetchProp: prop }).catch((error: unknown) => {
-        child.removeListener("message", listener);
-        this.decrementMaxListeners(child);
-        this._fetches.delete(prop);
-        reject(error);
-      });
-    });
-
+    this.incrementMaxListeners(child);
+    child.on("message", listener);
     this._fetches.set(prop, promise);
+
+    try {
+      await this.send({ _fetchProp: prop });
+    } catch (error: unknown) {
+      child.removeListener("message", listener);
+      this.decrementMaxListeners(child);
+      this._fetches.delete(prop);
+      reject(error);
+    }
+
     return promise;
   }
 
-  eval<T>(fn: (client: Client) => T): Promise<T>;
-  eval<T, P>(fn: (client: Client, context: P) => T, context: P): Promise<T>;
+  eval<Result>(fn: (client: Client) => Result): Promise<Result>;
+  eval<Result, Context>(
+    fn: (client: Client, context: Context) => Result,
+    context: Context
+  ): Promise<Result>;
   eval(script: string): Promise<unknown>;
-  eval(
+  async eval(
     script: string | ((client: Client, context?: unknown) => unknown),
     context?: unknown
   ): Promise<unknown> {
     // Stringify the script if it's a Function
-    const _eval =
+    const evalScript =
       typeof script === "function"
         ? `(${script})(this, ${JSON.stringify(context)})`
         : script;
 
     // Shard is dead (maybe respawning), don't cache anything and error immediately
-    if (!this.process && !this.worker) {
+    const child = this.process ?? this.worker;
+    if (!child) {
       throw new Error("SHARDING_NO_CHILD_EXISTS", this.id);
     }
 
     // Cached promise from previous call
-    const cached = this._evals.get(_eval);
+    const cached = this._evals.get(evalScript);
     if (cached) {
       return cached;
     }
 
-    const promise = new Promise<unknown>((resolve, reject) => {
-      const child = this.process ?? this.worker;
-      if (!child) {
-        return reject(new Error("SHARDING_NO_CHILD_EXISTS", this.id));
+    const { promise, resolve, reject } = Promise.withResolvers<unknown>();
+
+    const listener = (message: ShardIPCMessage) => {
+      if (message?._eval !== evalScript) {
+        return;
       }
+      child.removeListener("message", listener);
+      this.decrementMaxListeners(child);
+      this._evals.delete(evalScript);
+      if (message._error) {
+        reject(Util.makeError(message._error));
+      } else {
+        resolve(message._result);
+      }
+    };
 
-      const listener = (message: ShardIPCMessage) => {
-        if (message?._eval !== _eval) {
-          return;
-        }
-        child.removeListener("message", listener);
-        this.decrementMaxListeners(child);
-        this._evals.delete(_eval);
-        if (message._error) {
-          reject(Util.makeError(message._error));
-        } else {
-          resolve(message._result);
-        }
-      };
+    this.incrementMaxListeners(child);
+    child.on("message", listener);
+    this._evals.set(evalScript, promise);
 
-      this.incrementMaxListeners(child);
-      child.on("message", listener);
+    try {
+      await this.send({ _eval: evalScript });
+    } catch (error: unknown) {
+      child.removeListener("message", listener);
+      this.decrementMaxListeners(child);
+      this._evals.delete(evalScript);
+      reject(error);
+    }
 
-      this.send({ _eval }).catch((error: unknown) => {
-        child.removeListener("message", listener);
-        this.decrementMaxListeners(child);
-        this._evals.delete(_eval);
-        reject(error);
-      });
-    });
-
-    this._evals.set(_eval, promise);
     return promise;
   }
 
@@ -356,33 +372,13 @@ class Shard extends EventEmitter {
 
       // Shard is requesting a property fetch
       if (message._sFetchProp) {
-        const resp = {
-          _sFetchProp: message._sFetchProp,
-          _sFetchPropShard: message._sFetchPropShard,
-        };
-        this.manager
-          .fetchClientValues(message._sFetchProp, message._sFetchPropShard)
-          .then(
-            (results) => this.send({ ...resp, _result: results }),
-            (error: unknown) =>
-              this.send({ ...resp, _error: Util.makePlainError(error) })
-          );
+        this.sendFetchedValues(message._sFetchProp, message._sFetchPropShard);
         return;
       }
 
       // Shard is requesting an eval broadcast
       if (message._sEval) {
-        const resp = {
-          _sEval: message._sEval,
-          _sEvalShard: message._sEvalShard,
-        };
-        this.manager
-          ._performOnShards("eval", [message._sEval], message._sEvalShard)
-          .then(
-            (results) => this.send({ ...resp, _result: results }),
-            (error: unknown) =>
-              this.send({ ...resp, _error: Util.makePlainError(error) })
-          );
+        this.sendEvalResults(message._sEval, message._sEvalShard);
         return;
       }
 
@@ -411,8 +407,40 @@ class Shard extends EventEmitter {
     this._fetches.clear();
 
     if (respawn) {
-      this.spawn(timeout).catch((err: unknown) => this.emit("error", err));
+      this.respawnShard(timeout);
     }
+  }
+
+  private async respawnShard(timeout?: number): Promise<void> {
+    try {
+      await this.spawn(timeout);
+    } catch (error: unknown) {
+      this.emit("error", error);
+    }
+  }
+
+  private async sendFetchedValues(prop: string, shard?: number): Promise<void> {
+    const resp = { _sFetchProp: prop, _sFetchPropShard: shard };
+    let results: unknown;
+    try {
+      results = await this.manager.fetchClientValues(prop, shard);
+    } catch (error: unknown) {
+      await this.send({ ...resp, _error: Util.makePlainError(error) });
+      return;
+    }
+    await this.send({ ...resp, _result: results });
+  }
+
+  private async sendEvalResults(script: string, shard?: number): Promise<void> {
+    const resp = { _sEval: script, _sEvalShard: shard };
+    let results: unknown;
+    try {
+      results = await this.manager._performOnShards("eval", [script], shard);
+    } catch (error: unknown) {
+      await this.send({ ...resp, _error: Util.makePlainError(error) });
+      return;
+    }
+    await this.send({ ...resp, _result: results });
   }
 
   incrementMaxListeners(emitter: ListenerEmitter): void {

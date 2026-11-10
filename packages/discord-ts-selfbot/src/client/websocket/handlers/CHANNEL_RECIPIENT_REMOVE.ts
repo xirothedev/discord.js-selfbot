@@ -21,11 +21,11 @@ function isRecipientData(
   );
 }
 
-export default (
+export default function handleChannelRecipientRemove(
   client: Client,
   packet: { d?: unknown },
   _shard: WebSocketShard
-) => {
+) {
   if (!isRecipientData(packet.d)) {
     return;
   }
@@ -44,4 +44,4 @@ export default (
       client.users._add(data.user)
     );
   }
-};
+}

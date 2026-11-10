@@ -13,11 +13,11 @@ function isRelationshipData(value: unknown): value is RelationshipData {
   return isRecord(value) && typeof value.id === "string";
 }
 
-export default (
+export default function handleRelationshipUpdate(
   client: Client,
   packet: { d?: unknown },
   _shard: WebSocketShard
-) => {
+) {
   if (!isRelationshipData(packet.d)) {
     return;
   }
@@ -44,4 +44,4 @@ export default (
       type: data.type,
     }
   );
-};
+}

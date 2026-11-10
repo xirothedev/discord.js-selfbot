@@ -169,15 +169,14 @@ class ThreadMemberManager extends CachedManager<ThreadMember> {
       .get({
         query: { after, limit, with_member: withMember },
       });
-    return raw.reduce(
-      (col, member) =>
-        member.user_id
-          ? col.set(member.user_id, this._add(member, cache))
-          : col,
-      new Collection<Snowflake, ThreadMember>()
-    );
+    const members = new Collection<Snowflake, ThreadMember>();
+    for (const member of raw) {
+      if (member.user_id) {
+        members.set(member.user_id, this._add(member, cache));
+      }
+    }
+    return members;
   }
-
   fetch(
     member: UserResolvable,
     options?: FetchThreadMemberOptions
@@ -190,11 +189,9 @@ class ThreadMemberManager extends CachedManager<ThreadMember> {
       | ThreadMemberResolvableSource
       | FetchManyThreadMembersOptions
       | boolean,
-    options: FetchThreadMemberOptions | FetchManyThreadMembersOptions = {
-      cache: true,
-      force: false,
-    }
+    options?: FetchThreadMemberOptions | FetchManyThreadMembersOptions
   ): Promise<ThreadMember | Collection<Snowflake, ThreadMember>> {
+    const resolvedOptions = options ?? { cache: true, force: false };
     if (typeof member === "boolean" && !deprecationEmittedForPassingBoolean) {
       process.emitWarning(
         "Passing boolean to member option is deprecated, use cache property instead.",
@@ -208,13 +205,16 @@ class ThreadMemberManager extends CachedManager<ThreadMember> {
         ? this.resolveId(member)
         : null;
     if (id) {
-      return this._fetchOne(id, options);
+      return this._fetchOne(id, resolvedOptions);
     }
-    const fetchOptions: FetchManyThreadMembersOptions = isOptions
-      ? member
-      : typeof member === "boolean"
-        ? { ...options, cache: member }
-        : options;
+    let fetchOptions: FetchManyThreadMembersOptions;
+    if (isOptions) {
+      fetchOptions = member;
+    } else if (typeof member === "boolean") {
+      fetchOptions = { ...resolvedOptions, cache: member };
+    } else {
+      fetchOptions = resolvedOptions;
+    }
     return this._fetchMany(fetchOptions);
   }
 }

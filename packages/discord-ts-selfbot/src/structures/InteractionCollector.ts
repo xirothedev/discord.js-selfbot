@@ -19,8 +19,8 @@ import _ConstantsModule from "../util/Constants";
 const { Events } = _ConstantsModule;
 const { InteractionTypes, MessageComponentTypes } = _ConstantsModule;
 
-type InteractionCollectorSourceOptions<T extends Interaction> = Omit<
-  InteractionCollectorOptions<T>,
+type InteractionCollectorSourceOptions<TInteraction extends Interaction> = Omit<
+  InteractionCollectorOptions<TInteraction>,
   "channel" | "message"
 > & {
   channel?: TextBasedChannelResolvable & { guild?: unknown };
@@ -35,11 +35,22 @@ type InteractionCollectorSourceOptions<T extends Interaction> = Omit<
   };
 };
 
+function getMessageId(interaction: Interaction): Snowflake | null {
+  if (!("message" in interaction)) {
+    return null;
+  }
+  const { message } = interaction;
+  if (!message || typeof message !== "object" || !("id" in message)) {
+    return null;
+  }
+  return typeof message.id === "string" ? message.id : null;
+}
+
 class InteractionCollector<
-  T extends Interaction = Interaction,
-> extends Collector<Snowflake, T> {
+  TInteraction extends Interaction = Interaction,
+> extends Collector<Snowflake, TInteraction> {
   declare users: Collection<Snowflake, User>;
-  declare options: InteractionCollectorSourceOptions<T>;
+  declare options: InteractionCollectorSourceOptions<TInteraction>;
   declare messageId: Snowflake | null;
   declare channelId: Snowflake | null;
   declare guildId: Snowflake | null;
@@ -49,36 +60,19 @@ class InteractionCollector<
 
   constructor(
     client: Client,
-    options: InteractionCollectorSourceOptions<T> = {}
+    options: InteractionCollectorSourceOptions<TInteraction> = {}
   ) {
     super(client, options);
 
     this.messageId = options.message?.id ?? null;
-
-    this.channelId =
-      this.client.channels.resolveId(options.message?.channel) ??
-      options.message?.channelId ??
-      options.message?.channel_id ??
-      this.client.channels.resolveId(options.channel) ??
-      null;
-
-    this.guildId =
-      this.client.guilds.resolveId(options.message?.guild) ??
-      options.message?.guildId ??
-      options.message?.guild_id ??
-      this.client.guilds.resolveId(options.channel?.guild) ??
-      this.client.guilds.resolveId(options.guild) ??
-      null;
-
-    this.interactionType =
-      typeof options.interactionType === "number"
-        ? InteractionTypes[options.interactionType]
-        : (options.interactionType ?? null);
-
-    this.componentType =
-      typeof options.componentType === "number"
-        ? MessageComponentTypes[options.componentType]
-        : (options.componentType ?? null);
+    this.channelId = this.resolveChannelId(options);
+    this.guildId = this.resolveGuildId(options);
+    this.interactionType = InteractionCollector.resolveInteractionType(
+      options.interactionType
+    );
+    this.componentType = InteractionCollector.resolveComponentType(
+      options.componentType
+    );
 
     this.users = new Collection<Snowflake, User>();
 
@@ -138,13 +132,56 @@ class InteractionCollector<
       this.client.decrementMaxListeners();
     });
 
-    this.on("collect", (interaction: T) => {
+    this.on("collect", (interaction: TInteraction) => {
       this.total++;
       this.users.set(interaction.user.id, interaction.user);
     });
   }
 
-  collect(interaction: T): Snowflake | null {
+  private resolveChannelId(
+    options: InteractionCollectorSourceOptions<TInteraction>
+  ): Snowflake | null {
+    return (
+      this.client.channels.resolveId(options.message?.channel) ??
+      options.message?.channelId ??
+      options.message?.channel_id ??
+      this.client.channels.resolveId(options.channel) ??
+      null
+    );
+  }
+
+  private resolveGuildId(
+    options: InteractionCollectorSourceOptions<TInteraction>
+  ): Snowflake | null {
+    return (
+      this.client.guilds.resolveId(options.message?.guild) ??
+      options.message?.guildId ??
+      options.message?.guild_id ??
+      this.client.guilds.resolveId(options.channel?.guild) ??
+      this.client.guilds.resolveId(options.guild) ??
+      null
+    );
+  }
+
+  private static resolveInteractionType(
+    value: InteractionType | number | null | undefined
+  ): InteractionType | null {
+    if (typeof value === "number") {
+      return InteractionTypes[value];
+    }
+    return value ?? null;
+  }
+
+  private static resolveComponentType(
+    value: MessageComponentType | number | null | undefined
+  ): MessageComponentType | null {
+    if (typeof value === "number") {
+      return MessageComponentTypes[value];
+    }
+    return value ?? null;
+  }
+
+  collect(interaction: TInteraction): Snowflake | null {
     if (this.interactionType && interaction.type !== this.interactionType) {
       return null;
     }
@@ -168,7 +205,7 @@ class InteractionCollector<
     return interaction.id;
   }
 
-  dispose(interaction: T): Snowflake | null {
+  dispose(interaction: TInteraction): Snowflake | null {
     if (this.interactionType && interaction.type !== this.interactionType) {
       return null;
     }
@@ -245,17 +282,6 @@ class InteractionCollector<
       this.stop("guildDelete");
     }
   }
-}
-
-function getMessageId(interaction: Interaction): Snowflake | null {
-  if (!("message" in interaction)) {
-    return null;
-  }
-  const { message } = interaction;
-  if (!message || typeof message !== "object" || !("id" in message)) {
-    return null;
-  }
-  return typeof message.id === "string" ? message.id : null;
 }
 
 export default InteractionCollector;

@@ -96,30 +96,31 @@ class VoiceWebSocket extends EventEmitter {
 
     const ws = WebSocket.create(
       `wss://${this.connection.authentication.endpoint ?? ""}/`,
-      { v: 8 }
+      Object.fromEntries([["v", 8]])
     );
     this.ws = ws;
     this.emit("debug", `[WS] connecting, ${this.attempts} attempts, ${ws.url}`);
-    ws.onopen = this.onOpen.bind(this);
-    ws.onmessage = this.onMessage.bind(this);
-    ws.onclose = this.onClose.bind(this);
-    ws.onerror = this.onError.bind(this);
+    ws.addEventListener("open", this.onOpen.bind(this));
+    ws.addEventListener("message", this.onMessage.bind(this));
+    ws.addEventListener("close", this.onClose.bind(this));
+    ws.addEventListener("error", this.onError.bind(this));
   }
 
   send(data: string): Promise<string> {
     this.emit("debug", `[WS] >> ${data}`);
-    return new Promise<string>((resolve, reject) => {
-      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-        throw new Error("WS_NOT_OPEN", data);
+    const { ws } = this;
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      return Promise.reject(new Error("WS_NOT_OPEN", data));
+    }
+    const pending = Promise.withResolvers<string>();
+    ws.send(data, {}, (sendError) => {
+      if (sendError) {
+        pending.reject(sendError);
+      } else {
+        pending.resolve(data);
       }
-      this.ws.send(data, {}, (error) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(data);
-        }
-      });
     });
+    return pending.promise;
   }
 
   async sendPacket(packet: unknown): Promise<string> {
@@ -139,7 +140,7 @@ class VoiceWebSocket extends EventEmitter {
           this.connection.channel.id,
         session_id: this.connection.authentication.sessionId,
         token: this.connection.authentication.token,
-        user_id: this.client.user!.id,
+        user_id: this.client.user?.id,
         video: false,
       },
       op: Opcodes.DISPATCH,
@@ -150,14 +151,15 @@ class VoiceWebSocket extends EventEmitter {
   }
 
   onMessage(event: { data: unknown }) {
+    let packet: unknown;
     try {
-      const packet = WebSocket.unpack(event.data, "json");
-      if (isVoiceGatewayPacket(packet)) {
-        return this.onPacket(packet);
-      }
-      return;
+      packet = WebSocket.unpack(event.data, "json");
     } catch (error) {
-      return this.onError(error);
+      this.onError(error);
+      return;
+    }
+    if (isVoiceGatewayPacket(packet)) {
+      this.onPacket(packet);
     }
   }
 
@@ -193,8 +195,9 @@ class VoiceWebSocket extends EventEmitter {
     }
     switch (packet.op) {
       case VoiceOpcodes.HELLO: {
-        if (typeof packet.d?.heartbeat_interval === "number")
+        if (typeof packet.d?.heartbeat_interval === "number") {
           this.setHeartbeat(packet.d.heartbeat_interval);
+        }
         break;
       }
       case VoiceOpcodes.READY: {
@@ -202,19 +205,19 @@ class VoiceWebSocket extends EventEmitter {
         this.connection.setVideoStatus(false);
         break;
       }
-      /* eslint-disable no-case-declarations */
       case VoiceOpcodes.SESSION_DESCRIPTION: {
-        if (packet.d?.secret_key)
+        if (packet.d?.secret_key) {
           packet.d.secret_key = new Uint8Array(packet.d.secret_key);
+        }
         this.emit("sessionDescription", packet.d);
         break;
       }
       case VoiceOpcodes.CLIENT_CONNECT: {
         if (packet.d?.audio_ssrc !== undefined && packet.d.user_id) {
           this.connection.ssrcMap.set(+packet.d.audio_ssrc, {
-            userId: packet.d.user_id,
-            speaking: 0,
             hasVideo: Boolean(packet.d.video_ssrc),
+            speaking: 0,
+            userId: packet.d.user_id,
           });
         }
         break;
@@ -274,10 +277,10 @@ class VoiceWebSocket extends EventEmitter {
 
   sendHeartbeat() {
     this.sendPacket({
-      d: {
-        seq_ack: this._sequenceNumber,
-        t: Date.now(),
-      },
+      d: Object.fromEntries([
+        ["seq_ack", this._sequenceNumber],
+        ["t", Date.now()],
+      ]),
       op: VoiceOpcodes.HEARTBEAT,
     }).catch(() => {
       this.emit("warn", "Tried to send heartbeat, but connection is not open");

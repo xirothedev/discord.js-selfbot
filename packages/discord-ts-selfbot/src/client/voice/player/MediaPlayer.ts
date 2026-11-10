@@ -111,6 +111,40 @@ const FFMPEG_H265_ARGUMENTS = (options?: VideoOptionsSource) => [
   "0",
 ];
 
+function buildVideoArguments(
+  input: ReadableStream | string,
+  options: VideoOptionsSource
+): string[] {
+  const args = [
+    "-i",
+    input instanceof ReadableStream ? "-" : String(input),
+    ...FFMPEG_OUTPUT_PREFIX,
+    "-flags",
+    "low_delay",
+    "-r",
+    `${options?.fps}`,
+  ];
+
+  if (options?.bitrate && typeof options?.bitrate === "number") {
+    args.push("-b:v", `${options?.bitrate}K`);
+  }
+
+  if (options?.hwAccel === true) {
+    args.unshift("-hwaccel", "auto");
+  }
+
+  if (options.seek) {
+    args.unshift("-ss", String(options.seek));
+  }
+
+  // Check input
+  if (typeof input === "string" && input.startsWith("http")) {
+    args.unshift(...FFMPEG_INPUT_PREFIX);
+  }
+
+  return args;
+}
+
 class MediaPlayer extends EventEmitter {
   declare dispatcher: BaseDispatcher | null;
   declare videoDispatcher: BaseDispatcher | null;
@@ -190,11 +224,12 @@ class MediaPlayer extends EventEmitter {
     streams: DispatcherStreams = {}
   ): AudioDispatcher {
     this.destroyDispatcher();
-    const opus = (streams.opus = new prism.opus.Encoder({
+    const opus = new prism.opus.Encoder({
       channels: 2,
       frameSize: 960,
-      rate: 48000,
-    }));
+      rate: 48_000,
+    });
+    streams.opus = opus;
     if (options && options.volume === false) {
       stream.pipe(opus);
       return this.playOpusStream(opus, options, streams);
@@ -220,7 +255,7 @@ class MediaPlayer extends EventEmitter {
       const decoder = new prism.opus.Decoder({
         channels: 2,
         frameSize: 960,
-        rate: 48000,
+        rate: 48_000,
       });
       const volume = new prism.VolumeTransformer({
         type: "s16le",
@@ -231,7 +266,7 @@ class MediaPlayer extends EventEmitter {
         .pipe(decoder)
         .pipe(volume)
         .pipe(
-          new prism.opus.Encoder({ channels: 2, frameSize: 960, rate: 48000 })
+          new prism.opus.Encoder({ channels: 2, frameSize: 960, rate: 48_000 })
         );
       streams.opus = encoded;
     }
@@ -250,32 +285,7 @@ class MediaPlayer extends EventEmitter {
       options.fps = 30;
     }
 
-    const args = [
-      "-i",
-      isStream ? "-" : input,
-      ...FFMPEG_OUTPUT_PREFIX,
-      "-flags",
-      "low_delay",
-      "-r",
-      `${options?.fps}`,
-    ];
-
-    if (options?.bitrate && typeof options?.bitrate === "number") {
-      args.push("-b:v", `${options?.bitrate}K`);
-    }
-
-    if (options?.hwAccel === true) {
-      args.unshift("-hwaccel", "auto");
-    }
-
-    if (options.seek) {
-      args.unshift("-ss", String(options.seek));
-    }
-
-    // Check input
-    if (typeof input === "string" && input.startsWith("http")) {
-      args.unshift(...FFMPEG_INPUT_PREFIX);
-    }
+    const args = buildVideoArguments(input, options);
 
     // Get stream type
     if (this.voiceConnection.videoCodec === "VP8") {
@@ -345,7 +355,6 @@ class MediaPlayer extends EventEmitter {
     return dispatcher;
   }
 
-  // eslint-disable-next-line no-unused-vars
   playAnnexBVideo(
     stream: ReadableStream,
     options: VideoOptionsSource,
@@ -353,14 +362,8 @@ class MediaPlayer extends EventEmitter {
     type: "H264" | "H265"
   ): VideoDispatcher {
     this.destroyVideoDispatcher();
-    let videoStream:
-      | InstanceType<typeof H264NalSplitter>
-      | InstanceType<typeof H265NalSplitter>;
-    if (type === "H264") {
-      videoStream = new H264NalSplitter();
-    } else {
-      videoStream = new H265NalSplitter();
-    }
+    const videoStream =
+      type === "H264" ? new H264NalSplitter() : new H265NalSplitter();
     stream.pipe(videoStream);
     streams.video = videoStream;
     const dispatcher = this.createVideoDispatcher(options, streams);
@@ -373,11 +376,8 @@ class MediaPlayer extends EventEmitter {
     streams: DispatcherStreams
   ): AudioDispatcher {
     this.destroyDispatcher();
-    const dispatcher = (this.dispatcher = new AudioDispatcher(
-      this,
-      options,
-      streams
-    ));
+    const dispatcher = new AudioDispatcher(this, options, streams);
+    this.dispatcher = dispatcher;
     return dispatcher;
   }
 
@@ -388,21 +388,23 @@ class MediaPlayer extends EventEmitter {
     this.destroyVideoDispatcher();
     switch (this.voiceConnection.videoCodec) {
       case "VP8": {
-        const dispatcher = (this.videoDispatcher = new VP8Dispatcher(
+        const dispatcher = new VP8Dispatcher(
           this,
           options?.highWaterMark,
           streams,
           options.fps ?? 30
-        ));
+        );
+        this.videoDispatcher = dispatcher;
         return dispatcher;
       }
       case "H264": {
-        const dispatcher = (this.videoDispatcher = new H264Dispatcher(
+        const dispatcher = new H264Dispatcher(
           this,
           options?.highWaterMark,
           streams,
           options.fps ?? 30
-        ));
+        );
+        this.videoDispatcher = dispatcher;
         return dispatcher;
       }
       default: {

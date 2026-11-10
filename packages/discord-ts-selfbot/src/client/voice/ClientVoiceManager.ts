@@ -41,7 +41,7 @@ interface JoinChannelConfig {
 }
 
 interface VoiceAdapter {
-  destroy(): void;
+  destroy: () => void;
   onVoiceServerUpdate(payload: unknown): void;
   onVoiceStateUpdate(payload: unknown): void;
 }
@@ -66,7 +66,7 @@ class ClientVoiceManager {
 
     this.adapters = new Map();
 
-    client.on(Events.SHARD_DISCONNECT, (_: unknown, shardId: number) => {
+    client.on(Events.SHARD_DISCONNECT, (_event: unknown, shardId: number) => {
       for (const [guildId, adapter] of this.adapters.entries()) {
         if (client.guilds.cache.get(guildId)?.shardId === shardId) {
           // Because it has 1 shard => adapter.destroy();
@@ -143,59 +143,63 @@ class ClientVoiceManager {
     channel: VoiceConnectionChannel | Snowflake,
     config: JoinChannelConfig = {}
   ): Promise<VoiceConnection> {
-    return new Promise((resolve, reject) => {
-      const resolved = this.client.channels.resolve(channel);
-      if (!resolved) {
-        throw new Error("VOICE_JOIN_CHANNEL", String(channel));
-      }
-      if (
-        !["DM", "GROUP_DM"].includes(resolved.type) &&
-        !("joinable" in resolved && resolved.joinable)
-      ) {
-        throw new Error("VOICE_JOIN_CHANNEL", String(resolved));
-      }
+    const resolved = this.client.channels.resolve(channel);
+    if (!resolved) {
+      return Promise.reject(new Error("VOICE_JOIN_CHANNEL", String(channel)));
+    }
+    if (
+      !["DM", "GROUP_DM"].includes(resolved.type) &&
+      !("joinable" in resolved && resolved.joinable)
+    ) {
+      return Promise.reject(new Error("VOICE_JOIN_CHANNEL", String(resolved)));
+    }
 
-      let { connection } = this;
+    const pending = Promise.withResolvers<VoiceConnection>();
+    const { resolve, reject } = pending;
 
-      if (connection) {
-        if (connection.channel.id !== resolved.id) {
-          connection.updateChannel(resolved);
-        }
+    const existing = this.connection;
+    if (existing) {
+      if (existing.channel.id !== resolved.id) {
+        existing.updateChannel(resolved);
+      }
+      resolve(existing);
+      return pending.promise;
+    }
+    const connection = this.connectionFactory(this, resolved);
+    if (config?.videoCodec) {
+      connection.setVideoCodec(config.videoCodec);
+    }
+    connection.on("debug", (msg: string) =>
+      this.client.emit(
+        "debug",
+        `[VOICE (${connection.channel.guild?.id || connection.channel.id}:${connection.status})]: ${msg}`
+      )
+    );
+    connection.authenticate({
+      self_deaf: Boolean(config.selfDeaf),
+      self_mute: Boolean(config.selfMute),
+      self_video: Boolean(config.selfVideo),
+    });
+    this.connection = connection;
+
+    connection.once("failed", (reason: unknown) => {
+      this.connection = null;
+      reject(reason);
+    });
+
+    connection.on("error", reject);
+
+    connection.once("authenticated", () => {
+      connection.once("ready", () => {
         resolve(connection);
-        return;
-      }
-      connection = this.connectionFactory(this, resolved);
-      if (config?.videoCodec) connection.setVideoCodec(config.videoCodec);
-      connection.on("debug", (msg: string) =>
-        this.client.emit(
-          "debug",
-          `[VOICE (${connection!.channel.guild?.id || connection!.channel.id}:${connection!.status})]: ${msg}`
-        )
-      );
-      connection.authenticate({
-        self_mute: Boolean(config.selfMute),
-        self_deaf: Boolean(config.selfDeaf),
-        self_video: Boolean(config.selfVideo),
+        connection.removeListener("error", reject);
       });
-      this.connection = connection;
-
-      connection.once("failed", (reason: unknown) => {
+      connection.once("disconnect", () => {
         this.connection = null;
-        reject(reason);
-      });
-
-      connection.on("error", reject);
-
-      connection.once("authenticated", () => {
-        connection.once("ready", () => {
-          resolve(connection);
-          connection.removeListener("error", reject);
-        });
-        connection.once("disconnect", () => {
-          this.connection = null;
-        });
       });
     });
+
+    return pending.promise;
   }
 }
 

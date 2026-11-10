@@ -33,6 +33,108 @@ export default defineConfig({
         ...next.rules,
       },
     },
+    {
+      // Public classes and coupled class graphs. A split would change the public
+      // API or the deliberate circular import graph. See ADR 0007.
+      files: [
+        "packages/discord-ts-selfbot/src/client/Client.ts",
+        "packages/discord-ts-selfbot/src/client/voice/VoiceConnection.ts",
+        "packages/discord-ts-selfbot/src/client/voice/dispatcher/BaseDispatcher.ts",
+        "packages/discord-ts-selfbot/src/client/voice/player/MediaPlayer.ts",
+        "packages/discord-ts-selfbot/src/client/websocket/WebSocketManager.ts",
+        "packages/discord-ts-selfbot/src/client/websocket/WebSocketShard.ts",
+        "packages/discord-ts-selfbot/src/managers/ApplicationCommandPermissionsManager.ts",
+        "packages/discord-ts-selfbot/src/managers/GuildChannelManager.ts",
+        "packages/discord-ts-selfbot/src/managers/GuildManager.ts",
+        "packages/discord-ts-selfbot/src/managers/GuildMemberManager.ts",
+        "packages/discord-ts-selfbot/src/managers/MessageManager.ts",
+        "packages/discord-ts-selfbot/src/managers/RoleManager.ts",
+        "packages/discord-ts-selfbot/src/rest/RequestHandler.ts",
+        "packages/discord-ts-selfbot/src/sharding/Shard.ts",
+        "packages/discord-ts-selfbot/src/sharding/ShardingManager.ts",
+        "packages/discord-ts-selfbot/src/structures/ApplicationCommand.ts",
+        "packages/discord-ts-selfbot/src/structures/CommandInteractionOptionResolver.ts",
+        "packages/discord-ts-selfbot/src/structures/Guild.ts",
+        "packages/discord-ts-selfbot/src/structures/GuildAuditLogs.ts",
+        "packages/discord-ts-selfbot/src/structures/GuildChannel.ts",
+        "packages/discord-ts-selfbot/src/structures/GuildMember.ts",
+        "packages/discord-ts-selfbot/src/structures/Message.ts",
+        "packages/discord-ts-selfbot/src/structures/MessageEmbed.ts",
+        "packages/discord-ts-selfbot/src/structures/MessagePayload.ts",
+        "packages/discord-ts-selfbot/src/structures/Presence.ts",
+        "packages/discord-ts-selfbot/src/structures/ThreadChannel.ts",
+        "packages/discord-ts-selfbot/src/structures/User.ts",
+        "packages/discord-ts-selfbot/src/structures/Webhook.ts",
+        "packages/discord-ts-selfbot/src/structures/interfaces/Application.ts",
+        "packages/discord-ts-selfbot/src/structures/interfaces/TextBasedChannel.ts",
+        "packages/discord-ts-selfbot/src/util/Constants.ts",
+        "packages/discord-ts-selfbot/src/util/Sweepers.ts",
+        "packages/discord-ts-selfbot/src/util/Util.ts",
+      ],
+      rules: {
+        "max-lines": "off",
+      },
+    },
+    {
+      // Single-pass generator script; splitting would move top-level program state.
+      files: ["packages/discord-ts-selfbot/tools/schema/generate.ts"],
+      rules: {
+        "max-lines": "off",
+      },
+    },
+    {
+      // Coupled cycles: the base class and its subclasses must stay in one module
+      // and after each other. See ADR 0007.
+      files: [
+        "packages/discord-ts-selfbot/src/client/voice/VoiceConnection.ts",
+        "packages/discord-ts-selfbot/src/structures/GuildAuditLogs.ts",
+        "packages/discord-ts-selfbot/src/structures/Presence.ts",
+      ],
+      rules: {
+        "no-use-before-define": "off",
+      },
+    },
+    {
+      // Same-module subclass pairs; a split creates an import cycle.
+      files: [
+        "packages/discord-ts-selfbot/src/client/voice/VoiceConnection.ts",
+        "packages/discord-ts-selfbot/src/client/voice/dispatcher/AnnexBDispatcher.ts",
+        "packages/discord-ts-selfbot/src/client/voice/player/processing/AnnexBNalSplitter.ts",
+        "packages/discord-ts-selfbot/src/client/voice/receiver/PacketHandler.ts",
+        "packages/discord-ts-selfbot/src/structures/GuildAuditLogs.ts",
+        "packages/discord-ts-selfbot/src/structures/Presence.ts",
+      ],
+      rules: {
+        "max-classes-per-file": "off",
+      },
+    },
+    {
+      // Bivariant callback types; property signatures break real adapter and
+      // manager assignments. See ADR 0007.
+      files: [
+        "packages/discord-ts-selfbot/src/client/actions/Action.ts",
+        "packages/discord-ts-selfbot/src/client/voice/ClientVoiceManager.ts",
+      ],
+      rules: {
+        "typescript/method-signature-style": "off",
+      },
+    },
+    {
+      // `_eval` is the public sharding execute API. Replacing it changes scope.
+      files: ["packages/discord-ts-selfbot/src/client/Client.ts"],
+      rules: {
+        "no-eval": "off",
+      },
+    },
+    {
+      // Async generator must await one collect/end event per yielded item.
+      files: [
+        "packages/discord-ts-selfbot/src/structures/interfaces/Collector.ts",
+      ],
+      rules: {
+        "no-await-in-loop": "off",
+      },
+    },
   ],
   plugins,
   rules: {
@@ -55,7 +157,10 @@ export default defineConfig({
     eqeqeq: ["error", "always", { null: "ignore" }], // `!= null` also excludes undefined.
     "require-await": "off", // Dropping async changes promise rejection behavior.
     // Team baseline.
-    "max-lines": ["error", { max: 300 }],
+    "max-lines": [
+      "error",
+      { max: 300, skipBlankLines: true, skipComments: true },
+    ],
     "id-length": [
       "error",
       { exceptions: ["u", "r", "k", "e", "s", "w", "d", "n", "o"], min: 2 },

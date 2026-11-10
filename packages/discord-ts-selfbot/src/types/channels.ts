@@ -13,11 +13,13 @@ import type TextChannel from "../structures/TextChannel";
 import type ThreadChannel from "../structures/ThreadChannel";
 import type VoiceChannel from "../structures/VoiceChannel";
 import type MessagePayload from "../structures/MessagePayload";
-import type { MessageOptions } from "../../typings";
+import type {
+  GuildResolvable,
+  MessageOptions,
+  TextBasedChannelResolvable,
+} from "../../typings";
 import type { Message } from "../structures/Message";
 import type { Snowflake } from "discord-api-types/v10";
-import type { TextBasedChannelResolvable } from "../../typings";
-import type { GuildResolvable } from "../../typings";
 
 export type AnyChannel =
   | CategoryChannel

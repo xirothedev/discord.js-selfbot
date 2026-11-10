@@ -13,8 +13,8 @@ import {
 import type { SharedProps } from "fumadocs-ui/components/dialog/search";
 import { useI18n } from "fumadocs-ui/contexts/i18n";
 
-export default function DefaultSearchDialog(props: SharedProps) {
-  const { locale } = useI18n(); // (optional) for i18n
+const DefaultSearchDialog = (props: SharedProps) => {
+  const { locale } = useI18n();
   const search = useStaticSearch({
     from: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/search`,
     locale,
@@ -33,4 +33,6 @@ export default function DefaultSearchDialog(props: SharedProps) {
       </SearchDialogContent>
     </SearchDialog>
   );
-}
+};
+
+export default DefaultSearchDialog;

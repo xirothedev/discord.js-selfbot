@@ -119,7 +119,7 @@ test("BillingManager#fetchGuildBoosts GETs the slot route and parses GuildBoost 
   expect(result).toBe(client.billing.guildBoosts);
   expect(result.size).toBe(GUILD_BOOST_SLOTS.length);
 
-  const slot = GUILD_BOOST_SLOTS[0];
+  const [slot] = GUILD_BOOST_SLOTS;
   const boost = result.get(slot.id);
   expect(boost.constructor.name).toBe("GuildBoost");
   expect(boost.id).toBe(slot.id);
