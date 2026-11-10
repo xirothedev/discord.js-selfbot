@@ -1,20 +1,20 @@
-import { Collection } from "@discordjs/collection";
-import Base from "./Base";
-import _PollAnswerModule from "./PollAnswer";
+import { Collection } from '@discordjs/collection';
+import Base from './Base';
+import _PollAnswerModule from './PollAnswer';
 
 const { PollAnswer } = _PollAnswerModule;
-import _errorsModule from "../errors";
+import _errorsModule from '../errors';
 
 const { Error } = _errorsModule;
-import _ConstantsModule, { resolveEnumMember } from "../util/Constants";
+import _ConstantsModule, { resolveEnumMember } from '../util/Constants';
 
 const { PollLayoutTypes } = _ConstantsModule;
-import type { APIPoll } from "discord-api-types/v10";
-import type { PollQuestionMedia } from "../../typings";
-import type { Message } from "./Message";
-import type { PollAnswer as PollAnswerType } from "./PollAnswer";
-import type { PollLayoutTypes as PollLayoutTypesType } from "../../typings/enums";
-import type Client from "../client/Client";
+import type { APIPoll } from 'discord-api-types/v10';
+import type { PollQuestionMedia } from '../../typings';
+import type { Message } from './Message';
+import type { PollAnswer as PollAnswerType } from './PollAnswer';
+import type { PollLayoutTypes as PollLayoutTypesType } from '../../typings/enums';
+import type Client from '../client/Client';
 
 class Poll extends Base {
   declare message: Message;
@@ -28,10 +28,10 @@ class Poll extends Base {
   constructor(client: Client, data: APIPoll, message: Message) {
     super(client);
 
-    Object.defineProperty(this, "message", { value: message });
+    Object.defineProperty(this, 'message', { value: message });
 
     this.question = {
-      text: data.question.text ?? "",
+      text: data.question.text ?? '',
     };
 
     this.answers = new Collection<number, PollAnswerType>();
@@ -72,11 +72,11 @@ class Poll extends Base {
 
   async end() {
     if (Date.now() > this.expiresTimestamp) {
-      throw new Error("POLL_ALREADY_EXPIRED");
+      throw new Error('POLL_ALREADY_EXPIRED');
     }
     const { channel } = this.message;
     if (!channel) {
-      throw new Error("CHANNEL_NOT_CACHED");
+      throw new Error('CHANNEL_NOT_CACHED');
     }
     return channel.messages.endPoll(this.message.id);
   }

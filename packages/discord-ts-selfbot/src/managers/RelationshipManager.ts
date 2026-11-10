@@ -1,19 +1,19 @@
-import { Collection } from "@discordjs/collection";
-import BaseManager from "./BaseManager";
-import _GuildMemberModule from "../structures/GuildMember";
+import { Collection } from '@discordjs/collection';
+import BaseManager from './BaseManager';
+import _GuildMemberModule from '../structures/GuildMember';
 
 const { GuildMember } = _GuildMemberModule;
-import _MessageModule from "../structures/Message";
+import _MessageModule from '../structures/Message';
 
 const { Message } = _MessageModule;
-import ThreadMember from "../structures/ThreadMember";
-import User from "../structures/User";
-import _ConstantsModule from "../util/Constants";
+import ThreadMember from '../structures/ThreadMember';
+import User from '../structures/User';
+import _ConstantsModule from '../util/Constants';
 
 const { RelationshipTypes } = _ConstantsModule;
-import type { Snowflake } from "discord-api-types/v10";
-import type { BaseFetchOptions } from "../../typings";
-import type { Client } from "../client/Client";
+import type { Snowflake } from 'discord-api-types/v10';
+import type { BaseFetchOptions } from '../../typings';
+import type { Client } from '../client/Client';
 
 type UserResolvableSource =
   | User
@@ -98,7 +98,7 @@ class RelationshipManager extends BaseManager {
     return this.cache.map((value, key) => ({
       id: key,
       nickname: this.friendNicknames.get(key),
-      since: this.sinceCache.get(key)?.toISOString() ?? "",
+      since: this.sinceCache.get(key)?.toISOString() ?? '',
       type: RelationshipTypes[value],
     }));
   }
@@ -162,14 +162,14 @@ class RelationshipManager extends BaseManager {
         }
       }
       const data =
-        await this.client.api.users["@me"].relationships.get<
+        await this.client.api.users['@me'].relationships.get<
           RelationshipData[]
         >();
       await this._setup(data);
       return this.cache.get(id);
     }
     const data =
-      await this.client.api.users["@me"].relationships.get<
+      await this.client.api.users['@me'].relationships.get<
         RelationshipData[]
       >();
     await this._setup(data);
@@ -187,7 +187,7 @@ class RelationshipManager extends BaseManager {
    * @see {@link https://github.com/xirothedev/discord.js-selfbot/issues/11}
    */
   async deleteRelationship(_user: UserResolvableSource): Promise<boolean> {
-    throw new Error("Risky action, not finished yet.");
+    throw new Error('Risky action, not finished yet.');
   }
 
   /**
@@ -201,7 +201,7 @@ class RelationshipManager extends BaseManager {
    * @see {@link https://github.com/xirothedev/discord.js-selfbot/issues/11}
    */
   async sendFriendRequest(_options: UserResolvableSource): Promise<boolean> {
-    throw new Error("Risky action, not finished yet.");
+    throw new Error('Risky action, not finished yet.');
   }
 
   /**
@@ -215,7 +215,7 @@ class RelationshipManager extends BaseManager {
    * @see {@link https://github.com/xirothedev/discord.js-selfbot/issues/11}
    */
   async addFriend(_user: UserResolvableSource): Promise<boolean> {
-    throw new Error("Risky action, not finished yet.");
+    throw new Error('Risky action, not finished yet.');
   }
 
   async setNickname(
@@ -226,9 +226,9 @@ class RelationshipManager extends BaseManager {
     if (!id || this.cache.get(id) !== RelationshipTypes.FRIEND) {
       return false;
     }
-    await this.client.api.users["@me"].relationships[id].patch({
+    await this.client.api.users['@me'].relationships[id].patch({
       data: {
-        nickname: typeof nickname === "string" ? nickname : null,
+        nickname: typeof nickname === 'string' ? nickname : null,
       },
     });
     if (nickname) {
@@ -250,7 +250,7 @@ class RelationshipManager extends BaseManager {
    * @see {@link https://github.com/xirothedev/discord.js-selfbot/issues/11}
    */
   async addBlocked(_user: UserResolvableSource): Promise<boolean> {
-    throw new Error("Risky action, not finished yet.");
+    throw new Error('Risky action, not finished yet.');
   }
 }
 

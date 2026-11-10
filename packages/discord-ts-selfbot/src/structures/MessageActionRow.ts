@@ -1,18 +1,18 @@
-import { ComponentType } from "discord-api-types/v10";
+import { ComponentType } from 'discord-api-types/v10';
 import type {
   APIActionRowComponent,
   APIComponentInMessageActionRow,
-} from "discord-api-types/v10";
+} from 'discord-api-types/v10';
 import BaseMessageComponent, {
   isComponentDataSource,
   readComponentArray,
-} from "./BaseMessageComponent";
-import type { MessageComponentInstance } from "./BaseMessageComponent";
-import MessageButton from "./MessageButton";
-import MessageSelectMenu from "./MessageSelectMenu";
-import TextInputComponent from "./TextInputComponent";
-import type { Client } from "../client/Client";
-import type { MessageActionRowComponentResolvable } from "../../typings";
+} from './BaseMessageComponent';
+import type { MessageComponentInstance } from './BaseMessageComponent';
+import MessageButton from './MessageButton';
+import MessageSelectMenu from './MessageSelectMenu';
+import TextInputComponent from './TextInputComponent';
+import type { Client } from '../client/Client';
+import type { MessageActionRowComponentResolvable } from '../../typings';
 
 type ActionRowChild = MessageButton | MessageSelectMenu | TextInputComponent;
 
@@ -47,10 +47,10 @@ class MessageActionRow extends BaseMessageComponent {
   declare components: ActionRowChild[];
 
   constructor(data?: unknown, client: Client | null = null) {
-    super({ type: "ACTION_ROW" });
+    super({ type: 'ACTION_ROW' });
     const source = isComponentDataSource(data) ? data : {};
 
-    this.components = readComponentArray(source, "components")
+    this.components = readComponentArray(source, 'components')
       .map((component) => BaseMessageComponent.create(component, client))
       .filter(isActionRowChild);
 

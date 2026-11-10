@@ -29,7 +29,7 @@ interface StableLibModule {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  return typeof value === 'object' && value !== null;
 }
 
 function callMethod(
@@ -38,7 +38,7 @@ function callMethod(
   args: unknown[]
 ): Uint8Array {
   const method = target[name];
-  if (typeof method !== "function") {
+  if (typeof method !== 'function') {
     throw new TypeError(`Missing crypto method: ${name}`);
   }
   const result: unknown = Reflect.apply(method, target, args);
@@ -51,15 +51,15 @@ function callMethod(
 function isStableLib(value: unknown): value is StableLibModule {
   return (
     isRecord(value) &&
-    "XChaCha20Poly1305" in value &&
-    typeof value.XChaCha20Poly1305 === "function"
+    'XChaCha20Poly1305' in value &&
+    typeof value.XChaCha20Poly1305 === 'function'
   );
 }
 
 const libs: Record<string, (module: unknown) => SecretboxMethods> = {
-  "@stablelib/xchacha20poly1305": (stablelib: unknown) => {
+  '@stablelib/xchacha20poly1305': (stablelib: unknown) => {
     if (!isStableLib(stablelib)) {
-      throw new Error("Invalid @stablelib/xchacha20poly1305 module");
+      throw new Error('Invalid @stablelib/xchacha20poly1305 module');
     }
     return {
       crypto_aead_xchacha20poly1305_ietf_decrypt(
@@ -82,7 +82,7 @@ const libs: Record<string, (module: unknown) => SecretboxMethods> = {
       },
     };
   },
-  "libsodium-wrappers": (sodium: unknown) => {
+  'libsodium-wrappers': (sodium: unknown) => {
     const api = isRecord(sodium) ? sodium : {};
     return {
       crypto_aead_xchacha20poly1305_ietf_decrypt: (
@@ -91,7 +91,7 @@ const libs: Record<string, (module: unknown) => SecretboxMethods> = {
         nonce,
         key
       ) =>
-        callMethod(api, "crypto_aead_xchacha20poly1305_ietf_decrypt", [
+        callMethod(api, 'crypto_aead_xchacha20poly1305_ietf_decrypt', [
           null,
           plaintext,
           additionalData,
@@ -104,7 +104,7 @@ const libs: Record<string, (module: unknown) => SecretboxMethods> = {
         nonce,
         key
       ) =>
-        callMethod(api, "crypto_aead_xchacha20poly1305_ietf_encrypt", [
+        callMethod(api, 'crypto_aead_xchacha20poly1305_ietf_encrypt', [
           plaintext,
           additionalData,
           null,
@@ -125,7 +125,7 @@ const libs: Record<string, (module: unknown) => SecretboxMethods> = {
         nonce,
         key
       ) =>
-        callMethod(api, "crypto_aead_xchacha20poly1305_ietf_decrypt", [
+        callMethod(api, 'crypto_aead_xchacha20poly1305_ietf_decrypt', [
           plaintext,
           additionalData,
           null,
@@ -138,7 +138,7 @@ const libs: Record<string, (module: unknown) => SecretboxMethods> = {
         nonce,
         key
       ) =>
-        callMethod(api, "crypto_aead_xchacha20poly1305_ietf_encrypt", [
+        callMethod(api, 'crypto_aead_xchacha20poly1305_ietf_encrypt', [
           plaintext,
           additionalData,
           null,
@@ -151,7 +151,7 @@ const libs: Record<string, (module: unknown) => SecretboxMethods> = {
 
 function NoLib(): never {
   throw new Error(
-    "Cannot play audio as no valid encryption package is installed.\n- Install sodium, libsodium-wrappers, or @stablelib/xchacha20poly1305."
+    'Cannot play audio as no valid encryption package is installed.\n- Install sodium, libsodium-wrappers, or @stablelib/xchacha20poly1305.'
   );
 }
 
@@ -171,8 +171,8 @@ async function importSecretbox(
 ): Promise<SecretboxMethods | null> {
   try {
     const mod = await importModule(libName);
-    const lib = isRecord(mod) && "default" in mod ? mod.default : mod;
-    if (libName === "libsodium-wrappers" && isRecord(lib) && lib.ready) {
+    const lib = isRecord(mod) && 'default' in mod ? mod.default : mod;
+    if (libName === 'libsodium-wrappers' && isRecord(lib) && lib.ready) {
       await lib.ready;
     }
     const factory = libs[libName];

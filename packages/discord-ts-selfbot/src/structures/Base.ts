@@ -1,5 +1,5 @@
-import Util from "../util/Util";
-import type { Client } from "../client/Client";
+import Util from '../util/Util';
+import type { Client } from '../client/Client';
 
 function patchValue<TValue>(
   next: TValue | undefined,
@@ -22,7 +22,7 @@ class Base {
   declare client: Client;
 
   constructor(client: Client) {
-    Object.defineProperty(this, "client", { value: client });
+    Object.defineProperty(this, 'client', { value: client });
   }
 
   _clone() {
@@ -44,7 +44,7 @@ class Base {
   }
 
   valueOf(): string {
-    return "id" in this && typeof this.id === "string" ? this.id : "";
+    return 'id' in this && typeof this.id === 'string' ? this.id : '';
   }
 }
 

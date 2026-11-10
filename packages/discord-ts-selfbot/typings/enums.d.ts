@@ -275,62 +275,62 @@ export enum NameplatePalette {
    * Value: none
    * Name: None
    */
-  None = "none",
+  None = 'none',
   /**
    * Value: crimson
    * Name: Crimson
    */
-  Crimson = "crimson",
+  Crimson = 'crimson',
   /**
    * Value: berry
    * Name: Berry
    */
-  Berry = "berry",
+  Berry = 'berry',
   /**
    * Value: sky
    * Name: Sky
    */
-  Sky = "sky",
+  Sky = 'sky',
   /**
    * Value: teal
    * Name: Teal
    */
-  Teal = "teal",
+  Teal = 'teal',
   /**
    * Value: forest
    * Name: Forest
    */
-  Forest = "forest",
+  Forest = 'forest',
   /**
    * Value: bubble_gum
    * Name: BubbleGum
    */
-  BubbleGum = "bubble_gum",
+  BubbleGum = 'bubble_gum',
   /**
    * Value: violet
    * Name: Violet
    */
-  Violet = "violet",
+  Violet = 'violet',
   /**
    * Value: cobalt
    * Name: Cobalt
    */
-  Cobalt = "cobalt",
+  Cobalt = 'cobalt',
   /**
    * Value: clover
    * Name: Clover
    */
-  Clover = "clover",
+  Clover = 'clover',
   /**
    * Value: lemon
    * Name: Lemon
    */
-  Lemon = "lemon",
+  Lemon = 'lemon',
   /**
    * Value: white
    * Name: White
    */
-  White = "white",
+  White = 'white',
 }
 
 export enum OverwriteTypes {
@@ -387,7 +387,7 @@ export enum ReactionTypes {
 
 export enum WebhookTypes {
   Incoming = 1,
-  "Channel Follower" = 2,
+  'Channel Follower' = 2,
   Application = 3,
 }
 

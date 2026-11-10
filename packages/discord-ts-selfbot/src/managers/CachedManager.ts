@@ -1,8 +1,8 @@
-import type { Collection } from "@discordjs/collection";
-import DataManager, { readId } from "./DataManager";
-import type { DataHold } from "./DataManager";
-import _ConstantsModule from "../util/Constants";
-import type Client from "../client/Client";
+import type { Collection } from '@discordjs/collection';
+import DataManager, { readId } from './DataManager';
+import type { DataHold } from './DataManager';
+import _ConstantsModule from '../util/Constants';
+import type Client from '../client/Client';
 
 const { _cleanupSymbol } = _ConstantsModule;
 
@@ -12,15 +12,15 @@ type ManagerCache<Holds> = Collection<string, Holds> & {
 };
 
 function patch(hold: object, data: unknown): void {
-  const method = Reflect.get(hold, "_patch");
-  if (typeof method === "function") {
+  const method = Reflect.get(hold, '_patch');
+  if (typeof method === 'function') {
     Reflect.apply(method, hold, [data]);
   }
 }
 
 function cloneOf<Holds extends DataHold>(hold: Holds): Holds {
-  const method = Reflect.get(hold, "_clone");
-  return typeof method === "function" ? Reflect.apply(method, hold, []) : hold;
+  const method = Reflect.get(hold, '_clone');
+  return typeof method === 'function' ? Reflect.apply(method, hold, []) : hold;
 }
 
 class CachedManager<
@@ -35,7 +35,7 @@ class CachedManager<
   ) {
     super(client, holds);
 
-    Object.defineProperty(this, "_cache", {
+    Object.defineProperty(this, '_cache', {
       value: this.client.options.makeCache(this.constructor, this.holds),
     });
 
@@ -75,7 +75,7 @@ class CachedManager<
   ): Holds {
     const key =
       id ??
-      (typeof data === "object" && data !== null ? readId(data) : undefined);
+      (typeof data === 'object' && data !== null ? readId(data) : undefined);
     const existing = key ? this.cache.get(key) : undefined;
     if (existing) {
       if (cache) {
@@ -88,7 +88,7 @@ class CachedManager<
     }
 
     const entry: Holds =
-      typeof this.holds === "function"
+      typeof this.holds === 'function'
         ? Reflect.construct(this.holds, [this.client, data, ...extras])
         : (data as Holds);
     const entryId = key ?? readId(entry);

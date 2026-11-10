@@ -1,7 +1,7 @@
-import CachedManager from "./CachedManager";
-import MessageReaction from "../structures/MessageReaction";
-import type { Message } from "../structures/Message";
-import type { RawMessageReactionSource } from "../structures/MessageReaction";
+import CachedManager from './CachedManager';
+import MessageReaction from '../structures/MessageReaction';
+import type { Message } from '../structures/Message';
+import type { RawMessageReactionSource } from '../structures/MessageReaction';
 
 class ReactionManager extends CachedManager<MessageReaction> {
   declare message: Message;

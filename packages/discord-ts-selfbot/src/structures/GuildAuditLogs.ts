@@ -1,65 +1,65 @@
-import { Collection } from "@discordjs/collection";
-import ApplicationCommand from "./ApplicationCommand";
-import AutoModerationRule from "./AutoModerationRule";
-import _GuildScheduledEventModule from "./GuildScheduledEvent";
+import { Collection } from '@discordjs/collection';
+import ApplicationCommand from './ApplicationCommand';
+import AutoModerationRule from './AutoModerationRule';
+import _GuildScheduledEventModule from './GuildScheduledEvent';
 
 const { GuildScheduledEvent } = _GuildScheduledEventModule;
-import Integration from "./Integration";
-import Invite from "./Invite";
-import _StageInstanceModule from "./StageInstance";
+import Integration from './Integration';
+import Invite from './Invite';
+import _StageInstanceModule from './StageInstance';
 
 const { StageInstance } = _StageInstanceModule;
-import _StickerModule from "./Sticker";
+import _StickerModule from './Sticker';
 
 const { Sticker } = _StickerModule;
-import Webhook from "./Webhook";
-import _ConstantsModule from "../util/Constants";
+import Webhook from './Webhook';
+import _ConstantsModule from '../util/Constants';
 
 const { OverwriteTypes, PartialTypes, AutoModerationRuleTriggerTypes } =
   _ConstantsModule;
-import SnowflakeUtil from "../util/SnowflakeUtil";
-import Util from "../util/Util";
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import Util from '../util/Util';
 import type {
   APIAuditLogOptions,
   APIAutoModerationRule,
   Snowflake,
-} from "discord-api-types/v10";
+} from 'discord-api-types/v10';
 import type {
   GuildAuditLogsActionType,
   GuildAuditLogsIds,
   GuildAuditLogsResolvable,
   GuildAuditLogsTarget,
-} from "../../typings";
+} from '../../typings';
 import type {
   RawGuildAuditLogData,
   RawGuildAuditLogEntryData,
   RawIntegrationData,
   RawInviteData,
-} from "../../typings/rawDataTypes";
-import type { Guild } from "./Guild";
-import type { User } from "./User";
+} from '../../typings/rawDataTypes';
+import type { Guild } from './Guild';
+import type { User } from './User';
 
 const Targets = {
-  ALL: "ALL",
-  APPLICATION_COMMAND: "APPLICATION_COMMAND",
-  AUTO_MODERATION: "AUTO_MODERATION",
-  CHANNEL: "CHANNEL",
-  EMOJI: "EMOJI",
-  GUILD: "GUILD",
-  GUILD_ONBOARDING: "GUILD_ONBOARDING",
-  GUILD_ONBOARDING_PROMPT: "GUILD_ONBOARDING_PROMPT",
-  GUILD_SCHEDULED_EVENT: "GUILD_SCHEDULED_EVENT",
-  INTEGRATION: "INTEGRATION",
-  INVITE: "INVITE",
-  MESSAGE: "MESSAGE",
-  ROLE: "ROLE",
-  SOUNDBOARD_SOUND: "SOUNDBOARD_SOUND",
-  STAGE_INSTANCE: "STAGE_INSTANCE",
-  STICKER: "STICKER",
-  THREAD: "THREAD",
-  UNKNOWN: "UNKNOWN",
-  USER: "USER",
-  WEBHOOK: "WEBHOOK",
+  ALL: 'ALL',
+  APPLICATION_COMMAND: 'APPLICATION_COMMAND',
+  AUTO_MODERATION: 'AUTO_MODERATION',
+  CHANNEL: 'CHANNEL',
+  EMOJI: 'EMOJI',
+  GUILD: 'GUILD',
+  GUILD_ONBOARDING: 'GUILD_ONBOARDING',
+  GUILD_ONBOARDING_PROMPT: 'GUILD_ONBOARDING_PROMPT',
+  GUILD_SCHEDULED_EVENT: 'GUILD_SCHEDULED_EVENT',
+  INTEGRATION: 'INTEGRATION',
+  INVITE: 'INVITE',
+  MESSAGE: 'MESSAGE',
+  ROLE: 'ROLE',
+  SOUNDBOARD_SOUND: 'SOUNDBOARD_SOUND',
+  STAGE_INSTANCE: 'STAGE_INSTANCE',
+  STICKER: 'STICKER',
+  THREAD: 'THREAD',
+  UNKNOWN: 'UNKNOWN',
+  USER: 'USER',
+  WEBHOOK: 'WEBHOOK',
 } as const;
 
 const Actions: Record<string, number | null> = {
@@ -134,14 +134,14 @@ interface AuditLogChangeEntry {
 
 type AuditLogTarget =
   | GuildAuditLogsTarget
-  | "APPLICATION_COMMAND"
-  | "SOUNDBOARD_SOUND"
-  | "GUILD_ONBOARDING_PROMPT"
-  | "GUILD_ONBOARDING";
+  | 'APPLICATION_COMMAND'
+  | 'SOUNDBOARD_SOUND'
+  | 'GUILD_ONBOARDING_PROMPT'
+  | 'GUILD_ONBOARDING';
 
 function requireTargetId<TValue>(value: TValue | null | undefined): TValue {
   if (value === null || value === undefined) {
-    throw new TypeError("AUDIT_LOG_TARGET_ID_MISSING");
+    throw new TypeError('AUDIT_LOG_TARGET_ID_MISSING');
   }
   return value;
 }
@@ -166,7 +166,7 @@ const AUDIT_LOG_TARGET_TYPES: [number, AuditLogTarget][] = [
   [146, Targets.USER],
 ];
 
-class GuildAuditLogs<TAction extends GuildAuditLogsResolvable = "ALL"> {
+class GuildAuditLogs<TAction extends GuildAuditLogsResolvable = 'ALL'> {
   declare webhooks: Collection<Snowflake, Webhook>;
   declare integrations: Collection<Snowflake, Integration>;
   declare applicationCommands: Collection<Snowflake, ApplicationCommand>;
@@ -237,7 +237,7 @@ class GuildAuditLogs<TAction extends GuildAuditLogsResolvable = "ALL"> {
   static Targets: typeof Targets;
   static Entry: typeof GuildAuditLogsEntry;
 
-  static async build<TAction extends GuildAuditLogsResolvable = "ALL">(
+  static async build<TAction extends GuildAuditLogsResolvable = 'ALL'>(
     guild: Guild,
     data: RawGuildAuditLogData
   ) {
@@ -282,7 +282,7 @@ class GuildAuditLogs<TAction extends GuildAuditLogsResolvable = "ALL"> {
         Actions.AUTO_MODERATION_BLOCK_MESSAGE,
       ].includes(action)
     ) {
-      return "CREATE";
+      return 'CREATE';
     }
 
     if (
@@ -308,7 +308,7 @@ class GuildAuditLogs<TAction extends GuildAuditLogsResolvable = "ALL"> {
         Actions.AUTO_MODERATION_RULE_DELETE,
       ].includes(action)
     ) {
-      return "DELETE";
+      return 'DELETE';
     }
 
     if (
@@ -332,10 +332,10 @@ class GuildAuditLogs<TAction extends GuildAuditLogsResolvable = "ALL"> {
         Actions.AUTO_MODERATION_RULE_UPDATE,
       ].includes(action)
     ) {
-      return "UPDATE";
+      return 'UPDATE';
     }
 
-    return "ALL";
+    return 'ALL';
   }
 
   toJSON() {
@@ -344,11 +344,11 @@ class GuildAuditLogs<TAction extends GuildAuditLogsResolvable = "ALL"> {
 }
 
 class GuildAuditLogsEntry<
-  TActionRaw extends GuildAuditLogsResolvable = "ALL",
+  TActionRaw extends GuildAuditLogsResolvable = 'ALL',
   TAction = TActionRaw extends keyof GuildAuditLogsIds
     ? GuildAuditLogsIds[TActionRaw]
     : TActionRaw extends null
-      ? "ALL"
+      ? 'ALL'
       : TActionRaw,
   TActionType extends GuildAuditLogsActionType = GuildAuditLogsActionType,
   TTargetType extends GuildAuditLogsTarget = GuildAuditLogsTarget,
@@ -390,8 +390,8 @@ class GuildAuditLogsEntry<
     this.changes =
       data.changes?.map((change) => ({
         key: change.key,
-        ...("old_value" in change ? { old: change.old_value } : {}),
-        ...("new_value" in change ? { new: change.new_value } : {}),
+        ...('old_value' in change ? { old: change.old_value } : {}),
+        ...('new_value' in change ? { new: change.new_value } : {}),
       })) ?? [];
 
     this.id = data.id;
@@ -480,12 +480,12 @@ class GuildAuditLogsEntry<
       };
     }
     if (targetType === Targets.INVITE) {
-      const change = this.changes.find((entry) => entry.key === "code");
+      const change = this.changes.find((entry) => entry.key === 'code');
       const code = change?.new ?? change?.old;
       return {
         handled: true,
         target:
-          (typeof code === "string" ? guild.invites.cache.get(code) : null) ??
+          (typeof code === 'string' ? guild.invites.cache.get(code) : null) ??
           new Invite(
             guild.client,
             this.changesObject({ guild }) as unknown as RawInviteData

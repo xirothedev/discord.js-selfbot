@@ -1,9 +1,9 @@
-import process from "node:process";
-import Base from "./Base";
-import SnowflakeUtil from "../util/SnowflakeUtil";
-import type { RawEmojiData } from "../../typings/rawDataTypes";
-import type { EmojiEntity } from "../types/entities/emoji";
-import type Client from "../client/Client";
+import process from 'node:process';
+import Base from './Base';
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { RawEmojiData } from '../../typings/rawDataTypes';
+import type { EmojiEntity } from '../types/entities/emoji';
+import type Client from '../client/Client';
 
 /**
  * @type {WeakSet<Emoji>}
@@ -14,12 +14,12 @@ const deletedEmojis = new WeakSet();
 let deprecationEmittedForDeleted = false;
 
 class Emoji extends Base implements EmojiEntity {
-  declare animated: EmojiEntity["animated"];
-  declare id: EmojiEntity["id"];
-  declare name: EmojiEntity["name"];
+  declare animated: EmojiEntity['animated'];
+  declare id: EmojiEntity['id'];
+  declare name: EmojiEntity['name'];
   constructor(client: Client, emoji: RawEmojiData) {
     super(client);
-    this.animated = "animated" in emoji ? (emoji.animated ?? null) : null;
+    this.animated = 'animated' in emoji ? (emoji.animated ?? null) : null;
 
     this.name = emoji.name ?? null;
 
@@ -35,8 +35,8 @@ class Emoji extends Base implements EmojiEntity {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
-        "Emoji#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.",
-        "DeprecationWarning"
+        'Emoji#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
+        'DeprecationWarning'
       );
     }
 
@@ -47,8 +47,8 @@ class Emoji extends Base implements EmojiEntity {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
-        "Emoji#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.",
-        "DeprecationWarning"
+        'Emoji#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
+        'DeprecationWarning'
       );
     }
 
@@ -61,15 +61,15 @@ class Emoji extends Base implements EmojiEntity {
 
   get identifier() {
     if (this.id) {
-      return `${this.animated ? "a:" : ""}${this.name}:${this.id}`;
+      return `${this.animated ? 'a:' : ''}${this.name}:${this.id}`;
     }
-    return encodeURIComponent(this.name ?? "");
+    return encodeURIComponent(this.name ?? '');
   }
 
   get url() {
     return (
       this.id &&
-      this.client.rest.cdn.Emoji(this.id, this.animated ? "gif" : "png")
+      this.client.rest.cdn.Emoji(this.id, this.animated ? 'gif' : 'png')
     );
   }
 
@@ -83,14 +83,14 @@ class Emoji extends Base implements EmojiEntity {
 
   toString() {
     return this.id
-      ? `<${this.animated ? "a" : ""}:${this.name}:${this.id}>`
-      : (this.name ?? "");
+      ? `<${this.animated ? 'a' : ''}:${this.name}:${this.id}>`
+      : (this.name ?? '');
   }
 
   toJSON() {
     return super.toJSON({
       createdTimestamp: true,
-      guild: "guildId",
+      guild: 'guildId',
       identifier: true,
       url: true,
     });

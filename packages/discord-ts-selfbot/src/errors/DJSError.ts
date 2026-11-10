@@ -1,6 +1,6 @@
 // Heavily inspired by node's `internal/errors` module
 
-const kCode = Symbol("code");
+const kCode = Symbol('code');
 type MessageBuilder = (...args: never[]) => string;
 const messages = new Map<string, string | MessageBuilder>();
 
@@ -10,14 +10,14 @@ interface DiscordjsErrorConstructor {
 }
 
 function message(key: string, args: unknown[]): string {
-  if (typeof key !== "string") {
-    throw new TypeError("Error message key must be a string");
+  if (typeof key !== 'string') {
+    throw new TypeError('Error message key must be a string');
   }
   const msg = messages.get(key);
   if (!msg) {
     throw new Error(`An invalid error message key was used: ${key}.`);
   }
-  if (typeof msg === "function") {
+  if (typeof msg === 'function') {
     return String(Reflect.apply(msg, undefined, args));
   }
   if (!args?.length) {
@@ -50,7 +50,7 @@ function makeDiscordjsError(Base: ErrorConstructor): DiscordjsErrorConstructor {
 }
 
 function register(sym: string, val: string | MessageBuilder): void {
-  messages.set(sym, typeof val === "function" ? val : String(val));
+  messages.set(sym, typeof val === 'function' ? val : String(val));
 }
 
 const DiscordjsError = {

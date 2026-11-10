@@ -1,16 +1,16 @@
-import Action from "./Action";
-import type { Client } from "../Client";
-import type { Channel } from "../../structures/Channel";
-import type { GatewayChannelDeleteDispatchData } from "discord-api-types/v10";
-import _ChannelModule from "../../structures/Channel";
+import Action from './Action';
+import type { Client } from '../Client';
+import type { Channel } from '../../structures/Channel';
+import type { GatewayChannelDeleteDispatchData } from 'discord-api-types/v10';
+import _ChannelModule from '../../structures/Channel';
 
 const { deletedChannels } = _ChannelModule;
-import DMChannel from "../../structures/DMChannel";
-import { isTextBasedChannel } from "../../types/channels";
-import _MessageModule from "../../structures/Message";
+import DMChannel from '../../structures/DMChannel';
+import { isTextBasedChannel } from '../../types/channels';
+import _MessageModule from '../../structures/Message';
 
 const { deletedMessages } = _MessageModule;
-import _ConstantsModule from "../../util/Constants";
+import _ConstantsModule from '../../util/Constants';
 
 const { Events } = _ConstantsModule;
 

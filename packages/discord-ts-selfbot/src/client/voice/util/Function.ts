@@ -1,6 +1,6 @@
-import dgram from "node:dgram";
+import dgram from 'node:dgram';
 
-type SocketType = "udp4" | "udp6";
+type SocketType = 'udp4' | 'udp6';
 
 interface InterfaceAddresses {
   udp4?: string;
@@ -13,7 +13,7 @@ interface StreamKey {
   channelId: string;
   userId: string;
 }
-import { setImmediate } from "node:timers";
+import { setImmediate } from 'node:timers';
 
 function interfaceAddress(
   type: SocketType,
@@ -23,7 +23,7 @@ function interfaceAddress(
 }
 
 async function randomPort(
-  protocol: SocketType = "udp4",
+  protocol: SocketType = 'udp4',
   interfaceAddresses?: InterfaceAddresses | null
 ): Promise<number | undefined> {
   const socket = dgram.createSocket(protocol);
@@ -36,12 +36,12 @@ async function randomPort(
   );
 
   const bound = Promise.withResolvers<unknown>();
-  socket.once("error", bound.reject);
-  socket.once("listening", bound.resolve);
+  socket.once('error', bound.reject);
+  socket.once('listening', bound.resolve);
   await bound.promise;
 
   const address = socket.address();
-  const port = typeof address === "object" ? address.port : undefined;
+  const port = typeof address === 'object' ? address.port : undefined;
   const closed = Promise.withResolvers<undefined>();
   socket.close(() => closed.resolve(undefined));
   await closed.promise;
@@ -50,7 +50,7 @@ async function randomPort(
 
 async function randomPorts(
   num: number,
-  protocol: SocketType = "udp4",
+  protocol: SocketType = 'udp4',
   interfaceAddresses: InterfaceAddresses | null = null
 ): Promise<(number | undefined)[]> {
   return Promise.all(
@@ -75,8 +75,8 @@ async function probePort(
   );
 
   const bound = Promise.withResolvers<unknown>();
-  socket.once("error", bound.reject);
-  socket.once("listening", () => bound.resolve(null));
+  socket.once('error', bound.reject);
+  socket.once('listening', () => bound.resolve(null));
   const error = await bound.promise;
 
   const closed = Promise.withResolvers<undefined>();
@@ -114,22 +114,22 @@ async function findAvailablePort(
 async function findPort(
   min: number,
   max: number,
-  protocol: SocketType = "udp4",
+  protocol: SocketType = 'udp4',
   interfaceAddresses?: InterfaceAddresses | null
 ): Promise<number> {
   const port = await findAvailablePort(min, max, protocol, interfaceAddresses);
 
   if (!port) {
-    throw new Error("port not found");
+    throw new Error('port not found');
   }
   return port;
 }
 
 function parseStreamKey(key: string): StreamKey {
-  const [type, first, second, third] = key.split(":");
-  const guildId = type === "guild" ? first : null;
-  const channelId = type === "guild" ? second : first;
-  const userId = type === "guild" ? third : second;
+  const [type, first, second, third] = key.split(':');
+  const guildId = type === 'guild' ? first : null;
+  const channelId = type === 'guild' ? second : first;
+  const userId = type === 'guild' ? third : second;
   return { channelId, guildId, type, userId };
 }
 

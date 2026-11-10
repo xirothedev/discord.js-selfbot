@@ -1,18 +1,18 @@
-import type { Collection } from "@discordjs/collection";
-import { isCategoryChannel } from "../types/channels";
-import _ChannelModule from "./Channel";
+import type { Collection } from '@discordjs/collection';
+import { isCategoryChannel } from '../types/channels';
+import _ChannelModule from './Channel';
 
 const { Channel } = _ChannelModule;
-import _errorsModule from "../errors";
+import _errorsModule from '../errors';
 
 const { Error } = _errorsModule;
-import PermissionOverwriteManager from "../managers/PermissionOverwriteManager";
-import _ConstantsModule from "../util/Constants";
+import PermissionOverwriteManager from '../managers/PermissionOverwriteManager';
+import _ConstantsModule from '../util/Constants';
 
 const { VoiceBasedChannelTypes } = _ConstantsModule;
-import Permissions from "../util/Permissions";
-import Util from "../util/Util";
-import type { Snowflake } from "discord-api-types/v10";
+import Permissions from '../util/Permissions';
+import Util from '../util/Util';
+import type { Snowflake } from 'discord-api-types/v10';
 import type {
   CategoryChannelResolvable,
   ChannelData,
@@ -21,27 +21,27 @@ import type {
   SetChannelPositionOptions,
   SetParentOptions,
   ThreadAutoArchiveDuration,
-} from "../../typings";
-import type { RawGuildChannelData } from "../../typings/rawDataTypes";
-import type { GuildChannelEntity } from "../types/entities/guild-channel";
-import type { PatchOf } from "../types/schema";
-import type { Guild } from "./Guild";
-import type { GuildMember } from "./GuildMember";
-import type { Role } from "./Role";
-import type { User } from "./User";
-import type { CategoryChannel } from "./CategoryChannel";
-import type PermissionOverwrites from "./PermissionOverwrites";
-import type MessageManager from "../managers/MessageManager";
-import type Client from "../client/Client";
-import type { ChannelDataSource } from "../managers/GuildChannelManager";
+} from '../../typings';
+import type { RawGuildChannelData } from '../../typings/rawDataTypes';
+import type { GuildChannelEntity } from '../types/entities/guild-channel';
+import type { PatchOf } from '../types/schema';
+import type { Guild } from './Guild';
+import type { GuildMember } from './GuildMember';
+import type { Role } from './Role';
+import type { User } from './User';
+import type { CategoryChannel } from './CategoryChannel';
+import type PermissionOverwrites from './PermissionOverwrites';
+import type MessageManager from '../managers/MessageManager';
+import type Client from '../client/Client';
+import type { ChannelDataSource } from '../managers/GuildChannelManager';
 
 class GuildChannel extends Channel implements GuildChannelEntity {
-  declare guild: GuildChannelEntity["guild"];
-  declare guildId: GuildChannelEntity["guildId"];
-  declare name: GuildChannelEntity["name"];
-  declare parentId: GuildChannelEntity["parentId"];
-  declare permissionOverwrites: GuildChannelEntity["permissionOverwrites"];
-  declare rawPosition: GuildChannelEntity["rawPosition"];
+  declare guild: GuildChannelEntity['guild'];
+  declare guildId: GuildChannelEntity['guildId'];
+  declare name: GuildChannelEntity['name'];
+  declare parentId: GuildChannelEntity['parentId'];
+  declare permissionOverwrites: GuildChannelEntity['permissionOverwrites'];
+  declare rawPosition: GuildChannelEntity['rawPosition'];
   declare topic?: string | null;
   declare nsfw?: boolean;
   declare bitrate?: number;
@@ -70,26 +70,26 @@ class GuildChannel extends Channel implements GuildChannelEntity {
     }
   }
 
-  _patch(data: PatchOf<"GuildChannel">) {
+  _patch(data: PatchOf<'GuildChannel'>) {
     super._patch(data);
 
-    if ("name" in data && typeof data.name === "string") {
+    if ('name' in data && typeof data.name === 'string') {
       this.name = data.name;
     }
 
-    if ("position" in data && data.position !== undefined) {
+    if ('position' in data && data.position !== undefined) {
       this.rawPosition = data.position;
     }
 
-    if ("guild_id" in data && data.guild_id !== undefined) {
+    if ('guild_id' in data && data.guild_id !== undefined) {
       this.guildId = data.guild_id;
     }
 
-    if ("parent_id" in data && data.parent_id !== undefined) {
+    if ('parent_id' in data && data.parent_id !== undefined) {
       this.parentId = data.parent_id;
     }
 
-    if ("permission_overwrites" in data) {
+    if ('permission_overwrites' in data) {
       this.permissionOverwrites.cache.clear();
       for (const overwrite of data.permission_overwrites ?? []) {
         this.permissionOverwrites._add(overwrite);
@@ -156,7 +156,7 @@ class GuildChannel extends Channel implements GuildChannelEntity {
   }
 
   get position(): number {
-    const selfIsCategory = this.type === "GUILD_CATEGORY";
+    const selfIsCategory = this.type === 'GUILD_CATEGORY';
     const types = Util.getSortableGroupTypes(this.type);
 
     let count = 0;
@@ -288,7 +288,7 @@ class GuildChannel extends Channel implements GuildChannelEntity {
 
   async lockPermissions(): Promise<this> {
     if (!this.parent) {
-      throw new Error("GUILD_CHANNEL_ORPHAN");
+      throw new Error('GUILD_CHANNEL_ORPHAN');
     }
     const permissionOverwrites: OverwriteData[] =
       this.parent.permissionOverwrites.cache.map(

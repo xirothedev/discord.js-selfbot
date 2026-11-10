@@ -1,10 +1,10 @@
-import Base from "./Base";
-import ThreadMemberFlags from "../util/ThreadMemberFlags";
-import type { Snowflake } from "discord-api-types/v10";
-import type { RawThreadMemberData } from "../../typings/rawDataTypes";
-import type { GuildMember } from "./GuildMember";
-import type ThreadChannel from "./ThreadChannel";
-import type User from "./User";
+import Base from './Base';
+import ThreadMemberFlags from '../util/ThreadMemberFlags';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { RawThreadMemberData } from '../../typings/rawDataTypes';
+import type { GuildMember } from './GuildMember';
+import type ThreadChannel from './ThreadChannel';
+import type User from './User';
 
 class ThreadMember extends Base {
   declare thread: ThreadChannel;
@@ -27,7 +27,7 @@ class ThreadMember extends Base {
     const userId = data?.user_id ?? this.client.user?.id;
     if (userId === undefined) {
       throw new TypeError(
-        "A client user is required to create a thread member"
+        'A client user is required to create a thread member'
       );
     }
     this.id = userId;
@@ -38,15 +38,15 @@ class ThreadMember extends Base {
   }
 
   _patch(data: RawThreadMemberData, extra: { cache?: boolean } = {}) {
-    if ("join_timestamp" in data) {
+    if ('join_timestamp' in data) {
       this.joinedTimestamp = new Date(data.join_timestamp).getTime();
     }
 
-    if ("flags" in data) {
+    if ('flags' in data) {
       this.flags = new ThreadMemberFlags(data.flags).freeze();
     }
 
-    if ("member" in data && data.member) {
+    if ('member' in data && data.member) {
       this.member = this.thread.guild.members._add(data.member, extra.cache);
     } else {
       this.member ??= null;

@@ -1,8 +1,8 @@
-import GuildChannel from "./GuildChannel";
-import type { CreateInviteOptions } from "../../typings";
-import type { Guild } from "./Guild";
-import type { RawGuildChannelData } from "../../typings/rawDataTypes";
-import type Client from "../client/Client";
+import GuildChannel from './GuildChannel';
+import type { CreateInviteOptions } from '../../typings';
+import type { Guild } from './Guild';
+import type { RawGuildChannelData } from '../../typings/rawDataTypes';
+import type Client from '../client/Client';
 
 class StoreChannel extends GuildChannel {
   declare nsfw: boolean;
@@ -25,7 +25,7 @@ class StoreChannel extends GuildChannel {
   ) {
     super._patch(data);
 
-    if ("nsfw" in data) {
+    if ('nsfw' in data) {
       this.nsfw = Boolean(data.nsfw);
     }
   }

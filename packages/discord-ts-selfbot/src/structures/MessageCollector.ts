@@ -1,13 +1,13 @@
-import type { Snowflake } from "discord-api-types/v10";
-import type { Collection } from "@discordjs/collection";
-import Collector from "./interfaces/Collector";
-import type { CollectorOptions } from "../../typings";
-import type TextBasedChannel from "./interfaces/TextBasedChannel";
-import type { Guild } from "./Guild";
-import type GuildChannel from "./GuildChannel";
-import type { Message } from "./Message";
-import type ThreadChannel from "./ThreadChannel";
-import _ConstantsModule from "../util/Constants";
+import type { Snowflake } from 'discord-api-types/v10';
+import type { Collection } from '@discordjs/collection';
+import Collector from './interfaces/Collector';
+import type { CollectorOptions } from '../../typings';
+import type TextBasedChannel from './interfaces/TextBasedChannel';
+import type { Guild } from './Guild';
+import type GuildChannel from './GuildChannel';
+import type { Message } from './Message';
+import type ThreadChannel from './ThreadChannel';
+import _ConstantsModule from '../util/Constants';
 
 const { Events } = _ConstantsModule;
 
@@ -49,7 +49,7 @@ class MessageCollector extends Collector<Snowflake, Message> {
     this.client.on(Events.THREAD_DELETE, this._handleThreadDeletion);
     this.client.on(Events.GUILD_DELETE, this._handleGuildDeletion);
 
-    this.once("end", () => {
+    this.once('end', () => {
       this.client.removeListener(Events.MESSAGE_CREATE, this.handleCollect);
       this.client.removeListener(Events.MESSAGE_DELETE, this.handleDispose);
       this.client.removeListener(
@@ -86,13 +86,13 @@ class MessageCollector extends Collector<Snowflake, Message> {
 
   get endReason(): string | null {
     if (this.options.max && this.collected.size >= this.options.max) {
-      return "limit";
+      return 'limit';
     }
     if (
       this.options.maxProcessed &&
       this.received === this.options.maxProcessed
     ) {
-      return "processedLimit";
+      return 'processedLimit';
     }
     return null;
   }
@@ -100,21 +100,21 @@ class MessageCollector extends Collector<Snowflake, Message> {
   _handleChannelDeletion(channel: GuildChannel) {
     if (
       channel.id === this.channel.id ||
-      ("parentId" in this.channel && channel.id === this.channel.parentId)
+      ('parentId' in this.channel && channel.id === this.channel.parentId)
     ) {
-      this.stop("channelDelete");
+      this.stop('channelDelete');
     }
   }
 
   _handleThreadDeletion(thread: ThreadChannel) {
     if (thread.id === this.channel.id) {
-      this.stop("threadDelete");
+      this.stop('threadDelete');
     }
   }
 
   _handleGuildDeletion(guild: Guild) {
-    if ("guild" in this.channel && guild.id === this.channel.guild?.id) {
-      this.stop("guildDelete");
+    if ('guild' in this.channel && guild.id === this.channel.guild?.id) {
+      this.stop('guildDelete');
     }
   }
 }

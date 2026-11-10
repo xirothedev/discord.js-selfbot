@@ -1,20 +1,20 @@
-import { Readable as ReadableStream } from "node:stream";
-import EventEmitter from "node:events";
-import { setTimeout } from "node:timers";
-import Recorder from "./Recorder";
-import type { RtpPacket } from "werift-rtp";
+import { Readable as ReadableStream } from 'node:stream';
+import EventEmitter from 'node:events';
+import { setTimeout } from 'node:timers';
+import Recorder from './Recorder';
+import type { RtpPacket } from 'werift-rtp';
 
 interface UserStat {
   userId: string;
   speaking?: number;
   hasVideo?: boolean;
 }
-import Speaking from "../../../util/Speaking";
-import VoiceCodec from "../util/VoiceCodec";
-import RtpDecryptor from "../util/RtpDecryptor";
-import _SilenceModule from "../util/Silence";
-import type Receiver from "./Receiver";
-import type { Writable } from "node:stream";
+import Speaking from '../../../util/Speaking';
+import VoiceCodec from '../util/VoiceCodec';
+import RtpDecryptor from '../util/RtpDecryptor';
+import _SilenceModule from '../util/Silence';
+import type Receiver from './Receiver';
+import type { Writable } from 'node:stream';
 
 const { SILENCE_FRAME } = _SilenceModule;
 
@@ -46,7 +46,7 @@ class PacketHandler extends EventEmitter {
 
   getNonceBuffer() {
     return this.receiver.connection.authentication.mode ===
-      "aead_aes256_gcm_rtpsize"
+      'aead_aes256_gcm_rtpsize'
       ? Buffer.alloc(12)
       : Buffer.alloc(24);
   }
@@ -57,7 +57,7 @@ class PacketHandler extends EventEmitter {
 
   _stoppedSpeaking(userId: string) {
     const streamInfo = this.streams.get(userId);
-    if (streamInfo && streamInfo.end === "silence") {
+    if (streamInfo && streamInfo.end === 'silence') {
       this.streams.delete(userId);
       streamInfo.stream.push(null);
     }
@@ -69,7 +69,7 @@ class PacketHandler extends EventEmitter {
       return stream;
     }
     const newStream = new Readable();
-    newStream.on("end", () => this.streams.delete(user));
+    newStream.on('end', () => this.streams.delete(user));
     this.streams.set(user, { end, stream: newStream });
     return newStream;
   }
@@ -85,7 +85,7 @@ class PacketHandler extends EventEmitter {
       portUdpOpus: 65_510,
       userId: user,
     });
-    stream.on("ready", () => {
+    stream.on('ready', () => {
       this.videoStreams.set(user, stream);
     });
     return stream;
@@ -109,12 +109,12 @@ class PacketHandler extends EventEmitter {
       if (opusPacket instanceof Error) {
         // Only emit an error if we were actively receiving packets from this user
         if (streamInfo) {
-          this.emit("error", opusPacket);
+          this.emit('error', opusPacket);
         }
         return;
       }
       // Check payload type
-      if (opusPacket.header.payloadType !== VoiceCodec.getPayloadType("opus")) {
+      if (opusPacket.header.payloadType !== VoiceCodec.getPayloadType('opus')) {
         return;
       }
       if (!opusPacket.payload) {
@@ -159,10 +159,10 @@ class PacketHandler extends EventEmitter {
     if (streamInfo) {
       const { stream } = streamInfo;
       if (opusPacket instanceof Error) {
-        this.emit("error", opusPacket);
+        this.emit('error', opusPacket);
         return;
       }
-      if (opusPacket.header.payloadType !== VoiceCodec.getPayloadType("opus")) {
+      if (opusPacket.header.payloadType !== VoiceCodec.getPayloadType('opus')) {
         return;
       }
       stream.push(opusPacket.payload);
@@ -181,7 +181,7 @@ class PacketHandler extends EventEmitter {
     if (packet instanceof Error) {
       return;
     }
-    if (packet.header.payloadType !== VoiceCodec.getPayloadType("opus")) {
+    if (packet.header.payloadType !== VoiceCodec.getPayloadType('opus')) {
       return;
     }
     streamInfo.feed(packet);
@@ -195,7 +195,7 @@ class PacketHandler extends EventEmitter {
         return;
       }
 
-      if (packet.header.payloadType === VoiceCodec.getPayloadType("opus")) {
+      if (packet.header.payloadType === VoiceCodec.getPayloadType('opus')) {
         return;
       }
 
@@ -226,7 +226,7 @@ class PacketHandler extends EventEmitter {
       }
     }
     if (userStat && !(packet instanceof Error)) {
-      this.receiver.emit("receiverData", userStat, packet);
+      this.receiver.emit('receiverData', userStat, packet);
     }
   }
 

@@ -1,9 +1,9 @@
-import Action from "./Action";
-import type { Sticker } from "../../structures/Sticker";
-import _StickerModule from "../../structures/Sticker";
+import Action from './Action';
+import type { Sticker } from '../../structures/Sticker';
+import _StickerModule from '../../structures/Sticker';
 
 const { deletedStickers } = _StickerModule;
-import _ConstantsModule from "../../util/Constants";
+import _ConstantsModule from '../../util/Constants';
 
 const { Events } = _ConstantsModule;
 

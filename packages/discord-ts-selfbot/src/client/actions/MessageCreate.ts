@@ -1,8 +1,8 @@
-import process from "node:process";
-import Action from "./Action";
-import { isTextBasedChannel } from "../../types/channels";
-import type { GatewayMessageCreateDispatchData } from "discord-api-types/v10";
-import _ConstantsModule from "../../util/Constants";
+import process from 'node:process';
+import Action from './Action';
+import { isTextBasedChannel } from '../../types/channels';
+import type { GatewayMessageCreateDispatchData } from 'discord-api-types/v10';
+import _ConstantsModule from '../../util/Constants';
 
 const { Events } = _ConstantsModule;
 
@@ -14,7 +14,7 @@ class MessageCreateAction extends Action {
     const channel = this.getChannel({
       author: data.author,
       id: data.channel_id,
-      ...("guild_id" in data && { guild_id: data.guild_id }),
+      ...('guild_id' in data && { guild_id: data.guild_id }),
     });
     if (channel) {
       if (!isTextBasedChannel(channel)) {
@@ -36,11 +36,11 @@ class MessageCreateAction extends Action {
        * @param {Message} message The created message
        * @deprecated Use {@link Client#event:messageCreate} instead
        */
-      if (client.emit("message", message) && !deprecationEmitted) {
+      if (client.emit('message', message) && !deprecationEmitted) {
         deprecationEmitted = true;
         process.emitWarning(
-          "The message event is deprecated. Use messageCreate instead",
-          "DeprecationWarning"
+          'The message event is deprecated. Use messageCreate instead',
+          'DeprecationWarning'
         );
       }
 

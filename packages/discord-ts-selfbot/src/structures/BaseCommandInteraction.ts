@@ -1,9 +1,9 @@
-import { Collection } from "@discordjs/collection";
-import Interaction from "./Interaction";
-import InteractionWebhook from "./InteractionWebhook";
-import MessageAttachment from "./MessageAttachment";
-import InteractionResponses from "./interfaces/InteractionResponses";
-import _ConstantsModule from "../util/Constants";
+import { Collection } from '@discordjs/collection';
+import Interaction from './Interaction';
+import InteractionWebhook from './InteractionWebhook';
+import MessageAttachment from './MessageAttachment';
+import InteractionResponses from './interfaces/InteractionResponses';
+import _ConstantsModule from '../util/Constants';
 
 const { ApplicationCommandOptionTypes } = _ConstantsModule;
 import type {
@@ -11,15 +11,15 @@ import type {
   APIInteractionDataResolved,
   APIMessage,
   Snowflake,
-} from "discord-api-types/v10";
-import type { CacheType } from "../../typings";
+} from 'discord-api-types/v10';
+import type { CacheType } from '../../typings';
 import type {
   CommandInteractionOption,
   CommandInteractionResolvedData,
-} from "./CommandInteractionOptionResolver";
-import type CommandInteractionOptionResolver from "./CommandInteractionOptionResolver";
-import type Client from "../client/Client";
-import type { RawCommandInteractionData } from "../../typings/rawDataTypes";
+} from './CommandInteractionOptionResolver';
+import type CommandInteractionOptionResolver from './CommandInteractionOptionResolver';
+import type Client from '../client/Client';
+import type { RawCommandInteractionData } from '../../typings/rawDataTypes';
 
 type ResolvedData = APIInteractionDataResolved & {
   messages?: Record<Snowflake, APIMessage>;
@@ -107,7 +107,7 @@ class BaseCommandInteraction<
 
   private transformResolvedUsers(
     result: CommandInteractionResolvedData<Cached>,
-    users: NonNullable<ResolvedData["users"]>
+    users: NonNullable<ResolvedData['users']>
   ) {
     result.users = new Collection();
     for (const user of Object.values(users)) {
@@ -117,7 +117,7 @@ class BaseCommandInteraction<
 
   private transformResolvedRoles(
     result: CommandInteractionResolvedData<Cached>,
-    roles: NonNullable<ResolvedData["roles"]>
+    roles: NonNullable<ResolvedData['roles']>
   ) {
     result.roles = new Collection();
     for (const role of Object.values(roles)) {
@@ -127,7 +127,7 @@ class BaseCommandInteraction<
 
   private transformResolvedChannels(
     result: CommandInteractionResolvedData<Cached>,
-    channels: NonNullable<ResolvedData["channels"]>
+    channels: NonNullable<ResolvedData['channels']>
   ) {
     result.channels = new Collection();
     for (const channel of Object.values(channels)) {
@@ -140,7 +140,7 @@ class BaseCommandInteraction<
 
   private transformResolvedMessages(
     result: CommandInteractionResolvedData<Cached>,
-    messages: NonNullable<ResolvedData["messages"]>
+    messages: NonNullable<ResolvedData['messages']>
   ) {
     result.messages = new Collection();
     for (const message of Object.values(messages)) {
@@ -153,7 +153,7 @@ class BaseCommandInteraction<
 
   private transformResolvedAttachments(
     result: CommandInteractionResolvedData<Cached>,
-    attachments: NonNullable<ResolvedData["attachments"]>
+    attachments: NonNullable<ResolvedData['attachments']>
   ) {
     result.attachments = new Collection();
     for (const attachment of Object.values(attachments)) {
@@ -173,10 +173,10 @@ class BaseCommandInteraction<
       type: ApplicationCommandOptionTypes[option.type],
     };
 
-    if ("value" in option) {
+    if ('value' in option) {
       result.value = option.value;
     }
-    if ("options" in option) {
+    if ('options' in option) {
       result.options =
         option.options?.map((opt) => this.transformOption(opt, resolved)) ?? [];
     }
@@ -193,7 +193,7 @@ class BaseCommandInteraction<
     option: APIApplicationCommandInteractionDataOption,
     resolved: ResolvedData
   ) {
-    const value = "value" in option ? option.value : undefined;
+    const value = 'value' in option ? option.value : undefined;
     const key = value === undefined ? undefined : String(value);
     if (key === undefined) {
       return;
@@ -258,8 +258,8 @@ class BaseCommandInteraction<
 }
 
 InteractionResponses.applyToClass(BaseCommandInteraction, [
-  "deferUpdate",
-  "update",
+  'deferUpdate',
+  'update',
 ]);
 
 export default BaseCommandInteraction;

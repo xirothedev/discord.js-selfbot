@@ -1,5 +1,5 @@
-import Action from "./Action";
-import type { GatewayGuildStickersUpdateDispatchData } from "discord-api-types/v10";
+import Action from './Action';
+import type { GatewayGuildStickersUpdateDispatchData } from 'discord-api-types/v10';
 
 class GuildStickersUpdateAction extends Action {
   handle(data: GatewayGuildStickersUpdateDispatchData) {

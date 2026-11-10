@@ -1,16 +1,16 @@
 import BaseMessageComponent, {
   isComponentDataSource,
   readComponentArray,
-} from "./BaseMessageComponent";
-import MediaGalleryItem from "./MediaGalleryItem";
-import { ComponentType } from "discord-api-types/v10";
-import type { APIMediaGalleryComponent } from "discord-api-types/v10";
+} from './BaseMessageComponent';
+import MediaGalleryItem from './MediaGalleryItem';
+import { ComponentType } from 'discord-api-types/v10';
+import type { APIMediaGalleryComponent } from 'discord-api-types/v10';
 
 class MediaGalleryComponent extends BaseMessageComponent {
   declare items: MediaGalleryItem[];
 
   constructor(data: unknown = {}) {
-    super({ type: "MEDIA_GALLERY" });
+    super({ type: 'MEDIA_GALLERY' });
 
     this.setup(data);
   }
@@ -18,7 +18,7 @@ class MediaGalleryComponent extends BaseMessageComponent {
   setup(data: unknown) {
     super.setup(data);
     const source = isComponentDataSource(data) ? data : {};
-    this.items = readComponentArray(source, "items").map(
+    this.items = readComponentArray(source, 'items').map(
       (item) => new MediaGalleryItem(item)
     );
   }

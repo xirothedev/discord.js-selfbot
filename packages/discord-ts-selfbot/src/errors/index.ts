@@ -1,5 +1,5 @@
-import DJSError from "./DJSError";
-import Messages from "./Messages";
+import DJSError from './DJSError';
+import Messages from './Messages';
 // Re-export DJSError and attach Messages for side-effect registration.
 
 const result = Object.assign(DJSError, { Messages });

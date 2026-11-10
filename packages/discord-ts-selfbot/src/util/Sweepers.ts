@@ -1,11 +1,11 @@
-import { setInterval } from "node:timers";
-import { Collection } from "@discordjs/collection";
-import type { Client } from "../client/Client";
-import _ConstantsModule from "./Constants";
-import { isTextBasedChannel, isThreadChannel } from "../types/channels";
+import { setInterval } from 'node:timers';
+import { Collection } from '@discordjs/collection';
+import type { Client } from '../client/Client';
+import _ConstantsModule from './Constants';
+import { isTextBasedChannel, isThreadChannel } from '../types/channels';
 
 const { Events, ThreadChannelTypes, SweeperKeys } = _ConstantsModule;
-import _DJSErrorModule from "../errors/DJSError";
+import _DJSErrorModule from '../errors/DJSError';
 
 const { TypeError } = _DJSErrorModule;
 
@@ -21,24 +21,24 @@ interface SweepableManager {
 
 function isSweepableManager(value: unknown): value is SweepableManager {
   return (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value !== null &&
-    "cache" in value &&
+    'cache' in value &&
     value.cache instanceof Collection
   );
 }
 
 type SweepableGuildKey =
-  | "autoModerationRules"
-  | "bans"
-  | "commands"
-  | "emojis"
-  | "invites"
-  | "members"
-  | "presences"
-  | "stageInstances"
-  | "stickers"
-  | "voiceStates";
+  | 'autoModerationRules'
+  | 'bans'
+  | 'commands'
+  | 'emojis'
+  | 'invites'
+  | 'members'
+  | 'presences'
+  | 'stageInstances'
+  | 'stickers'
+  | 'voiceStates';
 
 class Sweepers {
   client!: Client;
@@ -46,7 +46,7 @@ class Sweepers {
   intervals: Record<string, ReturnType<typeof setInterval> | null>;
 
   constructor(client: Client, options: Record<string, unknown>) {
-    Object.defineProperty(this, "client", { value: client });
+    Object.defineProperty(this, 'client', { value: client });
 
     this.options = options;
 
@@ -66,21 +66,21 @@ class Sweepers {
       };
 
       // Handle cases that have a "lifetime"
-      if (!("filter" in clonedOptions)) {
+      if (!('filter' in clonedOptions)) {
         switch (key) {
-          case "invites": {
+          case 'invites': {
             clonedOptions.filter = Sweepers.expiredInviteSweepFilter(
               clonedOptions.lifetime as number
             );
             break;
           }
-          case "messages": {
+          case 'messages': {
             clonedOptions.filter = Sweepers.outdatedMessageSweepFilter(
               clonedOptions.lifetime as number
             );
             break;
           }
-          case "threads": {
+          case 'threads': {
             clonedOptions.filter = Sweepers.archivedThreadSweepFilter(
               clonedOptions.lifetime as number
             );
@@ -102,7 +102,7 @@ class Sweepers {
 
   sweepApplicationCommands(filter: SweepFilterFn) {
     const { guilds, items: guildCommands } = this._sweepGuildDirectProp(
-      "commands",
+      'commands',
       filter,
       { emit: false }
     );
@@ -118,30 +118,30 @@ class Sweepers {
   }
 
   sweepAutoModerationRules(filter: SweepFilterFn) {
-    return this._sweepGuildDirectProp("autoModerationRules", filter).items;
+    return this._sweepGuildDirectProp('autoModerationRules', filter).items;
   }
 
   sweepBans(filter: SweepFilterFn) {
-    return this._sweepGuildDirectProp("bans", filter).items;
+    return this._sweepGuildDirectProp('bans', filter).items;
   }
 
   sweepEmojis(filter: SweepFilterFn) {
-    return this._sweepGuildDirectProp("emojis", filter).items;
+    return this._sweepGuildDirectProp('emojis', filter).items;
   }
 
   sweepInvites(filter: SweepFilterFn) {
-    return this._sweepGuildDirectProp("invites", filter).items;
+    return this._sweepGuildDirectProp('invites', filter).items;
   }
 
   sweepGuildMembers(filter: SweepFilterFn) {
-    return this._sweepGuildDirectProp("members", filter, {
-      outputName: "guild members",
+    return this._sweepGuildDirectProp('members', filter, {
+      outputName: 'guild members',
     }).items;
   }
 
   sweepMessages(filter: SweepFilterFn) {
-    if (typeof filter !== "function") {
-      throw new TypeError("INVALID_TYPE", "filter", "function");
+    if (typeof filter !== 'function') {
+      throw new TypeError('INVALID_TYPE', 'filter', 'function');
     }
     let channels = 0;
     let messages = 0;
@@ -162,12 +162,12 @@ class Sweepers {
   }
 
   sweepPresences(filter: SweepFilterFn) {
-    return this._sweepGuildDirectProp("presences", filter).items;
+    return this._sweepGuildDirectProp('presences', filter).items;
   }
 
   sweepReactions(filter: SweepFilterFn) {
-    if (typeof filter !== "function") {
-      throw new TypeError("INVALID_TYPE", "filter", "function");
+    if (typeof filter !== 'function') {
+      throw new TypeError('INVALID_TYPE', 'filter', 'function');
     }
     let channels = 0;
     let messages = 0;
@@ -192,18 +192,18 @@ class Sweepers {
   }
 
   sweepStageInstances(filter: SweepFilterFn) {
-    return this._sweepGuildDirectProp("stageInstances", filter, {
-      outputName: "stage instances",
+    return this._sweepGuildDirectProp('stageInstances', filter, {
+      outputName: 'stage instances',
     }).items;
   }
 
   sweepStickers(filter: SweepFilterFn) {
-    return this._sweepGuildDirectProp("stickers", filter).items;
+    return this._sweepGuildDirectProp('stickers', filter).items;
   }
 
   sweepThreadMembers(filter: SweepFilterFn) {
-    if (typeof filter !== "function") {
-      throw new TypeError("INVALID_TYPE", "filter", "function");
+    if (typeof filter !== 'function') {
+      throw new TypeError('INVALID_TYPE', 'filter', 'function');
     }
 
     let threads = 0;
@@ -223,8 +223,8 @@ class Sweepers {
   }
 
   sweepThreads(filter: SweepFilterFn) {
-    if (typeof filter !== "function") {
-      throw new TypeError("INVALID_TYPE", "filter", "function");
+    if (typeof filter !== 'function') {
+      throw new TypeError('INVALID_TYPE', 'filter', 'function');
     }
 
     let threads = 0;
@@ -242,8 +242,8 @@ class Sweepers {
   }
 
   sweepUsers(filter: SweepFilterFn) {
-    if (typeof filter !== "function") {
-      throw new TypeError("INVALID_TYPE", "filter", "function");
+    if (typeof filter !== 'function') {
+      throw new TypeError('INVALID_TYPE', 'filter', 'function');
     }
 
     const users = this.client.users.cache.sweep(filter);
@@ -254,8 +254,8 @@ class Sweepers {
   }
 
   sweepVoiceStates(filter: SweepFilterFn) {
-    return this._sweepGuildDirectProp("voiceStates", filter, {
-      outputName: "voice states",
+    return this._sweepGuildDirectProp('voiceStates', filter, {
+      outputName: 'voice states',
     }).items;
   }
 
@@ -273,14 +273,14 @@ class Sweepers {
       (e as { createdTimestamp?: number } | null)?.createdTimestamp,
     excludeFromSweep = () => false,
   }: Record<string, unknown> = {}) {
-    if (typeof lifetime !== "number") {
-      throw new TypeError("INVALID_TYPE", "lifetime", "number");
+    if (typeof lifetime !== 'number') {
+      throw new TypeError('INVALID_TYPE', 'lifetime', 'number');
     }
-    if (typeof getComparisonTimestamp !== "function") {
-      throw new TypeError("INVALID_TYPE", "getComparisonTimestamp", "function");
+    if (typeof getComparisonTimestamp !== 'function') {
+      throw new TypeError('INVALID_TYPE', 'getComparisonTimestamp', 'function');
     }
-    if (typeof excludeFromSweep !== "function") {
-      throw new TypeError("INVALID_TYPE", "excludeFromSweep", "function");
+    if (typeof excludeFromSweep !== 'function') {
+      throw new TypeError('INVALID_TYPE', 'excludeFromSweep', 'function');
     }
     return () => {
       if (lifetime <= 0) {
@@ -293,7 +293,7 @@ class Sweepers {
           return false;
         }
         const comparisonTimestamp = getComparisonTimestamp(entry, key, coll);
-        if (!comparisonTimestamp || typeof comparisonTimestamp !== "number") {
+        if (!comparisonTimestamp || typeof comparisonTimestamp !== 'number') {
           return false;
         }
         return now - comparisonTimestamp > lifetimeMs;
@@ -338,8 +338,8 @@ class Sweepers {
     filter: SweepFilterFn,
     { emit = true, outputName }: { emit?: boolean; outputName?: string } = {}
   ) {
-    if (typeof filter !== "function") {
-      throw new TypeError("INVALID_TYPE", "filter", "function");
+    if (typeof filter !== 'function') {
+      throw new TypeError('INVALID_TYPE', 'filter', 'function');
     }
 
     let guilds = 0;
@@ -367,28 +367,28 @@ class Sweepers {
 
   _validateProperties(key: string) {
     const props = this.options[key] as Record<string, unknown> | null;
-    if (typeof props !== "object" || props === null) {
-      throw new TypeError("INVALID_TYPE", `sweepers.${key}`, "object", true);
+    if (typeof props !== 'object' || props === null) {
+      throw new TypeError('INVALID_TYPE', `sweepers.${key}`, 'object', true);
     }
-    if (typeof props.interval !== "number") {
-      throw new TypeError("INVALID_TYPE", `sweepers.${key}.interval`, "number");
+    if (typeof props.interval !== 'number') {
+      throw new TypeError('INVALID_TYPE', `sweepers.${key}.interval`, 'number');
     }
     // Invites, Messages, and Threads can be provided a lifetime parameter, which we use to generate the filter
     if (
-      ["invites", "messages", "threads"].includes(key) &&
-      !("filter" in props)
+      ['invites', 'messages', 'threads'].includes(key) &&
+      !('filter' in props)
     ) {
-      if (typeof props.lifetime !== "number") {
+      if (typeof props.lifetime !== 'number') {
         throw new TypeError(
-          "INVALID_TYPE",
+          'INVALID_TYPE',
           `sweepers.${key}.lifetime`,
-          "number"
+          'number'
         );
       }
       return;
     }
-    if (typeof props.filter !== "function") {
-      throw new TypeError("INVALID_TYPE", `sweepers.${key}.filter`, "function");
+    if (typeof props.filter !== 'function') {
+      throw new TypeError('INVALID_TYPE', `sweepers.${key}.filter`, 'function');
     }
   }
 
@@ -407,8 +407,8 @@ class Sweepers {
       if (sweepFn === null) {
         return;
       }
-      if (typeof sweepFn !== "function") {
-        throw new TypeError("SWEEP_FILTER_RETURN");
+      if (typeof sweepFn !== 'function') {
+        throw new TypeError('SWEEP_FILTER_RETURN');
       }
       (this as unknown as Record<string, (fn: SweepFilterFn) => number>)[
         sweepKey

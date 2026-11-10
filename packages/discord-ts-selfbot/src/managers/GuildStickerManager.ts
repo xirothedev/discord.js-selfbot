@@ -1,17 +1,17 @@
-import { Collection } from "@discordjs/collection";
-import CachedManager from "./CachedManager";
-import _errorsModule from "../errors";
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
 
 const { TypeError } = _errorsModule;
-import MessagePayload from "../structures/MessagePayload";
-import _StickerModule from "../structures/Sticker";
+import MessagePayload from '../structures/MessagePayload';
+import _StickerModule from '../structures/Sticker';
 
 const { Sticker } = _StickerModule;
 import type {
   RESTPostAPIGuildStickerResult,
   Snowflake,
-} from "discord-api-types/v10";
-import type { RawStickerData } from "../../typings/rawDataTypes";
+} from 'discord-api-types/v10';
+import type { RawStickerData } from '../../typings/rawDataTypes';
 import type {
   BaseFetchOptions,
   BufferResolvable,
@@ -20,11 +20,11 @@ import type {
   StickerResolvable,
   FileOptions,
   MessageAttachment,
-} from "../../typings";
-import type { Guild } from "../structures/Guild";
-import type { User } from "../structures/User";
-import type { Stream } from "node:stream";
-import type { Sticker as StickerType } from "../structures/Sticker";
+} from '../../typings';
+import type { Guild } from '../structures/Guild';
+import type { User } from '../structures/User';
+import type { Stream } from 'node:stream';
+import type { Sticker as StickerType } from '../structures/Sticker';
 
 type StickerResolvableSource = InstanceType<typeof Sticker> | StickerResolvable;
 
@@ -48,11 +48,11 @@ class GuildStickerManager extends CachedManager<StickerType> {
   ): Promise<InstanceType<typeof Sticker>> {
     const resolvedFile = await MessagePayload.resolveFile(file);
     if (!resolvedFile) {
-      throw new TypeError("REQ_RESOURCE_TYPE");
+      throw new TypeError('REQ_RESOURCE_TYPE');
     }
-    const payloadFile = { ...resolvedFile, key: "file" };
+    const payloadFile = { ...resolvedFile, key: 'file' };
 
-    const data = { description: description ?? "", name, tags };
+    const data = { description: description ?? '', name, tags };
 
     const sticker = await this.client.api
       .guilds(this.guild.id)
@@ -73,7 +73,7 @@ class GuildStickerManager extends CachedManager<StickerType> {
   ): Promise<InstanceType<typeof Sticker>> {
     const stickerId = this.resolveId(sticker);
     if (!stickerId) {
-      throw new TypeError("INVALID_TYPE", "sticker", "StickerResolvable");
+      throw new TypeError('INVALID_TYPE', 'sticker', 'StickerResolvable');
     }
 
     const d: RawStickerData = await this.client.api
@@ -99,7 +99,7 @@ class GuildStickerManager extends CachedManager<StickerType> {
   ): Promise<void> {
     const stickerId = this.resolveId(sticker);
     if (!stickerId) {
-      throw new TypeError("INVALID_TYPE", "sticker", "StickerResolvable");
+      throw new TypeError('INVALID_TYPE', 'sticker', 'StickerResolvable');
     }
 
     await this.client.api
@@ -152,7 +152,7 @@ class GuildStickerManager extends CachedManager<StickerType> {
   async fetchUser(sticker: StickerResolvableSource): Promise<User | null> {
     const resolved = this.resolve(sticker);
     if (!resolved) {
-      throw new TypeError("INVALID_TYPE", "sticker", "StickerResolvable");
+      throw new TypeError('INVALID_TYPE', 'sticker', 'StickerResolvable');
     }
     const data: RawStickerData = await this.client.api
       .guilds(this.guild.id)

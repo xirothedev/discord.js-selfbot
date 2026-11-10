@@ -1,17 +1,17 @@
-import GuildChannel from "./GuildChannel";
-import { patchValue } from "./Base";
-import TextBasedChannel from "./interfaces/TextBasedChannel";
-import GuildForumThreadManager from "../managers/GuildForumThreadManager";
+import GuildChannel from './GuildChannel';
+import { patchValue } from './Base';
+import TextBasedChannel from './interfaces/TextBasedChannel';
+import GuildForumThreadManager from '../managers/GuildForumThreadManager';
 import type {
   CreateInviteOptions,
   DefaultReactionEmoji,
   GuildForumTagData,
   ThreadAutoArchiveDuration,
-} from "../../typings";
-import type { RawGuildChannelData } from "../../typings/rawDataTypes";
-import type { PatchOf } from "../types/schema";
+} from '../../typings';
+import type { RawGuildChannelData } from '../../typings/rawDataTypes';
+import type { PatchOf } from '../types/schema';
 
-type ThreadOnlyChannelPatch = PatchOf<"GuildChannel"> & {
+type ThreadOnlyChannelPatch = PatchOf<'GuildChannel'> & {
   available_tags?: {
     id?: string;
     name?: string;
@@ -29,13 +29,13 @@ type ThreadOnlyChannelPatch = PatchOf<"GuildChannel"> & {
   topic?: string | null;
   default_sort_order?: number | null;
 };
-import type { Guild } from "./Guild";
-import _ConstantsModule, { resolveEnumMember } from "../util/Constants";
+import type { Guild } from './Guild';
+import _ConstantsModule, { resolveEnumMember } from '../util/Constants';
 
 const { SortOrderTypes } = _ConstantsModule;
-import _UtilModule from "../util/Util";
-import type { SortOrderTypes as SortOrderTypesType } from "../../typings/enums";
-import type Client from "../client/Client";
+import _UtilModule from '../util/Util';
+import type { SortOrderTypes as SortOrderTypesType } from '../../typings/enums';
+import type Client from '../client/Client';
 
 const { transformAPIGuildForumTag, transformAPIGuildDefaultReaction } =
   _UtilModule;
@@ -62,13 +62,13 @@ class ThreadOnlyChannel extends GuildChannel {
   _patch(data: ThreadOnlyChannelPatch) {
     super._patch(data);
     this.availableTags =
-      "available_tags" in data
+      'available_tags' in data
         ? (data.available_tags ?? []).map((tag) =>
             transformAPIGuildForumTag(tag)
           )
         : (this.availableTags ?? []);
 
-    if ("default_reaction_emoji" in data) {
+    if ('default_reaction_emoji' in data) {
       this.defaultReactionEmoji = data.default_reaction_emoji
         ? transformAPIGuildDefaultReaction(data.default_reaction_emoji)
         : null;
@@ -91,7 +91,7 @@ class ThreadOnlyChannel extends GuildChannel {
     this.nsfw = patchValue(data.nsfw, this.nsfw, false);
     this.topic = patchValue(data.topic, this.topic);
     this.defaultSortOrder =
-      "default_sort_order" in data
+      'default_sort_order' in data
         ? (resolveEnumMember(SortOrderTypes, data.default_sort_order) ?? null)
         : (this.defaultSortOrder ?? null);
   }
@@ -159,15 +159,15 @@ class ThreadOnlyChannel extends GuildChannel {
 }
 
 TextBasedChannel.applyToClass(ThreadOnlyChannel, true, [
-  "send",
-  "lastMessage",
-  "lastPinAt",
-  "bulkDelete",
-  "sendTyping",
-  "createMessageCollector",
-  "awaitMessages",
-  "createMessageComponentCollector",
-  "awaitMessageComponent",
+  'send',
+  'lastMessage',
+  'lastPinAt',
+  'bulkDelete',
+  'sendTyping',
+  'createMessageCollector',
+  'awaitMessages',
+  'createMessageComponentCollector',
+  'awaitMessageComponent',
 ]);
 
 export default ThreadOnlyChannel;

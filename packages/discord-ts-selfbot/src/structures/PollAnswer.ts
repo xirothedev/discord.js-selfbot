@@ -1,12 +1,12 @@
-import Base from "./Base";
-import _EmojiModule from "./Emoji";
+import Base from './Base';
+import _EmojiModule from './Emoji';
 
 const { Emoji } = _EmojiModule;
-import type { APIPartialEmoji, APIPollAnswer } from "discord-api-types/v10";
-import type { BaseFetchPollAnswerVotersOptions } from "../../typings";
-import type { Poll } from "./Poll";
-import _errorsModule from "../errors";
-import type Client from "../client/Client";
+import type { APIPartialEmoji, APIPollAnswer } from 'discord-api-types/v10';
+import type { BaseFetchPollAnswerVotersOptions } from '../../typings';
+import type { Poll } from './Poll';
+import _errorsModule from '../errors';
+import type Client from '../client/Client';
 
 const { Error } = _errorsModule;
 
@@ -24,13 +24,13 @@ class PollAnswer extends Base {
   ) {
     super(client);
 
-    Object.defineProperty(this, "poll", { value: poll });
+    Object.defineProperty(this, 'poll', { value: poll });
 
     this.id = data.answer_id ?? 0;
 
     this.text = data.poll_media?.text ?? null;
 
-    Object.defineProperty(this, "_emoji", {
+    Object.defineProperty(this, '_emoji', {
       value: data.poll_media?.emoji ?? null,
     });
 
@@ -39,7 +39,7 @@ class PollAnswer extends Base {
 
   _patch(data: Partial<APIPollAnswer> & { count?: number }) {
     // This `count` field comes from `poll.results.answer_counts`
-    if ("count" in data) {
+    if ('count' in data) {
       this.voteCount = data.count ?? 0;
     } else {
       this.voteCount ??= 0;
@@ -59,7 +59,7 @@ class PollAnswer extends Base {
   fetchVoters({ after, limit }: BaseFetchPollAnswerVotersOptions = {}) {
     const { channel } = this.poll.message;
     if (!channel) {
-      throw new Error("CHANNEL_NOT_CACHED");
+      throw new Error('CHANNEL_NOT_CACHED');
     }
     return channel.messages.fetchPollAnswerVoters({
       after,

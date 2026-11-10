@@ -1,13 +1,13 @@
-import _errorsModule from "../errors";
+import _errorsModule from '../errors';
 
 const { TypeError } = _errorsModule;
-import _ConstantsModule from "../util/Constants";
+import _ConstantsModule from '../util/Constants';
 
 const { MessageComponentTypes } = _ConstantsModule;
 import type {
   PartialModalActionRow,
   PartialTextInputData,
-} from "../../typings";
+} from '../../typings';
 
 class ModalSubmitFieldsResolver {
   declare components: PartialModalActionRow[];
@@ -27,7 +27,7 @@ class ModalSubmitFieldsResolver {
   getField(customId: string): PartialTextInputData {
     const field = this._fields.find((entry) => entry.customId === customId);
     if (!field) {
-      throw new TypeError("MODAL_SUBMIT_INTERACTION_FIELD_NOT_FOUND", customId);
+      throw new TypeError('MODAL_SUBMIT_INTERACTION_FIELD_NOT_FOUND', customId);
     }
     return field;
   }
@@ -38,7 +38,7 @@ class ModalSubmitFieldsResolver {
       MessageComponentTypes[MessageComponentTypes.TEXT_INPUT];
     if (field.type !== expectedType) {
       throw new TypeError(
-        "MODAL_SUBMIT_INTERACTION_FIELD_TYPE",
+        'MODAL_SUBMIT_INTERACTION_FIELD_TYPE',
         customId,
         field.type,
         expectedType

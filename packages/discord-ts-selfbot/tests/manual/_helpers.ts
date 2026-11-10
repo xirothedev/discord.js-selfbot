@@ -1,4 +1,4 @@
-import type { Client, ClientUser } from "../../src/index";
+import type { Client, ClientUser } from '../../src/index';
 import {
   DMChannel,
   NewsChannel,
@@ -6,7 +6,7 @@ import {
   TextChannel,
   ThreadChannel,
   VoiceChannel,
-} from "../../src/index";
+} from '../../src/index';
 
 export const token = process.env.DISCORD_TOKEN;
 export const guildId = process.env.TEST_GUILD_ID;
@@ -20,7 +20,7 @@ export interface StepResult {
   error?: string;
   ms: number;
   name: string;
-  status: "PASS" | "FAIL" | "SKIP";
+  status: 'PASS' | 'FAIL' | 'SKIP';
 }
 
 export type SendableChannel =
@@ -39,18 +39,18 @@ export function makeClient(): Client {
   ) => {
     const payload = options.data ?? options.body;
     console.log(
-      "[REQ]",
+      '[REQ]',
       method,
       url,
-      payload ? JSON.stringify(payload).slice(0, 500) : ""
+      payload ? JSON.stringify(payload).slice(0, 500) : ''
     );
     const response = await originalRequest(method, url, options);
     console.log(
-      "[RES]",
+      '[RES]',
       method,
       url,
-      "->",
-      typeof response === "object"
+      '->',
+      typeof response === 'object'
         ? JSON.stringify(response).slice(0, 300)
         : response
     );
@@ -61,11 +61,11 @@ export function makeClient(): Client {
 
 export async function login(client: Client): Promise<ClientUser> {
   if (!token) {
-    throw new Error("DISCORD_TOKEN is not set");
+    throw new Error('DISCORD_TOKEN is not set');
   }
   await client.login(token);
   if (!client.user) {
-    throw new Error("client.user is missing after login");
+    throw new Error('client.user is missing after login');
   }
   return client.user;
 }
@@ -124,7 +124,7 @@ export async function fetchVoiceChannel(
 
 export async function deleteChannel(client: Client, id: string): Promise<void> {
   const channel = await client.channels.fetch(id);
-  if (!channel || typeof channel.delete !== "function") {
+  if (!channel || typeof channel.delete !== 'function') {
     throw new Error(`channel ${id} cannot be deleted`);
   }
   await channel.delete();
@@ -143,37 +143,37 @@ export function makeStepRecorder() {
     const startedAt = Date.now();
     try {
       await fn();
-      results.push({ ms: Date.now() - startedAt, name, status: "PASS" });
+      results.push({ ms: Date.now() - startedAt, name, status: 'PASS' });
       console.log(`[PASS] ${name} (${Date.now() - startedAt}ms)`);
     } catch (error) {
       results.push({
         error: errorMessage(error),
         ms: Date.now() - startedAt,
         name,
-        status: "FAIL",
+        status: 'FAIL',
       });
       console.log(`[FAIL] ${name}: ${errorMessage(error)}`);
     }
   }
   function summary(label: string): void {
-    const pass = results.filter((result) => result.status === "PASS").length;
-    const fail = results.filter((result) => result.status === "FAIL").length;
+    const pass = results.filter((result) => result.status === 'PASS').length;
+    const fail = results.filter((result) => result.status === 'FAIL').length;
     console.log(`\n=== ${label}: ${pass} pass, ${fail} fail ===`);
     for (const result of results) {
-      if (result.status === "FAIL") {
-        console.log("  FAIL:", result.name, "-", result.error);
+      if (result.status === 'FAIL') {
+        console.log('  FAIL:', result.name, '-', result.error);
       }
     }
   }
   async function writeArtifact(name: string): Promise<void> {
     try {
-      const fs = await import("node:fs");
+      const fs = await import('node:fs');
       const path = `/private/var/folders/gs/h6f9nkc50716wx9vzfr70mt00000gn/T/opencode/${name}.json`;
       fs.writeFileSync(
         path,
         JSON.stringify({ ranAt: new Date().toISOString(), results }, null, 2)
       );
-      console.log("artifact:", path);
+      console.log('artifact:', path);
     } catch {
       // Artifact writing is best effort; a failure must not fail the step.
     }

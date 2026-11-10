@@ -1,22 +1,22 @@
-import { Collection } from "@discordjs/collection";
-import CachedManager from "./CachedManager";
-import _errorsModule from "../errors";
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
 
 const { TypeError, Error } = _errorsModule;
-import _GuildScheduledEventModule from "../structures/GuildScheduledEvent";
+import _GuildScheduledEventModule from '../structures/GuildScheduledEvent';
 
 const { GuildScheduledEvent } = _GuildScheduledEventModule;
-import _ConstantsModule, { resolveEnumValue } from "../util/Constants";
+import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
 
 const {
   PrivacyLevels,
   GuildScheduledEventEntityTypes,
   GuildScheduledEventStatuses,
 } = _ConstantsModule;
-import DataResolver from "../util/DataResolver";
-import Util from "../util/Util";
-import type { APIGuildMember, APIUser, Snowflake } from "discord-api-types/v10";
-import type { RawGuildScheduledEventData } from "../../typings/rawDataTypes";
+import DataResolver from '../util/DataResolver';
+import Util from '../util/Util';
+import type { APIGuildMember, APIUser, Snowflake } from 'discord-api-types/v10';
+import type { RawGuildScheduledEventData } from '../../typings/rawDataTypes';
 import type {
   FetchGuildScheduledEventOptions,
   FetchGuildScheduledEventsOptions,
@@ -24,18 +24,18 @@ import type {
   GuildScheduledEventRecurrenceRuleOptions,
   GuildScheduledEventResolvable,
   GuildVoiceChannelResolvable,
-} from "../../typings";
-import type { Guild } from "../structures/Guild";
-import type { GuildMember } from "../structures/GuildMember";
-import type { User } from "../structures/User";
-import type { GuildScheduledEvent as GuildScheduledEventType } from "../structures/GuildScheduledEvent";
+} from '../../typings';
+import type { Guild } from '../structures/Guild';
+import type { GuildMember } from '../structures/GuildMember';
+import type { User } from '../structures/User';
+import type { GuildScheduledEvent as GuildScheduledEventType } from '../structures/GuildScheduledEvent';
 
 type GuildScheduledEventResolvableSource =
   | InstanceType<typeof GuildScheduledEvent>
   | GuildScheduledEventResolvable;
 
 export type GuildScheduledEventEditOptionsSource = Partial<
-  Omit<GuildScheduledEventCreateOptions, "channel" | "recurrenceRule">
+  Omit<GuildScheduledEventCreateOptions, 'channel' | 'recurrenceRule'>
 > & {
   channel?: GuildVoiceChannelResolvable | null;
   status?: string | number;
@@ -59,9 +59,9 @@ function isFetchEventOptions(
   value: unknown
 ): value is FetchGuildScheduledEventOptions {
   return (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value !== null &&
-    "guildScheduledEvent" in value
+    'guildScheduledEvent' in value
   );
 }
 
@@ -69,9 +69,9 @@ function isFetchEventsOptions(
   value: unknown
 ): value is FetchGuildScheduledEventsOptions {
   return (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value !== null &&
-    ("withUserCount" in value || "cache" in value)
+    ('withUserCount' in value || 'cache' in value)
   );
 }
 
@@ -89,8 +89,8 @@ class GuildScheduledEventManager extends CachedManager<GuildScheduledEventType> 
   async create(
     options: GuildScheduledEventCreateOptions
   ): Promise<InstanceType<typeof GuildScheduledEvent>> {
-    if (typeof options !== "object") {
-      throw new TypeError("INVALID_TYPE", "options", "object", true);
+    if (typeof options !== 'object') {
+      throw new TypeError('INVALID_TYPE', 'options', 'object', true);
     }
     let { privacyLevel, entityType } = options;
     const {
@@ -105,10 +105,10 @@ class GuildScheduledEventManager extends CachedManager<GuildScheduledEventType> 
       recurrenceRule,
     } = options;
 
-    if (typeof privacyLevel === "string") {
+    if (typeof privacyLevel === 'string') {
       privacyLevel = PrivacyLevels[privacyLevel];
     }
-    if (typeof entityType === "string") {
+    if (typeof entityType === 'string') {
       entityType = GuildScheduledEventEntityTypes[entityType];
     }
 
@@ -120,13 +120,13 @@ class GuildScheduledEventManager extends CachedManager<GuildScheduledEventType> 
     } else {
       channel_id = this.guild.channels.resolveId(channel);
       if (!channel_id) {
-        throw new Error("GUILD_VOICE_CHANNEL_RESOLVE");
+        throw new Error('GUILD_VOICE_CHANNEL_RESOLVE');
       }
       entity_metadata = entityMetadata === undefined ? entityMetadata : null;
     }
 
     const data: RawGuildScheduledEventData = await this.client.api
-      .guilds(this.guild.id, "scheduled-events")
+      .guilds(this.guild.id, 'scheduled-events')
       .post({
         data: {
           channel_id,
@@ -180,7 +180,7 @@ class GuildScheduledEventManager extends CachedManager<GuildScheduledEventType> 
       }
 
       const data: RawGuildScheduledEventData = await this.client.api
-        .guilds(this.guild.id, "scheduled-events", id)
+        .guilds(this.guild.id, 'scheduled-events', id)
         .get({
           query: { with_user_count: eventOptions?.withUserCount ?? true },
         });
@@ -188,7 +188,7 @@ class GuildScheduledEventManager extends CachedManager<GuildScheduledEventType> 
     }
 
     const data: RawGuildScheduledEventData[] = await this.client.api
-      .guilds(this.guild.id, "scheduled-events")
+      .guilds(this.guild.id, 'scheduled-events')
       .get({
         query: { with_user_count: eventsOptions?.withUserCount ?? true },
       });
@@ -212,11 +212,11 @@ class GuildScheduledEventManager extends CachedManager<GuildScheduledEventType> 
   ): Promise<InstanceType<typeof GuildScheduledEvent>> {
     const guildScheduledEventId = this.resolveId(guildScheduledEvent);
     if (!guildScheduledEventId) {
-      throw new Error("GUILD_SCHEDULED_EVENT_RESOLVE");
+      throw new Error('GUILD_SCHEDULED_EVENT_RESOLVE');
     }
 
-    if (typeof options !== "object") {
-      throw new TypeError("INVALID_TYPE", "options", "object", true);
+    if (typeof options !== 'object') {
+      throw new TypeError('INVALID_TYPE', 'options', 'object', true);
     }
     let { privacyLevel, entityType, status } = options;
     const {
@@ -231,13 +231,13 @@ class GuildScheduledEventManager extends CachedManager<GuildScheduledEventType> 
       recurrenceRule,
     } = options;
 
-    if (typeof privacyLevel === "string") {
+    if (typeof privacyLevel === 'string') {
       privacyLevel = PrivacyLevels[privacyLevel];
     }
-    if (typeof entityType === "string") {
+    if (typeof entityType === 'string') {
       entityType = GuildScheduledEventEntityTypes[entityType];
     }
-    if (typeof status === "string") {
+    if (typeof status === 'string') {
       status = resolveEnumValue(GuildScheduledEventStatuses, status);
     }
 
@@ -249,7 +249,7 @@ class GuildScheduledEventManager extends CachedManager<GuildScheduledEventType> 
     }
 
     const data: RawGuildScheduledEventData = await this.client.api
-      .guilds(this.guild.id, "scheduled-events", guildScheduledEventId)
+      .guilds(this.guild.id, 'scheduled-events', guildScheduledEventId)
       .patch({
         data: {
           channel_id:
@@ -284,11 +284,11 @@ class GuildScheduledEventManager extends CachedManager<GuildScheduledEventType> 
   ): Promise<void> {
     const guildScheduledEventId = this.resolveId(guildScheduledEvent);
     if (!guildScheduledEventId) {
-      throw new Error("GUILD_SCHEDULED_EVENT_RESOLVE");
+      throw new Error('GUILD_SCHEDULED_EVENT_RESOLVE');
     }
 
     await this.client.api
-      .guilds(this.guild.id, "scheduled-events", guildScheduledEventId)
+      .guilds(this.guild.id, 'scheduled-events', guildScheduledEventId)
       .delete();
   }
 
@@ -298,7 +298,7 @@ class GuildScheduledEventManager extends CachedManager<GuildScheduledEventType> 
   ): Promise<Collection<Snowflake, GuildScheduledEventUserSource>> {
     const guildScheduledEventId = this.resolveId(guildScheduledEvent);
     if (!guildScheduledEventId) {
-      throw new Error("GUILD_SCHEDULED_EVENT_RESOLVE");
+      throw new Error('GUILD_SCHEDULED_EVENT_RESOLVE');
     }
 
     const { limit, withMember, before, after } = options;
@@ -308,7 +308,7 @@ class GuildScheduledEventManager extends CachedManager<GuildScheduledEventType> 
       user: APIUser;
       member?: APIGuildMember;
     }[] = await this.client.api
-      .guilds(this.guild.id, "scheduled-events", guildScheduledEventId)
+      .guilds(this.guild.id, 'scheduled-events', guildScheduledEventId)
       .users.get({
         query: { after, before, limit, with_member: withMember },
       });

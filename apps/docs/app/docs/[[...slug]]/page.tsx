@@ -5,22 +5,22 @@ import {
   DocsTitle,
   MarkdownCopyButton,
   ViewOptionsPopover,
-} from "fumadocs-ui/layouts/docs/page";
-import { createRelativeLink } from "fumadocs-ui/mdx";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+} from 'fumadocs-ui/layouts/docs/page';
+import { createRelativeLink } from 'fumadocs-ui/mdx';
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 
-import { getMDXComponents } from "@/components/mdx";
+import { getMDXComponents } from '@/components/mdx';
 import {
   getGitHubUrl,
   getPageImageUrl,
   getPageMarkdownUrl,
-} from "@/lib/shared";
-import { source } from "@/lib/source";
+} from '@/lib/shared';
+import { source } from '@/lib/source';
 
-const ANCHOR_TAG = "a";
+const ANCHOR_TAG = 'a';
 
-const Page = async (props: PageProps<"/docs/[[...slug]]">) => {
+const Page = async (props: PageProps<'/docs/[[...slug]]'>) => {
   const params = await props.params;
   const page = source.getPage(params.slug);
   if (!page) {
@@ -28,7 +28,7 @@ const Page = async (props: PageProps<"/docs/[[...slug]]">) => {
   }
 
   const PageContent = page.data.body;
-  const toc = page.url.startsWith("/docs/api")
+  const toc = page.url.startsWith('/docs/api')
     ? page.data.toc.filter((item) => item.depth <= 2)
     : page.data.toc;
   const markdownUrl = getPageMarkdownUrl(page).url;
@@ -61,7 +61,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata(
-  props: PageProps<"/docs/[[...slug]]">
+  props: PageProps<'/docs/[[...slug]]'>
 ): Promise<Metadata> {
   const params = await props.params;
   const page = source.getPage(params.slug);

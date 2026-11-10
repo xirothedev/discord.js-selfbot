@@ -1,12 +1,12 @@
-import type { Client } from "../../Client";
-import type { WebSocketShard } from "../WebSocketShard";
-import _ConstantsModule from "../../../util/Constants";
+import type { Client } from '../../Client';
+import type { WebSocketShard } from '../WebSocketShard';
+import _ConstantsModule from '../../../util/Constants';
 
 const { Events } = _ConstantsModule;
-import type { RawApplicationCommandData } from "../../../../typings/rawDataTypes";
+import type { RawApplicationCommandData } from '../../../../typings/rawDataTypes';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  return typeof value === 'object' && value !== null;
 }
 
 function isApplicationCommandData(
@@ -14,8 +14,8 @@ function isApplicationCommandData(
 ): value is RawApplicationCommandData {
   return (
     isRecord(value) &&
-    typeof value.id === "string" &&
-    typeof value.name === "string"
+    typeof value.id === 'string' &&
+    typeof value.name === 'string'
   );
 }
 

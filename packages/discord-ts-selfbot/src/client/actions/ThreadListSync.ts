@@ -1,16 +1,16 @@
-import { Collection } from "@discordjs/collection";
-import Action from "./Action";
-import _ConstantsModule from "../../util/Constants";
+import { Collection } from '@discordjs/collection';
+import Action from './Action';
+import _ConstantsModule from '../../util/Constants';
 
 const { Events } = _ConstantsModule;
-import type { Snowflake } from "discord-api-types/v10";
+import type { Snowflake } from 'discord-api-types/v10';
 import type {
   RawChannelData,
   RawThreadMemberData,
-} from "../../../typings/rawDataTypes";
-import { isThreadChannel, isThreadParentChannel } from "../../types/channels";
-import type { Channel } from "../../structures/Channel";
-import type { ThreadChannel } from "../../structures/ThreadChannel";
+} from '../../../typings/rawDataTypes';
+import { isThreadChannel, isThreadParentChannel } from '../../types/channels';
+import type { Channel } from '../../structures/Channel';
+import type { ThreadChannel } from '../../structures/ThreadChannel';
 
 interface ThreadListSyncData {
   guild_id: Snowflake;

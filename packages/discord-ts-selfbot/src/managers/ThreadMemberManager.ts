@@ -1,22 +1,22 @@
-import process from "node:process";
-import { Collection } from "@discordjs/collection";
-import CachedManager from "./CachedManager";
-import _errorsModule from "../errors";
+import process from 'node:process';
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
 
 const { TypeError } = _errorsModule;
-import ThreadMember from "../structures/ThreadMember";
-import type { Snowflake } from "discord-api-types/v10";
-import type { RawThreadMemberData } from "../../typings/rawDataTypes";
+import ThreadMember from '../structures/ThreadMember';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { RawThreadMemberData } from '../../typings/rawDataTypes';
 import type {
   BaseFetchOptions,
   FetchThreadMemberOptions,
   FetchThreadMembersOptions,
   UserResolvable,
-} from "../../typings";
-import type { ThreadChannel } from "../structures/ThreadChannel";
-import type { GuildMember } from "../structures/GuildMember";
-import type { Message } from "../structures/Message";
-import type { User } from "../structures/User";
+} from '../../typings';
+import type { ThreadChannel } from '../structures/ThreadChannel';
+import type { GuildMember } from '../structures/GuildMember';
+import type { Message } from '../structures/Message';
+import type { User } from '../structures/User';
 
 type ThreadMemberResolvableSource =
   | ThreadMember
@@ -30,12 +30,12 @@ function isFetchOptions(
   value: unknown
 ): value is FetchManyThreadMembersOptions {
   return (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value !== null &&
-    ("cache" in value ||
-      "withMember" in value ||
-      "limit" in value ||
-      "after" in value)
+    ('cache' in value ||
+      'withMember' in value ||
+      'limit' in value ||
+      'after' in value)
   );
 }
 
@@ -59,7 +59,7 @@ class ThreadMemberManager extends CachedManager<ThreadMember> {
   _add(data: RawThreadMemberData, cache = true): ThreadMember {
     const userId = data.user_id;
     if (!userId) {
-      throw new TypeError("INVALID_TYPE", "data", "ThreadMemberData");
+      throw new TypeError('INVALID_TYPE', 'data', 'ThreadMemberData');
     }
     const existing = this.cache.get(userId);
     if (cache) {
@@ -79,7 +79,7 @@ class ThreadMemberManager extends CachedManager<ThreadMember> {
   fetchMe(options?: BaseFetchOptions): Promise<ThreadMember> {
     const userId = this.client.user?.id;
     if (!userId) {
-      throw new TypeError("INVALID_TYPE", "user", "UserResolvable");
+      throw new TypeError('INVALID_TYPE', 'user', 'UserResolvable');
     }
     return this.fetch(userId, options);
   }
@@ -114,25 +114,25 @@ class ThreadMemberManager extends CachedManager<ThreadMember> {
   }
 
   async add(
-    member: UserResolvable | "@me",
+    member: UserResolvable | '@me',
     reason?: string
   ): Promise<Snowflake> {
-    const id = member === "@me" ? member : this.client.users.resolveId(member);
+    const id = member === '@me' ? member : this.client.users.resolveId(member);
     if (!id) {
-      throw new TypeError("INVALID_TYPE", "member", "UserResolvable");
+      throw new TypeError('INVALID_TYPE', 'member', 'UserResolvable');
     }
     await this.client.api
-      .channels(this.thread.id, "thread-members", id)
+      .channels(this.thread.id, 'thread-members', id)
       .put({ reason });
     return id;
   }
 
   async remove(
-    id: Snowflake | "@me",
+    id: Snowflake | '@me',
     reason?: string
-  ): Promise<Snowflake | "@me"> {
+  ): Promise<Snowflake | '@me'> {
     await this.client.api
-      .channels(this.thread.id, "thread-members", id)
+      .channels(this.thread.id, 'thread-members', id)
       .delete({ reason });
     return id;
   }
@@ -149,7 +149,7 @@ class ThreadMemberManager extends CachedManager<ThreadMember> {
     }
 
     const data: RawThreadMemberData = await this.client.api
-      .channels(this.thread.id, "thread-members", memberId)
+      .channels(this.thread.id, 'thread-members', memberId)
       .get({
         query: { with_member: withMember },
       });
@@ -165,7 +165,7 @@ class ThreadMemberManager extends CachedManager<ThreadMember> {
     Collection<Snowflake, ThreadMember>
   > {
     const raw: RawThreadMemberData[] = await this.client.api
-      .channels(this.thread.id, "thread-members")
+      .channels(this.thread.id, 'thread-members')
       .get({
         query: { after, limit, with_member: withMember },
       });
@@ -192,16 +192,16 @@ class ThreadMemberManager extends CachedManager<ThreadMember> {
     options?: FetchThreadMemberOptions | FetchManyThreadMembersOptions
   ): Promise<ThreadMember | Collection<Snowflake, ThreadMember>> {
     const resolvedOptions = options ?? { cache: true, force: false };
-    if (typeof member === "boolean" && !deprecationEmittedForPassingBoolean) {
+    if (typeof member === 'boolean' && !deprecationEmittedForPassingBoolean) {
       process.emitWarning(
-        "Passing boolean to member option is deprecated, use cache property instead.",
-        "DeprecationWarning"
+        'Passing boolean to member option is deprecated, use cache property instead.',
+        'DeprecationWarning'
       );
       deprecationEmittedForPassingBoolean = true;
     }
     const isOptions = isFetchOptions(member);
     const id =
-      !isOptions && typeof member !== "boolean" && member !== undefined
+      !isOptions && typeof member !== 'boolean' && member !== undefined
         ? this.resolveId(member)
         : null;
     if (id) {
@@ -210,7 +210,7 @@ class ThreadMemberManager extends CachedManager<ThreadMember> {
     let fetchOptions: FetchManyThreadMembersOptions;
     if (isOptions) {
       fetchOptions = member;
-    } else if (typeof member === "boolean") {
+    } else if (typeof member === 'boolean') {
       fetchOptions = { ...resolvedOptions, cache: member };
     } else {
       fetchOptions = resolvedOptions;

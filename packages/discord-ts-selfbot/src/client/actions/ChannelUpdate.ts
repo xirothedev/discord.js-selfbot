@@ -1,13 +1,13 @@
-import Action from "./Action";
-import { isTextBasedChannel, isGuildBasedChannel } from "../../types/channels";
+import Action from './Action';
+import { isTextBasedChannel, isGuildBasedChannel } from '../../types/channels';
 import type {
   GatewayChannelUpdateDispatchData,
   GatewayThreadUpdateDispatchData,
-} from "discord-api-types/v10";
-import _ChannelModule from "../../structures/Channel";
+} from 'discord-api-types/v10';
+import _ChannelModule from '../../structures/Channel';
 
 const { Channel } = _ChannelModule;
-import _ConstantsModule, { resolveEnumValue } from "../../util/Constants";
+import _ConstantsModule, { resolveEnumValue } from '../../util/Constants';
 
 const { ChannelTypes } = _ConstantsModule;
 

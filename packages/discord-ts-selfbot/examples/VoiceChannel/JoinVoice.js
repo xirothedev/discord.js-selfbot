@@ -10,13 +10,13 @@ Install:
 - ffmpeg (install and add to your system environment)
 */
 
-import { Client } from "../../src/index";
+import { Client } from '../../src/index';
 
 const client = new Client();
 
-client.on("ready", async () => {
+client.on('ready', async () => {
   console.log(`${client.user.username} is ready!`);
-  const channel = client.channels.cache.get("voice_channel");
+  const channel = client.channels.cache.get('voice_channel');
   const connection = await client.voice.joinChannel(channel, {
     selfDeaf: true,
     selfMute: true,
@@ -28,4 +28,4 @@ client.on("ready", async () => {
   }, 5000);
 });
 
-client.login("token");
+client.login('token');

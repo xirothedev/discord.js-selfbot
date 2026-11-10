@@ -1,5 +1,5 @@
-import { Collection } from "@discordjs/collection";
-import type { APIAutoModerationRule } from "discord-api-types/v10";
+import { Collection } from '@discordjs/collection';
+import type { APIAutoModerationRule } from 'discord-api-types/v10';
 import type {
   AutoModerationActionOptions,
   AutoModerationRuleEventType,
@@ -7,15 +7,15 @@ import type {
   GuildBasedChannel,
   GuildChannelResolvable,
   RoleResolvable,
-} from "../../typings";
-import Base from "./Base";
-import type { Role } from "./Role";
-import type { GuildChannel } from "./GuildChannel";
-import type { AutoModerationRuleEntity } from "../types/entities/auto-moderation-rule";
-import type { PatchOf } from "../types/schema";
-import _ConstantsModule from "../util/Constants";
-import type Client from "../client/Client";
-import type { Guild } from "./Guild";
+} from '../../typings';
+import Base from './Base';
+import type { Role } from './Role';
+import type { GuildChannel } from './GuildChannel';
+import type { AutoModerationRuleEntity } from '../types/entities/auto-moderation-rule';
+import type { PatchOf } from '../types/schema';
+import _ConstantsModule from '../util/Constants';
+import type Client from '../client/Client';
+import type { Guild } from './Guild';
 
 const {
   AutoModerationRuleKeywordPresetTypes,
@@ -25,17 +25,17 @@ const {
 } = _ConstantsModule;
 
 class AutoModerationRule extends Base implements AutoModerationRuleEntity {
-  declare id: AutoModerationRuleEntity["id"];
-  declare guild: AutoModerationRuleEntity["guild"];
-  declare name: AutoModerationRuleEntity["name"];
-  declare creatorId: AutoModerationRuleEntity["creatorId"];
-  declare eventType: AutoModerationRuleEntity["eventType"];
-  declare triggerType: AutoModerationRuleEntity["triggerType"];
-  declare triggerMetadata: AutoModerationRuleEntity["triggerMetadata"];
-  declare actions: AutoModerationRuleEntity["actions"];
-  declare enabled: AutoModerationRuleEntity["enabled"];
-  declare exemptRoles: AutoModerationRuleEntity["exemptRoles"];
-  declare exemptChannels: AutoModerationRuleEntity["exemptChannels"];
+  declare id: AutoModerationRuleEntity['id'];
+  declare guild: AutoModerationRuleEntity['guild'];
+  declare name: AutoModerationRuleEntity['name'];
+  declare creatorId: AutoModerationRuleEntity['creatorId'];
+  declare eventType: AutoModerationRuleEntity['eventType'];
+  declare triggerType: AutoModerationRuleEntity['triggerType'];
+  declare triggerMetadata: AutoModerationRuleEntity['triggerMetadata'];
+  declare actions: AutoModerationRuleEntity['actions'];
+  declare enabled: AutoModerationRuleEntity['enabled'];
+  declare exemptRoles: AutoModerationRuleEntity['exemptRoles'];
+  declare exemptChannels: AutoModerationRuleEntity['exemptChannels'];
 
   constructor(client: Client, data: APIAutoModerationRule, guild: Guild) {
     super(client);
@@ -51,7 +51,7 @@ class AutoModerationRule extends Base implements AutoModerationRuleEntity {
     this._patch(data);
   }
 
-  _patch(data: PatchOf<"AutoModerationRule">) {
+  _patch(data: PatchOf<'AutoModerationRule'>) {
     if (data.name !== undefined) {
       this.name = data.name;
     }

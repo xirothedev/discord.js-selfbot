@@ -1,9 +1,9 @@
-import { createMDX } from "fumadocs-mdx/next";
+import { createMDX } from 'fumadocs-mdx/next';
 
 const withMDX = createMDX();
 
 const basePath =
-  process.env.NODE_ENV === "production" ? "/discord.js-selfbot" : "";
+  process.env.NODE_ENV === 'production' ? '/discord.js-selfbot' : '';
 
 /** @type {import('next').NextConfig} */
 const config = {
@@ -13,10 +13,10 @@ const config = {
   },
   experimental: {
     optimizePackageImports: [
-      "lucide-react",
-      "fumadocs-ui",
-      "fumadocs-core",
-      "shiki",
+      'lucide-react',
+      'fumadocs-ui',
+      'fumadocs-core',
+      'shiki',
     ],
     turbopackFileSystemCacheForBuild: !process.env.CI,
     turbopackRustReactCompiler: true,
@@ -24,7 +24,7 @@ const config = {
   images: {
     unoptimized: true,
   },
-  output: "export",
+  output: 'export',
   reactCompiler: true,
   reactStrictMode: true,
   trailingSlash: true,

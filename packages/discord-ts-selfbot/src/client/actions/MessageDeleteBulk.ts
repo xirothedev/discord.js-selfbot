@@ -1,11 +1,11 @@
-import { Collection } from "@discordjs/collection";
-import Action from "./Action";
-import { isTextBasedChannel } from "../../types/channels";
-import type { GatewayMessageDeleteBulkDispatchData } from "discord-api-types/v10";
-import _MessageModule from "../../structures/Message";
+import { Collection } from '@discordjs/collection';
+import Action from './Action';
+import { isTextBasedChannel } from '../../types/channels';
+import type { GatewayMessageDeleteBulkDispatchData } from 'discord-api-types/v10';
+import _MessageModule from '../../structures/Message';
 
 const { deletedMessages } = _MessageModule;
-import _ConstantsModule from "../../util/Constants";
+import _ConstantsModule from '../../util/Constants';
 
 const { Events } = _ConstantsModule;
 

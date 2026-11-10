@@ -1,12 +1,12 @@
-import { Readable } from "node:stream";
-import prism from "prism-media";
-import _errorsModule from "../../../errors";
+import { Readable } from 'node:stream';
+import prism from 'prism-media';
+import _errorsModule from '../../../errors';
 
 const { Error } = _errorsModule;
-import type { StreamOptions, VideoOptions } from "../../../../typings";
-import type MediaPlayer from "../player/MediaPlayer";
-import type AudioDispatcher from "../dispatcher/AudioDispatcher";
-import type VideoDispatcher from "../dispatcher/VideoDispatcher";
+import type { StreamOptions, VideoOptions } from '../../../../typings';
+import type MediaPlayer from '../player/MediaPlayer';
+import type AudioDispatcher from '../dispatcher/AudioDispatcher';
+import type VideoDispatcher from '../dispatcher/VideoDispatcher';
 
 class PlayInterface {
   declare player: MediaPlayer;
@@ -19,31 +19,31 @@ class PlayInterface {
     resource: Readable | string,
     options: StreamOptions = {}
   ): AudioDispatcher {
-    if (resource instanceof Readable || typeof resource === "string") {
-      const type = options.type || "unknown";
-      if (type === "unknown") {
+    if (resource instanceof Readable || typeof resource === 'string') {
+      const type = options.type || 'unknown';
+      if (type === 'unknown') {
         return this.player.playUnknown(resource, options);
-      } else if (type === "converted") {
+      } else if (type === 'converted') {
         if (!(resource instanceof Readable)) {
-          throw new Error("VOICE_PRISM_DEMUXERS_NEED_STREAM");
+          throw new Error('VOICE_PRISM_DEMUXERS_NEED_STREAM');
         }
         return this.player.playPCMStream(resource, options);
-      } else if (type === "opus") {
+      } else if (type === 'opus') {
         if (!(resource instanceof Readable)) {
-          throw new Error("VOICE_PRISM_DEMUXERS_NEED_STREAM");
+          throw new Error('VOICE_PRISM_DEMUXERS_NEED_STREAM');
         }
         return this.player.playOpusStream(resource, options);
-      } else if (type === "ogg/opus") {
+      } else if (type === 'ogg/opus') {
         if (!(resource instanceof Readable)) {
-          throw new Error("VOICE_PRISM_DEMUXERS_NEED_STREAM");
+          throw new Error('VOICE_PRISM_DEMUXERS_NEED_STREAM');
         }
         return this.player.playOpusStream(
           resource.pipe(new prism.opus.OggDemuxer()),
           options
         );
-      } else if (type === "webm/opus") {
+      } else if (type === 'webm/opus') {
         if (!(resource instanceof Readable)) {
-          throw new Error("VOICE_PRISM_DEMUXERS_NEED_STREAM");
+          throw new Error('VOICE_PRISM_DEMUXERS_NEED_STREAM');
         }
         return this.player.playOpusStream(
           resource.pipe(new prism.opus.WebmDemuxer()),
@@ -51,17 +51,17 @@ class PlayInterface {
         );
       }
     }
-    throw new Error("VOICE_PLAY_INTERFACE_BAD_TYPE");
+    throw new Error('VOICE_PLAY_INTERFACE_BAD_TYPE');
   }
 
   playVideo(
     resource: Readable | string,
     options: VideoOptions = {}
   ): VideoDispatcher {
-    if (resource instanceof Readable || typeof resource === "string") {
+    if (resource instanceof Readable || typeof resource === 'string') {
       return this.player.playUnknownVideo(resource, options);
     }
-    throw new Error("VOICE_PLAY_INTERFACE_BAD_TYPE");
+    throw new Error('VOICE_PLAY_INTERFACE_BAD_TYPE');
   }
 
   playStream(
@@ -72,7 +72,7 @@ class PlayInterface {
   }
 
   static applyToClass(structure: { prototype: object }) {
-    for (const prop of ["playAudio", "playVideo", "playStream"]) {
+    for (const prop of ['playAudio', 'playVideo', 'playStream']) {
       const descriptor = Object.getOwnPropertyDescriptor(
         PlayInterface.prototype,
         prop

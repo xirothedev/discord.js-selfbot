@@ -1,5 +1,5 @@
-import Action from "./Action";
-import type { Snowflake } from "discord-api-types/v10";
+import Action from './Action';
+import type { Snowflake } from 'discord-api-types/v10';
 
 interface GuildChannelsPositionUpdateData {
   guild_id: Snowflake;
@@ -14,8 +14,8 @@ class GuildChannelsPositionUpdate extends Action {
     if (guild) {
       for (const partialChannel of data.channels) {
         if (
-          typeof partialChannel.id !== "string" ||
-          typeof partialChannel.position !== "number"
+          typeof partialChannel.id !== 'string' ||
+          typeof partialChannel.position !== 'number'
         ) {
           continue;
         }

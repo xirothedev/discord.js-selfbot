@@ -1,9 +1,9 @@
-import UnfurledMediaItem from "./UnfurledMediaItem";
+import UnfurledMediaItem from './UnfurledMediaItem';
 import {
   isComponentDataSource,
   readComponentBoolean,
   readComponentString,
-} from "./BaseMessageComponent";
+} from './BaseMessageComponent';
 
 class MediaGalleryItem {
   declare media: UnfurledMediaItem;
@@ -14,9 +14,9 @@ class MediaGalleryItem {
     const source = isComponentDataSource(data) ? data : {};
     this.media = new UnfurledMediaItem(source.media);
 
-    this.description = readComponentString(source, "description") ?? null;
+    this.description = readComponentString(source, 'description') ?? null;
 
-    this.spoiler = readComponentBoolean(source, "spoiler") ?? false;
+    this.spoiler = readComponentBoolean(source, 'spoiler') ?? false;
   }
 
   toJSON() {

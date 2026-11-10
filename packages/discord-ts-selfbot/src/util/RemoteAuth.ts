@@ -1,24 +1,24 @@
-import { createRequire } from "node:module";
+import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const qrcode = require("qrcode");
-import { Buffer } from "node:buffer";
-import crypto from "node:crypto";
-import EventEmitter from "node:events";
-import { setTimeout } from "node:timers";
-import { fetch } from "undici";
-import WebSocket from "ws";
-import _ConstantsModule from "./Constants";
+const qrcode = require('qrcode');
+import { Buffer } from 'node:buffer';
+import crypto from 'node:crypto';
+import EventEmitter from 'node:events';
+import { setTimeout } from 'node:timers';
+import { fetch } from 'undici';
+import WebSocket from 'ws';
+import _ConstantsModule from './Constants';
 
 const { UserAgent } = _ConstantsModule;
-import Options from "./Options";
+import Options from './Options';
 import {
   baseURL,
   Event,
   receiveEvent,
   sendEvent,
   wsURL,
-} from "./RemoteAuthGateway";
+} from './RemoteAuthGateway';
 
 const defaultClientOptions = Options.createDefault();
 
@@ -26,13 +26,13 @@ class DiscordAuthWebsocket extends EventEmitter {
   #ws: WebSocket | null = null;
   #heartbeatInterval = 0;
   #expire: Date | null = null;
-  #publicKey = "";
-  #privateKey = "";
-  #ticket = "";
-  #fingerprint = "";
-  #userDecryptString = "";
+  #publicKey = '';
+  #privateKey = '';
+  #ticket = '';
+  #fingerprint = '';
+  #userDecryptString = '';
 
-  token = "";
+  token = '';
 
   get AuthURL() {
     return baseURL + this.#fingerprint;
@@ -49,8 +49,8 @@ class DiscordAuthWebsocket extends EventEmitter {
   #createWebSocket(url: string) {
     this.#ws = new WebSocket(url, {
       headers: {
-        Origin: "https://discord.com",
-        "User-Agent": UserAgent,
+        Origin: 'https://discord.com',
+        'User-Agent': UserAgent,
       },
     });
     this.#handleWebSocket();
@@ -61,16 +61,16 @@ class DiscordAuthWebsocket extends EventEmitter {
     if (!socket) {
       return;
     }
-    socket.on("error", (error: Error) => {
+    socket.on('error', (error: Error) => {
       this.emit(Event.ERROR, error);
     });
-    socket.on("open", () => {
-      this.emit(Event.DEBUG, "[WS] Client Connected");
+    socket.on('open', () => {
+      this.emit(Event.DEBUG, '[WS] Client Connected');
     });
-    socket.on("close", () => {
-      this.emit(Event.DEBUG, "[WS] Connection closed");
+    socket.on('close', () => {
+      this.emit(Event.DEBUG, '[WS] Connection closed');
     });
-    socket.on("message", this.#handleMessage.bind(this));
+    socket.on('message', this.#handleMessage.bind(this));
   }
 
   #handleMessage(raw: unknown) {
@@ -139,7 +139,7 @@ class DiscordAuthWebsocket extends EventEmitter {
   }
 
   #ready(data: Record<string, unknown>) {
-    this.emit(Event.DEBUG, "Attempting server handshake...");
+    this.emit(Event.DEBUG, 'Attempting server handshake...');
     this.#expire = new Date(Date.now() + (data.timeout_ms as number));
     this.#heartbeatInterval = data.heartbeat_interval as number;
     this.#createKey();
@@ -148,15 +148,15 @@ class DiscordAuthWebsocket extends EventEmitter {
   }
 
   #createKey() {
-    const key = crypto.generateKeyPairSync("rsa", {
+    const key = crypto.generateKeyPairSync('rsa', {
       modulusLength: 2048,
       privateKeyEncoding: {
-        format: "pem",
-        type: "pkcs1",
+        format: 'pem',
+        type: 'pkcs1',
       },
       publicKeyEncoding: {
-        format: "pem",
-        type: "spki",
+        format: 'pem',
+        type: 'spki',
       },
     });
     this.#privateKey = key.privateKey;
@@ -165,7 +165,7 @@ class DiscordAuthWebsocket extends EventEmitter {
 
   #encodePublicKey() {
     let pub_key = this.#publicKey;
-    pub_key = pub_key.split("\n").slice(1, -2).join("");
+    pub_key = pub_key.split('\n').slice(1, -2).join('');
     return pub_key;
   }
 
@@ -177,21 +177,21 @@ class DiscordAuthWebsocket extends EventEmitter {
   #receiveNonceProof(data: Record<string, unknown>) {
     const nonce = data.encrypted_nonce;
     const decrypted_nonce = this.#decryptPayload(nonce);
-    const proof = Bun.CryptoHasher.hash("sha256", decrypted_nonce, "base64")
-      .replaceAll("+", "-")
-      .replaceAll("/", "_")
-      .replace(/=+/u, "")
-      .replace(/\s+$/u, "");
+    const proof = Bun.CryptoHasher.hash('sha256', decrypted_nonce, 'base64')
+      .replaceAll('+', '-')
+      .replaceAll('/', '_')
+      .replace(/=+/u, '')
+      .replace(/\s+$/u, '');
     this.#send(sendEvent.NONCE_PROOF, { proof });
   }
 
   #decryptPayload(encrypted_payload: unknown) {
-    const payload = Buffer.from(String(encrypted_payload), "base64");
+    const payload = Buffer.from(String(encrypted_payload), 'base64');
     const private_key = this.#privateKey;
     const data = crypto.privateDecrypt(
       {
         key: private_key,
-        oaepHash: "sha256",
+        oaepHash: 'sha256',
         padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
       },
       payload
@@ -227,7 +227,7 @@ class DiscordAuthWebsocket extends EventEmitter {
       return;
     }
     this.#ws.close();
-    this.emit(Event.DEBUG, "WebSocket closed.");
+    this.emit(Event.DEBUG, 'WebSocket closed.');
     this.emit(Event.CLOSED);
   }
 
@@ -237,7 +237,7 @@ class DiscordAuthWebsocket extends EventEmitter {
     }
     // The default qrcode renderer prints the QR as UTF-8 text.
     qrcode
-      .toString(this.AuthURL, { errorCorrectionLevel: "L" })
+      .toString(this.AuthURL, { errorCorrectionLevel: 'L' })
       .then((url: string) => console.log(url))
       .catch(() => false);
   }
@@ -251,24 +251,24 @@ class DiscordAuthWebsocket extends EventEmitter {
             ticket: this.#ticket,
           }),
           headers: {
-            Accept: "*/*",
-            "Accept-Language": "en-US",
-            Connection: "keep-alive",
-            "Content-Type": "application/json",
-            Origin: "https://discord.com",
-            Referer: "https://discord.com/channels/@me",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
-            "User-Agent": UserAgent,
-            "X-Debug-Options": "bugReporterEnabled",
-            "X-Discord-Locale": "en-US",
-            "X-Super-Properties": `${Buffer.from(
+            Accept: '*/*',
+            'Accept-Language': 'en-US',
+            Connection: 'keep-alive',
+            'Content-Type': 'application/json',
+            Origin: 'https://discord.com',
+            Referer: 'https://discord.com/channels/@me',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-origin',
+            'User-Agent': UserAgent,
+            'X-Debug-Options': 'bugReporterEnabled',
+            'X-Discord-Locale': 'en-US',
+            'X-Super-Properties': `${Buffer.from(
               JSON.stringify(defaultClientOptions.ws.properties),
-              "ascii"
-            ).toString("base64")}`,
+              'ascii'
+            ).toString('base64')}`,
           },
-          method: "POST",
+          method: 'POST',
         }
       );
       const body = (await response.json()) as Record<string, unknown>;
@@ -283,7 +283,7 @@ class DiscordAuthWebsocket extends EventEmitter {
   }
 
   static decryptUser(payload: unknown) {
-    const [id, discriminator, avatar, username] = String(payload).split(":");
+    const [id, discriminator, avatar, username] = String(payload).split(':');
     return {
       avatar,
       discriminator,

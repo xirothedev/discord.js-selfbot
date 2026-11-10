@@ -1,17 +1,17 @@
-import process from "node:process";
+import process from 'node:process';
 import type {
   APIMessage,
   APIUser,
   APIWebhookSourceChannel,
   APIWebhookSourceGuild,
   Snowflake,
-} from "discord-api-types/v10";
-import MessagePayload from "./MessagePayload";
-import { Message } from "./Message";
+} from 'discord-api-types/v10';
+import MessagePayload from './MessagePayload';
+import { Message } from './Message';
 import type {
   RawMessageData,
   RawWebhookData,
-} from "../../typings/rawDataTypes";
+} from '../../typings/rawDataTypes';
 import type {
   BufferResolvable,
   MessageResolvable,
@@ -21,21 +21,21 @@ import type {
   WebhookFetchMessageOptions,
   WebhookMessageOptions,
   WebhookType,
-} from "../../typings";
-import type { Client } from "../client/Client";
-import type { Channel } from "./Channel";
-import type User from "./User";
-import { isTextBasedChannel } from "../types/channels";
-import _errorsModule from "../errors";
+} from '../../typings';
+import type { Client } from '../client/Client';
+import type { Channel } from './Channel';
+import type User from './User';
+import { isTextBasedChannel } from '../types/channels';
+import _errorsModule from '../errors';
 
 const { Error } = _errorsModule;
-import _ConstantsModule from "../util/Constants";
+import _ConstantsModule from '../util/Constants';
 
 const { WebhookTypes } = _ConstantsModule;
-import DataResolver from "../util/DataResolver";
-import { patchValue } from "./Base";
-import SnowflakeUtil from "../util/SnowflakeUtil";
-import type { Guild } from "./Guild";
+import DataResolver from '../util/DataResolver';
+import { patchValue } from './Base';
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { Guild } from './Guild';
 
 let deprecationEmittedForFetchMessage = false;
 
@@ -53,7 +53,7 @@ class Webhook {
   declare type: WebhookType;
 
   constructor(client: Client, data?: RawWebhookData) {
-    Object.defineProperty(this, "client", { value: client });
+    Object.defineProperty(this, 'client', { value: client });
     if (data) {
       this._patch(data);
     }
@@ -62,7 +62,7 @@ class Webhook {
   _patch(data: RawWebhookData) {
     this.name = patchValue(data.name, this.name);
 
-    Object.defineProperty(this, "token", {
+    Object.defineProperty(this, 'token', {
       configurable: true,
       value: data.token ?? null,
       writable: true,
@@ -80,7 +80,7 @@ class Webhook {
     this.guildId = patchValue(data.guild_id, this.guildId);
     this.channelId = patchValue(data.channel_id, this.channelId);
 
-    if ("user" in data) {
+    if ('user' in data) {
       const added = this.client.users
         ? this.client.users._add(data.user)
         : null;
@@ -98,7 +98,7 @@ class Webhook {
       this.sourceGuild ??= null;
     }
 
-    if ("source_channel" in data) {
+    if ('source_channel' in data) {
       const sourceChannelData = data.source_channel;
       let sourceChannel: Channel | APIWebhookSourceChannel | null = null;
       if (sourceChannelData) {
@@ -117,7 +117,7 @@ class Webhook {
     options: string | MessagePayload | WebhookMessageOptions
   ): Promise<Message | APIMessage> {
     if (!this.token) {
-      throw new Error("WEBHOOK_TOKEN_UNAVAILABLE");
+      throw new Error('WEBHOOK_TOKEN_UNAVAILABLE');
     }
 
     const messagePayload =
@@ -134,12 +134,12 @@ class Webhook {
         files,
         query: {
           thread_id:
-            "threadId" in messagePayload.options
+            'threadId' in messagePayload.options
               ? messagePayload.options.threadId
               : undefined,
           wait: true,
           with_components:
-            "withComponents" in messagePayload.options
+            'withComponents' in messagePayload.options
               ? messagePayload.options.withComponents
               : undefined,
         },
@@ -155,7 +155,7 @@ class Webhook {
 
   async sendSlackMessage(body: unknown) {
     if (!this.token) {
-      throw new Error("WEBHOOK_TOKEN_UNAVAILABLE");
+      throw new Error('WEBHOOK_TOKEN_UNAVAILABLE');
     }
 
     const data = await this.client.api
@@ -166,7 +166,7 @@ class Webhook {
         query: { wait: true },
         webhook: true,
       });
-    return String(data) === "ok";
+    return String(data) === 'ok';
   }
 
   async edit({ name, avatar, channel }: WebhookEditData, reason?: string) {
@@ -174,7 +174,7 @@ class Webhook {
     if (
       resolvedAvatar &&
       !(
-        typeof resolvedAvatar === "string" && resolvedAvatar.startsWith("data:")
+        typeof resolvedAvatar === 'string' && resolvedAvatar.startsWith('data:')
       )
     ) {
       resolvedAvatar = await DataResolver.resolveImage(resolvedAvatar);
@@ -182,7 +182,7 @@ class Webhook {
     let channelId;
     if (channel) {
       channelId =
-        typeof channel === "object" && channel !== null && "id" in channel
+        typeof channel === 'object' && channel !== null && 'id' in channel
           ? channel.id
           : channel;
     }
@@ -206,15 +206,15 @@ class Webhook {
   }
 
   async fetchMessage(
-    message: Snowflake | "@original",
+    message: Snowflake | '@original',
     cacheOrOptions?: WebhookFetchMessageOptions | boolean
   ): Promise<Message | APIMessage> {
     let options: WebhookFetchMessageOptions;
-    if (typeof cacheOrOptions === "boolean") {
+    if (typeof cacheOrOptions === 'boolean') {
       if (!deprecationEmittedForFetchMessage) {
         process.emitWarning(
-          "Passing a boolean to cache the message in Webhook#fetchMessage is deprecated. Pass an object instead.",
-          "DeprecationWarning"
+          'Passing a boolean to cache the message in Webhook#fetchMessage is deprecated. Pass an object instead.',
+          'DeprecationWarning'
         );
 
         deprecationEmittedForFetchMessage = true;
@@ -226,7 +226,7 @@ class Webhook {
     }
 
     if (!this.token) {
-      throw new Error("WEBHOOK_TOKEN_UNAVAILABLE");
+      throw new Error('WEBHOOK_TOKEN_UNAVAILABLE');
     }
 
     const data = await this.client.api
@@ -248,11 +248,11 @@ class Webhook {
   }
 
   async editMessage(
-    message: MessageResolvable | "@original",
+    message: MessageResolvable | '@original',
     options: string | MessagePayload | WebhookEditMessageOptions
   ): Promise<Message | APIMessage> {
     if (!this.token) {
-      throw new Error("WEBHOOK_TOKEN_UNAVAILABLE");
+      throw new Error('WEBHOOK_TOKEN_UNAVAILABLE');
     }
 
     const messagePayload =
@@ -264,7 +264,7 @@ class Webhook {
 
     const d = await this.client.api
       .webhooks(this.id, this.token)
-      .messages(typeof message === "string" ? message : message.id)
+      .messages(typeof message === 'string' ? message : message.id)
       .patch<RawMessageData>({
         auth: false,
         data,
@@ -300,16 +300,16 @@ class Webhook {
   }
 
   async deleteMessage(
-    message: MessageResolvable | "@original",
+    message: MessageResolvable | '@original',
     threadId?: Snowflake
   ) {
     if (!this.token) {
-      throw new Error("WEBHOOK_TOKEN_UNAVAILABLE");
+      throw new Error('WEBHOOK_TOKEN_UNAVAILABLE');
     }
 
     await this.client.api
       .webhooks(this.id, this.token)
-      .messages(typeof message === "string" ? message : message.id)
+      .messages(typeof message === 'string' ? message : message.id)
       .delete({
         auth: false,
         query: {
@@ -339,7 +339,7 @@ class Webhook {
     );
   }
 
-  avatarURL({ format = "webp", size }: StaticImageURLOptions = {}) {
+  avatarURL({ format = 'webp', size }: StaticImageURLOptions = {}) {
     if (!this.avatar) {
       return null;
     }
@@ -347,25 +347,25 @@ class Webhook {
   }
 
   isChannelFollower() {
-    return this.type === "Channel Follower";
+    return this.type === 'Channel Follower';
   }
 
   isIncoming() {
-    return this.type === "Incoming";
+    return this.type === 'Incoming';
   }
 
   static applyToClass(structure: { prototype: object }, ignore: string[] = []) {
     for (const prop of [
-      "send",
-      "sendSlackMessage",
-      "fetchMessage",
-      "edit",
-      "editMessage",
-      "delete",
-      "deleteMessage",
-      "createdTimestamp",
-      "createdAt",
-      "url",
+      'send',
+      'sendSlackMessage',
+      'fetchMessage',
+      'edit',
+      'editMessage',
+      'delete',
+      'deleteMessage',
+      'createdTimestamp',
+      'createdAt',
+      'url',
     ]) {
       if (ignore.includes(prop)) {
         continue;

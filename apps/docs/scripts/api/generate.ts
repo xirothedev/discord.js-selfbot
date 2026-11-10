@@ -1,26 +1,26 @@
-import { mkdtempSync, readFileSync } from "node:fs";
-import os from "node:os";
-import path from "node:path";
+import { mkdtempSync, readFileSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-import { collectReflectionNames } from "./collect-names";
-import { frontmatterDescription } from "./comment";
-import { enrichClass, enrichType, loadApiStore } from "./enrich";
-import type { DocgenClass, DocgenType } from "./enrich";
-import { AREA_ORDER, areaFor, parseIndexExports, slugify } from "./exports";
-import { compareOutputs, meta, writeOutputs } from "./output-files";
-import type { GenerateResult } from "./output-files";
-import { renderApiIndex, renderAreaIndex } from "./render-index";
-import { renderPublicPage } from "./render-public-page";
-import { renderTypingsPage } from "./render-typings";
-import { reflectionsByName, runTypeDoc, sourceUrlFor } from "./typedoc";
-import { Kind } from "./types";
-import type { Reflection } from "./types";
-import { TYPINGS_GROUPS, typingsGroupFor } from "./typings-groups";
-import type { TypingsGroupId } from "./typings-groups";
+import { collectReflectionNames } from './collect-names';
+import { frontmatterDescription } from './comment';
+import { enrichClass, enrichType, loadApiStore } from './enrich';
+import type { DocgenClass, DocgenType } from './enrich';
+import { AREA_ORDER, areaFor, parseIndexExports, slugify } from './exports';
+import { compareOutputs, meta, writeOutputs } from './output-files';
+import type { GenerateResult } from './output-files';
+import { renderApiIndex, renderAreaIndex } from './render-index';
+import { renderPublicPage } from './render-public-page';
+import { renderTypingsPage } from './render-typings';
+import { reflectionsByName, runTypeDoc, sourceUrlFor } from './typedoc';
+import { Kind } from './types';
+import type { Reflection } from './types';
+import { TYPINGS_GROUPS, typingsGroupFor } from './typings-groups';
+import type { TypingsGroupId } from './typings-groups';
 
-const docsDir = path.resolve(import.meta.dir, "../..");
-const repoRoot = path.resolve(docsDir, "../..");
-const packageDir = path.join(repoRoot, "packages/discord-ts-selfbot");
+const docsDir = path.resolve(import.meta.dir, '../..');
+const repoRoot = path.resolve(docsDir, '../..');
+const packageDir = path.join(repoRoot, 'packages/discord-ts-selfbot');
 
 interface PageItem {
   title: string;
@@ -35,8 +35,8 @@ interface TypingsSection {
 
 function sourceUrlForExport(exportedPath: string): string {
   const relative =
-    exportedPath === "./index"
-      ? "src/index.ts"
+    exportedPath === './index'
+      ? 'src/index.ts'
       : `src/${exportedPath.slice(2)}.ts`;
   return `https://github.com/xirothedev/discord.js-selfbot/blob/main/packages/discord-ts-selfbot/${relative}#L1`;
 }
@@ -51,8 +51,8 @@ function sourceUrlForEntry(
   }
   const full = [entryMeta.path, entryMeta.file]
     .filter(Boolean)
-    .join("/")
-    .replace(/\.js$/u, ".ts");
+    .join('/')
+    .replace(/\.js$/u, '.ts');
   return `https://github.com/xirothedev/discord.js-selfbot/blob/main/packages/discord-ts-selfbot/${full}#L${
     entryMeta.line ?? 1
   }`;
@@ -119,25 +119,25 @@ function addTypingsGroups(input: {
 
 export function generateApi(options: { check?: boolean } = {}): GenerateResult {
   const tempDir = mkdtempSync(
-    path.join(os.tmpdir(), "discord-ts-selfbot-api-")
+    path.join(os.tmpdir(), 'discord-ts-selfbot-api-')
   );
   const typingsProject = runTypeDoc({
-    entryPointStrategy: "resolve",
-    entryPoints: ["typings/index.d.ts"],
-    outputJson: path.join(tempDir, "typings.json"),
+    entryPointStrategy: 'resolve',
+    entryPoints: ['typings/index.d.ts'],
+    outputJson: path.join(tempDir, 'typings.json'),
     packageDir,
   });
 
   const parsed = parseIndexExports(
-    readFileSync(path.join(packageDir, "src/index.ts"), "utf-8")
+    readFileSync(path.join(packageDir, 'src/index.ts'), 'utf-8')
   );
   const { version } = JSON.parse(
-    readFileSync(path.join(packageDir, "package.json"), "utf-8")
+    readFileSync(path.join(packageDir, 'package.json'), 'utf-8')
   ) as {
     version: string;
   };
   const typingsReflections = reflectionsByName(typingsProject);
-  const store = loadApiStore(path.join(docsDir, "scripts/agent/api.json"));
+  const store = loadApiStore(path.join(docsDir, 'scripts/agent/api.json'));
   const outputs = new Map<string, string>();
   const areaItems = new Map<string, PageItem[]>();
   const areaCounts = new Map<string, number>();
@@ -204,21 +204,21 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
   });
 
   if (typingsSection.items.length) {
-    areaItems.set("typings", typingsSection.items);
-    areaCounts.set("typings", typingsSection.count);
+    areaItems.set('typings', typingsSection.items);
+    areaCounts.set('typings', typingsSection.count);
     outputs.set(
-      "api/typings/index.mdx",
+      'api/typings/index.mdx',
       renderAreaIndex({
         description:
-          "Public interfaces, type aliases, variables, and functions from typings/index.d.ts.",
+          'Public interfaces, type aliases, variables, and functions from typings/index.d.ts.',
         items: typingsSection.items,
-        title: "Typings",
+        title: 'Typings',
       })
     );
     outputs.set(
-      "api/typings/meta.json",
-      meta("Typings", [
-        "index",
+      'api/typings/meta.json',
+      meta('Typings', [
+        'index',
         ...typingsSection.items.map((item) => path.basename(item.href)),
       ])
     );
@@ -240,7 +240,7 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
     outputs.set(
       `api/${area}/meta.json`,
       meta(areaMeta?.title ?? area, [
-        "index",
+        'index',
         ...sorted.map((item) => path.basename(item.href)),
       ])
     );
@@ -251,7 +251,7 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
     count: areaCounts.get(area.id) ?? 0,
   }));
   outputs.set(
-    "api/index.mdx",
+    'api/index.mdx',
     renderApiIndex({
       aliases: parsed.aliases.map((item) => item.name),
       areas: indexAreas,
@@ -261,9 +261,9 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
     })
   );
   outputs.set(
-    "api/meta.json",
-    meta("API Reference", [
-      "index",
+    'api/meta.json',
+    meta('API Reference', [
+      'index',
       ...indexAreas.filter((area) => area.count > 0).map((area) => area.id),
     ])
   );

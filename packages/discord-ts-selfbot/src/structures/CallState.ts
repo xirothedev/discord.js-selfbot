@@ -1,9 +1,9 @@
-import { Collection } from "@discordjs/collection";
-import Base from "./Base";
-import type { Snowflake } from "discord-api-types/v10";
-import type { Client } from "../client/Client";
-import type { User } from "./User";
-import type { RawVoiceStateData } from "../../typings/rawDataTypes";
+import { Collection } from '@discordjs/collection';
+import Base from './Base';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { Client } from '../client/Client';
+import type { User } from './User';
+import type { RawVoiceStateData } from '../../typings/rawDataTypes';
 
 export interface CallData {
   channel_id: Snowflake;
@@ -26,7 +26,7 @@ class CallState extends Base {
   }
 
   _patch(data: Partial<CallData>) {
-    if (typeof data.region === "string") {
+    if (typeof data.region === 'string') {
       this.region = data.region;
     }
     if (Array.isArray(data.ringing)) {
@@ -40,7 +40,7 @@ class CallState extends Base {
 
   setRTCRegion(region: string) {
     return this.client.api
-      .channels(this.channelId, "call")
+      .channels(this.channelId, 'call')
       .patch({ data: { region } });
   }
 

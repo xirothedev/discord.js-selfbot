@@ -1,5 +1,5 @@
-import GuildChannel from "./GuildChannel";
-import type { CategoryCreateChannelOptions } from "../../typings";
+import GuildChannel from './GuildChannel';
+import type { CategoryCreateChannelOptions } from '../../typings';
 
 class CategoryChannel extends GuildChannel {
   get children() {

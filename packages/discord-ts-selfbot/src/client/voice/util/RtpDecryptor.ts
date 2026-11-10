@@ -1,7 +1,7 @@
-import { Buffer } from "node:buffer";
-import crypto from "node:crypto";
-import { RtpPacket } from "werift-rtp";
-import secretbox from "./Secretbox";
+import { Buffer } from 'node:buffer';
+import crypto from 'node:crypto';
+import { RtpPacket } from 'werift-rtp';
+import secretbox from './Secretbox';
 
 const UNPADDED_NONCE_LENGTH = 4;
 const AUTH_TAG_LENGTH = 16;
@@ -18,10 +18,10 @@ const RtpDecryptor = {
   ): RtpPacket | Error {
     const { secret_key, mode } = authentication;
     if (!secret_key) {
-      return new Error("secret_key cannot be null or undefined");
+      return new Error('secret_key cannot be null or undefined');
     }
     const nonce =
-      mode === "aead_aes256_gcm_rtpsize" ? Buffer.alloc(12) : Buffer.alloc(24);
+      mode === 'aead_aes256_gcm_rtpsize' ? Buffer.alloc(12) : Buffer.alloc(24);
     buffer.copy(nonce, 0, buffer.length - UNPADDED_NONCE_LENGTH);
 
     let headerSize = 12;
@@ -42,9 +42,9 @@ const RtpDecryptor = {
 
     let packet: Buffer;
     switch (mode) {
-      case "aead_aes256_gcm_rtpsize": {
+      case 'aead_aes256_gcm_rtpsize': {
         const decipheriv = crypto.createDecipheriv(
-          "aes-256-gcm",
+          'aes-256-gcm',
           secret_key,
           nonce
         );
@@ -56,7 +56,7 @@ const RtpDecryptor = {
         ]);
         break;
       }
-      case "aead_xchacha20_poly1305_rtpsize": {
+      case 'aead_xchacha20_poly1305_rtpsize': {
         const decrypted =
           secretbox.methods.crypto_aead_xchacha20poly1305_ietf_decrypt(
             Buffer.concat([encrypted, authTag]),

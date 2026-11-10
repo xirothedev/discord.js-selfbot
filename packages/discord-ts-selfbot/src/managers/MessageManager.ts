@@ -1,15 +1,15 @@
-import { Collection } from "@discordjs/collection";
-import CachedManager from "./CachedManager";
-import _errorsModule from "../errors";
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
 
 const { TypeError } = _errorsModule;
-import _MessageModule from "../structures/Message";
+import _MessageModule from '../structures/Message';
 
 const { Message } = _MessageModule;
-import MessagePayload from "../structures/MessagePayload";
-import type { MessagePayloadOptions } from "../structures/MessagePayload";
-import Util from "../util/Util";
-import type { Snowflake } from "discord-api-types/v10";
+import MessagePayload from '../structures/MessagePayload';
+import type { MessagePayloadOptions } from '../structures/MessagePayload';
+import Util from '../util/Util';
+import type { Snowflake } from 'discord-api-types/v10';
 import type {
   BaseFetchOptions,
   ChannelLogsQueryOptions,
@@ -18,13 +18,13 @@ import type {
   MessageSearchOptions,
   TextChannelResolvable,
   UserResolvable,
-} from "../../typings";
-import type { RawMessageData, RawUserData } from "../../typings/rawDataTypes";
-import type { Message as SourceMessage } from "../structures/Message";
-import type { User } from "../structures/User";
-import type { UploadAttachment } from "../types/uploads";
-import type { Client } from "../client/Client";
-import type { Guild } from "../structures/Guild";
+} from '../../typings';
+import type { RawMessageData, RawUserData } from '../../typings/rawDataTypes';
+import type { Message as SourceMessage } from '../structures/Message';
+import type { User } from '../structures/User';
+import type { UploadAttachment } from '../types/uploads';
+import type { Client } from '../client/Client';
+import type { Guild } from '../structures/Guild';
 
 type MessageResolvableSource = SourceMessage | Snowflake;
 
@@ -39,7 +39,7 @@ interface MessageSearchDefaults {
   authors: UserResolvable[];
   content: string;
   mentions: UserResolvable[];
-  has: NonNullable<MessageSearchOptions["has"]>;
+  has: NonNullable<MessageSearchOptions['has']>;
   maxId: Snowflake | null;
   minId: Snowflake | null;
   channels: TextChannelResolvable[];
@@ -47,8 +47,8 @@ interface MessageSearchDefaults {
   nsfw: boolean;
   offset: number;
   limit: number;
-  sortBy: NonNullable<MessageSearchOptions["sortBy"]>;
-  sortOrder: NonNullable<MessageSearchOptions["sortOrder"]>;
+  sortBy: NonNullable<MessageSearchOptions['sortBy']>;
+  sortOrder: NonNullable<MessageSearchOptions['sortOrder']>;
 }
 
 interface MessageSearchResultSource {
@@ -72,21 +72,21 @@ interface RawPinnedMessagesResponse {
 function buildSearchQuery(search: MessageSearchDefaults): string[] {
   const stringQuery: string[] = [];
   if (search.authors.length > 0) {
-    stringQuery.push(search.authors.map((id) => `author_id=${id}`).join("&"));
+    stringQuery.push(search.authors.map((id) => `author_id=${id}`).join('&'));
   }
   if (search.content && search.content.length) {
     stringQuery.push(`content=${encodeURIComponent(search.content)}`);
   }
   if (search.mentions.length > 0) {
-    stringQuery.push(search.mentions.map((id) => `mentions=${id}`).join("&"));
+    stringQuery.push(search.mentions.map((id) => `mentions=${id}`).join('&'));
   }
   const has = search.has.filter((option) =>
-    ["link", "embed", "file", "video", "image", "sound", "sticker"].includes(
+    ['link', 'embed', 'file', 'video', 'image', 'sound', 'sticker'].includes(
       option
     )
   );
   if (has.length > 0) {
-    stringQuery.push(has.map((option) => `has=${option}`).join("&"));
+    stringQuery.push(has.map((option) => `has=${option}`).join('&'));
   }
   if (search.maxId) {
     stringQuery.push(`max_id=${search.maxId}`);
@@ -95,7 +95,7 @@ function buildSearchQuery(search: MessageSearchDefaults): string[] {
     stringQuery.push(`min_id=${search.minId}`);
   }
   if (search.nsfw) {
-    stringQuery.push("include_nsfw=true");
+    stringQuery.push('include_nsfw=true');
   }
   if (search.offset !== 0) {
     stringQuery.push(`offset=${search.offset}`);
@@ -103,20 +103,20 @@ function buildSearchQuery(search: MessageSearchDefaults): string[] {
   if (search.limit !== 25) {
     stringQuery.push(`limit=${search.limit}`);
   }
-  if (["timestamp", "relevance"].includes(search.sortBy)) {
+  if (['timestamp', 'relevance'].includes(search.sortBy)) {
     stringQuery.push(`sort_by=${search.sortBy}`);
   } else {
-    stringQuery.push("sort_by=timestamp");
+    stringQuery.push('sort_by=timestamp');
   }
-  if (["asc", "desc"].includes(search.sortOrder)) {
+  if (['asc', 'desc'].includes(search.sortOrder)) {
     stringQuery.push(`sort_order=${search.sortOrder}`);
   } else {
-    stringQuery.push("sort_order=desc");
+    stringQuery.push('sort_order=desc');
   }
   if (search.channels.length > 0) {
-    stringQuery.push(search.channels.map((id) => `channel_id=${id}`).join("&"));
+    stringQuery.push(search.channels.map((id) => `channel_id=${id}`).join('&'));
   }
-  if (typeof search.pinned === "boolean") {
+  if (typeof search.pinned === 'boolean') {
     stringQuery.push(`pinned=${search.pinned}`);
   }
   return stringQuery;
@@ -146,7 +146,7 @@ class MessageManager extends CachedManager<SourceMessage> {
     message?: Snowflake | ChannelLogsQueryOptions,
     { cache = true, force = false }: BaseFetchOptions = {}
   ) {
-    return typeof message === "string"
+    return typeof message === 'string'
       ? this._fetchId(message, cache, force)
       : this._fetchMany(message, cache);
   }
@@ -170,7 +170,7 @@ class MessageManager extends CachedManager<SourceMessage> {
   ): Promise<SourceMessage> {
     const messageId = this.resolveId(message);
     if (!messageId) {
-      throw new TypeError("INVALID_TYPE", "message", "MessageResolvable");
+      throw new TypeError('INVALID_TYPE', 'message', 'MessageResolvable');
     }
 
     const { data, files } = await (
@@ -196,7 +196,7 @@ class MessageManager extends CachedManager<SourceMessage> {
       async (attachment: UploadAttachment) => {
         const file = fileList[Number(attachment.id)];
         if (!file) {
-          throw new TypeError("INVALID_TYPE", "attachment", "FileOptions");
+          throw new TypeError('INVALID_TYPE', 'attachment', 'FileOptions');
         }
         await Util.uploadFile(file.file, attachment.upload_url);
         return {
@@ -235,7 +235,7 @@ class MessageManager extends CachedManager<SourceMessage> {
   async crosspost(message: MessageResolvableSource) {
     const messageId = this.resolveId(message);
     if (!messageId) {
-      throw new TypeError("INVALID_TYPE", "message", "MessageResolvable");
+      throw new TypeError('INVALID_TYPE', 'message', 'MessageResolvable');
     }
 
     const data = await this.client.api
@@ -248,7 +248,7 @@ class MessageManager extends CachedManager<SourceMessage> {
   async pin(message: MessageResolvableSource, reason?: string) {
     const messageId = this.resolveId(message);
     if (!messageId) {
-      throw new TypeError("INVALID_TYPE", "message", "MessageResolvable");
+      throw new TypeError('INVALID_TYPE', 'message', 'MessageResolvable');
     }
 
     await this.client.api
@@ -260,7 +260,7 @@ class MessageManager extends CachedManager<SourceMessage> {
   async unpin(message: MessageResolvableSource, reason?: string) {
     const messageId = this.resolveId(message);
     if (!messageId) {
-      throw new TypeError("INVALID_TYPE", "message", "MessageResolvable");
+      throw new TypeError('INVALID_TYPE', 'message', 'MessageResolvable');
     }
 
     await this.client.api
@@ -276,23 +276,23 @@ class MessageManager extends CachedManager<SourceMessage> {
   ) {
     const messageId = this.resolveId(message);
     if (!messageId) {
-      throw new TypeError("INVALID_TYPE", "message", "MessageResolvable");
+      throw new TypeError('INVALID_TYPE', 'message', 'MessageResolvable');
     }
 
     const resolvedEmoji = Util.resolvePartialEmoji(emoji);
     if (!resolvedEmoji) {
-      throw new TypeError("EMOJI_TYPE", "emoji", "EmojiIdentifierResolvable");
+      throw new TypeError('EMOJI_TYPE', 'emoji', 'EmojiIdentifierResolvable');
     }
 
-    const emojiName = resolvedEmoji.name ?? "";
+    const emojiName = resolvedEmoji.name ?? '';
     const emojiId = resolvedEmoji.id
-      ? `${resolvedEmoji.animated ? "a:" : ""}${emojiName}:${resolvedEmoji.id}`
+      ? `${resolvedEmoji.animated ? 'a:' : ''}${emojiName}:${resolvedEmoji.id}`
       : encodeURIComponent(emojiName);
 
     await this.client.api
       .channels(this.channel.id)
       .messages(messageId)
-      .reactions(emojiId, "@me")
+      .reactions(emojiId, '@me')
       .put({
         query: {
           type: burst ? 1 : 0,
@@ -303,7 +303,7 @@ class MessageManager extends CachedManager<SourceMessage> {
   async delete(message: MessageResolvableSource) {
     const messageId = this.resolveId(message);
     if (!messageId) {
-      throw new TypeError("INVALID_TYPE", "message", "MessageResolvable");
+      throw new TypeError('INVALID_TYPE', 'message', 'MessageResolvable');
     }
 
     await this.client.api
@@ -331,7 +331,7 @@ class MessageManager extends CachedManager<SourceMessage> {
     );
     const message = messages.get(messageId);
     if (!message) {
-      throw new Error("MESSAGE_ID_NOT_FOUND");
+      throw new Error('MESSAGE_ID_NOT_FOUND');
     }
     return message;
   }
@@ -342,7 +342,7 @@ class MessageManager extends CachedManager<SourceMessage> {
     const defaults: MessageSearchDefaults = {
       authors: [],
       channels: [],
-      content: "",
+      content: '',
       has: [],
       limit: 25,
       maxId: null,
@@ -351,8 +351,8 @@ class MessageManager extends CachedManager<SourceMessage> {
       nsfw: false,
       offset: 0,
       pinned: false,
-      sortBy: "timestamp",
-      sortOrder: "desc",
+      sortBy: 'timestamp',
+      sortOrder: 'desc',
     };
     const merged = Object.assign(defaults, options);
     let { authors, mentions, channels } = merged;
@@ -386,7 +386,7 @@ class MessageManager extends CachedManager<SourceMessage> {
         .filter((id) => this.isSearchableChannel(id));
     }
     if (limit && limit > 25) {
-      throw new RangeError("MESSAGE_SEARCH_LIMIT");
+      throw new RangeError('MESSAGE_SEARCH_LIMIT');
     }
     const result = new Collection<Snowflake, SourceMessage>();
     let data: MessageSearchResponse;
@@ -415,17 +415,17 @@ class MessageManager extends CachedManager<SourceMessage> {
     if (this.channel.guildId) {
       data =
         await this.client.api.guilds[this.channel.guildId].messages[
-          `search?${stringQuery.join("&")}`
+          `search?${stringQuery.join('&')}`
         ].get();
     } else {
       stringQuery = stringQuery.filter(
         (queryPart) =>
-          !queryPart.startsWith("channel_id") &&
-          !queryPart.startsWith("include_nsfw")
+          !queryPart.startsWith('channel_id') &&
+          !queryPart.startsWith('include_nsfw')
       );
       data =
         await this.client.api.channels[this.channel.id].messages[
-          `search?${stringQuery.join("&")}`
+          `search?${stringQuery.join('&')}`
         ].get();
     }
 
@@ -457,8 +457,8 @@ class MessageManager extends CachedManager<SourceMessage> {
     const perm = channel.permissionsFor(clientUser);
     if (
       !perm ||
-      !perm.has("READ_MESSAGE_HISTORY") ||
-      !perm.has("VIEW_CHANNEL")
+      !perm.has('READ_MESSAGE_HISTORY') ||
+      !perm.has('VIEW_CHANNEL')
     ) {
       return false;
     }

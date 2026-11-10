@@ -5,8 +5,8 @@ import {
   rmSync,
   statSync,
   writeFileSync,
-} from "node:fs";
-import path from "node:path";
+} from 'node:fs';
+import path from 'node:path';
 
 export function walk(root: string): string[] {
   if (!statSync(root, { throwIfNoEntry: false })) {
@@ -40,13 +40,13 @@ export function compareTrees(
   const expected = new Map(
     walk(expectedRoot).map((file) => [
       path.relative(expectedRoot, file),
-      readFileSync(file, "utf-8"),
+      readFileSync(file, 'utf-8'),
     ])
   );
   const actual = new Map(
     walk(actualRoot).map((file) => [
       path.relative(actualRoot, file),
-      readFileSync(file, "utf-8"),
+      readFileSync(file, 'utf-8'),
     ])
   );
   const diffs: string[] = [];

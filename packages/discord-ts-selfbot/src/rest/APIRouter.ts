@@ -1,12 +1,12 @@
 const noop = () => null;
-const methods = ["get", "post", "delete", "patch", "put"];
+const methods = ['get', 'post', 'delete', 'patch', 'put'];
 const reflectors: (string | symbol)[] = [
-  "toString",
-  "valueOf",
-  "inspect",
-  "constructor",
+  'toString',
+  'valueOf',
+  'inspect',
+  'constructor',
   Symbol.toPrimitive,
-  Symbol.for("nodejs.util.inspect.custom"),
+  Symbol.for('nodejs.util.inspect.custom'),
 ];
 
 export type ApiRouter = ((...args: unknown[]) => ApiRouter) & {
@@ -27,7 +27,7 @@ function buildRoute(manager: {
   ) => unknown;
   versioned: boolean;
 }): ApiRouter {
-  const route: string[] = [""];
+  const route: string[] = [''];
   const handler = {
     apply(_target: unknown, _thisArg: unknown, args: unknown[]) {
       route.push(
@@ -39,13 +39,13 @@ function buildRoute(manager: {
     },
     get(_target: unknown, name: string | symbol) {
       if (reflectors.includes(name)) {
-        return () => route.join("/");
+        return () => route.join('/');
       }
       if (methods.includes(name as string)) {
         const routeBucket: string[] = [];
         for (let index = 0; index < route.length; index++) {
           // Reactions routes and sub-routes all share the same bucket
-          if (route[index - 1] === "reactions") {
+          if (route[index - 1] === 'reactions') {
             break;
           }
           // Literal ids should only be taken account if they are the Major id (the Channel/Guild id)
@@ -53,7 +53,7 @@ function buildRoute(manager: {
             /\d{16,19}/u.test(route[index]) &&
             !/channels|guilds/u.test(route[index - 1])
           ) {
-            routeBucket.push(":id");
+            routeBucket.push(':id');
           } else {
             // All other parts of the route should be considered as part of the bucket identifier
             routeBucket.push(route[index]);
@@ -62,10 +62,10 @@ function buildRoute(manager: {
         return (options?: unknown) =>
           manager.request(
             name as string,
-            route.join("/"),
+            route.join('/'),
             Object.assign(
               {
-                route: routeBucket.join("/"),
+                route: routeBucket.join('/'),
                 versioned: manager.versioned,
               },
               (options ?? {}) as Record<string, unknown>

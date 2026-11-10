@@ -1,12 +1,12 @@
-import { Buffer } from "node:buffer";
-import { setTimeout } from "node:timers";
-import { FormData, buildConnector, Client, ProxyAgent } from "undici";
-import _ConstantsModule from "../util/Constants";
+import { Buffer } from 'node:buffer';
+import { setTimeout } from 'node:timers';
+import { FormData, buildConnector, Client, ProxyAgent } from 'undici';
+import _ConstantsModule from '../util/Constants';
 
 const { ciphers } = _ConstantsModule;
-import Util from "../util/Util";
-import type RESTManager from "../rest/RESTManager";
-import type { BaseClient } from "../client/BaseClient";
+import Util from '../util/Util';
+import type RESTManager from '../rest/RESTManager';
+import type { BaseClient } from '../client/BaseClient';
 
 let agent: unknown = null;
 
@@ -29,19 +29,19 @@ class APIRequest {
     this.rest = rest;
     this.client = rest.client;
     this.method = method;
-    this.route = (options.route as string) ?? "";
+    this.route = (options.route as string) ?? '';
     this.options = options;
     this.retries = 0;
 
     this.fullUserAgent = (
       this.client.options as { http: { headers: Record<string, string> } }
-    ).http.headers["User-Agent"];
+    ).http.headers['User-Agent'];
 
     (
       this.client.options as { ws: { properties: Record<string, string> } }
     ).ws.properties.browser_user_agent = this.fullUserAgent;
 
-    let queryString = "";
+    let queryString = '';
     if (options.query) {
       const queryOptions = options.query as Record<string, unknown>;
       const query = Object.entries(queryOptions)
@@ -76,12 +76,12 @@ class APIRequest {
     return this.rest
       .fetch(url, {
         body,
-        credentials: "include",
+        credentials: 'include',
         dispatcher: agent as never,
         headers: headers as never,
         method: this.method.toUpperCase(),
         // Undici doesn't normalize "patch" into "PATCH" (which surprisingly follows the spec).
-        redirect: "follow",
+        redirect: 'follow',
         signal: controller.signal,
       })
       .finally(() => clearTimeout(timeout));
@@ -97,10 +97,10 @@ class APIRequest {
     agent = proxyAgent
       ? new ProxyAgent({
           ...proxyAgent,
-          ciphers: ciphers.join(":"),
+          ciphers: ciphers.join(':'),
         } as never)
-      : new Client("https://discord.com", {
-          connect: buildConnector({ ciphers: ciphers.join(":") }),
+      : new Client('https://discord.com', {
+          connect: buildConnector({ ciphers: ciphers.join(':') }),
         });
   }
 
@@ -109,33 +109,33 @@ class APIRequest {
     captchaRqToken?: unknown
   ): Record<string, unknown> {
     let headers: Record<string, unknown> = {
-      accept: "*/*",
-      "accept-language": "en-US",
-      origin: "https://discord.com",
-      priority: "u=1, i",
-      referer: "https://discord.com/channels/@me",
-      "sec-ch-ua": '"Not:A-Brand";v="24", "Chromium";v="134"',
-      "sec-ch-ua-mobile": "?0",
-      "sec-ch-ua-platform": '"Windows"',
-      "sec-fetch-dest": "empty",
-      "sec-fetch-mode": "cors",
-      "sec-fetch-site": "same-origin",
-      "x-debug-options": "bugReporterEnabled",
-      "x-discord-locale": "en-US",
-      "x-discord-timezone": Intl.DateTimeFormat().resolvedOptions().timeZone,
-      "x-super-properties": `${Buffer.from(
+      accept: '*/*',
+      'accept-language': 'en-US',
+      origin: 'https://discord.com',
+      priority: 'u=1, i',
+      referer: 'https://discord.com/channels/@me',
+      'sec-ch-ua': '"Not:A-Brand";v="24", "Chromium";v="134"',
+      'sec-ch-ua-mobile': '?0',
+      'sec-ch-ua-platform': '"Windows"',
+      'sec-fetch-dest': 'empty',
+      'sec-fetch-mode': 'cors',
+      'sec-fetch-site': 'same-origin',
+      'x-debug-options': 'bugReporterEnabled',
+      'x-discord-locale': 'en-US',
+      'x-discord-timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
+      'x-super-properties': `${Buffer.from(
         JSON.stringify(this.client.options.ws.properties),
-        "ascii"
-      ).toString("base64")}`,
+        'ascii'
+      ).toString('base64')}`,
       ...this.client.options.http.headers,
-      "User-Agent": this.fullUserAgent,
+      'User-Agent': this.fullUserAgent,
     };
 
     if (this.options.auth !== false) {
       headers.Authorization = this.rest.getAuth();
     }
     if (this.options.reason) {
-      headers["X-Audit-Log-Reason"] = encodeURIComponent(
+      headers['X-Audit-Log-Reason'] = encodeURIComponent(
         String(this.options.reason)
       );
     }
@@ -149,28 +149,28 @@ class APIRequest {
     );
     if (this.options.webhook === true) {
       headers = {
-        "User-Agent": this.client.options.http.headers["User-Agent"],
+        'User-Agent': this.client.options.http.headers['User-Agent'],
       };
     }
 
     // Some options
     if (this.options.DiscordContext) {
-      headers["X-Context-Properties"] = Buffer.from(
+      headers['X-Context-Properties'] = Buffer.from(
         JSON.stringify(this.options.DiscordContext),
-        "utf-8"
-      ).toString("base64");
+        'utf-8'
+      ).toString('base64');
     }
 
     if (this.options.mfaToken) {
-      headers["X-Discord-Mfa-Authorization"] = this.options.mfaToken;
+      headers['X-Discord-Mfa-Authorization'] = this.options.mfaToken;
     }
 
     // Captcha
-    if (captchaKey && typeof captchaKey === "string") {
-      headers["X-Captcha-Key"] = captchaKey;
+    if (captchaKey && typeof captchaKey === 'string') {
+      headers['X-Captcha-Key'] = captchaKey;
     }
-    if (captchaRqToken && typeof captchaRqToken === "string") {
-      headers["X-Captcha-Rqtoken"] = captchaRqToken;
+    if (captchaRqToken && typeof captchaRqToken === 'string') {
+      headers['X-Captcha-Rqtoken'] = captchaRqToken;
     }
 
     return headers;
@@ -193,7 +193,7 @@ class APIRequest {
         };
         if (filePart.file) {
           body.set(filePart.key ?? `files[${index}]`, {
-            [Symbol.toStringTag]: "File",
+            [Symbol.toStringTag]: 'File',
             name: filePart.name,
             stream: () => filePart.file,
           });
@@ -207,16 +207,16 @@ class APIRequest {
             body.append(key, value);
           }
         } else {
-          body.append("payload_json", JSON.stringify(this.options.data));
+          body.append('payload_json', JSON.stringify(this.options.data));
         }
       }
     } else if (this.options.data !== null && this.options.data !== undefined) {
       if (this.options.usePayloadJSON) {
         body = new FormData();
-        body.append("payload_json", JSON.stringify(this.options.data));
+        body.append('payload_json', JSON.stringify(this.options.data));
       } else {
         body = JSON.stringify(this.options.data);
-        headers["Content-Type"] = "application/json";
+        headers['Content-Type'] = 'application/json';
       }
     }
     return body;

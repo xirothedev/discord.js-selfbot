@@ -1,7 +1,7 @@
-import CachedManager from "./CachedManager";
-import Session from "../structures/Session";
-import type { RawSessionData } from "../structures/Session";
-import type { Client } from "../client/Client";
+import CachedManager from './CachedManager';
+import Session from '../structures/Session';
+import type { RawSessionData } from '../structures/Session';
+import type { Client } from '../client/Client';
 
 class SessionManager extends CachedManager<Session> {
   declare currentSessionIdHash: string | null;
@@ -29,7 +29,7 @@ class SessionManager extends CachedManager<Session> {
       data: {
         session_id_hashes: this.cache
           .map((session) => session.id)
-          .filter((id): id is string => typeof id === "string"),
+          .filter((id): id is string => typeof id === 'string'),
       },
     });
   }

@@ -1,42 +1,42 @@
-import _ChannelModule from "./Channel";
+import _ChannelModule from './Channel';
 
 const { Channel } = _ChannelModule;
-import TextBasedChannel from "./interfaces/TextBasedChannel";
-import _errorsModule from "../errors";
+import TextBasedChannel from './interfaces/TextBasedChannel';
+import _errorsModule from '../errors';
 
 const { RangeError } = _errorsModule;
-import MessageManager from "../managers/MessageManager";
-import { patchValue } from "./Base";
-import ThreadMemberManager from "../managers/ThreadMemberManager";
-import ChannelFlags from "../util/ChannelFlags";
-import Permissions from "../util/Permissions";
-import _UtilModule from "../util/Util";
-import { isTextBasedChannel } from "../types/channels";
+import MessageManager from '../managers/MessageManager';
+import { patchValue } from './Base';
+import ThreadMemberManager from '../managers/ThreadMemberManager';
+import ChannelFlags from '../util/ChannelFlags';
+import Permissions from '../util/Permissions';
+import _UtilModule from '../util/Util';
+import { isTextBasedChannel } from '../types/channels';
 
 const { resolveAutoArchiveMaxLimit } = _UtilModule;
 import type {
   GatewayThreadUpdateDispatchData,
   Snowflake,
-} from "discord-api-types/v10";
+} from 'discord-api-types/v10';
 import type {
   BaseFetchOptions,
   ChannelFlagsResolvable,
   ThreadAutoArchiveDuration,
   ThreadEditData,
-} from "../../typings";
-import type { BitFieldResolvable } from "../util/BitField";
+} from '../../typings';
+import type { BitFieldResolvable } from '../util/BitField';
 import type {
   RawChannelData,
   RawMessageData,
   RawThreadMemberData,
-} from "../../typings/rawDataTypes";
-import type { PatchOf } from "../types/schema";
-import type { GuildMember } from "./GuildMember";
-import type { Role } from "./Role";
-import type { User } from "./User";
-import type { ThreadMember } from "./ThreadMember";
+} from '../../typings/rawDataTypes';
+import type { PatchOf } from '../types/schema';
+import type { GuildMember } from './GuildMember';
+import type { Role } from './Role';
+import type { User } from './User';
+import type { ThreadMember } from './ThreadMember';
 
-type ThreadChannelPatch = PatchOf<"Channel"> & {
+type ThreadChannelPatch = PatchOf<'Channel'> & {
   owner_id?: Snowflake;
   guild_id?: Snowflake;
   name?: string;
@@ -60,13 +60,13 @@ type ThreadChannelPatch = PatchOf<"Channel"> & {
   messages?: RawMessageData[];
 };
 
-type ThreadEditDataSource = Omit<ThreadEditData, "flags"> & {
+type ThreadEditDataSource = Omit<ThreadEditData, 'flags'> & {
   flags?: BitFieldResolvable | ChannelFlagsResolvable;
 };
-import type { Guild } from "./Guild";
-import type Client from "../client/Client";
-import type { GuildChannel } from "./GuildChannel";
-import type { SendOptions, SendResult } from "../types/channels";
+import type { Guild } from './Guild';
+import type Client from '../client/Client';
+import type { GuildChannel } from './GuildChannel';
+import type { SendOptions, SendResult } from '../types/channels';
 
 class ThreadChannel extends Channel {
   declare guild: Guild;
@@ -100,7 +100,7 @@ class ThreadChannel extends Channel {
     this.guild = guild;
 
     if (data.owner_id === undefined) {
-      throw new TypeError("A thread owner id is required");
+      throw new TypeError('A thread owner id is required');
     }
     this.ownerId = data.owner_id;
 
@@ -117,7 +117,7 @@ class ThreadChannel extends Channel {
   _patch(data: ThreadChannelPatch, partial = false) {
     super._patch(data);
 
-    if (typeof data.name === "string") {
+    if (typeof data.name === 'string') {
       this.name = data.name;
     }
 
@@ -129,11 +129,11 @@ class ThreadChannel extends Channel {
     this.patchThreadMetadata(data);
 
     this._createdTimestamp ??=
-      this.type === "GUILD_PRIVATE_THREAD" ? super.createdTimestamp : null;
+      this.type === 'GUILD_PRIVATE_THREAD' ? super.createdTimestamp : null;
 
     this.lastMessageId = patchValue(data.last_message_id, this.lastMessageId);
 
-    if ("last_pin_timestamp" in data) {
+    if ('last_pin_timestamp' in data) {
       this.lastPinTimestamp = data.last_pin_timestamp
         ? new Date(data.last_pin_timestamp).getTime()
         : null;
@@ -141,7 +141,7 @@ class ThreadChannel extends Channel {
       this.lastPinTimestamp ??= null;
     }
 
-    if ("rate_limit_per_user" in data || !partial) {
+    if ('rate_limit_per_user' in data || !partial) {
       this.rateLimitPerUser = data.rate_limit_per_user ?? 0;
     } else {
       this.rateLimitPerUser ??= null;
@@ -178,7 +178,7 @@ class ThreadChannel extends Channel {
     const metadata = data.thread_metadata;
     this.locked = metadata.locked ?? false;
     this.invitable =
-      this.type === "GUILD_PRIVATE_THREAD"
+      this.type === 'GUILD_PRIVATE_THREAD'
         ? (metadata.invitable ?? false)
         : null;
     this.archived = metadata.archived ?? null;
@@ -221,12 +221,12 @@ class ThreadChannel extends Channel {
   }
 
   async join() {
-    await this.members.add("@me");
+    await this.members.add('@me');
     return this;
   }
 
   async leave() {
-    await this.members.remove("@me");
+    await this.members.remove('@me');
     return this;
   }
 
@@ -254,7 +254,7 @@ class ThreadChannel extends Channel {
   }
 
   async fetchStarterMessage(options?: BaseFetchOptions) {
-    const channel = this.parent?.type === "GUILD_FORUM" ? this : this.parent;
+    const channel = this.parent?.type === 'GUILD_FORUM' ? this : this.parent;
     return channel && isTextBasedChannel(channel)
       ? (channel.messages.fetch(this.id, options) ?? null)
       : null;
@@ -266,10 +266,10 @@ class ThreadChannel extends Channel {
   ): Promise<ThreadChannel> {
     let autoArchiveDuration:
       | ThreadAutoArchiveDuration
-      | "MAX"
+      | 'MAX'
       | number
       | undefined = data.autoArchiveDuration;
-    if (autoArchiveDuration === "MAX") {
+    if (autoArchiveDuration === 'MAX') {
       autoArchiveDuration = resolveAutoArchiveMaxLimit(this.guild);
     }
 
@@ -280,9 +280,9 @@ class ThreadChannel extends Channel {
           applied_tags: data.appliedTags,
           archived: data.archived,
           auto_archive_duration: autoArchiveDuration,
-          flags: "flags" in data ? ChannelFlags.resolve(data.flags) : undefined,
+          flags: 'flags' in data ? ChannelFlags.resolve(data.flags) : undefined,
           invitable:
-            this.type === "GUILD_PRIVATE_THREAD" ? data.invitable : undefined,
+            this.type === 'GUILD_PRIVATE_THREAD' ? data.invitable : undefined,
           locked: data.locked,
           name: data.name,
           rate_limit_per_user: data.rateLimitPerUser,
@@ -299,15 +299,15 @@ class ThreadChannel extends Channel {
   }
 
   setAutoArchiveDuration(
-    autoArchiveDuration: ThreadAutoArchiveDuration | "MAX",
+    autoArchiveDuration: ThreadAutoArchiveDuration | 'MAX',
     reason?: string
   ) {
     return this.edit({ autoArchiveDuration }, reason);
   }
 
   async setInvitable(invitable = true, reason?: string) {
-    if (this.type !== "GUILD_PRIVATE_THREAD") {
-      throw new RangeError("THREAD_INVITABLE_TYPE", this.type);
+    if (this.type !== 'GUILD_PRIVATE_THREAD') {
+      throw new RangeError('THREAD_INVITABLE_TYPE', this.type);
     }
     return this.edit({ invitable }, reason);
   }
@@ -351,7 +351,7 @@ class ThreadChannel extends Channel {
   get editable() {
     return (
       (this.ownerId === this.client.user?.id &&
-        (this.type !== "GUILD_PRIVATE_THREAD" || this.joined)) ||
+        (this.type !== 'GUILD_PRIVATE_THREAD' || this.joined)) ||
       this.manageable
     );
   }
@@ -361,7 +361,7 @@ class ThreadChannel extends Channel {
       !this.archived &&
       !this.joined &&
       (this.client.user ? this.permissionsFor(this.client.user) : null)?.has(
-        this.type === "GUILD_PRIVATE_THREAD"
+        this.type === 'GUILD_PRIVATE_THREAD'
           ? Permissions.FLAGS.MANAGE_THREADS
           : Permissions.FLAGS.VIEW_CHANNEL,
         false
@@ -417,7 +417,7 @@ class ThreadChannel extends Channel {
 
     return (
       !(this.archived && this.locked && !this.manageable) &&
-      (this.type !== "GUILD_PRIVATE_THREAD" ||
+      (this.type !== 'GUILD_PRIVATE_THREAD' ||
         this.joined ||
         this.manageable) &&
       permissions.has(Permissions.FLAGS.SEND_MESSAGES_IN_THREADS, false) &&
@@ -430,7 +430,7 @@ class ThreadChannel extends Channel {
   }
 
   isPrivate() {
-    return this.type === "GUILD_PRIVATE_THREAD";
+    return this.type === 'GUILD_PRIVATE_THREAD';
   }
 
   async delete(reason?: string) {
@@ -440,10 +440,10 @@ class ThreadChannel extends Channel {
 
   // These are here only for documentation purposes - they are implemented by TextBasedChannel
   get lastMessage(): never {
-    throw new Error("THREAD_CHANNEL_MIXIN_NOT_APPLIED");
+    throw new Error('THREAD_CHANNEL_MIXIN_NOT_APPLIED');
   }
   get lastPinAt(): never {
-    throw new Error("THREAD_CHANNEL_MIXIN_NOT_APPLIED");
+    throw new Error('THREAD_CHANNEL_MIXIN_NOT_APPLIED');
   }
   declare send: (options: SendOptions) => SendResult;
   sendTyping() {
@@ -460,9 +460,9 @@ class ThreadChannel extends Channel {
 }
 
 TextBasedChannel.applyToClass(ThreadChannel, true, [
-  "fetchWebhooks",
-  "setRateLimitPerUser",
-  "setNSFW",
+  'fetchWebhooks',
+  'setRateLimitPerUser',
+  'setNSFW',
 ]);
 
 export default ThreadChannel;

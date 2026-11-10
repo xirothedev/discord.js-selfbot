@@ -1,12 +1,12 @@
-import { setTimeout } from "node:timers";
-import Action from "./Action";
-import type { Client } from "../Client";
-import type { GatewayGuildDeleteDispatchData } from "discord-api-types/v10";
-import _GuildModule from "../../structures/Guild";
-import type { Guild } from "../../structures/Guild";
+import { setTimeout } from 'node:timers';
+import Action from './Action';
+import type { Client } from '../Client';
+import type { GatewayGuildDeleteDispatchData } from 'discord-api-types/v10';
+import _GuildModule from '../../structures/Guild';
+import type { Guild } from '../../structures/Guild';
 
 const { deletedGuilds } = _GuildModule;
-import _ConstantsModule from "../../util/Constants";
+import _ConstantsModule from '../../util/Constants';
 
 const { Events } = _ConstantsModule;
 

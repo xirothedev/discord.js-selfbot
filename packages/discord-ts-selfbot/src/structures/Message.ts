@@ -1,5 +1,5 @@
-import process from "node:process";
-import { Collection } from "@discordjs/collection";
+import process from 'node:process';
+import { Collection } from '@discordjs/collection';
 import type {
   APIAuthorizingIntegrationOwnersMap,
   APIMessageInteractionMetadata,
@@ -10,32 +10,32 @@ import type {
   APIMessage,
   APIRole,
   Snowflake,
-} from "discord-api-types/v10";
-import Base from "./Base";
-import BaseMessageComponent from "./BaseMessageComponent";
+} from 'discord-api-types/v10';
+import Base from './Base';
+import BaseMessageComponent from './BaseMessageComponent';
 import type {
   MessageComponentInstance,
   TopLevelComponentSource,
-} from "./BaseMessageComponent";
-import InteractionCollector from "./InteractionCollector";
-import MessageAttachment from "./MessageAttachment";
-import Embed from "./MessageEmbed";
-import Mentions from "./MessageMentions";
-import MessagePayload from "./MessagePayload";
-import _PollModule from "./Poll";
+} from './BaseMessageComponent';
+import InteractionCollector from './InteractionCollector';
+import MessageAttachment from './MessageAttachment';
+import Embed from './MessageEmbed';
+import Mentions from './MessageMentions';
+import MessagePayload from './MessagePayload';
+import _PollModule from './Poll';
 
 const { Poll } = _PollModule;
-import ReactionCollector from "./ReactionCollector";
-import type { ReactionCollectorSourceOptions } from "./ReactionCollector";
-import _StickerModule from "./Sticker";
+import ReactionCollector from './ReactionCollector';
+import type { ReactionCollectorSourceOptions } from './ReactionCollector';
+import _StickerModule from './Sticker';
 
 const { Sticker } = _StickerModule;
-import Application from "./interfaces/Application";
-import _errorsModule from "../errors";
+import Application from './interfaces/Application';
+import _errorsModule from '../errors';
 
 const { Error } = _errorsModule;
-import ReactionManager from "../managers/ReactionManager";
-import _ConstantsModule, { resolveEnumMember } from "../util/Constants";
+import ReactionManager from '../managers/ReactionManager';
+import _ConstantsModule, { resolveEnumMember } from '../util/Constants';
 
 const {
   InteractionTypes,
@@ -44,15 +44,15 @@ const {
   MessageComponentTypes,
   MessageReferenceTypes,
 } = _ConstantsModule;
-import MessageFlags from "../util/MessageFlags";
-import Permissions from "../util/Permissions";
-import SnowflakeUtil from "../util/SnowflakeUtil";
-import Util from "../util/Util";
-import type { Client } from "../client/Client";
+import MessageFlags from '../util/MessageFlags';
+import Permissions from '../util/Permissions';
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import Util from '../util/Util';
+import type { Client } from '../client/Client';
 import type {
   RawMessageData,
   RawPartialMessageData,
-} from "../../typings/rawDataTypes";
+} from '../../typings/rawDataTypes';
 import type {
   EmojiIdentifierResolvable,
   MessageActivity,
@@ -70,22 +70,22 @@ import type {
   StartThreadOptions,
   TextBasedChannelResolvable,
   AwaitMessageComponentOptions,
-} from "../../typings";
-import type { Guild } from "./Guild";
-import type { Modal } from "./Modal";
-import type { GuildMember } from "./GuildMember";
-import type { Role } from "./Role";
-import type User from "./User";
-import type { Channel } from "./Channel";
+} from '../../typings';
+import type { Guild } from './Guild';
+import type { Modal } from './Modal';
+import type { GuildMember } from './GuildMember';
+import type { Role } from './Role';
+import type User from './User';
+import type { Channel } from './Channel';
 import {
   isGuildBasedChannel,
   isNewsChannel,
   isTextBasedChannel,
   isThreadChannel,
   isThreadParentChannel,
-} from "../types/channels";
-import type { TextBasedChannel } from "../types/channels";
-import type { MessagePayloadOptions } from "./MessagePayload";
+} from '../types/channels';
+import type { TextBasedChannel } from '../types/channels';
+import type { MessagePayloadOptions } from './MessagePayload';
 
 /**
  * @type {WeakSet<Message>}
@@ -160,12 +160,12 @@ function transformInteractionMetadata(
     ),
     id: data.id,
     interactedMessageId:
-      "interacted_message_id" in data
+      'interacted_message_id' in data
         ? (data.interacted_message_id ?? null)
         : null,
     originalResponseMessageId: data.original_response_message_id ?? null,
     triggeringInteractionMetadata:
-      "triggering_interaction_metadata" in data &&
+      'triggering_interaction_metadata' in data &&
       data.triggering_interaction_metadata
         ? transformInteractionMetadata(
             client,
@@ -195,8 +195,8 @@ interface ResolvedData {
 
 function transformResolvedMembers(
   guild: Guild | null,
-  members: NonNullable<ResolvedMessageData["members"]>,
-  users: ResolvedMessageData["users"]
+  members: NonNullable<ResolvedMessageData['members']>,
+  users: ResolvedMessageData['users']
 ) {
   const result = new Collection<
     Snowflake,
@@ -214,7 +214,7 @@ function transformResolvedMembers(
 
 function transformResolvedUsers(
   client: Client,
-  users: NonNullable<ResolvedMessageData["users"]>
+  users: NonNullable<ResolvedMessageData['users']>
 ) {
   const result = new Collection<Snowflake, User>();
   for (const user of Object.values(users)) {
@@ -225,7 +225,7 @@ function transformResolvedUsers(
 
 function transformResolvedRoles(
   guild: Guild | null,
-  roles: NonNullable<ResolvedMessageData["roles"]>
+  roles: NonNullable<ResolvedMessageData['roles']>
 ) {
   const result = new Collection<Snowflake, Role | APIRole>();
   for (const role of Object.values(roles)) {
@@ -237,7 +237,7 @@ function transformResolvedRoles(
 function transformResolvedChannels(
   client: Client,
   guild: Guild | null,
-  channels: NonNullable<ResolvedMessageData["channels"]>
+  channels: NonNullable<ResolvedMessageData['channels']>
 ) {
   const result = new Collection<
     Snowflake,
@@ -254,7 +254,7 @@ function transformResolvedChannels(
 
 function transformResolvedMessages(
   channel: Channel | null,
-  messages: NonNullable<ResolvedMessageData["messages"]>,
+  messages: NonNullable<ResolvedMessageData['messages']>,
   createMessage: (data: APIMessage) => Message
 ) {
   const result = new Collection<Snowflake, Message | APIMessage>();
@@ -269,7 +269,7 @@ function transformResolvedMessages(
 }
 
 function transformResolvedAttachments(
-  attachments: NonNullable<ResolvedMessageData["attachments"]>
+  attachments: NonNullable<ResolvedMessageData['attachments']>
 ) {
   const result = new Collection<Snowflake, MessageAttachment>();
   for (const attachment of Object.values(attachments)) {
@@ -329,23 +329,23 @@ function isSelectMenu(component: {
   type: string;
 }): component is MessageSelectMenu {
   return (
-    component.type === "STRING_SELECT" ||
-    component.type === "USER_SELECT" ||
-    component.type === "ROLE_SELECT" ||
-    component.type === "MENTIONABLE_SELECT" ||
-    component.type === "CHANNEL_SELECT"
+    component.type === 'STRING_SELECT' ||
+    component.type === 'USER_SELECT' ||
+    component.type === 'ROLE_SELECT' ||
+    component.type === 'MENTIONABLE_SELECT' ||
+    component.type === 'CHANNEL_SELECT'
   );
 }
 
 function resolveSelectValue(value: unknown): string | null {
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     return value;
   }
   if (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value !== null &&
-    "id" in value &&
-    typeof value.id === "string"
+    'id' in value &&
+    typeof value.id === 'string'
   ) {
     return value.id;
   }
@@ -401,9 +401,9 @@ class Message extends Base {
 
     this.channelId = data.channel_id;
 
-    const guildId = "guild_id" in data ? data.guild_id : undefined;
+    const guildId = 'guild_id' in data ? data.guild_id : undefined;
     const channelGuildId =
-      this.channel && "guild" in this.channel
+      this.channel && 'guild' in this.channel
         ? this.channel.guild?.id
         : undefined;
     this.guildId = guildId ?? channelGuildId ?? null;
@@ -423,13 +423,13 @@ class Message extends Base {
   private patchCore(data: MessagePatchData) {
     this.id = data.id;
 
-    if ("position" in data) {
+    if ('position' in data) {
       this.position = data.position ?? null;
     } else {
       this.position ??= null;
     }
 
-    if ("role_subscription_data" in data && data.role_subscription_data) {
+    if ('role_subscription_data' in data && data.role_subscription_data) {
       this.roleSubscriptionData = {
         isRenewal: data.role_subscription_data.is_renewal,
         roleSubscriptionListingId:
@@ -442,7 +442,7 @@ class Message extends Base {
       this.roleSubscriptionData ??= null;
     }
 
-    if ("resolved" in data) {
+    if ('resolved' in data) {
       this.resolved = transformResolved(
         { channel: this.channel, client: this.client, guild: this.guild },
         (message) => new Message(this.client, message),
@@ -456,7 +456,7 @@ class Message extends Base {
       ? SnowflakeUtil.timestampFrom(this.id)
       : new Date(data.timestamp).getTime();
 
-    if ("type" in data) {
+    if ('type' in data) {
       this.type = MessageTypes[data.type] ?? null;
 
       this.system =
@@ -470,31 +470,31 @@ class Message extends Base {
   }
 
   private patchCoreContent(data: MessagePatchData) {
-    if ("content" in data) {
+    if ('content' in data) {
       this.content = data.content;
     } else {
       this.content ??= null;
     }
 
-    if ("author" in data) {
+    if ('author' in data) {
       this.author = this.client.users._add(data.author, !data.webhook_id);
     } else {
       this.author ??= null;
     }
 
-    if ("pinned" in data) {
+    if ('pinned' in data) {
       this.pinned = Boolean(data.pinned);
     } else {
       this.pinned ??= null;
     }
 
-    if ("tts" in data) {
+    if ('tts' in data) {
       this.tts = data.tts;
     } else {
       this.tts ??= null;
     }
 
-    if ("nonce" in data) {
+    if ('nonce' in data) {
       this.nonce = data.nonce ?? null;
     } else {
       this.nonce ??= null;
@@ -502,13 +502,13 @@ class Message extends Base {
   }
 
   private patchCollections(data: MessagePatchData) {
-    if ("embeds" in data) {
+    if ('embeds' in data) {
       this.embeds = data.embeds.map((embed) => new Embed(embed, true));
     } else {
       this.embeds = this.embeds ? [...this.embeds] : [];
     }
 
-    if ("components" in data && data.components) {
+    if ('components' in data && data.components) {
       this.components = data.components
         .map((component) => BaseMessageComponent.create(component, this.client))
         .filter((component): component is TopLevelComponentSource =>
@@ -519,7 +519,7 @@ class Message extends Base {
     }
 
     this.attachments =
-      "attachments" in data
+      'attachments' in data
         ? new Collection<Snowflake, MessageAttachment>(
             data.attachments?.map((attachment) => [
               attachment.id,
@@ -533,7 +533,7 @@ class Message extends Base {
         : new Collection(this.attachments);
 
     this.stickers =
-      "sticker_items" in data || "stickers" in data
+      'sticker_items' in data || 'stickers' in data
         ? new Collection<Snowflake, InstanceType<typeof Sticker>>(
             (data.sticker_items ?? data.stickers)?.map((sticker) => [
               sticker.id,
@@ -551,7 +551,7 @@ class Message extends Base {
       this.editedTimestamp ??= null;
     }
 
-    if ("reactions" in data) {
+    if ('reactions' in data) {
       this.reactions = new ReactionManager(this);
       if (data.reactions && data.reactions.length > 0) {
         for (const reaction of data.reactions) {
@@ -565,11 +565,11 @@ class Message extends Base {
 
   private patchMentions(data: MessagePatchData) {
     const mentionEveryone =
-      "mention_everyone" in data ? data.mention_everyone : undefined;
+      'mention_everyone' in data ? data.mention_everyone : undefined;
     const mentionChannels =
-      "mention_channels" in data ? data.mention_channels : undefined;
+      'mention_channels' in data ? data.mention_channels : undefined;
     const referencedAuthor =
-      "referenced_message" in data
+      'referenced_message' in data
         ? data.referenced_message?.author
         : undefined;
 
@@ -593,19 +593,19 @@ class Message extends Base {
   }
 
   private patchMetadata(data: MessagePatchData) {
-    if ("webhook_id" in data && data.webhook_id !== undefined) {
+    if ('webhook_id' in data && data.webhook_id !== undefined) {
       this.webhookId = data.webhook_id;
     } else {
       this.webhookId ??= null;
     }
 
-    if ("poll" in data && data.poll) {
+    if ('poll' in data && data.poll) {
       this.poll = new Poll(this.client, data.poll, this);
     } else {
       this.poll ??= null;
     }
 
-    if ("application" in data) {
+    if ('application' in data) {
       this.groupActivityApplication = new Application(
         this.client,
         data.application
@@ -614,22 +614,22 @@ class Message extends Base {
       this.groupActivityApplication ??= null;
     }
 
-    if ("application_id" in data) {
+    if ('application_id' in data) {
       this.applicationId = data.application_id ?? null;
     } else {
       this.applicationId ??= null;
     }
 
-    if ("activity" in data && data.activity) {
+    if ('activity' in data && data.activity) {
       this.activity = {
-        partyId: data.activity.party_id ?? "",
+        partyId: data.activity.party_id ?? '',
         type: data.activity.type,
       };
     } else {
       this.activity ??= null;
     }
 
-    if ("thread" in data && data.thread) {
+    if ('thread' in data && data.thread) {
       this.client.channels._add(data.thread, this.guild);
     }
 
@@ -637,21 +637,21 @@ class Message extends Base {
   }
 
   private patchMemberState(data: MessagePatchData) {
-    if (this.member && "member" in data && data.member) {
+    if (this.member && 'member' in data && data.member) {
       this.member._patch(data.member);
-    } else if ("member" in data && data.member && this.guild && this.author) {
+    } else if ('member' in data && data.member && this.guild && this.author) {
       this.guild.members._add(
         Object.assign(data.member, { user: this.author })
       );
     }
 
     this.flags = new MessageFlags(
-      "flags" in data ? data.flags : this.flags
+      'flags' in data ? data.flags : this.flags
     ).freeze();
   }
 
   private patchReferences(data: MessagePatchData) {
-    if ("message_reference" in data && data.message_reference) {
+    if ('message_reference' in data && data.message_reference) {
       this.reference = {
         channelId: data.message_reference.channel_id,
         guildId: data.message_reference.guild_id,
@@ -666,14 +666,14 @@ class Message extends Base {
       this.reference ??= null;
     }
 
-    if ("referenced_message" in data && data.referenced_message) {
+    if ('referenced_message' in data && data.referenced_message) {
       this.channel?.messages._add({
         guild_id: data.message_reference?.guild_id,
         ...data.referenced_message,
       });
     }
 
-    if ("interaction_metadata" in data && data.interaction_metadata) {
+    if ('interaction_metadata' in data && data.interaction_metadata) {
       this.interactionMetadata = transformInteractionMetadata(
         this.client,
         data.interaction_metadata
@@ -692,7 +692,7 @@ class Message extends Base {
      * @property {User} user The user that invoked the interaction
      * @deprecated Use {@link Message#interactionMetadata} instead.
      */
-    if ("interaction" in data && data.interaction) {
+    if ('interaction' in data && data.interaction) {
       /**
        * Partial data of the interaction that this message is a reply to
        * @type {?MessageInteraction}
@@ -714,7 +714,7 @@ class Message extends Base {
 
   private patchMessageSnapshots(data: MessagePatchData) {
     if (
-      !("message_snapshots" in data) ||
+      !('message_snapshots' in data) ||
       !data.message_snapshots ||
       !this.reference
     ) {
@@ -746,7 +746,7 @@ class Message extends Base {
   }
 
   private patchCallAndTheme(data: MessagePatchData) {
-    if ("call" in data && data.call) {
+    if ('call' in data && data.call) {
       this.call = {
         get endedAt() {
           return this.endedTimestamp ? new Date(this.endedTimestamp) : null;
@@ -760,14 +760,14 @@ class Message extends Base {
       this.call ??= null;
     }
 
-    if ("shared_client_theme" in data && data.shared_client_theme) {
+    if ('shared_client_theme' in data && data.shared_client_theme) {
       this.sharedClientTheme = {
         baseMix: data.shared_client_theme.base_mix,
         colors: data.shared_client_theme.colors,
         gradientAngle: data.shared_client_theme.gradient_angle,
       };
 
-      if ("base_theme" in data.shared_client_theme) {
+      if ('base_theme' in data.shared_client_theme) {
         this.sharedClientTheme.baseTheme = data.shared_client_theme.base_theme;
       }
     } else {
@@ -784,8 +784,8 @@ class Message extends Base {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
-        "Message#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.",
-        "DeprecationWarning"
+        'Message#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
+        'DeprecationWarning'
       );
     }
 
@@ -796,8 +796,8 @@ class Message extends Base {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
-        "Message#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.",
-        "DeprecationWarning"
+        'Message#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
+        'DeprecationWarning'
       );
     }
 
@@ -814,7 +814,7 @@ class Message extends Base {
   }
 
   get partial() {
-    return typeof this.content !== "string" || !this.author;
+    return typeof this.content !== 'string' || !this.author;
   }
 
   get member() {
@@ -849,7 +849,7 @@ class Message extends Base {
   }
 
   get url() {
-    return `https://discord.com/channels/${this.guildId ?? "@me"}/${this.channelId}/${this.id}`;
+    return `https://discord.com/channels/${this.guildId ?? '@me'}/${this.channelId}/${this.id}`;
   }
 
   get cleanContent() {
@@ -869,7 +869,7 @@ class Message extends Base {
       Promise.withResolvers<Collection<Snowflake | string, MessageReaction>>();
     const collector = this.createReactionCollector(options);
     collector.once(
-      "end",
+      'end',
       (
         reactions: Collection<Snowflake | string, MessageReaction>,
         reason: string
@@ -902,7 +902,7 @@ class Message extends Base {
       Promise.withResolvers<MessageComponentInteraction>();
     const collector = this.createMessageComponentCollector(_options);
     collector.once(
-      "end",
+      'end',
       (
         interactions: Collection<Snowflake, MessageComponentInteraction>,
         reason: string
@@ -911,7 +911,7 @@ class Message extends Base {
         if (interaction) {
           resolve(interaction);
         } else {
-          reject(new Error("INTERACTION_COLLECTOR_ERROR", reason));
+          reject(new Error('INTERACTION_COLLECTOR_ERROR', reason));
         }
       }
     );
@@ -1002,15 +1002,15 @@ class Message extends Base {
 
   async fetchReference() {
     if (!this.reference) {
-      throw new Error("MESSAGE_REFERENCE_MISSING");
+      throw new Error('MESSAGE_REFERENCE_MISSING');
     }
     const { channelId, messageId } = this.reference;
     if (!messageId) {
-      throw new Error("MESSAGE_REFERENCE_MISSING");
+      throw new Error('MESSAGE_REFERENCE_MISSING');
     }
     const channel = this.client.channels.resolve(channelId);
     if (!channel || !isTextBasedChannel(channel)) {
-      throw new Error("GUILD_CHANNEL_RESOLVE");
+      throw new Error('GUILD_CHANNEL_RESOLVE');
     }
     const message = await channel.messages.fetch(messageId);
     return message;
@@ -1031,7 +1031,7 @@ class Message extends Base {
       isNewsChannel(channel) &&
       !this.flags.has(MessageFlags.FLAGS.CROSSPOSTED) &&
       this.reference?.type !== MessageReferenceTypes.FORWARD &&
-      this.type === "DEFAULT" &&
+      this.type === 'DEFAULT' &&
       !this.poll &&
       channel.viewable &&
       (user ? channel.permissionsFor(user)?.has(bitfield, false) : false) &&
@@ -1041,21 +1041,21 @@ class Message extends Base {
 
   edit(options: string | MessagePayloadOptions | MessagePayload) {
     if (!this.channel) {
-      throw new Error("CHANNEL_NOT_CACHED");
+      throw new Error('CHANNEL_NOT_CACHED');
     }
     return this.channel.messages.edit(this, options);
   }
 
   async crosspost() {
     if (!this.channel) {
-      throw new Error("CHANNEL_NOT_CACHED");
+      throw new Error('CHANNEL_NOT_CACHED');
     }
     return this.channel.messages.crosspost(this.id);
   }
 
   async pin(reason?: string) {
     if (!this.channel) {
-      throw new Error("CHANNEL_NOT_CACHED");
+      throw new Error('CHANNEL_NOT_CACHED');
     }
     await this.channel.messages.pin(this.id, reason);
     return this;
@@ -1063,7 +1063,7 @@ class Message extends Base {
 
   async unpin(reason?: string) {
     if (!this.channel) {
-      throw new Error("CHANNEL_NOT_CACHED");
+      throw new Error('CHANNEL_NOT_CACHED');
     }
     await this.channel.messages.unpin(this.id, reason);
     return this;
@@ -1071,7 +1071,7 @@ class Message extends Base {
 
   async react(emoji: EmojiIdentifierResolvable, burst = false) {
     if (!this.channel) {
-      throw new Error("CHANNEL_NOT_CACHED");
+      throw new Error('CHANNEL_NOT_CACHED');
     }
     await this.channel.messages.react(this.id, emoji, burst);
 
@@ -1090,7 +1090,7 @@ class Message extends Base {
 
   async delete() {
     if (!this.channel) {
-      throw new Error("CHANNEL_NOT_CACHED");
+      throw new Error('CHANNEL_NOT_CACHED');
     }
     await this.channel.messages.delete(this.id);
     return this;
@@ -1098,7 +1098,7 @@ class Message extends Base {
 
   async reply(options: string | MessagePayload | ReplyMessageOptions) {
     if (!this.channel) {
-      throw new Error("CHANNEL_NOT_CACHED");
+      throw new Error('CHANNEL_NOT_CACHED');
     }
     const data =
       options instanceof MessagePayload
@@ -1106,7 +1106,7 @@ class Message extends Base {
         : MessagePayload.create(this, options, {
             reply: {
               failIfNotExists:
-                (typeof options === "object"
+                (typeof options === 'object'
                   ? options.failIfNotExists
                   : undefined) ?? this.client.options.failIfNotExists,
               messageReference: this,
@@ -1118,7 +1118,7 @@ class Message extends Base {
   forward(channel: TextBasedChannelResolvable) {
     const resolvedChannel = this.client.channels.resolve(channel);
     if (!resolvedChannel || !isTextBasedChannel(resolvedChannel)) {
-      throw new Error("INVALID_TYPE", "channel", "TextBasedChannelResolvable");
+      throw new Error('INVALID_TYPE', 'channel', 'TextBasedChannelResolvable');
     }
     return resolvedChannel.send({
       forward: {
@@ -1131,14 +1131,14 @@ class Message extends Base {
 
   async startThread(options: StartThreadOptions) {
     if (!this.channel) {
-      throw new Error("CHANNEL_NOT_CACHED");
+      throw new Error('CHANNEL_NOT_CACHED');
     }
     const { channel } = this;
     if (!isThreadParentChannel(channel)) {
-      throw new Error("MESSAGE_THREAD_PARENT");
+      throw new Error('MESSAGE_THREAD_PARENT');
     }
     if (this.hasThread) {
-      throw new Error("MESSAGE_EXISTING_THREAD");
+      throw new Error('MESSAGE_EXISTING_THREAD');
     }
     return channel.threads.create({ ...options, startMessage: this });
   }
@@ -1147,7 +1147,7 @@ class Message extends Base {
     return this.client.api
       .channels(this.channelId)
       .polls(this.id)
-      .answers["@me"].put({
+      .answers['@me'].put({
         data: {
           answer_ids: ids.flat().map((value) => value.toString()),
         },
@@ -1156,17 +1156,17 @@ class Message extends Base {
 
   async fetch(force = true): Promise<Message> {
     if (!this.channel) {
-      throw new Error("CHANNEL_NOT_CACHED");
+      throw new Error('CHANNEL_NOT_CACHED');
     }
     return this.channel.messages.fetch(this.id, { force });
   }
 
   async fetchWebhook() {
     if (!this.webhookId) {
-      throw new Error("WEBHOOK_MESSAGE");
+      throw new Error('WEBHOOK_MESSAGE');
     }
     if (this.webhookId === this.applicationId) {
-      throw new Error("WEBHOOK_APPLICATION");
+      throw new Error('WEBHOOK_APPLICATION');
     }
     return this.client.fetchWebhook(this.webhookId);
   }
@@ -1194,10 +1194,10 @@ class Message extends Base {
           BaseMessageComponent.extractInteractiveComponents(component)
         )
         .find((component) => {
-          if ("customId" in component && component.customId === customId) {
+          if ('customId' in component && component.customId === customId) {
             return true;
           }
-          return "custom_id" in component && component.custom_id === customId;
+          return 'custom_id' in component && component.custom_id === customId;
         }) ?? null
     );
   }
@@ -1244,16 +1244,16 @@ class Message extends Base {
   }
 
   toString(): string {
-    return this.content ?? "";
+    return this.content ?? '';
   }
 
   toJSON() {
     return super.toJSON({
-      author: "authorId",
-      channel: "channelId",
+      author: 'authorId',
+      channel: 'channelId',
       cleanContent: true,
-      groupActivityApplication: "groupActivityApplicationId",
-      guild: "guildId",
+      groupActivityApplication: 'groupActivityApplicationId',
+      guild: 'guildId',
       member: false,
       reactions: false,
     });
@@ -1266,11 +1266,11 @@ class Message extends Base {
 
   clickButton(buttonid: string) {
     const button = this.resolveComponent(buttonid);
-    if (!button || button.type !== "BUTTON") {
-      throw new TypeError("BUTTON_NOT_FOUND");
+    if (!button || button.type !== 'BUTTON') {
+      throw new TypeError('BUTTON_NOT_FOUND');
     }
-    if ("disabled" in button && button.disabled) {
-      throw new TypeError("BUTTON_CANNOT_CLICK");
+    if ('disabled' in button && button.disabled) {
+      throw new TypeError('BUTTON_CANNOT_CLICK');
     }
     const nonce = SnowflakeUtil.generate();
     const data = {
@@ -1278,7 +1278,7 @@ class Message extends Base {
       channel_id: this.channelId,
       data: {
         component_type: MessageComponentTypes.BUTTON,
-        custom_id: "customId" in button ? button.customId : null,
+        custom_id: 'customId' in button ? button.customId : null,
       },
       guild_id: this.guildId,
       message_flags: this.flags.bitfield,
@@ -1294,7 +1294,7 @@ class Message extends Base {
   }
 
   private static resolveMenuIndex(menu: string | number) {
-    if (typeof menu === "number") {
+    if (typeof menu === 'number') {
       return menu;
     }
     return /^[0-4]$/u.test(menu) ? Number(menu) : undefined;
@@ -1310,14 +1310,14 @@ class Message extends Base {
       disabled?: boolean;
     }[] = [];
     for (const row of this.components) {
-      if (!("components" in row)) {
+      if (!('components' in row)) {
         continue;
       }
       for (const component of row.components) {
-        if ("type" in component && typeof component.type === "string") {
+        if ('type' in component && typeof component.type === 'string') {
           components.push({
-            customId: "customId" in component ? component.customId : undefined,
-            disabled: "disabled" in component ? component.disabled : undefined,
+            customId: 'customId' in component ? component.customId : undefined,
+            disabled: 'disabled' in component ? component.disabled : undefined,
             type: component.type,
           });
         }
@@ -1340,7 +1340,7 @@ class Message extends Base {
     }
     if (!selectMenu) {
       throw new RangeError(
-        "[SELECT_MENU_NOT_FOUND] The select menu could not be resolved"
+        '[SELECT_MENU_NOT_FOUND] The select menu could not be resolved'
       );
     }
 
@@ -1359,7 +1359,7 @@ class Message extends Base {
 
     const resolvedValues = values
       .map((value) => {
-        if (selectMenu.type === "STRING_SELECT") {
+        if (selectMenu.type === 'STRING_SELECT') {
           const match = selectMenu.options.find(
             (option) => option.value === value || option.label === value
           );
@@ -1418,11 +1418,11 @@ class Message extends Base {
         breadcrumbs,
         channel_id: this.channelId,
         elements,
-        language: "en",
+        language: 'en',
         message_id: this.id,
-        name: "message",
-        variant: "4",
-        version: "1.0",
+        name: 'message',
+        variant: '4',
+        version: '1.0',
       },
     });
   }

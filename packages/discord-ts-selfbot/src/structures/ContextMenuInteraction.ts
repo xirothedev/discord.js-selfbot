@@ -1,6 +1,6 @@
-import BaseCommandInteraction from "./BaseCommandInteraction";
-import CommandInteractionOptionResolver from "./CommandInteractionOptionResolver";
-import _ConstantsModule from "../util/Constants";
+import BaseCommandInteraction from './BaseCommandInteraction';
+import CommandInteractionOptionResolver from './CommandInteractionOptionResolver';
+import _ConstantsModule from '../util/Constants';
 
 const { ApplicationCommandOptionTypes, ApplicationCommandTypes } =
   _ConstantsModule;
@@ -8,16 +8,16 @@ import type {
   APIContextMenuInteraction,
   APIContextMenuInteractionData,
   Snowflake,
-} from "discord-api-types/v10";
-import type { ApplicationCommandType, CacheType } from "../../typings";
-import type { CommandInteractionOption } from "./CommandInteractionOptionResolver";
-import type Client from "../client/Client";
+} from 'discord-api-types/v10';
+import type { ApplicationCommandType, CacheType } from '../../typings';
+import type { CommandInteractionOption } from './CommandInteractionOptionResolver';
+import type Client from '../client/Client';
 
 class ContextMenuInteraction<
   Cached extends CacheType = CacheType,
 > extends BaseCommandInteraction<Cached> {
   declare targetId: Snowflake;
-  declare targetType: Exclude<ApplicationCommandType, "CHAT_INPUT">;
+  declare targetType: Exclude<ApplicationCommandType, 'CHAT_INPUT'>;
 
   constructor(client: Client, data: APIContextMenuInteraction) {
     super(client, data);
@@ -30,7 +30,7 @@ class ContextMenuInteraction<
     this.targetId = data.data.target_id;
 
     this.targetType =
-      data.data.type === ApplicationCommandTypes.MESSAGE ? "MESSAGE" : "USER";
+      data.data.type === ApplicationCommandTypes.MESSAGE ? 'MESSAGE' : 'USER';
   }
 
   resolveContextMenuOptions({
@@ -39,11 +39,11 @@ class ContextMenuInteraction<
   }: APIContextMenuInteractionData): CommandInteractionOption<Cached>[] {
     const result: CommandInteractionOption<Cached>[] = [];
 
-    if ("users" in resolved && resolved.users[target_id]) {
+    if ('users' in resolved && resolved.users[target_id]) {
       result.push(
         this.transformOption(
           {
-            name: "user",
+            name: 'user',
             type: ApplicationCommandOptionTypes.USER,
             value: target_id,
           },
@@ -52,13 +52,13 @@ class ContextMenuInteraction<
       );
     }
 
-    if ("messages" in resolved && resolved.messages[target_id]) {
+    if ('messages' in resolved && resolved.messages[target_id]) {
       result.push({
         message:
           this.channel?.messages._add(resolved.messages[target_id]) ??
           resolved.messages[target_id],
-        name: "message",
-        type: "_MESSAGE" as CommandInteractionOption<Cached>["type"],
+        name: 'message',
+        type: '_MESSAGE' as CommandInteractionOption<Cached>['type'],
         value: target_id,
       });
     }

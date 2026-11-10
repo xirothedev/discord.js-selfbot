@@ -4,13 +4,13 @@
 import type {
   APIApplicationIntegrationTypesConfigMap,
   Snowflake,
-} from "discord-api-types/v10";
-import type { ApplicationType } from "../../../typings/enums";
-import type { User } from "../../structures/User";
-import type { Team } from "../../structures/Team";
-import type ApplicationCommandManager from "../../managers/ApplicationCommandManager";
-import type ApplicationFlags from "../../util/ApplicationFlags";
-import type Permissions from "../../util/Permissions";
+} from 'discord-api-types/v10';
+import type { ApplicationType } from '../../../typings/enums';
+import type { User } from '../../structures/User';
+import type { Team } from '../../structures/Team';
+import type ApplicationCommandManager from '../../managers/ApplicationCommandManager';
+import type ApplicationFlags from '../../util/ApplicationFlags';
+import type Permissions from '../../util/Permissions';
 
 /**
  * The object shape of a `Application`.

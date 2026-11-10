@@ -1,5 +1,5 @@
-import { Buffer } from "node:buffer";
-import { Readable } from "node:stream";
+import { Buffer } from 'node:buffer';
+import { Readable } from 'node:stream';
 
 const SILENCE_FRAME = Buffer.from([0xf8, 0xff, 0xfe]);
 

@@ -1,24 +1,24 @@
-import process from "node:process";
-import CachedManager from "./CachedManager";
+import process from 'node:process';
+import CachedManager from './CachedManager';
 import {
   isGuildBasedChannel,
   isThreadChannel,
   isThreadParentChannel,
-} from "../types/channels";
-import _ChannelModule from "../structures/Channel";
+} from '../types/channels';
+import _ChannelModule from '../structures/Channel';
 
 const { Channel } = _ChannelModule;
-import GuildChannel from "../structures/GuildChannel";
-import _ConstantsModule from "../util/Constants";
+import GuildChannel from '../structures/GuildChannel';
+import _ConstantsModule from '../util/Constants';
 
 const { Events, RelationshipTypes } = _ConstantsModule;
-import type { Snowflake } from "discord-api-types/v10";
-import type { RawChannelData } from "../../typings/rawDataTypes";
-import type { FetchChannelOptions, UserResolvable } from "../../typings";
-import type { Client } from "../client/Client";
-import type { Guild } from "../structures/Guild";
-import GroupDMChannel from "../structures/GroupDMChannel";
-import type { Channel as ChannelType } from "../structures/Channel";
+import type { Snowflake } from 'discord-api-types/v10';
+import type { RawChannelData } from '../../typings/rawDataTypes';
+import type { FetchChannelOptions, UserResolvable } from '../../typings';
+import type { Client } from '../client/Client';
+import type { Guild } from '../structures/Guild';
+import GroupDMChannel from '../structures/GroupDMChannel';
+import type { Channel as ChannelType } from '../structures/Channel';
 
 let cacheWarningEmitted = false;
 
@@ -26,7 +26,7 @@ class ChannelManager extends CachedManager<ChannelType> {
   constructor(client: Client, iterable?: Iterable<ChannelType>) {
     super(client, Channel, iterable);
     const defaultCaching =
-      this._cache.constructor.name === "Collection" ||
+      this._cache.constructor.name === 'Collection' ||
       ((this._cache.maxSize === undefined ||
         this._cache.maxSize === Infinity) &&
         (this._cache.sweepFilter === undefined ||
@@ -35,7 +35,7 @@ class ChannelManager extends CachedManager<ChannelType> {
       cacheWarningEmitted = true;
       process.emitWarning(
         `Overriding the cache handling for ${this.constructor.name} is unsupported and breaks functionality.`,
-        "UnsupportedCacheOverwriteWarning"
+        'UnsupportedCacheOverwriteWarning'
       );
     }
   }
@@ -53,15 +53,15 @@ class ChannelManager extends CachedManager<ChannelType> {
       | { cache?: boolean; allowUnknownGuild?: boolean }
       | { id?: string; extras?: unknown[] } = {}
   ): ChannelType | null {
-    const guild = typeof guildOrCache === "object" ? guildOrCache : null;
+    const guild = typeof guildOrCache === 'object' ? guildOrCache : null;
     let cache = true;
-    if (typeof guildOrCache === "boolean") {
+    if (typeof guildOrCache === 'boolean') {
       cache = guildOrCache;
-    } else if ("cache" in options && typeof options.cache === "boolean") {
+    } else if ('cache' in options && typeof options.cache === 'boolean') {
       ({ cache } = options);
     }
     const allowUnknownGuild =
-      "allowUnknownGuild" in options
+      'allowUnknownGuild' in options
         ? Boolean(options.allowUnknownGuild)
         : false;
     const existing = this.cache.get(data.id);
@@ -157,14 +157,14 @@ class ChannelManager extends CachedManager<ChannelType> {
       .map((r) => this.client.users.resolveId(r))
       .filter(
         (r): r is Snowflake =>
-          typeof r === "string" &&
+          typeof r === 'string' &&
           this.client.relationships.cache.get(r) === RelationshipTypes.FRIEND
       );
     if (resolvedRecipients.length === 1 || resolvedRecipients.length > 9) {
-      throw new Error("Invalid Users length (max=9)");
+      throw new Error('Invalid Users length (max=9)');
     }
     const data: RawChannelData = await this.client.api.users[
-      "@me"
+      '@me'
     ].channels.post({
       data: { recipients: resolvedRecipients },
     });
@@ -173,7 +173,7 @@ class ChannelManager extends CachedManager<ChannelType> {
       cache: true,
     });
     if (!(channel instanceof GroupDMChannel)) {
-      throw new Error("INVALID_TYPE: channel is not a GroupDMChannel");
+      throw new Error('INVALID_TYPE: channel is not a GroupDMChannel');
     }
     return channel;
   }

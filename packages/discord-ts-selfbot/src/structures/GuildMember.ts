@@ -1,24 +1,24 @@
-import { createRequire } from "node:module";
+import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-import process from "node:process";
-import Base from "./Base";
-import VoiceState from "./VoiceState";
-import _errorsModule from "../errors";
+import process from 'node:process';
+import Base from './Base';
+import VoiceState from './VoiceState';
+import _errorsModule from '../errors';
 
 const { Error } = _errorsModule;
-import GuildMemberRoleManager from "../managers/GuildMemberRoleManager";
-import GuildMemberFlags from "../util/GuildMemberFlags";
-import Permissions from "../util/Permissions";
-import type { RawGuildMemberData } from "../../typings/rawDataTypes";
-import type { ImageURLOptions } from "../../typings";
-import type { GuildMemberEntity } from "../types/entities/guild-member";
-import type { PatchOf } from "../types/schema";
-import type Client from "../client/Client";
-import type { Guild } from "./Guild";
-import type { Presence } from "./Presence";
-import type { Role } from "./Role";
-import type { GuildChannel } from "./GuildChannel";
+import GuildMemberRoleManager from '../managers/GuildMemberRoleManager';
+import GuildMemberFlags from '../util/GuildMemberFlags';
+import Permissions from '../util/Permissions';
+import type { RawGuildMemberData } from '../../typings/rawDataTypes';
+import type { ImageURLOptions } from '../../typings';
+import type { GuildMemberEntity } from '../types/entities/guild-member';
+import type { PatchOf } from '../types/schema';
+import type Client from '../client/Client';
+import type { Guild } from './Guild';
+import type { Presence } from './Presence';
+import type { Role } from './Role';
+import type { GuildChannel } from './GuildChannel';
 
 /**
  * @type {WeakSet<GuildMember>}
@@ -29,18 +29,18 @@ const deletedGuildMembers = new WeakSet();
 let deprecationEmittedForDeleted = false;
 
 class GuildMember extends Base implements GuildMemberEntity {
-  declare avatar: GuildMemberEntity["avatar"];
-  declare avatarDecorationData: GuildMemberEntity["avatarDecorationData"];
-  declare banner: GuildMemberEntity["banner"];
-  declare communicationDisabledUntilTimestamp: GuildMemberEntity["communicationDisabledUntilTimestamp"];
-  declare flags: GuildMemberEntity["flags"];
-  declare guild: GuildMemberEntity["guild"];
-  declare joinedTimestamp: GuildMemberEntity["joinedTimestamp"];
-  declare nickname: GuildMemberEntity["nickname"];
-  declare pending: GuildMemberEntity["pending"];
-  declare premiumSinceTimestamp: GuildMemberEntity["premiumSinceTimestamp"];
-  declare user: GuildMemberEntity["user"];
-  declare _roles: GuildMemberEntity["_roles"];
+  declare avatar: GuildMemberEntity['avatar'];
+  declare avatarDecorationData: GuildMemberEntity['avatarDecorationData'];
+  declare banner: GuildMemberEntity['banner'];
+  declare communicationDisabledUntilTimestamp: GuildMemberEntity['communicationDisabledUntilTimestamp'];
+  declare flags: GuildMemberEntity['flags'];
+  declare guild: GuildMemberEntity['guild'];
+  declare joinedTimestamp: GuildMemberEntity['joinedTimestamp'];
+  declare nickname: GuildMemberEntity['nickname'];
+  declare pending: GuildMemberEntity['pending'];
+  declare premiumSinceTimestamp: GuildMemberEntity['premiumSinceTimestamp'];
+  declare user: GuildMemberEntity['user'];
+  declare _roles: GuildMemberEntity['_roles'];
 
   constructor(client: Client, data: RawGuildMemberData, guild: Guild) {
     super(client);
@@ -63,7 +63,7 @@ class GuildMember extends Base implements GuildMemberEntity {
     }
   }
 
-  _patch(data: PatchOf<"GuildMember">) {
+  _patch(data: PatchOf<'GuildMember'>) {
     if (data.user !== undefined) {
       this.user = this.client.users._add(data.user, true);
     }
@@ -73,7 +73,7 @@ class GuildMember extends Base implements GuildMemberEntity {
     }
     if (data.avatar !== undefined) {
       this.avatar = data.avatar;
-    } else if (typeof this.avatar !== "string") {
+    } else if (typeof this.avatar !== 'string') {
       this.avatar = null;
     }
     if (data.banner === undefined) {
@@ -130,8 +130,8 @@ class GuildMember extends Base implements GuildMemberEntity {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
-        "GuildMember#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.",
-        "DeprecationWarning"
+        'GuildMember#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
+        'DeprecationWarning'
       );
     }
 
@@ -142,8 +142,8 @@ class GuildMember extends Base implements GuildMemberEntity {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
-        "GuildMember#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.",
-        "DeprecationWarning"
+        'GuildMember#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
+        'DeprecationWarning'
       );
     }
 
@@ -244,7 +244,7 @@ class GuildMember extends Base implements GuildMemberEntity {
   }
 
   get displayHexColor() {
-    return this.roles.color?.hexColor ?? "#000000";
+    return this.roles.color?.hexColor ?? '#000000';
   }
 
   get id() {
@@ -275,7 +275,7 @@ class GuildMember extends Base implements GuildMemberEntity {
       return true;
     }
     if (!this.guild.members.me) {
-      throw new Error("GUILD_UNCACHED_ME");
+      throw new Error('GUILD_UNCACHED_ME');
     }
     return (
       this.guild.members.me.roles.highest.comparePositionTo(
@@ -323,7 +323,7 @@ class GuildMember extends Base implements GuildMemberEntity {
   permissionsIn(channel: GuildChannel | string) {
     const resolved = this.guild.channels.resolve(channel);
     if (!resolved) {
-      throw new Error("GUILD_CHANNEL_RESOLVE");
+      throw new Error('GUILD_CHANNEL_RESOLVE');
     }
     return resolved.permissionsFor(this);
   }
@@ -397,15 +397,15 @@ class GuildMember extends Base implements GuildMemberEntity {
   }
 
   toString() {
-    return `<@${this.nickname ? "!" : ""}${this.user.id}>`;
+    return `<@${this.nickname ? '!' : ''}${this.user.id}>`;
   }
 
   toJSON() {
     const json = super.toJSON({
       displayName: true,
-      guild: "guildId",
+      guild: 'guildId',
       roles: true,
-      user: "userId",
+      user: 'userId',
     });
     json.avatarURL = this.avatarURL();
     json.bannerURL = this.bannerURL();
@@ -433,7 +433,7 @@ export default { GuildMember, deletedGuildMembers };
 
 setTimeout(() => {
   try {
-    const TextBasedChannel = require("./interfaces/TextBasedChannel");
+    const TextBasedChannel = require('./interfaces/TextBasedChannel');
     TextBasedChannel.applyToClass(GuildMember);
   } catch {
     // The channel mixin is optional during early circular imports.

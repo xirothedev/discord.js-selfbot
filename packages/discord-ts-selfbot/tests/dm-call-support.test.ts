@@ -1,46 +1,46 @@
-import { afterAll, beforeAll, expect, test } from "bun:test";
+import { afterAll, beforeAll, expect, test } from 'bun:test';
 
 import {
   DEFAULT_READY,
   startFakeDiscord,
-} from "@discord-ts-selfbot/test-harness";
+} from '@discord-ts-selfbot/test-harness';
 
-import { DMChannel, GroupDMChannel, Client } from "../src/index";
-import { gatewayPacket, waitForEvent } from "./helpers";
+import { DMChannel, GroupDMChannel, Client } from '../src/index';
+import { gatewayPacket, waitForEvent } from './helpers';
 
-const TEST_USER_ID = "900000000000000101";
-const FRIEND_USER_ID = "900000000000000102";
-const OTHER_FRIEND_USER_ID = "900000000000000103";
+const TEST_USER_ID = '900000000000000101';
+const FRIEND_USER_ID = '900000000000000102';
+const OTHER_FRIEND_USER_ID = '900000000000000103';
 
-const DM_CHANNEL_ID = "900000000000000201";
-const MESSAGE_REQUEST_ID = "900000000000000202";
-const CANCELLED_MESSAGE_REQUEST_ID = "900000000000000203";
-const GROUP_DM_CHANNEL_ID = "900000000000000204";
+const DM_CHANNEL_ID = '900000000000000201';
+const MESSAGE_REQUEST_ID = '900000000000000202';
+const CANCELLED_MESSAGE_REQUEST_ID = '900000000000000203';
+const GROUP_DM_CHANNEL_ID = '900000000000000204';
 
 const TEST_USER = {
   avatar: null,
   bot: false,
-  discriminator: "0",
+  discriminator: '0',
   flags: 0,
   global_name: null,
   id: TEST_USER_ID,
-  username: "test",
+  username: 'test',
 };
 
 const FRIEND = {
   avatar: null,
-  discriminator: "0",
+  discriminator: '0',
   global_name: null,
   id: FRIEND_USER_ID,
-  username: "friend",
+  username: 'friend',
 };
 
 const OTHER_FRIEND = {
   avatar: null,
-  discriminator: "0",
+  discriminator: '0',
   global_name: null,
   id: OTHER_FRIEND_USER_ID,
-  username: "other-friend",
+  username: 'other-friend',
 };
 
 function readyPayloadWithCallChannels() {
@@ -56,20 +56,20 @@ function readyPayloadWithCallChannels() {
       {
         id: MESSAGE_REQUEST_ID,
         is_message_request: true,
-        is_message_request_timestamp: "2024-01-01T00:00:00.000Z",
+        is_message_request_timestamp: '2024-01-01T00:00:00.000Z',
         recipients: [FRIEND],
         type: 1,
       },
       {
         id: CANCELLED_MESSAGE_REQUEST_ID,
         is_message_request: true,
-        is_message_request_timestamp: "2024-01-01T00:00:00.000Z",
+        is_message_request_timestamp: '2024-01-01T00:00:00.000Z',
         recipients: [FRIEND],
         type: 1,
       },
       {
         id: GROUP_DM_CHANNEL_ID,
-        name: "Test group call",
+        name: 'Test group call',
         owner_id: TEST_USER_ID,
         recipients: [FRIEND, OTHER_FRIEND],
         type: 3,
@@ -86,8 +86,8 @@ beforeAll(async () => {
   fake = startFakeDiscord({ readyPayload: readyPayloadWithCallChannels() });
   client = new Client({ http: { api: fake.url, version: 9 } });
 
-  const ready = waitForEvent(client, "ready");
-  await client.login("fake-token");
+  const ready = waitForEvent(client, 'ready');
+  await client.login('fake-token');
   await ready;
   await fake.waitForShard();
 }, 15_000);
@@ -101,26 +101,26 @@ function channel(id) {
   return client.channels.cache.get(id);
 }
 
-test("DMChannel#ring posts a call ring request with null recipients", async () => {
+test('DMChannel#ring posts a call ring request with null recipients', async () => {
   const dmChannel = channel(DM_CHANNEL_ID);
   expect(dmChannel).toBeInstanceOf(DMChannel);
 
   await dmChannel.ring();
 
   const request = fake.getLastRequest();
-  expect(request.method).toBe("POST");
+  expect(request.method).toBe('POST');
   expect(request.path).toBe(`/v9/channels/${DM_CHANNEL_ID}/call/ring`);
   expect(request.body).toEqual({ recipients: null });
 });
 
-test("GroupDMChannel#ring posts the resolved recipient list, or null when empty", async () => {
+test('GroupDMChannel#ring posts the resolved recipient list, or null when empty', async () => {
   const groupChannel = channel(GROUP_DM_CHANNEL_ID);
   expect(groupChannel).toBeInstanceOf(GroupDMChannel);
 
   await groupChannel.ring([FRIEND_USER_ID, OTHER_FRIEND_USER_ID]);
 
   let request = fake.getLastRequest();
-  expect(request.method).toBe("POST");
+  expect(request.method).toBe('POST');
   expect(request.path).toBe(`/v9/channels/${GROUP_DM_CHANNEL_ID}/call/ring`);
   expect(request.body).toEqual({
     recipients: [FRIEND_USER_ID, OTHER_FRIEND_USER_ID],
@@ -129,19 +129,19 @@ test("GroupDMChannel#ring posts the resolved recipient list, or null when empty"
   await groupChannel.ring([]);
 
   request = fake.getLastRequest();
-  expect(request.method).toBe("POST");
+  expect(request.method).toBe('POST');
   expect(request.path).toBe(`/v9/channels/${GROUP_DM_CHANNEL_ID}/call/ring`);
   expect(request.body).toEqual({ recipients: null });
 });
 
-test("DMChannel#acceptMessageRequest consents through the recipients route", async () => {
+test('DMChannel#acceptMessageRequest consents through the recipients route', async () => {
   const requestChannel = channel(MESSAGE_REQUEST_ID);
   expect(requestChannel.messageRequest).toBe(true);
 
   await requestChannel.acceptMessageRequest();
 
   const request = fake.getLastRequest();
-  expect(request.method).toBe("PUT");
+  expect(request.method).toBe('PUT');
   expect(request.path).toBe(
     `/v9/channels/${MESSAGE_REQUEST_ID}/recipients/@me`
   );
@@ -149,118 +149,118 @@ test("DMChannel#acceptMessageRequest consents through the recipients route", asy
   expect(requestChannel.messageRequest).toBe(false);
 });
 
-test("DMChannel#cancelMessageRequest deletes through the recipients route", async () => {
+test('DMChannel#cancelMessageRequest deletes through the recipients route', async () => {
   const requestChannel = channel(CANCELLED_MESSAGE_REQUEST_ID);
   expect(requestChannel.messageRequest).toBe(true);
 
   const returned = await requestChannel.cancelMessageRequest();
 
   const request = fake.getLastRequest();
-  expect(request.method).toBe("DELETE");
+  expect(request.method).toBe('DELETE');
   expect(request.path).toBe(
     `/v9/channels/${CANCELLED_MESSAGE_REQUEST_ID}/recipients/@me`
   );
   expect(returned).toBe(requestChannel);
 });
 
-test("CALL_CREATE emits callCreate with a CallState for the DM channel", async () => {
-  const callPromise = waitForEvent(client, "callCreate");
+test('CALL_CREATE emits callCreate with a CallState for the DM channel', async () => {
+  const callPromise = waitForEvent(client, 'callCreate');
 
   fake.sendGatewayPacket(
     gatewayPacket(
       {
         channel_id: DM_CHANNEL_ID,
-        region: "us-west",
+        region: 'us-west',
         ringing: [],
         voice_states: [],
       },
       201,
-      "CALL_CREATE"
+      'CALL_CREATE'
     )
   );
 
   const call = await callPromise;
   expect(call.channelId).toBe(DM_CHANNEL_ID);
-  expect(call.region).toBe("us-west");
+  expect(call.region).toBe('us-west');
   expect(call.ringing.size).toBe(0);
   expect(call.channel).toBe(channel(DM_CHANNEL_ID));
 });
 
-test("CALL_UPDATE emits callUpdate and patches region and ringing users", async () => {
-  const callPromise = waitForEvent(client, "callUpdate");
+test('CALL_UPDATE emits callUpdate and patches region and ringing users', async () => {
+  const callPromise = waitForEvent(client, 'callUpdate');
 
   fake.sendGatewayPacket(
     gatewayPacket(
       {
         channel_id: DM_CHANNEL_ID,
-        region: "eu-central",
+        region: 'eu-central',
         ringing: [FRIEND_USER_ID],
         voice_states: [],
       },
       202,
-      "CALL_UPDATE"
+      'CALL_UPDATE'
     )
   );
 
   const call = await callPromise;
   expect(call.channelId).toBe(DM_CHANNEL_ID);
-  expect(call.region).toBe("eu-central");
+  expect(call.region).toBe('eu-central');
   expect(call.ringing.size).toBe(1);
   expect(call.ringing.get(FRIEND_USER_ID).id).toBe(FRIEND_USER_ID);
 });
 
-test("CALL_DELETE emits callDelete with the group DM channel state", async () => {
-  const callPromise = waitForEvent(client, "callDelete");
+test('CALL_DELETE emits callDelete with the group DM channel state', async () => {
+  const callPromise = waitForEvent(client, 'callDelete');
 
   fake.sendGatewayPacket(
     gatewayPacket(
       {
         channel_id: GROUP_DM_CHANNEL_ID,
-        region: "brazil",
+        region: 'brazil',
         ringing: [],
         voice_states: [],
       },
       203,
-      "CALL_DELETE"
+      'CALL_DELETE'
     )
   );
 
   const call = await callPromise;
   expect(call.channelId).toBe(GROUP_DM_CHANNEL_ID);
-  expect(call.region).toBe("brazil");
+  expect(call.region).toBe('brazil');
   expect(call.channel).toBe(channel(GROUP_DM_CHANNEL_ID));
 });
 
-test("DMChannel#voiceAdapterCreator returns a gateway adapter and registers it by channel id", () => {
+test('DMChannel#voiceAdapterCreator returns a gateway adapter and registers it by channel id', () => {
   const dmChannel = channel(DM_CHANNEL_ID);
   const methods = {
     onVoiceServerUpdate: () => {},
     onVoiceStateUpdate: () => {},
   };
 
-  expect(typeof dmChannel.voiceAdapterCreator).toBe("function");
+  expect(typeof dmChannel.voiceAdapterCreator).toBe('function');
 
   const adapter = dmChannel.voiceAdapterCreator(methods);
-  expect(typeof adapter.sendPayload).toBe("function");
-  expect(typeof adapter.destroy).toBe("function");
+  expect(typeof adapter.sendPayload).toBe('function');
+  expect(typeof adapter.destroy).toBe('function');
   expect(client.voice.adapters.get(DM_CHANNEL_ID)).toBe(methods);
 
   adapter.destroy();
   expect(client.voice.adapters.has(DM_CHANNEL_ID)).toBe(false);
 });
 
-test("GroupDMChannel#voiceAdapterCreator returns a gateway adapter and unregisters it on destroy", () => {
+test('GroupDMChannel#voiceAdapterCreator returns a gateway adapter and unregisters it on destroy', () => {
   const groupChannel = channel(GROUP_DM_CHANNEL_ID);
   const methods = {
     onVoiceServerUpdate: () => {},
     onVoiceStateUpdate: () => {},
   };
 
-  expect(typeof groupChannel.voiceAdapterCreator).toBe("function");
+  expect(typeof groupChannel.voiceAdapterCreator).toBe('function');
 
   const adapter = groupChannel.voiceAdapterCreator(methods);
-  expect(typeof adapter.sendPayload).toBe("function");
-  expect(typeof adapter.destroy).toBe("function");
+  expect(typeof adapter.sendPayload).toBe('function');
+  expect(typeof adapter.destroy).toBe('function');
   expect(client.voice.adapters.get(GROUP_DM_CHANNEL_ID)).toBe(methods);
 
   adapter.destroy();

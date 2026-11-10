@@ -1,6 +1,6 @@
-import Base from "./Base";
-import type { SessionClientInfo } from "../../typings";
-import type Client from "../client/Client";
+import Base from './Base';
+import type { SessionClientInfo } from '../../typings';
+import type Client from '../client/Client';
 
 export interface RawSessionData {
   id_hash?: string;
@@ -19,16 +19,16 @@ class Session extends Base {
   }
 
   _patch(data: RawSessionData) {
-    if ("id_hash" in data) {
+    if ('id_hash' in data) {
       this.id = data.id_hash;
     }
     if (
-      "approx_last_used_time" in data &&
+      'approx_last_used_time' in data &&
       data.approx_last_used_time !== undefined
     ) {
       this.approxLastUsedTime = data.approx_last_used_time;
     }
-    if ("client_info" in data) {
+    if ('client_info' in data) {
       this.clientInfo = data.client_info;
     }
   }

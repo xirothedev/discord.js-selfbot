@@ -1,7 +1,7 @@
-import Action from "./Action";
-import { isTextBasedChannel } from "../../types/channels";
-import type { GatewayMessageReactionRemoveEmojiDispatchData } from "discord-api-types/v10";
-import _ConstantsModule from "../../util/Constants";
+import Action from './Action';
+import { isTextBasedChannel } from '../../types/channels';
+import type { GatewayMessageReactionRemoveEmojiDispatchData } from 'discord-api-types/v10';
+import _ConstantsModule from '../../util/Constants';
 
 const { Events } = _ConstantsModule;
 
@@ -9,7 +9,7 @@ class MessageReactionRemoveEmoji extends Action {
   handle(data: GatewayMessageReactionRemoveEmojiDispatchData) {
     const channel = this.getChannel({
       id: data.channel_id,
-      ...("guild_id" in data && { guild_id: data.guild_id }),
+      ...('guild_id' in data && { guild_id: data.guild_id }),
     });
     if (!channel || !isTextBasedChannel(channel)) {
       return false;
@@ -26,7 +26,7 @@ class MessageReactionRemoveEmoji extends Action {
     }
     if (!message.partial) {
       message.reactions.cache.delete(
-        reaction.emoji.id ?? reaction.emoji.name ?? ""
+        reaction.emoji.id ?? reaction.emoji.name ?? ''
       );
     }
 

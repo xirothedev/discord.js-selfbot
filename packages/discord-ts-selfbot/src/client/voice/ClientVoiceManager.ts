@@ -1,14 +1,14 @@
-import VoiceConnection from "./VoiceConnection";
+import VoiceConnection from './VoiceConnection';
 import type {
   VoiceConnectionChannel,
   SourceVideoCodec,
-} from "./VoiceConnection";
-import type { Snowflake } from "discord-api-types/v10";
-import type { Client } from "../../client/Client";
-import _errorsModule from "../../errors";
+} from './VoiceConnection';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { Client } from '../../client/Client';
+import _errorsModule from '../../errors';
 
 const { Error } = _errorsModule;
-import _ConstantsModule from "../../util/Constants";
+import _ConstantsModule from '../../util/Constants';
 
 const { Events } = _ConstantsModule;
 
@@ -56,7 +56,7 @@ class ClientVoiceManager {
   declare adapters: Map<string, VoiceAdapter>;
 
   constructor(client: Client, options: ClientVoiceManagerOptions = {}) {
-    Object.defineProperty(this, "client", { value: client });
+    Object.defineProperty(this, 'client', { value: client });
 
     this.connectionFactory =
       options.connectionFactory ??
@@ -79,8 +79,8 @@ class ClientVoiceManager {
   onVoiceServer(payload: VoiceServerUpdatePayload) {
     const { guild_id, channel_id, token, endpoint } = payload;
     this.client.emit(
-      "debug",
-      `[VOICE] voiceServer ${channel_id ? "channel" : "guild"}: ${
+      'debug',
+      `[VOICE] voiceServer ${channel_id ? 'channel' : 'guild'}: ${
         channel_id || guild_id
       } token: ${token} endpoint: ${endpoint}`
     );
@@ -115,7 +115,7 @@ class ClientVoiceManager {
     // Main lib
     const { connection } = this;
     this.client.emit(
-      "debug",
+      'debug',
       `[VOICE] connection? ${!!connection}, ${guild_id} ${session_id} ${channel_id}`
     );
     if (!connection) {
@@ -132,7 +132,7 @@ class ClientVoiceManager {
       connection.setSessionId(session_id ?? null);
     } else {
       this.client.emit(
-        "debug",
+        'debug',
         `[VOICE] disconnecting from guild ${guild_id} as channel ${channel_id} is uncached`
       );
       connection.disconnect();
@@ -145,13 +145,13 @@ class ClientVoiceManager {
   ): Promise<VoiceConnection> {
     const resolved = this.client.channels.resolve(channel);
     if (!resolved) {
-      return Promise.reject(new Error("VOICE_JOIN_CHANNEL", String(channel)));
+      return Promise.reject(new Error('VOICE_JOIN_CHANNEL', String(channel)));
     }
     if (
-      !["DM", "GROUP_DM"].includes(resolved.type) &&
-      !("joinable" in resolved && resolved.joinable)
+      !['DM', 'GROUP_DM'].includes(resolved.type) &&
+      !('joinable' in resolved && resolved.joinable)
     ) {
-      return Promise.reject(new Error("VOICE_JOIN_CHANNEL", String(resolved)));
+      return Promise.reject(new Error('VOICE_JOIN_CHANNEL', String(resolved)));
     }
 
     const pending = Promise.withResolvers<VoiceConnection>();
@@ -169,9 +169,9 @@ class ClientVoiceManager {
     if (config?.videoCodec) {
       connection.setVideoCodec(config.videoCodec);
     }
-    connection.on("debug", (msg: string) =>
+    connection.on('debug', (msg: string) =>
       this.client.emit(
-        "debug",
+        'debug',
         `[VOICE (${connection.channel.guild?.id || connection.channel.id}:${connection.status})]: ${msg}`
       )
     );
@@ -182,19 +182,19 @@ class ClientVoiceManager {
     });
     this.connection = connection;
 
-    connection.once("failed", (reason: unknown) => {
+    connection.once('failed', (reason: unknown) => {
       this.connection = null;
       reject(reason);
     });
 
-    connection.on("error", reject);
+    connection.on('error', reject);
 
-    connection.once("authenticated", () => {
-      connection.once("ready", () => {
+    connection.once('authenticated', () => {
+      connection.once('ready', () => {
         resolve(connection);
-        connection.removeListener("error", reject);
+        connection.removeListener('error', reject);
       });
-      connection.once("disconnect", () => {
+      connection.once('disconnect', () => {
         this.connection = null;
       });
     });

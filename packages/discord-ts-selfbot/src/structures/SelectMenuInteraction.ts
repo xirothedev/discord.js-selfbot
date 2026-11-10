@@ -1,7 +1,7 @@
-import MessageComponentInteraction from "./MessageComponentInteraction";
-import type { CacheType } from "../../typings";
-import type { RawMessageComponentInteractionData } from "../../typings/rawDataTypes";
-import type Client from "../client/Client";
+import MessageComponentInteraction from './MessageComponentInteraction';
+import type { CacheType } from '../../typings';
+import type { RawMessageComponentInteractionData } from '../../typings/rawDataTypes';
+import type Client from '../client/Client';
 
 class SelectMenuInteraction<
   Cached extends CacheType = CacheType,

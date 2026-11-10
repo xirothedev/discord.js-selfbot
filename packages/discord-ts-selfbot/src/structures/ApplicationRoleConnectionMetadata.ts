@@ -1,11 +1,11 @@
-import _ConstantsModule, { resolveEnumMember } from "../util/Constants";
+import _ConstantsModule, { resolveEnumMember } from '../util/Constants';
 
 const { ApplicationRoleConnectionMetadataTypes } = _ConstantsModule;
 import type {
   APIApplicationRoleConnectionMetadata,
   LocalizationMap,
-} from "discord-api-types/v10";
-import type { ApplicationRoleConnectionMetadataTypes as ApplicationRoleConnectionMetadataTypesType } from "../../typings/enums";
+} from 'discord-api-types/v10';
+import type { ApplicationRoleConnectionMetadataTypes as ApplicationRoleConnectionMetadataTypesType } from '../../typings/enums';
 
 class ApplicationRoleConnectionMetadata {
   declare name: string;

@@ -1,16 +1,16 @@
-import { Collection } from "@discordjs/collection";
-import BaseGuildEmojiManager from "./BaseGuildEmojiManager";
-import _errorsModule from "../errors";
+import { Collection } from '@discordjs/collection';
+import BaseGuildEmojiManager from './BaseGuildEmojiManager';
+import _errorsModule from '../errors';
 
 const { Error, TypeError } = _errorsModule;
-import DataResolver from "../util/DataResolver";
-import Permissions from "../util/Permissions";
+import DataResolver from '../util/DataResolver';
+import Permissions from '../util/Permissions';
 import type {
   RESTPatchAPIGuildEmojiResult,
   RESTPostAPIGuildEmojiResult,
   Snowflake,
-} from "discord-api-types/v10";
-import type { RawGuildEmojiData } from "../../typings/rawDataTypes";
+} from 'discord-api-types/v10';
+import type { RawGuildEmojiData } from '../../typings/rawDataTypes';
 import type {
   BaseFetchOptions,
   BufferResolvable,
@@ -18,11 +18,11 @@ import type {
   EmojiResolvable,
   GuildEmojiCreateOptions,
   GuildEmojiEditData,
-} from "../../typings";
-import type { Guild } from "../structures/Guild";
-import type { GuildEmoji } from "../structures/GuildEmoji";
-import type { ReactionEmoji } from "../structures/ReactionEmoji";
-import type { User } from "../structures/User";
+} from '../../typings';
+import type { Guild } from '../structures/Guild';
+import type { GuildEmoji } from '../structures/GuildEmoji';
+import type { ReactionEmoji } from '../structures/ReactionEmoji';
+import type { User } from '../structures/User';
 
 type EmojiResolvableSource =
   | GuildEmoji
@@ -49,7 +49,7 @@ class GuildEmojiManager extends BaseGuildEmojiManager {
   ): Promise<GuildEmoji> {
     const resolvedImage = await DataResolver.resolveImage(attachment);
     if (!resolvedImage) {
-      throw new TypeError("REQ_RESOURCE_TYPE");
+      throw new TypeError('REQ_RESOURCE_TYPE');
     }
 
     const data: { image: string; name: string; roles?: Snowflake[] } = {
@@ -59,9 +59,9 @@ class GuildEmojiManager extends BaseGuildEmojiManager {
     if (roles) {
       if (!Array.isArray(roles) && !(roles instanceof Collection)) {
         throw new TypeError(
-          "INVALID_TYPE",
-          "options.roles",
-          "Array or Collection of Roles or Snowflakes",
+          'INVALID_TYPE',
+          'options.roles',
+          'Array or Collection of Roles or Snowflakes',
           true
         );
       }
@@ -70,9 +70,9 @@ class GuildEmojiManager extends BaseGuildEmojiManager {
         const resolvedRole = this.guild.roles.resolveId(role);
         if (!resolvedRole) {
           throw new TypeError(
-            "INVALID_ELEMENT",
-            "Array or Collection",
-            "options.roles",
+            'INVALID_ELEMENT',
+            'Array or Collection',
+            'options.roles',
             role
           );
         }
@@ -127,7 +127,7 @@ class GuildEmojiManager extends BaseGuildEmojiManager {
   async delete(emoji: EmojiResolvableSource, reason?: string): Promise<void> {
     const id = this.resolveId(emoji);
     if (!id) {
-      throw new TypeError("INVALID_TYPE", "emoji", "EmojiResolvable", true);
+      throw new TypeError('INVALID_TYPE', 'emoji', 'EmojiResolvable', true);
     }
     await this.client.api.guilds(this.guild.id).emojis(id).delete({ reason });
   }
@@ -139,7 +139,7 @@ class GuildEmojiManager extends BaseGuildEmojiManager {
   ): Promise<GuildEmoji> {
     const id = this.resolveId(emoji);
     if (!id) {
-      throw new TypeError("INVALID_TYPE", "emoji", "EmojiResolvable", true);
+      throw new TypeError('INVALID_TYPE', 'emoji', 'EmojiResolvable', true);
     }
     const roles = data.roles
       ? (data.roles instanceof Collection
@@ -169,19 +169,19 @@ class GuildEmojiManager extends BaseGuildEmojiManager {
   async fetchAuthor(emoji: EmojiResolvableSource): Promise<User> {
     const resolved = this.resolve(emoji);
     if (!resolved) {
-      throw new TypeError("INVALID_TYPE", "emoji", "EmojiResolvable", true);
+      throw new TypeError('INVALID_TYPE', 'emoji', 'EmojiResolvable', true);
     }
     if (resolved.managed) {
-      throw new Error("EMOJI_MANAGED");
+      throw new Error('EMOJI_MANAGED');
     }
 
     const { me } = this.guild.members;
     if (!me) {
-      throw new Error("GUILD_UNCACHED_ME");
+      throw new Error('GUILD_UNCACHED_ME');
     }
     if (!me.permissions.has(Permissions.FLAGS.MANAGE_EMOJIS_AND_STICKERS)) {
       throw new Error(
-        "MISSING_MANAGE_EMOJIS_AND_STICKERS_PERMISSION",
+        'MISSING_MANAGE_EMOJIS_AND_STICKERS_PERMISSION',
         this.guild
       );
     }
@@ -192,7 +192,7 @@ class GuildEmojiManager extends BaseGuildEmojiManager {
       .get();
     resolved._patch(data);
     if (!resolved.author) {
-      throw new Error("EMOJI_AUTHOR_UNKNOWN");
+      throw new Error('EMOJI_AUTHOR_UNKNOWN');
     }
     return resolved.author;
   }

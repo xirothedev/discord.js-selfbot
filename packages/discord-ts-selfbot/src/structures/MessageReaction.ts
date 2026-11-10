@@ -1,13 +1,13 @@
-import GuildEmoji from "./GuildEmoji";
-import ReactionEmoji from "./ReactionEmoji";
-import ReactionUserManager from "../managers/ReactionUserManager";
-import Util from "../util/Util";
-import type { ReactionCountDetailsData } from "../../typings";
-import type { RawMessageReactionData } from "../../typings/rawDataTypes";
+import GuildEmoji from './GuildEmoji';
+import ReactionEmoji from './ReactionEmoji';
+import ReactionUserManager from '../managers/ReactionUserManager';
+import Util from '../util/Util';
+import type { ReactionCountDetailsData } from '../../typings';
+import type { RawMessageReactionData } from '../../typings/rawDataTypes';
 
 export type RawMessageReactionSource = Omit<
   Partial<RawMessageReactionData>,
-  "count"
+  'count'
 > & {
   emoji: APIPartialEmoji;
   count?: number | null;
@@ -20,21 +20,21 @@ interface RawMessageReactionPatch {
   count?: number;
   count_details?: ReactionCountDetailsData;
 }
-import type { Message } from "./Message";
-import type { User } from "./User";
-import type { APIPartialEmoji } from "discord-api-types/v10";
-import type Client from "../client/Client";
+import type { Message } from './Message';
+import type { User } from './User';
+import type { APIPartialEmoji } from 'discord-api-types/v10';
+import type Client from '../client/Client';
 
 function isReactionCountDetails(
   value: unknown
 ): value is ReactionCountDetailsData {
   return (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value !== null &&
-    "burst" in value &&
-    typeof value.burst === "number" &&
-    "normal" in value &&
-    typeof value.normal === "number"
+    'burst' in value &&
+    typeof value.burst === 'number' &&
+    'normal' in value &&
+    typeof value.normal === 'number'
   );
 }
 
@@ -54,7 +54,7 @@ class MessageReaction {
     data: RawMessageReactionSource,
     message: Message
   ) {
-    Object.defineProperty(this, "client", { value: client });
+    Object.defineProperty(this, 'client', { value: client });
 
     this.message = message;
 
@@ -75,7 +75,7 @@ class MessageReaction {
       burst_colors: data.burst_colors,
       count: data.count ?? undefined,
       count_details:
-        "count_details" in data && isReactionCountDetails(data.count_details)
+        'count_details' in data && isReactionCountDetails(data.count_details)
           ? data.count_details
           : undefined,
     });
@@ -151,7 +151,7 @@ class MessageReaction {
   }
 
   toJSON() {
-    return Util.flatten(this, { emoji: "emojiId", message: "messageId" });
+    return Util.flatten(this, { emoji: 'emojiId', message: 'messageId' });
   }
 
   _add(user: User, burst = false) {

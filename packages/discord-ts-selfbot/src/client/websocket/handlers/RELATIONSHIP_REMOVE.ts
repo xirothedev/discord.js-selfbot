@@ -1,16 +1,16 @@
-import type { Client } from "../../Client";
-import type { WebSocketShard } from "../WebSocketShard";
-import _ConstantsModule from "../../../util/Constants";
+import type { Client } from '../../Client';
+import type { WebSocketShard } from '../WebSocketShard';
+import _ConstantsModule from '../../../util/Constants';
 
 const { Events } = _ConstantsModule;
-import type { RelationshipData } from "../../../managers/RelationshipManager";
+import type { RelationshipData } from '../../../managers/RelationshipManager';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  return typeof value === 'object' && value !== null;
 }
 
 function isRelationshipData(value: unknown): value is RelationshipData {
-  return isRecord(value) && typeof value.id === "string";
+  return isRecord(value) && typeof value.id === 'string';
 }
 
 export default function handleRelationshipRemove(

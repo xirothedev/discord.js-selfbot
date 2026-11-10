@@ -1,10 +1,10 @@
-import BaseDispatcher from "./BaseDispatcher";
-import type MediaPlayer from "../player/MediaPlayer";
-import type { StreamOptions } from "../../../../typings";
-import type { DispatcherStreams } from "./BaseDispatcher";
-import VoiceCodec from "../util/VoiceCodec";
-import Silence from "../util/Silence";
-import VolumeInterface from "../util/VolumeInterface";
+import BaseDispatcher from './BaseDispatcher';
+import type MediaPlayer from '../player/MediaPlayer';
+import type { StreamOptions } from '../../../../typings';
+import type { DispatcherStreams } from './BaseDispatcher';
+import VoiceCodec from '../util/VoiceCodec';
+import Silence from '../util/Silence';
+import VolumeInterface from '../util/VolumeInterface';
 
 const CHANNELS = 2;
 
@@ -32,17 +32,17 @@ class AudioDispatcher extends BaseDispatcher {
       highWaterMark = 12,
     } = options ?? {};
     const streamOptions = {
-      bitrate: typeof bitrate === "number" ? bitrate : 96,
+      bitrate: typeof bitrate === 'number' ? bitrate : 96,
       fec: Boolean(fec),
       highWaterMark,
       plp: plp ?? 0,
       seek,
-      volume: typeof volume === "number" ? volume : 1,
+      volume: typeof volume === 'number' ? volume : 1,
     };
     super(
       player,
       highWaterMark,
-      VoiceCodec.getPayloadType("opus"),
+      VoiceCodec.getPayloadType('opus'),
       false,
       streams
     );
@@ -70,16 +70,16 @@ class AudioDispatcher extends BaseDispatcher {
   }
 
   getTypeDispatcher() {
-    return "audio";
+    return 'audio';
   }
 
-  setBitrate(value: number | "auto") {
+  setBitrate(value: number | 'auto') {
     const { opus } = this.streams;
     if (!value || !opus?.setBitrate) {
       return false;
     }
     const bitrate =
-      value === "auto"
+      value === 'auto'
         ? (this.player.voiceConnection.channel.bitrate ?? 96)
         : value;
     opus.setBitrate(bitrate * 1000);
@@ -122,17 +122,17 @@ class AudioDispatcher extends BaseDispatcher {
     if (!volume?.setVolume) {
       return false;
     }
-    if (typeof value !== "number") {
+    if (typeof value !== 'number') {
       return false;
     }
-    this.emit("volumeChange", this.volume, value);
+    this.emit('volumeChange', this.volume, value);
     volume.setVolume(value);
     return true;
   }
 
   setSyncVideoDispatcher(otherDispatcher: BaseDispatcher) {
-    if (otherDispatcher.getTypeDispatcher() !== "video") {
-      throw new Error("Dispatcher must be a video dispatcher");
+    if (otherDispatcher.getTypeDispatcher() !== 'video') {
+      throw new Error('Dispatcher must be a video dispatcher');
     }
     this._syncDispatcher = otherDispatcher;
   }

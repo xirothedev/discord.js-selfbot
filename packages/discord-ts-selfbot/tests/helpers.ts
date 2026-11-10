@@ -1,20 +1,20 @@
-import { on } from "node:events";
-import type { EventEmitter } from "node:events";
+import { on } from 'node:events';
+import type { EventEmitter } from 'node:events';
 
-import { DEFAULT_READY } from "@discord-ts-selfbot/test-harness";
+import { DEFAULT_READY } from '@discord-ts-selfbot/test-harness';
 
-export const TEST_USER_ID = "900000000000000001";
-export const DM_CHANNEL_ID = "900000000000000002";
-export const FRIEND_USER_ID = "900000000000000003";
+export const TEST_USER_ID = '900000000000000001';
+export const DM_CHANNEL_ID = '900000000000000002';
+export const FRIEND_USER_ID = '900000000000000003';
 
 export const TEST_USER = {
   avatar: null,
   bot: false,
-  discriminator: "0",
+  discriminator: '0',
   flags: 0,
   global_name: null,
   id: TEST_USER_ID,
-  username: "test",
+  username: 'test',
 };
 
 export function readyPayloadWithDM() {
@@ -26,10 +26,10 @@ export function readyPayloadWithDM() {
         recipients: [
           {
             avatar: null,
-            discriminator: "0",
+            discriminator: '0',
             global_name: null,
             id: FRIEND_USER_ID,
-            username: "friend",
+            username: 'friend',
           },
         ],
         type: 1,
@@ -57,11 +57,11 @@ export async function waitForEvent(
   return args.length === 1 ? args[0] : args;
 }
 
-export function actionRowWithButton(customId = "test-button") {
+export function actionRowWithButton(customId = 'test-button') {
   return [
     {
       components: [
-        { custom_id: customId, label: "Click me", style: 1, type: 2 },
+        { custom_id: customId, label: 'Click me', style: 1, type: 2 },
       ],
       type: 1,
     },
@@ -69,8 +69,8 @@ export function actionRowWithButton(customId = "test-button") {
 }
 
 export function rawMessage({
-  id = "900000000000000010",
-  content = "",
+  id = '900000000000000010',
+  content = '',
   components,
   ...rest
 } = {}) {
@@ -96,13 +96,13 @@ export function rawMessage({
 }
 
 export function rawButtonInteraction({
-  id = "900000000000000020",
-  messageId = "900000000000000010",
-  customId = "test-button",
+  id = '900000000000000020',
+  messageId = '900000000000000010',
+  customId = 'test-button',
   ...rest
 } = {}) {
   return {
-    application_id: "900000000000000099",
+    application_id: '900000000000000099',
     channel_id: DM_CHANNEL_ID,
     data: {
       component_type: 2,
@@ -111,12 +111,12 @@ export function rawButtonInteraction({
     guild_id: null,
     guild_locale: null,
     id,
-    locale: "en-US",
+    locale: 'en-US',
     message: rawMessage({
       components: actionRowWithButton(customId),
       id: messageId,
     }),
-    token: "interaction-token",
+    token: 'interaction-token',
     type: 3,
     user: TEST_USER,
     version: 1,
@@ -125,7 +125,7 @@ export function rawButtonInteraction({
 }
 
 // The gateway payload key is `t`, too short for the id-length rule.
-const GATEWAY_EVENT_TYPE = "t";
+const GATEWAY_EVENT_TYPE = 't';
 
 export function gatewayPacket(data: unknown, sequence: number, type: string) {
   return { d: data, op: 0, s: sequence, [GATEWAY_EVENT_TYPE]: type };
@@ -133,12 +133,12 @@ export function gatewayPacket(data: unknown, sequence: number, type: string) {
 
 export function dispatchMessage(fake, overrides = {}) {
   const message = rawMessage(overrides);
-  fake.sendGatewayPacket(gatewayPacket(message, 1, "MESSAGE_CREATE"));
+  fake.sendGatewayPacket(gatewayPacket(message, 1, 'MESSAGE_CREATE'));
   return message;
 }
 
 export function dispatchButtonInteraction(fake, overrides = {}) {
   const interaction = rawButtonInteraction(overrides);
-  fake.sendGatewayPacket(gatewayPacket(interaction, 2, "INTERACTION_CREATE"));
+  fake.sendGatewayPacket(gatewayPacket(interaction, 2, 'INTERACTION_CREATE'));
   return interaction;
 }

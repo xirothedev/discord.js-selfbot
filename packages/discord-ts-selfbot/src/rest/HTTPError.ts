@@ -17,9 +17,9 @@ class HTTPError extends Error {
   ) {
     super(message);
 
-    this.name = "HTTPError";
+    this.name = 'HTTPError';
     if (name !== this.name) {
-      Object.defineProperty(this, "name", {
+      Object.defineProperty(this, 'name', {
         configurable: true,
         enumerable: true,
         value: name,

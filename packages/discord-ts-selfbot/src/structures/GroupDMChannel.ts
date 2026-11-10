@@ -1,28 +1,28 @@
-import { Collection } from "@discordjs/collection";
-import { createRequire } from "node:module";
+import { Collection } from '@discordjs/collection';
+import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { Channel }: typeof ChannelModule = require("./Channel");
-import Invite from "./Invite";
-import type { RawInviteDataSource } from "./Invite";
-import TextBasedChannel from "./interfaces/TextBasedChannel";
-import MessageManager from "../managers/MessageManager";
-import _ConstantsModule from "../util/Constants";
+const { Channel }: typeof ChannelModule = require('./Channel');
+import Invite from './Invite';
+import type { RawInviteDataSource } from './Invite';
+import TextBasedChannel from './interfaces/TextBasedChannel';
+import MessageManager from '../managers/MessageManager';
+import _ConstantsModule from '../util/Constants';
 
 const { Status, Opcodes } = _ConstantsModule;
-import DataResolver from "../util/DataResolver";
-import _errorsModule from "../errors";
+import DataResolver from '../util/DataResolver';
+import _errorsModule from '../errors';
 
 const { TypeError } = _errorsModule;
 import type {
   GatewayChannelUpdateDispatchData,
   Snowflake,
-} from "discord-api-types/v10";
+} from 'discord-api-types/v10';
 import type {
   RawChannelData,
   RawInviteData,
   RawUserData,
-} from "../../typings/rawDataTypes";
+} from '../../typings/rawDataTypes';
 import type {
   BufferResolvable,
   Base64Resolvable,
@@ -30,13 +30,13 @@ import type {
   InviteResolvable,
   StaticImageURLOptions,
   UserResolvable,
-} from "../../typings";
-import type { PatchOf } from "../types/schema";
-import type { Client } from "../client/Client";
-import type { User } from "./User";
-import type { Message } from "./Message";
-import type * as ChannelModule from "./Channel";
-import type { SendOptions, SendResult } from "../types/channels";
+} from '../../typings';
+import type { PatchOf } from '../types/schema';
+import type { Client } from '../client/Client';
+import type { User } from './User';
+import type { Message } from './Message';
+import type * as ChannelModule from './Channel';
+import type { SendOptions, SendResult } from '../types/channels';
 
 interface VoiceAdapter {
   destroy: () => void;
@@ -56,15 +56,15 @@ class GroupDMChannel extends Channel {
   constructor(client: Client, data: RawChannelData) {
     super(client, data);
     // Override the channel type so partials have a known type
-    this.type = "GROUP_DM";
+    this.type = 'GROUP_DM';
 
     this.messages = new MessageManager(this);
   }
 
-  _patch(data: PatchOf<"Channel">) {
+  _patch(data: PatchOf<'Channel'>) {
     super._patch(data);
 
-    if ("recipients" in data && Array.isArray(data.recipients)) {
+    if ('recipients' in data && Array.isArray(data.recipients)) {
       this._recipients = data.recipients;
       for (const recipient of data.recipients) {
         this.client.users._add(recipient);
@@ -73,19 +73,19 @@ class GroupDMChannel extends Channel {
       this._recipients = [];
     }
 
-    if ("owner_id" in data) {
-      this.ownerId = typeof data.owner_id === "string" ? data.owner_id : null;
+    if ('owner_id' in data) {
+      this.ownerId = typeof data.owner_id === 'string' ? data.owner_id : null;
     } else {
       this.ownerId ??= null;
     }
 
-    if ("last_message_id" in data) {
+    if ('last_message_id' in data) {
       this.lastMessageId = data.last_message_id ?? null;
     } else {
       this.lastMessageId ??= null;
     }
 
-    if ("last_pin_timestamp" in data) {
+    if ('last_pin_timestamp' in data) {
       this.lastPinTimestamp = data.last_pin_timestamp
         ? Date.parse(data.last_pin_timestamp)
         : null;
@@ -93,16 +93,16 @@ class GroupDMChannel extends Channel {
       this.lastPinTimestamp ??= null;
     }
 
-    if ("name" in data) {
+    if ('name' in data) {
       this.name = data.name ?? null;
     }
 
-    if ("icon" in data) {
+    if ('icon' in data) {
       this.icon = data.icon ?? null;
     }
   }
 
-  iconURL({ format = "webp", size }: StaticImageURLOptions = {}) {
+  iconURL({ format = 'webp', size }: StaticImageURLOptions = {}) {
     return (
       this.icon &&
       this.client.rest.cdn.GDMIcon(this.id, this.icon, format, size)
@@ -134,7 +134,7 @@ class GroupDMChannel extends Channel {
   }
 
   async delete(slient: string | boolean | null = false) {
-    await (typeof slient === "boolean" && slient
+    await (typeof slient === 'boolean' && slient
       ? this.client.api.channels[this.id].delete({
           query: {
             silent: true,
@@ -150,7 +150,7 @@ class GroupDMChannel extends Channel {
       this._recipients
         .filter((user) => user.id !== this.client.user?.id)
         .map((user) => user.username)
-        .join(", ")
+        .join(', ')
     );
   }
 
@@ -168,13 +168,13 @@ class GroupDMChannel extends Channel {
       icon?: string | null;
       owner?: UserResolvable;
     } = {};
-    if ("name" in data) {
+    if ('name' in data) {
       _data.name = data.name?.trim() ?? null;
     }
     if (data.icon !== undefined) {
       _data.icon = await DataResolver.resolveImage(data.icon);
     }
-    if ("owner" in data) {
+    if ('owner' in data) {
       _data.owner = data.owner;
     }
     const newData = await this.client.api.channels[
@@ -197,7 +197,7 @@ class GroupDMChannel extends Channel {
   setOwner(user: UserResolvable) {
     const id = this.client.users.resolveId(user);
     if (!id) {
-      throw new TypeError("INVALID_TYPE", "user", "UserResolvable");
+      throw new TypeError('INVALID_TYPE', 'user', 'UserResolvable');
     }
     if (this.ownerId === id) {
       return Promise.resolve(this);
@@ -208,7 +208,7 @@ class GroupDMChannel extends Channel {
   async addUser(user: UserResolvable) {
     const id = this.client.users.resolveId(user);
     if (!id) {
-      throw new TypeError("INVALID_TYPE", "user", "UserResolvable");
+      throw new TypeError('INVALID_TYPE', 'user', 'UserResolvable');
     }
     await this.client.api.channels[this.id].recipients[id].put();
     return this;
@@ -217,7 +217,7 @@ class GroupDMChannel extends Channel {
   async removeUser(user: UserResolvable) {
     const id = this.client.users.resolveId(user);
     if (!id) {
-      throw new TypeError("INVALID_TYPE", "user", "UserResolvable");
+      throw new TypeError('INVALID_TYPE', 'user', 'UserResolvable');
     }
     await this.client.api.channels[this.id].recipients[id].delete();
     return this;
@@ -248,7 +248,7 @@ class GroupDMChannel extends Channel {
       ? new URL(invite).pathname.slice(1)
       : invite;
     if (!code) {
-      throw new TypeError("INVALID_TYPE", "invite", "InviteResolvable");
+      throw new TypeError('INVALID_TYPE', 'invite', 'InviteResolvable');
     }
     await this.client.api.channels(this.id).invites[code].delete();
     return this;
@@ -263,7 +263,7 @@ class GroupDMChannel extends Channel {
           (id): id is Snowflake => id !== null && this.recipients.has(id)
         );
     }
-    await this.client.api.channels(this.id, "call", "ring").post({
+    await this.client.api.channels(this.id, 'call', 'ring').post({
       data: {
         recipients: recipientIds,
       },
@@ -334,10 +334,10 @@ class GroupDMChannel extends Channel {
 }
 
 TextBasedChannel.applyToClass(GroupDMChannel, true, [
-  "fetchWebhooks",
-  "createWebhook",
-  "setRateLimitPerUser",
-  "setNSFW",
+  'fetchWebhooks',
+  'createWebhook',
+  'setRateLimitPerUser',
+  'setNSFW',
 ]);
 
 export default GroupDMChannel;

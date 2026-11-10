@@ -6,16 +6,16 @@ import {
   rmSync,
   statSync,
   writeFileSync,
-} from "node:fs";
-import path from "node:path";
+} from 'node:fs';
+import path from 'node:path';
 
 export interface GenerateResult {
   ok: boolean;
   files: string[];
 }
 
-const docsDir = path.resolve(import.meta.dir, "../..");
-const apiDir = path.join(docsDir, "content/docs/api");
+const docsDir = path.resolve(import.meta.dir, '../..');
+const apiDir = path.join(docsDir, 'content/docs/api');
 
 export function meta(title: string, pages: string[]): string {
   return `${JSON.stringify({ pages, title }, null, 2)}\n`;
@@ -34,7 +34,7 @@ function collectFiles(root: string, current = root): Map<string, string> {
         files.set(file, content);
       }
     } else {
-      files.set(path.relative(root, full), readFileSync(full, "utf-8"));
+      files.set(path.relative(root, full), readFileSync(full, 'utf-8'));
     }
   }
   return files;
@@ -49,15 +49,15 @@ export function compareOutputs(outputs: Map<string, string>): GenerateResult {
   );
 
   if (missing.length || extra.length || changed.length) {
-    console.error("API reference is stale.");
+    console.error('API reference is stale.');
     if (missing.length) {
-      console.error(`Missing: ${missing.slice(0, 10).join(", ")}`);
+      console.error(`Missing: ${missing.slice(0, 10).join(', ')}`);
     }
     if (extra.length) {
-      console.error(`Extra: ${extra.slice(0, 10).join(", ")}`);
+      console.error(`Extra: ${extra.slice(0, 10).join(', ')}`);
     }
     if (changed.length) {
-      console.error(`Changed: ${changed.slice(0, 10).join(", ")}`);
+      console.error(`Changed: ${changed.slice(0, 10).join(', ')}`);
     }
     return { files: [...outputs.keys()], ok: false };
   }
@@ -68,9 +68,9 @@ export function compareOutputs(outputs: Map<string, string>): GenerateResult {
 export function writeOutputs(outputs: Map<string, string>): GenerateResult {
   rmSync(apiDir, { force: true, recursive: true });
   for (const [file, content] of outputs) {
-    const full = path.join(docsDir, "content/docs", file);
+    const full = path.join(docsDir, 'content/docs', file);
     mkdirSync(path.dirname(full), { recursive: true });
-    writeFileSync(full, content.endsWith("\n") ? content : `${content}\n`);
+    writeFileSync(full, content.endsWith('\n') ? content : `${content}\n`);
   }
   return { files: [...outputs.keys()], ok: true };
 }

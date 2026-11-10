@@ -1,27 +1,27 @@
-import Base from "./Base";
-import SnowflakeUtil from "../util/SnowflakeUtil";
-import type { RawBaseGuildData } from "../../typings/rawDataTypes";
-import type { BaseGuildEntity } from "../types/entities/base-guild";
-import type { ImageURLOptions } from "../../typings";
-import { GuildFeature } from "discord-api-types/v10";
-import type Client from "../client/Client";
+import Base from './Base';
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { RawBaseGuildData } from '../../typings/rawDataTypes';
+import type { BaseGuildEntity } from '../types/entities/base-guild';
+import type { ImageURLOptions } from '../../typings';
+import { GuildFeature } from 'discord-api-types/v10';
+import type Client from '../client/Client';
 
 class BaseGuild extends Base implements BaseGuildEntity {
-  declare id: BaseGuildEntity["id"];
-  declare name: BaseGuildEntity["name"];
-  declare icon: BaseGuildEntity["icon"];
-  declare features: BaseGuildEntity["features"];
+  declare id: BaseGuildEntity['id'];
+  declare name: BaseGuildEntity['name'];
+  declare icon: BaseGuildEntity['icon'];
+  declare features: BaseGuildEntity['features'];
 
   constructor(client: Client, data: RawBaseGuildData) {
     super(client);
 
     this.id = data.id;
 
-    this.name = "name" in data ? data.name : "";
+    this.name = 'name' in data ? data.name : '';
 
-    this.icon = "icon" in data ? (data.icon ?? null) : null;
+    this.icon = 'icon' in data ? (data.icon ?? null) : null;
 
-    this.features = "features" in data ? (data.features ?? []) : [];
+    this.features = 'features' in data ? (data.features ?? []) : [];
   }
 
   get createdTimestamp() {
@@ -34,9 +34,9 @@ class BaseGuild extends Base implements BaseGuildEntity {
 
   get nameAcronym() {
     return this.name
-      .replaceAll("'s ", " ")
+      .replaceAll("'s ", ' ')
       .replaceAll(/\w+/gu, (e) => e[0])
-      .replaceAll(/\s/gu, "");
+      .replaceAll(/\s/gu, '');
   }
 
   get partnered() {
@@ -47,7 +47,7 @@ class BaseGuild extends Base implements BaseGuildEntity {
     return this.features.includes(GuildFeature.Verified);
   }
 
-  iconURL({ format = "webp", size, dynamic }: ImageURLOptions = {}) {
+  iconURL({ format = 'webp', size, dynamic }: ImageURLOptions = {}) {
     if (!this.icon) {
       return null;
     }

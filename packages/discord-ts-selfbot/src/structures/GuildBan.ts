@@ -1,8 +1,8 @@
-import Base from "./Base";
-import type { Client } from "../client/Client";
-import type { Guild } from "./Guild";
-import type { RawGuildBanData } from "../../typings/rawDataTypes";
-import type { User } from "./User";
+import Base from './Base';
+import type { Client } from '../client/Client';
+import type { Guild } from './Guild';
+import type { RawGuildBanData } from '../../typings/rawDataTypes';
+import type { User } from './User';
 
 class GuildBan extends Base {
   declare guild: Guild;
@@ -17,17 +17,17 @@ class GuildBan extends Base {
   }
 
   _patch(data: RawGuildBanData) {
-    if ("user" in data) {
+    if ('user' in data) {
       this.user = this.client.users._add(data.user, true);
     }
 
-    if ("reason" in data) {
+    if ('reason' in data) {
       this.reason = data.reason;
     }
   }
 
   get partial() {
-    return !("reason" in this);
+    return !('reason' in this);
   }
 
   fetch(force = true) {

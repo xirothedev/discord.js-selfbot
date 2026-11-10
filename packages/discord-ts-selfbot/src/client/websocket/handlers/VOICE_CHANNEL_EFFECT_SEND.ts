@@ -1,19 +1,19 @@
-import type { Client } from "../../Client";
-import type { WebSocketShard } from "../WebSocketShard";
-import VoiceChannelEffect from "../../../structures/VoiceChannelEffect";
-import _ConstantsModule from "../../../util/Constants";
+import type { Client } from '../../Client';
+import type { WebSocketShard } from '../WebSocketShard';
+import VoiceChannelEffect from '../../../structures/VoiceChannelEffect';
+import _ConstantsModule from '../../../util/Constants';
 
 const { Events } = _ConstantsModule;
-import type { GatewayVoiceChannelEffectSendDispatchData } from "discord-api-types/v10";
+import type { GatewayVoiceChannelEffectSendDispatchData } from 'discord-api-types/v10';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  return typeof value === 'object' && value !== null;
 }
 
 function isEffectData(
   value: unknown
 ): value is GatewayVoiceChannelEffectSendDispatchData {
-  return isRecord(value) && typeof value.guild_id === "string";
+  return isRecord(value) && typeof value.guild_id === 'string';
 }
 
 export default function handleVoiceChannelEffectSend(

@@ -1,35 +1,35 @@
-import { Collection } from "@discordjs/collection";
+import { Collection } from '@discordjs/collection';
 import type {
   APIChannelMention,
   APIGuildMember,
   APIUser,
   Snowflake,
-} from "discord-api-types/v10";
-import _ConstantsModule from "../util/Constants";
+} from 'discord-api-types/v10';
+import _ConstantsModule from '../util/Constants';
 
 const { ChannelTypes } = _ConstantsModule;
-import Util from "../util/Util";
+import Util from '../util/Util';
 import type {
   ChannelResolvable,
   CrosspostedChannel,
   MessageMentionsHasOptions,
   RoleResolvable,
   UserResolvable,
-} from "../../typings";
-import type { Client } from "../client/Client";
-import type { Guild } from "./Guild";
-import type { GuildMember } from "./GuildMember";
-import type { Message } from "./Message";
-import type { Role } from "./Role";
-import type { User } from "./User";
-import type { Channel } from "./Channel";
+} from '../../typings';
+import type { Client } from '../client/Client';
+import type { Guild } from './Guild';
+import type { GuildMember } from './GuildMember';
+import type { Message } from './Message';
+import type { Role } from './Role';
+import type { User } from './User';
+import type { Channel } from './Channel';
 
-type MentionUser = APIUser & { member?: Omit<APIGuildMember, "user"> };
+type MentionUser = APIUser & { member?: Omit<APIGuildMember, 'user'> };
 
 function isChannelTypeName(
   value: string | undefined
-): value is CrosspostedChannel["type"] {
-  return typeof value === "string" && value in ChannelTypes;
+): value is CrosspostedChannel['type'] {
+  return typeof value === 'string' && value in ChannelTypes;
 }
 
 class MessageMentions {
@@ -60,11 +60,11 @@ class MessageMentions {
       | Collection<Snowflake, CrosspostedChannel>,
     repliedUser?: APIUser | User | null
   ) {
-    Object.defineProperty(this, "client", { value: message.client });
+    Object.defineProperty(this, 'client', { value: message.client });
 
-    Object.defineProperty(this, "guild", { value: message.guild });
+    Object.defineProperty(this, 'guild', { value: message.guild });
 
-    Object.defineProperty(this, "_content", { value: message.content });
+    Object.defineProperty(this, '_content', { value: message.content });
 
     this.everyone = Boolean(everyone);
 
@@ -128,7 +128,7 @@ class MessageMentions {
             channelId: d.id,
             guildId: d.guild_id,
             name: d.name,
-            type: isChannelTypeName(type) ? type : "UNKNOWN",
+            type: isChannelTypeName(type) ? type : 'UNKNOWN',
           });
         }
       }

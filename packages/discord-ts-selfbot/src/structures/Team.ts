@@ -1,26 +1,26 @@
-import { Collection } from "@discordjs/collection";
-import Base from "./Base";
-import TeamMember from "./TeamMember";
-import SnowflakeUtil from "../util/SnowflakeUtil";
-import type { RawTeamData } from "../../typings/rawDataTypes";
-import type { StaticImageURLOptions } from "../../typings";
-import type { TeamEntity } from "../types/entities/team";
-import type { PatchOf } from "../types/schema";
-import type Client from "../client/Client";
+import { Collection } from '@discordjs/collection';
+import Base from './Base';
+import TeamMember from './TeamMember';
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { RawTeamData } from '../../typings/rawDataTypes';
+import type { StaticImageURLOptions } from '../../typings';
+import type { TeamEntity } from '../types/entities/team';
+import type { PatchOf } from '../types/schema';
+import type Client from '../client/Client';
 
 class Team extends Base implements TeamEntity {
-  declare id: TeamEntity["id"];
-  declare name: TeamEntity["name"];
-  declare icon: TeamEntity["icon"];
-  declare ownerId: TeamEntity["ownerId"];
-  declare members: TeamEntity["members"];
+  declare id: TeamEntity['id'];
+  declare name: TeamEntity['name'];
+  declare icon: TeamEntity['icon'];
+  declare ownerId: TeamEntity['ownerId'];
+  declare members: TeamEntity['members'];
 
   constructor(client: Client, data: RawTeamData) {
     super(client);
     this._patch(data);
   }
 
-  _patch(data: PatchOf<"Team">) {
+  _patch(data: PatchOf<'Team'>) {
     if (data.id !== undefined) {
       this.id = data.id;
     }

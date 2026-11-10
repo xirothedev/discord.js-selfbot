@@ -1,13 +1,13 @@
-import ts from "typescript";
+import ts from 'typescript';
 
-import type { ParsedExports, PublicExport } from "./types";
+import type { ParsedExports, PublicExport } from './types';
 
 function isExternal(path: string): boolean {
-  return !path.startsWith("./") && !path.startsWith("../");
+  return !path.startsWith('./') && !path.startsWith('../');
 }
 
 function isMetadata(path: string): boolean {
-  return path.startsWith("../");
+  return path.startsWith('../');
 }
 
 function isExported(statement: ts.Statement): boolean {
@@ -73,13 +73,13 @@ function parseExportDeclaration(
 
     // `export { Target as Alias }` is the v13 alias shape. `default as X`
     // names the class itself, so it stays public.
-    if (target && target !== "default" && target !== name) {
+    if (target && target !== 'default' && target !== name) {
       result.aliases.push({ name, target });
       continue;
     }
 
     const namedExport: string | undefined =
-      target === "default" ? undefined : (target ?? name);
+      target === 'default' ? undefined : (target ?? name);
     result.public.push({
       name,
       namedExport,
@@ -103,7 +103,7 @@ function parseVariableStatement(
     result.public.push({
       name: declaration.name.text,
       namedExport: undefined,
-      path: "./index",
+      path: './index',
     });
   }
 }
@@ -121,7 +121,7 @@ function parseNamedDeclaration(
     result.public.push({
       name,
       namedExport: undefined,
-      path: "./index",
+      path: './index',
       ...(typeOnly ? { typeOnly: true } : {}),
     });
   } else {
@@ -137,7 +137,7 @@ export function parseIndexExports(source: string): ParsedExports {
     unparsed: [],
   };
   const file = ts.createSourceFile(
-    "index.ts",
+    'index.ts',
     source,
     ts.ScriptTarget.Latest,
     true,
@@ -169,58 +169,58 @@ export function parseIndexExports(source: string): ParsedExports {
 }
 
 export const AREA_ORDER = [
-  { id: "client", title: "Client" },
-  { id: "structures", title: "Structures" },
-  { id: "managers", title: "Managers" },
-  { id: "rest", title: "REST" },
-  { id: "voice", title: "Voice" },
-  { id: "sharding", title: "Sharding" },
-  { id: "utilities", title: "Utilities" },
-  { id: "packages", title: "Packages" },
-  { id: "typings", title: "Typings" },
-  { id: "other", title: "Other" },
+  { id: 'client', title: 'Client' },
+  { id: 'structures', title: 'Structures' },
+  { id: 'managers', title: 'Managers' },
+  { id: 'rest', title: 'REST' },
+  { id: 'voice', title: 'Voice' },
+  { id: 'sharding', title: 'Sharding' },
+  { id: 'utilities', title: 'Utilities' },
+  { id: 'packages', title: 'Packages' },
+  { id: 'typings', title: 'Typings' },
+  { id: 'other', title: 'Other' },
 ] as const;
 
-export type AreaId = (typeof AREA_ORDER)[number]["id"];
+export type AreaId = (typeof AREA_ORDER)[number]['id'];
 
 export function areaFor(path: string): AreaId {
-  if (path.startsWith("./client/voice")) {
-    return "voice";
+  if (path.startsWith('./client/voice')) {
+    return 'voice';
   }
-  if (path.startsWith("./client")) {
-    return "client";
+  if (path.startsWith('./client')) {
+    return 'client';
   }
-  if (path.startsWith("./structures")) {
-    return "structures";
+  if (path.startsWith('./structures')) {
+    return 'structures';
   }
-  if (path.startsWith("./managers")) {
-    return "managers";
+  if (path.startsWith('./managers')) {
+    return 'managers';
   }
-  if (path.startsWith("./rest")) {
-    return "rest";
+  if (path.startsWith('./rest')) {
+    return 'rest';
   }
-  if (path.startsWith("./sharding")) {
-    return "sharding";
+  if (path.startsWith('./sharding')) {
+    return 'sharding';
   }
-  if (path.startsWith("./util")) {
-    return "utilities";
+  if (path.startsWith('./util')) {
+    return 'utilities';
   }
-  if (path.startsWith("./packages")) {
-    return "packages";
+  if (path.startsWith('./packages')) {
+    return 'packages';
   }
-  if (path === "./WebSocket") {
-    return "client";
+  if (path === './WebSocket') {
+    return 'client';
   }
-  return "other";
+  return 'other';
 }
 
 export function slugify(name: string): string {
   return name
-    .replaceAll(/(?<lower>[a-z0-9])(?<upper>[A-Z])/gu, "$1-$2")
-    .replaceAll(/(?<acronym>[A-Z]+)(?<word>[A-Z][a-z])/gu, "$1-$2")
+    .replaceAll(/(?<lower>[a-z0-9])(?<upper>[A-Z])/gu, '$1-$2')
+    .replaceAll(/(?<acronym>[A-Z]+)(?<word>[A-Z][a-z])/gu, '$1-$2')
     .toLowerCase()
-    .replaceAll(/[^a-z0-9]+/gu, "-")
-    .replaceAll(/^-+|-+$/gu, "");
+    .replaceAll(/[^a-z0-9]+/gu, '-')
+    .replaceAll(/^-+|-+$/gu, '');
 }
 
 export function sortByName(exports: PublicExport[]): PublicExport[] {

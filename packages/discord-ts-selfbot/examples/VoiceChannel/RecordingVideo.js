@@ -10,32 +10,32 @@ Install:
 - ffmpeg (install and add to your system environment)
 */
 
-import fs from "node:fs";
-import { Client } from "../../src/index";
+import fs from 'node:fs';
+import { Client } from '../../src/index';
 
 const client = new Client();
 
-client.on("ready", async () => {
+client.on('ready', async () => {
   console.log(`${client.user.username} is ready!`);
 
-  const channel = client.channels.cache.get("voice_id");
+  const channel = client.channels.cache.get('voice_id');
   const connection = await client.voice.joinChannel(channel, {
     selfDeaf: true,
     selfMute: true,
     selfVideo: false,
   });
 
-  const connectionStream = await connection.joinStreamConnection("user_id");
+  const connectionStream = await connection.joinStreamConnection('user_id');
 
   // Output file using matroska container
   const video = connectionStream.receiver.createVideoStream(
-    "user_id",
-    fs.createWriteStream("video.mkv")
+    'user_id',
+    fs.createWriteStream('video.mkv')
   );
 
-  video.on("ready", () => {
-    console.log("FFmpeg process ready!");
-    video.stream.stderr.on("data", (data) => {
+  video.on('ready', () => {
+    console.log('FFmpeg process ready!');
+    video.stream.stderr.on('data', (data) => {
       console.log(`FFmpeg: ${data}`);
     });
   });
@@ -46,4 +46,4 @@ client.on("ready", async () => {
   }, 15_000);
 });
 
-client.login("token");
+client.login('token');

@@ -26,42 +26,42 @@ import type {
   RawVoiceStateData,
   RawWelcomeScreenData,
   RawWidgetData,
-} from "../../typings/rawDataTypes";
-import type { SelfbotGuildBoostData } from "./selfbot/guild-boost";
-import type { SelfbotClientUserData, SelfbotUserData } from "./selfbot/user";
-import type { APIAutoModerationRule } from "discord-api-types/v10";
-import type { ApplicationPatch } from "./selfbot/application";
-import type { GuildPatch } from "./selfbot/guild";
-import type { GuildMemberPatch } from "./selfbot/guild-member";
-import type { AnonymousGuildEntity } from "./entities/anonymous-guild";
-import type { ApplicationEntity } from "./entities/application";
-import type { AutoModerationRuleEntity } from "./entities/auto-moderation-rule";
-import type { BaseGuildEntity } from "./entities/base-guild";
-import type { BaseGuildEmojiEntity } from "./entities/base-guild-emoji";
-import type { ChannelEntity } from "./entities/channel";
-import type { ClientUserEntity } from "./entities/client-user";
-import type { EmojiEntity } from "./entities/emoji";
-import type { GuildEntity } from "./entities/guild";
-import type { GuildBoostEntity } from "./entities/guild-boost";
-import type { GuildChannelEntity } from "./entities/guild-channel";
-import type { GuildEmojiEntity } from "./entities/guild-emoji";
-import type { GuildMemberEntity } from "./entities/guild-member";
-import type { GuildPreviewEntity } from "./entities/guild-preview";
-import type { GuildScheduledEventEntity } from "./entities/guild-scheduled-event";
-import type { GuildTemplateEntity } from "./entities/guild-template";
-import type { IntegrationEntity } from "./entities/integration";
-import type { InviteEntity } from "./entities/invite";
-import type { InviteStageInstanceEntity } from "./entities/invite-stage-instance";
-import type { MessageEntity } from "./entities/message";
-import type { MessagePayloadEntity } from "./entities/message-payload";
-import type { RoleEntity } from "./entities/role";
-import type { StageInstanceEntity } from "./entities/stage-instance";
-import type { StickerPackEntity } from "./entities/sticker-pack";
-import type { TeamEntity } from "./entities/team";
-import type { UserEntity } from "./entities/user";
-import type { VoiceStateEntity } from "./entities/voice-state";
-import type { WelcomeScreenEntity } from "./entities/welcome-screen";
-import type { WidgetEntity } from "./entities/widget";
+} from '../../typings/rawDataTypes';
+import type { SelfbotGuildBoostData } from './selfbot/guild-boost';
+import type { SelfbotClientUserData, SelfbotUserData } from './selfbot/user';
+import type { APIAutoModerationRule } from 'discord-api-types/v10';
+import type { ApplicationPatch } from './selfbot/application';
+import type { GuildPatch } from './selfbot/guild';
+import type { GuildMemberPatch } from './selfbot/guild-member';
+import type { AnonymousGuildEntity } from './entities/anonymous-guild';
+import type { ApplicationEntity } from './entities/application';
+import type { AutoModerationRuleEntity } from './entities/auto-moderation-rule';
+import type { BaseGuildEntity } from './entities/base-guild';
+import type { BaseGuildEmojiEntity } from './entities/base-guild-emoji';
+import type { ChannelEntity } from './entities/channel';
+import type { ClientUserEntity } from './entities/client-user';
+import type { EmojiEntity } from './entities/emoji';
+import type { GuildEntity } from './entities/guild';
+import type { GuildBoostEntity } from './entities/guild-boost';
+import type { GuildChannelEntity } from './entities/guild-channel';
+import type { GuildEmojiEntity } from './entities/guild-emoji';
+import type { GuildMemberEntity } from './entities/guild-member';
+import type { GuildPreviewEntity } from './entities/guild-preview';
+import type { GuildScheduledEventEntity } from './entities/guild-scheduled-event';
+import type { GuildTemplateEntity } from './entities/guild-template';
+import type { IntegrationEntity } from './entities/integration';
+import type { InviteEntity } from './entities/invite';
+import type { InviteStageInstanceEntity } from './entities/invite-stage-instance';
+import type { MessageEntity } from './entities/message';
+import type { MessagePayloadEntity } from './entities/message-payload';
+import type { RoleEntity } from './entities/role';
+import type { StageInstanceEntity } from './entities/stage-instance';
+import type { StickerPackEntity } from './entities/sticker-pack';
+import type { TeamEntity } from './entities/team';
+import type { UserEntity } from './entities/user';
+import type { VoiceStateEntity } from './entities/voice-state';
+import type { WelcomeScreenEntity } from './entities/welcome-screen';
+import type { WidgetEntity } from './entities/widget';
 
 /**
  * The provenance of a field on an entity.
@@ -71,7 +71,7 @@ import type { WidgetEntity } from "./entities/widget";
  * - `internal`: a cache or bookkeeping field owned by this library.
  * - `relation`: a field that points at another structure.
  */
-export type FieldKind = "api" | "selfbot" | "internal" | "relation";
+export type FieldKind = 'api' | 'selfbot' | 'internal' | 'relation';
 
 export interface EntityEntry<
   Raw,
@@ -98,13 +98,13 @@ export type EntitySchema = {
   Application: EntityEntry<
     RawApplicationData,
     ApplicationEntity,
-    { commands: "relation"; owner: "relation" },
+    { commands: 'relation'; owner: 'relation' },
     Partial<ApplicationPatch>
   >;
   AutoModerationRule: EntityEntry<
     APIAutoModerationRule,
     AutoModerationRuleEntity,
-    { guild: "relation" }
+    { guild: 'relation' }
   >;
   BaseGuild: EntityEntry<
     RawBaseGuildData,
@@ -114,19 +114,19 @@ export type EntitySchema = {
   BaseGuildEmoji: EntityEntry<
     RawGuildEmojiData,
     BaseGuildEmojiEntity,
-    { guild: "relation" }
+    { guild: 'relation' }
   >;
   Channel: EntityEntry<RawChannelData, ChannelEntity, Record<never, never>>;
   ClientUser: EntityEntry<
     SelfbotClientUserData,
     ClientUserEntity,
     {
-      bio: "selfbot";
-      nsfwAllowed: "selfbot";
-      phone: "selfbot";
-      premiumUsageFlags: "selfbot";
-      pronouns: "selfbot";
-      purchasedFlags: "selfbot";
+      bio: 'selfbot';
+      nsfwAllowed: 'selfbot';
+      phone: 'selfbot';
+      premiumUsageFlags: 'selfbot';
+      pronouns: 'selfbot';
+      purchasedFlags: 'selfbot';
     }
   >;
   Emoji: EntityEntry<RawEmojiData, EmojiEntity, Record<never, never>>;
@@ -144,17 +144,17 @@ export type EntitySchema = {
   GuildChannel: EntityEntry<
     RawGuildChannelData,
     GuildChannelEntity,
-    { guild: "relation" }
+    { guild: 'relation' }
   >;
   GuildEmoji: EntityEntry<
     RawGuildEmojiData,
     GuildEmojiEntity,
-    { _roles: "internal"; author: "relation"; guild: "relation" }
+    { _roles: 'internal'; author: 'relation'; guild: 'relation' }
   >;
   GuildMember: EntityEntry<
     RawGuildMemberData,
     GuildMemberEntity,
-    { _roles: "internal"; guild: "relation" },
+    { _roles: 'internal'; guild: 'relation' },
     Partial<GuildMemberPatch>
   >;
   GuildPreview: EntityEntry<
@@ -170,28 +170,28 @@ export type EntitySchema = {
   GuildTemplate: EntityEntry<
     RawGuildTemplateData,
     GuildTemplateEntity,
-    { creator: "relation"; guild: "relation" }
+    { creator: 'relation'; guild: 'relation' }
   >;
   Integration: EntityEntry<
     RawIntegrationData,
     IntegrationEntity,
     {
-      application: "relation";
-      guild: "relation";
-      role: "relation";
-      user: "relation";
+      application: 'relation';
+      guild: 'relation';
+      role: 'relation';
+      user: 'relation';
     }
   >;
   Invite: EntityEntry<
     RawInviteData,
     InviteEntity,
     {
-      guild: "relation";
-      guildScheduledEvent: "relation";
-      inviter: "relation";
-      stageInstance: "relation";
-      targetApplication: "relation";
-      targetUser: "relation";
+      guild: 'relation';
+      guildScheduledEvent: 'relation';
+      inviter: 'relation';
+      stageInstance: 'relation';
+      targetApplication: 'relation';
+      targetUser: 'relation';
     }
   >;
   InviteStageInstance: EntityEntry<
@@ -205,7 +205,7 @@ export type EntitySchema = {
     MessagePayloadEntity,
     Record<never, never>
   >;
-  Role: EntityEntry<RawRoleData, RoleEntity, { guild: "relation" }>;
+  Role: EntityEntry<RawRoleData, RoleEntity, { guild: 'relation' }>;
   StageInstance: EntityEntry<
     RawStageInstanceData,
     StageInstanceEntity,
@@ -217,21 +217,21 @@ export type EntitySchema = {
     Record<never, never>
   >;
   Team: EntityEntry<RawTeamData, TeamEntity, Record<never, never>>;
-  User: EntityEntry<SelfbotUserData, UserEntity, { bannerColor: "selfbot" }>;
+  User: EntityEntry<SelfbotUserData, UserEntity, { bannerColor: 'selfbot' }>;
   VoiceState: EntityEntry<
     RawVoiceStateData,
     VoiceStateEntity,
-    { guild: "relation" }
+    { guild: 'relation' }
   >;
   WelcomeScreen: EntityEntry<
     RawWelcomeScreenData,
     WelcomeScreenEntity,
-    { guild: "relation" }
+    { guild: 'relation' }
   >;
   Widget: EntityEntry<RawWidgetData, WidgetEntity, Record<never, never>>;
 };
 
 export type EntityName = keyof EntitySchema;
-export type RawOf<K extends EntityName> = EntitySchema[K]["raw"];
-export type EntityOf<K extends EntityName> = EntitySchema[K]["entity"];
-export type PatchOf<K extends EntityName> = EntitySchema[K]["patch"];
+export type RawOf<K extends EntityName> = EntitySchema[K]['raw'];
+export type EntityOf<K extends EntityName> = EntitySchema[K]['entity'];
+export type PatchOf<K extends EntityName> = EntitySchema[K]['patch'];

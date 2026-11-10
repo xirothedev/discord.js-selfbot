@@ -1,17 +1,17 @@
-import type { Client } from "../../Client";
-import type { WebSocketShard } from "../WebSocketShard";
-import CallState from "../../../structures/CallState";
-import _ConstantsModule from "../../../util/Constants";
+import type { Client } from '../../Client';
+import type { WebSocketShard } from '../WebSocketShard';
+import CallState from '../../../structures/CallState';
+import _ConstantsModule from '../../../util/Constants';
 
 const { Events } = _ConstantsModule;
-import type { CallData } from "../../../structures/CallState";
+import type { CallData } from '../../../structures/CallState';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  return typeof value === 'object' && value !== null;
 }
 
 function isCallData(value: unknown): value is CallData {
-  return isRecord(value) && typeof value.channel_id === "string";
+  return isRecord(value) && typeof value.channel_id === 'string';
 }
 
 export default function handleCallDelete(

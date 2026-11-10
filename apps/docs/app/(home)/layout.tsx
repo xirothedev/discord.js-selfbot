@@ -1,10 +1,10 @@
-import { HomeLayout } from "fumadocs-ui/layouts/home";
-import Link from "next/link";
+import { HomeLayout } from 'fumadocs-ui/layouts/home';
+import Link from 'next/link';
 
-import { baseOptions } from "@/lib/layout.shared";
-import { appName } from "@/lib/shared";
+import { baseOptions } from '@/lib/layout.shared';
+import { appName } from '@/lib/shared';
 
-const Layout = ({ children }: LayoutProps<"/">) => (
+const Layout = ({ children }: LayoutProps<'/'>) => (
   <HomeLayout {...baseOptions()}>
     {children}
     <footer className="border-fd-border border-t">

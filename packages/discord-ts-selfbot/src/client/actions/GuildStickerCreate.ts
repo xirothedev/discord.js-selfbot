@@ -1,8 +1,8 @@
-import Action from "./Action";
-import type { RawStickerData } from "../../../typings/rawDataTypes";
-import type { Guild } from "../../structures/Guild";
-import type { Sticker } from "../../structures/Sticker";
-import _ConstantsModule from "../../util/Constants";
+import Action from './Action';
+import type { RawStickerData } from '../../../typings/rawDataTypes';
+import type { Guild } from '../../structures/Guild';
+import type { Sticker } from '../../structures/Sticker';
+import _ConstantsModule from '../../util/Constants';
 
 const { Events } = _ConstantsModule;
 

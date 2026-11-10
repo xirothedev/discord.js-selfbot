@@ -1,18 +1,18 @@
-import { Buffer } from "node:buffer";
-import fs from "node:fs";
-import path from "node:path";
-import stream from "node:stream";
-import { fetch } from "undici";
-import _errorsModule from "../errors";
+import { Buffer } from 'node:buffer';
+import fs from 'node:fs';
+import path from 'node:path';
+import stream from 'node:stream';
+import { fetch } from 'undici';
+import _errorsModule from '../errors';
 
 const { Error: DiscordError, TypeError } = _errorsModule;
-import Invite from "../structures/Invite";
-import GuildTemplate from "../structures/GuildTemplate";
+import Invite from '../structures/Invite';
+import GuildTemplate from '../structures/GuildTemplate';
 
 class DataResolver extends null {
   static resolveCode(data: unknown, regex: RegExp) {
     return (
-      new RegExp(regex.source, "u").exec(String(data))?.[1] ?? (data as string)
+      new RegExp(regex.source, 'u').exec(String(data))?.[1] ?? (data as string)
     );
   }
 
@@ -28,7 +28,7 @@ class DataResolver extends null {
     if (!image) {
       return null;
     }
-    if (typeof image === "string" && image.startsWith("data:")) {
+    if (typeof image === 'string' && image.startsWith('data:')) {
       return image;
     }
     const file = await this.resolveFileAsBuffer(image);
@@ -37,7 +37,7 @@ class DataResolver extends null {
 
   static resolveBase64(data: unknown) {
     if (Buffer.isBuffer(data)) {
-      return `data:image/jpg;base64,${data.toString("base64")}`;
+      return `data:image/jpg;base64,${data.toString('base64')}`;
     }
     return data as string;
   }
@@ -46,24 +46,24 @@ class DataResolver extends null {
     if (Buffer.isBuffer(resource) || resource instanceof stream.Readable) {
       return resource;
     }
-    if (typeof resource === "string") {
+    if (typeof resource === 'string') {
       if (/^https?:\/\//u.test(resource)) {
         const res = await fetch(resource);
         if (res.ok) {
           return res.body;
         }
-        throw new DiscordError("FILE_NOT_FOUND", resource);
+        throw new DiscordError('FILE_NOT_FOUND', resource);
       }
 
       const file = path.resolve(resource);
       const stats = await fs.promises.stat(file);
       if (!stats.isFile()) {
-        throw new DiscordError("FILE_NOT_FOUND", file);
+        throw new DiscordError('FILE_NOT_FOUND', file);
       }
       return fs.createReadStream(file);
     }
 
-    throw new TypeError("REQ_RESOURCE_TYPE");
+    throw new TypeError('REQ_RESOURCE_TYPE');
   }
 
   static async resolveFileAsBuffer(resource: unknown) {
@@ -72,7 +72,7 @@ class DataResolver extends null {
       return file;
     }
     if (!file) {
-      throw new DiscordError("FILE_NOT_FOUND", String(resource));
+      throw new DiscordError('FILE_NOT_FOUND', String(resource));
     }
 
     const buffers = [];

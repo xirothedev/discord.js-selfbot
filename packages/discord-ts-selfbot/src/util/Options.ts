@@ -1,10 +1,10 @@
-import Util from "./Util";
-import _ConstantsModule from "./Constants";
+import Util from './Util';
+import _ConstantsModule from './Constants';
 
 const { UserAgent } = _ConstantsModule;
-import Intents from "./Intents";
-import { Collection } from "@discordjs/collection";
-import LimitedCollection from "./LimitedCollection";
+import Intents from './Intents';
+import { Collection } from '@discordjs/collection';
+import LimitedCollection from './LimitedCollection';
 import type {
   BitFieldResolvable,
   ClientOptions,
@@ -14,15 +14,15 @@ import type {
   PresenceData,
   SweeperOptions,
   WebSocketOptions,
-} from "../../typings";
+} from '../../typings';
 
 export interface ResolvedWebSocketOptions extends Omit<
   WebSocketOptions,
-  "agent"
+  'agent'
 > {
   agent: unknown;
   compress: boolean;
-  properties: NonNullable<WebSocketOptions["properties"]> &
+  properties: NonNullable<WebSocketOptions['properties']> &
     Record<string, unknown>;
   capabilities: number;
   client_state: { guild_versions: Record<string, unknown> };
@@ -30,7 +30,7 @@ export interface ResolvedWebSocketOptions extends Omit<
   presence?: unknown;
 }
 
-export interface ResolvedHTTPOptions extends Omit<HTTPOptions, "agent"> {
+export interface ResolvedHTTPOptions extends Omit<HTTPOptions, 'agent'> {
   agent: unknown;
   headers: Record<string, string>;
   version: number;
@@ -43,10 +43,10 @@ export interface ResolvedHTTPOptions extends Omit<HTTPOptions, "agent"> {
 
 export interface ResolvedClientOptions extends Omit<
   ClientOptions,
-  "TOTPKey" | "shards" | "ws" | "http" | "presence" | "makeCache"
+  'TOTPKey' | 'shards' | 'ws' | 'http' | 'presence' | 'makeCache'
 > {
   TOTPKey: string | null;
-  shards?: number[] | "auto";
+  shards?: number[] | 'auto';
   makeCache: (
     manager: { name: string },
     holds: { name: string }
@@ -57,7 +57,7 @@ export interface ResolvedClientOptions extends Omit<
   intents: BitFieldResolvable<IntentsString, number>;
   DMChannelVoiceStatusSync: number;
   captchaRetryLimit: number;
-  captchaSolver: NonNullable<ClientOptions["captchaSolver"]>;
+  captchaSolver: NonNullable<ClientOptions['captchaSolver']>;
   closeTimeout: number;
   messageCacheLifetime: number;
   messageSweepInterval: number;
@@ -83,23 +83,23 @@ class Options extends null {
       TOTPKey: null,
       captchaRetryLimit: 3,
       captchaSolver: () => {
-        const err = new Error("CAPTCHA_SOLVER_NOT_IMPLEMENTED");
+        const err = new Error('CAPTCHA_SOLVER_NOT_IMPLEMENTED');
         err.cause =
-          "You need to provide a captcha solver to use this feature\nExample: const client = new Client({ captchaSolver: yourAsyncFunction })";
+          'You need to provide a captcha solver to use this feature\nExample: const client = new Client({ captchaSolver: yourAsyncFunction })';
         throw err;
       },
       closeTimeout: 5000,
       failIfNotExists: true,
       http: {
         agent: {},
-        api: "https://discord.com/api",
-        cdn: "https://cdn.discordapp.com",
+        api: 'https://discord.com/api',
+        cdn: 'https://cdn.discordapp.com',
         headers: {
-          "User-Agent": UserAgent,
+          'User-Agent': UserAgent,
         },
-        invite: "https://discord.gg",
-        scheduledEvent: "https://discord.com/events",
-        template: "https://discord.new",
+        invite: 'https://discord.gg',
+        scheduledEvent: 'https://discord.com/events',
+        template: 'https://discord.new',
         version: 9,
       },
       intents: Intents.ALL,
@@ -109,14 +109,14 @@ class Options extends null {
       messageSweepInterval: 0,
       // Enable the partials
       partials: [
-        "USER",
-        "CHANNEL",
-        "GUILD_MEMBER",
-        "MESSAGE",
-        "REACTION",
-        "GUILD_SCHEDULED_EVENT",
+        'USER',
+        'CHANNEL',
+        'GUILD_MEMBER',
+        'MESSAGE',
+        'REACTION',
+        'GUILD_SCHEDULED_EVENT',
       ],
-      presence: { activities: [], afk: true, since: 0, status: "online" },
+      presence: { activities: [], afk: true, since: 0, status: 'online' },
       restGlobalRateLimit: 0,
       restRequestTimeout: 15_000,
       restSweepInterval: 60,
@@ -137,25 +137,25 @@ class Options extends null {
         },
         compress: false,
         properties: {
-          app_arch: "x64",
-          browser: "Discord Client",
+          app_arch: 'x64',
+          browser: 'Discord Client',
           browser_user_agent: UserAgent,
-          browser_version: "35.3.0",
-          client_app_state: "focused",
+          browser_version: '35.3.0',
+          client_app_state: 'focused',
           client_build_number: 455_964,
           client_event_source: null,
           client_heartbeat_session_id: crypto.randomUUID(),
           client_launch_id: crypto.randomUUID(),
-          client_version: "1.0.9210",
+          client_version: '1.0.9210',
           has_client_mods: false,
           launch_signature: crypto.randomUUID(),
           native_build_number: 69_976,
-          os: "Windows",
-          os_arch: "x64",
-          os_sdk_version: "19044",
-          os_version: "10.0.19044",
-          release_channel: "stable",
-          system_locale: "en-US",
+          os: 'Windows',
+          os_arch: 'x64',
+          os_sdk_version: '19044',
+          os_version: '10.0.19044',
+          release_channel: 'stable',
+          system_locale: 'en-US',
         },
         version: 9,
       },
@@ -168,7 +168,7 @@ class Options extends null {
       if (setting === null || setting === undefined) {
         return new Collection();
       }
-      if (typeof setting === "number") {
+      if (typeof setting === 'number') {
         if (setting === Infinity) {
           return new Collection();
         }

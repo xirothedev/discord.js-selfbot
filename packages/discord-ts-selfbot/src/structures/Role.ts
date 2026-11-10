@@ -1,19 +1,19 @@
-import process from "node:process";
-import Base from "./Base";
-import _errorsModule from "../errors";
+import process from 'node:process';
+import Base from './Base';
+import _errorsModule from '../errors';
 
 const { Error } = _errorsModule;
-import Permissions from "../util/Permissions";
-import RoleFlags from "../util/RoleFlags";
-import SnowflakeUtil from "../util/SnowflakeUtil";
-import type { RawRoleData } from "../../typings/rawDataTypes";
-import type { RoleEntity } from "../types/entities/role";
-import type { PatchOf } from "../types/schema";
-import type Client from "../client/Client";
-import type { Guild } from "./Guild";
-import type { GuildMember } from "./GuildMember";
-import type { GuildChannel } from "./GuildChannel";
-import type { SetRolePositionOptions } from "../../typings";
+import Permissions from '../util/Permissions';
+import RoleFlags from '../util/RoleFlags';
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { RawRoleData } from '../../typings/rawDataTypes';
+import type { RoleEntity } from '../types/entities/role';
+import type { PatchOf } from '../types/schema';
+import type Client from '../client/Client';
+import type { Guild } from './Guild';
+import type { GuildMember } from './GuildMember';
+import type { GuildChannel } from './GuildChannel';
+import type { SetRolePositionOptions } from '../../typings';
 
 let deprecationEmittedForComparePositions = false;
 
@@ -26,20 +26,20 @@ const deletedRoles = new WeakSet();
 let deprecationEmittedForDeleted = false;
 
 class Role extends Base implements RoleEntity {
-  declare color: RoleEntity["color"];
-  declare colors: RoleEntity["colors"];
-  declare flags: RoleEntity["flags"];
-  declare guild: RoleEntity["guild"];
-  declare hoist: RoleEntity["hoist"];
-  declare id: RoleEntity["id"];
-  declare managed: RoleEntity["managed"];
-  declare mentionable: RoleEntity["mentionable"];
-  declare name: RoleEntity["name"];
-  declare permissions: RoleEntity["permissions"];
-  declare rawPosition: RoleEntity["rawPosition"];
-  declare tags: RoleEntity["tags"];
-  declare icon: RoleEntity["icon"];
-  declare unicodeEmoji: RoleEntity["unicodeEmoji"];
+  declare color: RoleEntity['color'];
+  declare colors: RoleEntity['colors'];
+  declare flags: RoleEntity['flags'];
+  declare guild: RoleEntity['guild'];
+  declare hoist: RoleEntity['hoist'];
+  declare id: RoleEntity['id'];
+  declare managed: RoleEntity['managed'];
+  declare mentionable: RoleEntity['mentionable'];
+  declare name: RoleEntity['name'];
+  declare permissions: RoleEntity['permissions'];
+  declare rawPosition: RoleEntity['rawPosition'];
+  declare tags: RoleEntity['tags'];
+  declare icon: RoleEntity['icon'];
+  declare unicodeEmoji: RoleEntity['unicodeEmoji'];
 
   constructor(client: Client, data: RawRoleData, guild: Guild) {
     super(client);
@@ -55,7 +55,7 @@ class Role extends Base implements RoleEntity {
     }
   }
 
-  _patch(data: PatchOf<"Role">) {
+  _patch(data: PatchOf<'Role'>) {
     this.id = data.id ?? this.id;
     if (data.name !== undefined) {
       this.name = data.name;
@@ -118,9 +118,9 @@ class Role extends Base implements RoleEntity {
   }
 
   static mapTags(
-    tags: NonNullable<PatchOf<"Role">["tags"]>
-  ): NonNullable<RoleEntity["tags"]> {
-    const mapped: NonNullable<RoleEntity["tags"]> = {};
+    tags: NonNullable<PatchOf<'Role'>['tags']>
+  ): NonNullable<RoleEntity['tags']> {
+    const mapped: NonNullable<RoleEntity['tags']> = {};
     if (tags.bot_id !== undefined) {
       mapped.botId = tags.bot_id;
     }
@@ -159,8 +159,8 @@ class Role extends Base implements RoleEntity {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
-        "Role#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.",
-        "DeprecationWarning"
+        'Role#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
+        'DeprecationWarning'
       );
     }
 
@@ -171,8 +171,8 @@ class Role extends Base implements RoleEntity {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
-        "Role#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.",
-        "DeprecationWarning"
+        'Role#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
+        'DeprecationWarning'
       );
     }
 
@@ -184,7 +184,7 @@ class Role extends Base implements RoleEntity {
   }
 
   get hexColor() {
-    return `#${this.colors.primaryColor.toString(16).padStart(6, "0")}`;
+    return `#${this.colors.primaryColor.toString(16).padStart(6, '0')}`;
   }
 
   get members() {
@@ -233,7 +233,7 @@ class Role extends Base implements RoleEntity {
   permissionsIn(channel: GuildChannel | string, checkAdmin = true) {
     const resolved = this.guild.channels.resolve(channel);
     if (!resolved) {
-      throw new Error("GUILD_CHANNEL_RESOLVE");
+      throw new Error('GUILD_CHANNEL_RESOLVE');
     }
     return resolved.rolePermissions(this, checkAdmin);
   }
@@ -316,7 +316,7 @@ class Role extends Base implements RoleEntity {
 
   toString() {
     if (this.id === this.guild.id) {
-      return "@everyone";
+      return '@everyone';
     }
     return `<@&${this.id}>`;
   }
@@ -339,8 +339,8 @@ class Role extends Base implements RoleEntity {
   static comparePositions(role1: Role, role2: Role) {
     if (!deprecationEmittedForComparePositions) {
       process.emitWarning(
-        "The Role.comparePositions method is deprecated. Use RoleManager#comparePositions instead.",
-        "DeprecationWarning"
+        'The Role.comparePositions method is deprecated. Use RoleManager#comparePositions instead.',
+        'DeprecationWarning'
       );
 
       deprecationEmittedForComparePositions = true;

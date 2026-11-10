@@ -1,16 +1,16 @@
-import { Collection } from "@discordjs/collection";
-import DataManager from "./DataManager";
-import _errorsModule from "../errors";
+import { Collection } from '@discordjs/collection';
+import DataManager from './DataManager';
+import _errorsModule from '../errors';
 
 const { TypeError } = _errorsModule;
-import _RoleModule from "../structures/Role";
+import _RoleModule from '../structures/Role';
 
 const { Role } = _RoleModule;
-import type { Snowflake } from "discord-api-types/v10";
-import type { RoleResolvable } from "../../typings";
-import type { Guild } from "../structures/Guild";
-import type { GuildEmoji } from "../structures/GuildEmoji";
-import type { Role as RoleType } from "../structures/Role";
+import type { Snowflake } from 'discord-api-types/v10';
+import type { RoleResolvable } from '../../typings';
+import type { Guild } from '../structures/Guild';
+import type { GuildEmoji } from '../structures/GuildEmoji';
+import type { Role as RoleType } from '../structures/Role';
 
 type RoleResolvableSource = InstanceType<typeof Role> | RoleResolvable;
 type RoleOrRolesSource =
@@ -61,9 +61,9 @@ class GuildEmojiRoleManager extends DataManager<RoleType> {
       const resolvedRole = this.guild.roles.resolveId(role);
       if (!resolvedRole) {
         throw new TypeError(
-          "INVALID_ELEMENT",
-          "Array or Collection",
-          "roles",
+          'INVALID_ELEMENT',
+          'Array or Collection',
+          'roles',
           role
         );
       }
@@ -82,9 +82,9 @@ class GuildEmojiRoleManager extends DataManager<RoleType> {
       const roleId = this.guild.roles.resolveId(role);
       if (!roleId) {
         throw new TypeError(
-          "INVALID_ELEMENT",
-          "Array or Collection",
-          "roles",
+          'INVALID_ELEMENT',
+          'Array or Collection',
+          'roles',
           role
         );
       }

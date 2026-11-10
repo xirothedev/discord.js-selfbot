@@ -1,17 +1,17 @@
-import _PresenceModule from "./Presence";
+import _PresenceModule from './Presence';
 
 const { Presence } = _PresenceModule;
-import _errorsModule from "../errors";
+import _errorsModule from '../errors';
 
 const { TypeError } = _errorsModule;
-import _ConstantsModule, { resolveEnumValue } from "../util/Constants";
+import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
 
 const { ActivityTypes, Opcodes } = _ConstantsModule;
-import { ActivityType } from "discord-api-types/v10";
-import type { GatewayActivityUpdateData } from "discord-api-types/v10";
-import type { Client } from "../client/Client";
-import type { PresenceData, PresenceStatus } from "../../typings";
-import type { RawActivityData } from "../../typings/rawDataTypes";
+import { ActivityType } from 'discord-api-types/v10';
+import type { GatewayActivityUpdateData } from 'discord-api-types/v10';
+import type { Client } from '../client/Client';
+import type { PresenceData, PresenceStatus } from '../../typings';
+import type { RawActivityData } from '../../typings/rawDataTypes';
 
 const CustomStatusActivityTypes = [
   ActivityTypes.CUSTOM,
@@ -26,7 +26,7 @@ interface PresenceActivitySource {
   toJSON?: () => unknown;
 }
 
-interface PresenceDataSource extends Omit<PresenceData, "activities"> {
+interface PresenceDataSource extends Omit<PresenceData, 'activities'> {
   since?: number;
   activities?: PresenceActivitySource[];
 }
@@ -39,14 +39,14 @@ interface ClientPresencePacket {
 }
 
 function isActivityType(value: unknown): value is ActivityType {
-  return typeof value === "number" && value in ActivityType;
+  return typeof value === 'number' && value in ActivityType;
 }
 
 function resolveActivityType(type: string | number | undefined): ActivityType {
-  if (typeof type === "number") {
+  if (typeof type === 'number') {
     return isActivityType(type) ? type : ActivityType.Playing;
   }
-  if (typeof type === "string") {
+  if (typeof type === 'string') {
     const resolved = resolveEnumValue(ActivityTypes, type);
     return resolved !== undefined && isActivityType(resolved)
       ? resolved
@@ -72,7 +72,7 @@ class ClientPresence extends Presence {
     super(
       client,
       Object.assign(rest, {
-        status: data.status ?? "online",
+        status: data.status ?? 'online',
         user: { id: null },
       })
     );
@@ -102,17 +102,17 @@ class ClientPresence extends Presence {
   }: PresenceDataSource): ClientPresencePacket {
     const data: ClientPresencePacket = {
       activities: [],
-      afk: typeof afk === "boolean" ? afk : this.afk,
-      since: typeof since === "number" && !Number.isNaN(since) ? this.since : 0,
+      afk: typeof afk === 'boolean' ? afk : this.afk,
+      since: typeof since === 'number' && !Number.isNaN(since) ? this.since : 0,
       status: status ?? this.status,
     };
     if (activities?.length) {
       for (const [index, activity] of activities.entries()) {
-        if (typeof activity.name !== "string") {
+        if (typeof activity.name !== 'string') {
           throw new TypeError(
-            "INVALID_TYPE",
+            'INVALID_TYPE',
             `activities[${index}].name`,
-            "string"
+            'string'
           );
         }
 
@@ -127,7 +127,7 @@ class ClientPresence extends Presence {
           !activity.state
         ) {
           activity.state = activity.name;
-          activity.name = "Custom Status";
+          activity.name = 'Custom Status';
         }
 
         data.activities.push({

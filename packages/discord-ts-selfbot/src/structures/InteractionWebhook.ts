@@ -1,6 +1,6 @@
-import { createRequire } from "node:module";
-import type Client from "../client/Client";
-import type { Snowflake } from "discord-api-types/v10";
+import { createRequire } from 'node:module';
+import type Client from '../client/Client';
+import type { Snowflake } from 'discord-api-types/v10';
 
 const require = createRequire(import.meta.url);
 
@@ -10,9 +10,9 @@ class InteractionWebhook {
   declare token: string;
 
   constructor(client: Client, id: Snowflake, token: string) {
-    Object.defineProperty(this, "client", { value: client });
+    Object.defineProperty(this, 'client', { value: client });
     this.id = id;
-    Object.defineProperty(this, "token", {
+    Object.defineProperty(this, 'token', {
       configurable: true,
       value: token,
       writable: true,
@@ -42,13 +42,13 @@ export { InteractionWebhook };
 
 setTimeout(() => {
   try {
-    const Webhook = require("./Webhook");
+    const Webhook = require('./Webhook');
     Webhook.applyToClass(InteractionWebhook, [
-      "sendSlackMessage",
-      "edit",
-      "delete",
-      "createdTimestamp",
-      "createdAt",
+      'sendSlackMessage',
+      'edit',
+      'delete',
+      'createdTimestamp',
+      'createdAt',
     ]);
   } catch {
     // The webhook mixin is optional during early circular imports.

@@ -1,14 +1,14 @@
-import EventEmitter from "node:events";
-import { setImmediate } from "node:timers";
-import { Collection } from "@discordjs/collection";
-import { RPCErrorCodes } from "discord-api-types/v10";
-import WebSocketShard from "./WebSocketShard";
-import PacketHandlers from "./handlers";
-import _errorsModule from "../../errors";
+import EventEmitter from 'node:events';
+import { setImmediate } from 'node:timers';
+import { Collection } from '@discordjs/collection';
+import { RPCErrorCodes } from 'discord-api-types/v10';
+import WebSocketShard from './WebSocketShard';
+import PacketHandlers from './handlers';
+import _errorsModule from '../../errors';
 
 const { Error } = _errorsModule;
-import _ConstantsModule from "../../util/Constants";
-import type Client from "../Client";
+import _ConstantsModule from '../../util/Constants';
+import type Client from '../Client';
 
 const { Events, ShardEvents, Status, WSCodes, WSEvents } = _ConstantsModule;
 
@@ -23,7 +23,7 @@ const BeforeReadyWhitelist: readonly string[] = [
 ];
 
 interface GatewayPacket {
-  ["t"]?: string;
+  ['t']?: string;
   d?: unknown;
   op?: number;
   s?: number;
@@ -40,7 +40,7 @@ interface CloseEventLike {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  return typeof value === 'object' && value !== null;
 }
 
 const UNRECOVERABLE_CLOSE_CODES = Object.keys(WSCodes).slice(2).map(Number);
@@ -64,7 +64,7 @@ class WebSocketManager extends EventEmitter {
   constructor(client: Client) {
     super();
 
-    Object.defineProperty(this, "client", { value: client });
+    Object.defineProperty(this, 'client', { value: client });
 
     this.gateway = null;
 
@@ -74,12 +74,12 @@ class WebSocketManager extends EventEmitter {
 
     this.shards = new Collection();
 
-    Object.defineProperty(this, "shardQueue", {
+    Object.defineProperty(this, 'shardQueue', {
       value: new Set(),
       writable: true,
     });
 
-    Object.defineProperty(this, "packetQueue", { value: [] });
+    Object.defineProperty(this, 'packetQueue', { value: [] });
 
     this.status = Status.IDLE;
 
@@ -96,12 +96,12 @@ class WebSocketManager extends EventEmitter {
   debug(message: string, shard?: WebSocketShard) {
     this.client.emit(
       Events.DEBUG,
-      `[WS => ${shard ? `Shard ${shard.id}` : "Manager"}] ${message}`
+      `[WS => ${shard ? `Shard ${shard.id}` : 'Manager'}] ${message}`
     );
   }
 
   async connect() {
-    let gatewayURL = "wss://gateway.discord.gg";
+    let gatewayURL = 'wss://gateway.discord.gg';
     await this.client.api.gateway
       .get<GatewayInfo>({ auth: false })
       .then((r: GatewayInfo) => (gatewayURL = r.url))
@@ -125,7 +125,7 @@ class WebSocketManager extends EventEmitter {
 
     let { shards } = this.client.options;
 
-    if (shards === "auto") {
+    if (shards === 'auto') {
       this.debug(
         `Using the recommended shard count provided by Discord: ${recommendedShards}`
       );
@@ -147,7 +147,7 @@ class WebSocketManager extends EventEmitter {
     }
 
     this.totalShards = shards.length;
-    this.debug(`Spawning shards: ${shards.join(", ")}`);
+    this.debug(`Spawning shards: ${shards.join(', ')}`);
     this.shardQueue = new Set(
       shards.map((id: number) => new WebSocketShard(this, id))
     );
@@ -219,7 +219,7 @@ class WebSocketManager extends EventEmitter {
 
       shard.on(ShardEvents.DESTROYED, () => {
         this.debug(
-          "Shard was destroyed but no WebSocket connection was present! Reconnecting...",
+          'Shard was destroyed but no WebSocket connection was present! Reconnecting...',
           shard
         );
 
@@ -238,14 +238,14 @@ class WebSocketManager extends EventEmitter {
       await shard.connect();
     } catch (error: unknown) {
       const code =
-        isRecord(error) && typeof error.code === "number"
+        isRecord(error) && typeof error.code === 'number'
           ? error.code
           : undefined;
       if (code && UNRECOVERABLE_CLOSE_CODES.includes(code)) {
         throw new Error(WSCodes[code]);
         // Undefined if session is invalid, error event for regular closes
       } else if (!error || code) {
-        this.debug("Failed to connect to the gateway, requeueing...", shard);
+        this.debug('Failed to connect to the gateway, requeueing...', shard);
         this.shardQueue.add(shard);
       } else {
         throw error;
@@ -275,7 +275,7 @@ class WebSocketManager extends EventEmitter {
         `Couldn't reconnect or fetch information about the gateway. ${String(error)}`
       );
       const httpStatus =
-        isRecord(error) && typeof error.httpStatus === "number"
+        isRecord(error) && typeof error.httpStatus === 'number'
           ? error.httpStatus
           : undefined;
       if (httpStatus !== 401) {
@@ -309,7 +309,7 @@ class WebSocketManager extends EventEmitter {
       return;
     }
     this.debug(
-      `Manager was destroyed. Called by:\n${new Error("MANAGER_DESTROYED").stack}`
+      `Manager was destroyed. Called by:\n${new Error('MANAGER_DESTROYED').stack}`
     );
     this.destroyed = true;
     this.shardQueue.clear();
@@ -322,7 +322,7 @@ class WebSocketManager extends EventEmitter {
     if (
       packet &&
       this.status !== Status.READY &&
-      !BeforeReadyWhitelist.includes(packet.t ?? "")
+      !BeforeReadyWhitelist.includes(packet.t ?? '')
     ) {
       this.packetQueue.push({ packet, shard });
       return false;
@@ -340,16 +340,16 @@ class WebSocketManager extends EventEmitter {
     if (packet?.t && PacketHandlers[packet.t]) {
       PacketHandlers[packet.t](this.client, packet, shard);
     } else if (packet) {
-      const actionName = String(packet.t || "")
-        .split("_")
+      const actionName = String(packet.t || '')
+        .split('_')
         .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
-        .join("");
+        .join('');
       const action = Reflect.get(this.client.actions, actionName);
       if (
         action &&
-        typeof action === "object" &&
-        "handle" in action &&
-        typeof action.handle === "function"
+        typeof action === 'object' &&
+        'handle' in action &&
+        typeof action.handle === 'function'
       ) {
         Reflect.apply(action.handle, action, [packet.d, shard]);
         return true;

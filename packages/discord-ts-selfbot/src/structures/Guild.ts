@@ -1,29 +1,29 @@
-import process from "node:process";
-import { Collection } from "@discordjs/collection";
-import AnonymousGuild from "./AnonymousGuild";
-import GuildAuditLogs from "./GuildAuditLogs";
-import GuildPreview from "./GuildPreview";
-import GuildTemplate from "./GuildTemplate";
-import Integration from "./Integration";
-import Webhook from "./Webhook";
-import WelcomeScreen from "./WelcomeScreen";
-import _errorsModule from "../errors";
+import process from 'node:process';
+import { Collection } from '@discordjs/collection';
+import AnonymousGuild from './AnonymousGuild';
+import GuildAuditLogs from './GuildAuditLogs';
+import GuildPreview from './GuildPreview';
+import GuildTemplate from './GuildTemplate';
+import Integration from './Integration';
+import Webhook from './Webhook';
+import WelcomeScreen from './WelcomeScreen';
+import _errorsModule from '../errors';
 
 const { Error } = _errorsModule;
-import AutoModerationRuleManager from "../managers/AutoModerationRuleManager";
-import GuildBanManager from "../managers/GuildBanManager";
-import GuildChannelManager from "../managers/GuildChannelManager";
-import GuildEmojiManager from "../managers/GuildEmojiManager";
-import GuildInviteManager from "../managers/GuildInviteManager";
-import GuildMemberManager from "../managers/GuildMemberManager";
-import GuildScheduledEventManager from "../managers/GuildScheduledEventManager";
-import GuildSettingManager from "../managers/GuildSettingManager";
-import GuildStickerManager from "../managers/GuildStickerManager";
-import PresenceManager from "../managers/PresenceManager";
-import RoleManager from "../managers/RoleManager";
-import StageInstanceManager from "../managers/StageInstanceManager";
-import VoiceStateManager from "../managers/VoiceStateManager";
-import _ConstantsModule from "../util/Constants";
+import AutoModerationRuleManager from '../managers/AutoModerationRuleManager';
+import GuildBanManager from '../managers/GuildBanManager';
+import GuildChannelManager from '../managers/GuildChannelManager';
+import GuildEmojiManager from '../managers/GuildEmojiManager';
+import GuildInviteManager from '../managers/GuildInviteManager';
+import GuildMemberManager from '../managers/GuildMemberManager';
+import GuildScheduledEventManager from '../managers/GuildScheduledEventManager';
+import GuildSettingManager from '../managers/GuildSettingManager';
+import GuildStickerManager from '../managers/GuildStickerManager';
+import PresenceManager from '../managers/PresenceManager';
+import RoleManager from '../managers/RoleManager';
+import StageInstanceManager from '../managers/StageInstanceManager';
+import VoiceStateManager from '../managers/VoiceStateManager';
+import _ConstantsModule from '../util/Constants';
 
 const {
   DefaultMessageNotificationLevels,
@@ -33,11 +33,11 @@ const {
   MFALevels,
   PremiumTiers,
 } = _ConstantsModule;
-import DataResolver from "../util/DataResolver";
-import { patchValue } from "./Base";
-import SystemChannelFlags from "../util/SystemChannelFlags";
-import Util from "../util/Util";
-import { GuildFeature } from "discord-api-types/v10";
+import DataResolver from '../util/DataResolver';
+import { patchValue } from './Base';
+import SystemChannelFlags from '../util/SystemChannelFlags';
+import Util from '../util/Util';
+import { GuildFeature } from 'discord-api-types/v10';
 import type {
   RESTGetAPIAuditLogResult,
   RESTGetAPIGuildIntegrationsResult,
@@ -50,8 +50,8 @@ import type {
   RESTPatchAPIGuildWelcomeScreenResult,
   RESTPostAPIGuildTemplatesResult,
   Snowflake,
-} from "discord-api-types/v10";
-import type { RawGuildData } from "../../typings/rawDataTypes";
+} from 'discord-api-types/v10';
+import type { RawGuildData } from '../../typings/rawDataTypes';
 import type {
   Base64Resolvable,
   BaseFetchOptions,
@@ -79,12 +79,12 @@ import type {
   VoiceChannelResolvable,
   WelcomeChannelData,
   WelcomeScreenEditData,
-} from "../../typings";
-import type { GuildChannel } from "./GuildChannel";
-import type { GuildEntity } from "../types/entities/guild";
-import type { PatchOf } from "../types/schema";
-import type { GuildEmoji } from "./GuildEmoji";
-import type Client from "../client/Client";
+} from '../../typings';
+import type { GuildChannel } from './GuildChannel';
+import type { GuildEntity } from '../types/entities/guild';
+import type { PatchOf } from '../types/schema';
+import type { GuildEmoji } from './GuildEmoji';
+import type Client from '../client/Client';
 
 let deprecationEmittedForSetChannelPositions = false;
 let deprecationEmittedForSetRolePositions = false;
@@ -99,80 +99,80 @@ let deprecationEmittedForMe = false;
 const deletedGuilds = new WeakSet();
 
 function resolveGuildVerificationLevel(
-  value: GuildEditData["verificationLevel"]
+  value: GuildEditData['verificationLevel']
 ) {
   if (value === null || value === undefined) {
     return null;
   }
-  return typeof value === "number" ? value : VerificationLevels[value];
+  return typeof value === 'number' ? value : VerificationLevels[value];
 }
 
 function resolveExplicitContentFilter(
-  value: GuildEditData["explicitContentFilter"]
+  value: GuildEditData['explicitContentFilter']
 ) {
   if (value === null || value === undefined) {
     return null;
   }
-  return typeof value === "number" ? value : ExplicitContentFilterLevels[value];
+  return typeof value === 'number' ? value : ExplicitContentFilterLevels[value];
 }
 
 function resolveDefaultMessageNotificationLevel(
-  value: GuildEditData["defaultMessageNotifications"]
+  value: GuildEditData['defaultMessageNotifications']
 ) {
   if (value === null || value === undefined) {
     return null;
   }
-  return typeof value === "number"
+  return typeof value === 'number'
     ? value
     : DefaultMessageNotificationLevels[value];
 }
 
 class Guild extends AnonymousGuild implements GuildEntity {
   declare client: Client;
-  declare afkChannelId: GuildEntity["afkChannelId"];
-  declare afkTimeout: GuildEntity["afkTimeout"];
-  declare applicationId: GuildEntity["applicationId"];
-  declare maxVideoChannelUsers: GuildEntity["maxVideoChannelUsers"];
-  declare maxStageVideoChannelUsers: GuildEntity["maxStageVideoChannelUsers"];
-  declare approximateMemberCount: GuildEntity["approximateMemberCount"];
-  declare approximatePresenceCount: GuildEntity["approximatePresenceCount"];
-  declare autoModerationRules: GuildEntity["autoModerationRules"];
-  declare available: GuildEntity["available"];
-  declare bans: GuildEntity["bans"];
-  declare channels: GuildEntity["channels"];
-  declare defaultMessageNotifications: GuildEntity["defaultMessageNotifications"];
-  declare discoverySplash: GuildEntity["discoverySplash"];
-  declare emojis: GuildEntity["emojis"];
-  declare explicitContentFilter: GuildEntity["explicitContentFilter"];
-  declare invites: GuildEntity["invites"];
-  declare joinedTimestamp: GuildEntity["joinedTimestamp"];
-  declare large: GuildEntity["large"];
-  declare maximumMembers: GuildEntity["maximumMembers"];
-  declare maximumPresences: GuildEntity["maximumPresences"];
-  declare memberCount: GuildEntity["memberCount"];
-  declare members: GuildEntity["members"];
-  declare mfaLevel: GuildEntity["mfaLevel"];
-  declare ownerId: GuildEntity["ownerId"];
-  declare preferredLocale: GuildEntity["preferredLocale"];
-  declare premiumProgressBarEnabled: GuildEntity["premiumProgressBarEnabled"];
-  declare premiumTier: GuildEntity["premiumTier"];
-  declare presences: GuildEntity["presences"];
-  declare publicUpdatesChannelId: GuildEntity["publicUpdatesChannelId"];
-  declare roles: GuildEntity["roles"];
-  declare rulesChannelId: GuildEntity["rulesChannelId"];
-  declare safetyAlertsChannelId: GuildEntity["safetyAlertsChannelId"];
-  declare scheduledEvents: GuildEntity["scheduledEvents"];
-  declare settings: GuildEntity["settings"];
-  declare shardId: GuildEntity["shardId"];
-  declare stageInstances: GuildEntity["stageInstances"];
-  declare stickers: GuildEntity["stickers"];
-  declare incidentsData: GuildEntity["incidentsData"];
-  declare systemChannelFlags: GuildEntity["systemChannelFlags"];
-  declare systemChannelId: GuildEntity["systemChannelId"];
-  declare vanityURLUses: GuildEntity["vanityURLUses"];
-  declare voiceStates: GuildEntity["voiceStates"];
-  declare widgetChannelId: GuildEntity["widgetChannelId"];
-  declare widgetEnabled: GuildEntity["widgetEnabled"];
+  declare afkChannelId: GuildEntity['afkChannelId'];
+  declare afkTimeout: GuildEntity['afkTimeout'];
+  declare applicationId: GuildEntity['applicationId'];
+  declare maxVideoChannelUsers: GuildEntity['maxVideoChannelUsers'];
+  declare maxStageVideoChannelUsers: GuildEntity['maxStageVideoChannelUsers'];
+  declare approximateMemberCount: GuildEntity['approximateMemberCount'];
+  declare approximatePresenceCount: GuildEntity['approximatePresenceCount'];
+  declare autoModerationRules: GuildEntity['autoModerationRules'];
+  declare available: GuildEntity['available'];
+  declare bans: GuildEntity['bans'];
+  declare channels: GuildEntity['channels'];
+  declare defaultMessageNotifications: GuildEntity['defaultMessageNotifications'];
+  declare discoverySplash: GuildEntity['discoverySplash'];
+  declare emojis: GuildEntity['emojis'];
+  declare explicitContentFilter: GuildEntity['explicitContentFilter'];
+  declare invites: GuildEntity['invites'];
+  declare joinedTimestamp: GuildEntity['joinedTimestamp'];
+  declare large: GuildEntity['large'];
+  declare maximumMembers: GuildEntity['maximumMembers'];
+  declare maximumPresences: GuildEntity['maximumPresences'];
+  declare memberCount: GuildEntity['memberCount'];
+  declare members: GuildEntity['members'];
+  declare mfaLevel: GuildEntity['mfaLevel'];
+  declare ownerId: GuildEntity['ownerId'];
+  declare preferredLocale: GuildEntity['preferredLocale'];
+  declare premiumProgressBarEnabled: GuildEntity['premiumProgressBarEnabled'];
+  declare premiumTier: GuildEntity['premiumTier'];
+  declare presences: GuildEntity['presences'];
+  declare publicUpdatesChannelId: GuildEntity['publicUpdatesChannelId'];
+  declare roles: GuildEntity['roles'];
+  declare rulesChannelId: GuildEntity['rulesChannelId'];
+  declare safetyAlertsChannelId: GuildEntity['safetyAlertsChannelId'];
+  declare scheduledEvents: GuildEntity['scheduledEvents'];
+  declare settings: GuildEntity['settings'];
+  declare shardId: GuildEntity['shardId'];
+  declare stageInstances: GuildEntity['stageInstances'];
+  declare stickers: GuildEntity['stickers'];
+  declare incidentsData: GuildEntity['incidentsData'];
+  declare systemChannelFlags: GuildEntity['systemChannelFlags'];
+  declare systemChannelId: GuildEntity['systemChannelId'];
+  declare vanityURLUses: GuildEntity['vanityURLUses'];
+  declare voiceStates: GuildEntity['voiceStates'];
+  declare widgetChannelId: GuildEntity['widgetChannelId'];
+  declare widgetEnabled: GuildEntity['widgetEnabled'];
 
   constructor(client: Client, data: RawGuildData & { shardId?: number }) {
     super(client, data, false);
@@ -202,11 +202,11 @@ class Guild extends AnonymousGuild implements GuildEntity {
     if (!data) {
       return;
     }
-    if ("unavailable" in data && data.unavailable) {
+    if ('unavailable' in data && data.unavailable) {
       this.available = false;
     } else {
       this._patch(data);
-      if (!("channels" in data) || !data.channels) {
+      if (!('channels' in data) || !data.channels) {
         this.available = false;
       }
     }
@@ -223,8 +223,8 @@ class Guild extends AnonymousGuild implements GuildEntity {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
-        "Guild#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.",
-        "DeprecationWarning"
+        'Guild#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
+        'DeprecationWarning'
       );
     }
 
@@ -235,8 +235,8 @@ class Guild extends AnonymousGuild implements GuildEntity {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
-        "Guild#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.",
-        "DeprecationWarning"
+        'Guild#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
+        'DeprecationWarning'
       );
     }
 
@@ -251,7 +251,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
     return this.client.ws.shards.get(this.shardId);
   }
 
-  _patch(data: PatchOf<"Guild">) {
+  _patch(data: PatchOf<'Guild'>) {
     super._patch(data);
     if (data.id !== undefined) {
       this.id = data.id;
@@ -262,10 +262,10 @@ class Guild extends AnonymousGuild implements GuildEntity {
     this.patchAssets(data);
   }
 
-  private patchCoreFields(data: PatchOf<"Guild">) {
+  private patchCoreFields(data: PatchOf<'Guild'>) {
     this.name = patchValue(data.name, this.name);
     this.icon = patchValue(data.icon, this.icon);
-    if ("unavailable" in data && data.unavailable) {
+    if ('unavailable' in data && data.unavailable) {
       this.available = !data.unavailable;
     } else {
       this.available ??= true;
@@ -307,7 +307,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
     this.patchCoreSettings(data);
   }
 
-  private patchCoreSettings(data: PatchOf<"Guild">) {
+  private patchCoreSettings(data: PatchOf<'Guild'>) {
     if (data.explicit_content_filter !== undefined) {
       this.explicitContentFilter =
         ExplicitContentFilterLevels[data.explicit_content_filter];
@@ -329,7 +329,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
     }
   }
 
-  private patchCounters(data: PatchOf<"Guild">) {
+  private patchCounters(data: PatchOf<'Guild'>) {
     this.patchLimits(data);
 
     if (data.rules_channel_id !== undefined) {
@@ -355,7 +355,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
     }
   }
 
-  private patchLimits(data: PatchOf<"Guild">) {
+  private patchLimits(data: PatchOf<'Guild'>) {
     if (data.max_members === undefined) {
       this.maximumMembers ??= null;
     } else {
@@ -390,7 +390,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
     this.vanityURLUses ??= null;
   }
 
-  private patchCollections(data: PatchOf<"Guild">) {
+  private patchCollections(data: PatchOf<'Guild'>) {
     if (data.channels) {
       this.channels.cache.clear();
       for (const rawChannel of data.channels) {
@@ -442,7 +442,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
     }
   }
 
-  private patchAssets(data: PatchOf<"Guild">) {
+  private patchAssets(data: PatchOf<'Guild'>) {
     if (!this.emojis) {
       this.emojis = new GuildEmojiManager(this);
       if (data.emojis) {
@@ -476,7 +476,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
     return new Date(this.joinedTimestamp);
   }
 
-  discoverySplashURL({ format = "webp", size }: StaticImageURLOptions = {}) {
+  discoverySplashURL({ format = 'webp', size }: StaticImageURLOptions = {}) {
     return (
       this.discoverySplash &&
       this.client.rest.cdn.DiscoverySplash(
@@ -525,8 +525,8 @@ class Guild extends AnonymousGuild implements GuildEntity {
   get me() {
     if (!deprecationEmittedForMe) {
       process.emitWarning(
-        "Guild#me is deprecated. Use Guild#members#me instead.",
-        "DeprecationWarning"
+        'Guild#me is deprecated. Use Guild#members#me instead.',
+        'DeprecationWarning'
       );
       deprecationEmittedForMe = true;
     }
@@ -582,7 +582,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
 
   async fetchWelcomeScreen() {
     const data = await this.client.api
-      .guilds(this.id, "welcome-screen")
+      .guilds(this.id, 'welcome-screen')
       .get<RESTGetAPIGuildWelcomeScreenResult>();
     return new WelcomeScreen(this, data);
   }
@@ -605,7 +605,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
 
   async fetchVanityData() {
     const data = await this.client.api
-      .guilds(this.id, "vanity-url")
+      .guilds(this.id, 'vanity-url')
       .get<Vanity>();
     this.vanityURLCode = data.code;
     this.vanityURLUses = data.uses;
@@ -642,7 +642,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
     };
   }
 
-  async fetchAuditLogs<TResolvable extends GuildAuditLogsResolvable = "ALL">({
+  async fetchAuditLogs<TResolvable extends GuildAuditLogsResolvable = 'ALL'>({
     before,
     after,
     limit,
@@ -653,12 +653,12 @@ class Guild extends AnonymousGuild implements GuildEntity {
   > {
     const data = await this.client.api
       .guilds(this.id)
-      ["audit-logs"].get<RESTGetAPIAuditLogResult>({
+      ['audit-logs'].get<RESTGetAPIAuditLogResult>({
         query: {
           action_type:
-            typeof type === "string" ? GuildAuditLogs.Actions[type] : type,
-          after: typeof after === "string" ? after : after?.id,
-          before: typeof before === "string" ? before : before?.id,
+            typeof type === 'string' ? GuildAuditLogs.Actions[type] : type,
+          after: typeof after === 'string' ? after : after?.id,
+          before: typeof before === 'string' ? before : before?.id,
           limit,
           user_id: this.client.users.resolveId(user),
         },
@@ -744,7 +744,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
         data.safetyAlertsChannel
       );
     }
-    if ("premiumProgressBarEnabled" in data) {
+    if ('premiumProgressBarEnabled' in data) {
       _data.premium_progress_bar_enabled = data.premiumProgressBarEnabled;
     }
     return _data;
@@ -784,7 +784,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
     );
 
     const patchData = await this.client.api
-      .guilds(this.id, "welcome-screen")
+      .guilds(this.id, 'welcome-screen')
       .patch<RESTPatchAPIGuildWelcomeScreenResult>({
         data: {
           description,
@@ -928,8 +928,8 @@ class Guild extends AnonymousGuild implements GuildEntity {
   ): Promise<this> {
     if (!deprecationEmittedForSetChannelPositions) {
       process.emitWarning(
-        "The Guild#setChannelPositions method is deprecated. Use GuildChannelManager#setPositions instead.",
-        "DeprecationWarning"
+        'The Guild#setChannelPositions method is deprecated. Use GuildChannelManager#setPositions instead.',
+        'DeprecationWarning'
       );
 
       deprecationEmittedForSetChannelPositions = true;
@@ -951,8 +951,8 @@ class Guild extends AnonymousGuild implements GuildEntity {
   setRolePositions(rolePositions: readonly RolePosition[]): Promise<this> {
     if (!deprecationEmittedForSetRolePositions) {
       process.emitWarning(
-        "The Guild#setRolePositions method is deprecated. Use RoleManager#setPositions instead.",
-        "DeprecationWarning"
+        'The Guild#setRolePositions method is deprecated. Use RoleManager#setPositions instead.',
+        'DeprecationWarning'
       );
 
       deprecationEmittedForSetRolePositions = true;
@@ -995,9 +995,9 @@ class Guild extends AnonymousGuild implements GuildEntity {
 
   async leave() {
     if (this.ownerId === this.client.user?.id) {
-      throw new Error("GUILD_OWNED");
+      throw new Error('GUILD_OWNED');
     }
-    await this.client.api.users("@me").guilds(this.id).delete();
+    await this.client.api.users('@me').guilds(this.id).delete();
     return this.client.actions.GuildDelete.handle({ id: this.id }).guild;
   }
 
@@ -1063,18 +1063,18 @@ class Guild extends AnonymousGuild implements GuildEntity {
       // Setting
       return this.edit(
         {
-          defaultMessageNotifications: "ONLY_MENTIONS",
-          explicitContentFilter: "ALL_MEMBERS",
+          defaultMessageNotifications: 'ONLY_MENTIONS',
+          explicitContentFilter: 'ALL_MEMBERS',
           features: [...this.features, GuildFeature.Community].map(
             (feature) => String(feature) as GuildFeatures
           ),
           publicUpdatesChannel:
-            this.channels.resolveId(publicUpdatesChannel) || "1",
-          rulesChannel: this.channels.resolveId(rulesChannel) || "1",
+            this.channels.resolveId(publicUpdatesChannel) || '1',
+          rulesChannel: this.channels.resolveId(rulesChannel) || '1',
           // Email verification level fallback.
           verificationLevel:
             VerificationLevels[this.verificationLevel] < 1
-              ? "LOW"
+              ? 'LOW'
               : this.verificationLevel,
         },
         reason
@@ -1095,7 +1095,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
   }
 
   async topEmojis(): Promise<Collection<number, GuildEmoji>> {
-    const data = await this.client.api.guilds(this.id)["top-emojis"].get<{
+    const data = await this.client.api.guilds(this.id)['top-emojis'].get<{
       items: { emoji_rank: number; emoji_id: Snowflake }[];
     }>();
     const emojis = new Collection<number, GuildEmoji>();
@@ -1108,12 +1108,12 @@ class Guild extends AnonymousGuild implements GuildEntity {
     return emojis;
   }
 
-  async setVanityCode(code = ""): Promise<Vanity> {
-    if (typeof code !== "string") {
-      throw new TypeError("INVALID_VANITY_URL_CODE");
+  async setVanityCode(code = ''): Promise<Vanity> {
+    if (typeof code !== 'string') {
+      throw new TypeError('INVALID_VANITY_URL_CODE');
     }
     const data = await this.client.api
-      .guilds(this.id, "vanity-url")
+      .guilds(this.id, 'vanity-url')
       .patch<Vanity>({
         data: { code },
       });
@@ -1147,14 +1147,14 @@ class Guild extends AnonymousGuild implements GuildEntity {
   }
 
   _sortedChannels(channel: GuildChannel) {
-    const category = channel.type === "GUILD_CATEGORY";
+    const category = channel.type === 'GUILD_CATEGORY';
     return Util.discordSort(
       this.channels.cache.filter(
         (channelItem: GuildChannel) =>
-          (["GUILD_TEXT", "GUILD_NEWS", "GUILD_STORE"].includes(
+          (['GUILD_TEXT', 'GUILD_NEWS', 'GUILD_STORE'].includes(
             String(channel.type)
           )
-            ? ["GUILD_TEXT", "GUILD_NEWS", "GUILD_STORE"].includes(
+            ? ['GUILD_TEXT', 'GUILD_NEWS', 'GUILD_STORE'].includes(
                 String(channelItem.type)
               )
             : channelItem.type === channel.type) &&

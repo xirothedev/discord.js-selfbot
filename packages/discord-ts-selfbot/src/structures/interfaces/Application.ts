@@ -1,25 +1,25 @@
-import process from "node:process";
-import ApplicationFlags from "../../util/ApplicationFlags";
-import _ConstantsModule from "../../util/Constants";
+import process from 'node:process';
+import ApplicationFlags from '../../util/ApplicationFlags';
+import _ConstantsModule from '../../util/Constants';
 
 const { ClientApplicationAssetTypes, Endpoints } = _ConstantsModule;
-import Permissions from "../../util/Permissions";
-import SnowflakeUtil from "../../util/SnowflakeUtil";
-import _ApplicationRoleConnectionMetadataModule from "../ApplicationRoleConnectionMetadata";
+import Permissions from '../../util/Permissions';
+import SnowflakeUtil from '../../util/SnowflakeUtil';
+import _ApplicationRoleConnectionMetadataModule from '../ApplicationRoleConnectionMetadata';
 
 const { ApplicationRoleConnectionMetadata } =
   _ApplicationRoleConnectionMetadataModule;
-import Base, { patchValue } from "../Base";
-import Team from "../Team";
-import ApplicationCommandManager from "../../managers/ApplicationCommandManager";
+import Base, { patchValue } from '../Base';
+import Team from '../Team';
+import ApplicationCommandManager from '../../managers/ApplicationCommandManager';
 import type {
   RawApplicationData,
   RawUserData,
-} from "../../../typings/rawDataTypes";
-import type { StaticImageURLOptions } from "../../../typings";
-import type { ApplicationEntity } from "../../types/entities/application";
-import type { ApplicationPatch } from "../../types/selfbot/application";
-import type Client from "../../client/Client";
+} from '../../../typings/rawDataTypes';
+import type { StaticImageURLOptions } from '../../../typings';
+import type { ApplicationEntity } from '../../types/entities/application';
+import type { ApplicationPatch } from '../../types/selfbot/application';
+import type Client from '../../client/Client';
 
 const AssetTypes = Object.keys(ClientApplicationAssetTypes);
 
@@ -31,14 +31,14 @@ interface ApplicationAssetData {
 
 function isApplicationAsset(value: unknown): value is ApplicationAssetData {
   return (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value !== null &&
-    "id" in value &&
-    typeof value.id === "string" &&
-    "name" in value &&
-    typeof value.name === "string" &&
-    "type" in value &&
-    typeof value.type === "number"
+    'id' in value &&
+    typeof value.id === 'string' &&
+    'name' in value &&
+    typeof value.name === 'string' &&
+    'type' in value &&
+    typeof value.type === 'number'
   );
 }
 
@@ -46,71 +46,71 @@ let deprecationEmittedForFetchAssets = false;
 
 class Application extends Base implements ApplicationEntity {
   declare commands: ApplicationCommandManager;
-  declare description: ApplicationEntity["description"];
-  declare icon: ApplicationEntity["icon"];
-  declare id: ApplicationEntity["id"];
-  declare name: ApplicationEntity["name"];
-  declare termsOfServiceURL: ApplicationEntity["termsOfServiceURL"];
-  declare privacyPolicyURL: ApplicationEntity["privacyPolicyURL"];
-  declare verifyKey: ApplicationEntity["verifyKey"];
-  declare roleConnectionsVerificationURL: ApplicationEntity["roleConnectionsVerificationURL"];
-  declare approximateGuildCount: ApplicationEntity["approximateGuildCount"];
-  declare botPublic: ApplicationEntity["botPublic"];
-  declare botRequireCodeGrant: ApplicationEntity["botRequireCodeGrant"];
-  declare cover: ApplicationEntity["cover"];
-  declare flags: ApplicationEntity["flags"];
-  declare guildId: ApplicationEntity["guildId"];
-  declare tags: ApplicationEntity["tags"];
-  declare installParams: ApplicationEntity["installParams"];
-  declare customInstallURL: ApplicationEntity["customInstallURL"];
-  declare owner: ApplicationEntity["owner"];
-  declare rpcOrigins: ApplicationEntity["rpcOrigins"];
-  declare splash: ApplicationEntity["splash"];
-  declare type: ApplicationEntity["type"];
-  declare primarySkuId: ApplicationEntity["primarySkuId"];
-  declare eulaId: ApplicationEntity["eulaId"];
-  declare slug: ApplicationEntity["slug"];
-  declare aliases: ApplicationEntity["aliases"];
-  declare executables: ApplicationEntity["executables"];
-  declare thirdPartySkus: ApplicationEntity["thirdPartySkus"];
-  declare hook: ApplicationEntity["hook"];
-  declare overlay: ApplicationEntity["overlay"];
-  declare overlayMethods: ApplicationEntity["overlayMethods"];
-  declare overlayWarn: ApplicationEntity["overlayWarn"];
-  declare overlayCompatibilityHook: ApplicationEntity["overlayCompatibilityHook"];
-  declare bot: ApplicationEntity["bot"];
-  declare developers: ApplicationEntity["developers"];
-  declare publishers: ApplicationEntity["publishers"];
-  declare redirectUris: ApplicationEntity["redirectUris"];
-  declare deeplinkUri: ApplicationEntity["deeplinkUri"];
-  declare integrationPublic: ApplicationEntity["integrationPublic"];
-  declare integrationRequireCodeGrant: ApplicationEntity["integrationRequireCodeGrant"];
-  declare botDisabled: ApplicationEntity["botDisabled"];
-  declare botQuarantined: ApplicationEntity["botQuarantined"];
-  declare approximateUserInstallCount: ApplicationEntity["approximateUserInstallCount"];
-  declare approximateUserAuthorizationCount: ApplicationEntity["approximateUserAuthorizationCount"];
-  declare internalGuildRestriction: ApplicationEntity["internalGuildRestriction"];
-  declare interactionsEndpointUrl: ApplicationEntity["interactionsEndpointUrl"];
-  declare interactionsVersion: ApplicationEntity["interactionsVersion"];
-  declare interactionsEventTypes: ApplicationEntity["interactionsEventTypes"];
-  declare eventWebhooksStatus: ApplicationEntity["eventWebhooksStatus"];
-  declare eventWebhooksUrl: ApplicationEntity["eventWebhooksUrl"];
-  declare eventWebhooksTypes: ApplicationEntity["eventWebhooksTypes"];
-  declare explicitContentFilter: ApplicationEntity["explicitContentFilter"];
-  declare integrationTypesConfig: ApplicationEntity["integrationTypesConfig"];
-  declare isVerified: ApplicationEntity["isVerified"];
-  declare verificationState: ApplicationEntity["verificationState"];
-  declare storeApplicationState: ApplicationEntity["storeApplicationState"];
-  declare rpcApplicationState: ApplicationEntity["rpcApplicationState"];
-  declare creatorMonetizationState: ApplicationEntity["creatorMonetizationState"];
-  declare isDiscoverable: ApplicationEntity["isDiscoverable"];
-  declare discoverabilityState: ApplicationEntity["discoverabilityState"];
-  declare discoveryEligibilityFlags: ApplicationEntity["discoveryEligibilityFlags"];
-  declare isMonetized: ApplicationEntity["isMonetized"];
-  declare storefrontAvailable: ApplicationEntity["storefrontAvailable"];
-  declare monetizationState: ApplicationEntity["monetizationState"];
-  declare monetizationEligibilityFlags: ApplicationEntity["monetizationEligibilityFlags"];
-  declare maxParticipants: ApplicationEntity["maxParticipants"];
+  declare description: ApplicationEntity['description'];
+  declare icon: ApplicationEntity['icon'];
+  declare id: ApplicationEntity['id'];
+  declare name: ApplicationEntity['name'];
+  declare termsOfServiceURL: ApplicationEntity['termsOfServiceURL'];
+  declare privacyPolicyURL: ApplicationEntity['privacyPolicyURL'];
+  declare verifyKey: ApplicationEntity['verifyKey'];
+  declare roleConnectionsVerificationURL: ApplicationEntity['roleConnectionsVerificationURL'];
+  declare approximateGuildCount: ApplicationEntity['approximateGuildCount'];
+  declare botPublic: ApplicationEntity['botPublic'];
+  declare botRequireCodeGrant: ApplicationEntity['botRequireCodeGrant'];
+  declare cover: ApplicationEntity['cover'];
+  declare flags: ApplicationEntity['flags'];
+  declare guildId: ApplicationEntity['guildId'];
+  declare tags: ApplicationEntity['tags'];
+  declare installParams: ApplicationEntity['installParams'];
+  declare customInstallURL: ApplicationEntity['customInstallURL'];
+  declare owner: ApplicationEntity['owner'];
+  declare rpcOrigins: ApplicationEntity['rpcOrigins'];
+  declare splash: ApplicationEntity['splash'];
+  declare type: ApplicationEntity['type'];
+  declare primarySkuId: ApplicationEntity['primarySkuId'];
+  declare eulaId: ApplicationEntity['eulaId'];
+  declare slug: ApplicationEntity['slug'];
+  declare aliases: ApplicationEntity['aliases'];
+  declare executables: ApplicationEntity['executables'];
+  declare thirdPartySkus: ApplicationEntity['thirdPartySkus'];
+  declare hook: ApplicationEntity['hook'];
+  declare overlay: ApplicationEntity['overlay'];
+  declare overlayMethods: ApplicationEntity['overlayMethods'];
+  declare overlayWarn: ApplicationEntity['overlayWarn'];
+  declare overlayCompatibilityHook: ApplicationEntity['overlayCompatibilityHook'];
+  declare bot: ApplicationEntity['bot'];
+  declare developers: ApplicationEntity['developers'];
+  declare publishers: ApplicationEntity['publishers'];
+  declare redirectUris: ApplicationEntity['redirectUris'];
+  declare deeplinkUri: ApplicationEntity['deeplinkUri'];
+  declare integrationPublic: ApplicationEntity['integrationPublic'];
+  declare integrationRequireCodeGrant: ApplicationEntity['integrationRequireCodeGrant'];
+  declare botDisabled: ApplicationEntity['botDisabled'];
+  declare botQuarantined: ApplicationEntity['botQuarantined'];
+  declare approximateUserInstallCount: ApplicationEntity['approximateUserInstallCount'];
+  declare approximateUserAuthorizationCount: ApplicationEntity['approximateUserAuthorizationCount'];
+  declare internalGuildRestriction: ApplicationEntity['internalGuildRestriction'];
+  declare interactionsEndpointUrl: ApplicationEntity['interactionsEndpointUrl'];
+  declare interactionsVersion: ApplicationEntity['interactionsVersion'];
+  declare interactionsEventTypes: ApplicationEntity['interactionsEventTypes'];
+  declare eventWebhooksStatus: ApplicationEntity['eventWebhooksStatus'];
+  declare eventWebhooksUrl: ApplicationEntity['eventWebhooksUrl'];
+  declare eventWebhooksTypes: ApplicationEntity['eventWebhooksTypes'];
+  declare explicitContentFilter: ApplicationEntity['explicitContentFilter'];
+  declare integrationTypesConfig: ApplicationEntity['integrationTypesConfig'];
+  declare isVerified: ApplicationEntity['isVerified'];
+  declare verificationState: ApplicationEntity['verificationState'];
+  declare storeApplicationState: ApplicationEntity['storeApplicationState'];
+  declare rpcApplicationState: ApplicationEntity['rpcApplicationState'];
+  declare creatorMonetizationState: ApplicationEntity['creatorMonetizationState'];
+  declare isDiscoverable: ApplicationEntity['isDiscoverable'];
+  declare discoverabilityState: ApplicationEntity['discoverabilityState'];
+  declare discoveryEligibilityFlags: ApplicationEntity['discoveryEligibilityFlags'];
+  declare isMonetized: ApplicationEntity['isMonetized'];
+  declare storefrontAvailable: ApplicationEntity['storefrontAvailable'];
+  declare monetizationState: ApplicationEntity['monetizationState'];
+  declare monetizationEligibilityFlags: ApplicationEntity['monetizationEligibilityFlags'];
+  declare maxParticipants: ApplicationEntity['maxParticipants'];
   constructor(client: Client, data: RawApplicationData) {
     super(client);
     this.commands = new ApplicationCommandManager(this.client);
@@ -142,9 +142,9 @@ class Application extends Base implements ApplicationEntity {
     );
 
     this.tags =
-      data.tags?.filter((tag): tag is string => typeof tag === "string") ?? [];
+      data.tags?.filter((tag): tag is string => typeof tag === 'string') ?? [];
 
-    if ("install_params" in data && data.install_params) {
+    if ('install_params' in data && data.install_params) {
       this.installParams = {
         permissions: new Permissions(data.install_params.permissions).freeze(),
         scopes: data.install_params.scopes,
@@ -155,7 +155,7 @@ class Application extends Base implements ApplicationEntity {
 
     this.customInstallURL = data.custom_install_url ?? null;
     this.flags =
-      "flags" in data ? new ApplicationFlags(data.flags).freeze() : this.flags;
+      'flags' in data ? new ApplicationFlags(data.flags).freeze() : this.flags;
     this.approximateGuildCount = patchValue(
       data.approximate_guild_count,
       this.approximateGuildCount
@@ -197,7 +197,7 @@ class Application extends Base implements ApplicationEntity {
       this.overlayCompatibilityHook
     );
 
-    if ("bot" in data) {
+    if ('bot' in data) {
       this.bot = data.bot ? this.client.users._add(data.bot) : null;
     } else {
       this.bot ??= null;
@@ -331,7 +331,7 @@ class Application extends Base implements ApplicationEntity {
     }>({
       query: {
         client_id: this.id,
-        scope: "bot applications.commands",
+        scope: 'bot applications.commands',
       },
     });
     this.client.users._add(app.bot);
@@ -341,7 +341,7 @@ class Application extends Base implements ApplicationEntity {
 
   async fetchRoleConnectionMetadataRecords() {
     const metadata: unknown = await this.client.api
-      .applications(this.id)("role-connections")
+      .applications(this.id)('role-connections')
       .metadata.get();
     if (!Array.isArray(metadata)) {
       return [];
@@ -375,8 +375,8 @@ class Application extends Base implements ApplicationEntity {
   async fetchAssets() {
     if (!deprecationEmittedForFetchAssets) {
       process.emitWarning(
-        "Application#fetchAssets is deprecated as it is unsupported and will be removed in the next major version.",
-        "DeprecationWarning"
+        'Application#fetchAssets is deprecated as it is unsupported and will be removed in the next major version.',
+        'DeprecationWarning'
       );
 
       deprecationEmittedForFetchAssets = true;

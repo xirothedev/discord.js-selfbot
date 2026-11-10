@@ -1,6 +1,6 @@
 interface PayloadType {
   name: string;
-  type: "audio" | "video";
+  type: 'audio' | 'video';
   priority: number;
   payload_type: number;
   rtx_payload_type?: number;
@@ -9,51 +9,51 @@ interface PayloadType {
 }
 
 const payloadTypes: PayloadType[] = [
-  { name: "opus", payload_type: 120, priority: 1000, type: "audio" },
+  { name: 'opus', payload_type: 120, priority: 1000, type: 'audio' },
   {
     decode: false,
     encode: false,
-    name: "AV1",
+    name: 'AV1',
     payload_type: 101,
     priority: 1000,
     rtx_payload_type: 102,
-    type: "video",
+    type: 'video',
   },
   {
     decode: false,
     encode: false,
-    name: "H265",
+    name: 'H265',
     payload_type: 103,
     priority: 2000,
     rtx_payload_type: 104,
-    type: "video",
+    type: 'video',
   },
   {
     decode: true,
     encode: true,
-    name: "H264",
+    name: 'H264',
     payload_type: 105,
     priority: 3000,
     rtx_payload_type: 106,
-    type: "video",
+    type: 'video',
   },
   {
     decode: false,
     encode: true,
-    name: "VP8",
+    name: 'VP8',
     payload_type: 107,
     priority: 4000,
     rtx_payload_type: 108,
-    type: "video",
+    type: 'video',
   },
   {
     decode: false,
     encode: false,
-    name: "VP9",
+    name: 'VP9',
     payload_type: 109,
     priority: 5000,
     rtx_payload_type: 110,
-    type: "video",
+    type: 'video',
   },
 ];
 
@@ -75,9 +75,9 @@ const VoiceCodec = {
     portUdpH265: number | null,
     portUdpOpus: number | null
   ) {
-    const payloadTypeH264 = VoiceCodec.getPayloadType("H264");
-    const payloadTypeH265 = VoiceCodec.getPayloadType("H265");
-    const payloadTypeOpus = VoiceCodec.getPayloadType("opus");
+    const payloadTypeH264 = VoiceCodec.getPayloadType('H264');
+    const payloadTypeH265 = VoiceCodec.getPayloadType('H265');
+    const payloadTypeOpus = VoiceCodec.getPayloadType('opus');
     const sdpData = `v=0
 o=- 0 0 IN IP4 0.0.0.0
 s=-
@@ -95,7 +95,7 @@ ${
 c=IN IP4 127.0.0.1
 b=AS:1000
 a=rtpmap:${payloadTypeH265} H265/90000`
-    : ""
+    : ''
 }
 m=audio ${portUdpOpus} RTP/AVP ${payloadTypeOpus}
 c=IN IP4 127.0.0.1

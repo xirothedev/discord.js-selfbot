@@ -7,8 +7,8 @@
  * Set DISCORD_TOKEN in the environment before you start the example.
  */
 
-import { Client, Events, Partials, Status } from "discord-ts-selfbot";
-import type { Message, PartialTypes } from "discord-ts-selfbot";
+import { Client, Events, Partials, Status } from 'discord-ts-selfbot';
+import type { Message, PartialTypes } from 'discord-ts-selfbot';
 
 // The runtime Partials enum is numeric, while ClientOptions.partials uses the
 // v14 string union. Cast until the package typings and enum agree.
@@ -21,7 +21,7 @@ const partials = [
 const client = new Client({ partials });
 
 const announceReady = (readyClient: Client<true>) => {
-  const gatewayStatus = Status[readyClient.ws.status] ?? "unknown";
+  const gatewayStatus = Status[readyClient.ws.status] ?? 'unknown';
   console.log(
     `${readyClient.user.tag} is ready (gateway status: ${gatewayStatus}).`
   );
@@ -37,18 +37,18 @@ client.on(Events.MessageCreate, async (message: Message) => {
     return;
   }
 
-  if (message.content === "!hello") {
-    await message.reply("Hello from the events example!");
+  if (message.content === '!hello') {
+    await message.reply('Hello from the events example!');
   }
 });
 
 client.on(Events.Error, (error: Error) => {
-  console.error("Client error:", error);
+  console.error('Client error:', error);
 });
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) {
-  throw new Error("Set DISCORD_TOKEN before running this example.");
+  throw new Error('Set DISCORD_TOKEN before running this example.');
 }
 
 await client.login(token);

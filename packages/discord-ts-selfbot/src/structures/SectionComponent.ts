@@ -1,20 +1,20 @@
 import BaseMessageComponent, {
   isComponentDataSource,
   readComponentArray,
-} from "./BaseMessageComponent";
-import type { MessageComponentInstance } from "./BaseMessageComponent";
-import MessageButton from "./MessageButton";
-import TextDisplayComponent from "./TextDisplayComponent";
-import ThumbnailComponent from "./ThumbnailComponent";
-import { ComponentType } from "discord-api-types/v10";
-import type { APISectionComponent } from "discord-api-types/v10";
+} from './BaseMessageComponent';
+import type { MessageComponentInstance } from './BaseMessageComponent';
+import MessageButton from './MessageButton';
+import TextDisplayComponent from './TextDisplayComponent';
+import ThumbnailComponent from './ThumbnailComponent';
+import { ComponentType } from 'discord-api-types/v10';
+import type { APISectionComponent } from 'discord-api-types/v10';
 
 class SectionComponent extends BaseMessageComponent {
   declare components: TextDisplayComponent[];
   declare accessory: MessageButton | ThumbnailComponent | null;
 
   constructor(data: unknown = {}) {
-    super({ type: "SECTION" });
+    super({ type: 'SECTION' });
 
     this.setup(data);
   }
@@ -22,7 +22,7 @@ class SectionComponent extends BaseMessageComponent {
   setup(data: unknown) {
     super.setup(data);
     const source = isComponentDataSource(data) ? data : {};
-    this.components = readComponentArray(source, "components")
+    this.components = readComponentArray(source, 'components')
       .map((component) => BaseMessageComponent.create(component))
       .filter(
         (component): component is TextDisplayComponent =>
@@ -41,7 +41,7 @@ class SectionComponent extends BaseMessageComponent {
   toJSON(): APISectionComponent {
     const accessory = this.accessory?.toJSON();
     if (!accessory) {
-      throw new Error("SECTION_ACCESSORY_REQUIRED");
+      throw new Error('SECTION_ACCESSORY_REQUIRED');
     }
     return {
       accessory,

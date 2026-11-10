@@ -1,10 +1,10 @@
-import Action from "./Action";
-import { isTextBasedChannel } from "../../types/channels";
+import Action from './Action';
+import { isTextBasedChannel } from '../../types/channels';
 import type {
   APIPartialEmoji,
   GatewayMessageReactionAddDispatchData,
-} from "discord-api-types/v10";
-import _ConstantsModule from "../../util/Constants";
+} from 'discord-api-types/v10';
+import _ConstantsModule from '../../util/Constants';
 
 const { Events } = _ConstantsModule;
 const { PartialTypes } = _ConstantsModule;
@@ -22,7 +22,7 @@ const { PartialTypes } = _ConstantsModule;
 
 type MessageReactionAddData = Omit<
   Partial<GatewayMessageReactionAddDispatchData>,
-  "emoji"
+  'emoji'
 > & {
   emoji?: APIPartialEmoji | null;
   [key: string]: unknown;
@@ -43,7 +43,7 @@ class MessageReactionAdd extends Action {
     const channel = this.getChannel({
       id: data.channel_id,
       user_id: data.user_id,
-      ...("guild_id" in data && { guild_id: data.guild_id }),
+      ...('guild_id' in data && { guild_id: data.guild_id }),
     });
     if (!channel || !isTextBasedChannel(channel)) {
       return false;

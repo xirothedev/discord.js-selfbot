@@ -1,9 +1,9 @@
-import { createRequire } from "node:module";
+import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-import BaseClient from "./BaseClient";
-import _errorsModule from "../errors";
-import type { WebhookClientData, ClientOptions } from "../../typings";
+import BaseClient from './BaseClient';
+import _errorsModule from '../errors';
+import type { WebhookClientData, ClientOptions } from '../../typings';
 
 const { Error } = _errorsModule;
 
@@ -12,17 +12,17 @@ class WebhookClient extends BaseClient {
 
   constructor(data: WebhookClientData, options?: ClientOptions) {
     super(options);
-    Object.defineProperty(this, "client", { value: this });
+    Object.defineProperty(this, 'client', { value: this });
     let id: string | null = null;
     let token: string | null = null;
 
-    if ("url" in data) {
+    if ('url' in data) {
       const url = data.url.match(
         /^https?:\/\/(?:canary|ptb)?\.?discord\.com\/api\/webhooks(?:\/v[0-9]\d*)?\/(?<webhookId>[^/]+)\/(?<webhookToken>[^/]+)/iu
       );
 
       if (!url || url.length <= 1) {
-        throw new Error("WEBHOOK_URL_INVALID");
+        throw new Error('WEBHOOK_URL_INVALID');
       }
 
       id = url.groups?.webhookId ?? null;
@@ -32,7 +32,7 @@ class WebhookClient extends BaseClient {
     }
 
     this.id = id;
-    Object.defineProperty(this, "token", {
+    Object.defineProperty(this, 'token', {
       configurable: true,
       value: token,
       writable: true,
@@ -71,7 +71,7 @@ export { WebhookClient };
 
 setTimeout(() => {
   try {
-    const Webhook = require("../structures/Webhook");
+    const Webhook = require('../structures/Webhook');
     Webhook.applyToClass(WebhookClient);
   } catch {
     // Ignore a missing Webhook structure module.

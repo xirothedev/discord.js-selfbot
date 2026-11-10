@@ -1,14 +1,14 @@
-import { mkdir } from "node:fs/promises";
-import path from "node:path";
+import { mkdir } from 'node:fs/promises';
+import path from 'node:path';
 
-import type { Api, BenchCase, CaseResult, RunResult, Stats } from "./types";
+import type { Api, BenchCase, CaseResult, RunResult, Stats } from './types';
 
 let sink = 0;
 
 export function consume(value: unknown): void {
-  if (typeof value === "number") {
+  if (typeof value === 'number') {
     sink += value;
-  } else if (typeof value === "string") {
+  } else if (typeof value === 'string') {
     sink += value.length;
   } else if (value instanceof Uint8Array) {
     sink += value.byteLength;
@@ -16,11 +16,11 @@ export function consume(value: unknown): void {
     sink += value.byteLength;
   } else if (Array.isArray(value)) {
     sink += value.length;
-  } else if (value && typeof value === "object" && "byteLength" in value) {
+  } else if (value && typeof value === 'object' && 'byteLength' in value) {
     sink += Number((value as { byteLength: number }).byteLength);
   }
   if (!Number.isFinite(sink)) {
-    throw new TypeError("benchmark sink is not finite");
+    throw new TypeError('benchmark sink is not finite');
   }
 }
 
@@ -56,9 +56,9 @@ export async function runCase(
   const nodeSamples: number[] = [];
   const bunSamples: number[] = [];
   await Array.fromAsync({ length: rounds }, async (_value, round) => {
-    const order: Api[] = round % 2 === 0 ? ["node", "bun"] : ["bun", "node"];
+    const order: Api[] = round % 2 === 0 ? ['node', 'bun'] : ['bun', 'node'];
     await Array.fromAsync(order, async (api) => {
-      const samples = api === "node" ? nodeSamples : bunSamples;
+      const samples = api === 'node' ? nodeSamples : bunSamples;
       const start = Bun.nanoseconds();
       await Array.fromAsync({ length: benchCase.iterations }, async () => {
         consume(await benchCase[api]());
@@ -82,7 +82,7 @@ export async function runCase(
   };
 }
 
-const number = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+const number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 
 function perSecond(value: number): string {
   if (value >= 1_000_000) {
@@ -99,18 +99,18 @@ function ratio(value: number): string {
 }
 
 export function printTable(results: CaseResult[]): void {
-  console.log("");
+  console.log('');
   console.log(
     [
-      "Case".padEnd(26),
-      "Node API".padStart(11),
-      "Bun API".padStart(11),
-      "Bun/Node".padStart(9),
-      "Node p95".padStart(11),
-      "Bun p95".padStart(11),
-    ].join(" ")
+      'Case'.padEnd(26),
+      'Node API'.padStart(11),
+      'Bun API'.padStart(11),
+      'Bun/Node'.padStart(9),
+      'Node p95'.padStart(11),
+      'Bun p95'.padStart(11),
+    ].join(' ')
   );
-  let group = "";
+  let group = '';
   for (const result of results) {
     const { group: resultGroup } = result;
     if (resultGroup !== group) {
@@ -125,10 +125,10 @@ export function printTable(results: CaseResult[]): void {
         ratio(result.ratio).padStart(9),
         `${result.node.p95Ms.toFixed(3)}ms`.padStart(11),
         `${result.bun.p95Ms.toFixed(3)}ms`.padStart(11),
-      ].join(" ")
+      ].join(' ')
     );
   }
-  console.log("");
+  console.log('');
 }
 
 export function toMarkdown(run: RunResult): string {
@@ -137,19 +137,19 @@ export function toMarkdown(run: RunResult): string {
   const slower = results.filter((result) => result.ratio <= 0.95);
   const neutral = results.length - faster.length - slower.length;
   const lines = [
-    "# Node API vs Bun API benchmark",
-    "",
+    '# Node API vs Bun API benchmark',
+    '',
     `- Runtime: Bun ${meta.bunVersion} (${meta.bunRevision})`,
     `- Platform: ${meta.platform} ${meta.arch}`,
     `- Date: ${meta.date}`,
     `- Rounds: ${meta.rounds}`,
-    `- Filter: ${meta.filters.length ? meta.filters.join(", ") : "all"}`,
-    "",
-    "The ratio is Bun API throughput divided by Node API throughput. `1.00x`",
-    "means no difference. A value below `1.00x` means the Bun API was slower.",
-    "",
-    "| Group | Case | Node API | Bun API | Bun/Node | Node p95 | Bun p95 |",
-    "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
+    `- Filter: ${meta.filters.length ? meta.filters.join(', ') : 'all'}`,
+    '',
+    'The ratio is Bun API throughput divided by Node API throughput. `1.00x`',
+    'means no difference. A value below `1.00x` means the Bun API was slower.',
+    '',
+    '| Group | Case | Node API | Bun API | Bun/Node | Node p95 | Bun p95 |',
+    '| --- | --- | ---: | ---: | ---: | ---: | ---: |',
   ];
 
   for (const result of results) {
@@ -161,9 +161,9 @@ export function toMarkdown(run: RunResult): string {
   }
 
   lines.push(
-    "",
-    "## Summary",
-    "",
+    '',
+    '## Summary',
+    '',
     `- Bun faster (at least 1.05x): ${faster.length}`,
     `- Node faster (at most 0.95x): ${slower.length}`,
     `- Neutral: ${neutral}`
@@ -178,8 +178,8 @@ export function toMarkdown(run: RunResult): string {
       `- Largest Bun loss: ${slower.toSorted((left, right) => left.ratio - right.ratio)[0].id}`
     );
   }
-  lines.push("");
-  return lines.join("\n");
+  lines.push('');
+  return lines.join('\n');
 }
 
 export async function writeOutputs(

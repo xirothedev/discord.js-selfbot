@@ -1,11 +1,11 @@
-import EventEmitter from "node:events";
-import process from "node:process";
-import RESTManager from "../rest/RESTManager";
-import Options from "../util/Options";
-import type { ResolvedClientOptions } from "../util/Options";
-import Util from "../util/Util";
-import type { ClientOptions } from "../../typings";
-import type { authenticator } from "otplib";
+import EventEmitter from 'node:events';
+import process from 'node:process';
+import RESTManager from '../rest/RESTManager';
+import Options from '../util/Options';
+import type { ResolvedClientOptions } from '../util/Options';
+import Util from '../util/Util';
+import type { ClientOptions } from '../../typings';
+import type { authenticator } from 'otplib';
 
 class BaseClient extends EventEmitter {
   declare options: ResolvedClientOptions;
@@ -16,7 +16,7 @@ class BaseClient extends EventEmitter {
     super({ captureRejections: true });
 
     if (options.intents) {
-      process.emitWarning("Intents is not available.", "DeprecationWarning");
+      process.emitWarning('Intents is not available.', 'DeprecationWarning');
     }
 
     this.options = Util.mergeDefault(Options.createDefault(), options);

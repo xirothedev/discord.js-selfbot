@@ -1,40 +1,40 @@
-import _errorsModule from "../errors";
+import _errorsModule from '../errors';
 
 const { TypeError } = _errorsModule;
-import type { Collection } from "@discordjs/collection";
+import type { Collection } from '@discordjs/collection';
 import type {
   APIMessage,
   APIRole,
   APIInteractionDataResolvedChannel,
   APIInteractionDataResolvedGuildMember,
   Snowflake,
-} from "discord-api-types/v10";
-import type Client from "../client/Client";
-import type MessageAttachment from "./MessageAttachment";
+} from 'discord-api-types/v10';
+import type Client from '../client/Client';
+import type MessageAttachment from './MessageAttachment';
 import type {
   ApplicationCommandOptionType,
   AutocompleteFocusedOption,
   CacheType,
   CommandInteractionOption as PublicCommandInteractionOption,
-} from "../../typings";
-import type User from "./User";
-import type { GuildMember } from "./GuildMember";
-import type { Channel } from "./Channel";
-import type { Role } from "./Role";
-import type { Message } from "./Message";
+} from '../../typings';
+import type User from './User';
+import type { GuildMember } from './GuildMember';
+import type { Channel } from './Channel';
+import type { Role } from './Role';
+import type { Message } from './Message';
 
-type OptionType = ApplicationCommandOptionType | "_MESSAGE";
+type OptionType = ApplicationCommandOptionType | '_MESSAGE';
 
 export type CommandInteractionOption<Cached extends CacheType = CacheType> =
   Omit<
     PublicCommandInteractionOption<Cached>,
-    | "attachment"
-    | "options"
-    | "user"
-    | "member"
-    | "channel"
-    | "role"
-    | "message"
+    | 'attachment'
+    | 'options'
+    | 'user'
+    | 'member'
+    | 'channel'
+    | 'role'
+    | 'message'
   > & {
     options?: CommandInteractionOption<Cached>[];
     attachment?: MessageAttachment;
@@ -61,8 +61,8 @@ export interface CommandInteractionResolvedData<
 
 function isAutocompleteOptionType(
   type: ApplicationCommandOptionType
-): type is "STRING" | "INTEGER" | "NUMBER" {
-  return type === "STRING" || type === "INTEGER" || type === "NUMBER";
+): type is 'STRING' | 'INTEGER' | 'NUMBER' {
+  return type === 'STRING' || type === 'INTEGER' || type === 'NUMBER';
 }
 
 class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
@@ -80,7 +80,7 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     options: CommandInteractionOption<Cached>[],
     resolved: CommandInteractionResolvedData<Cached> | null = null
   ) {
-    Object.defineProperty(this, "client", { value: client });
+    Object.defineProperty(this, 'client', { value: client });
 
     this._group = null;
 
@@ -89,21 +89,21 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     this._hoistedOptions = options;
 
     // Hoist subcommand group if present
-    if (this._hoistedOptions[0]?.type === "SUB_COMMAND_GROUP") {
+    if (this._hoistedOptions[0]?.type === 'SUB_COMMAND_GROUP') {
       this._group = this._hoistedOptions[0].name;
       this._hoistedOptions = this._hoistedOptions[0]
         .options as CommandInteractionOption<Cached>[];
     }
     // Hoist subcommand if present
-    if (this._hoistedOptions[0]?.type === "SUB_COMMAND") {
+    if (this._hoistedOptions[0]?.type === 'SUB_COMMAND') {
       this._subcommand = this._hoistedOptions[0].name;
       this._hoistedOptions = this._hoistedOptions[0]
         .options as CommandInteractionOption<Cached>[];
     }
 
-    Object.defineProperty(this, "data", { value: Object.freeze([...options]) });
+    Object.defineProperty(this, 'data', { value: Object.freeze([...options]) });
 
-    Object.defineProperty(this, "resolved", {
+    Object.defineProperty(this, 'resolved', {
       value: resolved ? Object.freeze(resolved) : null,
     });
   }
@@ -117,7 +117,7 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     const option = this._hoistedOptions.find((opt) => opt.name === name);
     if (!option) {
       if (required) {
-        throw new TypeError("COMMAND_INTERACTION_OPTION_NOT_FOUND", name);
+        throw new TypeError('COMMAND_INTERACTION_OPTION_NOT_FOUND', name);
       }
       return null;
     }
@@ -147,7 +147,7 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
       return null;
     } else if (option.type !== type) {
       throw new TypeError(
-        "COMMAND_INTERACTION_OPTION_TYPE",
+        'COMMAND_INTERACTION_OPTION_TYPE',
         name,
         option.type,
         type
@@ -159,7 +159,7 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
       )
     ) {
       throw new TypeError(
-        "COMMAND_INTERACTION_OPTION_EMPTY",
+        'COMMAND_INTERACTION_OPTION_EMPTY',
         name,
         option.type
       );
@@ -171,7 +171,7 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
   getSubcommand(required: boolean): string | null;
   getSubcommand(required = true) {
     if (required && !this._subcommand) {
-      throw new TypeError("COMMAND_INTERACTION_OPTION_NO_SUB_COMMAND");
+      throw new TypeError('COMMAND_INTERACTION_OPTION_NO_SUB_COMMAND');
     }
     return this._subcommand;
   }
@@ -180,7 +180,7 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
   getSubcommandGroup(required: boolean): string | null;
   getSubcommandGroup(required = true) {
     if (required && !this._group) {
-      throw new TypeError("COMMAND_INTERACTION_OPTION_NO_SUB_COMMAND_GROUP");
+      throw new TypeError('COMMAND_INTERACTION_OPTION_NO_SUB_COMMAND_GROUP');
     }
     return this._group;
   }
@@ -188,98 +188,98 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
   getBoolean(name: string, required: true): boolean;
   getBoolean(name: string, required?: boolean): boolean | null;
   getBoolean(name: string, required = false) {
-    const option = this._getTypedOption(name, "BOOLEAN", ["value"], required);
+    const option = this._getTypedOption(name, 'BOOLEAN', ['value'], required);
     return option?.value ?? null;
   }
 
   getChannel(
     name: string,
     required: true
-  ): NonNullable<CommandInteractionOption<Cached>["channel"]>;
+  ): NonNullable<CommandInteractionOption<Cached>['channel']>;
   getChannel(
     name: string,
     required?: boolean
-  ): NonNullable<CommandInteractionOption<Cached>["channel"]> | null;
+  ): NonNullable<CommandInteractionOption<Cached>['channel']> | null;
   getChannel(name: string, required = false) {
-    const option = this._getTypedOption(name, "CHANNEL", ["channel"], required);
+    const option = this._getTypedOption(name, 'CHANNEL', ['channel'], required);
     return option?.channel ?? null;
   }
 
   getString(name: string, required: true): string;
   getString(name: string, required?: boolean): string | null;
   getString(name: string, required = false) {
-    const option = this._getTypedOption(name, "STRING", ["value"], required);
+    const option = this._getTypedOption(name, 'STRING', ['value'], required);
     return option?.value ?? null;
   }
 
   getInteger(name: string, required: true): number;
   getInteger(name: string, required?: boolean): number | null;
   getInteger(name: string, required = false) {
-    const option = this._getTypedOption(name, "INTEGER", ["value"], required);
+    const option = this._getTypedOption(name, 'INTEGER', ['value'], required);
     return option?.value ?? null;
   }
 
   getNumber(name: string, required: true): number;
   getNumber(name: string, required?: boolean): number | null;
   getNumber(name: string, required = false) {
-    const option = this._getTypedOption(name, "NUMBER", ["value"], required);
+    const option = this._getTypedOption(name, 'NUMBER', ['value'], required);
     return option?.value ?? null;
   }
 
   getUser(
     name: string,
     required: true
-  ): NonNullable<CommandInteractionOption<Cached>["user"]>;
+  ): NonNullable<CommandInteractionOption<Cached>['user']>;
   getUser(
     name: string,
     required?: boolean
-  ): NonNullable<CommandInteractionOption<Cached>["user"]> | null;
+  ): NonNullable<CommandInteractionOption<Cached>['user']> | null;
   getUser(name: string, required = false) {
-    const option = this._getTypedOption(name, "USER", ["user"], required);
+    const option = this._getTypedOption(name, 'USER', ['user'], required);
     return option?.user ?? null;
   }
 
   getMember(
     name: string,
     required: true
-  ): NonNullable<CommandInteractionOption<Cached>["member"]>;
+  ): NonNullable<CommandInteractionOption<Cached>['member']>;
   getMember(
     name: string,
     required?: boolean
-  ): NonNullable<CommandInteractionOption<Cached>["member"]> | null;
+  ): NonNullable<CommandInteractionOption<Cached>['member']> | null;
   getMember(name: string, required = false) {
-    const option = this._getTypedOption(name, "USER", ["member"], required);
+    const option = this._getTypedOption(name, 'USER', ['member'], required);
     return option?.member ?? null;
   }
 
   getRole(
     name: string,
     required: true
-  ): NonNullable<CommandInteractionOption<Cached>["role"]>;
+  ): NonNullable<CommandInteractionOption<Cached>['role']>;
   getRole(
     name: string,
     required?: boolean
-  ): NonNullable<CommandInteractionOption<Cached>["role"]> | null;
+  ): NonNullable<CommandInteractionOption<Cached>['role']> | null;
   getRole(name: string, required = false) {
-    const option = this._getTypedOption(name, "ROLE", ["role"], required);
+    const option = this._getTypedOption(name, 'ROLE', ['role'], required);
     return option?.role ?? null;
   }
 
   getMentionable(
     name: string,
     required: true
-  ): NonNullable<CommandInteractionOption<Cached>["member" | "role" | "user"]>;
+  ): NonNullable<CommandInteractionOption<Cached>['member' | 'role' | 'user']>;
   getMentionable(
     name: string,
     required?: boolean
   ): NonNullable<
-    CommandInteractionOption<Cached>["member" | "role" | "user"]
+    CommandInteractionOption<Cached>['member' | 'role' | 'user']
   > | null;
   getMentionable(name: string, required = false) {
     const option = this._getTypedOption(
       name,
-      "MENTIONABLE",
-      ["user", "member", "role"],
+      'MENTIONABLE',
+      ['user', 'member', 'role'],
       required
     );
     return option?.member ?? option?.user ?? option?.role ?? null;
@@ -288,16 +288,16 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
   getMessage(
     name: string,
     required: true
-  ): NonNullable<CommandInteractionOption<Cached>["message"]>;
+  ): NonNullable<CommandInteractionOption<Cached>['message']>;
   getMessage(
     name: string,
     required?: boolean
-  ): NonNullable<CommandInteractionOption<Cached>["message"]> | null;
+  ): NonNullable<CommandInteractionOption<Cached>['message']> | null;
   getMessage(name: string, required = false) {
     const option = this._getTypedOption(
       name,
-      "_MESSAGE",
-      ["message"],
+      '_MESSAGE',
+      ['message'],
       required
     );
     return option?.message ?? null;
@@ -308,16 +308,16 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
   getFocused(getFull = false): AutocompleteFocusedOption | string {
     const focusedOption = this._hoistedOptions.find((option) => option.focused);
     if (!focusedOption) {
-      throw new TypeError("AUTOCOMPLETE_INTERACTION_OPTION_NO_FOCUSED_OPTION");
+      throw new TypeError('AUTOCOMPLETE_INTERACTION_OPTION_NO_FOCUSED_OPTION');
     }
     const value =
-      typeof focusedOption.value === "string"
+      typeof focusedOption.value === 'string'
         ? focusedOption.value
-        : String(focusedOption.value ?? "");
+        : String(focusedOption.value ?? '');
     if (getFull) {
       if (!isAutocompleteOptionType(focusedOption.type)) {
         throw new TypeError(
-          "AUTOCOMPLETE_INTERACTION_OPTION_NO_FOCUSED_OPTION"
+          'AUTOCOMPLETE_INTERACTION_OPTION_NO_FOCUSED_OPTION'
         );
       }
       return {
@@ -333,16 +333,16 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
   getAttachment(
     name: string,
     required: true
-  ): NonNullable<CommandInteractionOption<Cached>["attachment"]>;
+  ): NonNullable<CommandInteractionOption<Cached>['attachment']>;
   getAttachment(
     name: string,
     required?: boolean
-  ): NonNullable<CommandInteractionOption<Cached>["attachment"]> | null;
+  ): NonNullable<CommandInteractionOption<Cached>['attachment']> | null;
   getAttachment(name: string, required = false) {
     const option = this._getTypedOption(
       name,
-      "ATTACHMENT",
-      ["attachment"],
+      'ATTACHMENT',
+      ['attachment'],
       required
     );
     return option?.attachment ?? null;

@@ -1,5 +1,5 @@
-import type { MessageComponentType } from "../../typings";
-import _ConstantsModule from "../util/Constants";
+import type { MessageComponentType } from '../../typings';
+import _ConstantsModule from '../util/Constants';
 
 const { MessageComponentTypes } = _ConstantsModule;
 
@@ -12,7 +12,7 @@ export interface ComponentDataSource {
 export function isComponentDataSource(
   value: unknown
 ): value is ComponentDataSource {
-  return typeof value === "object" && value !== null;
+  return typeof value === 'object' && value !== null;
 }
 
 export function readComponentString(
@@ -21,7 +21,7 @@ export function readComponentString(
 ): string | undefined {
   for (const key of keys) {
     const value = data[key];
-    if (typeof value === "string") {
+    if (typeof value === 'string') {
       return value;
     }
   }
@@ -34,7 +34,7 @@ export function readComponentNumber(
 ): number | undefined {
   for (const key of keys) {
     const value = data[key];
-    if (typeof value === "number") {
+    if (typeof value === 'number') {
       return value;
     }
   }
@@ -47,7 +47,7 @@ export function readComponentBoolean(
 ): boolean | undefined {
   for (const key of keys) {
     const value = data[key];
-    if (typeof value === "boolean") {
+    if (typeof value === 'boolean') {
       return value;
     }
   }
@@ -73,5 +73,5 @@ export function readComponentRecord(
 export function isMessageComponentType(
   value: unknown
 ): value is MessageComponentType {
-  return typeof value === "string" && value in MessageComponentTypes;
+  return typeof value === 'string' && value in MessageComponentTypes;
 }

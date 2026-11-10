@@ -1,15 +1,15 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
-import os from "node:os";
-import path from "node:path";
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-import { summaryText } from "../api/comment";
-import { enrichClass, enrichType, loadApiStore } from "../api/enrich";
-import type { DocgenClass, DocgenType } from "../api/enrich";
-import { areaFor, parseIndexExports, slugify } from "../api/exports";
-import { reflectionsByName, runTypeDoc } from "../api/typedoc";
-import { Kind } from "../api/types";
-import type { GeneratedPage } from "./guides";
-import { buildLinkMap, collectGuides, oneLine, rewriteLinks } from "./guides";
+import { summaryText } from '../api/comment';
+import { enrichClass, enrichType, loadApiStore } from '../api/enrich';
+import type { DocgenClass, DocgenType } from '../api/enrich';
+import { areaFor, parseIndexExports, slugify } from '../api/exports';
+import { reflectionsByName, runTypeDoc } from '../api/typedoc';
+import { Kind } from '../api/types';
+import type { GeneratedPage } from './guides';
+import { buildLinkMap, collectGuides, oneLine, rewriteLinks } from './guides';
 import {
   KNOWN_UNTYPED_EXPORTS,
   renderAgentsMd,
@@ -17,38 +17,38 @@ import {
   renderIndex,
   renderReadme,
   renderReferenceIndex,
-} from "./render-indexes";
+} from './render-indexes';
 import {
   isRuntimeKind,
   renderClassPage,
   renderFunctionPage,
   renderVariablePage,
-} from "./render";
-import { compareTrees, writeTree } from "./tree";
+} from './render';
+import { compareTrees, writeTree } from './tree';
 
-const docsDir = path.resolve(import.meta.dir, "../..");
-const repoRoot = path.resolve(docsDir, "../..");
-const packageDir = path.join(repoRoot, "packages/discord-ts-selfbot");
+const docsDir = path.resolve(import.meta.dir, '../..');
+const repoRoot = path.resolve(docsDir, '../..');
+const packageDir = path.join(repoRoot, 'packages/discord-ts-selfbot');
 
 // The runtime export names differ from the class names in the public typings.
 const TYPINGS_ALIASES: Record<string, string> = {
-  ActivityFlagsBitField: "ActivityFlags",
-  ApplicationFlagsBitField: "ApplicationFlags",
-  AttachmentFlagsBitField: "AttachmentFlags",
-  GuildMemberFlagsBitField: "GuildMemberFlags",
-  IntentsBitField: "Intents",
-  MessageFlagsBitField: "MessageFlags",
-  PermissionsBitField: "Permissions",
-  RoleFlagsBitField: "RoleFlags",
-  SystemChannelFlagsBitField: "SystemChannelFlags",
-  ThreadMemberFlagsBitField: "ThreadMemberFlags",
-  UserFlagsBitField: "UserFlags",
+  ActivityFlagsBitField: 'ActivityFlags',
+  ApplicationFlagsBitField: 'ApplicationFlags',
+  AttachmentFlagsBitField: 'AttachmentFlags',
+  GuildMemberFlagsBitField: 'GuildMemberFlags',
+  IntentsBitField: 'Intents',
+  MessageFlagsBitField: 'MessageFlags',
+  PermissionsBitField: 'Permissions',
+  RoleFlagsBitField: 'RoleFlags',
+  SystemChannelFlagsBitField: 'SystemChannelFlags',
+  ThreadMemberFlagsBitField: 'ThreadMemberFlags',
+  UserFlagsBitField: 'UserFlags',
 };
 
 function sourceUrlForExport(exportedPath: string): string {
   const relative =
-    exportedPath === "./index"
-      ? "src/index.ts"
+    exportedPath === './index'
+      ? 'src/index.ts'
       : `src/${exportedPath.slice(2)}.ts`;
   return `https://github.com/xirothedev/discord.js-selfbot/blob/main/packages/discord-ts-selfbot/${relative}#L1`;
 }
@@ -63,8 +63,8 @@ function sourceUrlForEntry(
   }
   const full = [meta.path, meta.file]
     .filter(Boolean)
-    .join("/")
-    .replace(/\.js$/u, ".ts");
+    .join('/')
+    .replace(/\.js$/u, '.ts');
   return `https://github.com/xirothedev/discord.js-selfbot/blob/main/packages/discord-ts-selfbot/${full}#L${
     meta.line ?? 1
   }`;
@@ -76,24 +76,24 @@ export function generateAgentDocs(options: { outputDir: string }): {
   pages: GeneratedPage[];
 } {
   const { version } = JSON.parse(
-    readFileSync(path.join(packageDir, "package.json"), "utf-8")
+    readFileSync(path.join(packageDir, 'package.json'), 'utf-8')
   ) as {
     version: string;
   };
   const tempDir = mkdtempSync(
-    path.join(os.tmpdir(), "discord-ts-selfbot-agent-")
+    path.join(os.tmpdir(), 'discord-ts-selfbot-agent-')
   );
   const project = runTypeDoc({
-    entryPointStrategy: "resolve",
-    entryPoints: ["typings/index.d.ts"],
-    outputJson: path.join(tempDir, "typings.json"),
+    entryPointStrategy: 'resolve',
+    entryPoints: ['typings/index.d.ts'],
+    outputJson: path.join(tempDir, 'typings.json'),
     packageDir,
   });
   const typingsByName = reflectionsByName(project);
   const parsed = parseIndexExports(
-    readFileSync(path.join(packageDir, "src/index.ts"), "utf-8")
+    readFileSync(path.join(packageDir, 'src/index.ts'), 'utf-8')
   );
-  const store = loadApiStore(path.join(import.meta.dir, "api.json"));
+  const store = loadApiStore(path.join(import.meta.dir, 'api.json'));
 
   const pages: GeneratedPage[] = [];
   const missing: string[] = [];
@@ -169,7 +169,7 @@ export function generateAgentDocs(options: { outputDir: string }): {
     .filter((value, index, all) => all.indexOf(value) !== index);
   if (duplicateSlugs.length) {
     throw new Error(
-      `Duplicate reference slugs: ${[...new Set(duplicateSlugs)].join(", ")}`
+      `Duplicate reference slugs: ${[...new Set(duplicateSlugs)].join(', ')}`
     );
   }
 
@@ -183,12 +183,12 @@ export function generateAgentDocs(options: { outputDir: string }): {
   }
 
   const referenceIndex = renderReferenceIndex(pages, version);
-  files.set("reference/index.md", referenceIndex);
+  files.set('reference/index.md', referenceIndex);
 
   const eventsIndex = renderEventsIndex(pages, store);
-  const hasEvents = eventsIndex.includes("\n## ");
+  const hasEvents = eventsIndex.includes('\n## ');
   if (hasEvents) {
-    files.set("events/index.md", eventsIndex);
+    files.set('events/index.md', eventsIndex);
   }
 
   for (const guide of guides) {
@@ -197,7 +197,7 @@ export function generateAgentDocs(options: { outputDir: string }): {
   }
 
   files.set(
-    "llms.txt",
+    'llms.txt',
     renderIndex({
       guides,
       hasEvents,
@@ -205,8 +205,8 @@ export function generateAgentDocs(options: { outputDir: string }): {
       version,
     })
   );
-  files.set("README.md", renderReadme(version));
-  files.set("AGENTS.md", renderAgentsMd());
+  files.set('README.md', renderReadme(version));
+  files.set('AGENTS.md', renderAgentsMd());
 
   writeTree(options.outputDir, files);
   rmSync(tempDir, { force: true, recursive: true });
@@ -215,23 +215,23 @@ export function generateAgentDocs(options: { outputDir: string }): {
 }
 
 function main(): void {
-  const check = process.argv.includes("--check");
-  const outIndex = process.argv.indexOf("--out");
+  const check = process.argv.includes('--check');
+  const outIndex = process.argv.indexOf('--out');
   const outputDir =
     outIndex === -1
-      ? path.join(packageDir, "docs")
+      ? path.join(packageDir, 'docs')
       : path.resolve(process.argv[outIndex + 1]);
 
   if (check) {
     const temp = mkdtempSync(
-      path.join(os.tmpdir(), "discord-ts-selfbot-agent-check-")
+      path.join(os.tmpdir(), 'discord-ts-selfbot-agent-check-')
     );
     try {
       const result = generateAgentDocs({ outputDir: temp });
       const diffs = compareTrees(outputDir, temp);
       if (result.missing.length) {
         console.error(
-          `Missing typings reflections: ${result.missing.join(", ")}`
+          `Missing typings reflections: ${result.missing.join(', ')}`
         );
         process.exitCode = 1;
       }
@@ -243,7 +243,7 @@ function main(): void {
         process.exitCode = 1;
       }
       if (!result.missing.length && !diffs.length) {
-        console.log("Agent docs are up to date.");
+        console.log('Agent docs are up to date.');
       }
     } finally {
       rmSync(temp, { force: true, recursive: true });
@@ -254,7 +254,7 @@ function main(): void {
   const result = generateAgentDocs({ outputDir });
   console.log(`Generated ${result.files.length} agent docs files.`);
   if (result.missing.length) {
-    console.warn(`Missing typings reflections: ${result.missing.join(", ")}`);
+    console.warn(`Missing typings reflections: ${result.missing.join(', ')}`);
   }
 }
 

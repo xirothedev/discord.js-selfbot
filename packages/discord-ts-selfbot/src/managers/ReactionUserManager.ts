@@ -1,19 +1,19 @@
-import { Collection } from "@discordjs/collection";
-import CachedManager from "./CachedManager";
-import _errorsModule from "../errors";
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
 
 const { Error } = _errorsModule;
-import User from "../structures/User";
-import type { RESTGetAPIChannelMessageReactionUsersResult } from "discord-api-types/v10";
-import type { MessageReaction } from "../structures/MessageReaction";
-import type { FetchReactionUsersOptions, UserResolvable } from "../../typings";
+import User from '../structures/User';
+import type { RESTGetAPIChannelMessageReactionUsersResult } from 'discord-api-types/v10';
+import type { MessageReaction } from '../structures/MessageReaction';
+import type { FetchReactionUsersOptions, UserResolvable } from '../../typings';
 
 type UserResolvableSource = User | UserResolvable;
 type FetchReactionUsersOptionsSource = Omit<
   FetchReactionUsersOptions,
-  "type"
+  'type'
 > & { type?: string | number };
-import _ConstantsModule, { resolveEnumValue } from "../util/Constants";
+import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
 
 const { ReactionTypes } = _ConstantsModule;
 
@@ -28,7 +28,7 @@ class ReactionUserManager extends CachedManager<User> {
   async fetch({
     limit = 100,
     after,
-    type = "NORMAL",
+    type = 'NORMAL',
   }: FetchReactionUsersOptionsSource = {}) {
     const { message } = this.reaction;
     const data = await this.client.api.channels[message.channelId].messages[
@@ -50,18 +50,18 @@ class ReactionUserManager extends CachedManager<User> {
   async remove(user?: UserResolvableSource) {
     const target = user ?? this.client.user;
     if (!target) {
-      throw new Error("REACTION_RESOLVE_USER");
+      throw new Error('REACTION_RESOLVE_USER');
     }
     const userId = this.client.users.resolveId(target);
     if (!userId) {
-      throw new Error("REACTION_RESOLVE_USER");
+      throw new Error('REACTION_RESOLVE_USER');
     }
     const selfId = this.client.user?.id;
     const { message } = this.reaction;
     await this.client.api.channels[message.channelId].messages[
       message.id
     ].reactions[this.reaction.emoji.identifier][
-      userId === selfId ? "@me" : userId
+      userId === selfId ? '@me' : userId
     ].delete();
     return this.reaction;
   }

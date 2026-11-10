@@ -1,26 +1,26 @@
-import process from "node:process";
-import { Collection } from "@discordjs/collection";
-import CachedManager from "./CachedManager";
-import _errorsModule from "../errors";
+import process from 'node:process';
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
 
 const { TypeError } = _errorsModule;
-import PermissionOverwrites from "../structures/PermissionOverwrites";
-import _RoleModule from "../structures/Role";
+import PermissionOverwrites from '../structures/PermissionOverwrites';
+import _RoleModule from '../structures/Role';
 
 const { Role } = _RoleModule;
-import _ConstantsModule from "../util/Constants";
+import _ConstantsModule from '../util/Constants';
 
 const { OverwriteTypes } = _ConstantsModule;
-import type { Snowflake } from "discord-api-types/v10";
-import type { RawPermissionOverwriteData } from "../../typings/rawDataTypes";
+import type { Snowflake } from 'discord-api-types/v10';
+import type { RawPermissionOverwriteData } from '../../typings/rawDataTypes';
 import type {
   GuildChannelOverwriteOptions,
   OverwriteResolvable,
   PermissionOverwriteOptions,
   RoleResolvable,
   UserResolvable,
-} from "../../typings";
-import type { GuildChannel } from "../structures/GuildChannel";
+} from '../../typings';
+import type { GuildChannel } from '../structures/GuildChannel';
 
 type UserOrRoleResolvableSource = RoleResolvable | UserResolvable;
 type OverwriteResolvableSource = PermissionOverwrites | OverwriteResolvable;
@@ -34,11 +34,11 @@ class PermissionOverwriteManager extends CachedManager<PermissionOverwrites> {
     iterable?: Iterable<PermissionOverwrites>
   ) {
     super(channel.client, PermissionOverwrites);
-    if (!cacheWarningEmitted && this._cache.constructor.name !== "Collection") {
+    if (!cacheWarningEmitted && this._cache.constructor.name !== 'Collection') {
       cacheWarningEmitted = true;
       process.emitWarning(
         `Overriding the cache handling for ${this.constructor.name} is unsupported and breaks functionality.`,
-        "UnsupportedCacheOverwriteWarning"
+        'UnsupportedCacheOverwriteWarning'
       );
     }
 
@@ -66,9 +66,9 @@ class PermissionOverwriteManager extends CachedManager<PermissionOverwrites> {
   ) {
     if (!Array.isArray(overwrites) && !(overwrites instanceof Collection)) {
       throw new TypeError(
-        "INVALID_TYPE",
-        "overwrites",
-        "Array or Collection of Permission Overwrites",
+        'INVALID_TYPE',
+        'overwrites',
+        'Array or Collection of Permission Overwrites',
         true
       );
     }
@@ -86,12 +86,12 @@ class PermissionOverwriteManager extends CachedManager<PermissionOverwrites> {
       this.client.users.resolveId(userOrRole);
     let { type } = overwriteOptions;
     const { reason } = overwriteOptions;
-    if (typeof type !== "number") {
+    if (typeof type !== 'number') {
       const resolved =
         this.channel.guild.roles.resolve(userOrRole) ??
         this.client.users.resolve(userOrRole);
       if (!resolved) {
-        throw new TypeError("INVALID_TYPE", "parameter", "User nor a Role");
+        throw new TypeError('INVALID_TYPE', 'parameter', 'User nor a Role');
       }
       type =
         resolved instanceof Role ? OverwriteTypes.role : OverwriteTypes.member;
@@ -140,7 +140,7 @@ class PermissionOverwriteManager extends CachedManager<PermissionOverwrites> {
       this.channel.guild.roles.resolveId(userOrRole) ??
       this.client.users.resolveId(userOrRole);
     if (!userOrRoleId) {
-      throw new TypeError("INVALID_TYPE", "parameter", "User nor a Role");
+      throw new TypeError('INVALID_TYPE', 'parameter', 'User nor a Role');
     }
 
     await this.client.api

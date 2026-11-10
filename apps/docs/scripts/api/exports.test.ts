@@ -1,6 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from 'bun:test';
 
-import { areaFor, parseIndexExports, slugify } from "./exports";
+import { areaFor, parseIndexExports, slugify } from './exports';
 
 const source = `import pkg from '../package.json';
 
@@ -15,48 +15,48 @@ export {
 } from './structures/index';
 `;
 
-describe("parseIndexExports", () => {
-  test("separates public, alias, external, and metadata exports", () => {
+describe('parseIndexExports', () => {
+  test('separates public, alias, external, and metadata exports', () => {
     const parsed = parseIndexExports(source);
 
     expect(parsed.public).toEqual([
-      { name: "Client", namedExport: undefined, path: "./client/Client" },
+      { name: 'Client', namedExport: undefined, path: './client/Client' },
       {
-        name: "CustomStatus",
-        namedExport: "CustomStatus",
-        path: "./structures/Presence",
+        name: 'CustomStatus',
+        namedExport: 'CustomStatus',
+        path: './structures/Presence',
       },
-      { name: "version", namedExport: undefined, path: "./index" },
-      { name: "Guild", namedExport: "Guild", path: "./structures/index" },
-      { name: "Message", namedExport: "Message", path: "./structures/index" },
+      { name: 'version', namedExport: undefined, path: './index' },
+      { name: 'Guild', namedExport: 'Guild', path: './structures/index' },
+      { name: 'Message', namedExport: 'Message', path: './structures/index' },
     ]);
     expect(parsed.aliases).toEqual([
-      { name: "ClientAlias", target: "DefaultClient" },
+      { name: 'ClientAlias', target: 'DefaultClient' },
     ]);
-    expect(parsed.external).toEqual(["ActionRow"]);
+    expect(parsed.external).toEqual(['ActionRow']);
     expect(parsed.unparsed).toEqual([]);
   });
 });
 
-describe("slugify", () => {
-  test("converts class names to lowercase kebab-case", () => {
-    expect(slugify("Client")).toBe("client");
-    expect(slugify("ClientUser")).toBe("client-user");
-    expect(slugify("RESTManager")).toBe("rest-manager");
-    expect(slugify("QRLogin")).toBe("qr-login");
-    expect(slugify("WebSocket")).toBe("web-socket");
+describe('slugify', () => {
+  test('converts class names to lowercase kebab-case', () => {
+    expect(slugify('Client')).toBe('client');
+    expect(slugify('ClientUser')).toBe('client-user');
+    expect(slugify('RESTManager')).toBe('rest-manager');
+    expect(slugify('QRLogin')).toBe('qr-login');
+    expect(slugify('WebSocket')).toBe('web-socket');
   });
 });
 
-describe("areaFor", () => {
-  test("groups public modules by area", () => {
-    expect(areaFor("./client/Client")).toBe("client");
-    expect(areaFor("./client/voice/ClientVoiceManager")).toBe("voice");
-    expect(areaFor("./structures/Message")).toBe("structures");
-    expect(areaFor("./managers/GuildManager")).toBe("managers");
-    expect(areaFor("./rest/RESTManager")).toBe("rest");
-    expect(areaFor("./sharding/Shard")).toBe("sharding");
-    expect(areaFor("./util/Events")).toBe("utilities");
-    expect(areaFor("./WebSocket")).toBe("client");
+describe('areaFor', () => {
+  test('groups public modules by area', () => {
+    expect(areaFor('./client/Client')).toBe('client');
+    expect(areaFor('./client/voice/ClientVoiceManager')).toBe('voice');
+    expect(areaFor('./structures/Message')).toBe('structures');
+    expect(areaFor('./managers/GuildManager')).toBe('managers');
+    expect(areaFor('./rest/RESTManager')).toBe('rest');
+    expect(areaFor('./sharding/Shard')).toBe('sharding');
+    expect(areaFor('./util/Events')).toBe('utilities');
+    expect(areaFor('./WebSocket')).toBe('client');
   });
 });

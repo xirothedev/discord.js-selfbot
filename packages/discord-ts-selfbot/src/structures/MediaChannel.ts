@@ -1,4 +1,4 @@
-import ThreadOnlyChannel from "./ThreadOnlyChannel";
+import ThreadOnlyChannel from './ThreadOnlyChannel';
 
 class MediaChannel extends ThreadOnlyChannel {}
 

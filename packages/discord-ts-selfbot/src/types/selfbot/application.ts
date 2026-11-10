@@ -1,5 +1,5 @@
-import type { APIApplication } from "discord-api-types/v10";
-import type { ApplicationType } from "../../../typings/enums";
+import type { APIApplication } from 'discord-api-types/v10';
+import type { ApplicationType } from '../../../typings/enums';
 
 export interface ApplicationPatch extends Partial<APIApplication> {
   type?: ApplicationType | null;

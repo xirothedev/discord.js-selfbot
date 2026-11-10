@@ -1,10 +1,10 @@
-import type { Client } from "../../Client";
-import type { WebSocketShard } from "../WebSocketShard";
-import _ConstantsModule from "../../../util/Constants";
+import type { Client } from '../../Client';
+import type { WebSocketShard } from '../WebSocketShard';
+import _ConstantsModule from '../../../util/Constants';
 
 const { Events } = _ConstantsModule;
-import type { RelationshipData } from "../../../managers/RelationshipManager";
-import type { RawUserData } from "../../../../typings/rawDataTypes";
+import type { RelationshipData } from '../../../managers/RelationshipManager';
+import type { RawUserData } from '../../../../typings/rawDataTypes';
 
 interface RelationshipAddData extends RelationshipData {
   user?: RawUserData;
@@ -12,14 +12,14 @@ interface RelationshipAddData extends RelationshipData {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  return typeof value === 'object' && value !== null;
 }
 
 function isRelationshipData(value: unknown): value is RelationshipAddData {
   return (
     isRecord(value) &&
-    typeof value.id === "string" &&
-    typeof value.type === "number"
+    typeof value.id === 'string' &&
+    typeof value.type === 'number'
   );
 }
 

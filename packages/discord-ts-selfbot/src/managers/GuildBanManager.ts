@@ -1,18 +1,18 @@
-import process from "node:process";
-import { Collection } from "@discordjs/collection";
-import CachedManager from "./CachedManager";
-import _errorsModule from "../errors";
+import process from 'node:process';
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
 
 const { TypeError, Error } = _errorsModule;
-import GuildBan from "../structures/GuildBan";
-import _GuildMemberModule from "../structures/GuildMember";
+import GuildBan from '../structures/GuildBan';
+import _GuildMemberModule from '../structures/GuildMember';
 
 const { GuildMember } = _GuildMemberModule;
 import type {
   RESTPostAPIGuildBulkBanResult,
   Snowflake,
-} from "discord-api-types/v10";
-import type { RawGuildBanData } from "../../typings/rawDataTypes";
+} from 'discord-api-types/v10';
+import type { RawGuildBanData } from '../../typings/rawDataTypes';
 import type {
   BanOptions,
   BaseFetchOptions,
@@ -21,27 +21,27 @@ import type {
   FetchBanOptions,
   FetchBansOptions,
   UserResolvable,
-} from "../../typings";
-import type { Guild } from "../structures/Guild";
-import type { User } from "../structures/User";
-import type { Message } from "../structures/Message";
-import type { ThreadMember } from "../structures/ThreadMember";
+} from '../../typings';
+import type { Guild } from '../structures/Guild';
+import type { User } from '../structures/User';
+import type { Message } from '../structures/Message';
+import type { ThreadMember } from '../structures/ThreadMember';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  return typeof value === 'object' && value !== null;
 }
 
 function isFetchBanOptions(value: unknown): value is FetchBanOptions {
-  return isRecord(value) && "user" in value;
+  return isRecord(value) && 'user' in value;
 }
 
 function isFetchBansOptions(value: unknown): value is FetchBansOptions {
   return (
     isRecord(value) &&
-    ("limit" in value ||
-      "before" in value ||
-      "after" in value ||
-      "cache" in value)
+    ('limit' in value ||
+      'before' in value ||
+      'after' in value ||
+      'cache' in value)
   );
 }
 
@@ -101,7 +101,7 @@ class GuildBanManager extends CachedManager<GuildBan> {
       !listOptions?.limit &&
       listOptions?.cache === undefined
     ) {
-      throw new Error("FETCH_BAN_RESOLVE_ID");
+      throw new Error('FETCH_BAN_RESOLVE_ID');
     }
 
     return this._fetchMany(listOptions);
@@ -145,18 +145,18 @@ class GuildBanManager extends CachedManager<GuildBan> {
     user: UserResolvableSource,
     options: BanOptions = {}
   ): Promise<InstanceType<typeof GuildMember> | User | Snowflake> {
-    if (typeof options !== "object") {
-      throw new TypeError("INVALID_TYPE", "options", "object", true);
+    if (typeof options !== 'object') {
+      throw new TypeError('INVALID_TYPE', 'options', 'object', true);
     }
     const id = this.client.users.resolveId(user);
     if (!id) {
-      throw new Error("BAN_RESOLVE_ID", true);
+      throw new Error('BAN_RESOLVE_ID', true);
     }
 
     if (options.days !== undefined && !deprecationEmittedForDays) {
       process.emitWarning(
-        "The days option for GuildBanManager#create() is deprecated. Use the deleteMessageSeconds option instead.",
-        "DeprecationWarning"
+        'The days option for GuildBanManager#create() is deprecated. Use the deleteMessageSeconds option instead.',
+        'DeprecationWarning'
       );
 
       deprecationEmittedForDays = true;
@@ -190,7 +190,7 @@ class GuildBanManager extends CachedManager<GuildBan> {
   ): Promise<User | null> {
     const id = this.client.users.resolveId(user);
     if (!id) {
-      throw new Error("BAN_RESOLVE_ID");
+      throw new Error('BAN_RESOLVE_ID');
     }
     await this.client.api.guilds(this.guild.id).bans(id).delete({ reason });
     return this.client.users.resolve(user);
@@ -219,26 +219,26 @@ class GuildBanManager extends CachedManager<GuildBan> {
   ): Promise<BulkBanResult> {
     if (!users || !(Array.isArray(users) || users instanceof Collection)) {
       throw new TypeError(
-        "INVALID_TYPE",
-        "users",
-        "Array or Collection of UserResolvable",
+        'INVALID_TYPE',
+        'users',
+        'Array or Collection of UserResolvable',
         true
       );
     }
-    if (typeof options !== "object") {
-      throw new TypeError("INVALID_TYPE", "options", "object", true);
+    if (typeof options !== 'object') {
+      throw new TypeError('INVALID_TYPE', 'options', 'object', true);
     }
 
     const userIds = (
       users instanceof Collection ? [...users.values()] : users
     ).map((user) => this.client.users.resolveId(user));
     if (userIds.length === 0) {
-      throw new Error("BULK_BAN_USERS_OPTION_EMPTY");
+      throw new Error('BULK_BAN_USERS_OPTION_EMPTY');
     }
 
     const result = await this.client.api
       .guilds(this.guild.id)
-      ["bulk-ban"].post<RESTPostAPIGuildBulkBanResult>({
+      ['bulk-ban'].post<RESTPostAPIGuildBulkBanResult>({
         data: {
           delete_message_days: options.deleteMessageSeconds,
           user_ids: userIds,

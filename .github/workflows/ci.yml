@@ -37,7 +37,7 @@ jobs:
         id: filter
         uses: dorny/paths-filter@f3360c560367c9daf72b88c0e6164162034c5721 # v4
         with:
-          predicate-quantifier: "some-with-excludes"
+          predicate-quantifier: 'some-with-excludes'
           filters: |
             library:
               - 'packages/discord-ts-selfbot/**'

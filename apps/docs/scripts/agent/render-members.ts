@@ -1,69 +1,69 @@
-import { plainText, stripJsdocSyntax } from "../api/comment";
-import { mergeSignature, signatureLine } from "../api/render-shared";
-import type { MergedMember } from "../api/render-shared";
-import { renderType } from "../api/render-type";
-import type { Comment, DocgenEvent } from "../api/types";
+import { plainText, stripJsdocSyntax } from '../api/comment';
+import { mergeSignature, signatureLine } from '../api/render-shared';
+import type { MergedMember } from '../api/render-shared';
+import { renderType } from '../api/render-type';
+import type { Comment, DocgenEvent } from '../api/types';
 
 export function summary(comment: Comment | undefined): string {
   const parts = comment?.summary;
   if (!parts?.length) {
-    return "";
+    return '';
   }
   return parts
     .map((part) => {
-      if (part.kind === "code") {
-        return part.text ?? "";
+      if (part.kind === 'code') {
+        return part.text ?? '';
       }
-      return stripJsdocSyntax(part.text ?? "");
+      return stripJsdocSyntax(part.text ?? '');
     })
-    .join("")
+    .join('')
     .trim();
 }
 
 export function deprecated(comment: Comment | undefined): string {
-  const tag = comment?.blockTags?.find((item) => item.tag === "@deprecated");
+  const tag = comment?.blockTags?.find((item) => item.tag === '@deprecated');
   if (!tag) {
-    return "";
+    return '';
   }
   const text = stripJsdocSyntax(plainText(tag.content)).trim();
-  return `> **Deprecated.** ${text || "This API is deprecated."}`;
+  return `> **Deprecated.** ${text || 'This API is deprecated.'}`;
 }
 
 export function examples(comment: Comment | undefined): string[] {
   const tags =
-    comment?.blockTags?.filter((item) => item.tag === "@example") ?? [];
+    comment?.blockTags?.filter((item) => item.tag === '@example') ?? [];
   return tags
     .map((tag) => {
-      const code = tag.content?.find((part) => part.kind === "code")?.text;
+      const code = tag.content?.find((part) => part.kind === 'code')?.text;
       if (code) {
         return code.trim();
       }
       const text = stripJsdocSyntax(plainText(tag.content)).trim();
-      return text ? `\`\`\`ts\n${text}\n\`\`\`` : "";
+      return text ? `\`\`\`ts\n${text}\n\`\`\`` : '';
     })
     .filter(Boolean);
 }
 
 export function parameterList(
-  parameters: ReturnType<typeof mergeSignature>["parameters"]
+  parameters: ReturnType<typeof mergeSignature>['parameters']
 ): string {
   return parameters
     .map((parameter) => {
       const optional =
         parameter.flags?.isOptional || parameter.defaultValue !== undefined
-          ? "?"
-          : "";
+          ? '?'
+          : '';
       const description = stripJsdocSyntax(
         plainText(parameter.comment?.summary)
       ).trim();
-      const code = `\`${parameter.name}${optional}: ${renderType(parameter.type) ?? "unknown"}\``;
+      const code = `\`${parameter.name}${optional}: ${renderType(parameter.type) ?? 'unknown'}\``;
       return description ? `- ${code} — ${description}` : `- ${code}`;
     })
-    .join("\n");
+    .join('\n');
 }
 
 export function block(title: string, body: string): string {
-  return body.trim() ? `## ${title}\n\n${body.trim()}` : "";
+  return body.trim() ? `## ${title}\n\n${body.trim()}` : '';
 }
 
 export function renderMethod(member: MergedMember): string {
@@ -81,33 +81,33 @@ export function renderMethod(member: MergedMember): string {
       member.typings?.flags?.isStatic || member.source?.flags?.isStatic;
     const code = signatureLine(
       merged,
-      `${isStatic ? "static " : ""}${member.name}`
+      `${isStatic ? 'static ' : ''}${member.name}`
     );
     const description = summary(merged.comment);
     const deprecatedText = deprecated(merged.comment);
     const parameters = parameterList(merged.parameters);
     const returns = merged.returnType
-      ? `**Returns:** \`${renderType(merged.returnType) ?? "unknown"}\``
-      : "";
+      ? `**Returns:** \`${renderType(merged.returnType) ?? 'unknown'}\``
+      : '';
     const exampleBlocks = examples(merged.comment);
 
     parts.push(
       [
         description,
         deprecatedText,
-        "```ts",
+        '```ts',
         code,
-        "```",
+        '```',
         parameters,
         returns,
         ...exampleBlocks,
       ]
         .filter(Boolean)
-        .join("\n\n")
+        .join('\n\n')
     );
   }
 
-  return [`### \`${member.name}\``, ...parts].join("\n\n");
+  return [`### \`${member.name}\``, ...parts].join('\n\n');
 }
 
 function propertyType(member: MergedMember) {
@@ -123,10 +123,10 @@ function memberFlags(member: MergedMember): string[] {
   const typingsFlags = member.typings?.flags;
   const sourceFlags = member.source?.flags;
   if (typingsFlags?.isReadonly || sourceFlags?.isReadonly) {
-    flags.push("readonly");
+    flags.push('readonly');
   }
   if (typingsFlags?.isStatic || sourceFlags?.isStatic) {
-    flags.push("static");
+    flags.push('static');
   }
   return flags;
 }
@@ -138,32 +138,32 @@ export function renderProperty(member: MergedMember): string {
   const flags = memberFlags(member);
 
   const meta = [
-    `**Type:** \`${renderType(propertyType(member)) ?? "unknown"}\``,
-    flags.length ? `**Modifiers:** ${flags.join(", ")}` : "",
+    `**Type:** \`${renderType(propertyType(member)) ?? 'unknown'}\``,
+    flags.length ? `**Modifiers:** ${flags.join(', ')}` : '',
   ]
     .filter(Boolean)
-    .join(" · ");
+    .join(' · ');
 
   return [`### \`${member.name}\``, description, meta]
     .filter(Boolean)
-    .join("\n\n");
+    .join('\n\n');
 }
 
 export function renderEvent(event: DocgenEvent): string {
   const description = event.description
     ? stripJsdocSyntax(event.description).trim()
-    : "";
+    : '';
   const params = (event.params ?? [])
     .map((parameter) => {
-      const optional = parameter.optional ? "?" : "";
+      const optional = parameter.optional ? '?' : '';
       const details = parameter.description
         ? ` — ${stripJsdocSyntax(parameter.description).trim()}`
-        : "";
+        : '';
       return `- \`${parameter.name}${optional}\`${details}`;
     })
-    .join("\n");
+    .join('\n');
 
   return [`### \`${event.name}\``, description, params]
     .filter(Boolean)
-    .join("\n\n");
+    .join('\n\n');
 }

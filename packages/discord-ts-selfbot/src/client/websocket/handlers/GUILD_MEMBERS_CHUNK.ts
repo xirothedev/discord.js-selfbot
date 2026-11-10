@@ -1,20 +1,20 @@
-import { Collection } from "@discordjs/collection";
-import _ConstantsModule from "../../../util/Constants";
+import { Collection } from '@discordjs/collection';
+import _ConstantsModule from '../../../util/Constants';
 
 const { Events } = _ConstantsModule;
-import type { Client } from "../../Client";
-import type { WebSocketShard } from "../WebSocketShard";
-import type { GatewayGuildMembersChunkDispatchData } from "discord-api-types/v10";
-import type { GuildMember } from "../../../structures/GuildMember";
+import type { Client } from '../../Client';
+import type { WebSocketShard } from '../WebSocketShard';
+import type { GatewayGuildMembersChunkDispatchData } from 'discord-api-types/v10';
+import type { GuildMember } from '../../../structures/GuildMember';
 
 function isChunkData(
   value: unknown
 ): value is GatewayGuildMembersChunkDispatchData {
   return (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value !== null &&
-    "guild_id" in value &&
-    typeof value.guild_id === "string"
+    'guild_id' in value &&
+    typeof value.guild_id === 'string'
   );
 }
 

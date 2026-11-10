@@ -1,4 +1,4 @@
-import _errorsModule from "../errors";
+import _errorsModule from '../errors';
 
 const { Error, RangeError, TypeError } = _errorsModule;
 import type {
@@ -7,8 +7,8 @@ import type {
   MessageReferenceTypes,
   PollLayoutTypes,
   SortOrderTypes,
-} from "../../typings/enums";
-import type { MessageType } from "../../typings";
+} from '../../typings/enums';
+import type { MessageType } from '../../typings';
 
 type EnumOf<Key extends string, Value extends number = number> = Record<
   Key,
@@ -44,41 +44,41 @@ const Constants: ConstantsShape = Object.create(Object.prototype);
 Constants.MaxBulkDeletableMessageAge = 1_209_600_000;
 
 Constants.UserAgent =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) discord/1.0.9210 Chrome/134.0.6998.205 Electron/35.3.0 Safari/537.36";
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) discord/1.0.9210 Chrome/134.0.6998.205 Electron/35.3.0 Safari/537.36';
 
 Constants.ciphers = [
-  "TLS_AES_128_GCM_SHA256",
-  "TLS_AES_256_GCM_SHA384",
-  "TLS_CHACHA20_POLY1305_SHA256",
-  "ECDHE-ECDSA-AES128-GCM-SHA256",
-  "ECDHE-RSA-AES128-GCM-SHA256",
-  "ECDHE-ECDSA-AES256-GCM-SHA384",
-  "ECDHE-RSA-AES256-GCM-SHA384",
-  "ECDHE-ECDSA-CHACHA20-POLY1305",
-  "ECDHE-RSA-CHACHA20-POLY1305",
-  "ECDHE-RSA-AES128-SHA",
-  "ECDHE-RSA-AES256-SHA",
-  "AES128-GCM-SHA256",
-  "AES256-GCM-SHA384",
-  "AES128-SHA",
-  "AES256-SHA",
+  'TLS_AES_128_GCM_SHA256',
+  'TLS_AES_256_GCM_SHA384',
+  'TLS_CHACHA20_POLY1305_SHA256',
+  'ECDHE-ECDSA-AES128-GCM-SHA256',
+  'ECDHE-RSA-AES128-GCM-SHA256',
+  'ECDHE-ECDSA-AES256-GCM-SHA384',
+  'ECDHE-RSA-AES256-GCM-SHA384',
+  'ECDHE-ECDSA-CHACHA20-POLY1305',
+  'ECDHE-RSA-CHACHA20-POLY1305',
+  'ECDHE-RSA-AES128-SHA',
+  'ECDHE-RSA-AES256-SHA',
+  'AES128-GCM-SHA256',
+  'AES256-GCM-SHA384',
+  'AES128-SHA',
+  'AES256-SHA',
 ];
 
 Constants.WSCodes = {
-  1000: "WS_CLOSE_REQUESTED",
-  1011: "INTERNAL_ERROR",
-  4004: "TOKEN_INVALID",
-  4010: "SHARDING_INVALID",
-  4011: "SHARDING_REQUIRED",
-  4013: "INVALID_INTENTS",
-  4014: "DISALLOWED_INTENTS",
+  1000: 'WS_CLOSE_REQUESTED',
+  1011: 'INTERNAL_ERROR',
+  4004: 'TOKEN_INVALID',
+  4010: 'SHARDING_INVALID',
+  4011: 'SHARDING_REQUIRED',
+  4013: 'INVALID_INTENTS',
+  4014: 'DISALLOWED_INTENTS',
 };
 
-const AllowedImageFormats = ["webp", "png", "jpg", "jpeg", "gif"];
+const AllowedImageFormats = ['webp', 'png', 'jpg', 'jpeg', 'gif'];
 
 const StickerFormatExtensions: Record<string, string> = {
-  GIF: "gif",
-  LOTTIE: "json",
+  GIF: 'gif',
+  LOTTIE: 'json',
 };
 
 const AllowedImageSizes = [
@@ -183,18 +183,18 @@ interface EndpointsShape {
 
 function makeImageUrl(
   root: string,
-  { format = "webp", size }: ImageURLOptions = {}
+  { format = 'webp', size }: ImageURLOptions = {}
 ) {
-  if (!["undefined", "number"].includes(typeof size)) {
-    throw new TypeError("INVALID_TYPE", "size", "number");
+  if (!['undefined', 'number'].includes(typeof size)) {
+    throw new TypeError('INVALID_TYPE', 'size', 'number');
   }
   if (format && !AllowedImageFormats.includes(format)) {
-    throw new Error("IMAGE_FORMAT", format);
+    throw new Error('IMAGE_FORMAT', format);
   }
   if (size && !AllowedImageSizes.includes(size)) {
-    throw new RangeError("IMAGE_SIZE", size);
+    throw new RangeError('IMAGE_SIZE', size);
   }
-  return `${root}.${format}${size ? `?size=${size}` : ""}`;
+  return `${root}.${format}${size ? `?size=${size}` : ''}`;
 }
 
 Constants.Endpoints = {
@@ -213,7 +213,7 @@ Constants.Endpoints = {
         dynamic = false
       ) => {
         const resolvedFormat =
-          dynamic && hash.startsWith("a_") ? "gif" : format;
+          dynamic && hash.startsWith('a_') ? 'gif' : format;
         return makeImageUrl(`${root}/avatars/${userId}/${hash}`, {
           format: resolvedFormat,
           size,
@@ -221,7 +221,7 @@ Constants.Endpoints = {
       },
       AvatarDecoration: (hash: string) =>
         makeImageUrl(`${root}/avatar-decoration-presets/${hash}`, {
-          format: "png",
+          format: 'png',
         }),
       Banner: (
         id: string,
@@ -231,7 +231,7 @@ Constants.Endpoints = {
         dynamic = false
       ) => {
         const resolvedFormat =
-          dynamic && hash.startsWith("a_") ? "gif" : format;
+          dynamic && hash.startsWith('a_') ? 'gif' : format;
         return makeImageUrl(`${root}/banners/${id}/${hash}`, {
           format: resolvedFormat,
           size,
@@ -248,7 +248,7 @@ Constants.Endpoints = {
           format,
           size,
         }),
-      Emoji: (emojiId: string, format = "webp") =>
+      Emoji: (emojiId: string, format = 'webp') =>
         `${root}/emojis/${emojiId}.${format}`,
       GDMIcon: (
         channelId: string,
@@ -264,12 +264,12 @@ Constants.Endpoints = {
         guildId: string,
         memberId: string,
         hash: string,
-        format = "webp",
+        format = 'webp',
         size?: number,
         dynamic = false
       ) => {
         const resolvedFormat =
-          dynamic && hash.startsWith("a_") ? "gif" : format;
+          dynamic && hash.startsWith('a_') ? 'gif' : format;
         return makeImageUrl(
           `${root}/guilds/${guildId}/users/${memberId}/avatars/${hash}`,
           { format: resolvedFormat, size }
@@ -279,12 +279,12 @@ Constants.Endpoints = {
         guildId: string,
         memberId: string,
         hash: string,
-        format = "webp",
+        format = 'webp',
         size?: number,
         dynamic = false
       ) => {
         const resolvedFormat =
-          dynamic && hash.startsWith("a_") ? "gif" : format;
+          dynamic && hash.startsWith('a_') ? 'gif' : format;
         return makeImageUrl(
           `${root}/guilds/${guildId}/users/${memberId}/banners/${hash}`,
           { format: resolvedFormat, size }
@@ -310,7 +310,7 @@ Constants.Endpoints = {
         dynamic = false
       ) => {
         const resolvedFormat =
-          dynamic && hash.startsWith("a_") ? "gif" : format;
+          dynamic && hash.startsWith('a_') ? 'gif' : format;
         return makeImageUrl(`${root}/icons/${guildId}/${hash}`, {
           format: resolvedFormat,
           size,
@@ -319,14 +319,14 @@ Constants.Endpoints = {
       RoleIcon: (
         roleId: string,
         hash: string,
-        format = "webp",
+        format = 'webp',
         size?: number
       ) =>
         makeImageUrl(`${root}/role-icons/${roleId}/${hash}`, { format, size }),
       Splash: (guildId: string, hash: string, format: string, size?: number) =>
         makeImageUrl(`${root}/splashes/${guildId}/${hash}`, { format, size }),
       Sticker: (stickerId: string, stickerFormat: string) =>
-        `${root}/stickers/${stickerId}.${StickerFormatExtensions[stickerFormat] ?? "png"}`,
+        `${root}/stickers/${stickerId}.${StickerFormatExtensions[stickerFormat] ?? 'png'}`,
       StickerPackBanner: (bannerId: string, format: string, size?: number) =>
         makeImageUrl(
           `${root}/app-assets/710982414301790216/store/${bannerId}`,
@@ -336,7 +336,7 @@ Constants.Endpoints = {
         makeImageUrl(`${root}/team-icons/${teamId}/${hash}`, options),
     };
   },
-  botGateway: "/gateway",
+  botGateway: '/gateway',
   invite: (root: string, code: string, eventId?: string) =>
     eventId ? `${root}/${code}?event=${eventId}` : `${root}/${code}`,
   scheduledEvent: (root: string, guildId: string, eventId: string) =>
@@ -433,346 +433,346 @@ Constants.VoiceOpcodes = {
 };
 
 Constants.Events = {
-  API_REQUEST: "apiRequest",
-  API_RESPONSE: "apiResponse",
-  APPLICATION_COMMAND_CREATE: "applicationCommandCreate",
-  APPLICATION_COMMAND_DELETE: "applicationCommandDelete",
-  APPLICATION_COMMAND_PERMISSIONS_UPDATE: "applicationCommandPermissionsUpdate",
-  APPLICATION_COMMAND_UPDATE: "applicationCommandUpdate",
-  AUTO_MODERATION_ACTION_EXECUTION: "autoModerationActionExecution",
-  AUTO_MODERATION_RULE_CREATE: "autoModerationRuleCreate",
-  AUTO_MODERATION_RULE_DELETE: "autoModerationRuleDelete",
-  AUTO_MODERATION_RULE_UPDATE: "autoModerationRuleUpdate",
-  CACHE_SWEEP: "cacheSweep",
-  CALL_CREATE: "callCreate",
-  CALL_DELETE: "callDelete",
-  CALL_UPDATE: "callUpdate",
-  CHANNEL_CREATE: "channelCreate",
-  CHANNEL_DELETE: "channelDelete",
-  CHANNEL_PINS_UPDATE: "channelPinsUpdate",
-  CHANNEL_RECIPIENT_ADD: "channelRecipientAdd",
-  CHANNEL_RECIPIENT_REMOVE: "channelRecipientRemove",
-  CHANNEL_UPDATE: "channelUpdate",
-  CLIENT_READY: "ready",
-  DEBUG: "debug",
-  ERROR: "error",
-  GUILD_AUDIT_LOG_ENTRY_CREATE: "guildAuditLogEntryCreate",
-  GUILD_AVAILABLE: "guildAvailable",
-  GUILD_BAN_ADD: "guildBanAdd",
-  GUILD_BAN_REMOVE: "guildBanRemove",
-  GUILD_CREATE: "guildCreate",
-  GUILD_DELETE: "guildDelete",
-  GUILD_EMOJI_CREATE: "emojiCreate",
-  GUILD_EMOJI_DELETE: "emojiDelete",
-  GUILD_EMOJI_UPDATE: "emojiUpdate",
-  GUILD_INTEGRATIONS_UPDATE: "guildIntegrationsUpdate",
-  GUILD_MEMBERS_CHUNK: "guildMembersChunk",
-  GUILD_MEMBER_ADD: "guildMemberAdd",
-  GUILD_MEMBER_AVAILABLE: "guildMemberAvailable",
-  GUILD_MEMBER_REMOVE: "guildMemberRemove",
-  GUILD_MEMBER_UPDATE: "guildMemberUpdate",
-  GUILD_ROLE_CREATE: "roleCreate",
-  GUILD_ROLE_DELETE: "roleDelete",
-  GUILD_ROLE_UPDATE: "roleUpdate",
-  GUILD_SCHEDULED_EVENT_CREATE: "guildScheduledEventCreate",
-  GUILD_SCHEDULED_EVENT_DELETE: "guildScheduledEventDelete",
-  GUILD_SCHEDULED_EVENT_UPDATE: "guildScheduledEventUpdate",
-  GUILD_SCHEDULED_EVENT_USER_ADD: "guildScheduledEventUserAdd",
-  GUILD_SCHEDULED_EVENT_USER_REMOVE: "guildScheduledEventUserRemove",
-  GUILD_STICKER_CREATE: "stickerCreate",
-  GUILD_STICKER_DELETE: "stickerDelete",
-  GUILD_STICKER_UPDATE: "stickerUpdate",
-  GUILD_UNAVAILABLE: "guildUnavailable",
-  GUILD_UPDATE: "guildUpdate",
-  INTERACTION_CREATE: "interactionCreate",
-  INTERACTION_MODAL_CREATE: "interactionModalCreate",
-  INVALIDATED: "invalidated",
-  INVALID_REQUEST_WARNING: "invalidRequestWarning",
-  INVITE_CREATE: "inviteCreate",
-  INVITE_DELETE: "inviteDelete",
-  MESSAGE_BULK_DELETE: "messageDeleteBulk",
-  MESSAGE_CREATE: "messageCreate",
-  MESSAGE_DELETE: "messageDelete",
-  MESSAGE_POLL_VOTE_ADD: "messagePollVoteAdd",
-  MESSAGE_POLL_VOTE_REMOVE: "messagePollVoteRemove",
-  MESSAGE_REACTION_ADD: "messageReactionAdd",
-  MESSAGE_REACTION_REMOVE: "messageReactionRemove",
-  MESSAGE_REACTION_REMOVE_ALL: "messageReactionRemoveAll",
-  MESSAGE_REACTION_REMOVE_EMOJI: "messageReactionRemoveEmoji",
-  MESSAGE_UPDATE: "messageUpdate",
-  PRESENCE_UPDATE: "presenceUpdate",
-  RATE_LIMIT: "rateLimit",
-  RAW: "raw",
-  RELATIONSHIP_ADD: "relationshipAdd",
-  RELATIONSHIP_REMOVE: "relationshipRemove",
-  RELATIONSHIP_UPDATE: "relationshipUpdate",
-  SHARD_DISCONNECT: "shardDisconnect",
-  SHARD_ERROR: "shardError",
-  SHARD_READY: "shardReady",
-  SHARD_RECONNECTING: "shardReconnecting",
-  SHARD_RESUME: "shardResume",
-  STAGE_INSTANCE_CREATE: "stageInstanceCreate",
-  STAGE_INSTANCE_DELETE: "stageInstanceDelete",
-  STAGE_INSTANCE_UPDATE: "stageInstanceUpdate",
-  THREAD_CREATE: "threadCreate",
-  THREAD_DELETE: "threadDelete",
-  THREAD_LIST_SYNC: "threadListSync",
-  THREAD_MEMBERS_UPDATE: "threadMembersUpdate",
-  THREAD_MEMBER_UPDATE: "threadMemberUpdate",
-  THREAD_UPDATE: "threadUpdate",
-  TYPING_START: "typingStart",
-  UNHANDLED_PACKET: "unhandledPacket",
-  USER_UPDATE: "userUpdate",
+  API_REQUEST: 'apiRequest',
+  API_RESPONSE: 'apiResponse',
+  APPLICATION_COMMAND_CREATE: 'applicationCommandCreate',
+  APPLICATION_COMMAND_DELETE: 'applicationCommandDelete',
+  APPLICATION_COMMAND_PERMISSIONS_UPDATE: 'applicationCommandPermissionsUpdate',
+  APPLICATION_COMMAND_UPDATE: 'applicationCommandUpdate',
+  AUTO_MODERATION_ACTION_EXECUTION: 'autoModerationActionExecution',
+  AUTO_MODERATION_RULE_CREATE: 'autoModerationRuleCreate',
+  AUTO_MODERATION_RULE_DELETE: 'autoModerationRuleDelete',
+  AUTO_MODERATION_RULE_UPDATE: 'autoModerationRuleUpdate',
+  CACHE_SWEEP: 'cacheSweep',
+  CALL_CREATE: 'callCreate',
+  CALL_DELETE: 'callDelete',
+  CALL_UPDATE: 'callUpdate',
+  CHANNEL_CREATE: 'channelCreate',
+  CHANNEL_DELETE: 'channelDelete',
+  CHANNEL_PINS_UPDATE: 'channelPinsUpdate',
+  CHANNEL_RECIPIENT_ADD: 'channelRecipientAdd',
+  CHANNEL_RECIPIENT_REMOVE: 'channelRecipientRemove',
+  CHANNEL_UPDATE: 'channelUpdate',
+  CLIENT_READY: 'ready',
+  DEBUG: 'debug',
+  ERROR: 'error',
+  GUILD_AUDIT_LOG_ENTRY_CREATE: 'guildAuditLogEntryCreate',
+  GUILD_AVAILABLE: 'guildAvailable',
+  GUILD_BAN_ADD: 'guildBanAdd',
+  GUILD_BAN_REMOVE: 'guildBanRemove',
+  GUILD_CREATE: 'guildCreate',
+  GUILD_DELETE: 'guildDelete',
+  GUILD_EMOJI_CREATE: 'emojiCreate',
+  GUILD_EMOJI_DELETE: 'emojiDelete',
+  GUILD_EMOJI_UPDATE: 'emojiUpdate',
+  GUILD_INTEGRATIONS_UPDATE: 'guildIntegrationsUpdate',
+  GUILD_MEMBERS_CHUNK: 'guildMembersChunk',
+  GUILD_MEMBER_ADD: 'guildMemberAdd',
+  GUILD_MEMBER_AVAILABLE: 'guildMemberAvailable',
+  GUILD_MEMBER_REMOVE: 'guildMemberRemove',
+  GUILD_MEMBER_UPDATE: 'guildMemberUpdate',
+  GUILD_ROLE_CREATE: 'roleCreate',
+  GUILD_ROLE_DELETE: 'roleDelete',
+  GUILD_ROLE_UPDATE: 'roleUpdate',
+  GUILD_SCHEDULED_EVENT_CREATE: 'guildScheduledEventCreate',
+  GUILD_SCHEDULED_EVENT_DELETE: 'guildScheduledEventDelete',
+  GUILD_SCHEDULED_EVENT_UPDATE: 'guildScheduledEventUpdate',
+  GUILD_SCHEDULED_EVENT_USER_ADD: 'guildScheduledEventUserAdd',
+  GUILD_SCHEDULED_EVENT_USER_REMOVE: 'guildScheduledEventUserRemove',
+  GUILD_STICKER_CREATE: 'stickerCreate',
+  GUILD_STICKER_DELETE: 'stickerDelete',
+  GUILD_STICKER_UPDATE: 'stickerUpdate',
+  GUILD_UNAVAILABLE: 'guildUnavailable',
+  GUILD_UPDATE: 'guildUpdate',
+  INTERACTION_CREATE: 'interactionCreate',
+  INTERACTION_MODAL_CREATE: 'interactionModalCreate',
+  INVALIDATED: 'invalidated',
+  INVALID_REQUEST_WARNING: 'invalidRequestWarning',
+  INVITE_CREATE: 'inviteCreate',
+  INVITE_DELETE: 'inviteDelete',
+  MESSAGE_BULK_DELETE: 'messageDeleteBulk',
+  MESSAGE_CREATE: 'messageCreate',
+  MESSAGE_DELETE: 'messageDelete',
+  MESSAGE_POLL_VOTE_ADD: 'messagePollVoteAdd',
+  MESSAGE_POLL_VOTE_REMOVE: 'messagePollVoteRemove',
+  MESSAGE_REACTION_ADD: 'messageReactionAdd',
+  MESSAGE_REACTION_REMOVE: 'messageReactionRemove',
+  MESSAGE_REACTION_REMOVE_ALL: 'messageReactionRemoveAll',
+  MESSAGE_REACTION_REMOVE_EMOJI: 'messageReactionRemoveEmoji',
+  MESSAGE_UPDATE: 'messageUpdate',
+  PRESENCE_UPDATE: 'presenceUpdate',
+  RATE_LIMIT: 'rateLimit',
+  RAW: 'raw',
+  RELATIONSHIP_ADD: 'relationshipAdd',
+  RELATIONSHIP_REMOVE: 'relationshipRemove',
+  RELATIONSHIP_UPDATE: 'relationshipUpdate',
+  SHARD_DISCONNECT: 'shardDisconnect',
+  SHARD_ERROR: 'shardError',
+  SHARD_READY: 'shardReady',
+  SHARD_RECONNECTING: 'shardReconnecting',
+  SHARD_RESUME: 'shardResume',
+  STAGE_INSTANCE_CREATE: 'stageInstanceCreate',
+  STAGE_INSTANCE_DELETE: 'stageInstanceDelete',
+  STAGE_INSTANCE_UPDATE: 'stageInstanceUpdate',
+  THREAD_CREATE: 'threadCreate',
+  THREAD_DELETE: 'threadDelete',
+  THREAD_LIST_SYNC: 'threadListSync',
+  THREAD_MEMBERS_UPDATE: 'threadMembersUpdate',
+  THREAD_MEMBER_UPDATE: 'threadMemberUpdate',
+  THREAD_UPDATE: 'threadUpdate',
+  TYPING_START: 'typingStart',
+  UNHANDLED_PACKET: 'unhandledPacket',
+  USER_UPDATE: 'userUpdate',
   // Djs v12
-  VOICE_BROADCAST_SUBSCRIBE: "subscribe",
-  VOICE_BROADCAST_UNSUBSCRIBE: "unsubscribe",
-  VOICE_CHANNEL_EFFECT_SEND: "voiceChannelEffectSend",
-  VOICE_SERVER_UPDATE: "voiceServerUpdate",
-  VOICE_STATE_UPDATE: "voiceStateUpdate",
-  WARN: "warn",
-  WEBHOOKS_UPDATE: "webhookUpdate",
+  VOICE_BROADCAST_SUBSCRIBE: 'subscribe',
+  VOICE_BROADCAST_UNSUBSCRIBE: 'unsubscribe',
+  VOICE_CHANNEL_EFFECT_SEND: 'voiceChannelEffectSend',
+  VOICE_SERVER_UPDATE: 'voiceServerUpdate',
+  VOICE_STATE_UPDATE: 'voiceStateUpdate',
+  WARN: 'warn',
+  WEBHOOKS_UPDATE: 'webhookUpdate',
 };
 
 Constants.ShardEvents = {
-  ALL_READY: "allReady",
-  CLOSE: "close",
-  DESTROYED: "destroyed",
-  INVALID_SESSION: "invalidSession",
-  READY: "ready",
-  RESUMED: "resumed",
+  ALL_READY: 'allReady',
+  CLOSE: 'close',
+  DESTROYED: 'destroyed',
+  INVALID_SESSION: 'invalidSession',
+  READY: 'ready',
+  RESUMED: 'resumed',
 };
 
 Constants.PartialTypes = keyMirror([
-  "USER",
-  "CHANNEL",
-  "GUILD_MEMBER",
-  "MESSAGE",
-  "REACTION",
-  "GUILD_SCHEDULED_EVENT",
+  'USER',
+  'CHANNEL',
+  'GUILD_MEMBER',
+  'MESSAGE',
+  'REACTION',
+  'GUILD_SCHEDULED_EVENT',
 ]);
 
 Constants.WSEvents = keyMirror([
-  "READY",
-  "RESUMED",
-  "APPLICATION_COMMAND_CREATE",
-  "APPLICATION_COMMAND_DELETE",
-  "APPLICATION_COMMAND_UPDATE",
-  "APPLICATION_COMMAND_PERMISSIONS_UPDATE",
-  "AUTO_MODERATION_ACTION_EXECUTION",
-  "AUTO_MODERATION_RULE_CREATE",
-  "AUTO_MODERATION_RULE_DELETE",
-  "AUTO_MODERATION_RULE_UPDATE",
-  "GUILD_CREATE",
-  "GUILD_DELETE",
-  "GUILD_UPDATE",
-  "INVITE_CREATE",
-  "INVITE_DELETE",
-  "GUILD_MEMBER_ADD",
-  "GUILD_MEMBER_REMOVE",
-  "GUILD_MEMBER_UPDATE",
-  "GUILD_MEMBERS_CHUNK",
-  "GUILD_INTEGRATIONS_UPDATE",
-  "GUILD_ROLE_CREATE",
-  "GUILD_ROLE_DELETE",
-  "GUILD_ROLE_UPDATE",
-  "GUILD_BAN_ADD",
-  "GUILD_BAN_REMOVE",
-  "GUILD_EMOJIS_UPDATE",
-  "CHANNEL_CREATE",
-  "CHANNEL_DELETE",
-  "CHANNEL_UPDATE",
-  "CHANNEL_PINS_UPDATE",
-  "MESSAGE_CREATE",
-  "MESSAGE_DELETE",
-  "MESSAGE_UPDATE",
-  "MESSAGE_DELETE_BULK",
-  "MESSAGE_REACTION_ADD",
-  "MESSAGE_REACTION_REMOVE",
-  "MESSAGE_REACTION_REMOVE_ALL",
-  "MESSAGE_REACTION_REMOVE_EMOJI",
-  "THREAD_CREATE",
-  "THREAD_UPDATE",
-  "THREAD_DELETE",
-  "THREAD_LIST_SYNC",
-  "THREAD_MEMBER_UPDATE",
-  "THREAD_MEMBERS_UPDATE",
-  "USER_UPDATE",
-  "PRESENCE_UPDATE",
-  "TYPING_START",
-  "VOICE_STATE_UPDATE",
-  "VOICE_SERVER_UPDATE",
-  "WEBHOOKS_UPDATE",
-  "STAGE_INSTANCE_CREATE",
-  "STAGE_INSTANCE_UPDATE",
-  "STAGE_INSTANCE_DELETE",
-  "GUILD_STICKERS_UPDATE",
-  "GUILD_SCHEDULED_EVENT_CREATE",
-  "GUILD_SCHEDULED_EVENT_UPDATE",
-  "GUILD_SCHEDULED_EVENT_DELETE",
-  "GUILD_SCHEDULED_EVENT_USER_ADD",
-  "GUILD_SCHEDULED_EVENT_USER_REMOVE",
-  "GUILD_AUDIT_LOG_ENTRY_CREATE",
+  'READY',
+  'RESUMED',
+  'APPLICATION_COMMAND_CREATE',
+  'APPLICATION_COMMAND_DELETE',
+  'APPLICATION_COMMAND_UPDATE',
+  'APPLICATION_COMMAND_PERMISSIONS_UPDATE',
+  'AUTO_MODERATION_ACTION_EXECUTION',
+  'AUTO_MODERATION_RULE_CREATE',
+  'AUTO_MODERATION_RULE_DELETE',
+  'AUTO_MODERATION_RULE_UPDATE',
+  'GUILD_CREATE',
+  'GUILD_DELETE',
+  'GUILD_UPDATE',
+  'INVITE_CREATE',
+  'INVITE_DELETE',
+  'GUILD_MEMBER_ADD',
+  'GUILD_MEMBER_REMOVE',
+  'GUILD_MEMBER_UPDATE',
+  'GUILD_MEMBERS_CHUNK',
+  'GUILD_INTEGRATIONS_UPDATE',
+  'GUILD_ROLE_CREATE',
+  'GUILD_ROLE_DELETE',
+  'GUILD_ROLE_UPDATE',
+  'GUILD_BAN_ADD',
+  'GUILD_BAN_REMOVE',
+  'GUILD_EMOJIS_UPDATE',
+  'CHANNEL_CREATE',
+  'CHANNEL_DELETE',
+  'CHANNEL_UPDATE',
+  'CHANNEL_PINS_UPDATE',
+  'MESSAGE_CREATE',
+  'MESSAGE_DELETE',
+  'MESSAGE_UPDATE',
+  'MESSAGE_DELETE_BULK',
+  'MESSAGE_REACTION_ADD',
+  'MESSAGE_REACTION_REMOVE',
+  'MESSAGE_REACTION_REMOVE_ALL',
+  'MESSAGE_REACTION_REMOVE_EMOJI',
+  'THREAD_CREATE',
+  'THREAD_UPDATE',
+  'THREAD_DELETE',
+  'THREAD_LIST_SYNC',
+  'THREAD_MEMBER_UPDATE',
+  'THREAD_MEMBERS_UPDATE',
+  'USER_UPDATE',
+  'PRESENCE_UPDATE',
+  'TYPING_START',
+  'VOICE_STATE_UPDATE',
+  'VOICE_SERVER_UPDATE',
+  'WEBHOOKS_UPDATE',
+  'STAGE_INSTANCE_CREATE',
+  'STAGE_INSTANCE_UPDATE',
+  'STAGE_INSTANCE_DELETE',
+  'GUILD_STICKERS_UPDATE',
+  'GUILD_SCHEDULED_EVENT_CREATE',
+  'GUILD_SCHEDULED_EVENT_UPDATE',
+  'GUILD_SCHEDULED_EVENT_DELETE',
+  'GUILD_SCHEDULED_EVENT_USER_ADD',
+  'GUILD_SCHEDULED_EVENT_USER_REMOVE',
+  'GUILD_AUDIT_LOG_ENTRY_CREATE',
 ]);
 
 Constants.InviteScopes = [
-  "applications.builds.read",
-  "applications.commands",
-  "applications.entitlements",
-  "applications.store.update",
-  "bot",
-  "connections",
-  "email",
-  "identify",
-  "guilds",
-  "guilds.join",
-  "gdm.join",
-  "webhook.incoming",
-  "role_connections.write",
+  'applications.builds.read',
+  'applications.commands',
+  'applications.entitlements',
+  'applications.store.update',
+  'bot',
+  'connections',
+  'email',
+  'identify',
+  'guilds',
+  'guilds.join',
+  'gdm.join',
+  'webhook.incoming',
+  'role_connections.write',
 ];
 
 // Integration#expireBehavior still uses the old strings. Align it with this enum later.
-Constants.IntegrationExpireBehaviors = createEnum(["REMOVE_ROLE", "KICK"]);
+Constants.IntegrationExpireBehaviors = createEnum(['REMOVE_ROLE', 'KICK']);
 
 Constants.MessageTypes = [
   // 0
-  "DEFAULT",
-  "RECIPIENT_ADD",
-  "RECIPIENT_REMOVE",
-  "CALL",
-  "CHANNEL_NAME_CHANGE",
-  "CHANNEL_ICON_CHANGE",
-  "CHANNEL_PINNED_MESSAGE",
-  "GUILD_MEMBER_JOIN",
-  "USER_PREMIUM_GUILD_SUBSCRIPTION",
-  "USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_1",
-  "USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_2",
-  "USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3",
-  "CHANNEL_FOLLOW_ADD",
+  'DEFAULT',
+  'RECIPIENT_ADD',
+  'RECIPIENT_REMOVE',
+  'CALL',
+  'CHANNEL_NAME_CHANGE',
+  'CHANNEL_ICON_CHANGE',
+  'CHANNEL_PINNED_MESSAGE',
+  'GUILD_MEMBER_JOIN',
+  'USER_PREMIUM_GUILD_SUBSCRIPTION',
+  'USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_1',
+  'USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_2',
+  'USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3',
+  'CHANNEL_FOLLOW_ADD',
   // 13
   null,
-  "GUILD_DISCOVERY_DISQUALIFIED",
-  "GUILD_DISCOVERY_REQUALIFIED",
-  "GUILD_DISCOVERY_GRACE_PERIOD_INITIAL_WARNING",
-  "GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING",
-  "THREAD_CREATED",
-  "REPLY",
-  "APPLICATION_COMMAND",
-  "THREAD_STARTER_MESSAGE",
-  "GUILD_INVITE_REMINDER",
-  "CONTEXT_MENU_COMMAND",
-  "AUTO_MODERATION_ACTION",
-  "ROLE_SUBSCRIPTION_PURCHASE",
-  "INTERACTION_PREMIUM_UPSELL",
-  "STAGE_START",
-  "STAGE_END",
-  "STAGE_SPEAKER",
-  "STAGE_RAISE_HAND",
-  "STAGE_TOPIC",
-  "GUILD_APPLICATION_PREMIUM_SUBSCRIPTION",
+  'GUILD_DISCOVERY_DISQUALIFIED',
+  'GUILD_DISCOVERY_REQUALIFIED',
+  'GUILD_DISCOVERY_GRACE_PERIOD_INITIAL_WARNING',
+  'GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING',
+  'THREAD_CREATED',
+  'REPLY',
+  'APPLICATION_COMMAND',
+  'THREAD_STARTER_MESSAGE',
+  'GUILD_INVITE_REMINDER',
+  'CONTEXT_MENU_COMMAND',
+  'AUTO_MODERATION_ACTION',
+  'ROLE_SUBSCRIPTION_PURCHASE',
+  'INTERACTION_PREMIUM_UPSELL',
+  'STAGE_START',
+  'STAGE_END',
+  'STAGE_SPEAKER',
+  'STAGE_RAISE_HAND',
+  'STAGE_TOPIC',
+  'GUILD_APPLICATION_PREMIUM_SUBSCRIPTION',
   // 33 and 34 are unused
   null,
   null,
-  "PREMIUM_REFERRAL",
-  "GUILD_INCIDENT_ALERT_MODE_ENABLED",
-  "GUILD_INCIDENT_ALERT_MODE_DISABLED",
-  "GUILD_INCIDENT_REPORT_RAID",
-  "GUILD_INCIDENT_REPORT_FALSE_ALARM",
-  "GUILD_DEADCHAT_REVIVE_PROMPT",
-  "CUSTOM_GIFT",
-  "GUILD_GAMING_STATS_PROMPT",
+  'PREMIUM_REFERRAL',
+  'GUILD_INCIDENT_ALERT_MODE_ENABLED',
+  'GUILD_INCIDENT_ALERT_MODE_DISABLED',
+  'GUILD_INCIDENT_REPORT_RAID',
+  'GUILD_INCIDENT_REPORT_FALSE_ALARM',
+  'GUILD_DEADCHAT_REVIVE_PROMPT',
+  'CUSTOM_GIFT',
+  'GUILD_GAMING_STATS_PROMPT',
   null,
-  "PURCHASE_NOTIFICATION",
+  'PURCHASE_NOTIFICATION',
   null,
-  "POLL_RESULT",
-  "CHANGELOG",
-  "NITRO_NOTIFICATION",
+  'POLL_RESULT',
+  'CHANGELOG',
+  'NITRO_NOTIFICATION',
 ];
 
 Constants.MessageReferenceTypes = createEnum<
-  "DEFAULT" | "FORWARD",
+  'DEFAULT' | 'FORWARD',
   MessageReferenceTypes
 >([
   // 0
-  "DEFAULT",
-  "FORWARD",
+  'DEFAULT',
+  'FORWARD',
 ]);
 
 Constants.SweeperKeys = [
-  "applicationCommands",
-  "autoModerationRules",
-  "bans",
-  "emojis",
-  "invites",
-  "guildMembers",
-  "messages",
-  "presences",
-  "reactions",
-  "stageInstances",
-  "stickers",
-  "threadMembers",
-  "threads",
-  "users",
-  "voiceStates",
+  'applicationCommands',
+  'autoModerationRules',
+  'bans',
+  'emojis',
+  'invites',
+  'guildMembers',
+  'messages',
+  'presences',
+  'reactions',
+  'stageInstances',
+  'stickers',
+  'threadMembers',
+  'threads',
+  'users',
+  'voiceStates',
 ];
 
 Constants.SystemMessageTypes = Constants.MessageTypes.filter(
   (type): type is MessageType =>
     type !== null &&
     ![
-      "DEFAULT",
-      "REPLY",
-      "APPLICATION_COMMAND",
-      "CONTEXT_MENU_COMMAND",
+      'DEFAULT',
+      'REPLY',
+      'APPLICATION_COMMAND',
+      'CONTEXT_MENU_COMMAND',
     ].includes(type)
 );
 
 Constants.ActivityTypes = createEnum([
-  "PLAYING",
-  "STREAMING",
-  "LISTENING",
-  "WATCHING",
-  "CUSTOM",
-  "COMPETING",
-  "HANG",
+  'PLAYING',
+  'STREAMING',
+  'LISTENING',
+  'WATCHING',
+  'CUSTOM',
+  'COMPETING',
+  'HANG',
 ]);
 
 Constants.ChannelTypes = createEnum<ChannelTypeName>([
-  "GUILD_TEXT",
-  "DM",
-  "GUILD_VOICE",
-  "GROUP_DM",
-  "GUILD_CATEGORY",
-  "GUILD_NEWS",
-  "GUILD_STORE",
+  'GUILD_TEXT',
+  'DM',
+  'GUILD_VOICE',
+  'GROUP_DM',
+  'GUILD_CATEGORY',
+  'GUILD_NEWS',
+  'GUILD_STORE',
   ...Array.from({ length: 3 }, () => null),
   // 10
-  "GUILD_NEWS_THREAD",
-  "GUILD_PUBLIC_THREAD",
-  "GUILD_PRIVATE_THREAD",
-  "GUILD_STAGE_VOICE",
-  "GUILD_DIRECTORY",
-  "GUILD_FORUM",
-  "GUILD_MEDIA",
+  'GUILD_NEWS_THREAD',
+  'GUILD_PUBLIC_THREAD',
+  'GUILD_PRIVATE_THREAD',
+  'GUILD_STAGE_VOICE',
+  'GUILD_DIRECTORY',
+  'GUILD_FORUM',
+  'GUILD_MEDIA',
 ]);
 
 Constants.TextBasedChannelTypes = [
-  "DM",
-  "GUILD_TEXT",
-  "GUILD_NEWS",
-  "GUILD_NEWS_THREAD",
-  "GUILD_PUBLIC_THREAD",
-  "GUILD_PRIVATE_THREAD",
-  "GUILD_VOICE",
-  "GUILD_STAGE_VOICE",
+  'DM',
+  'GUILD_TEXT',
+  'GUILD_NEWS',
+  'GUILD_NEWS_THREAD',
+  'GUILD_PUBLIC_THREAD',
+  'GUILD_PRIVATE_THREAD',
+  'GUILD_VOICE',
+  'GUILD_STAGE_VOICE',
 ];
 
 Constants.ThreadChannelTypes = [
-  "GUILD_NEWS_THREAD",
-  "GUILD_PUBLIC_THREAD",
-  "GUILD_PRIVATE_THREAD",
+  'GUILD_NEWS_THREAD',
+  'GUILD_PUBLIC_THREAD',
+  'GUILD_PRIVATE_THREAD',
 ];
 
-Constants.VoiceBasedChannelTypes = ["GUILD_VOICE", "GUILD_STAGE_VOICE"];
+Constants.VoiceBasedChannelTypes = ['GUILD_VOICE', 'GUILD_STAGE_VOICE'];
 
 Constants.ClientApplicationAssetTypes = {
   BIG: 2,
@@ -819,17 +819,17 @@ Constants.HolographicStyles = {
 };
 
 Constants.ExplicitContentFilterLevels = createEnum([
-  "DISABLED",
-  "MEMBERS_WITHOUT_ROLES",
-  "ALL_MEMBERS",
+  'DISABLED',
+  'MEMBERS_WITHOUT_ROLES',
+  'ALL_MEMBERS',
 ]);
 
 Constants.VerificationLevels = createEnum([
-  "NONE",
-  "LOW",
-  "MEDIUM",
-  "HIGH",
-  "VERY_HIGH",
+  'NONE',
+  'LOW',
+  'MEDIUM',
+  'HIGH',
+  'VERY_HIGH',
 ]);
 
 Constants.APIErrors = {
@@ -988,233 +988,233 @@ Constants.APIErrors = {
 };
 
 Constants.DefaultMessageNotificationLevels = createEnum([
-  "ALL_MESSAGES",
-  "ONLY_MENTIONS",
+  'ALL_MESSAGES',
+  'ONLY_MENTIONS',
 ]);
 
-Constants.MembershipStates = createEnum([null, "INVITED", "ACCEPTED"]);
+Constants.MembershipStates = createEnum([null, 'INVITED', 'ACCEPTED']);
 
 Constants.WebhookTypes = createEnum([
   null,
-  "Incoming",
-  "Channel Follower",
-  "Application",
+  'Incoming',
+  'Channel Follower',
+  'Application',
 ]);
 
-Constants.StickerTypes = createEnum([null, "STANDARD", "GUILD"]);
+Constants.StickerTypes = createEnum([null, 'STANDARD', 'GUILD']);
 
 Constants.StickerFormatTypes = createEnum([
   null,
-  "PNG",
-  "APNG",
-  "LOTTIE",
-  "GIF",
+  'PNG',
+  'APNG',
+  'LOTTIE',
+  'GIF',
 ]);
 
-Constants.OverwriteTypes = createEnum(["role", "member"]);
+Constants.OverwriteTypes = createEnum(['role', 'member']);
 
 Constants.ApplicationCommandTypes = createEnum([
   null,
-  "CHAT_INPUT",
-  "USER",
-  "MESSAGE",
+  'CHAT_INPUT',
+  'USER',
+  'MESSAGE',
 ]);
 
 Constants.ApplicationCommandOptionTypes = createEnum([
   null,
-  "SUB_COMMAND",
-  "SUB_COMMAND_GROUP",
-  "STRING",
-  "INTEGER",
-  "BOOLEAN",
-  "USER",
-  "CHANNEL",
-  "ROLE",
-  "MENTIONABLE",
-  "NUMBER",
-  "ATTACHMENT",
+  'SUB_COMMAND',
+  'SUB_COMMAND_GROUP',
+  'STRING',
+  'INTEGER',
+  'BOOLEAN',
+  'USER',
+  'CHANNEL',
+  'ROLE',
+  'MENTIONABLE',
+  'NUMBER',
+  'ATTACHMENT',
 ]);
 
 Constants.ApplicationCommandPermissionTypes = createEnum([
   null,
-  "ROLE",
-  "USER",
+  'ROLE',
+  'USER',
 ]);
 
 Constants.ApplicationRoleConnectionMetadataTypes = createEnum<
-  | "INTEGER_LESS_THAN_OR_EQUAL"
-  | "INTEGER_GREATER_THAN_OR_EQUAL"
-  | "INTEGER_EQUAL"
-  | "INTEGER_NOT_EQUAL"
-  | "DATATIME_LESS_THAN_OR_EQUAL"
-  | "DATATIME_GREATER_THAN_OR_EQUAL"
-  | "BOOLEAN_EQUAL"
-  | "BOOLEAN_NOT_EQUAL",
+  | 'INTEGER_LESS_THAN_OR_EQUAL'
+  | 'INTEGER_GREATER_THAN_OR_EQUAL'
+  | 'INTEGER_EQUAL'
+  | 'INTEGER_NOT_EQUAL'
+  | 'DATATIME_LESS_THAN_OR_EQUAL'
+  | 'DATATIME_GREATER_THAN_OR_EQUAL'
+  | 'BOOLEAN_EQUAL'
+  | 'BOOLEAN_NOT_EQUAL',
   ApplicationRoleConnectionMetadataTypes
 >([
   null,
-  "INTEGER_LESS_THAN_OR_EQUAL",
-  "INTEGER_GREATER_THAN_OR_EQUAL",
-  "INTEGER_EQUAL",
-  "INTEGER_NOT_EQUAL",
-  "DATATIME_LESS_THAN_OR_EQUAL",
-  "DATATIME_GREATER_THAN_OR_EQUAL",
-  "BOOLEAN_EQUAL",
-  "BOOLEAN_NOT_EQUAL",
+  'INTEGER_LESS_THAN_OR_EQUAL',
+  'INTEGER_GREATER_THAN_OR_EQUAL',
+  'INTEGER_EQUAL',
+  'INTEGER_NOT_EQUAL',
+  'DATATIME_LESS_THAN_OR_EQUAL',
+  'DATATIME_GREATER_THAN_OR_EQUAL',
+  'BOOLEAN_EQUAL',
+  'BOOLEAN_NOT_EQUAL',
 ]);
 
 Constants.AutoModerationRuleTriggerTypes = createEnum([
   null,
-  "KEYWORD",
+  'KEYWORD',
   null,
-  "SPAM",
-  "KEYWORD_PRESET",
-  "MENTION_SPAM",
+  'SPAM',
+  'KEYWORD_PRESET',
+  'MENTION_SPAM',
 ]);
 
 Constants.AutoModerationRuleKeywordPresetTypes = createEnum([
   null,
-  "PROFANITY",
-  "SEXUAL_CONTENT",
-  "SLURS",
+  'PROFANITY',
+  'SEXUAL_CONTENT',
+  'SLURS',
 ]);
 Constants.AutoModerationActionTypes = createEnum([
   null,
-  "BLOCK_MESSAGE",
-  "SEND_ALERT_MESSAGE",
-  "TIMEOUT",
+  'BLOCK_MESSAGE',
+  'SEND_ALERT_MESSAGE',
+  'TIMEOUT',
 ]);
 
-Constants.AutoModerationRuleEventTypes = createEnum([null, "MESSAGE_SEND"]);
+Constants.AutoModerationRuleEventTypes = createEnum([null, 'MESSAGE_SEND']);
 Constants.InteractionTypes = createEnum([
   null,
-  "PING",
-  "APPLICATION_COMMAND",
-  "MESSAGE_COMPONENT",
-  "APPLICATION_COMMAND_AUTOCOMPLETE",
-  "MODAL_SUBMIT",
+  'PING',
+  'APPLICATION_COMMAND',
+  'MESSAGE_COMPONENT',
+  'APPLICATION_COMMAND_AUTOCOMPLETE',
+  'MODAL_SUBMIT',
 ]);
 
 Constants.InteractionResponseTypes = createEnum([
   null,
-  "PONG",
+  'PONG',
   null,
   null,
-  "CHANNEL_MESSAGE_WITH_SOURCE",
-  "DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE",
-  "DEFERRED_MESSAGE_UPDATE",
-  "UPDATE_MESSAGE",
-  "APPLICATION_COMMAND_AUTOCOMPLETE_RESULT",
-  "MODAL",
+  'CHANNEL_MESSAGE_WITH_SOURCE',
+  'DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE',
+  'DEFERRED_MESSAGE_UPDATE',
+  'UPDATE_MESSAGE',
+  'APPLICATION_COMMAND_AUTOCOMPLETE_RESULT',
+  'MODAL',
 ]);
 
 Constants.MessageComponentTypes = createEnum([
   null,
-  "ACTION_ROW",
-  "BUTTON",
-  "STRING_SELECT",
-  "TEXT_INPUT",
-  "USER_SELECT",
-  "ROLE_SELECT",
-  "MENTIONABLE_SELECT",
-  "CHANNEL_SELECT",
-  "SECTION",
-  "TEXT_DISPLAY",
-  "THUMBNAIL",
-  "MEDIA_GALLERY",
-  "FILE",
-  "SEPARATOR",
+  'ACTION_ROW',
+  'BUTTON',
+  'STRING_SELECT',
+  'TEXT_INPUT',
+  'USER_SELECT',
+  'ROLE_SELECT',
+  'MENTIONABLE_SELECT',
+  'CHANNEL_SELECT',
+  'SECTION',
+  'TEXT_DISPLAY',
+  'THUMBNAIL',
+  'MEDIA_GALLERY',
+  'FILE',
+  'SEPARATOR',
   null,
   null,
-  "CONTAINER",
+  'CONTAINER',
 ]);
 
 Constants.SelectMenuComponentTypes = createEnum([
   ...Array.from({ length: 3 }, () => null),
-  "STRING_MENU",
+  'STRING_MENU',
   null,
-  "USER_SELECT",
-  "ROLE_SELECT",
-  "MENTIONABLE_SELECT",
-  "CHANNEL_SELECT",
+  'USER_SELECT',
+  'ROLE_SELECT',
+  'MENTIONABLE_SELECT',
+  'CHANNEL_SELECT',
 ]);
 
 Constants.MessageButtonStyles = createEnum([
   null,
-  "PRIMARY",
-  "SECONDARY",
-  "SUCCESS",
-  "DANGER",
-  "LINK",
+  'PRIMARY',
+  'SECONDARY',
+  'SUCCESS',
+  'DANGER',
+  'LINK',
 ]);
 
-Constants.MFALevels = createEnum(["NONE", "ELEVATED"]);
+Constants.MFALevels = createEnum(['NONE', 'ELEVATED']);
 
 Constants.NSFWLevels = createEnum([
-  "DEFAULT",
-  "EXPLICIT",
-  "SAFE",
-  "AGE_RESTRICTED",
+  'DEFAULT',
+  'EXPLICIT',
+  'SAFE',
+  'AGE_RESTRICTED',
 ]);
 
-Constants.PrivacyLevels = createEnum([null, "PUBLIC", "GUILD_ONLY"]);
+Constants.PrivacyLevels = createEnum([null, 'PUBLIC', 'GUILD_ONLY']);
 
-Constants.TextInputStyles = createEnum([null, "SHORT", "PARAGRAPH"]);
+Constants.TextInputStyles = createEnum([null, 'SHORT', 'PARAGRAPH']);
 
 Constants.GuildScheduledEventPrivacyLevels = createEnum([
   null,
   null,
-  "GUILD_ONLY",
+  'GUILD_ONLY',
 ]);
 
-Constants.PremiumTiers = createEnum(["NONE", "TIER_1", "TIER_2", "TIER_3"]);
+Constants.PremiumTiers = createEnum(['NONE', 'TIER_1', 'TIER_2', 'TIER_3']);
 
 Constants.GuildScheduledEventStatuses = createEnum([
   null,
-  "SCHEDULED",
-  "ACTIVE",
-  "COMPLETED",
-  "CANCELED",
+  'SCHEDULED',
+  'ACTIVE',
+  'COMPLETED',
+  'CANCELED',
 ]);
 
 Constants.GuildScheduledEventEntityTypes = createEnum([
   null,
-  "STAGE_INSTANCE",
-  "VOICE",
-  "EXTERNAL",
+  'STAGE_INSTANCE',
+  'VOICE',
+  'EXTERNAL',
 ]);
 
-Constants.VideoQualityModes = createEnum([null, "AUTO", "FULL"]);
+Constants.VideoQualityModes = createEnum([null, 'AUTO', 'FULL']);
 
-Constants.ReactionTypes = createEnum(["NORMAL", "BURST"]);
+Constants.ReactionTypes = createEnum(['NORMAL', 'BURST']);
 
 Constants.SortOrderTypes = createEnum<
-  "LATEST_ACTIVITY" | "CREATION_DATE",
+  'LATEST_ACTIVITY' | 'CREATION_DATE',
   SortOrderTypes
->([null, "LATEST_ACTIVITY", "CREATION_DATE"]);
+>([null, 'LATEST_ACTIVITY', 'CREATION_DATE']);
 
 Constants.ForumLayoutTypes = createEnum<
-  "NOT_SET" | "LIST_VIEW" | "GALLERY_VIEW",
+  'NOT_SET' | 'LIST_VIEW' | 'GALLERY_VIEW',
   ForumLayoutTypes
->(["NOT_SET", "LIST_VIEW", "GALLERY_VIEW"]);
+>(['NOT_SET', 'LIST_VIEW', 'GALLERY_VIEW']);
 
 Constants.PollLayoutTypes = createEnum<
-  "DEFAULT" | "IMAGE_ONLY_ANSWERS",
+  'DEFAULT' | 'IMAGE_ONLY_ANSWERS',
   PollLayoutTypes
->([null, "DEFAULT", "IMAGE_ONLY_ANSWERS"]);
+>([null, 'DEFAULT', 'IMAGE_ONLY_ANSWERS']);
 
 Constants.RelationshipTypes = createEnum([
-  "NONE",
-  "FRIEND",
-  "BLOCKED",
-  "PENDING_INCOMING",
-  "PENDING_OUTGOING",
-  "IMPLICIT",
+  'NONE',
+  'FRIEND',
+  'BLOCKED',
+  'PENDING_INCOMING',
+  'PENDING_OUTGOING',
+  'IMPLICIT',
 ]);
 
-Constants.SeparatorSpacingSizes = createEnum([null, "SMALL", "LARGE"]);
+Constants.SeparatorSpacingSizes = createEnum([null, 'SMALL', 'LARGE']);
 
-Constants._cleanupSymbol = Symbol("djsCleanup");
+Constants._cleanupSymbol = Symbol('djsCleanup');
 
 function isEnumKey<Key extends string>(
   enumObject: EnumOf<Key>,
@@ -1227,10 +1227,10 @@ function resolveEnumValue<Key extends string>(
   enumObject: EnumOf<Key>,
   value: string | number | null | undefined
 ): number | undefined {
-  if (typeof value === "number") {
+  if (typeof value === 'number') {
     return value;
   }
-  if (typeof value === "string" && isEnumKey(enumObject, value)) {
+  if (typeof value === 'string' && isEnumKey(enumObject, value)) {
     return enumObject[value];
   }
   return undefined;
@@ -1240,140 +1240,140 @@ function resolveEnumMember<Key extends string, Value extends number>(
   enumObject: EnumOf<Key, Value>,
   value: string | number | null | undefined
 ): Value | undefined {
-  if (typeof value === "number") {
+  if (typeof value === 'number') {
     const name = enumObject[value];
     return name === undefined ? undefined : enumObject[name];
   }
-  if (typeof value === "string" && isEnumKey(enumObject, value)) {
+  if (typeof value === 'string' && isEnumKey(enumObject, value)) {
     return enumObject[value];
   }
   return undefined;
 }
 
 type PartialTypeName =
-  | "USER"
-  | "CHANNEL"
-  | "GUILD_MEMBER"
-  | "MESSAGE"
-  | "REACTION"
-  | "GUILD_SCHEDULED_EVENT";
+  | 'USER'
+  | 'CHANNEL'
+  | 'GUILD_MEMBER'
+  | 'MESSAGE'
+  | 'REACTION'
+  | 'GUILD_SCHEDULED_EVENT';
 
 type WSEventName =
-  | "READY"
-  | "RESUMED"
-  | "APPLICATION_COMMAND_CREATE"
-  | "APPLICATION_COMMAND_DELETE"
-  | "APPLICATION_COMMAND_UPDATE"
-  | "APPLICATION_COMMAND_PERMISSIONS_UPDATE"
-  | "AUTO_MODERATION_ACTION_EXECUTION"
-  | "AUTO_MODERATION_RULE_CREATE"
-  | "AUTO_MODERATION_RULE_DELETE"
-  | "AUTO_MODERATION_RULE_UPDATE"
-  | "GUILD_CREATE"
-  | "GUILD_DELETE"
-  | "GUILD_UPDATE"
-  | "INVITE_CREATE"
-  | "INVITE_DELETE"
-  | "GUILD_MEMBER_ADD"
-  | "GUILD_MEMBER_REMOVE"
-  | "GUILD_MEMBER_UPDATE"
-  | "GUILD_MEMBERS_CHUNK"
-  | "GUILD_INTEGRATIONS_UPDATE"
-  | "GUILD_ROLE_CREATE"
-  | "GUILD_ROLE_DELETE"
-  | "GUILD_ROLE_UPDATE"
-  | "GUILD_BAN_ADD"
-  | "GUILD_BAN_REMOVE"
-  | "GUILD_EMOJIS_UPDATE"
-  | "CHANNEL_CREATE"
-  | "CHANNEL_DELETE"
-  | "CHANNEL_UPDATE"
-  | "CHANNEL_PINS_UPDATE"
-  | "MESSAGE_CREATE"
-  | "MESSAGE_DELETE"
-  | "MESSAGE_UPDATE"
-  | "MESSAGE_DELETE_BULK"
-  | "MESSAGE_REACTION_ADD"
-  | "MESSAGE_REACTION_REMOVE"
-  | "MESSAGE_REACTION_REMOVE_ALL"
-  | "MESSAGE_REACTION_REMOVE_EMOJI"
-  | "THREAD_CREATE"
-  | "THREAD_UPDATE"
-  | "THREAD_DELETE"
-  | "THREAD_LIST_SYNC"
-  | "THREAD_MEMBER_UPDATE"
-  | "THREAD_MEMBERS_UPDATE"
-  | "USER_UPDATE"
-  | "PRESENCE_UPDATE"
-  | "TYPING_START"
-  | "VOICE_STATE_UPDATE"
-  | "VOICE_SERVER_UPDATE"
-  | "WEBHOOKS_UPDATE"
-  | "STAGE_INSTANCE_CREATE"
-  | "STAGE_INSTANCE_UPDATE"
-  | "STAGE_INSTANCE_DELETE"
-  | "GUILD_STICKERS_UPDATE"
-  | "GUILD_SCHEDULED_EVENT_CREATE"
-  | "GUILD_SCHEDULED_EVENT_UPDATE"
-  | "GUILD_SCHEDULED_EVENT_DELETE"
-  | "GUILD_SCHEDULED_EVENT_USER_ADD"
-  | "GUILD_SCHEDULED_EVENT_USER_REMOVE"
-  | "GUILD_AUDIT_LOG_ENTRY_CREATE";
+  | 'READY'
+  | 'RESUMED'
+  | 'APPLICATION_COMMAND_CREATE'
+  | 'APPLICATION_COMMAND_DELETE'
+  | 'APPLICATION_COMMAND_UPDATE'
+  | 'APPLICATION_COMMAND_PERMISSIONS_UPDATE'
+  | 'AUTO_MODERATION_ACTION_EXECUTION'
+  | 'AUTO_MODERATION_RULE_CREATE'
+  | 'AUTO_MODERATION_RULE_DELETE'
+  | 'AUTO_MODERATION_RULE_UPDATE'
+  | 'GUILD_CREATE'
+  | 'GUILD_DELETE'
+  | 'GUILD_UPDATE'
+  | 'INVITE_CREATE'
+  | 'INVITE_DELETE'
+  | 'GUILD_MEMBER_ADD'
+  | 'GUILD_MEMBER_REMOVE'
+  | 'GUILD_MEMBER_UPDATE'
+  | 'GUILD_MEMBERS_CHUNK'
+  | 'GUILD_INTEGRATIONS_UPDATE'
+  | 'GUILD_ROLE_CREATE'
+  | 'GUILD_ROLE_DELETE'
+  | 'GUILD_ROLE_UPDATE'
+  | 'GUILD_BAN_ADD'
+  | 'GUILD_BAN_REMOVE'
+  | 'GUILD_EMOJIS_UPDATE'
+  | 'CHANNEL_CREATE'
+  | 'CHANNEL_DELETE'
+  | 'CHANNEL_UPDATE'
+  | 'CHANNEL_PINS_UPDATE'
+  | 'MESSAGE_CREATE'
+  | 'MESSAGE_DELETE'
+  | 'MESSAGE_UPDATE'
+  | 'MESSAGE_DELETE_BULK'
+  | 'MESSAGE_REACTION_ADD'
+  | 'MESSAGE_REACTION_REMOVE'
+  | 'MESSAGE_REACTION_REMOVE_ALL'
+  | 'MESSAGE_REACTION_REMOVE_EMOJI'
+  | 'THREAD_CREATE'
+  | 'THREAD_UPDATE'
+  | 'THREAD_DELETE'
+  | 'THREAD_LIST_SYNC'
+  | 'THREAD_MEMBER_UPDATE'
+  | 'THREAD_MEMBERS_UPDATE'
+  | 'USER_UPDATE'
+  | 'PRESENCE_UPDATE'
+  | 'TYPING_START'
+  | 'VOICE_STATE_UPDATE'
+  | 'VOICE_SERVER_UPDATE'
+  | 'WEBHOOKS_UPDATE'
+  | 'STAGE_INSTANCE_CREATE'
+  | 'STAGE_INSTANCE_UPDATE'
+  | 'STAGE_INSTANCE_DELETE'
+  | 'GUILD_STICKERS_UPDATE'
+  | 'GUILD_SCHEDULED_EVENT_CREATE'
+  | 'GUILD_SCHEDULED_EVENT_UPDATE'
+  | 'GUILD_SCHEDULED_EVENT_DELETE'
+  | 'GUILD_SCHEDULED_EVENT_USER_ADD'
+  | 'GUILD_SCHEDULED_EVENT_USER_REMOVE'
+  | 'GUILD_AUDIT_LOG_ENTRY_CREATE';
 
 type ChannelTypeName =
-  | "GUILD_TEXT"
-  | "DM"
-  | "GUILD_VOICE"
-  | "GROUP_DM"
-  | "GUILD_CATEGORY"
-  | "GUILD_NEWS"
-  | "GUILD_STORE"
-  | "GUILD_NEWS_THREAD"
-  | "GUILD_PUBLIC_THREAD"
-  | "GUILD_PRIVATE_THREAD"
-  | "GUILD_STAGE_VOICE"
-  | "GUILD_DIRECTORY"
-  | "GUILD_FORUM"
-  | "GUILD_MEDIA";
+  | 'GUILD_TEXT'
+  | 'DM'
+  | 'GUILD_VOICE'
+  | 'GROUP_DM'
+  | 'GUILD_CATEGORY'
+  | 'GUILD_NEWS'
+  | 'GUILD_STORE'
+  | 'GUILD_NEWS_THREAD'
+  | 'GUILD_PUBLIC_THREAD'
+  | 'GUILD_PRIVATE_THREAD'
+  | 'GUILD_STAGE_VOICE'
+  | 'GUILD_DIRECTORY'
+  | 'GUILD_FORUM'
+  | 'GUILD_MEDIA';
 
 type ActivityTypeName =
-  | "PLAYING"
-  | "STREAMING"
-  | "LISTENING"
-  | "WATCHING"
-  | "CUSTOM"
-  | "COMPETING"
-  | "HANG";
+  | 'PLAYING'
+  | 'STREAMING'
+  | 'LISTENING'
+  | 'WATCHING'
+  | 'CUSTOM'
+  | 'COMPETING'
+  | 'HANG';
 
 type ApplicationCommandOptionTypeName =
-  | "SUB_COMMAND"
-  | "SUB_COMMAND_GROUP"
-  | "STRING"
-  | "INTEGER"
-  | "BOOLEAN"
-  | "USER"
-  | "CHANNEL"
-  | "ROLE"
-  | "MENTIONABLE"
-  | "NUMBER"
-  | "ATTACHMENT";
+  | 'SUB_COMMAND'
+  | 'SUB_COMMAND_GROUP'
+  | 'STRING'
+  | 'INTEGER'
+  | 'BOOLEAN'
+  | 'USER'
+  | 'CHANNEL'
+  | 'ROLE'
+  | 'MENTIONABLE'
+  | 'NUMBER'
+  | 'ATTACHMENT';
 
 type MessageComponentTypeName =
-  | "ACTION_ROW"
-  | "BUTTON"
-  | "STRING_SELECT"
-  | "TEXT_INPUT"
-  | "USER_SELECT"
-  | "ROLE_SELECT"
-  | "MENTIONABLE_SELECT"
-  | "CHANNEL_SELECT"
-  | "SECTION"
-  | "TEXT_DISPLAY"
-  | "THUMBNAIL"
-  | "MEDIA_GALLERY"
-  | "FILE"
-  | "SEPARATOR"
-  | "CONTAINER";
+  | 'ACTION_ROW'
+  | 'BUTTON'
+  | 'STRING_SELECT'
+  | 'TEXT_INPUT'
+  | 'USER_SELECT'
+  | 'ROLE_SELECT'
+  | 'MENTIONABLE_SELECT'
+  | 'CHANNEL_SELECT'
+  | 'SECTION'
+  | 'TEXT_DISPLAY'
+  | 'THUMBNAIL'
+  | 'MEDIA_GALLERY'
+  | 'FILE'
+  | 'SEPARATOR'
+  | 'CONTAINER';
 
 interface ConstantsShape {
   MaxBulkDeletableMessageAge: number;
@@ -1390,9 +1390,9 @@ interface ConstantsShape {
   PartialTypes: KeyMirrorOf<PartialTypeName>;
   WSEvents: KeyMirrorOf<WSEventName>;
   InviteScopes: string[];
-  IntegrationExpireBehaviors: EnumOf<"REMOVE_ROLE" | "KICK">;
+  IntegrationExpireBehaviors: EnumOf<'REMOVE_ROLE' | 'KICK'>;
   MessageTypes: (MessageType | null)[];
-  MessageReferenceTypes: EnumOf<"DEFAULT" | "FORWARD", MessageReferenceTypes>;
+  MessageReferenceTypes: EnumOf<'DEFAULT' | 'FORWARD', MessageReferenceTypes>;
   SweeperKeys: string[];
   SystemMessageTypes: MessageType[];
   ActivityTypes: EnumOf<ActivityTypeName>;
@@ -1404,96 +1404,96 @@ interface ConstantsShape {
   Colors: Record<string, number>;
   HolographicStyles: { PRIMARY: number; SECONDARY: number; TERTIARY: number };
   ExplicitContentFilterLevels: EnumOf<
-    "DISABLED" | "MEMBERS_WITHOUT_ROLES" | "ALL_MEMBERS"
+    'DISABLED' | 'MEMBERS_WITHOUT_ROLES' | 'ALL_MEMBERS'
   >;
-  VerificationLevels: EnumOf<"NONE" | "LOW" | "MEDIUM" | "HIGH" | "VERY_HIGH">;
+  VerificationLevels: EnumOf<'NONE' | 'LOW' | 'MEDIUM' | 'HIGH' | 'VERY_HIGH'>;
   APIErrors: Record<string, number>;
-  DefaultMessageNotificationLevels: EnumOf<"ALL_MESSAGES" | "ONLY_MENTIONS">;
-  MembershipStates: EnumOf<"INVITED" | "ACCEPTED">;
-  WebhookTypes: EnumOf<"Incoming" | "Channel Follower" | "Application">;
-  StickerTypes: EnumOf<"STANDARD" | "GUILD">;
-  StickerFormatTypes: EnumOf<"PNG" | "APNG" | "LOTTIE" | "GIF">;
-  OverwriteTypes: EnumOf<"role" | "member">;
-  ApplicationCommandTypes: EnumOf<"CHAT_INPUT" | "USER" | "MESSAGE">;
+  DefaultMessageNotificationLevels: EnumOf<'ALL_MESSAGES' | 'ONLY_MENTIONS'>;
+  MembershipStates: EnumOf<'INVITED' | 'ACCEPTED'>;
+  WebhookTypes: EnumOf<'Incoming' | 'Channel Follower' | 'Application'>;
+  StickerTypes: EnumOf<'STANDARD' | 'GUILD'>;
+  StickerFormatTypes: EnumOf<'PNG' | 'APNG' | 'LOTTIE' | 'GIF'>;
+  OverwriteTypes: EnumOf<'role' | 'member'>;
+  ApplicationCommandTypes: EnumOf<'CHAT_INPUT' | 'USER' | 'MESSAGE'>;
   ApplicationCommandOptionTypes: EnumOf<ApplicationCommandOptionTypeName>;
-  ApplicationCommandPermissionTypes: EnumOf<"ROLE" | "USER">;
+  ApplicationCommandPermissionTypes: EnumOf<'ROLE' | 'USER'>;
   ApplicationRoleConnectionMetadataTypes: EnumOf<
-    | "INTEGER_LESS_THAN_OR_EQUAL"
-    | "INTEGER_GREATER_THAN_OR_EQUAL"
-    | "INTEGER_EQUAL"
-    | "INTEGER_NOT_EQUAL"
-    | "DATATIME_LESS_THAN_OR_EQUAL"
-    | "DATATIME_GREATER_THAN_OR_EQUAL"
-    | "BOOLEAN_EQUAL"
-    | "BOOLEAN_NOT_EQUAL",
+    | 'INTEGER_LESS_THAN_OR_EQUAL'
+    | 'INTEGER_GREATER_THAN_OR_EQUAL'
+    | 'INTEGER_EQUAL'
+    | 'INTEGER_NOT_EQUAL'
+    | 'DATATIME_LESS_THAN_OR_EQUAL'
+    | 'DATATIME_GREATER_THAN_OR_EQUAL'
+    | 'BOOLEAN_EQUAL'
+    | 'BOOLEAN_NOT_EQUAL',
     ApplicationRoleConnectionMetadataTypes
   >;
   AutoModerationRuleTriggerTypes: EnumOf<
-    "KEYWORD" | "SPAM" | "KEYWORD_PRESET" | "MENTION_SPAM"
+    'KEYWORD' | 'SPAM' | 'KEYWORD_PRESET' | 'MENTION_SPAM'
   >;
   AutoModerationRuleKeywordPresetTypes: EnumOf<
-    "PROFANITY" | "SEXUAL_CONTENT" | "SLURS"
+    'PROFANITY' | 'SEXUAL_CONTENT' | 'SLURS'
   >;
   AutoModerationActionTypes: EnumOf<
-    "BLOCK_MESSAGE" | "SEND_ALERT_MESSAGE" | "TIMEOUT"
+    'BLOCK_MESSAGE' | 'SEND_ALERT_MESSAGE' | 'TIMEOUT'
   >;
-  AutoModerationRuleEventTypes: EnumOf<"MESSAGE_SEND">;
+  AutoModerationRuleEventTypes: EnumOf<'MESSAGE_SEND'>;
   InteractionTypes: EnumOf<
-    | "PING"
-    | "APPLICATION_COMMAND"
-    | "MESSAGE_COMPONENT"
-    | "APPLICATION_COMMAND_AUTOCOMPLETE"
-    | "MODAL_SUBMIT"
+    | 'PING'
+    | 'APPLICATION_COMMAND'
+    | 'MESSAGE_COMPONENT'
+    | 'APPLICATION_COMMAND_AUTOCOMPLETE'
+    | 'MODAL_SUBMIT'
   >;
   InteractionResponseTypes: EnumOf<
-    | "PONG"
-    | "CHANNEL_MESSAGE_WITH_SOURCE"
-    | "DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE"
-    | "DEFERRED_MESSAGE_UPDATE"
-    | "UPDATE_MESSAGE"
-    | "APPLICATION_COMMAND_AUTOCOMPLETE_RESULT"
-    | "MODAL"
+    | 'PONG'
+    | 'CHANNEL_MESSAGE_WITH_SOURCE'
+    | 'DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE'
+    | 'DEFERRED_MESSAGE_UPDATE'
+    | 'UPDATE_MESSAGE'
+    | 'APPLICATION_COMMAND_AUTOCOMPLETE_RESULT'
+    | 'MODAL'
   >;
   MessageComponentTypes: EnumOf<MessageComponentTypeName>;
   SelectMenuComponentTypes: EnumOf<
-    | "STRING_MENU"
-    | "USER_SELECT"
-    | "ROLE_SELECT"
-    | "MENTIONABLE_SELECT"
-    | "CHANNEL_SELECT"
+    | 'STRING_MENU'
+    | 'USER_SELECT'
+    | 'ROLE_SELECT'
+    | 'MENTIONABLE_SELECT'
+    | 'CHANNEL_SELECT'
   >;
   MessageButtonStyles: EnumOf<
-    "PRIMARY" | "SECONDARY" | "SUCCESS" | "DANGER" | "LINK"
+    'PRIMARY' | 'SECONDARY' | 'SUCCESS' | 'DANGER' | 'LINK'
   >;
-  MFALevels: EnumOf<"NONE" | "ELEVATED">;
-  NSFWLevels: EnumOf<"DEFAULT" | "EXPLICIT" | "SAFE" | "AGE_RESTRICTED">;
-  PrivacyLevels: EnumOf<"PUBLIC" | "GUILD_ONLY">;
-  TextInputStyles: EnumOf<"SHORT" | "PARAGRAPH">;
-  GuildScheduledEventPrivacyLevels: EnumOf<"GUILD_ONLY">;
-  PremiumTiers: EnumOf<"NONE" | "TIER_1" | "TIER_2" | "TIER_3">;
+  MFALevels: EnumOf<'NONE' | 'ELEVATED'>;
+  NSFWLevels: EnumOf<'DEFAULT' | 'EXPLICIT' | 'SAFE' | 'AGE_RESTRICTED'>;
+  PrivacyLevels: EnumOf<'PUBLIC' | 'GUILD_ONLY'>;
+  TextInputStyles: EnumOf<'SHORT' | 'PARAGRAPH'>;
+  GuildScheduledEventPrivacyLevels: EnumOf<'GUILD_ONLY'>;
+  PremiumTiers: EnumOf<'NONE' | 'TIER_1' | 'TIER_2' | 'TIER_3'>;
   GuildScheduledEventStatuses: EnumOf<
-    "SCHEDULED" | "ACTIVE" | "COMPLETED" | "CANCELED"
+    'SCHEDULED' | 'ACTIVE' | 'COMPLETED' | 'CANCELED'
   >;
   GuildScheduledEventEntityTypes: EnumOf<
-    "STAGE_INSTANCE" | "VOICE" | "EXTERNAL"
+    'STAGE_INSTANCE' | 'VOICE' | 'EXTERNAL'
   >;
-  VideoQualityModes: EnumOf<"AUTO" | "FULL">;
-  ReactionTypes: EnumOf<"NORMAL" | "BURST">;
-  SortOrderTypes: EnumOf<"LATEST_ACTIVITY" | "CREATION_DATE", SortOrderTypes>;
+  VideoQualityModes: EnumOf<'AUTO' | 'FULL'>;
+  ReactionTypes: EnumOf<'NORMAL' | 'BURST'>;
+  SortOrderTypes: EnumOf<'LATEST_ACTIVITY' | 'CREATION_DATE', SortOrderTypes>;
   ForumLayoutTypes: EnumOf<
-    "NOT_SET" | "LIST_VIEW" | "GALLERY_VIEW",
+    'NOT_SET' | 'LIST_VIEW' | 'GALLERY_VIEW',
     ForumLayoutTypes
   >;
-  PollLayoutTypes: EnumOf<"DEFAULT" | "IMAGE_ONLY_ANSWERS", PollLayoutTypes>;
+  PollLayoutTypes: EnumOf<'DEFAULT' | 'IMAGE_ONLY_ANSWERS', PollLayoutTypes>;
   RelationshipTypes: EnumOf<
-    | "NONE"
-    | "FRIEND"
-    | "BLOCKED"
-    | "PENDING_INCOMING"
-    | "PENDING_OUTGOING"
-    | "IMPLICIT"
+    | 'NONE'
+    | 'FRIEND'
+    | 'BLOCKED'
+    | 'PENDING_INCOMING'
+    | 'PENDING_OUTGOING'
+    | 'IMPLICIT'
   >;
-  SeparatorSpacingSizes: EnumOf<"SMALL" | "LARGE">;
+  SeparatorSpacingSizes: EnumOf<'SMALL' | 'LARGE'>;
   _cleanupSymbol: symbol;
 }
 

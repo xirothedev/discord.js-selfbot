@@ -1,22 +1,22 @@
-import { Collection } from "@discordjs/collection";
-import CachedManager from "./CachedManager";
-import ThreadChannel from "../structures/ThreadChannel";
-import { isThreadChannel } from "../types/channels";
-import type { Snowflake } from "discord-api-types/v10";
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import ThreadChannel from '../structures/ThreadChannel';
+import { isThreadChannel } from '../types/channels';
+import type { Snowflake } from 'discord-api-types/v10';
 import type {
   RawChannelData,
   RawMessageData,
   RawThreadMemberData,
-} from "../../typings/rawDataTypes";
+} from '../../typings/rawDataTypes';
 import type {
   BaseFetchOptions,
   FetchArchivedThreadOptions,
   FetchThreadsOptions,
   ThreadChannelResolvable,
-} from "../../typings";
-import type { Client } from "../client/Client";
-import type { Guild } from "../structures/Guild";
-import type { GuildChannel } from "../structures/GuildChannel";
+} from '../../typings';
+import type { Client } from '../client/Client';
+import type { Guild } from '../structures/Guild';
+import type { GuildChannel } from '../structures/GuildChannel';
 
 type ThreadChannelResolvableSource =
   | ThreadChannel
@@ -76,9 +76,9 @@ class ThreadManager extends CachedManager<ThreadChannel> {
         );
     }
     if (
-      typeof options === "object" &&
-      "archived" in options &&
-      typeof options.archived === "object" &&
+      typeof options === 'object' &&
+      'archived' in options &&
+      typeof options.archived === 'object' &&
       options.archived
     ) {
       return this.fetchArchived(options.archived, cache);
@@ -104,8 +104,8 @@ class ThreadManager extends CachedManager<ThreadChannel> {
           archived: options?.archived ?? false,
           limit: options?.limit ?? 25,
           offset: options?.offset ?? 0,
-          sort_by: options?.sortBy ?? "last_message_time",
-          sort_order: options?.sortOrder ?? "desc",
+          sort_by: options?.sortBy ?? 'last_message_time',
+          sort_order: options?.sortOrder ?? 'desc',
         },
       });
 

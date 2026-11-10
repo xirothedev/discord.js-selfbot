@@ -1,5 +1,5 @@
-"use client";
-import { useStaticSearch } from "fumadocs-core/search/client";
+'use client';
+import { useStaticSearch } from 'fumadocs-core/search/client';
 import {
   SearchDialog,
   SearchDialogClose,
@@ -9,14 +9,14 @@ import {
   SearchDialogInput,
   SearchDialogList,
   SearchDialogOverlay,
-} from "fumadocs-ui/components/dialog/search";
-import type { SharedProps } from "fumadocs-ui/components/dialog/search";
-import { useI18n } from "fumadocs-ui/contexts/i18n";
+} from 'fumadocs-ui/components/dialog/search';
+import type { SharedProps } from 'fumadocs-ui/components/dialog/search';
+import { useI18n } from 'fumadocs-ui/contexts/i18n';
 
 const DefaultSearchDialog = (props: SharedProps) => {
   const { locale } = useI18n();
   const search = useStaticSearch({
-    from: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/search`,
+    from: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/api/search`,
     locale,
   });
 

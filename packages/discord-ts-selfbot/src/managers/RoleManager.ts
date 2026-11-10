@@ -1,22 +1,22 @@
-import process from "node:process";
-import { Collection } from "@discordjs/collection";
-import CachedManager from "./CachedManager";
-import _errorsModule from "../errors";
+import process from 'node:process';
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
 
 const { TypeError } = _errorsModule;
-import _RoleModule from "../structures/Role";
+import _RoleModule from '../structures/Role';
 
 const { Role } = _RoleModule;
-import DataResolver from "../util/DataResolver";
-import Permissions from "../util/Permissions";
-import Util from "../util/Util";
+import DataResolver from '../util/DataResolver';
+import Permissions from '../util/Permissions';
+import Util from '../util/Util';
 
 const { resolveColor } = Util;
 import type {
   RESTPostAPIGuildRoleResult,
   Snowflake,
-} from "discord-api-types/v10";
-import type { RawRoleData } from "../../typings/rawDataTypes";
+} from 'discord-api-types/v10';
+import type { RawRoleData } from '../../typings/rawDataTypes';
 import type {
   BaseFetchOptions,
   CreateRoleOptions,
@@ -24,9 +24,9 @@ import type {
   RoleResolvable,
   SetRolePositionOptions,
   UserResolvable,
-} from "../../typings";
-import type { Guild } from "../structures/Guild";
-import type { Role as RoleStructure } from "../structures/Role";
+} from '../../typings';
+import type { Guild } from '../structures/Guild';
+import type { Role as RoleStructure } from '../structures/Role';
 
 type RoleResolvableSource = RoleStructure | RoleResolvable;
 
@@ -43,11 +43,11 @@ class RoleManager extends CachedManager<RoleStructure> {
   declare guild: Guild;
   constructor(guild: Guild, iterable?: Iterable<RoleStructure>) {
     super(guild.client, Role, iterable);
-    if (!cacheWarningEmitted && this._cache.constructor.name !== "Collection") {
+    if (!cacheWarningEmitted && this._cache.constructor.name !== 'Collection') {
       cacheWarningEmitted = true;
       process.emitWarning(
         `Overriding the cache handling for ${this.constructor.name} is unsupported and breaks functionality.`,
-        "UnsupportedCacheOverwriteWarning"
+        'UnsupportedCacheOverwriteWarning'
       );
     }
 
@@ -91,7 +91,7 @@ class RoleManager extends CachedManager<RoleStructure> {
   async fetchMemberCounts() {
     const data = await this.client.api
       .guilds(this.guild.id)
-      .roles("member-counts")
+      .roles('member-counts')
       .get();
 
     return data;
@@ -100,12 +100,12 @@ class RoleManager extends CachedManager<RoleStructure> {
   async fetchMemberIds(role: RoleResolvableSource): Promise<Snowflake[]> {
     const id = this.resolveId(role);
     if (!id) {
-      throw new TypeError("INVALID_TYPE", "role", "RoleResolvable");
+      throw new TypeError('INVALID_TYPE', 'role', 'RoleResolvable');
     }
 
     const data: Snowflake[] = await this.client.api
       .guilds(this.guild.id)
-      .roles(id, "member-ids")
+      .roles(id, 'member-ids')
       .get();
 
     return data;
@@ -125,7 +125,7 @@ class RoleManager extends CachedManager<RoleStructure> {
       icon = guildEmojiURL
         ? await DataResolver.resolveImage(guildEmojiURL)
         : await DataResolver.resolveImage(icon);
-      if (typeof icon !== "string") {
+      if (typeof icon !== 'string') {
         icon = undefined;
       }
     }
@@ -181,7 +181,7 @@ class RoleManager extends CachedManager<RoleStructure> {
       role: data,
     });
     if (!role) {
-      throw new TypeError("INVALID_TYPE", "role", "RoleResolvable");
+      throw new TypeError('INVALID_TYPE', 'role', 'RoleResolvable');
     }
     if (position) {
       return this.setPosition(role, position, { reason });
@@ -196,10 +196,10 @@ class RoleManager extends CachedManager<RoleStructure> {
   ): Promise<RoleStructure> {
     const resolved = this.resolve(role);
     if (!resolved) {
-      throw new TypeError("INVALID_TYPE", "role", "RoleResolvable");
+      throw new TypeError('INVALID_TYPE', 'role', 'RoleResolvable');
     }
 
-    if (typeof data.position === "number") {
+    if (typeof data.position === 'number') {
       await this.setPosition(resolved, data.position, { reason });
     }
 
@@ -209,7 +209,7 @@ class RoleManager extends CachedManager<RoleStructure> {
       icon = guildEmojiURL
         ? await DataResolver.resolveImage(guildEmojiURL)
         : await DataResolver.resolveImage(icon);
-      if (typeof icon !== "string") {
+      if (typeof icon !== 'string') {
         icon = undefined;
       }
     }
@@ -272,7 +272,7 @@ class RoleManager extends CachedManager<RoleStructure> {
   async delete(role: RoleResolvableSource, reason?: string): Promise<void> {
     const id = this.resolveId(role);
     if (!id) {
-      throw new TypeError("INVALID_TYPE", "role", "RoleResolvable");
+      throw new TypeError('INVALID_TYPE', 'role', 'RoleResolvable');
     }
     await this.client.api.guilds[this.guild.id].roles[id].delete({ reason });
     this.client.actions.GuildRoleDelete.handle({
@@ -288,7 +288,7 @@ class RoleManager extends CachedManager<RoleStructure> {
   ): Promise<RoleStructure> {
     const resolved = this.resolve(role);
     if (!resolved) {
-      throw new TypeError("INVALID_TYPE", "role", "RoleResolvable");
+      throw new TypeError('INVALID_TYPE', 'role', 'RoleResolvable');
     }
     const updatedRoles = await Util.setPosition(
       resolved,
@@ -327,7 +327,7 @@ class RoleManager extends CachedManager<RoleStructure> {
     const resolvedRole1 = this.resolve(role1);
     const resolvedRole2 = this.resolve(role2);
     if (!resolvedRole1 || !resolvedRole2) {
-      throw new TypeError("INVALID_TYPE", "role", "Role nor a Snowflake");
+      throw new TypeError('INVALID_TYPE', 'role', 'Role nor a Snowflake');
     }
 
     const role1Position = resolvedRole1.position;
@@ -359,7 +359,7 @@ class RoleManager extends CachedManager<RoleStructure> {
   get highest(): RoleStructure {
     const highest = this.cache.first();
     if (!highest) {
-      throw new Error("GUILD_UNCACHED_ROLE_RESOLVE");
+      throw new Error('GUILD_UNCACHED_ROLE_RESOLVE');
     }
     let result = highest;
     for (const role of this.cache.values()) {

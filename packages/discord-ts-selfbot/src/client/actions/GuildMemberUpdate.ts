@@ -1,7 +1,7 @@
-import Action from "./Action";
-import type { GatewayGuildMemberUpdateDispatchData } from "discord-api-types/v10";
-import _ConstantsModule from "../../util/Constants";
-import type { WebSocketShard } from "../websocket/WebSocketShard";
+import Action from './Action';
+import type { GatewayGuildMemberUpdateDispatchData } from 'discord-api-types/v10';
+import _ConstantsModule from '../../util/Constants';
+import type { WebSocketShard } from '../websocket/WebSocketShard';
 
 const { Status, Events } = _ConstantsModule;
 

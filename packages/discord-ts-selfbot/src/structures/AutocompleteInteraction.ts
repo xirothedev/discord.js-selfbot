@@ -1,9 +1,9 @@
-import CommandInteractionOptionResolver from "./CommandInteractionOptionResolver";
-import Interaction from "./Interaction";
-import _errorsModule from "../errors";
+import CommandInteractionOptionResolver from './CommandInteractionOptionResolver';
+import Interaction from './Interaction';
+import _errorsModule from '../errors';
 
 const { Error } = _errorsModule;
-import _ConstantsModule from "../util/Constants";
+import _ConstantsModule from '../util/Constants';
 
 const { InteractionResponseTypes, ApplicationCommandOptionTypes } =
   _ConstantsModule;
@@ -11,13 +11,13 @@ import type {
   APIApplicationCommandInteractionDataOption,
   APIChatInputApplicationCommandInteraction,
   Snowflake,
-} from "discord-api-types/v10";
+} from 'discord-api-types/v10';
 import type {
   ApplicationCommandOptionChoiceData,
   CacheType,
-} from "../../typings";
-import type { CommandInteractionOption } from "./CommandInteractionOptionResolver";
-import type Client from "../client/Client";
+} from '../../typings';
+import type { CommandInteractionOption } from './CommandInteractionOptionResolver';
+import type Client from '../client/Client';
 
 class AutocompleteInteraction<
   Cached extends CacheType = CacheType,
@@ -25,7 +25,7 @@ class AutocompleteInteraction<
   declare commandId: Snowflake;
   declare commandName: string;
   declare responded: boolean;
-  declare options: Omit<CommandInteractionOptionResolver<Cached>, "getMessage">;
+  declare options: Omit<CommandInteractionOptionResolver<Cached>, 'getMessage'>;
 
   constructor(client: Client, data: APIChatInputApplicationCommandInteraction) {
     super(client, data);
@@ -55,14 +55,14 @@ class AutocompleteInteraction<
       type: ApplicationCommandOptionTypes[option.type],
     };
 
-    if ("value" in option) {
+    if ('value' in option) {
       result.value = option.value;
     }
-    if ("options" in option) {
+    if ('options' in option) {
       result.options =
         option.options?.map((opt) => this.transformOption(opt)) ?? [];
     }
-    if ("focused" in option) {
+    if ('focused' in option) {
       result.focused = option.focused;
     }
 
@@ -71,7 +71,7 @@ class AutocompleteInteraction<
 
   async respond(options: ApplicationCommandOptionChoiceData[]): Promise<void> {
     if (this.responded) {
-      throw new Error("INTERACTION_ALREADY_REPLIED");
+      throw new Error('INTERACTION_ALREADY_REPLIED');
     }
 
     await this.client.api.interactions(this.id, this.token).callback.post({

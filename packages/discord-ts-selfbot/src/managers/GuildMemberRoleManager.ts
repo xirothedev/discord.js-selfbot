@@ -1,15 +1,15 @@
-import { Collection } from "@discordjs/collection";
-import DataManager from "./DataManager";
-import _errorsModule from "../errors";
+import { Collection } from '@discordjs/collection';
+import DataManager from './DataManager';
+import _errorsModule from '../errors';
 
 const { TypeError } = _errorsModule;
-import _RoleModule from "../structures/Role";
+import _RoleModule from '../structures/Role';
 
 const { Role } = _RoleModule;
-import type { Role as RoleType } from "../structures/Role";
-import type { Snowflake } from "discord-api-types/v10";
-import type { GuildMember } from "../structures/GuildMember";
-import type { Guild } from "../structures/Guild";
+import type { Role as RoleType } from '../structures/Role';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { GuildMember } from '../structures/GuildMember';
+import type { Guild } from '../structures/Guild';
 
 type RoleResolvableSource = RoleType | Snowflake;
 
@@ -65,7 +65,7 @@ class GuildMemberRoleManager extends DataManager<RoleType> {
   get highest(): RoleType {
     const highest = findHighestRole(this.cache);
     if (!highest) {
-      throw new Error("GUILD_UNCACHED_ROLE_RESOLVE");
+      throw new Error('GUILD_UNCACHED_ROLE_RESOLVE');
     }
     return highest;
   }
@@ -101,9 +101,9 @@ class GuildMemberRoleManager extends DataManager<RoleType> {
         const resolvedRole = this.guild.roles.resolveId(role);
         if (!resolvedRole) {
           throw new TypeError(
-            "INVALID_ELEMENT",
-            "Array or Collection",
-            "roles",
+            'INVALID_ELEMENT',
+            'Array or Collection',
+            'roles',
             role
           );
         }
@@ -116,9 +116,9 @@ class GuildMemberRoleManager extends DataManager<RoleType> {
     const roleId = this.guild.roles.resolveId(roles);
     if (roleId === null) {
       throw new TypeError(
-        "INVALID_TYPE",
-        "roles",
-        "RoleType, Snowflake or Array or Collection of Roles or Snowflakes"
+        'INVALID_TYPE',
+        'roles',
+        'RoleType, Snowflake or Array or Collection of Roles or Snowflakes'
       );
     }
 
@@ -148,9 +148,9 @@ class GuildMemberRoleManager extends DataManager<RoleType> {
         const resolvedRole = this.guild.roles.resolveId(role);
         if (!resolvedRole) {
           throw new TypeError(
-            "INVALID_ELEMENT",
-            "Array or Collection",
-            "roles",
+            'INVALID_ELEMENT',
+            'Array or Collection',
+            'roles',
             role
           );
         }
@@ -165,9 +165,9 @@ class GuildMemberRoleManager extends DataManager<RoleType> {
     const roleId = this.guild.roles.resolveId(roles);
     if (roleId === null) {
       throw new TypeError(
-        "INVALID_TYPE",
-        "roles",
-        "RoleType, Snowflake or Array or Collection of Roles or Snowflakes"
+        'INVALID_TYPE',
+        'roles',
+        'RoleType, Snowflake or Array or Collection of Roles or Snowflakes'
       );
     }
 

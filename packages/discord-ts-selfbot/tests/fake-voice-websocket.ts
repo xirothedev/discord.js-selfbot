@@ -1,4 +1,4 @@
-import { EventEmitter } from "node:events";
+import { EventEmitter } from 'node:events';
 
 class FakeVoiceWebSocket extends EventEmitter {
   constructor(connection) {

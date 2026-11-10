@@ -6,8 +6,8 @@ import type {
   MessageOptions,
   MessageTarget,
   WebhookMessageOptions,
-} from "../../../typings";
-import type { RawMessagePayloadData } from "../../../typings/rawDataTypes";
+} from '../../../typings';
+import type { RawMessagePayloadData } from '../../../typings/rawDataTypes';
 
 /**
  * The object shape of a `MessagePayload`.

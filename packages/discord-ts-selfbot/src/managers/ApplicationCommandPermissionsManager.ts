@@ -1,9 +1,9 @@
-import { Collection } from "@discordjs/collection";
-import BaseManager from "./BaseManager";
-import _errorsModule from "../errors";
+import { Collection } from '@discordjs/collection';
+import BaseManager from './BaseManager';
+import _errorsModule from '../errors';
 
 const { Error, TypeError } = _errorsModule;
-import _ConstantsModule from "../util/Constants";
+import _ConstantsModule from '../util/Constants';
 
 const { ApplicationCommandPermissionTypes, APIErrors } = _ConstantsModule;
 import type {
@@ -13,7 +13,7 @@ import type {
   RESTPutAPIApplicationCommandPermissionsResult,
   RESTPutAPIGuildApplicationCommandsPermissionsResult,
   Snowflake,
-} from "discord-api-types/v10";
+} from 'discord-api-types/v10';
 import type {
   ApplicationCommandPermissionData,
   ApplicationCommandPermissions,
@@ -22,10 +22,10 @@ import type {
   GuildResolvable,
   RoleResolvable,
   UserResolvable,
-} from "../../typings";
-import type ApplicationCommand from "../structures/ApplicationCommand";
-import type ApplicationCommandManager from "./ApplicationCommandManager";
-import type { Guild } from "../structures/Guild";
+} from '../../typings';
+import type ApplicationCommand from '../structures/ApplicationCommand';
+import type ApplicationCommandManager from './ApplicationCommandManager';
+import type { Guild } from '../structures/Guild';
 
 export interface BaseApplicationCommandPermissionsOptions {
   guild?: GuildResolvable;
@@ -91,14 +91,14 @@ class ApplicationCommandPermissionsManager<
 
     this.guildId = manager.guildId ?? manager.guild?.id ?? null;
 
-    const managerId = "id" in manager ? manager.id : null;
+    const managerId = 'id' in manager ? manager.id : null;
     this.commandId = (managerId ? String(managerId) : null) as CommandIdType;
   }
 
   permissionsPath(guildId: Snowflake, commandId?: Snowflake) {
     const applicationId = this.client.application?.id;
     if (!applicationId) {
-      throw new TypeError("INVALID_TYPE", "application", "Application");
+      throw new TypeError('INVALID_TYPE', 'application', 'Application');
     }
     return this.client.api
       .applications(applicationId)
@@ -196,9 +196,9 @@ class ApplicationCommandPermissionsManager<
     if (commandId) {
       if (!Array.isArray(permissions)) {
         throw new TypeError(
-          "INVALID_TYPE",
-          "permissions",
-          "Array of ApplicationCommandPermissionData",
+          'INVALID_TYPE',
+          'permissions',
+          'Array of ApplicationCommandPermissionData',
           true
         );
       }
@@ -207,9 +207,9 @@ class ApplicationCommandPermissionsManager<
 
     if (!Array.isArray(fullPermissions)) {
       throw new TypeError(
-        "INVALID_TYPE",
-        "fullPermissions",
-        "Array of GuildApplicationCommandPermissionData",
+        'INVALID_TYPE',
+        'fullPermissions',
+        'Array of GuildApplicationCommandPermissionData',
         true
       );
     }
@@ -218,9 +218,9 @@ class ApplicationCommandPermissionsManager<
     for (const perm of fullPermissions) {
       if (!Array.isArray(perm.permissions)) {
         throw new TypeError(
-          "INVALID_ELEMENT",
-          "Array",
-          "fullPermissions",
+          'INVALID_ELEMENT',
+          'Array',
+          'fullPermissions',
           perm
         );
       }
@@ -264,16 +264,16 @@ class ApplicationCommandPermissionsManager<
     const { guildId, commandId } = this._validateOptions(guild, command);
     if (!commandId) {
       throw new TypeError(
-        "INVALID_TYPE",
-        "command",
-        "ApplicationCommandResolvable"
+        'INVALID_TYPE',
+        'command',
+        'ApplicationCommandResolvable'
       );
     }
     if (!Array.isArray(permissions)) {
       throw new TypeError(
-        "INVALID_TYPE",
-        "permissions",
-        "Array of ApplicationCommandPermissionData",
+        'INVALID_TYPE',
+        'permissions',
+        'Array of ApplicationCommandPermissionData',
         true
       );
     }
@@ -310,17 +310,17 @@ class ApplicationCommandPermissionsManager<
     const { guildId, commandId } = this._validateOptions(guild, command);
     if (!commandId) {
       throw new TypeError(
-        "INVALID_TYPE",
-        "command",
-        "ApplicationCommandResolvable"
+        'INVALID_TYPE',
+        'command',
+        'ApplicationCommandResolvable'
       );
     }
 
     if (!users && !roles) {
       throw new TypeError(
-        "INVALID_TYPE",
-        "users OR roles",
-        "Array or Resolvable",
+        'INVALID_TYPE',
+        'users OR roles',
+        'Array or Resolvable',
         true
       );
     }
@@ -330,46 +330,46 @@ class ApplicationCommandPermissionsManager<
       for (const user of users) {
         const userId = this.client.users.resolveId(user);
         if (!userId) {
-          throw new TypeError("INVALID_ELEMENT", "Array", "users", user);
+          throw new TypeError('INVALID_ELEMENT', 'Array', 'users', user);
         }
         resolvedIds.push(userId);
       }
     } else if (users) {
       const userId = this.client.users.resolveId(users);
       if (!userId) {
-        throw new TypeError("INVALID_TYPE", "users", "Array or UserResolvable");
+        throw new TypeError('INVALID_TYPE', 'users', 'Array or UserResolvable');
       }
       resolvedIds.push(userId);
     }
 
     if (Array.isArray(roles)) {
       for (const role of roles) {
-        if (typeof role === "string") {
+        if (typeof role === 'string') {
           resolvedIds.push(role);
           continue;
         }
         if (!this.guild) {
-          throw new Error("GUILD_UNCACHED_ROLE_RESOLVE");
+          throw new Error('GUILD_UNCACHED_ROLE_RESOLVE');
         }
         const roleId = this.guild.roles.resolveId(role);
         if (!roleId) {
-          throw new TypeError("INVALID_ELEMENT", "Array", "users", role);
+          throw new TypeError('INVALID_ELEMENT', 'Array', 'users', role);
         }
         resolvedIds.push(roleId);
       }
     } else if (roles) {
-      if (typeof roles === "string") {
+      if (typeof roles === 'string') {
         resolvedIds.push(roles);
       } else {
         if (!this.guild) {
-          throw new Error("GUILD_UNCACHED_ROLE_RESOLVE");
+          throw new Error('GUILD_UNCACHED_ROLE_RESOLVE');
         }
         const roleId = this.guild.roles.resolveId(roles);
         if (!roleId) {
           throw new TypeError(
-            "INVALID_TYPE",
-            "users",
-            "Array or RoleResolvable"
+            'INVALID_TYPE',
+            'users',
+            'Array or RoleResolvable'
           );
         }
         resolvedIds.push(roleId);
@@ -402,34 +402,34 @@ class ApplicationCommandPermissionsManager<
     const { guildId, commandId } = this._validateOptions(guild, command);
     if (!commandId) {
       throw new TypeError(
-        "INVALID_TYPE",
-        "command",
-        "ApplicationCommandResolvable"
+        'INVALID_TYPE',
+        'command',
+        'ApplicationCommandResolvable'
       );
     }
 
     if (!permissionId) {
       throw new TypeError(
-        "INVALID_TYPE",
-        "permissionId",
-        "UserResolvable or RoleResolvable"
+        'INVALID_TYPE',
+        'permissionId',
+        'UserResolvable or RoleResolvable'
       );
     }
     let resolvedId: string | null =
-      typeof permissionId === "string" ? permissionId : null;
-    if (typeof permissionId !== "string") {
+      typeof permissionId === 'string' ? permissionId : null;
+    if (typeof permissionId !== 'string') {
       resolvedId = this.client.users.resolveId(permissionId);
       if (!resolvedId) {
         if (!this.guild) {
-          throw new Error("GUILD_UNCACHED_ROLE_RESOLVE");
+          throw new Error('GUILD_UNCACHED_ROLE_RESOLVE');
         }
         resolvedId = this.guild.roles.resolveId(permissionId);
       }
       if (!resolvedId) {
         throw new TypeError(
-          "INVALID_TYPE",
-          "permissionId",
-          "UserResolvable or RoleResolvable"
+          'INVALID_TYPE',
+          'permissionId',
+          'UserResolvable or RoleResolvable'
         );
       }
     }
@@ -454,23 +454,23 @@ class ApplicationCommandPermissionsManager<
   ): { guildId: Snowflake; commandId: Snowflake | null } {
     const guildId = this.guildId ?? this.client.guilds.resolveId(guild);
     if (!guildId) {
-      throw new Error("GLOBAL_COMMAND_PERMISSIONS");
+      throw new Error('GLOBAL_COMMAND_PERMISSIONS');
     }
     let commandId: Snowflake | null = this.commandId;
     if (command && !commandId) {
-      if ("id" in this.manager) {
+      if ('id' in this.manager) {
         const { id } = this.manager;
-        commandId = typeof id === "string" ? id : null;
-      } else if ("resolveId" in this.manager) {
+        commandId = typeof id === 'string' ? id : null;
+      } else if ('resolveId' in this.manager) {
         commandId = this.manager.resolveId(command);
       }
       commandId ??=
         this.client.application?.commands.resolveId(command) ?? null;
       if (!commandId) {
         throw new TypeError(
-          "INVALID_TYPE",
-          "command",
-          "ApplicationCommandResolvable",
+          'INVALID_TYPE',
+          'command',
+          'ApplicationCommandResolvable',
           true
         );
       }
@@ -500,7 +500,7 @@ class ApplicationCommandPermissionsManager<
       id: permissions.id,
       permission: permissions.permission,
       type:
-        typeof permissions.type === "number" && !received
+        typeof permissions.type === 'number' && !received
           ? permissions.type
           : ApplicationCommandPermissionTypes[permissions.type],
     };
@@ -508,9 +508,9 @@ class ApplicationCommandPermissionsManager<
 
   private static isUnknownPermissionsError(error: unknown): boolean {
     return (
-      typeof error === "object" &&
+      typeof error === 'object' &&
       error !== null &&
-      "code" in error &&
+      'code' in error &&
       error.code === APIErrors.UNKNOWN_APPLICATION_COMMAND_PERMISSIONS
     );
   }

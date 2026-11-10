@@ -1,10 +1,10 @@
-import { ActivityFlags as APIActivityFlags } from "discord-api-types/v10";
-import type { APIPartialEmoji, Snowflake } from "discord-api-types/v10";
-import Base from "./Base";
+import { ActivityFlags as APIActivityFlags } from 'discord-api-types/v10';
+import type { APIPartialEmoji, Snowflake } from 'discord-api-types/v10';
+import Base from './Base';
 import type {
   RawActivityData,
   RawRichPresenceAssets,
-} from "../../typings/rawDataTypes";
+} from '../../typings/rawDataTypes';
 import type {
   ActivityOptions,
   ActivityPlatform,
@@ -13,23 +13,23 @@ import type {
   PresenceStatus,
   RichPresenceMetadata,
   StaticImageURLOptions,
-} from "../../typings";
-import type { Guild } from "./Guild";
-import type { Client } from "../client/Client";
-import ActivityFlags from "../util/ActivityFlags";
-import _ConstantsModule from "../util/Constants";
+} from '../../typings';
+import type { Guild } from './Guild';
+import type { Client } from '../client/Client';
+import ActivityFlags from '../util/ActivityFlags';
+import _ConstantsModule from '../util/Constants';
 
 const { ActivityTypes } = _ConstantsModule;
-import Util from "../util/Util";
-import type User from "./User";
-import type { GuildMember } from "./GuildMember";
+import Util from '../util/Util';
+import type User from './User';
+import type { GuildMember } from './GuildMember';
 
 const NESTED_ARRAY_FLAT_DEPTH = 2;
 
 interface PresencePatch {
   status?: PresenceStatus;
   activities?: Partial<RawActivityData>[];
-  client_status?: Partial<Record<"web" | "mobile" | "desktop", string>> | null;
+  client_status?: Partial<Record<'web' | 'mobile' | 'desktop', string>> | null;
   last_modified?: number;
   afk?: boolean;
   since?: number;
@@ -50,9 +50,9 @@ class Presence extends Base {
   constructor(client: Client, data?: PresencePatch) {
     super(client);
 
-    const source = data ?? { user: { id: "" } };
+    const source = data ?? { user: { id: '' } };
 
-    this.userId = source.user?.id ?? "";
+    this.userId = source.user?.id ?? '';
 
     this.guild = source.guild ?? null;
 
@@ -68,10 +68,10 @@ class Presence extends Base {
   }
 
   _patch(data: PresencePatch) {
-    if (typeof data.status === "string") {
+    if (typeof data.status === 'string') {
       this.status = data.status;
     } else {
-      this.status ??= "offline";
+      this.status ??= 'offline';
     }
 
     if (data.activities) {
@@ -79,10 +79,10 @@ class Presence extends Base {
         if (this.userId === this.client.user?.id) {
           if (
             activity.type !== undefined &&
-            [ActivityTypes.CUSTOM, "CUSTOM"].includes(activity.type)
+            [ActivityTypes.CUSTOM, 'CUSTOM'].includes(activity.type)
           ) {
             return new CustomStatus(this.client, activity);
-          } else if (activity.id === "spotify:1") {
+          } else if (activity.id === 'spotify:1') {
             return new SpotifyRPC(this.client, activity);
           }
           return new RichPresence(this.client, activity);
@@ -93,10 +93,10 @@ class Presence extends Base {
       this.activities ??= [];
     }
 
-    if ("client_status" in data) {
+    if ('client_status' in data) {
       if (data.client_status) {
         const clientStatus: Record<string, string> = {};
-        for (const key of ["web", "mobile", "desktop"] as const) {
+        for (const key of ['web', 'mobile', 'desktop'] as const) {
           const value = data.client_status[key];
           if (value) {
             clientStatus[key] = value;
@@ -112,17 +112,17 @@ class Presence extends Base {
       this.clientStatus ??= null;
     }
 
-    if ("last_modified" in data && typeof data.last_modified === "number") {
+    if ('last_modified' in data && typeof data.last_modified === 'number') {
       this.lastModified = data.last_modified;
     }
 
-    if ("afk" in data && typeof data.afk === "boolean") {
+    if ('afk' in data && typeof data.afk === 'boolean') {
       this.afk = data.afk;
     } else {
       this.afk ??= false;
     }
 
-    if ("since" in data && typeof data.since === "number") {
+    if ('since' in data && typeof data.since === 'number') {
       this.since = data.since;
     } else {
       this.since ??= 0;
@@ -201,26 +201,26 @@ function isActivityPlatform(
   value: string | undefined
 ): value is ActivityPlatform {
   return (
-    value === "desktop" ||
-    value === "samsung" ||
-    value === "xbox" ||
-    value === "ios" ||
-    value === "android" ||
-    value === "embedded" ||
-    value === "ps4" ||
-    value === "ps5"
+    value === 'desktop' ||
+    value === 'samsung' ||
+    value === 'xbox' ||
+    value === 'ios' ||
+    value === 'android' ||
+    value === 'embedded' ||
+    value === 'ps4' ||
+    value === 'ps5'
   );
 }
 
 function resolvePresence(client: Client | Presence | Activity): Presence {
-  return "presence" in client ? client.presence : client;
+  return 'presence' in client ? client.presence : client;
 }
 
 function resolvePresenceUserId(client: Client | Presence | Activity): string {
   const { user } = resolvePresence(client).client;
   if (!user) {
     throw new TypeError(
-      "A client user is required to create a SpotifyRPC activity"
+      'A client user is required to create a SpotifyRPC activity'
     );
   }
   return user.id;
@@ -252,7 +252,7 @@ class Activity {
         "Class constructor Activity cannot be invoked without 'presence'"
       );
     }
-    Object.defineProperty(this, "presence", { value: presence });
+    Object.defineProperty(this, 'presence', { value: presence });
 
     this._patch(data);
   }
@@ -265,17 +265,17 @@ class Activity {
   }
 
   private _patchIdentity(data: ActivityPatch) {
-    if (typeof data.id === "string") {
+    if (typeof data.id === 'string') {
       this.id = data.id;
     }
 
-    if (typeof data.name === "string") {
+    if (typeof data.name === 'string') {
       this.name = data.name;
     }
 
-    if ("type" in data && data.type !== undefined) {
+    if ('type' in data && data.type !== undefined) {
       this.type =
-        typeof data.type === "number" ? ActivityTypes[data.type] : data.type;
+        typeof data.type === 'number' ? ActivityTypes[data.type] : data.type;
     }
 
     this.url = data.url ?? null;
@@ -285,7 +285,7 @@ class Activity {
     }
 
     this.sessionId =
-      "session_id" in data
+      'session_id' in data
         ? (data.session_id ?? null)
         : (this.presence.client?.sessionId ?? null);
 
@@ -314,13 +314,13 @@ class Activity {
 
   private _patchPresentation(data: ActivityPatch) {
     this.flags =
-      "flags" in data
+      'flags' in data
         ? new ActivityFlags(data.flags).freeze()
         : new ActivityFlags().freeze();
 
     this.buttons =
       data.buttons?.map((button) =>
-        typeof button === "string" ? button : button.label
+        typeof button === 'string' ? button : button.label
       ) ?? [];
 
     this.emoji = data.emoji ? Util.resolvePartialEmoji(data.emoji) : null;
@@ -375,29 +375,29 @@ class RichPresenceAssets {
   declare smallText: string | null;
 
   constructor(activity: Activity, assets: RichPresenceAssetData | undefined) {
-    Object.defineProperty(this, "activity", { value: activity });
+    Object.defineProperty(this, 'activity', { value: activity });
 
     this._patch(assets);
   }
 
   _patch(assets: RichPresenceAssetData = {}) {
     this.largeText =
-      "large_text" in assets || "largeText" in assets
+      'large_text' in assets || 'largeText' in assets
         ? (assets.large_text ?? assets.largeText ?? null)
         : null;
 
     this.smallText =
-      "small_text" in assets || "smallText" in assets
+      'small_text' in assets || 'smallText' in assets
         ? (assets.small_text ?? assets.smallText ?? null)
         : null;
 
     this.largeImage =
-      "large_image" in assets || "largeImage" in assets
+      'large_image' in assets || 'largeImage' in assets
         ? (assets.large_image ?? assets.largeImage ?? null)
         : null;
 
     this.smallImage =
-      "small_image" in assets || "smallImage" in assets
+      'small_image' in assets || 'smallImage' in assets
         ? (assets.small_image ?? assets.smallImage ?? null)
         : null;
   }
@@ -406,19 +406,19 @@ class RichPresenceAssets {
     if (!this.smallImage) {
       return null;
     }
-    if (this.smallImage.includes(":")) {
-      const [platform, id] = this.smallImage.split(":");
+    if (this.smallImage.includes(':')) {
+      const [platform, id] = this.smallImage.split(':');
       switch (platform) {
-        case "mp": {
+        case 'mp': {
           return `https://media.discordapp.net/${id}`;
         }
-        case "spotify": {
+        case 'spotify': {
           return `https://i.scdn.co/image/${id}`;
         }
-        case "youtube": {
+        case 'youtube': {
           return `https://i.ytimg.com/vi/${id}/hqdefault_live.jpg`;
         }
-        case "twitch": {
+        case 'twitch': {
           return `https://static-cdn.jtvnw.net/previews-ttv/live_user_${id}.png`;
         }
         default: {
@@ -446,19 +446,19 @@ class RichPresenceAssets {
     if (!this.largeImage) {
       return null;
     }
-    if (this.largeImage.includes(":")) {
-      const [platform, id] = this.largeImage.split(":");
+    if (this.largeImage.includes(':')) {
+      const [platform, id] = this.largeImage.split(':');
       switch (platform) {
-        case "mp": {
+        case 'mp': {
           return `https://media.discordapp.net/${id}`;
         }
-        case "spotify": {
+        case 'spotify': {
           return `https://i.scdn.co/image/${id}`;
         }
-        case "youtube": {
+        case 'youtube': {
           return `https://i.ytimg.com/vi/${id}/hqdefault_live.jpg`;
         }
-        case "twitch": {
+        case 'twitch': {
           return `https://static-cdn.jtvnw.net/previews-ttv/live_user_${id}.png`;
         }
         default: {
@@ -483,34 +483,34 @@ class RichPresenceAssets {
   }
 
   static parseImage(image: string | null) {
-    if (typeof image !== "string") {
+    if (typeof image !== 'string') {
       return null;
     }
     const current = image;
     let parsed = image;
     if (
       URL.canParse(image) &&
-      ["http:", "https:"].includes(new URL(image).protocol)
+      ['http:', 'https:'].includes(new URL(image).protocol)
     ) {
       // Discord URL:
       parsed = parsed
-        .replace("https://cdn.discordapp.com/", "mp:")
-        .replace("http://cdn.discordapp.com/", "mp:")
-        .replace("https://media.discordapp.net/", "mp:")
-        .replace("http://media.discordapp.net/", "mp:");
+        .replace('https://cdn.discordapp.com/', 'mp:')
+        .replace('http://cdn.discordapp.com/', 'mp:')
+        .replace('https://media.discordapp.net/', 'mp:')
+        .replace('http://media.discordapp.net/', 'mp:');
       //
-      if (!parsed.startsWith("mp:")) {
-        throw new Error("INVALID_URL");
+      if (!parsed.startsWith('mp:')) {
+        throw new Error('INVALID_URL');
       }
     } else if (/^[0-9]{17,19}$/u.test(parsed)) {
       // ID Assets
     } else if (
-      ["mp:", "youtube:", "spotify:", "twitch:"].some((prefix) =>
+      ['mp:', 'youtube:', 'spotify:', 'twitch:'].some((prefix) =>
         current.startsWith(prefix)
       )
     ) {
       // Image
-    } else if (parsed.startsWith("external/")) {
+    } else if (parsed.startsWith('external/')) {
       parsed = `mp:${parsed}`;
     }
     return parsed;
@@ -568,11 +568,11 @@ class CustomStatus extends Activity {
     const raw: RawActivityData = {
       ...rest,
       created_at:
-        "created_at" in data && typeof data.created_at === "number"
+        'created_at' in data && typeof data.created_at === 'number'
           ? data.created_at
           : Date.now(),
-      id: "id" in data && typeof data.id === "string" ? data.id : "",
-      name: " ",
+      id: 'id' in data && typeof data.id === 'string' ? data.id : '',
+      name: ' ',
       type: ActivityTypes.CUSTOM,
       ...(emoji ? { emoji: Util.resolvePartialEmoji(emoji) ?? undefined } : {}),
     };
@@ -585,8 +585,8 @@ class CustomStatus extends Activity {
   }
 
   setState(state: string | null) {
-    if (typeof state === "string" && state.length > 128) {
-      throw new Error("State must be less than 128 characters");
+    if (typeof state === 'string' && state.length > 128) {
+      throw new Error('State must be less than 128 characters');
     }
     this.state = state;
     return this;
@@ -594,12 +594,12 @@ class CustomStatus extends Activity {
 
   override toJSON(): ActivityOptions {
     if (!this.emoji && !this.state) {
-      throw new Error("CustomStatus must have at least one of emoji or state");
+      throw new Error('CustomStatus must have at least one of emoji or state');
     }
     return {
       name: this.name,
       state: this.state,
-      type: "CUSTOM",
+      type: 'CUSTOM',
       ...(this.emoji ? { emoji: this.emoji } : {}),
     };
   }
@@ -620,8 +620,8 @@ class RichPresence extends Activity {
     const raw: RawActivityData = Object.assign(
       {
         created_at: data.created_at ?? Date.now(),
-        id: data.id ?? "",
-        name: " ",
+        id: data.id ?? '',
+        name: ' ',
         type: 0,
       },
       data
@@ -633,7 +633,7 @@ class RichPresence extends Activity {
   setup(data: RichPresenceData = {}) {
     const secrets: Record<string, string> = {};
     for (const [key, value] of Object.entries(data.secrets ?? {})) {
-      if (typeof value === "string") {
+      if (typeof value === 'string') {
         secrets[key] = value;
       }
     }
@@ -667,8 +667,8 @@ class RichPresence extends Activity {
   }
 
   setURL(url: string | null) {
-    if (typeof url === "string" && !URL.canParse(url)) {
-      throw new Error("URL must be a valid URL");
+    if (typeof url === 'string' && !URL.canParse(url)) {
+      throw new Error('URL must be a valid URL');
     }
     this.url = url;
     return this;
@@ -676,7 +676,7 @@ class RichPresence extends Activity {
 
   setType(type: ActivityType | number) {
     this.type =
-      typeof type === "number" ? (ActivityTypes[type] ?? this.type) : type;
+      typeof type === 'number' ? (ActivityTypes[type] ?? this.type) : type;
     return this;
   }
 
@@ -697,16 +697,16 @@ class RichPresence extends Activity {
 
   setParty(party: RichParty | null) {
     if (party) {
-      if (!party.max || typeof party.max !== "number") {
-        throw new Error("Party must have max number");
+      if (!party.max || typeof party.max !== 'number') {
+        throw new Error('Party must have max number');
       }
-      if (!party.current || typeof party.current !== "number") {
-        throw new Error("Party must have current");
+      if (!party.current || typeof party.current !== 'number') {
+        throw new Error('Party must have current');
       }
       if (party.current > party.max) {
-        throw new Error("Party current must be less than max number");
+        throw new Error('Party current must be less than max number');
       }
-      if (!party.id || typeof party.id !== "string") {
+      if (!party.id || typeof party.id !== 'string') {
         party.id = crypto.randomUUID();
       }
       this.party = {
@@ -743,7 +743,7 @@ class RichPresence extends Activity {
       delete this.metadata.button_urls;
       return this;
     } else if (button.length > 2) {
-      throw new Error("RichPresence can only have up to 2 buttons");
+      throw new Error('RichPresence can only have up to 2 buttons');
     }
 
     this.buttons = [];
@@ -754,11 +754,11 @@ class RichPresence extends Activity {
       if (buttonItem.name && buttonItem.url) {
         this.buttons.push(buttonItem.name);
         if (!URL.canParse(buttonItem.url)) {
-          throw new Error("Button url must be a valid url");
+          throw new Error('Button url must be a valid url');
         }
         buttonUrls.push(buttonItem.url);
       } else {
-        throw new Error("Button must have name and url");
+        throw new Error('Button must have name and url');
       }
     }
     return this;
@@ -780,13 +780,13 @@ class RichPresence extends Activity {
 
   addButton(name: string, url: string) {
     if (!name || !url) {
-      throw new Error("Button must have name and url");
+      throw new Error('Button must have name and url');
     }
-    if (typeof name !== "string") {
-      throw new TypeError("Button name must be a string");
+    if (typeof name !== 'string') {
+      throw new TypeError('Button name must be a string');
     }
     if (!URL.canParse(url)) {
-      throw new Error("Button url must be a valid url");
+      throw new Error('Button url must be a valid url');
     }
     this.buttons.push(name);
     if (Array.isArray(this.metadata.button_urls)) {
@@ -800,10 +800,10 @@ class RichPresence extends Activity {
   override toJSON(...props: unknown[]) {
     return super.toJSON(
       {
-        applicationId: "application_id",
-        createdTimestamp: "created_at",
-        sessionId: "session_id",
-        syncId: "sync_id",
+        applicationId: 'application_id',
+        createdTimestamp: 'created_at',
+        sessionId: 'session_id',
+        syncId: 'sync_id',
       },
       ...props
     );
@@ -815,22 +815,22 @@ class RichPresence extends Activity {
     ...images: string[]
   ): Promise<ExternalAssets[]> {
     if (!client || !client.token || !client.api) {
-      throw new Error("Client must be set");
+      throw new Error('Client must be set');
     }
     // Check if applicationId is discord snowflake (17 , 18, 19 numbers)
     if (!/^[0-9]{17,19}$/u.test(applicationId)) {
-      throw new Error("Application id must be a Discord Snowflake");
+      throw new Error('Application id must be a Discord Snowflake');
     }
     // Check if images are 1 or 2
     if (images.length > 2) {
-      throw new Error("RichPresence can only have up to 2 external images");
+      throw new Error('RichPresence can only have up to 2 external images');
     }
     // Check if all images are valid URLs
     if (images.some((image) => !URL.canParse(image))) {
-      throw new Error("Each image must be a valid URL.");
+      throw new Error('Each image must be a valid URL.');
     }
     const res = await client.api.applications[applicationId][
-      "external-assets"
+      'external-assets'
     ].post<ExternalAssets[]>({
       data: {
         urls: images,
@@ -860,8 +860,8 @@ class SpotifyRPC extends RichPresence {
     }
     super(client, {
       flags: APIActivityFlags.Sync | APIActivityFlags.Play,
-      id: "spotify:1",
-      name: "Spotify",
+      id: 'spotify:1',
+      name: 'Spotify',
       party: {
         id: `spotify:${resolvePresenceUserId(client)}`,
       },

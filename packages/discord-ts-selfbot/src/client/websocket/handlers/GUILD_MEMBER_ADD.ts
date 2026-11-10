@@ -1,18 +1,18 @@
-import _ConstantsModule from "../../../util/Constants";
+import _ConstantsModule from '../../../util/Constants';
 
 const { Events, Status } = _ConstantsModule;
-import type { Client } from "../../Client";
-import type { WebSocketShard } from "../WebSocketShard";
-import type { GatewayGuildMemberAddDispatchData } from "discord-api-types/v10";
+import type { Client } from '../../Client';
+import type { WebSocketShard } from '../WebSocketShard';
+import type { GatewayGuildMemberAddDispatchData } from 'discord-api-types/v10';
 
 function isMemberAddData(
   value: unknown
 ): value is GatewayGuildMemberAddDispatchData {
   return (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value !== null &&
-    "guild_id" in value &&
-    typeof value.guild_id === "string"
+    'guild_id' in value &&
+    typeof value.guild_id === 'string'
   );
 }
 

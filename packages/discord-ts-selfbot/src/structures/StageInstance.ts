@@ -1,15 +1,15 @@
-import process from "node:process";
-import Base from "./Base";
-import _ConstantsModule from "../util/Constants";
-import _errorsModule from "../errors";
+import process from 'node:process';
+import Base from './Base';
+import _ConstantsModule from '../util/Constants';
+import _errorsModule from '../errors';
 
 const { Error } = _errorsModule;
 const { PrivacyLevels } = _ConstantsModule;
-import SnowflakeUtil from "../util/SnowflakeUtil";
-import type { RawStageInstanceData } from "../../typings/rawDataTypes";
-import type { StageInstanceEntity } from "../types/entities/stage-instance";
-import type { PatchOf } from "../types/schema";
-import type Client from "../client/Client";
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { RawStageInstanceData } from '../../typings/rawDataTypes';
+import type { StageInstanceEntity } from '../types/entities/stage-instance';
+import type { PatchOf } from '../types/schema';
+import type Client from '../client/Client';
 
 /**
  * @type {WeakSet<StageInstance>}
@@ -20,13 +20,13 @@ const deletedStageInstances = new WeakSet();
 let deprecationEmittedForDeleted = false;
 
 class StageInstance extends Base implements StageInstanceEntity {
-  declare id: StageInstanceEntity["id"];
-  declare guildId: StageInstanceEntity["guildId"];
-  declare channelId: StageInstanceEntity["channelId"];
-  declare topic: StageInstanceEntity["topic"];
-  declare privacyLevel: StageInstanceEntity["privacyLevel"];
-  declare discoverableDisabled: StageInstanceEntity["discoverableDisabled"];
-  declare guildScheduledEventId: StageInstanceEntity["guildScheduledEventId"];
+  declare id: StageInstanceEntity['id'];
+  declare guildId: StageInstanceEntity['guildId'];
+  declare channelId: StageInstanceEntity['channelId'];
+  declare topic: StageInstanceEntity['topic'];
+  declare privacyLevel: StageInstanceEntity['privacyLevel'];
+  declare discoverableDisabled: StageInstanceEntity['discoverableDisabled'];
+  declare guildScheduledEventId: StageInstanceEntity['guildScheduledEventId'];
 
   constructor(client: Client, data: RawStageInstanceData) {
     super(client);
@@ -36,7 +36,7 @@ class StageInstance extends Base implements StageInstanceEntity {
     this._patch(data);
   }
 
-  _patch(data: PatchOf<"StageInstance">) {
+  _patch(data: PatchOf<'StageInstance'>) {
     if (data.guild_id !== undefined) {
       this.guildId = data.guild_id;
     }
@@ -86,8 +86,8 @@ class StageInstance extends Base implements StageInstanceEntity {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
-        "StageInstance#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.",
-        "DeprecationWarning"
+        'StageInstance#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
+        'DeprecationWarning'
       );
     }
 
@@ -98,8 +98,8 @@ class StageInstance extends Base implements StageInstanceEntity {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
-        "StageInstance#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.",
-        "DeprecationWarning"
+        'StageInstance#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
+        'DeprecationWarning'
       );
     }
 
@@ -117,7 +117,7 @@ class StageInstance extends Base implements StageInstanceEntity {
   edit(options: Record<string, unknown>) {
     const { guild } = this;
     if (!guild) {
-      throw new Error("INVALID_TYPE", "guildId", "Guild");
+      throw new Error('INVALID_TYPE', 'guildId', 'Guild');
     }
     return guild.stageInstances.edit(this.channelId, options);
   }
@@ -125,7 +125,7 @@ class StageInstance extends Base implements StageInstanceEntity {
   async delete() {
     const { guild } = this;
     if (!guild) {
-      throw new Error("INVALID_TYPE", "guildId", "Guild");
+      throw new Error('INVALID_TYPE', 'guildId', 'Guild');
     }
     await guild.stageInstances.delete(this.channelId);
     const clone = this._clone();
@@ -136,7 +136,7 @@ class StageInstance extends Base implements StageInstanceEntity {
   setTopic(topic: string) {
     const { guild } = this;
     if (!guild) {
-      throw new Error("INVALID_TYPE", "guildId", "Guild");
+      throw new Error('INVALID_TYPE', 'guildId', 'Guild');
     }
     return guild.stageInstances.edit(this.channelId, { topic });
   }

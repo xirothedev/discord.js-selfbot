@@ -1,31 +1,31 @@
-import { setInterval } from "node:timers";
-import { Collection } from "@discordjs/collection";
-import Invite from "./Invite";
-import type { RawInviteDataSource } from "./Invite";
-import User from "./User";
-import DataResolver from "../util/DataResolver";
-import PremiumUsageFlags from "../util/PremiumUsageFlags";
-import PurchasedFlags from "../util/PurchasedFlags";
-import Util from "../util/Util";
-import type { SelfbotClientUserData } from "../types/selfbot/user";
-import type { APIUser } from "discord-api-types/v10";
-import type { RawInviteData } from "../../typings/rawDataTypes";
-import type { ClientUserEntity } from "../types/entities/client-user";
-import type { PatchOf } from "../types/schema";
-import type Client from "../client/Client";
-import type { PresenceStatusData } from "../../typings";
+import { setInterval } from 'node:timers';
+import { Collection } from '@discordjs/collection';
+import Invite from './Invite';
+import type { RawInviteDataSource } from './Invite';
+import User from './User';
+import DataResolver from '../util/DataResolver';
+import PremiumUsageFlags from '../util/PremiumUsageFlags';
+import PurchasedFlags from '../util/PurchasedFlags';
+import Util from '../util/Util';
+import type { SelfbotClientUserData } from '../types/selfbot/user';
+import type { APIUser } from 'discord-api-types/v10';
+import type { RawInviteData } from '../../typings/rawDataTypes';
+import type { ClientUserEntity } from '../types/entities/client-user';
+import type { PatchOf } from '../types/schema';
+import type Client from '../client/Client';
+import type { PresenceStatusData } from '../../typings';
 
 class ClientUser extends User implements ClientUserEntity {
-  declare mfaEnabled: ClientUserEntity["mfaEnabled"];
-  declare verified: ClientUserEntity["verified"];
-  declare purchasedFlags: ClientUserEntity["purchasedFlags"];
-  declare premiumUsageFlags: ClientUserEntity["premiumUsageFlags"];
-  declare phone: ClientUserEntity["phone"];
-  declare nsfwAllowed: ClientUserEntity["nsfwAllowed"];
-  declare email: ClientUserEntity["email"];
-  declare bio: ClientUserEntity["bio"];
-  declare pronouns: ClientUserEntity["pronouns"];
-  declare premiumType: ClientUserEntity["premiumType"];
+  declare mfaEnabled: ClientUserEntity['mfaEnabled'];
+  declare verified: ClientUserEntity['verified'];
+  declare purchasedFlags: ClientUserEntity['purchasedFlags'];
+  declare premiumUsageFlags: ClientUserEntity['premiumUsageFlags'];
+  declare phone: ClientUserEntity['phone'];
+  declare nsfwAllowed: ClientUserEntity['nsfwAllowed'];
+  declare email: ClientUserEntity['email'];
+  declare bio: ClientUserEntity['bio'];
+  declare pronouns: ClientUserEntity['pronouns'];
+  declare premiumType: ClientUserEntity['premiumType'];
   #packageName: string | null = null;
 
   constructor(client: Client, data: SelfbotClientUserData) {
@@ -33,19 +33,19 @@ class ClientUser extends User implements ClientUserEntity {
     setInterval(
       () => {
         this.client.emit(
-          "debug",
+          'debug',
           `[UPDATE] Samsung Presence: ${this.#packageName}`
         );
         if (!this.#packageName) {
           return;
         }
-        this.setSamsungActivity(this.#packageName, "UPDATE");
+        this.setSamsungActivity(this.#packageName, 'UPDATE');
       },
       1000 * 60 * 10
     ).unref();
   }
 
-  _patch(data: PatchOf<"ClientUser">) {
+  _patch(data: PatchOf<'ClientUser'>) {
     super._patch(data);
 
     if (data.verified === undefined) {
@@ -105,7 +105,7 @@ class ClientUser extends User implements ClientUserEntity {
 
   async edit(options: Record<string, unknown> = {}) {
     const data = await this.client.api
-      .users("@me")
+      .users('@me')
       .patch<APIUser>({ data: options });
     const { updated } = this.client.actions.UserUpdate.handle(data);
     return updated ?? this;
@@ -136,7 +136,7 @@ class ClientUser extends User implements ClientUserEntity {
     const activity = Object.assign(
       {},
       options,
-      typeof name === "object" ? name : { name }
+      typeof name === 'object' ? name : { name }
     );
     return this.setPresence({
       activities: [activity],
@@ -156,19 +156,19 @@ class ClientUser extends User implements ClientUserEntity {
   setHypeSquad(type: unknown) {
     let houseId = type;
     switch (type) {
-      case "LEAVE": {
+      case 'LEAVE': {
         houseId = 0;
         break;
       }
-      case "HOUSE_BRAVERY": {
+      case 'HOUSE_BRAVERY': {
         houseId = 1;
         break;
       }
-      case "HOUSE_BRILLIANCE": {
+      case 'HOUSE_BRILLIANCE': {
         houseId = 2;
         break;
       }
-      case "HOUSE_BALANCE": {
+      case 'HOUSE_BALANCE': {
         houseId = 3;
         break;
       }
@@ -194,7 +194,7 @@ class ClientUser extends User implements ClientUserEntity {
 
   async createFriendInvite() {
     const data = await this.client.api.users[
-      "@me"
+      '@me'
     ].invites.post<RawInviteDataSource>({
       data: {},
     });
@@ -203,7 +203,7 @@ class ClientUser extends User implements ClientUserEntity {
 
   async getAllFriendInvites() {
     const data =
-      await this.client.api.users["@me"].invites.get<RawInviteData[]>();
+      await this.client.api.users['@me'].invites.get<RawInviteData[]>();
     const collection = new Collection();
     for (const invite of data) {
       collection.set(invite.code, new Invite(this.client, invite));
@@ -212,19 +212,19 @@ class ClientUser extends User implements ClientUserEntity {
   }
 
   revokeAllFriendInvites() {
-    return this.client.api.users["@me"].invites.delete();
+    return this.client.api.users['@me'].invites.delete();
   }
 
   async setSamsungActivity(
     packageName: string,
-    type: "START" | "UPDATE" | "STOP" = "START"
+    type: 'START' | 'UPDATE' | 'STOP' = 'START'
   ) {
     const normalizedType = type.toUpperCase();
     if (!packageName) {
-      throw new Error("Package name is required.");
+      throw new Error('Package name is required.');
     }
-    if (!["START", "UPDATE", "STOP"].includes(normalizedType)) {
-      throw new Error("Invalid type (Must be START, UPDATE, or STOP)");
+    if (!['START', 'UPDATE', 'STOP'].includes(normalizedType)) {
+      throw new Error('Invalid type (Must be START, UPDATE, or STOP)');
     }
     await this.client.api.presences.post({
       data: {
@@ -232,29 +232,29 @@ class ClientUser extends User implements ClientUserEntity {
         update: normalizedType,
       },
     });
-    this.#packageName = normalizedType === "STOP" ? null : packageName;
+    this.#packageName = normalizedType === 'STOP' ? null : packageName;
     return this;
   }
 
   stopRinging(channel: unknown) {
     return this.client.api
-      .channels(this.client.channels.resolveId(channel), "call", "stop-ringing")
+      .channels(this.client.channels.resolveId(channel), 'call', 'stop-ringing')
       .post({
         data: {},
       });
   }
 
   fetchBurstCredit(): Promise<number> {
-    return this.client.api.users["@me"]["burst-credits"]
+    return this.client.api.users['@me']['burst-credits']
       .get<{ amount: number }>()
       .then((data) => data.amount);
   }
 
-  setGlobalName(globalName: string | null = "") {
+  setGlobalName(globalName: string | null = '') {
     return this.edit({ global_name: globalName });
   }
 
-  setPronouns(pronouns: string | null = "") {
+  setPronouns(pronouns: string | null = '') {
     return this.edit({ pronouns });
   }
 }

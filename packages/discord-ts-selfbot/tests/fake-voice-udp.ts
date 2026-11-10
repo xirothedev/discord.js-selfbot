@@ -1,4 +1,4 @@
-import { EventEmitter } from "node:events";
+import { EventEmitter } from 'node:events';
 
 class FakeVoiceUdp extends EventEmitter {
   constructor(connection) {

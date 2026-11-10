@@ -1,34 +1,34 @@
-import { Buffer } from "node:buffer";
-import type { Stream } from "node:stream";
+import { Buffer } from 'node:buffer';
+import type { Stream } from 'node:stream';
 import {
   AllowedMentionsTypes,
   MessageReferenceType,
-} from "discord-api-types/v10";
-import type { APIAllowedMentions } from "discord-api-types/v10";
-import BaseMessageComponent from "./BaseMessageComponent";
-import MessageEmbed from "./MessageEmbed";
-import _errorsModule from "../errors";
+} from 'discord-api-types/v10';
+import type { APIAllowedMentions } from 'discord-api-types/v10';
+import BaseMessageComponent from './BaseMessageComponent';
+import MessageEmbed from './MessageEmbed';
+import _errorsModule from '../errors';
 
 const { RangeError, Error: DjsError } = _errorsModule;
-import _ConstantsModule, { resolveEnumValue } from "../util/Constants";
+import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
 
 const { PollLayoutTypes } = _ConstantsModule;
-import DataResolver from "../util/DataResolver";
-import MessageFlags from "../util/MessageFlags";
-import SnowflakeUtil from "../util/SnowflakeUtil";
-import Util from "../util/Util";
-import Webhook from "./Webhook";
-import WebhookClient from "../client/WebhookClient";
-import User from "./User";
-import _GuildMemberModule from "./GuildMember";
+import DataResolver from '../util/DataResolver';
+import MessageFlags from '../util/MessageFlags';
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import Util from '../util/Util';
+import Webhook from './Webhook';
+import WebhookClient from '../client/WebhookClient';
+import User from './User';
+import _GuildMemberModule from './GuildMember';
 
 const { GuildMember } = _GuildMemberModule;
-import _MessageModule from "./Message";
+import _MessageModule from './Message';
 
 const { Message } = _MessageModule;
-import MessageManager from "../managers/MessageManager";
-import Interaction from "./Interaction";
-import InteractionWebhook from "./InteractionWebhook";
+import MessageManager from '../managers/MessageManager';
+import Interaction from './Interaction';
+import InteractionWebhook from './InteractionWebhook';
 import type {
   BitFieldResolvable,
   BufferResolvable,
@@ -40,9 +40,9 @@ import type {
   MessageOptions,
   MessageResolvable,
   Snowflake,
-} from "../../typings";
-import type { RawMessagePayloadData } from "../../typings/rawDataTypes";
-import type { Client } from "../client/Client";
+} from '../../typings';
+import type { RawMessagePayloadData } from '../../typings/rawDataTypes';
+import type { Client } from '../client/Client';
 
 type MessageReferenceLike =
   | MessageResolvable
@@ -50,7 +50,7 @@ type MessageReferenceLike =
 
 export type MessagePayloadOptions = Omit<
   MessageOptions,
-  "reply" | "forward" | "flags"
+  'reply' | 'forward' | 'flags'
 > & {
   reply?: { messageReference: MessageReferenceLike; failIfNotExists?: boolean };
   forward?: {
@@ -60,7 +60,7 @@ export type MessagePayloadOptions = Omit<
   };
   flags?:
     | BitFieldResolvable<MessageFlagsString, number>
-    | MessageOptions["flags"];
+    | MessageOptions['flags'];
   username?: string;
   avatarURL?: string;
   threadName?: string;
@@ -81,7 +81,7 @@ function resolveTargetMessageId(
   target: MessagePayloadTarget,
   reference: MessageReferenceLike
 ): string | null {
-  if (typeof reference === "object" && "id" in reference) {
+  if (typeof reference === 'object' && 'id' in reference) {
     return reference.id;
   }
   if (target.messages) {
@@ -100,28 +100,28 @@ const ALLOWED_MENTION_TYPES: Record<string, AllowedMentionsTypes> = {
 };
 
 function findFileName(thing: unknown) {
-  if (typeof thing === "string") {
+  if (typeof thing === 'string') {
     return Util.basename(thing);
   }
 
   if (
-    typeof thing === "object" &&
+    typeof thing === 'object' &&
     thing !== null &&
-    "path" in thing &&
-    typeof thing.path === "string"
+    'path' in thing &&
+    typeof thing.path === 'string'
   ) {
     return Util.basename(thing.path);
   }
 
-  return "file.jpg";
+  return 'file.jpg';
 }
 
 function isStream(value: unknown): value is Stream {
   return (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value !== null &&
-    "pipe" in value &&
-    typeof value.pipe === "function"
+    'pipe' in value &&
+    typeof value.pipe === 'function'
   );
 }
 
@@ -182,12 +182,12 @@ class MessagePayload {
   makeContent(): string | undefined {
     let content: string | undefined;
     if (this.options.content === null) {
-      content = "";
+      content = '';
     } else if (this.options.content !== undefined) {
       content = Util.verifyString(
         this.options.content,
         RangeError,
-        "MESSAGE_CONTENT_TYPE",
+        'MESSAGE_CONTENT_TYPE',
         false
       );
     }
@@ -232,7 +232,7 @@ class MessagePayload {
       content,
       embeds: this.options.embeds?.map((embed) => {
         const data =
-          "toJSON" in embed && typeof embed.toJSON === "function"
+          'toJSON' in embed && typeof embed.toJSON === 'function'
             ? embed.toJSON()
             : embed;
         return new MessageEmbed(data).toJSON();
@@ -251,7 +251,7 @@ class MessagePayload {
 
   private resolveMessageReference() {
     let messageReference;
-    if (typeof this.options.reply === "object") {
+    if (typeof this.options.reply === 'object') {
       const reference = this.options.reply.messageReference;
       const messageId = resolveTargetMessageId(this.target, reference);
       if (messageId) {
@@ -265,15 +265,15 @@ class MessagePayload {
       }
     }
 
-    if (typeof this.options.forward === "object") {
+    if (typeof this.options.forward === 'object') {
       const reference = this.options.forward.message;
       const channelId =
-        (typeof reference === "object" && "channelId" in reference
+        (typeof reference === 'object' && 'channelId' in reference
           ? reference.channelId
           : undefined) ??
         this.target.client.channels.resolveId(this.options.forward.channel);
       const guildId =
-        (typeof reference === "object" && "guildId" in reference
+        (typeof reference === 'object' && 'guildId' in reference
           ? reference.guildId
           : undefined) ??
         this.target.client.guilds.resolveId(this.options.forward.guild);
@@ -281,9 +281,9 @@ class MessagePayload {
       if (messageId) {
         if (!channelId) {
           throw new DjsError(
-            "INVALID_TYPE",
-            "channelId",
-            "TextBasedChannelResolvable"
+            'INVALID_TYPE',
+            'channelId',
+            'TextBasedChannelResolvable'
           );
         }
         messageReference = {
@@ -301,10 +301,10 @@ class MessagePayload {
   private applyAttachmentIds() {
     const attachments = this.options.files?.map((file, index) => ({
       description:
-        typeof file === "object" &&
+        typeof file === 'object' &&
         file !== null &&
-        "description" in file &&
-        typeof file.description === "string"
+        'description' in file &&
+        typeof file.description === 'string'
           ? file.description
           : undefined,
       id: index.toString(),
@@ -322,11 +322,11 @@ class MessagePayload {
       return SnowflakeUtil.generate();
     }
     if (
-      typeof nonce === "number"
+      typeof nonce === 'number'
         ? !Number.isInteger(nonce)
-        : typeof nonce !== "string"
+        : typeof nonce !== 'string'
     ) {
-      throw new RangeError("MESSAGE_NONCE_TYPE");
+      throw new RangeError('MESSAGE_NONCE_TYPE');
     }
     return nonce;
   }
@@ -334,13 +334,13 @@ class MessagePayload {
   private resolveComponents() {
     return this.options.components?.map((component) => {
       const data =
-        "toJSON" in component && typeof component.toJSON === "function"
+        'toJSON' in component && typeof component.toJSON === 'function'
           ? component.toJSON()
           : component;
       const created = BaseMessageComponent.create(data);
       if (!created || !BaseMessageComponent.isTopLevelComponent(created)) {
         throw new DjsError(
-          "INVALID_TYPE: component is not a top-level component"
+          'INVALID_TYPE: component is not a top-level component'
         );
       }
       return BaseMessageComponent.serializeTopLevelComponent(created);
@@ -385,7 +385,7 @@ class MessagePayload {
 
   private resolveStickerIds() {
     const stickerIds = this.options.stickers?.map((sticker) =>
-      typeof sticker === "object" ? sticker.id : sticker
+      typeof sticker === 'object' ? sticker.id : sticker
     );
     let result:
       | [string]
@@ -432,7 +432,7 @@ class MessagePayload {
     return Boolean(
       this.isMessage &&
       messageReference === undefined &&
-      "author" in this.target &&
+      'author' in this.target &&
       this.target.author?.id !== this.target.client.user?.id
     );
   }
@@ -452,41 +452,41 @@ class MessagePayload {
     attachment: BufferResolvable | Stream;
     name: string;
   } {
-    if (typeof fileLike === "string" || fileLike instanceof Buffer) {
+    if (typeof fileLike === 'string' || fileLike instanceof Buffer) {
       return { attachment: fileLike, name: findFileName(fileLike) };
     }
     if (isStream(fileLike)) {
       return { attachment: fileLike, name: findFileName(fileLike) };
     }
     if (
-      typeof fileLike === "object" &&
+      typeof fileLike === 'object' &&
       fileLike !== null &&
-      "attachment" in fileLike
+      'attachment' in fileLike
     ) {
       const attachmentValue = fileLike.attachment;
       if (
-        typeof attachmentValue !== "string" &&
+        typeof attachmentValue !== 'string' &&
         !Buffer.isBuffer(attachmentValue) &&
         !isStream(attachmentValue)
       ) {
         throw new DjsError(
-          "INVALID_TYPE",
-          "fileLike",
-          "BufferResolvable|Stream|FileOptions|MessageAttachment"
+          'INVALID_TYPE',
+          'fileLike',
+          'BufferResolvable|Stream|FileOptions|MessageAttachment'
         );
       }
       return {
         attachment: attachmentValue,
         name:
-          "name" in fileLike && typeof fileLike.name === "string"
+          'name' in fileLike && typeof fileLike.name === 'string'
             ? fileLike.name
             : findFileName(fileLike),
       };
     }
     throw new DjsError(
-      "INVALID_TYPE",
-      "fileLike",
-      "BufferResolvable|Stream|FileOptions|MessageAttachment"
+      'INVALID_TYPE',
+      'fileLike',
+      'BufferResolvable|Stream|FileOptions|MessageAttachment'
     );
   }
 
@@ -495,21 +495,21 @@ class MessagePayload {
 
     const resource = await DataResolver.resolveFile(attachment);
     if (!resource) {
-      throw new DjsError("INVALID_TYPE", "fileLike", "BufferResolvable|Stream");
+      throw new DjsError('INVALID_TYPE', 'fileLike', 'BufferResolvable|Stream');
     }
     const metadata =
-      typeof fileLike === "object" && fileLike !== null ? fileLike : {};
+      typeof fileLike === 'object' && fileLike !== null ? fileLike : {};
     const description =
-      "description" in metadata ? metadata.description : undefined;
-    const duration = "duration" in metadata ? metadata.duration : undefined;
-    const waveform = "waveform" in metadata ? metadata.waveform : undefined;
+      'description' in metadata ? metadata.description : undefined;
+    const duration = 'duration' in metadata ? metadata.duration : undefined;
+    const waveform = 'waveform' in metadata ? metadata.waveform : undefined;
     return {
       attachment,
-      description: typeof description === "string" ? description : undefined,
-      duration_secs: typeof duration === "number" ? duration : undefined,
+      description: typeof description === 'string' ? description : undefined,
+      duration_secs: typeof duration === 'number' ? duration : undefined,
       file: resource,
       name,
-      waveform: typeof waveform === "string" ? waveform : undefined,
+      waveform: typeof waveform === 'string' ? waveform : undefined,
     };
   }
 
@@ -520,7 +520,7 @@ class MessagePayload {
   ) {
     return new this(
       target,
-      typeof options !== "object" || options === null
+      typeof options !== 'object' || options === null
         ? { content: options, ...extra }
         : { ...options, ...extra }
     );

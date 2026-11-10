@@ -1,9 +1,9 @@
-import type Client from "../client/Client";
+import type Client from '../client/Client';
 
 class BaseManager {
   declare client: Client;
   constructor(client: Client) {
-    Object.defineProperty(this, "client", { value: client });
+    Object.defineProperty(this, 'client', { value: client });
   }
 }
 

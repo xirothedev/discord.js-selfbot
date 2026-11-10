@@ -1,4 +1,4 @@
-import type { Reflection, Signature, TypeNode, TypeParameter } from "./types";
+import type { Reflection, Signature, TypeNode, TypeParameter } from './types';
 
 interface ReflectionLike {
   type?: TypeNode;
@@ -17,7 +17,7 @@ class NameCollector {
       return;
     }
 
-    if (node.type === "reference" && node.name) {
+    if (node.type === 'reference' && node.name) {
       out.add(node.name);
     }
     for (const type of node.types ?? []) {

@@ -1,9 +1,9 @@
-import { Buffer } from "node:buffer";
-import VideoDispatcher from "./VideoDispatcher";
-import type MediaPlayer from "../player/MediaPlayer";
-import type { DispatcherStreams } from "./BaseDispatcher";
-import VoiceCodec from "../util/VoiceCodec";
-import _AnnexBNalSplitterModule from "../player/processing/AnnexBNalSplitter";
+import { Buffer } from 'node:buffer';
+import VideoDispatcher from './VideoDispatcher';
+import type MediaPlayer from '../player/MediaPlayer';
+import type { DispatcherStreams } from './BaseDispatcher';
+import VoiceCodec from '../util/VoiceCodec';
+import _AnnexBNalSplitterModule from '../player/processing/AnnexBNalSplitter';
 
 const { H264Helpers, H265Helpers } = _AnnexBNalSplitterModule;
 /*
@@ -36,7 +36,7 @@ class AnnexBDispatcher extends VideoDispatcher {
     _naluHeader: Buffer
   ): Buffer {
     throw new Error(
-      "The makeFragmentationUnitHeader method must be implemented"
+      'The makeFragmentationUnitHeader method must be implemented'
     );
   }
 
@@ -113,7 +113,7 @@ class H264Dispatcher extends AnnexBDispatcher {
       streams,
       fps,
       H264Helpers,
-      VoiceCodec.getPayloadType("H264")
+      VoiceCodec.getPayloadType('H264')
     );
   }
 
@@ -154,7 +154,7 @@ class H265Dispatcher extends AnnexBDispatcher {
       streams,
       fps,
       H265Helpers,
-      VoiceCodec.getPayloadType("H265")
+      VoiceCodec.getPayloadType('H265')
     );
   }
 

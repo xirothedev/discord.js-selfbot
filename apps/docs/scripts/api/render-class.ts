@@ -6,21 +6,21 @@ import {
   renderExamples,
   renderSummary,
   stripJsdocSyntax,
-} from "./comment";
+} from './comment';
 import {
   frontmatter,
   mergeMembers,
   mergeSignature,
   renderParameterList,
   signatureLine,
-} from "./render-shared";
-import type { MergedMember } from "./render-shared";
+} from './render-shared';
+import type { MergedMember } from './render-shared';
 import {
   renderType,
   renderHeritage,
   renderTypeParameters,
-} from "./render-type";
-import type { DocgenEvent, Reflection } from "./types";
+} from './render-type';
+import type { DocgenEvent, Reflection } from './types';
 
 export interface ClassPageInput {
   name: string;
@@ -32,30 +32,30 @@ export interface ClassPageInput {
 }
 
 const INHERITED_MEMBERS = new Set([
-  "[captureRejectionSymbol]",
-  "addAbortListener",
-  "addListener",
-  "captureRejectionSymbol",
-  "captureRejections",
-  "defaultMaxListeners",
-  "emit",
-  "errorMonitor",
-  "eventNames",
-  "getEventListeners",
-  "getMaxListeners",
-  "listenerCount",
-  "listeners",
-  "off",
-  "on",
-  "once",
-  "prependListener",
-  "prependOnceListener",
-  "rawListeners",
-  "removeAllListeners",
-  "removeListener",
-  "setMaxListeners",
-  "authenticator",
-  "token",
+  '[captureRejectionSymbol]',
+  'addAbortListener',
+  'addListener',
+  'captureRejectionSymbol',
+  'captureRejections',
+  'defaultMaxListeners',
+  'emit',
+  'errorMonitor',
+  'eventNames',
+  'getEventListeners',
+  'getMaxListeners',
+  'listenerCount',
+  'listeners',
+  'off',
+  'on',
+  'once',
+  'prependListener',
+  'prependOnceListener',
+  'rawListeners',
+  'removeAllListeners',
+  'removeListener',
+  'setMaxListeners',
+  'authenticator',
+  'token',
 ]);
 
 function renderMethod(member: MergedMember): string {
@@ -71,41 +71,41 @@ function renderMethod(member: MergedMember): string {
     );
     const staticPrefix =
       member.typings?.flags?.isStatic || member.source?.flags?.isStatic
-        ? "static "
-        : "";
+        ? 'static '
+        : '';
     const code = signatureLine(merged, `${staticPrefix}${member.name}`);
     const description = renderSummary(merged.comment);
     const parameters = renderParameterList(merged.parameters);
     const returns = merged.returnType
       ? `**Returns:** ${inlineCode(renderType(merged.returnType))}`
-      : "";
+      : '';
     const examples = renderExamples(merged.comment);
 
     parts.push(
-      [description, "```ts", code, "```", parameters, returns, examples]
+      [description, '```ts', code, '```', parameters, returns, examples]
         .filter(Boolean)
-        .join("\n\n")
+        .join('\n\n')
     );
   }
 
-  return parts.join("\n\n");
+  return parts.join('\n\n');
 }
 
 function renderEvent(event: DocgenEvent): string {
   const description = event.description
     ? escapeMdx(stripJsdocSyntax(event.description))
-    : "";
+    : '';
   const params = (event.params ?? [])
     .map((parameter) => {
-      const optional = parameter.optional ? "?" : "";
+      const optional = parameter.optional ? '?' : '';
       const details = parameter.description
         ? ` — ${escapeMdx(stripJsdocSyntax(parameter.description))}`
-        : "";
+        : '';
       return `- ${inlineCode(`${parameter.name}${optional}`)}${details}`;
     })
-    .join("\n");
+    .join('\n');
 
-  return `### \`${event.name}\`\n\n${[description, params].filter(Boolean).join("\n\n")}`;
+  return `### \`${event.name}\`\n\n${[description, params].filter(Boolean).join('\n\n')}`;
 }
 
 function propertyType(member: MergedMember) {
@@ -121,10 +121,10 @@ function memberFlags(member: MergedMember): string[] {
   const typingsFlags = member.typings?.flags;
   const sourceFlags = member.source?.flags;
   if (typingsFlags?.isReadonly || sourceFlags?.isReadonly) {
-    flags.push("readonly");
+    flags.push('readonly');
   }
   if (typingsFlags?.isStatic || sourceFlags?.isStatic) {
-    flags.push("static");
+    flags.push('static');
   }
   return flags;
 }
@@ -137,12 +137,12 @@ function renderProperty(member: MergedMember): string {
 
   const meta = [
     `**Type:** ${inlineCode(renderType(propertyType(member)))}`,
-    flags.length ? `**Modifiers:** ${flags.join(", ")}` : "",
+    flags.length ? `**Modifiers:** ${flags.join(', ')}` : '',
   ]
     .filter(Boolean)
-    .join(" · ");
+    .join(' · ');
 
-  return [description, meta].filter(Boolean).join("\n\n");
+  return [description, meta].filter(Boolean).join('\n\n');
 }
 
 function sortByName(members: MergedMember[]): MergedMember[] {
@@ -154,7 +154,7 @@ function constructorSection(
   name: string
 ): string {
   if (!constructor) {
-    return "";
+    return '';
   }
   const sourceSignature = constructor.source?.signatures?.[0];
   const typingsSignature = constructor.typings?.signatures?.[0];
@@ -163,47 +163,47 @@ function constructorSection(
   const constructorDescription = renderSummary(merged.comment);
   const parameters = renderParameterList(merged.parameters);
   return [
-    "## Constructor",
+    '## Constructor',
     constructorDescription,
-    "```ts",
+    '```ts',
     code,
-    "```",
+    '```',
     parameters,
   ]
     .filter(Boolean)
-    .join("\n\n");
+    .join('\n\n');
 }
 
 function propertySection(members: MergedMember[]): string {
   const properties = sortByName(
     members.filter(
-      (member) => member.kind === "property" || member.kind === "accessor"
+      (member) => member.kind === 'property' || member.kind === 'accessor'
     )
   );
   if (!properties.length) {
-    return "";
+    return '';
   }
   return [
-    "## Properties",
+    '## Properties',
     ...properties.map(
       (property) => `### \`${property.name}\`\n\n${renderProperty(property)}`
     ),
-  ].join("\n\n");
+  ].join('\n\n');
 }
 
 function methodSection(members: MergedMember[]): string {
   const methods = sortByName(
-    members.filter((member) => member.kind === "method")
+    members.filter((member) => member.kind === 'method')
   );
   if (!methods.length) {
-    return "";
+    return '';
   }
   return [
-    "## Methods",
+    '## Methods',
     ...methods.map(
       (method) => `### \`${method.name}\`\n\n${renderMethod(method)}`
     ),
-  ].join("\n\n");
+  ].join('\n\n');
 }
 
 function eventSection(events: DocgenEvent[] | undefined): string {
@@ -211,10 +211,10 @@ function eventSection(events: DocgenEvent[] | undefined): string {
     left.name.localeCompare(right.name)
   );
   if (!sorted.length) {
-    return "";
+    return '';
   }
-  return ["## Events", ...sorted.map((event) => renderEvent(event))].join(
-    "\n\n"
+  return ['## Events', ...sorted.map((event) => renderEvent(event))].join(
+    '\n\n'
   );
 }
 
@@ -226,8 +226,8 @@ function classDeclaration(input: ClassPageInput): string {
     source?.implementedTypes ?? typings?.implementedTypes
   );
   const prefix =
-    source?.flags?.isAbstract || typings?.flags?.isAbstract ? "abstract " : "";
-  return `${prefix}class ${name}${renderTypeParameters(typeParameters)}${heritage ? ` ${heritage}` : ""}`;
+    source?.flags?.isAbstract || typings?.flags?.isAbstract ? 'abstract ' : '';
+  return `${prefix}class ${name}${renderTypeParameters(typeParameters)}${heritage ? ` ${heritage}` : ''}`;
 }
 
 export function renderClassPage(input: ClassPageInput): string {
@@ -240,12 +240,12 @@ export function renderClassPage(input: ClassPageInput): string {
     ...(input.privateMembers ?? []),
   ]);
   const members = mergeMembers(source, typings).filter(
-    (member) => !member.name.startsWith("_") && !hidden.has(member.name)
+    (member) => !member.name.startsWith('_') && !hidden.has(member.name)
   );
 
   const sections = [
     constructorSection(
-      members.find((member) => member.kind === "constructor"),
+      members.find((member) => member.kind === 'constructor'),
       name
     ),
     propertySection(members),
@@ -262,18 +262,18 @@ export function renderClassPage(input: ClassPageInput): string {
       sourceUrl: input.sourceUrl,
       title: name,
     }),
-    "{/* This file is generated by apps/docs/scripts/generate-api.ts. Do not edit. */}",
-    "",
+    '{/* This file is generated by apps/docs/scripts/generate-api.ts. Do not edit. */}',
+    '',
     input.sourceUrl
       ? `<Callout type="info" title="Source">[View source](${input.sourceUrl})</Callout>`
-      : "",
+      : '',
     renderDeprecated(description),
     renderSummary(description),
-    "```ts",
+    '```ts',
     classLine,
-    "```",
+    '```',
     ...sections,
   ]
     .filter(Boolean)
-    .join("\n\n");
+    .join('\n\n');
 }

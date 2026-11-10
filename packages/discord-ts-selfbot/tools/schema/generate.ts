@@ -4,12 +4,12 @@ import {
   readFileSync,
   readdirSync,
   writeFileSync,
-} from "node:fs";
-import pathModule from "node:path";
+} from 'node:fs';
+import pathModule from 'node:path';
 
-import ts from "typescript";
+import ts from 'typescript';
 
-type FieldKind = "api" | "selfbot" | "internal" | "relation";
+type FieldKind = 'api' | 'selfbot' | 'internal' | 'relation';
 
 interface ImportSpec {
   from: string;
@@ -54,12 +54,12 @@ interface EntityResult {
 }
 
 const HERE = pathModule.dirname(Bun.fileURLToPath(import.meta.url));
-const PKG = pathModule.join(HERE, "..", "..");
-const SRC = pathModule.join(PKG, "src");
-const TYPINGS = pathModule.join(PKG, "typings");
-const ENTITIES = pathModule.join(SRC, "types", "entities");
-const SCHEMA = pathModule.join(SRC, "types", "schema.ts");
-const TSCONFIG = pathModule.join(PKG, "tsconfig.json");
+const PKG = pathModule.join(HERE, '..', '..');
+const SRC = pathModule.join(PKG, 'src');
+const TYPINGS = pathModule.join(PKG, 'typings');
+const ENTITIES = pathModule.join(SRC, 'types', 'entities');
+const SCHEMA = pathModule.join(SRC, 'types', 'schema.ts');
+const TSCONFIG = pathModule.join(PKG, 'tsconfig.json');
 
 /**
  * Per-entity import and provenance configuration.
@@ -70,63 +70,63 @@ const TSCONFIG = pathModule.join(PKG, "tsconfig.json");
  */
 const CONFIG: Record<string, EntityConfig> = {
   AnonymousGuild: {
-    extends: "BaseGuildEntity",
-    fieldTypes: { description: "string | null" },
+    extends: 'BaseGuildEntity',
+    fieldTypes: { description: 'string | null' },
     fields: {},
     imports: [
-      { from: "../../../typings", named: ["NSFWLevel", "VerificationLevel"] },
+      { from: '../../../typings', named: ['NSFWLevel', 'VerificationLevel'] },
     ],
     rawType: {
-      from: "../../typings/rawDataTypes",
-      name: "RawAnonymousGuildData",
+      from: '../../typings/rawDataTypes',
+      name: 'RawAnonymousGuildData',
     },
   },
   Application: {
     fieldTypes: {
-      bot: "User | null",
-      id: "Snowflake",
+      bot: 'User | null',
+      id: 'Snowflake',
       installParams:
-        "{ scopes: string[]; permissions: Readonly<Permissions> } | null",
-      integrationTypesConfig: "APIApplicationIntegrationTypesConfigMap | null",
+        '{ scopes: string[]; permissions: Readonly<Permissions> } | null',
+      integrationTypesConfig: 'APIApplicationIntegrationTypesConfigMap | null',
     },
-    fields: { commands: "relation", owner: "relation" },
+    fields: { commands: 'relation', owner: 'relation' },
     imports: [
       {
-        from: "discord-api-types/v10",
+        from: 'discord-api-types/v10',
         named: [
-          "APIApplicationIntegrationTypesConfigMap",
-          "APIUser",
-          "ApplicationWebhookEventStatus",
-          "ApplicationWebhookEventType",
-          "Snowflake",
+          'APIApplicationIntegrationTypesConfigMap',
+          'APIUser',
+          'ApplicationWebhookEventStatus',
+          'ApplicationWebhookEventType',
+          'Snowflake',
         ],
       },
-      { from: "../../../typings/enums", named: ["ApplicationType"] },
+      { from: '../../../typings/enums', named: ['ApplicationType'] },
       {
-        from: "../../../typings",
+        from: '../../../typings',
         named: [
-          "ClientApplicationInstallParams",
-          "PartialUser",
-          "StaticImageURLOptions",
+          'ClientApplicationInstallParams',
+          'PartialUser',
+          'StaticImageURLOptions',
         ],
       },
-      { from: "../../structures/User", named: ["User"] },
-      { from: "../../structures/Team", named: ["Team"] },
-      { from: "../../structures/Guild", named: ["Guild"] },
+      { from: '../../structures/User', named: ['User'] },
+      { from: '../../structures/Team', named: ['Team'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
       {
-        default: "ApplicationCommandManager",
-        from: "../../managers/ApplicationCommandManager",
+        default: 'ApplicationCommandManager',
+        from: '../../managers/ApplicationCommandManager',
       },
-      { default: "ApplicationFlags", from: "../../util/ApplicationFlags" },
-      { default: "Permissions", from: "../../util/Permissions" },
+      { default: 'ApplicationFlags', from: '../../util/ApplicationFlags' },
+      { default: 'Permissions', from: '../../util/Permissions' },
     ],
-    patchType: { from: "./selfbot/application", type: "ApplicationPatch" },
-    rawType: { from: "../../typings/rawDataTypes", name: "RawApplicationData" },
+    patchType: { from: './selfbot/application', type: 'ApplicationPatch' },
+    rawType: { from: '../../typings/rawDataTypes', name: 'RawApplicationData' },
   },
   ApplicationCommand: {
     fieldTypes: {
       permissions:
-        "ApplicationCommandPermissionsManager<PermissionsFetchType, PermissionsFetchType, PermissionsFetchType, Guild | null, Snowflake>",
+        'ApplicationCommandPermissionsManager<PermissionsFetchType, PermissionsFetchType, PermissionsFetchType, Guild | null, Snowflake>',
     },
     fields: {},
     generate: false,
@@ -134,27 +134,27 @@ const CONFIG: Record<string, EntityConfig> = {
   },
   AutoModerationRule: {
     fieldTypes: {
-      exemptChannels: "Collection<Snowflake, GuildChannel>",
-      exemptRoles: "Collection<Snowflake, Role>",
+      exemptChannels: 'Collection<Snowflake, GuildChannel>',
+      exemptRoles: 'Collection<Snowflake, Role>',
     },
-    fields: { guild: "relation" },
+    fields: { guild: 'relation' },
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
-      { from: "@discordjs/collection", named: ["Collection"] },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '@discordjs/collection', named: ['Collection'] },
       {
-        from: "../../../typings",
+        from: '../../../typings',
         named: [
-          "AutoModerationAction",
-          "AutoModerationRuleEventType",
-          "AutoModerationRuleTriggerType",
-          "AutoModerationTriggerMetadata",
+          'AutoModerationAction',
+          'AutoModerationRuleEventType',
+          'AutoModerationRuleTriggerType',
+          'AutoModerationTriggerMetadata',
         ],
       },
-      { from: "../../structures/Guild", named: ["Guild"] },
-      { from: "../../structures/Role", named: ["Role"] },
-      { from: "../../structures/GuildChannel", named: ["GuildChannel"] },
+      { from: '../../structures/Guild', named: ['Guild'] },
+      { from: '../../structures/Role', named: ['Role'] },
+      { from: '../../structures/GuildChannel', named: ['GuildChannel'] },
     ],
-    rawType: { from: "discord-api-types/v10", name: "APIAutoModerationRule" },
+    rawType: { from: 'discord-api-types/v10', name: 'APIAutoModerationRule' },
   },
   AutocompleteInteraction: {
     fieldTypes: {
@@ -167,44 +167,44 @@ const CONFIG: Record<string, EntityConfig> = {
   BaseGuild: {
     fields: {},
     imports: [
-      { from: "discord-api-types/v10", named: ["GuildFeature", "Snowflake"] },
+      { from: 'discord-api-types/v10', named: ['GuildFeature', 'Snowflake'] },
     ],
-    rawType: { from: "../../typings/rawDataTypes", name: "RawBaseGuildData" },
+    rawType: { from: '../../typings/rawDataTypes', name: 'RawBaseGuildData' },
   },
   BaseGuildEmoji: {
-    extends: "EmojiEntity",
-    fields: { guild: "relation" },
+    extends: 'EmojiEntity',
+    fields: { guild: 'relation' },
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
-      { from: "../../structures/Guild", named: ["Guild"] },
-      { from: "../../structures/GuildPreview", named: ["GuildPreview"] },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
+      { from: '../../structures/GuildPreview', named: ['GuildPreview'] },
     ],
-    rawType: { from: "../../typings/rawDataTypes", name: "RawGuildEmojiData" },
+    rawType: { from: '../../typings/rawDataTypes', name: 'RawGuildEmojiData' },
   },
   Channel: {
-    fieldTypes: { type: "string" },
+    fieldTypes: { type: 'string' },
     fields: {},
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
-      { default: "ChannelFlags", from: "../../util/ChannelFlags" },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { default: 'ChannelFlags', from: '../../util/ChannelFlags' },
     ],
-    rawType: { from: "../../typings/rawDataTypes", name: "RawChannelData" },
+    rawType: { from: '../../typings/rawDataTypes', name: 'RawChannelData' },
   },
   ClientUser: {
-    extends: "UserEntity",
+    extends: 'UserEntity',
     fields: {
-      bio: "selfbot",
-      nsfwAllowed: "selfbot",
-      phone: "selfbot",
-      premiumUsageFlags: "selfbot",
-      pronouns: "selfbot",
-      purchasedFlags: "selfbot",
+      bio: 'selfbot',
+      nsfwAllowed: 'selfbot',
+      phone: 'selfbot',
+      premiumUsageFlags: 'selfbot',
+      pronouns: 'selfbot',
+      purchasedFlags: 'selfbot',
     },
     imports: [
-      { default: "PremiumUsageFlags", from: "../../util/PremiumUsageFlags" },
-      { default: "PurchasedFlags", from: "../../util/PurchasedFlags" },
+      { default: 'PremiumUsageFlags', from: '../../util/PremiumUsageFlags' },
+      { default: 'PurchasedFlags', from: '../../util/PurchasedFlags' },
     ],
-    rawType: { from: "./selfbot/user", name: "SelfbotClientUserData" },
+    rawType: { from: './selfbot/user', name: 'SelfbotClientUserData' },
   },
   CommandInteraction: {
     fieldTypes: {
@@ -226,88 +226,88 @@ const CONFIG: Record<string, EntityConfig> = {
   },
   Emoji: {
     fields: {},
-    imports: [{ from: "discord-api-types/v10", named: ["Snowflake"] }],
-    rawType: { from: "../../typings/rawDataTypes", name: "RawEmojiData" },
+    imports: [{ from: 'discord-api-types/v10', named: ['Snowflake'] }],
+    rawType: { from: '../../typings/rawDataTypes', name: 'RawEmojiData' },
   },
   Guild: {
-    extends: "AnonymousGuildEntity",
+    extends: 'AnonymousGuildEntity',
     fields: {},
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
       {
-        from: "../../../typings",
+        from: '../../../typings',
         named: [
-          "DefaultMessageNotificationLevel",
-          "ExplicitContentFilterLevel",
-          "IncidentActions",
-          "MFALevel",
-          "PremiumTier",
+          'DefaultMessageNotificationLevel',
+          'ExplicitContentFilterLevel',
+          'IncidentActions',
+          'MFALevel',
+          'PremiumTier',
         ],
       },
       {
-        default: "AutoModerationRuleManager",
-        from: "../../managers/AutoModerationRuleManager",
+        default: 'AutoModerationRuleManager',
+        from: '../../managers/AutoModerationRuleManager',
       },
-      { default: "GuildBanManager", from: "../../managers/GuildBanManager" },
+      { default: 'GuildBanManager', from: '../../managers/GuildBanManager' },
       {
-        default: "GuildChannelManager",
-        from: "../../managers/GuildChannelManager",
-      },
-      {
-        default: "GuildEmojiManager",
-        from: "../../managers/GuildEmojiManager",
+        default: 'GuildChannelManager',
+        from: '../../managers/GuildChannelManager',
       },
       {
-        default: "GuildInviteManager",
-        from: "../../managers/GuildInviteManager",
+        default: 'GuildEmojiManager',
+        from: '../../managers/GuildEmojiManager',
       },
       {
-        default: "GuildMemberManager",
-        from: "../../managers/GuildMemberManager",
+        default: 'GuildInviteManager',
+        from: '../../managers/GuildInviteManager',
       },
       {
-        default: "GuildScheduledEventManager",
-        from: "../../managers/GuildScheduledEventManager",
+        default: 'GuildMemberManager',
+        from: '../../managers/GuildMemberManager',
       },
       {
-        default: "GuildSettingManager",
-        from: "../../managers/GuildSettingManager",
+        default: 'GuildScheduledEventManager',
+        from: '../../managers/GuildScheduledEventManager',
       },
       {
-        default: "GuildStickerManager",
-        from: "../../managers/GuildStickerManager",
-      },
-      { default: "PresenceManager", from: "../../managers/PresenceManager" },
-      { default: "RoleManager", from: "../../managers/RoleManager" },
-      {
-        default: "StageInstanceManager",
-        from: "../../managers/StageInstanceManager",
+        default: 'GuildSettingManager',
+        from: '../../managers/GuildSettingManager',
       },
       {
-        default: "VoiceStateManager",
-        from: "../../managers/VoiceStateManager",
+        default: 'GuildStickerManager',
+        from: '../../managers/GuildStickerManager',
       },
-      { default: "SystemChannelFlags", from: "../../util/SystemChannelFlags" },
+      { default: 'PresenceManager', from: '../../managers/PresenceManager' },
+      { default: 'RoleManager', from: '../../managers/RoleManager' },
+      {
+        default: 'StageInstanceManager',
+        from: '../../managers/StageInstanceManager',
+      },
+      {
+        default: 'VoiceStateManager',
+        from: '../../managers/VoiceStateManager',
+      },
+      { default: 'SystemChannelFlags', from: '../../util/SystemChannelFlags' },
     ],
-    patchType: { from: "./selfbot/guild", type: "GuildPatch" },
-    rawType: { from: "../../typings/rawDataTypes", name: "RawGuildData" },
+    patchType: { from: './selfbot/guild', type: 'GuildPatch' },
+    rawType: { from: '../../typings/rawDataTypes', name: 'RawGuildData' },
   },
   GuildAuditLogs: {
-    fieldTypes: { entries: "Collection<Snowflake, GuildAuditLogsEntry<T>>" },
+    fieldTypes: { entries: 'Collection<Snowflake, GuildAuditLogsEntry<T>>' },
     fields: {},
     generate: false,
     imports: [],
   },
   GuildAuditLogsEntry: {
     fieldTypes: {
-      action: "TAction",
-      actionType: "TActionType",
-      changes: "Array<{ key: string; old?: unknown; new?: unknown }>",
+      action: 'TAction',
+      actionType: 'TActionType',
+      changes: 'Array<{ key: string; old?: unknown; new?: unknown }>',
       extra:
-        "TAction extends keyof GuildAuditLogsEntryExtraField ? GuildAuditLogsEntryExtraField[TAction] : null",
+        'TAction extends keyof GuildAuditLogsEntryExtraField ? GuildAuditLogsEntryExtraField[TAction] : null',
       target:
-        "TTargetType extends keyof GuildAuditLogsEntryTargetField<TActionType> ? GuildAuditLogsEntryTargetField<TActionType>[TTargetType] : Role | GuildEmoji | { id: Snowflake } | null",
-      targetType: "TTargetType",
+        'TTargetType extends keyof GuildAuditLogsEntryTargetField<TActionType> ? GuildAuditLogsEntryTargetField<TActionType>[TTargetType] : Role | GuildEmoji | { id: Snowflake } | null',
+      targetType: 'TTargetType',
     },
     fields: {},
     generate: false,
@@ -315,138 +315,138 @@ const CONFIG: Record<string, EntityConfig> = {
   },
   GuildBoost: {
     fields: {},
-    imports: [{ from: "discord-api-types/v10", named: ["Snowflake"] }],
-    rawType: { from: "./selfbot/guild-boost", name: "SelfbotGuildBoostData" },
+    imports: [{ from: 'discord-api-types/v10', named: ['Snowflake'] }],
+    rawType: { from: './selfbot/guild-boost', name: 'SelfbotGuildBoostData' },
   },
   GuildChannel: {
-    fields: { guild: "relation" },
+    fields: { guild: 'relation' },
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
-      { from: "../../structures/Guild", named: ["Guild"] },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
       {
-        default: "PermissionOverwriteManager",
-        from: "../../managers/PermissionOverwriteManager",
+        default: 'PermissionOverwriteManager',
+        from: '../../managers/PermissionOverwriteManager',
       },
     ],
     rawType: {
-      from: "../../typings/rawDataTypes",
-      name: "RawGuildChannelData",
+      from: '../../typings/rawDataTypes',
+      name: 'RawGuildChannelData',
     },
   },
   GuildEmoji: {
-    extends: "BaseGuildEmojiEntity",
-    extraFields: [{ kind: "internal", name: "_roles", type: "Snowflake[]" }],
-    fields: { _roles: "internal", author: "relation", guild: "relation" },
+    extends: 'BaseGuildEmojiEntity',
+    extraFields: [{ kind: 'internal', name: '_roles', type: 'Snowflake[]' }],
+    fields: { _roles: 'internal', author: 'relation', guild: 'relation' },
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
-      { from: "../../structures/User", named: ["User"] },
-      { from: "../../structures/Guild", named: ["Guild"] },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '../../structures/User', named: ['User'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
     ],
-    rawType: { from: "../../typings/rawDataTypes", name: "RawGuildEmojiData" },
+    rawType: { from: '../../typings/rawDataTypes', name: 'RawGuildEmojiData' },
   },
   GuildMember: {
-    extraFields: [{ kind: "internal", name: "_roles", type: "string[]" }],
-    fields: { _roles: "internal", guild: "relation" },
+    extraFields: [{ kind: 'internal', name: '_roles', type: 'string[]' }],
+    fields: { _roles: 'internal', guild: 'relation' },
     imports: [
-      { from: "../../../typings", named: ["AvatarDecorationData"] },
-      { from: "../../structures/Guild", named: ["Guild"] },
-      { from: "../../structures/User", named: ["User"] },
-      { default: "GuildMemberFlags", from: "../../util/GuildMemberFlags" },
+      { from: '../../../typings', named: ['AvatarDecorationData'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
+      { from: '../../structures/User', named: ['User'] },
+      { default: 'GuildMemberFlags', from: '../../util/GuildMemberFlags' },
     ],
-    patchType: { from: "./selfbot/guild-member", type: "GuildMemberPatch" },
-    rawType: { from: "../../typings/rawDataTypes", name: "RawGuildMemberData" },
+    patchType: { from: './selfbot/guild-member', type: 'GuildMemberPatch' },
+    rawType: { from: '../../typings/rawDataTypes', name: 'RawGuildMemberData' },
   },
   GuildPreview: {
     fieldTypes: {
-      emojis: "Collection<Snowflake, GuildPreviewEmoji>",
-      stickers: "Collection<Snowflake, Sticker>",
+      emojis: 'Collection<Snowflake, GuildPreviewEmoji>',
+      stickers: 'Collection<Snowflake, Sticker>',
     },
     fields: {},
     imports: [
-      { from: "discord-api-types/v10", named: ["GuildFeature", "Snowflake"] },
-      { from: "@discordjs/collection", named: ["Collection"] },
+      { from: 'discord-api-types/v10', named: ['GuildFeature', 'Snowflake'] },
+      { from: '@discordjs/collection', named: ['Collection'] },
       {
-        default: "GuildPreviewEmoji",
-        from: "../../structures/GuildPreviewEmoji",
+        default: 'GuildPreviewEmoji',
+        from: '../../structures/GuildPreviewEmoji',
       },
-      { from: "../../structures/Sticker", named: ["Sticker"] },
+      { from: '../../structures/Sticker', named: ['Sticker'] },
     ],
     rawType: {
-      from: "../../typings/rawDataTypes",
-      name: "RawGuildPreviewData",
+      from: '../../typings/rawDataTypes',
+      name: 'RawGuildPreviewData',
     },
   },
   GuildScheduledEvent: {
     fieldTypes: {
-      entityMetadata: "GuildScheduledEventEntityMetadata | null",
-      entityType: "GuildScheduledEventEntityType | null",
-      name: "string | null",
-      privacyLevel: "GuildScheduledEventPrivacyLevel | null",
-      status: "GuildScheduledEventStatus | null",
+      entityMetadata: 'GuildScheduledEventEntityMetadata | null',
+      entityType: 'GuildScheduledEventEntityType | null',
+      name: 'string | null',
+      privacyLevel: 'GuildScheduledEventPrivacyLevel | null',
+      status: 'GuildScheduledEventStatus | null',
     },
     fields: {},
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
       {
-        from: "../../../typings",
+        from: '../../../typings',
         named: [
-          "GuildScheduledEventEntityMetadata",
-          "GuildScheduledEventEntityType",
-          "GuildScheduledEventPrivacyLevel",
-          "GuildScheduledEventRecurrenceRule",
-          "GuildScheduledEventStatus",
+          'GuildScheduledEventEntityMetadata',
+          'GuildScheduledEventEntityType',
+          'GuildScheduledEventPrivacyLevel',
+          'GuildScheduledEventRecurrenceRule',
+          'GuildScheduledEventStatus',
         ],
       },
-      { from: "../../structures/User", named: ["User"] },
+      { from: '../../structures/User', named: ['User'] },
     ],
     rawType: {
-      from: "../../typings/rawDataTypes",
-      name: "RawGuildScheduledEventData",
+      from: '../../typings/rawDataTypes',
+      name: 'RawGuildScheduledEventData',
     },
   },
   GuildTemplate: {
-    fields: { creator: "relation", guild: "relation" },
+    fields: { creator: 'relation', guild: 'relation' },
     imports: [
       {
-        from: "discord-api-types/v10",
-        named: ["APITemplateSerializedSourceGuild", "Snowflake"],
+        from: 'discord-api-types/v10',
+        named: ['APITemplateSerializedSourceGuild', 'Snowflake'],
       },
-      { from: "../../structures/User", named: ["User"] },
-      { from: "../../structures/Guild", named: ["Guild"] },
+      { from: '../../structures/User', named: ['User'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
     ],
     rawType: {
-      from: "../../typings/rawDataTypes",
-      name: "RawGuildTemplateData",
+      from: '../../typings/rawDataTypes',
+      name: 'RawGuildTemplateData',
     },
   },
   Integration: {
     fields: {
-      application: "relation",
-      guild: "relation",
-      role: "relation",
-      user: "relation",
+      application: 'relation',
+      guild: 'relation',
+      role: 'relation',
+      user: 'relation',
     },
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
       {
-        from: "../../../typings",
-        named: ["IntegrationAccount", "IntegrationType"],
+        from: '../../../typings',
+        named: ['IntegrationAccount', 'IntegrationType'],
       },
-      { from: "../../structures/Guild", named: ["Guild"] },
-      { from: "../../structures/Role", named: ["Role"] },
-      { from: "../../structures/User", named: ["User"] },
+      { from: '../../structures/Guild', named: ['Guild'] },
+      { from: '../../structures/Role', named: ['Role'] },
+      { from: '../../structures/User', named: ['User'] },
       {
-        default: "IntegrationApplication",
-        from: "../../structures/IntegrationApplication",
+        default: 'IntegrationApplication',
+        from: '../../structures/IntegrationApplication',
       },
     ],
-    rawType: { from: "../../typings/rawDataTypes", name: "RawIntegrationData" },
+    rawType: { from: '../../typings/rawDataTypes', name: 'RawIntegrationData' },
   },
   Interaction: {
     fieldTypes: {
-      guildId: "Snowflake | null",
-      guildLocale: "string | null",
-      memberPermissions: "Readonly<Permissions> | null",
+      guildId: 'Snowflake | null',
+      guildLocale: 'string | null',
+      memberPermissions: 'Readonly<Permissions> | null',
     },
     fields: {},
     generate: false,
@@ -454,293 +454,293 @@ const CONFIG: Record<string, EntityConfig> = {
   },
   Invite: {
     fieldTypes: {
-      channel: "GuildChannel | GroupDMChannel | undefined",
-      targetType: "InviteTargetTypes | number | null",
-      type: "InviteTypes | number | null",
+      channel: 'GuildChannel | GroupDMChannel | undefined',
+      targetType: 'InviteTargetTypes | number | null',
+      type: 'InviteTypes | number | null',
     },
     fields: {
-      guild: "relation",
-      guildScheduledEvent: "relation",
-      inviter: "relation",
-      stageInstance: "relation",
-      targetApplication: "relation",
-      targetUser: "relation",
+      guild: 'relation',
+      guildScheduledEvent: 'relation',
+      inviter: 'relation',
+      stageInstance: 'relation',
+      targetApplication: 'relation',
+      targetUser: 'relation',
     },
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
       {
-        from: "../../../typings/enums",
-        named: ["InviteTargetTypes", "InviteTypes"],
+        from: '../../../typings/enums',
+        named: ['InviteTargetTypes', 'InviteTypes'],
       },
-      { from: "../../structures/InviteGuild", named: ["InviteGuild"] },
-      { from: "../../structures/GroupDMChannel", named: ["GroupDMChannel"] },
-      { from: "../../structures/GuildChannel", named: ["GuildChannel"] },
-      { from: "../../structures/Guild", named: ["Guild"] },
-      { from: "../../structures/User", named: ["User"] },
+      { from: '../../structures/InviteGuild', named: ['InviteGuild'] },
+      { from: '../../structures/GroupDMChannel', named: ['GroupDMChannel'] },
+      { from: '../../structures/GuildChannel', named: ['GuildChannel'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
+      { from: '../../structures/User', named: ['User'] },
       {
-        default: "IntegrationApplication",
-        from: "../../structures/IntegrationApplication",
-      },
-      {
-        default: "InviteStageInstance",
-        from: "../../structures/InviteStageInstance",
+        default: 'IntegrationApplication',
+        from: '../../structures/IntegrationApplication',
       },
       {
-        from: "../../structures/GuildScheduledEvent",
-        named: ["GuildScheduledEvent"],
+        default: 'InviteStageInstance',
+        from: '../../structures/InviteStageInstance',
       },
-      { default: "InviteFlags", from: "../../util/InviteFlags" },
+      {
+        from: '../../structures/GuildScheduledEvent',
+        named: ['GuildScheduledEvent'],
+      },
+      { default: 'InviteFlags', from: '../../util/InviteFlags' },
     ],
-    rawType: { from: "../../typings/rawDataTypes", name: "RawInviteData" },
+    rawType: { from: '../../typings/rawDataTypes', name: 'RawInviteData' },
   },
   InviteStageInstance: {
-    fieldTypes: { members: "Collection<Snowflake, GuildMember>" },
+    fieldTypes: { members: 'Collection<Snowflake, GuildMember>' },
     fields: {},
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
-      { from: "@discordjs/collection", named: ["Collection"] },
-      { from: "../../structures/GuildMember", named: ["GuildMember"] },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '@discordjs/collection', named: ['Collection'] },
+      { from: '../../structures/GuildMember', named: ['GuildMember'] },
     ],
     rawType: {
-      from: "../../typings/rawDataTypes",
-      name: "RawInviteStageInstance",
+      from: '../../typings/rawDataTypes',
+      name: 'RawInviteStageInstance',
     },
   },
   Message: {
     fieldTypes: {
-      attachments: "Collection<Snowflake, MessageAttachment>",
-      author: "User | null",
-      components: "TopLevelComponent[]",
-      content: "string | null",
-      guildId: "Snowflake | null",
-      interaction: "MessageInteraction | null",
-      messageSnapshots: "Collection<Snowflake, Message>",
-      pinned: "boolean | null",
-      resolved: "CommandInteractionResolvedData | null",
-      sharedClientTheme: "SharedClientTheme | null",
-      stickers: "Collection<Snowflake, Sticker>",
-      system: "boolean | null",
-      tts: "boolean | null",
-      type: "MessageType | null",
+      attachments: 'Collection<Snowflake, MessageAttachment>',
+      author: 'User | null',
+      components: 'TopLevelComponent[]',
+      content: 'string | null',
+      guildId: 'Snowflake | null',
+      interaction: 'MessageInteraction | null',
+      messageSnapshots: 'Collection<Snowflake, Message>',
+      pinned: 'boolean | null',
+      resolved: 'CommandInteractionResolvedData | null',
+      sharedClientTheme: 'SharedClientTheme | null',
+      stickers: 'Collection<Snowflake, Sticker>',
+      system: 'boolean | null',
+      tts: 'boolean | null',
+      type: 'MessageType | null',
     },
     fields: {},
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
-      { from: "@discordjs/collection", named: ["Collection"] },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '@discordjs/collection', named: ['Collection'] },
       {
-        default: "Application",
-        from: "../../structures/interfaces/Application",
+        default: 'Application',
+        from: '../../structures/interfaces/Application',
       },
       {
-        default: "MessageAttachment",
-        from: "../../structures/MessageAttachment",
+        default: 'MessageAttachment',
+        from: '../../structures/MessageAttachment',
       },
-      { default: "MessageEmbed", from: "../../structures/MessageEmbed" },
-      { default: "MessageMentions", from: "../../structures/MessageMentions" },
+      { default: 'MessageEmbed', from: '../../structures/MessageEmbed' },
+      { default: 'MessageMentions', from: '../../structures/MessageMentions' },
       {
-        from: "../../structures/Message",
-        named: ["Message", "MessageInteraction"],
+        from: '../../structures/Message',
+        named: ['Message', 'MessageInteraction'],
       },
-      { from: "../../structures/Poll", named: ["Poll"] },
-      { from: "../../structures/Sticker", named: ["Sticker"] },
-      { default: "ReactionManager", from: "../../managers/ReactionManager" },
-      { default: "MessageFlags", from: "../../util/MessageFlags" },
+      { from: '../../structures/Poll', named: ['Poll'] },
+      { from: '../../structures/Sticker', named: ['Sticker'] },
+      { default: 'ReactionManager', from: '../../managers/ReactionManager' },
+      { default: 'MessageFlags', from: '../../util/MessageFlags' },
       {
-        from: "../../../typings",
+        from: '../../../typings',
         named: [
-          "CommandInteractionResolvedData",
-          "MessageActivity",
-          "MessageCall",
-          "MessageInteractionMetadata",
-          "MessageReference",
-          "MessageSnapshot",
-          "MessageType",
-          "RoleSubscriptionData",
-          "SharedClientTheme",
-          "TopLevelComponent",
-          "User",
+          'CommandInteractionResolvedData',
+          'MessageActivity',
+          'MessageCall',
+          'MessageInteractionMetadata',
+          'MessageReference',
+          'MessageSnapshot',
+          'MessageType',
+          'RoleSubscriptionData',
+          'SharedClientTheme',
+          'TopLevelComponent',
+          'User',
         ],
       },
     ],
-    rawType: { from: "../../typings/rawDataTypes", name: "RawMessageData" },
+    rawType: { from: '../../typings/rawDataTypes', name: 'RawMessageData' },
   },
   MessageMentions: {
     fieldTypes: {
-      roles: "Collection<Snowflake, Role>",
-      users: "Collection<Snowflake, User>",
+      roles: 'Collection<Snowflake, Role>',
+      users: 'Collection<Snowflake, User>',
     },
     fields: {},
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
-      { from: "@discordjs/collection", named: ["Collection"] },
-      { from: "../../structures/Role", named: ["Role"] },
-      { from: "../../structures/User", named: ["User"] },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '@discordjs/collection', named: ['Collection'] },
+      { from: '../../structures/Role', named: ['Role'] },
+      { from: '../../structures/User', named: ['User'] },
     ],
   },
   MessagePayload: {
     fieldTypes: {
-      options: "MessageOptions | WebhookMessageOptions",
-      target: "MessageTarget",
+      options: 'MessageOptions | WebhookMessageOptions',
+      target: 'MessageTarget',
     },
     fields: {},
     imports: [
       {
-        from: "../../../typings",
+        from: '../../../typings',
         named: [
-          "HTTPAttachmentData",
-          "MessageOptions",
-          "MessageTarget",
-          "WebhookMessageOptions",
+          'HTTPAttachmentData',
+          'MessageOptions',
+          'MessageTarget',
+          'WebhookMessageOptions',
         ],
       },
       {
-        from: "../../../typings/rawDataTypes",
-        named: ["RawMessagePayloadData"],
+        from: '../../../typings/rawDataTypes',
+        named: ['RawMessagePayloadData'],
       },
     ],
     rawType: {
-      from: "../../typings/rawDataTypes",
-      name: "RawMessagePayloadData",
+      from: '../../typings/rawDataTypes',
+      name: 'RawMessagePayloadData',
     },
   },
   RichPresence: {
-    fieldTypes: { metadata: "RichPresenceMetadata" },
+    fieldTypes: { metadata: 'RichPresenceMetadata' },
     fields: {},
     generate: false,
     imports: [],
   },
   Role: {
-    fields: { guild: "relation" },
+    fields: { guild: 'relation' },
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
-      { from: "../../../typings", named: ["RoleColors", "RoleTagData"] },
-      { from: "../../structures/Guild", named: ["Guild"] },
-      { default: "Permissions", from: "../../util/Permissions" },
-      { default: "RoleFlags", from: "../../util/RoleFlags" },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '../../../typings', named: ['RoleColors', 'RoleTagData'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
+      { default: 'Permissions', from: '../../util/Permissions' },
+      { default: 'RoleFlags', from: '../../util/RoleFlags' },
     ],
   },
   StageInstance: {
     fields: {},
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
-      { from: "../../../typings", named: ["PrivacyLevel"] },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '../../../typings', named: ['PrivacyLevel'] },
     ],
     rawType: {
-      from: "../../typings/rawDataTypes",
-      name: "RawStageInstanceData",
+      from: '../../typings/rawDataTypes',
+      name: 'RawStageInstanceData',
     },
   },
   StickerPack: {
-    fieldTypes: { stickers: "Collection<Snowflake, Sticker>" },
+    fieldTypes: { stickers: 'Collection<Snowflake, Sticker>' },
     fields: {},
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
-      { from: "@discordjs/collection", named: ["Collection"] },
-      { from: "../../structures/Sticker", named: ["Sticker"] },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '@discordjs/collection', named: ['Collection'] },
+      { from: '../../structures/Sticker', named: ['Sticker'] },
     ],
-    rawType: { from: "../../typings/rawDataTypes", name: "RawStickerPackData" },
+    rawType: { from: '../../typings/rawDataTypes', name: 'RawStickerPackData' },
   },
   Team: {
-    fieldTypes: { members: "Collection<Snowflake, TeamMember>" },
+    fieldTypes: { members: 'Collection<Snowflake, TeamMember>' },
     fields: {},
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
-      { from: "@discordjs/collection", named: ["Collection"] },
-      { default: "TeamMember", from: "../../structures/TeamMember" },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '@discordjs/collection', named: ['Collection'] },
+      { default: 'TeamMember', from: '../../structures/TeamMember' },
     ],
-    rawType: { from: "../../typings/rawDataTypes", name: "RawTeamData" },
+    rawType: { from: '../../typings/rawDataTypes', name: 'RawTeamData' },
   },
   User: {
-    fields: { bannerColor: "selfbot" },
+    fields: { bannerColor: 'selfbot' },
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
       {
-        from: "../../../typings",
-        named: ["AvatarDecorationData", "Collectibles", "UserPrimaryGuild"],
+        from: '../../../typings',
+        named: ['AvatarDecorationData', 'Collectibles', 'UserPrimaryGuild'],
       },
-      { default: "UserFlags", from: "../../util/UserFlags" },
+      { default: 'UserFlags', from: '../../util/UserFlags' },
     ],
-    rawType: { from: "./selfbot/user", name: "SelfbotUserData" },
+    rawType: { from: './selfbot/user', name: 'SelfbotUserData' },
   },
   VoiceState: {
-    fields: { guild: "relation" },
+    fields: { guild: 'relation' },
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
-      { from: "../../structures/Guild", named: ["Guild"] },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
     ],
-    rawType: { from: "../../typings/rawDataTypes", name: "RawVoiceStateData" },
+    rawType: { from: '../../typings/rawDataTypes', name: 'RawVoiceStateData' },
   },
   Webhook: {
     fieldTypes: {
-      avatar: "string | null",
-      channelId: "Snowflake | null",
-      guildId: "Snowflake | null",
-      name: "string | null",
-      sourceGuild: "Guild | APIPartialGuild | null",
+      avatar: 'string | null',
+      channelId: 'Snowflake | null',
+      guildId: 'Snowflake | null',
+      name: 'string | null',
+      sourceGuild: 'Guild | APIPartialGuild | null',
     },
     fields: {},
     generate: false,
     imports: [],
   },
   WelcomeScreen: {
-    fieldTypes: { welcomeChannels: "Collection<Snowflake, WelcomeChannel>" },
-    fields: { guild: "relation" },
+    fieldTypes: { welcomeChannels: 'Collection<Snowflake, WelcomeChannel>' },
+    fields: { guild: 'relation' },
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
-      { from: "@discordjs/collection", named: ["Collection"] },
-      { from: "../../structures/Guild", named: ["Guild"] },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '@discordjs/collection', named: ['Collection'] },
+      { from: '../../structures/Guild', named: ['Guild'] },
       {
-        from: "../../../typings/enums",
-        named: ["InviteTargetTypes", "InviteTypes"],
+        from: '../../../typings/enums',
+        named: ['InviteTargetTypes', 'InviteTypes'],
       },
-      { from: "../../structures/InviteGuild", named: ["InviteGuild"] },
-      { from: "../../structures/GroupDMChannel", named: ["GroupDMChannel"] },
-      { from: "../../structures/GuildChannel", named: ["GuildChannel"] },
-      { default: "WelcomeChannel", from: "../../structures/WelcomeChannel" },
+      { from: '../../structures/InviteGuild', named: ['InviteGuild'] },
+      { from: '../../structures/GroupDMChannel', named: ['GroupDMChannel'] },
+      { from: '../../structures/GuildChannel', named: ['GuildChannel'] },
+      { default: 'WelcomeChannel', from: '../../structures/WelcomeChannel' },
     ],
     rawType: {
-      from: "../../typings/rawDataTypes",
-      name: "RawWelcomeScreenData",
+      from: '../../typings/rawDataTypes',
+      name: 'RawWelcomeScreenData',
     },
   },
   Widget: {
     fields: {},
     imports: [
-      { from: "discord-api-types/v10", named: ["Snowflake"] },
-      { from: "@discordjs/collection", named: ["Collection"] },
-      { from: "../../../typings", named: ["WidgetChannel"] },
-      { default: "WidgetMember", from: "../../structures/WidgetMember" },
+      { from: 'discord-api-types/v10', named: ['Snowflake'] },
+      { from: '@discordjs/collection', named: ['Collection'] },
+      { from: '../../../typings', named: ['WidgetChannel'] },
+      { default: 'WidgetMember', from: '../../structures/WidgetMember' },
     ],
-    rawType: { from: "../../typings/rawDataTypes", name: "RawWidgetData" },
+    rawType: { from: '../../typings/rawDataTypes', name: 'RawWidgetData' },
   },
 };
 
 const BUILTIN_TYPES = new Set([
-  "Array",
-  "BigInt",
-  "Boolean",
-  "Date",
-  "Error",
-  "Function",
-  "Map",
-  "Number",
-  "Object",
-  "Omit",
-  "Partial",
-  "Pick",
-  "Promise",
-  "Readonly",
-  "Record",
-  "Required",
-  "Set",
-  "String",
-  "Symbol",
+  'Array',
+  'BigInt',
+  'Boolean',
+  'Date',
+  'Error',
+  'Function',
+  'Map',
+  'Number',
+  'Object',
+  'Omit',
+  'Partial',
+  'Pick',
+  'Promise',
+  'Readonly',
+  'Record',
+  'Required',
+  'Set',
+  'String',
+  'Symbol',
 ]);
 
 const configFile = ts.readConfigFile(TSCONFIG, ts.sys.readFile);
 if (configFile.error) {
   throw new Error(
-    ts.flattenDiagnosticMessageText(configFile.error.messageText, "\n")
+    ts.flattenDiagnosticMessageText(configFile.error.messageText, '\n')
   );
 }
 const parsed = ts.parseJsonConfigFileContent(configFile.config, ts.sys, PKG);
@@ -771,7 +771,7 @@ function walkFiles(dir: string, out: string[] = []): string[] {
     const path = pathModule.join(dir, entry.name);
     if (entry.isDirectory()) {
       walkFiles(path, out);
-    } else if (entry.name.endsWith(".ts")) {
+    } else if (entry.name.endsWith('.ts')) {
       out.push(path);
     }
   }
@@ -868,14 +868,14 @@ function collectDeclared(
       continue;
     }
     const name = member.name.getText(sf);
-    if (name.startsWith("#") || !member.type) {
+    if (name.startsWith('#') || !member.type) {
       continue;
     }
     out.push({
       name,
       optional: Boolean(member.questionToken),
       type: checker.getTypeAtLocation(member.type),
-      typeText: member.type.getText(sf).replaceAll(/\s+/gu, " ").trim(),
+      typeText: member.type.getText(sf).replaceAll(/\s+/gu, ' ').trim(),
     });
   }
   return out;
@@ -884,24 +884,24 @@ function collectDeclared(
 function safeTypeText(type: ts.Type): string {
   const text = checker
     .typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation)
-    .replaceAll(/\s+/gu, " ")
+    .replaceAll(/\s+/gu, ' ')
     .trim();
-  return text === "any" ? "unknown" : text;
+  return text === 'any' ? 'unknown' : text;
 }
 
 function splitTopLevelUnion(text: string): string[] {
   const parts: string[] = [];
   let depth = 0;
-  let current = "";
+  let current = '';
   for (const char of text) {
-    if (char === "<" || char === "(" || char === "[" || char === "{") {
+    if (char === '<' || char === '(' || char === '[' || char === '{') {
       depth += 1;
-    } else if (char === ">" || char === ")" || char === "]" || char === "}") {
+    } else if (char === '>' || char === ')' || char === ']' || char === '}') {
       depth -= 1;
     }
-    if (char === "|" && depth === 0) {
+    if (char === '|' && depth === 0) {
       parts.push(current);
-      current = "";
+      current = '';
     } else {
       current += char;
     }
@@ -911,10 +911,10 @@ function splitTopLevelUnion(text: string): string[] {
 }
 
 const unionRank = (value: string): number => {
-  if (value === "null") {
+  if (value === 'null') {
     return 1;
   }
-  if (value === "undefined") {
+  if (value === 'undefined') {
     return 2;
   }
   return 0;
@@ -934,12 +934,12 @@ function formatUnion(texts: string[]): string {
       (left, right) =>
         unionRank(left) - unionRank(right) || left.localeCompare(right)
     )
-    .join(" | ");
+    .join(' | ');
 }
 
-const typingsSf = getSource(pathModule.join(TYPINGS, "index.d.ts"));
-const rawSf = getSource(pathModule.join(TYPINGS, "rawDataTypes.d.ts"));
-const structureFiles = walkFiles(pathModule.join(SRC, "structures"));
+const typingsSf = getSource(pathModule.join(TYPINGS, 'index.d.ts'));
+const rawSf = getSource(pathModule.join(TYPINGS, 'rawDataTypes.d.ts'));
+const structureFiles = walkFiles(pathModule.join(SRC, 'structures'));
 const classFiles = new Map<string, string>();
 for (const file of structureFiles) {
   const sf = getSource(file);
@@ -1043,8 +1043,8 @@ function analyze(name: string, file: string): EntityResult | undefined {
         (prop) =>
           !declaredNames.has(prop) &&
           !extraNames.has(prop) &&
-          prop !== "client" &&
-          !prop.startsWith("#")
+          prop !== 'client' &&
+          !prop.startsWith('#')
       )
       .toSorted(),
     declaredNotAssigned: declared
@@ -1060,8 +1060,8 @@ function analyze(name: string, file: string): EntityResult | undefined {
 
 function kebab(name: string): string {
   return name
-    .replaceAll(/(?<lower>[a-z0-9])(?<upper>[A-Z])/gu, "$<lower>-$<upper>")
-    .replaceAll(/(?<first>[A-Z])(?<second>[A-Z][a-z])/gu, "$<first>-$<second>")
+    .replaceAll(/(?<lower>[a-z0-9])(?<upper>[A-Z])/gu, '$<lower>-$<upper>')
+    .replaceAll(/(?<first>[A-Z])(?<second>[A-Z][a-z])/gu, '$<first>-$<second>')
     .toLowerCase();
 }
 
@@ -1096,7 +1096,7 @@ function renderImports(name: string, fields: Field[]): string {
       covered.add(spec.default);
     }
     if (named.length) {
-      lines.push(`import type { ${named.join(", ")} } from '${spec.from}';`);
+      lines.push(`import type { ${named.join(', ')} } from '${spec.from}';`);
       for (const id of named) {
         covered.add(id);
       }
@@ -1104,35 +1104,35 @@ function renderImports(name: string, fields: Field[]): string {
   }
   const missing = [...used].filter((id) => !covered.has(id));
   if (missing.length) {
-    throw new Error(`Missing imports for ${name}: ${missing.join(", ")}`);
+    throw new Error(`Missing imports for ${name}: ${missing.join(', ')}`);
   }
-  return lines.join("\n");
+  return lines.join('\n');
 }
 
 function renderFields(fields: Record<string, FieldKind> | undefined): string {
   const entries = Object.entries(fields ?? {});
   if (entries.length === 0) {
-    return "Record<never, never>";
+    return 'Record<never, never>';
   }
-  return `{ ${entries.map(([key, value]) => `${key}: '${value}'`).join("; ")} }`;
+  return `{ ${entries.map(([key, value]) => `${key}: '${value}'`).join('; ')} }`;
 }
 
 function generateEntity(result: EntityResult): string {
-  const file = pathModule.relative(PKG, result.file).replaceAll("\\", "/");
+  const file = pathModule.relative(PKG, result.file).replaceAll('\\', '/');
   const config = CONFIG[result.name];
   if (!config) {
     throw new Error(`No import config for ${result.name}`);
   }
   const rawType = result.rawType?.name ?? `Raw${result.name}Data`;
   const extendsImport = config.extends
-    ? `import type { ${config.extends} } from './${kebab(config.extends.replace(/Entity$/u, ""))}';\n`
-    : "";
+    ? `import type { ${config.extends} } from './${kebab(config.extends.replace(/Entity$/u, ''))}';\n`
+    : '';
   const body = result.fields
     .map(
-      (field) => `  ${field.name}${field.optional ? "?" : ""}: ${field.type};`
+      (field) => `  ${field.name}${field.optional ? '?' : ''}: ${field.type};`
     )
-    .join("\n");
-  const extendsClause = config.extends ? ` extends ${config.extends}` : "";
+    .join('\n');
+  const extendsClause = config.extends ? ` extends ${config.extends}` : '';
   return `// @generated by tools/schema/generate.ts — do not edit by hand.
 // Run \`bun run schema:generate\` from the package to update.
 
@@ -1181,27 +1181,27 @@ function generateSchema(results: EntityResult[]): string {
     ...[...rawImports.entries()]
       .toSorted(([left], [right]) => left.localeCompare(right))
       .map(
-        ([from, names]) => `import type { ${names.join(", ")} } from '${from}';`
+        ([from, names]) => `import type { ${names.join(', ')} } from '${from}';`
       ),
     ...[...patchImports.entries()]
       .toSorted(([left], [right]) => left.localeCompare(right))
       .map(
-        ([from, names]) => `import type { ${names.join(", ")} } from '${from}';`
+        ([from, names]) => `import type { ${names.join(', ')} } from '${from}';`
       ),
     ...generated.map(
       (result) =>
         `import type { ${result.name}Entity } from './entities/${kebab(result.name)}';`
     ),
-  ].join("\n");
+  ].join('\n');
   const entries = generated
     .map((result) => {
       const patch = CONFIG[result.name]?.patchType;
-      const patchGeneric = patch ? `, Partial<${patch.type}>` : "";
+      const patchGeneric = patch ? `, Partial<${patch.type}>` : '';
       return `  ${result.name}: EntityEntry<${result.rawType?.name ?? `Raw${result.name}Data`}, ${result.name}Entity, ${renderFields(
         CONFIG[result.name]?.fields
       )}${patchGeneric}>;`;
     })
-    .join("\n");
+    .join('\n');
   return `// @generated by tools/schema/generate.ts — do not edit by hand.
 // Run \`bun run schema:generate\` from the package to update.
 
@@ -1246,12 +1246,12 @@ export type PatchOf<K extends EntityName> = EntitySchema[K]['patch'];
 
 function normalize(text: string): string {
   return text
-    .replaceAll(/import[\s\S]*?from\s+["'][^"']+["'];?/gu, "")
-    .replaceAll(/import\s+["'][^"']+["'];?/gu, "")
-    .replaceAll(/["']/gu, "")
-    .replaceAll(/\s+/gu, "")
-    .replaceAll(":|", ":")
-    .replaceAll(/[,;]+\}/gu, "}");
+    .replaceAll(/import[\s\S]*?from\s+["'][^"']+["'];?/gu, '')
+    .replaceAll(/import\s+["'][^"']+["'];?/gu, '')
+    .replaceAll(/["']/gu, '')
+    .replaceAll(/\s+/gu, '')
+    .replaceAll(':|', ':')
+    .replaceAll(/[,;]+\}/gu, '}');
 }
 
 function checkFile(path: string, content: string): boolean {
@@ -1259,7 +1259,7 @@ function checkFile(path: string, content: string): boolean {
     console.error(`missing ${pathModule.relative(PKG, path)}`);
     return false;
   }
-  const current = readFileSync(path, "utf-8");
+  const current = readFileSync(path, 'utf-8');
   // `bun fmt` may wrap long type entries and reorder imports; compare tokens,
   // not line breaks, quotes, or import order.
   // Formatting itself is enforced separately by `bun fmt:check`.
@@ -1277,8 +1277,8 @@ function checkFile(path: string, content: string): boolean {
   );
   console.error(`  actual:   ${left.slice(index, index + 120)}`);
   console.error(`  expected: ${right.slice(index, index + 120)}`);
-  const actual = current.split("\n");
-  const expected = content.split("\n");
+  const actual = current.split('\n');
+  const expected = content.split('\n');
   for (
     let offset = 0;
     offset < Math.max(actual.length, expected.length);
@@ -1286,8 +1286,8 @@ function checkFile(path: string, content: string): boolean {
   ) {
     if (actual[offset] !== expected[offset]) {
       console.error(`mismatch ${pathModule.relative(PKG, path)}:${offset + 1}`);
-      console.error(`  actual:   ${actual[offset] ?? "<eof>"}`);
-      console.error(`  expected: ${expected[offset] ?? "<eof>"}`);
+      console.error(`  actual:   ${actual[offset] ?? '<eof>'}`);
+      console.error(`  expected: ${expected[offset] ?? '<eof>'}`);
       break;
     }
   }
@@ -1295,11 +1295,11 @@ function checkFile(path: string, content: string): boolean {
 }
 
 const args = process.argv.slice(2);
-const check = args.includes("--check");
-const report = args.includes("--report");
+const check = args.includes('--check');
+const report = args.includes('--report');
 const filter =
-  args.find((arg) => arg.startsWith("--entity="))?.slice("--entity=".length) ??
-  (args.includes("--entity") ? args[args.indexOf("--entity") + 1] : undefined);
+  args.find((arg) => arg.startsWith('--entity='))?.slice('--entity='.length) ??
+  (args.includes('--entity') ? args[args.indexOf('--entity') + 1] : undefined);
 const results: EntityResult[] = [];
 for (const [name, file] of [...classFiles.entries()].toSorted(
   ([left], [right]) => left.localeCompare(right)
@@ -1314,7 +1314,7 @@ for (const [name, file] of [...classFiles.entries()].toSorted(
   const alias = findRawAlias(name);
   result.rawType =
     CONFIG[name]?.rawType ??
-    (alias ? { from: "../../typings/rawDataTypes", name: alias } : undefined);
+    (alias ? { from: '../../typings/rawDataTypes', name: alias } : undefined);
   results.push(result);
 }
 

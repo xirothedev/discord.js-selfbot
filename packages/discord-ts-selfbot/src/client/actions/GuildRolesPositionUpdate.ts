@@ -1,5 +1,5 @@
-import Action from "./Action";
-import type { Snowflake } from "discord-api-types/v10";
+import Action from './Action';
+import type { Snowflake } from 'discord-api-types/v10';
 
 interface GuildRolesPositionUpdateData {
   guild_id: Snowflake;
@@ -14,8 +14,8 @@ class GuildRolesPositionUpdate extends Action {
     if (guild) {
       for (const partialRole of data.roles) {
         if (
-          typeof partialRole.id !== "string" ||
-          typeof partialRole.position !== "number"
+          typeof partialRole.id !== 'string' ||
+          typeof partialRole.position !== 'number'
         ) {
           continue;
         }

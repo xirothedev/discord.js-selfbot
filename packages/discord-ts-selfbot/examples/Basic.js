@@ -1,15 +1,15 @@
-import { Client } from "../src/index";
+import { Client } from '../src/index';
 
 const client = new Client();
 
-client.on("ready", () => {
+client.on('ready', () => {
   console.log(`${client.user.username} is ready!`);
 });
 
-client.on("messageCreate", (message) => {
-  if (message.content === "ping") {
-    message.reply("pong");
+client.on('messageCreate', (message) => {
+  if (message.content === 'ping') {
+    message.reply('pong');
   }
 });
 
-client.login("token");
+client.login('token');

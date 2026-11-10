@@ -1,29 +1,29 @@
-import Interaction from "./Interaction";
-import InteractionWebhook from "./InteractionWebhook";
-import InteractionResponses from "./interfaces/InteractionResponses";
-import _ConstantsModule from "../util/Constants";
-import type { APIMessage, Snowflake } from "discord-api-types/v10";
-import type { CacheType, MessageComponentType } from "../../typings";
-import type { RawMessageComponentInteractionData } from "../../typings/rawDataTypes";
-import type { Message } from "./Message";
-import type Client from "../client/Client";
+import Interaction from './Interaction';
+import InteractionWebhook from './InteractionWebhook';
+import InteractionResponses from './interfaces/InteractionResponses';
+import _ConstantsModule from '../util/Constants';
+import type { APIMessage, Snowflake } from 'discord-api-types/v10';
+import type { CacheType, MessageComponentType } from '../../typings';
+import type { RawMessageComponentInteractionData } from '../../typings/rawDataTypes';
+import type { Message } from './Message';
+import type Client from '../client/Client';
 
 const { MessageComponentTypes } = _ConstantsModule;
 
 function isComponentType(
   value: unknown
-): value is Exclude<MessageComponentType, "ACTION_ROW"> {
+): value is Exclude<MessageComponentType, 'ACTION_ROW'> {
   return (
-    typeof value === "string" &&
+    typeof value === 'string' &&
     value in MessageComponentTypes &&
-    value !== "ACTION_ROW"
+    value !== 'ACTION_ROW'
   );
 }
 
 class MessageComponentInteraction<
   Cached extends CacheType = CacheType,
 > extends Interaction<Cached> {
-  declare componentType: Exclude<MessageComponentType, "ACTION_ROW">;
+  declare componentType: Exclude<MessageComponentType, 'ACTION_ROW'>;
   declare customId: string;
   declare channelId: Snowflake;
   declare deferred: boolean;
@@ -43,7 +43,7 @@ class MessageComponentInteraction<
       data.data.component_type
     );
     if (!componentType) {
-      throw new Error("INVALID_COMPONENT_TYPE");
+      throw new Error('INVALID_COMPONENT_TYPE');
     }
     this.componentType = componentType;
 
@@ -62,30 +62,30 @@ class MessageComponentInteraction<
 
   get component() {
     const rows =
-      "components" in this.message && this.message.components
+      'components' in this.message && this.message.components
         ? this.message.components
         : [];
     const components: unknown[] = [];
     for (const row of rows) {
-      if ("components" in row && Array.isArray(row.components)) {
+      if ('components' in row && Array.isArray(row.components)) {
         components.push(...row.components);
       }
     }
     return components.find((component) => {
-      if (typeof component !== "object" || component === null) {
+      if (typeof component !== 'object' || component === null) {
         return false;
       }
-      if ("customId" in component && component.customId === this.customId) {
+      if ('customId' in component && component.customId === this.customId) {
         return true;
       }
-      return "custom_id" in component && component.custom_id === this.customId;
+      return 'custom_id' in component && component.custom_id === this.customId;
     });
   }
 
   static resolveType(
     type: string | number | undefined
-  ): Exclude<MessageComponentType, "ACTION_ROW"> | undefined {
-    if (typeof type === "number") {
+  ): Exclude<MessageComponentType, 'ACTION_ROW'> | undefined {
+    if (typeof type === 'number') {
       const name = MessageComponentTypes[type];
       return isComponentType(name) ? name : undefined;
     }

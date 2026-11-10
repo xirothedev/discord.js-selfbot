@@ -1,41 +1,41 @@
-import Base, { patchValue } from "./Base";
-import VoiceState from "./VoiceState";
-import TextBasedChannel from "./interfaces/TextBasedChannel";
-import _errorsModule from "../errors";
+import Base, { patchValue } from './Base';
+import VoiceState from './VoiceState';
+import TextBasedChannel from './interfaces/TextBasedChannel';
+import _errorsModule from '../errors';
 
 const { Error } = _errorsModule;
-import _ConstantsModule from "../util/Constants";
+import _ConstantsModule from '../util/Constants';
 
 const { RelationshipTypes } = _ConstantsModule;
-import SnowflakeUtil from "../util/SnowflakeUtil";
-import UserFlags from "../util/UserFlags";
-import Util from "../util/Util";
-import type { APIUser } from "discord-api-types/v10";
-import type { ImageURLOptions } from "../../typings";
-import type { SelfbotUserData } from "../types/selfbot/user";
-import type { UserEntity } from "../types/entities/user";
-import type { PatchOf } from "../types/schema";
-import type { SendOptions, SendResult } from "../types/channels";
-import type Client from "../client/Client";
-import type { VoiceState as VoiceStateType } from "./VoiceState";
-import type { Guild } from "./Guild";
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import UserFlags from '../util/UserFlags';
+import Util from '../util/Util';
+import type { APIUser } from 'discord-api-types/v10';
+import type { ImageURLOptions } from '../../typings';
+import type { SelfbotUserData } from '../types/selfbot/user';
+import type { UserEntity } from '../types/entities/user';
+import type { PatchOf } from '../types/schema';
+import type { SendOptions, SendResult } from '../types/channels';
+import type Client from '../client/Client';
+import type { VoiceState as VoiceStateType } from './VoiceState';
+import type { Guild } from './Guild';
 
 class User extends Base implements UserEntity {
   declare send: (options: SendOptions) => SendResult;
-  declare accentColor: UserEntity["accentColor"];
-  declare avatar: UserEntity["avatar"];
-  declare avatarDecorationData: UserEntity["avatarDecorationData"];
-  declare banner: UserEntity["banner"];
-  declare bannerColor: UserEntity["bannerColor"];
-  declare bot: UserEntity["bot"];
-  declare collectibles: UserEntity["collectibles"];
-  declare discriminator: UserEntity["discriminator"];
-  declare flags: UserEntity["flags"];
-  declare globalName: UserEntity["globalName"];
-  declare id: UserEntity["id"];
-  declare primaryGuild: UserEntity["primaryGuild"];
-  declare system: UserEntity["system"];
-  declare username: UserEntity["username"];
+  declare accentColor: UserEntity['accentColor'];
+  declare avatar: UserEntity['avatar'];
+  declare avatarDecorationData: UserEntity['avatarDecorationData'];
+  declare banner: UserEntity['banner'];
+  declare bannerColor: UserEntity['bannerColor'];
+  declare bot: UserEntity['bot'];
+  declare collectibles: UserEntity['collectibles'];
+  declare discriminator: UserEntity['discriminator'];
+  declare flags: UserEntity['flags'];
+  declare globalName: UserEntity['globalName'];
+  declare id: UserEntity['id'];
+  declare primaryGuild: UserEntity['primaryGuild'];
+  declare system: UserEntity['system'];
+  declare username: UserEntity['username'];
 
   constructor(client: Client, data: SelfbotUserData) {
     super(client);
@@ -51,7 +51,7 @@ class User extends Base implements UserEntity {
     this._patch(data);
   }
 
-  _patch(data: PatchOf<"User">) {
+  _patch(data: PatchOf<'User'>) {
     if (data.username !== undefined) {
       this.username = data.username;
     }
@@ -152,7 +152,7 @@ class User extends Base implements UserEntity {
   }
 
   get partial() {
-    return typeof this.username !== "string";
+    return typeof this.username !== 'string';
   }
 
   get createdTimestamp() {
@@ -163,7 +163,7 @@ class User extends Base implements UserEntity {
     return new Date(this.createdTimestamp);
   }
 
-  avatarURL({ format = "webp", size, dynamic }: ImageURLOptions = {}) {
+  avatarURL({ format = 'webp', size, dynamic }: ImageURLOptions = {}) {
     if (!this.avatar) {
       return null;
     }
@@ -204,7 +204,7 @@ class User extends Base implements UserEntity {
 
   get defaultAvatarURL() {
     const index =
-      this.discriminator === "0" || this.discriminator === "0000"
+      this.discriminator === '0' || this.discriminator === '0000'
         ? Util.calculateUserDefaultAvatarIndex(this.id)
         : Number(this.discriminator) % 5;
     return this.client.rest.cdn.DefaultAvatar(index);
@@ -215,15 +215,15 @@ class User extends Base implements UserEntity {
   }
 
   get hexAccentColor() {
-    if (typeof this.accentColor !== "number") {
+    if (typeof this.accentColor !== 'number') {
       return this.accentColor;
     }
-    return `#${this.accentColor.toString(16).padStart(6, "0")}`;
+    return `#${this.accentColor.toString(16).padStart(6, '0')}`;
   }
 
-  bannerURL({ format = "webp", size, dynamic }: ImageURLOptions = {}) {
+  bannerURL({ format = 'webp', size, dynamic }: ImageURLOptions = {}) {
     if (this.banner === undefined) {
-      throw new Error("USER_BANNER_NOT_FETCHED");
+      throw new Error('USER_BANNER_NOT_FETCHED');
     }
     if (!this.banner) {
       return null;
@@ -238,10 +238,10 @@ class User extends Base implements UserEntity {
   }
 
   get tag() {
-    if (typeof this.username !== "string") {
+    if (typeof this.username !== 'string') {
       return null;
     }
-    return this.discriminator === "0" || this.discriminator === "0000"
+    return this.discriminator === '0' || this.discriminator === '0000'
       ? this.username
       : `${this.username}#${this.discriminator}`;
   }

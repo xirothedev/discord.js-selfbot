@@ -1,10 +1,10 @@
-import { setInterval, clearInterval } from "node:timers";
-import { Collection } from "@discordjs/collection";
-import _ConstantsModule from "./Constants";
+import { setInterval, clearInterval } from 'node:timers';
+import { Collection } from '@discordjs/collection';
+import _ConstantsModule from './Constants';
 
 const { _cleanupSymbol } = _ConstantsModule;
-import Sweepers from "./Sweepers";
-import _DJSErrorModule from "../errors/DJSError";
+import Sweepers from './Sweepers';
+import _DJSErrorModule from '../errors/DJSError';
 
 const { TypeError } = _DJSErrorModule;
 
@@ -25,8 +25,8 @@ class LimitedCollection<Key = unknown, Value = unknown> extends Collection<
     options: unknown = {},
     iterable?: Iterable<readonly [Key, Value]>
   ) {
-    if (typeof options !== "object" || options === null) {
-      throw new TypeError("INVALID_TYPE", "options", "object", true);
+    if (typeof options !== 'object' || options === null) {
+      throw new TypeError('INVALID_TYPE', 'options', 'object', true);
     }
     const opts = (options ?? {}) as Record<string, unknown>;
     const {
@@ -41,17 +41,17 @@ class LimitedCollection<Key = unknown, Value = unknown> extends Collection<
       sweepFilter?: unknown;
     };
 
-    if (typeof maxSize !== "number") {
-      throw new TypeError("INVALID_TYPE", "maxSize", "number");
+    if (typeof maxSize !== 'number') {
+      throw new TypeError('INVALID_TYPE', 'maxSize', 'number');
     }
-    if (keepOverLimit !== null && typeof keepOverLimit !== "function") {
-      throw new TypeError("INVALID_TYPE", "keepOverLimit", "function");
+    if (keepOverLimit !== null && typeof keepOverLimit !== 'function') {
+      throw new TypeError('INVALID_TYPE', 'keepOverLimit', 'function');
     }
-    if (typeof sweepInterval !== "number") {
-      throw new TypeError("INVALID_TYPE", "sweepInterval", "number");
+    if (typeof sweepInterval !== 'number') {
+      throw new TypeError('INVALID_TYPE', 'sweepInterval', 'number');
     }
-    if (sweepFilter !== null && typeof sweepFilter !== "function") {
-      throw new TypeError("INVALID_TYPE", "sweepFilter", "function");
+    if (sweepFilter !== null && typeof sweepFilter !== 'function') {
+      throw new TypeError('INVALID_TYPE', 'sweepFilter', 'function');
     }
 
     super(iterable);
@@ -89,8 +89,8 @@ class LimitedCollection<Key = unknown, Value = unknown> extends Collection<
             if (sweepFn === null) {
               return;
             }
-            if (typeof sweepFn !== "function") {
-              throw new TypeError("SWEEP_FILTER_RETURN");
+            if (typeof sweepFn !== 'function') {
+              throw new TypeError('SWEEP_FILTER_RETURN');
             }
             this.sweep(sweepFn);
           }, sweepInterval * 1000).unref()

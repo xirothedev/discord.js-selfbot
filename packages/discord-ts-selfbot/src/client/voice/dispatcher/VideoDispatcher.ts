@@ -1,6 +1,6 @@
-import BaseDispatcher from "./BaseDispatcher";
-import type MediaPlayer from "../player/MediaPlayer";
-import type { DispatcherStreams } from "./BaseDispatcher";
+import BaseDispatcher from './BaseDispatcher';
+import type MediaPlayer from '../player/MediaPlayer';
+import type { DispatcherStreams } from './BaseDispatcher';
 
 class VideoDispatcher extends BaseDispatcher {
   declare fps: number;
@@ -28,7 +28,7 @@ class VideoDispatcher extends BaseDispatcher {
   }
 
   getTypeDispatcher() {
-    return "video";
+    return 'video';
   }
 
   partitionMtu(data: Buffer): Buffer[] {
@@ -47,7 +47,7 @@ class VideoDispatcher extends BaseDispatcher {
   }
 
   _codecCallback(_chunk: Buffer): void {
-    throw new Error("The _codecCallback method must be implemented");
+    throw new Error('The _codecCallback method must be implemented');
   }
 }
 

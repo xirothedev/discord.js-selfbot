@@ -1,4 +1,4 @@
-import _errorsModule from "../errors";
+import _errorsModule from '../errors';
 
 const { RangeError } = _errorsModule;
 // Data structure that makes it easy to interact with a bitfield.
@@ -38,7 +38,7 @@ class BitField {
   any(bit: BitFieldResolvable): boolean {
     const lhs = this.bitfield;
     const rhs = (this.constructor as unknown as BitFieldStatic).resolve(bit);
-    if (typeof lhs === "bigint" || typeof rhs === "bigint") {
+    if (typeof lhs === 'bigint' || typeof rhs === 'bigint') {
       return (
         ((lhs as bigint) & (rhs as bigint)) !==
         (this.constructor as unknown as BitFieldStatic).defaultBit
@@ -62,7 +62,7 @@ class BitField {
       bit
     ) as number | bigint;
     const lhs = this.bitfield;
-    if (typeof lhs === "bigint" || typeof resolved === "bigint") {
+    if (typeof lhs === 'bigint' || typeof resolved === 'bigint') {
       return ((lhs as bigint) & (resolved as bigint)) === (resolved as bigint);
     }
     return ((lhs as number) & (resolved as number)) === (resolved as number);
@@ -86,12 +86,12 @@ class BitField {
     for (const bit of bits) {
       const resolved = ctor.resolve(bit);
       total =
-        typeof total === "bigint"
+        typeof total === 'bigint'
           ? (total as bigint) | (resolved as bigint)
           : (total as number) | (resolved as number);
     }
     const next =
-      typeof this.bitfield === "bigint"
+      typeof this.bitfield === 'bigint'
         ? (this.bitfield as bigint) | (total as bigint)
         : (this.bitfield as number) | (total as number);
     if (Object.isFrozen(this)) {
@@ -109,12 +109,12 @@ class BitField {
     for (const bit of bits) {
       const resolved = ctor.resolve(bit);
       total =
-        typeof total === "bigint"
+        typeof total === 'bigint'
           ? (total as bigint) | (resolved as bigint)
           : (total as number) | (resolved as number);
     }
     const next =
-      typeof this.bitfield === "bigint"
+      typeof this.bitfield === 'bigint'
         ? (this.bitfield as bigint) & ~(total as bigint)
         : (this.bitfield as number) & ~(total as number);
     if (Object.isFrozen(this)) {
@@ -146,7 +146,7 @@ class BitField {
   }
 
   toJSON(): number | string {
-    return typeof this.bitfield === "number"
+    return typeof this.bitfield === 'number'
       ? this.bitfield
       : this.bitfield.toString();
   }
@@ -173,29 +173,29 @@ class BitField {
       for (const item of bit) {
         const resolved = self.resolve(item);
         total =
-          typeof total === "bigint" || typeof resolved === "bigint"
+          typeof total === 'bigint' || typeof resolved === 'bigint'
             ? (total as bigint) | (resolved as bigint)
             : (total as number) | (resolved as number);
       }
       return total;
     }
     if (
-      typeof bit === "object" &&
+      typeof bit === 'object' &&
       bit !== null &&
-      "bitfield" in bit &&
-      (typeof bit.bitfield === "number" || typeof bit.bitfield === "bigint")
+      'bitfield' in bit &&
+      (typeof bit.bitfield === 'number' || typeof bit.bitfield === 'bigint')
     ) {
       return bit.bitfield;
     }
-    if (typeof bit === "string") {
+    if (typeof bit === 'string') {
       if (!Number.isNaN(Number(bit))) {
-        return typeof defaultBit === "bigint" ? BigInt(bit) : Number(bit);
+        return typeof defaultBit === 'bigint' ? BigInt(bit) : Number(bit);
       }
       if (self.FLAGS[bit] !== undefined) {
         return self.FLAGS[bit];
       }
     }
-    throw new RangeError("BITFIELD_INVALID", bit);
+    throw new RangeError('BITFIELD_INVALID', bit);
   }
 }
 

@@ -1,10 +1,10 @@
-import type { Stream } from "node:stream";
-import { patchValue } from "./Base";
-import AttachmentFlags from "../util/AttachmentFlags";
-import Util from "../util/Util";
-import type { Snowflake } from "discord-api-types/v10";
-import type { BufferResolvable } from "../../typings";
-import type { RawMessageAttachmentData } from "../../typings/rawDataTypes";
+import type { Stream } from 'node:stream';
+import { patchValue } from './Base';
+import AttachmentFlags from '../util/AttachmentFlags';
+import Util from '../util/Util';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { BufferResolvable } from '../../typings';
+import type { RawMessageAttachmentData } from '../../typings/rawDataTypes';
 
 type MessageAttachmentPatch = Partial<RawMessageAttachmentData> & {
   flags?: number;
@@ -63,7 +63,7 @@ class MessageAttachment {
 
     if (!spoiler) {
       while (this.spoiler) {
-        this.name = this.name?.slice("SPOILER_".length) ?? null;
+        this.name = this.name?.slice('SPOILER_'.length) ?? null;
       }
       return this;
     }
@@ -87,14 +87,14 @@ class MessageAttachment {
     this.duration = patchValue(data.duration_secs, this.duration);
     this.waveform = patchValue(data.waveform, this.waveform);
     this.flags =
-      "flags" in data
+      'flags' in data
         ? new AttachmentFlags(data.flags).freeze()
         : (this.flags ?? new AttachmentFlags().freeze());
     this.title = patchValue(data.title, this.title);
   }
 
   get spoiler() {
-    return Util.basename(this.url ?? this.name).startsWith("SPOILER_");
+    return Util.basename(this.url ?? this.name).startsWith('SPOILER_');
   }
 
   toJSON() {

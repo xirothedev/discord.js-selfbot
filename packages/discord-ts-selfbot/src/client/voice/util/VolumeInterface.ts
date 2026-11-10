@@ -1,5 +1,5 @@
-import EventEmitter from "node:events";
-import { Buffer } from "node:buffer";
+import EventEmitter from 'node:events';
+import { Buffer } from 'node:buffer';
 
 class VolumeInterface extends EventEmitter {
   declare _volume: number;
@@ -47,7 +47,7 @@ class VolumeInterface extends EventEmitter {
   }
 
   setVolume(volume: number) {
-    this.emit("volumeChange", this._volume, volume);
+    this.emit('volumeChange', this._volume, volume);
     this._volume = volume;
   }
 
@@ -61,10 +61,10 @@ class VolumeInterface extends EventEmitter {
 }
 
 const props = [
-  "volumeDecibels",
-  "volumeLogarithmic",
-  "setVolumeDecibels",
-  "setVolumeLogarithmic",
+  'volumeDecibels',
+  'volumeLogarithmic',
+  'setVolumeDecibels',
+  'setVolumeLogarithmic',
 ];
 
 function applyToClass(structure: { prototype: object }) {

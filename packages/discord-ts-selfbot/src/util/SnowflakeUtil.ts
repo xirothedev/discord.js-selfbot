@@ -5,9 +5,9 @@ let INCREMENT = 0n;
 class SnowflakeUtil extends null {
   static generate(timestamp: number | Date = Date.now()) {
     const time = timestamp instanceof Date ? timestamp.getTime() : timestamp;
-    if (typeof time !== "number" || Number.isNaN(time)) {
+    if (typeof time !== 'number' || Number.isNaN(time)) {
       throw new TypeError(
-        `"timestamp" argument must be a number (received ${Number.isNaN(time) ? "NaN" : typeof time})`
+        `"timestamp" argument must be a number (received ${Number.isNaN(time) ? 'NaN' : typeof time})`
       );
     }
     if (INCREMENT >= 4095n) {
@@ -25,7 +25,7 @@ class SnowflakeUtil extends null {
   static deconstruct(snowflake: string | number | bigint) {
     const bigIntSnowflake = BigInt(snowflake);
     return {
-      binary: bigIntSnowflake.toString(2).padStart(64, "0"),
+      binary: bigIntSnowflake.toString(2).padStart(64, '0'),
       get date() {
         return new Date(this.timestamp);
       },

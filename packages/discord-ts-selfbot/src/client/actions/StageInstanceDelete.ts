@@ -1,10 +1,10 @@
-import Action from "./Action";
-import { isGuildBasedChannel } from "../../types/channels";
-import type { GatewayStageInstanceDeleteDispatchData } from "discord-api-types/v10";
-import _StageInstanceModule from "../../structures/StageInstance";
+import Action from './Action';
+import { isGuildBasedChannel } from '../../types/channels';
+import type { GatewayStageInstanceDeleteDispatchData } from 'discord-api-types/v10';
+import _StageInstanceModule from '../../structures/StageInstance';
 
 const { deletedStageInstances } = _StageInstanceModule;
-import _ConstantsModule from "../../util/Constants";
+import _ConstantsModule from '../../util/Constants';
 
 const { Events } = _ConstantsModule;
 

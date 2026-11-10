@@ -1,6 +1,6 @@
-import { readFileSync } from "node:fs";
+import { readFileSync } from 'node:fs';
 
-import type { Comment, Reflection } from "./types";
+import type { Comment, Reflection } from './types';
 
 export interface DocgenParam {
   name: string;
@@ -75,7 +75,7 @@ export interface ApiStore {
 export function loadApiStore(
   file: string
 ): Map<string, DocgenClass | DocgenType> {
-  const store = JSON.parse(readFileSync(file, "utf-8")) as ApiStore;
+  const store = JSON.parse(readFileSync(file, 'utf-8')) as ApiStore;
   const byName = new Map<string, DocgenClass | DocgenType>();
   for (const entry of [
     ...(store.classes ?? []),
@@ -103,7 +103,7 @@ function ensureSummary(
     target.comment = { summary: [] };
   }
   if (!target.comment.summary?.length) {
-    target.comment.summary = [{ kind: "text", text: description }];
+    target.comment.summary = [{ kind: 'text', text: description }];
   }
 }
 
@@ -121,7 +121,7 @@ function ensureSignatureSummary(
       signature.comment = { summary: [] };
     }
     if (!signature.comment.summary?.length) {
-      signature.comment.summary = [{ kind: "text", text: description }];
+      signature.comment.summary = [{ kind: 'text', text: description }];
     }
   }
 }
@@ -131,7 +131,7 @@ function addBlockTag(comment: Comment, tag: string, text: string): void {
     comment.blockTags = [];
   }
   if (!comment.blockTags.some((item) => item.tag === tag)) {
-    comment.blockTags.push({ content: [{ kind: "text", text }], tag });
+    comment.blockTags.push({ content: [{ kind: 'text', text }], tag });
   }
 }
 
@@ -144,7 +144,7 @@ function ensureReturns(
   }
   target.comment ??= {};
   const { comment } = target;
-  addBlockTag(comment, "@returns", description);
+  addBlockTag(comment, '@returns', description);
 }
 
 function ensureExamples(
@@ -162,9 +162,9 @@ function ensureExamples(
 
   const existing = new Set(
     comment.blockTags
-      .filter((item) => item.tag === "@example")
+      .filter((item) => item.tag === '@example')
       .map(
-        (item) => item.content?.map((part) => part.text ?? "").join("") ?? ""
+        (item) => item.content?.map((part) => part.text ?? '').join('') ?? ''
       )
   );
 
@@ -172,8 +172,8 @@ function ensureExamples(
     const text = `\`\`\`ts\n${example}\n\`\`\``;
     if (!existing.has(text)) {
       comment.blockTags.push({
-        content: [{ kind: "code", text }],
-        tag: "@example",
+        content: [{ kind: 'code', text }],
+        tag: '@example',
       });
       existing.add(text);
     }
@@ -208,9 +208,9 @@ function enrichConstructor(
 }
 
 function returnsDescription(
-  returns: DocgenMethod["returns"]
+  returns: DocgenMethod['returns']
 ): string | undefined {
-  if (!returns || typeof returns !== "object" || !("description" in returns)) {
+  if (!returns || typeof returns !== 'object' || !('description' in returns)) {
     return undefined;
   }
   return returns.description as string | undefined;

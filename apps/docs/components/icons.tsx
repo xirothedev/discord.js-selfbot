@@ -10,8 +10,8 @@ import {
   Radio,
   ShieldAlert,
   Terminal,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 export const ICON = {
   api: Boxes,

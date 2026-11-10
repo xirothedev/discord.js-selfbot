@@ -1,13 +1,13 @@
-import type { Client } from "../../Client";
-import type { WebSocketShard } from "../WebSocketShard";
-import _ConstantsModule from "../../../util/Constants";
+import type { Client } from '../../Client';
+import type { WebSocketShard } from '../WebSocketShard';
+import _ConstantsModule from '../../../util/Constants';
 
 const { Events, Status } = _ConstantsModule;
-import GroupDMChannel from "../../../structures/GroupDMChannel";
-import type { RawUserData } from "../../../../typings/rawDataTypes";
+import GroupDMChannel from '../../../structures/GroupDMChannel';
+import type { RawUserData } from '../../../../typings/rawDataTypes';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  return typeof value === 'object' && value !== null;
 }
 
 function isRecipientData(
@@ -15,7 +15,7 @@ function isRecipientData(
 ): value is { channel_id: string; user: RawUserData } {
   return (
     isRecord(value) &&
-    typeof value.channel_id === "string" &&
+    typeof value.channel_id === 'string' &&
     isRecord(value.user)
   );
 }

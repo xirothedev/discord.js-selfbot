@@ -10,13 +10,13 @@ Install:
 - ffmpeg (install and add to your system environment)
 */
 
-import fs from "node:fs";
-import Speaker from "speaker";
-import { Client } from "../../src/index";
+import fs from 'node:fs';
+import Speaker from 'speaker';
+import { Client } from '../../src/index';
 
 const client = new Client();
 
-client.on("ready", async () => {
+client.on('ready', async () => {
   console.log(`${client.user.username} is ready!`);
 
   const speaker = new Speaker({
@@ -28,28 +28,28 @@ client.on("ready", async () => {
     sampleRate: 48_000,
   });
 
-  const channel = client.channels.cache.get("voice_id");
+  const channel = client.channels.cache.get('voice_id');
   const connection = await client.voice.joinChannel(channel, {
     selfDeaf: true,
     selfMute: true,
     selfVideo: false,
   });
 
-  const audio = connection.receiver.createStream("user_id", {
-    end: "manual",
-    mode: "pcm",
+  const audio = connection.receiver.createStream('user_id', {
+    end: 'manual',
+    mode: 'pcm',
     paddingSilence: true,
   });
 
-  audio.pipe(fs.createWriteStream("test.pcm"));
+  audio.pipe(fs.createWriteStream('test.pcm'));
 
   // After 15s
   setTimeout(() => {
-    console.log("Stop recording");
+    console.log('Stop recording');
     audio.destroy();
     // Play this record...
-    fs.createReadStream("test.pcm").pipe(speaker);
+    fs.createReadStream('test.pcm').pipe(speaker);
   }, 15_000);
 });
 
-client.login("token");
+client.login('token');

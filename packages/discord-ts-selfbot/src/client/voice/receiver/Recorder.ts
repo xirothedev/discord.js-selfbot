@@ -1,20 +1,20 @@
-import { spawn as spawnProcess } from "node:child_process";
-import type { ChildProcessWithoutNullStreams } from "node:child_process";
-import { createSocket } from "node:dgram";
-import { EventEmitter } from "node:events";
-import { Buffer } from "node:buffer";
-import { Writable } from "node:stream";
-import findProcessDefault from "find-process";
-import killProcessDefault from "tree-kill";
-import { RtpPacket } from "werift-rtp";
-import VoiceCodec from "../util/VoiceCodec";
-import _FunctionModule from "../util/Function";
+import { spawn as spawnProcess } from 'node:child_process';
+import type { ChildProcessWithoutNullStreams } from 'node:child_process';
+import { createSocket } from 'node:dgram';
+import { EventEmitter } from 'node:events';
+import { Buffer } from 'node:buffer';
+import { Writable } from 'node:stream';
+import findProcessDefault from 'find-process';
+import killProcessDefault from 'tree-kill';
+import { RtpPacket } from 'werift-rtp';
+import VoiceCodec from '../util/VoiceCodec';
+import _FunctionModule from '../util/Function';
 
 const { randomPorts } = _FunctionModule;
-import _SocketModule from "../util/Socket";
-import type PacketHandler from "./PacketHandler";
-import type { Socket } from "node:dgram";
-import type { UnixStream } from "../util/Socket";
+import _SocketModule from '../util/Socket';
+import type PacketHandler from './PacketHandler';
+import type { Socket } from 'node:dgram';
+import type { UnixStream } from '../util/Socket';
 
 const { StreamOutput } = _SocketModule;
 
@@ -61,7 +61,7 @@ class Recorder extends EventEmitter {
   ) {
     super();
 
-    Object.defineProperty(this, "receiver", { value: receiver });
+    Object.defineProperty(this, 'receiver', { value: receiver });
 
     // Process and filesystem boundaries are injectable so tests never spawn ffmpeg or touch the OS.
     this.spawn = spawn;
@@ -85,14 +85,14 @@ class Recorder extends EventEmitter {
 
     this.ready = false;
 
-    this.socket = createSocket("udp4");
+    this.socket = createSocket('udp4');
 
     this.init(output);
   }
   async loadRandomPorts() {
-    const ports = await randomPorts(6, "udp4");
+    const ports = await randomPorts(6, 'udp4');
     const evenPorts = ports.filter(
-      (port): port is number => typeof port === "number" && port % 2 === 0
+      (port): port is number => typeof port === 'number' && port % 2 === 0
     );
     this.portUdpH264 ??= evenPorts[0] ?? null;
     this.portUdpOpus ??= evenPorts[1] ?? null;
@@ -112,59 +112,59 @@ class Recorder extends EventEmitter {
     } else {
       outputTarget = output;
     }
-    const stream = this.spawn("ffmpeg", [
-      "-reorder_queue_size",
-      "500",
-      "-thread_queue_size",
-      "500",
-      "-err_detect",
-      "ignore_err",
-      "-flags2",
-      "+export_mvs",
-      "-fflags",
-      "+genpts+discardcorrupt",
-      "-use_wallclock_as_timestamps",
-      "1",
-      "-f",
-      "sdp",
-      "-analyzeduration",
-      "1M",
-      "-probesize",
-      "1M",
-      "-protocol_whitelist",
-      "file,udp,rtp,pipe,fd",
-      "-i",
+    const stream = this.spawn('ffmpeg', [
+      '-reorder_queue_size',
+      '500',
+      '-thread_queue_size',
+      '500',
+      '-err_detect',
+      'ignore_err',
+      '-flags2',
+      '+export_mvs',
+      '-fflags',
+      '+genpts+discardcorrupt',
+      '-use_wallclock_as_timestamps',
+      '1',
+      '-f',
+      'sdp',
+      '-analyzeduration',
+      '1M',
+      '-probesize',
+      '1M',
+      '-protocol_whitelist',
+      'file,udp,rtp,pipe,fd',
+      '-i',
       // Read from stdin.
-      "-",
-      "-buffer_size",
-      "4M",
-      "-max_delay",
+      '-',
+      '-buffer_size',
+      '4M',
+      '-max_delay',
       // 500ms.
-      "500000",
-      "-rtbufsize",
-      "4M",
-      "-c",
-      "copy",
-      "-y",
-      "-f",
-      "matroska",
+      '500000',
+      '-rtbufsize',
+      '4M',
+      '-c',
+      'copy',
+      '-y',
+      '-f',
+      'matroska',
       outputTarget,
     ]);
 
     this.stream = stream;
     this.stream.stdin.write(sdpData);
     this.stream.stdin.end();
-    this.stream.stderr.once("data", (data: Buffer) => {
-      this.emit("debug", `stderr: ${data}`);
+    this.stream.stderr.once('data', (data: Buffer) => {
+      this.emit('debug', `stderr: ${data}`);
       this.ready = true;
-      this.emit("ready");
+      this.emit('ready');
     });
   }
   feed(
     payload: RtpPacket | string | Buffer,
     done: (error?: Error | null) => void = (error) => {
       if (error) {
-        console.error("Error sending packet:", error);
+        console.error('Error sending packet:', error);
       }
     }
   ) {
@@ -177,14 +177,14 @@ class Recorder extends EventEmitter {
     const message = packet.serialize();
     // Get port from payloadType
     let port: number | null | undefined;
-    if (packet.header.payloadType === VoiceCodec.getPayloadType("opus")) {
+    if (packet.header.payloadType === VoiceCodec.getPayloadType('opus')) {
       port = this.portUdpOpus;
     } else if (
-      packet.header.payloadType === VoiceCodec.getPayloadType("H264")
+      packet.header.payloadType === VoiceCodec.getPayloadType('H264')
     ) {
       port = this.portUdpH264;
     } else if (
-      packet.header.payloadType === VoiceCodec.getPayloadType("H265")
+      packet.header.payloadType === VoiceCodec.getPayloadType('H265')
     ) {
       port = this.portUdpH265;
     } else {
@@ -193,7 +193,7 @@ class Recorder extends EventEmitter {
     if (!port) {
       return;
     }
-    this.socket.send(message, 0, message.length, port, "127.0.0.1", done);
+    this.socket.send(message, 0, message.length, port, '127.0.0.1', done);
   }
 
   stop() {
@@ -206,7 +206,7 @@ class Recorder extends EventEmitter {
       this.output.end();
     }
     this.receiver?.videoStreams?.delete(this.userId);
-    this.emit("closed");
+    this.emit('closed');
   }
 
   destroy() {
@@ -216,9 +216,9 @@ class Recorder extends EventEmitter {
     // The pid is actually the parent pid here.
     const ffmpegPid = this.stream.pid;
     // Skip the ffmpeg binary itself.
-    const args = this.stream.spawnargs.slice(1).join(" ");
+    const args = this.stream.spawnargs.slice(1).join(' ');
     const killMatching = async () => {
-      const list = await this.findProcess("name", "ffmpeg", true);
+      const list = await this.findProcess('name', 'ffmpeg', true);
       const process = list.find(
         (item) =>
           item.pid === ffmpegPid ||
@@ -228,7 +228,7 @@ class Recorder extends EventEmitter {
       if (process) {
         this.killProcess(process.pid);
         this.receiver?.videoStreams?.delete(this.userId);
-        this.emit("closed");
+        this.emit('closed');
       }
     };
     void killMatching();

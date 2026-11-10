@@ -1,4 +1,4 @@
-import BaseGuildTextChannel from "./BaseGuildTextChannel";
+import BaseGuildTextChannel from './BaseGuildTextChannel';
 
 class TextChannel extends BaseGuildTextChannel {
   _patch(
@@ -8,7 +8,7 @@ class TextChannel extends BaseGuildTextChannel {
   ) {
     super._patch(data);
 
-    if ("rate_limit_per_user" in data) {
+    if ('rate_limit_per_user' in data) {
       this.rateLimitPerUser = data.rate_limit_per_user;
     }
   }

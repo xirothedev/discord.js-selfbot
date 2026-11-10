@@ -1,52 +1,52 @@
-import Link from "next/link";
+import Link from 'next/link';
 
-import { Icon, ICON } from "@/components/icons";
-import { appVersion } from "@/lib/shared";
+import { Icon, ICON } from '@/components/icons';
+import { appVersion } from '@/lib/shared';
 
 const features = [
   {
     description:
-      "Events, Partials, Status, builders, 20 interaction classes, and the v14 client surface.",
+      'Events, Partials, Status, builders, 20 interaction classes, and the v14 client surface.',
     icon: ICON.api,
-    title: "discord.js v14 parity",
+    title: 'discord.js v14 parity',
   },
   {
     description:
-      "Every source module has a TypeScript counterpart, with handwritten public typings.",
+      'Every source module has a TypeScript counterpart, with handwritten public typings.',
     icon: ICON.examples,
-    title: "TypeScript first",
+    title: 'TypeScript first',
   },
   {
     description:
-      "Join channels, play audio, video, or streams, and clean up connections.",
+      'Join channels, play audio, video, or streams, and clean up connections.',
     icon: ICON.voice,
-    title: "Voice and video",
+    title: 'Voice and video',
   },
   {
     description:
-      "Ring, accept message requests, and follow CallState transitions.",
+      'Ring, accept message requests, and follow CallState transitions.',
     icon: ICON.calls,
-    title: "DM and group calls",
+    title: 'DM and group calls',
   },
   {
     description:
-      "Build ffmpeg pipelines for audio and video without leaking processes.",
+      'Build ffmpeg pipelines for audio and video without leaking processes.',
     icon: ICON.recording,
-    title: "Recording",
+    title: 'Recording',
   },
   {
     description:
-      "Route-level HTTP and gateway tests without a real token or network.",
+      'Route-level HTTP and gateway tests without a real token or network.',
     icon: ICON.safety,
-    title: "Fake Discord test server",
+    title: 'Fake Discord test server',
   },
 ];
 
 const stats = [
-  ["365", "TypeScript modules"],
-  ["92", "tests"],
-  ["474", "assertions"],
-  ["0", "open parity issues"],
+  ['365', 'TypeScript modules'],
+  ['92', 'tests'],
+  ['474', 'assertions'],
+  ['0', 'open parity issues'],
 ];
 
 const HomePage = () => (
@@ -59,7 +59,7 @@ const HomePage = () => (
             {appVersion} · Bun-first · TypeScript
           </span>
           <h1 className="mt-6 text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-            A discord.js v14-compatible{" "}
+            A discord.js v14-compatible{' '}
             <span className="text-discord-blurple">selfbot</span>, built for
             Bun.
           </h1>

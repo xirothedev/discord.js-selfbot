@@ -1,18 +1,18 @@
-import _ConstantsModule from "../../util/Constants";
+import _ConstantsModule from '../../util/Constants';
 
 const { PartialTypes: PartialTypeValues } = _ConstantsModule;
-import _ChannelModule from "../../structures/Channel";
+import _ChannelModule from '../../structures/Channel';
 
 const { Channel } = _ChannelModule;
-import _MessageModule from "../../structures/Message";
+import _MessageModule from '../../structures/Message';
 
 const { Message } = _MessageModule;
-import type MessageReaction from "../../structures/MessageReaction";
-import User from "../../structures/User";
-import type { Client } from "../Client";
-import type { PartialTypes } from "../../../typings";
-import type { GuildMember } from "../../structures/GuildMember";
-import type { GuildScheduledEvent } from "../../structures/GuildScheduledEvent";
+import type MessageReaction from '../../structures/MessageReaction';
+import User from '../../structures/User';
+import type { Client } from '../Client';
+import type { PartialTypes } from '../../../typings';
+import type { GuildMember } from '../../structures/GuildMember';
+import type { GuildScheduledEvent } from '../../structures/GuildScheduledEvent';
 
 /*
 
@@ -51,12 +51,12 @@ interface ActionGuild {
 }
 
 function isActionData(value: unknown): value is ActionData {
-  return typeof value === "object" && value !== null;
+  return typeof value === 'object' && value !== null;
 }
 
 function readString(data: ActionData, key: string): string | undefined {
   const value = data[key];
-  return typeof value === "string" ? value : undefined;
+  return typeof value === 'string' ? value : undefined;
 }
 
 function readData(data: ActionData, key: string): ActionData | undefined {
@@ -67,7 +67,7 @@ function readData(data: ActionData, key: string): ActionData | undefined {
 function isGuildMemberData(
   value: ActionData
 ): value is ActionData & { user: { id: string } } {
-  return isActionData(value.user) && typeof value.user.id === "string";
+  return isActionData(value.user) && typeof value.user.id === 'string';
 }
 
 class GenericAction {
@@ -99,12 +99,12 @@ class GenericAction {
     const source = isActionData(data) ? data : {};
     const payloadData: ActionData & { recipients?: ActionData[]; id?: string } =
       {};
-    const id = readString(source, "channel_id") ?? readString(source, "id");
+    const id = readString(source, 'channel_id') ?? readString(source, 'id');
 
-    if (!("recipients" in source)) {
+    if (!('recipients' in source)) {
       // Try to resolve the recipient, but do not add the client user.
-      const recipient = readData(source, "author") ??
-        readData(source, "user") ?? { id: readString(source, "user_id") };
+      const recipient = readData(source, 'author') ??
+        readData(source, 'user') ?? { id: readString(source, 'user_id') };
       if (recipient.id !== this.client.user?.id) {
         payloadData.recipients = [recipient];
       }
@@ -122,7 +122,7 @@ class GenericAction {
     return this.getPayload(
       { ...source, ...payloadData },
       this.client.channels,
-      id ?? "",
+      id ?? '',
       PartialTypeValues.CHANNEL
     );
   }
@@ -133,7 +133,7 @@ class GenericAction {
     cache?: boolean
   ): InstanceType<typeof Message> | null | undefined {
     const source = isActionData(data) ? data : {};
-    const id = readString(source, "message_id") ?? readString(source, "id");
+    const id = readString(source, 'message_id') ?? readString(source, 'id');
     const injected = source[this.client.actions.injectedMessage];
     if (injected instanceof Message) {
       return injected;
@@ -142,11 +142,11 @@ class GenericAction {
     return this.getPayload(
       {
         channel_id: channel.id,
-        guild_id: readString(source, "guild_id") ?? channel.guild?.id,
+        guild_id: readString(source, 'guild_id') ?? channel.guild?.id,
         id,
       },
       channel.messages,
-      id ?? "",
+      id ?? '',
       PartialTypeValues.MESSAGE,
       cache
     );
@@ -158,13 +158,13 @@ class GenericAction {
     user: { id?: string } | null = null
   ): InstanceType<typeof MessageReaction> | null | undefined {
     const source = isActionData(data) ? data : {};
-    const emoji = readData(source, "emoji");
+    const emoji = readData(source, 'emoji');
     if (!emoji) {
       return null;
     }
-    const emojiId = readString(emoji, "id");
-    const emojiName = readString(emoji, "name");
-    const id = emojiId ?? (emojiName ? decodeURIComponent(emojiName) : "");
+    const emojiId = readString(emoji, 'id');
+    const emojiName = readString(emoji, 'name');
+    const id = emojiId ?? (emojiName ? decodeURIComponent(emojiName) : '');
     return this.getPayload(
       {
         count: message.partial ? null : 0,
@@ -182,11 +182,11 @@ class GenericAction {
     guild: ActionGuild
   ): InstanceType<typeof GuildMember> | null | undefined {
     const source = isActionData(data) ? data : {};
-    const member = readData(source, "member");
+    const member = readData(source, 'member');
     if (!member || !isGuildMemberData(member)) {
       return null;
     }
-    const userId = readString(member.user, "id");
+    const userId = readString(member.user, 'id');
     if (!userId) {
       return null;
     }
@@ -200,7 +200,7 @@ class GenericAction {
 
   getUser(data: unknown): InstanceType<typeof User> | null | undefined {
     const source = isActionData(data) ? data : {};
-    const id = readString(source, "user_id");
+    const id = readString(source, 'user_id');
     const injected = source[this.client.actions.injectedUser];
     if (injected instanceof User) {
       return injected;
@@ -220,9 +220,9 @@ class GenericAction {
     data: unknown
   ): InstanceType<typeof User> | null | undefined {
     const source = isActionData(data) ? data : {};
-    const guildId = readString(source, "guild_id");
-    const member = readData(source, "member");
-    const memberUser = member ? readData(member, "user") : undefined;
+    const guildId = readString(source, 'guild_id');
+    const member = readData(source, 'member');
+    const memberUser = member ? readData(member, 'user') : undefined;
     if (guildId && member && memberUser && isGuildMemberData(member)) {
       const guild = this.client.guilds.cache.get(guildId);
       if (guild) {
@@ -239,13 +239,13 @@ class GenericAction {
   ): InstanceType<typeof GuildScheduledEvent> | null | undefined {
     const source = isActionData(data) ? data : {};
     const id =
-      readString(source, "guild_scheduled_event_id") ??
-      readString(source, "id");
+      readString(source, 'guild_scheduled_event_id') ??
+      readString(source, 'id');
     if (!id) {
       return null;
     }
     return this.getPayload(
-      { guild_id: readString(source, "guild_id") ?? guild.id, id },
+      { guild_id: readString(source, 'guild_id') ?? guild.id, id },
       guild.scheduledEvents,
       id,
       PartialTypeValues.GUILD_SCHEDULED_EVENT

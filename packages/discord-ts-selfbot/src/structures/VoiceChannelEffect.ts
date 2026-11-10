@@ -1,13 +1,13 @@
-import _EmojiModule from "./Emoji";
+import _EmojiModule from './Emoji';
 
 const { Emoji } = _EmojiModule;
 import type {
   GatewayVoiceChannelEffectSendDispatchData,
   Snowflake,
   VoiceChannelEffectSendAnimationType,
-} from "discord-api-types/v10";
-import type { Guild } from "./Guild";
-import type { Emoji as EmojiType } from "./Emoji";
+} from 'discord-api-types/v10';
+import type { Guild } from './Guild';
+import type { Emoji as EmojiType } from './Emoji';
 
 class VoiceChannelEffect {
   declare guild: Guild;

@@ -1,8 +1,8 @@
-import BaseCommandInteraction from "./BaseCommandInteraction";
-import CommandInteractionOptionResolver from "./CommandInteractionOptionResolver";
-import type { CacheType } from "../../typings";
-import type { APIChatInputApplicationCommandInteraction } from "discord-api-types/v10";
-import type Client from "../client/Client";
+import BaseCommandInteraction from './BaseCommandInteraction';
+import CommandInteractionOptionResolver from './CommandInteractionOptionResolver';
+import type { CacheType } from '../../typings';
+import type { APIChatInputApplicationCommandInteraction } from 'discord-api-types/v10';
+import type Client from '../client/Client';
 
 class CommandInteraction<
   Cached extends CacheType = CacheType,
@@ -26,7 +26,7 @@ class CommandInteraction<
       this.options._subcommand,
       ...this.options._hoistedOptions.map((o) => `${o.name}:${o.value}`),
     ];
-    return `/${properties.filter(Boolean).join(" ")}`;
+    return `/${properties.filter(Boolean).join(' ')}`;
   }
 }
 

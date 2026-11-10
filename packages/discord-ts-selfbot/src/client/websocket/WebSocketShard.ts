@@ -1,14 +1,14 @@
-import EventEmitter from "node:events";
-import { setTimeout, setInterval, clearTimeout } from "node:timers";
-import WebSocket from "../../WebSocket";
-import _ConstantsModule from "../../util/Constants";
+import EventEmitter from 'node:events';
+import { setTimeout, setInterval, clearTimeout } from 'node:timers';
+import WebSocket from '../../WebSocket';
+import _ConstantsModule from '../../util/Constants';
 
 const { Status, Events, ShardEvents, Opcodes, WSEvents, WSCodes } =
   _ConstantsModule;
-import Intents from "../../util/Intents";
-import Util from "../../util/Util";
-import type WebSocketManager from "./WebSocketManager";
-import type { WebSocket as WebSocketType } from "ws";
+import Intents from '../../util/Intents';
+import Util from '../../util/Util';
+import type WebSocketManager from './WebSocketManager';
+import type { WebSocket as WebSocketType } from 'ws';
 
 const STATUS_KEYS = Object.keys(Status);
 const CONNECTION_STATE = Object.keys(WebSocket.WebSocket);
@@ -35,7 +35,7 @@ interface DestroyOptions {
 }
 
 interface GatewayPacket {
-  ["t"]?: string;
+  ['t']?: string;
   op?: number;
   s?: number;
   d?: unknown;
@@ -47,16 +47,16 @@ interface UnavailableGuild {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  return typeof value === 'object' && value !== null;
 }
 
 function isZlibStream(value: unknown): value is ZlibStream {
   return (
     isRecord(value) &&
-    "Inflate" in value &&
-    typeof value.Inflate === "function" &&
-    "Z_SYNC_FLUSH" in value &&
-    typeof value.Z_SYNC_FLUSH === "number"
+    'Inflate' in value &&
+    typeof value.Inflate === 'function' &&
+    'Z_SYNC_FLUSH' in value &&
+    typeof value.Z_SYNC_FLUSH === 'number'
   );
 }
 
@@ -65,11 +65,11 @@ function isGatewayPacket(value: unknown): value is GatewayPacket {
 }
 
 function isUnavailableGuild(value: unknown): value is UnavailableGuild {
-  return isRecord(value) && "id" in value && typeof value.id === "string";
+  return isRecord(value) && 'id' in value && typeof value.id === 'string';
 }
 
 function toChunk(data: unknown): Buffer | Uint8Array | null {
-  if (typeof data === "string") {
+  if (typeof data === 'string') {
     return Buffer.from(data);
   }
   if (data instanceof Uint8Array) {
@@ -84,10 +84,10 @@ function toChunk(data: unknown): Buffer | Uint8Array | null {
 let zlib: ZlibStream | null = null;
 
 try {
-  const _zs = "zlib-sync";
+  const _zs = 'zlib-sync';
   const loaded: unknown = await import(_zs);
   const candidate =
-    isRecord(loaded) && "default" in loaded ? loaded.default : loaded;
+    isRecord(loaded) && 'default' in loaded ? loaded.default : loaded;
   if (isZlibStream(candidate)) {
     zlib = candidate;
   } else if (isZlibStream(loaded)) {
@@ -154,7 +154,7 @@ class WebSocketShard extends EventEmitter {
 
     this.closeEmitted = false;
 
-    Object.defineProperty(this, "ratelimit", {
+    Object.defineProperty(this, 'ratelimit', {
       value: {
         queue: [],
         remaining: 120,
@@ -164,36 +164,36 @@ class WebSocketShard extends EventEmitter {
       },
     });
 
-    Object.defineProperty(this, "connection", { value: null, writable: true });
+    Object.defineProperty(this, 'connection', { value: null, writable: true });
 
-    Object.defineProperty(this, "inflate", { value: null, writable: true });
+    Object.defineProperty(this, 'inflate', { value: null, writable: true });
 
-    Object.defineProperty(this, "helloTimeout", {
+    Object.defineProperty(this, 'helloTimeout', {
       value: null,
       writable: true,
     });
 
-    Object.defineProperty(this, "wsCloseTimeout", {
+    Object.defineProperty(this, 'wsCloseTimeout', {
       value: null,
       writable: true,
     });
 
-    Object.defineProperty(this, "eventsAttached", {
+    Object.defineProperty(this, 'eventsAttached', {
       value: false,
       writable: true,
     });
 
-    Object.defineProperty(this, "expectedGuilds", {
+    Object.defineProperty(this, 'expectedGuilds', {
       value: null,
       writable: true,
     });
 
-    Object.defineProperty(this, "readyTimeout", {
+    Object.defineProperty(this, 'readyTimeout', {
       value: null,
       writable: true,
     });
 
-    Object.defineProperty(this, "connectedAt", { value: 0, writable: true });
+    Object.defineProperty(this, 'connectedAt', { value: 0, writable: true });
   }
 
   debug(message: string) {
@@ -234,7 +234,7 @@ class WebSocketShard extends EventEmitter {
 
     if (this.connection?.readyState === WebSocket.OPEN) {
       this.debug(
-        "An open connection was found, attempting an immediate identify."
+        'An open connection was found, attempting an immediate identify.'
       );
       this.identify();
       return completion;
@@ -247,16 +247,16 @@ class WebSocketShard extends EventEmitter {
     }
 
     const wsQuery: Record<string, unknown> = Object.fromEntries([
-      ["v", client.options.ws.version],
+      ['v', client.options.ws.version],
     ]);
 
     if (zlib) {
       this.inflate = new zlib.Inflate({
         chunkSize: 65_535,
         flush: zlib.Z_SYNC_FLUSH,
-        to: WebSocket.encoding === "json" ? "string" : "",
+        to: WebSocket.encoding === 'json' ? 'string' : '',
       });
-      wsQuery.compress = "zlib-stream";
+      wsQuery.compress = 'zlib-stream';
     }
 
     this.debug(
@@ -264,7 +264,7 @@ class WebSocketShard extends EventEmitter {
     Gateway    : ${gateway}
     Version    : ${client.options.ws.version}
     Encoding   : ${WebSocket.encoding}
-    Compression: ${zlib ? "zlib-stream" : "none"}
+    Compression: ${zlib ? 'zlib-stream' : 'none'}
     Agent      : ${Util.verifyProxyAgent(client.options.ws.agent)}`
     );
 
@@ -346,7 +346,7 @@ class WebSocketShard extends EventEmitter {
   }
 
   onError(event: unknown) {
-    const error = isRecord(event) && "error" in event ? event.error : event;
+    const error = isRecord(event) && 'error' in event ? event.error : event;
     if (!error) {
       return;
     }
@@ -377,13 +377,13 @@ class WebSocketShard extends EventEmitter {
   emitClose(event?: CloseEventLike) {
     const resolved = event ?? {
       code: 1011,
-      reason: String(WSCodes[1011] ?? "Unknown error"),
+      reason: String(WSCodes[1011] ?? 'Unknown error'),
       wasClean: false,
     };
     this.debug(`[CLOSE]
     Event Code: ${resolved.code}
     Clean     : ${resolved.wasClean}
-    Reason    : ${resolved.reason ?? "No reason received"}`);
+    Reason    : ${resolved.reason ?? 'No reason received'}`);
     this.emit(ShardEvents.CLOSE, resolved);
   }
 
@@ -399,11 +399,11 @@ class WebSocketShard extends EventEmitter {
 
         const ready = isRecord(packet.d) ? packet.d : {};
         this.resumeURL =
-          typeof ready.resume_gateway_url === "string"
+          typeof ready.resume_gateway_url === 'string'
             ? ready.resume_gateway_url
             : null;
         this.sessionId =
-          typeof ready.session_id === "string" ? ready.session_id : null;
+          typeof ready.session_id === 'string' ? ready.session_id : null;
         const guilds = Array.isArray(ready.guilds) ? ready.guilds : [];
         this.expectedGuilds = new Set(
           guilds
@@ -416,7 +416,7 @@ class WebSocketShard extends EventEmitter {
           `[READY] Session ${this.sessionId} | Resume url ${this.resumeURL}.`
         );
         this.lastHeartbeatAcked = true;
-        this.sendHeartbeat("ReadyHeartbeat");
+        this.sendHeartbeat('ReadyHeartbeat');
         break;
       }
       case WSEvents.RESUMED: {
@@ -428,7 +428,7 @@ class WebSocketShard extends EventEmitter {
           `[RESUMED] Session ${this.sessionId} | Replayed ${replayed} events.`
         );
         this.lastHeartbeatAcked = true;
-        this.sendHeartbeat("ResumeHeartbeat");
+        this.sendHeartbeat('ResumeHeartbeat');
         break;
       }
       default: {
@@ -436,7 +436,7 @@ class WebSocketShard extends EventEmitter {
       }
     }
 
-    if (typeof packet.s === "number" && packet.s > this.sequence) {
+    if (typeof packet.s === 'number' && packet.s > this.sequence) {
       this.sequence = packet.s;
     }
 
@@ -449,7 +449,7 @@ class WebSocketShard extends EventEmitter {
         this.setHelloTimeout(-1);
         if (
           isRecord(packet.d) &&
-          typeof packet.d.heartbeat_interval === "number"
+          typeof packet.d.heartbeat_interval === 'number'
         ) {
           this.setHeartbeatTimer(packet.d.heartbeat_interval);
         }
@@ -457,7 +457,7 @@ class WebSocketShard extends EventEmitter {
         break;
       }
       case Opcodes.RECONNECT: {
-        this.debug("[RECONNECT] Discord asked us to reconnect");
+        this.debug('[RECONNECT] Discord asked us to reconnect');
         this.destroy({ closeCode: 4000 });
         break;
       }
@@ -483,7 +483,7 @@ class WebSocketShard extends EventEmitter {
         break;
       }
       case Opcodes.HEARTBEAT: {
-        this.sendHeartbeat("HeartbeatRequest", true);
+        this.sendHeartbeat('HeartbeatRequest', true);
         break;
       }
       default: {
@@ -492,7 +492,7 @@ class WebSocketShard extends EventEmitter {
           this.status === Status.WAITING_FOR_GUILDS &&
           packet.t === WSEvents.GUILD_CREATE
         ) {
-          if (isRecord(packet.d) && typeof packet.d.id === "string") {
+          if (isRecord(packet.d) && typeof packet.d.id === 'string') {
             this.expectedGuilds?.delete(packet.d.id);
           }
           this.checkReady();
@@ -509,7 +509,7 @@ class WebSocketShard extends EventEmitter {
     }
     // Step 1. If we don't have any other guilds pending, we are ready
     if (!this.expectedGuilds?.size) {
-      this.debug("Shard received all its guilds. Marking as fully ready.");
+      this.debug('Shard received all its guilds. Marking as fully ready.');
       this.status = Status.READY;
 
       this.emit(ShardEvents.ALL_READY);
@@ -528,8 +528,8 @@ class WebSocketShard extends EventEmitter {
     this.readyTimeout = setTimeout(
       () => {
         this.debug(
-          `Shard ${hasGuildsIntent ? "did" : "will"} not receive any more guild packets` +
-            `${hasGuildsIntent ? ` in ${waitGuildTimeout} ms` : ""}.\nUnavailable guild count: ${
+          `Shard ${hasGuildsIntent ? 'did' : 'will'} not receive any more guild packets` +
+            `${hasGuildsIntent ? ` in ${waitGuildTimeout} ms` : ''}.\nUnavailable guild count: ${
               this.expectedGuilds?.size
             }`
         );
@@ -547,16 +547,16 @@ class WebSocketShard extends EventEmitter {
   setHelloTimeout(time?: number) {
     if (time === -1) {
       if (this.helloTimeout) {
-        this.debug("Clearing the HELLO timeout.");
+        this.debug('Clearing the HELLO timeout.');
         clearTimeout(this.helloTimeout);
         this.helloTimeout = null;
       }
       return;
     }
-    this.debug("Setting a HELLO timeout for 20s.");
+    this.debug('Setting a HELLO timeout for 20s.');
     this.helloTimeout = setTimeout(() => {
       this.debug(
-        "Did not receive HELLO in time. Destroying and connecting again."
+        'Did not receive HELLO in time. Destroying and connecting again.'
       );
       this.destroy({ closeCode: 4009, reset: true });
     }, 20_000).unref();
@@ -564,7 +564,7 @@ class WebSocketShard extends EventEmitter {
 
   setWsCloseTimeout(time?: number) {
     if (this.wsCloseTimeout) {
-      this.debug("[WebSocket] Clearing the close timeout.");
+      this.debug('[WebSocket] Clearing the close timeout.');
       clearTimeout(this.wsCloseTimeout);
     }
     if (time === -1) {
@@ -594,7 +594,7 @@ class WebSocketShard extends EventEmitter {
 
       this.emitClose({
         code: 4009,
-        reason: "Session time out.",
+        reason: 'Session time out.',
         wasClean: false,
       });
     }, time);
@@ -603,7 +603,7 @@ class WebSocketShard extends EventEmitter {
   setHeartbeatTimer(time: number) {
     if (time === -1) {
       if (this.heartbeatInterval) {
-        this.debug("Clearing the heartbeat interval.");
+        this.debug('Clearing the heartbeat interval.');
         clearInterval(this.heartbeatInterval);
         this.heartbeatInterval = null;
       }
@@ -621,7 +621,7 @@ class WebSocketShard extends EventEmitter {
   }
 
   sendHeartbeat(
-    tag = "HeartbeatTimer",
+    tag = 'HeartbeatTimer',
     ignoreHeartbeatAck = [
       Status.WAITING_FOR_GUILDS,
       Status.IDENTIFYING,
@@ -637,7 +637,7 @@ class WebSocketShard extends EventEmitter {
         `[${tag}] Didn't receive a heartbeat ack last time, assuming zombie connection. Destroying and reconnecting.
     Status          : ${STATUS_KEYS[this.status]}
     Sequence        : ${this.sequence}
-    Connection State: ${this.connection ? CONNECTION_STATE[this.connection.readyState] : "No Connection??"}`
+    Connection State: ${this.connection ? CONNECTION_STATE[this.connection.readyState] : 'No Connection??'}`
       );
       this.destroy({ closeCode: 4009, reset: true });
       return;
@@ -663,7 +663,7 @@ class WebSocketShard extends EventEmitter {
   identifyNew() {
     const { client } = this.manager;
     if (!client.token) {
-      this.debug("[IDENTIFY] No token available to identify a new session.");
+      this.debug('[IDENTIFY] No token available to identify a new session.');
       return;
     }
 
@@ -672,7 +672,7 @@ class WebSocketShard extends EventEmitter {
     // Patch something
     const properties = Object.fromEntries(
       Object.entries(client.options.ws.properties).map(([key, value]) => [
-        key.startsWith("$") ? key.slice(1) : key,
+        key.startsWith('$') ? key.slice(1) : key,
         value,
       ])
     );
@@ -694,7 +694,7 @@ class WebSocketShard extends EventEmitter {
   identifyResume() {
     if (!this.sessionId) {
       this.debug(
-        "[RESUME] No session id was present; identifying as a new session."
+        '[RESUME] No session id was present; identifying as a new session.'
       );
       this.identifyNew();
       return;
@@ -716,7 +716,7 @@ class WebSocketShard extends EventEmitter {
   }
 
   send(data: unknown, important = false) {
-    this.ratelimit.queue[important ? "unshift" : "push"](data);
+    this.ratelimit.queue[important ? 'unshift' : 'push'](data);
     this.processQueue();
   }
 

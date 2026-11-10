@@ -1,26 +1,26 @@
-import Base, { patchValue } from "./Base";
-import ApplicationCommandPermissionsManager from "../managers/ApplicationCommandPermissionsManager";
-import _ConstantsModule from "../util/Constants";
+import Base, { patchValue } from './Base';
+import ApplicationCommandPermissionsManager from '../managers/ApplicationCommandPermissionsManager';
+import _ConstantsModule from '../util/Constants';
 
 const { ApplicationCommandOptionTypes, ApplicationCommandTypes, ChannelTypes } =
   _ConstantsModule;
-import Permissions from "../util/Permissions";
-import SnowflakeUtil from "../util/SnowflakeUtil";
+import Permissions from '../util/Permissions';
+import SnowflakeUtil from '../util/SnowflakeUtil';
 import type {
   ChannelType,
   LocalizationMap,
   Snowflake,
-} from "discord-api-types/v10";
+} from 'discord-api-types/v10';
 import type {
   ApplicationCommandData,
   ApplicationCommandOptionData,
   ApplicationCommandOptionType,
   ApplicationCommandType,
   PermissionResolvable,
-} from "../../typings";
-import type { RawApplicationCommandData } from "../../typings/rawDataTypes";
-import type { Guild } from "./Guild";
-import type Client from "../client/Client";
+} from '../../typings';
+import type { RawApplicationCommandData } from '../../typings/rawDataTypes';
+import type { Guild } from './Guild';
+import type Client from '../client/Client';
 
 type ApplicationCommandPatch = Partial<RawApplicationCommandData> & {
   name_localized?: string;
@@ -146,13 +146,13 @@ class ApplicationCommand extends Base {
       this.descriptionLocalized
     );
     this.options =
-      "options" in data
+      'options' in data
         ? (data.options ?? []).map((option) =>
             ApplicationCommand.transformOption(option, true)
           )
         : (this.options ?? []);
 
-    if ("default_permission" in data) {
+    if ('default_permission' in data) {
       /**
        * Whether the command is enabled by default when the app is added to a guild
        * @type {boolean}
@@ -161,7 +161,7 @@ class ApplicationCommand extends Base {
       this.defaultPermission = data.default_permission ?? false;
     }
 
-    if ("default_member_permissions" in data) {
+    if ('default_member_permissions' in data) {
       this.defaultMemberPermissions = data.default_member_permissions
         ? new Permissions(BigInt(data.default_member_permissions)).freeze()
         : null;
@@ -186,7 +186,7 @@ class ApplicationCommand extends Base {
 
   get manager() {
     if (!this.client.application) {
-      throw new Error("CLIENT_NOT_READY");
+      throw new Error('CLIENT_NOT_READY');
     }
     return this.client.application.commands;
   }
@@ -252,7 +252,7 @@ class ApplicationCommand extends Base {
       ApplicationCommand.resolveDefaultMemberPermissions(command);
     const dmPermission =
       command.dmPermission ??
-      ("dm_permission" in command ? command.dm_permission : undefined);
+      ('dm_permission' in command ? command.dm_permission : undefined);
     const commandType = ApplicationCommand.resolveComparableType(command);
 
     // Check top level parameters
@@ -303,9 +303,9 @@ class ApplicationCommand extends Base {
   ) {
     return (
       command.name !== self.name ||
-      ("description" in command && command.description !== self.description) ||
-      ("version" in command && command.version !== self.version) ||
-      ("autocomplete" in command &&
+      ('description' in command && command.description !== self.description) ||
+      ('version' in command && command.version !== self.version) ||
+      ('autocomplete' in command &&
         command.autocomplete !== self.autocomplete) ||
       Boolean(commandType && commandType !== self.type)
     );
@@ -332,9 +332,9 @@ class ApplicationCommand extends Base {
     command: ApplicationCommand | ApplicationCommandComparable
   ) {
     let resolvedType;
-    if (typeof command.type === "string") {
+    if (typeof command.type === 'string') {
       resolvedType = command.type;
-    } else if (typeof command.type === "number") {
+    } else if (typeof command.type === 'number') {
       resolvedType = ApplicationCommandTypes[command.type];
     }
     return resolvedType;
@@ -345,13 +345,13 @@ class ApplicationCommand extends Base {
   ) {
     let defaultMemberPermissions = null;
 
-    if ("default_member_permissions" in command) {
+    if ('default_member_permissions' in command) {
       defaultMemberPermissions = command.default_member_permissions
         ? new Permissions(BigInt(command.default_member_permissions)).bitfield
         : null;
     }
 
-    if ("defaultMemberPermissions" in command) {
+    if ('defaultMemberPermissions' in command) {
       defaultMemberPermissions =
         command.defaultMemberPermissions === null
           ? null
@@ -390,7 +390,7 @@ class ApplicationCommand extends Base {
     enforceOptionOrder = false
   ): boolean {
     const optionType =
-      typeof option.type === "string"
+      typeof option.type === 'string'
         ? option.type
         : ApplicationCommandOptionTypes[option.type];
     if (
@@ -445,7 +445,7 @@ class ApplicationCommand extends Base {
       option.description !== existing.description ||
       option.autocomplete !== existing.autocomplete ||
       (option.required ??
-        (["SUB_COMMAND", "SUB_COMMAND_GROUP"].includes(optionType)
+        (['SUB_COMMAND', 'SUB_COMMAND_GROUP'].includes(optionType)
           ? undefined
           : false)) !== existing.required
     );
@@ -514,7 +514,7 @@ class ApplicationCommand extends Base {
       option.channelTypes ??
       option.channel_types ??
       []
-    ).map((type) => (typeof type === "number" ? ChannelTypes[type] : type));
+    ).map((type) => (typeof type === 'number' ? ChannelTypes[type] : type));
     for (const type of existing.channelTypes) {
       if (!newTypes.includes(type)) {
         return false;
@@ -529,7 +529,7 @@ class ApplicationCommand extends Base {
   ) {
     return (
       option.required ??
-      (["SUB_COMMAND", "SUB_COMMAND_GROUP"].includes(stringType)
+      (['SUB_COMMAND', 'SUB_COMMAND_GROUP'].includes(stringType)
         ? undefined
         : false)
     );
@@ -544,7 +544,7 @@ class ApplicationCommand extends Base {
     }
     return (
       option.channelTypes?.map((type) =>
-        typeof type === "string" ? ChannelTypes[type] : type
+        typeof type === 'string' ? ChannelTypes[type] : type
       ) ??
       // When transforming to API data, accept API data
       option.channel_types
@@ -553,21 +553,21 @@ class ApplicationCommand extends Base {
 
   static transformOptionKeys(received: boolean) {
     return {
-      channelTypesKey: received ? "channelTypes" : "channel_types",
+      channelTypesKey: received ? 'channelTypes' : 'channel_types',
       descriptionLocalizationsKey: received
-        ? "descriptionLocalizations"
-        : "description_localizations",
+        ? 'descriptionLocalizations'
+        : 'description_localizations',
       descriptionLocalizedKey: received
-        ? "descriptionLocalized"
-        : "description_localized",
-      maxLengthKey: received ? "maxLength" : "max_length",
-      maxValueKey: received ? "maxValue" : "max_value",
-      minLengthKey: received ? "minLength" : "min_length",
-      minValueKey: received ? "minValue" : "min_value",
+        ? 'descriptionLocalized'
+        : 'description_localized',
+      maxLengthKey: received ? 'maxLength' : 'max_length',
+      maxValueKey: received ? 'maxValue' : 'max_value',
+      minLengthKey: received ? 'minLength' : 'min_length',
+      minValueKey: received ? 'minValue' : 'min_value',
       nameLocalizationsKey: received
-        ? "nameLocalizations"
-        : "name_localizations",
-      nameLocalizedKey: received ? "nameLocalized" : "name_localized",
+        ? 'nameLocalizations'
+        : 'name_localizations',
+      nameLocalizedKey: received ? 'nameLocalized' : 'name_localized',
     };
   }
 
@@ -588,7 +588,7 @@ class ApplicationCommand extends Base {
     received = false
   ): ApplicationCommandOptionSource | Record<string, unknown> {
     const stringType =
-      typeof option.type === "string"
+      typeof option.type === 'string'
         ? option.type
         : ApplicationCommandOptionTypes[option.type];
     const {
@@ -623,7 +623,7 @@ class ApplicationCommand extends Base {
       options: option.options?.map((o) => this.transformOption(o, received)),
       required: ApplicationCommand.resolveRequiredValue(option, stringType),
       type:
-        typeof option.type === "number" && !received
+        typeof option.type === 'number' && !received
           ? option.type
           : ApplicationCommandOptionTypes[option.type],
       [channelTypesKey]: ApplicationCommand.resolveChannelTypesValue(

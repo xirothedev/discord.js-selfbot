@@ -1,10 +1,10 @@
-import { Buffer } from "node:buffer";
-import crypto from "node:crypto";
-import type { CipherGCM } from "node:crypto";
-import { Writable } from "node:stream";
-import { setTimeout } from "node:timers";
-import secretbox from "../util/Secretbox";
-import type MediaPlayer from "../player/MediaPlayer";
+import { Buffer } from 'node:buffer';
+import crypto from 'node:crypto';
+import type { CipherGCM } from 'node:crypto';
+import { Writable } from 'node:stream';
+import { setTimeout } from 'node:timers';
+import secretbox from '../util/Secretbox';
+import type MediaPlayer from '../player/MediaPlayer';
 
 const MAX_UINT_16 = 2 ** 16 - 1;
 const MAX_UINT_32 = 2 ** 32 - 1;
@@ -61,7 +61,7 @@ class BaseDispatcher extends Writable {
   }
 
   _codecCallback(_chunk: Buffer): void {
-    throw new Error("The _codecCallback method must be implemented");
+    throw new Error('The _codecCallback method must be implemented');
   }
 
   constructor(
@@ -96,26 +96,26 @@ class BaseDispatcher extends Writable {
       if (type && err) {
         const error = err instanceof Error ? err : new Error(String(err));
         error.message = `${type} stream: ${error.message}`;
-        this.emit(this.player.dispatcher === this ? "error" : "debug", error);
+        this.emit(this.player.dispatcher === this ? 'error' : 'debug', error);
       }
       this.destroy();
     };
 
-    this.on("error", () => streamError());
+    this.on('error', () => streamError());
     if (this.streams.input) {
-      this.streams.input.on("error", (err) => streamError("input", err));
+      this.streams.input.on('error', (err) => streamError('input', err));
     }
     if (this.streams.ffmpeg) {
-      this.streams.ffmpeg.on("error", (err) => streamError("ffmpeg", err));
+      this.streams.ffmpeg.on('error', (err) => streamError('ffmpeg', err));
     }
     if (this.streams.opus) {
-      this.streams.opus.on("error", (err) => streamError("opus", err));
+      this.streams.opus.on('error', (err) => streamError('opus', err));
     }
     if (this.streams.volume) {
-      this.streams.volume.on("error", (err) => streamError("volume", err));
+      this.streams.volume.on('error', (err) => streamError('volume', err));
     }
 
-    this.on("finish", () => {
+    this.on('finish', () => {
       this._cleanup();
       this._setSpeaking(0);
       this._setVideoStatus(false);
@@ -124,13 +124,13 @@ class BaseDispatcher extends Writable {
   }
 
   getTypeDispatcher() {
-    return "base";
+    return 'base';
   }
 
   resetNonceBuffer() {
     this._nonceBuffer =
       this.player.voiceConnection.authentication.mode ===
-      "aead_aes256_gcm_rtpsize"
+      'aead_aes256_gcm_rtpsize'
         ? Buffer.alloc(12)
         : Buffer.alloc(24);
     return this._nonceBuffer;
@@ -151,7 +151,7 @@ class BaseDispatcher extends Writable {
     done: (error?: Error | null) => void
   ) {
     if (!this.startTime) {
-      this.emit("start");
+      this.emit('start');
       this.startTime = performance.now();
     }
     if (this._syncDispatcher && !this._syncDispatcher.startTime) {
@@ -168,9 +168,9 @@ class BaseDispatcher extends Writable {
         this.resume();
         clearTimeout(timeout);
       };
-      this._syncDispatcher.once("start", cb);
+      this._syncDispatcher.once('start', cb);
     }
-    if (this.getTypeDispatcher() === "video") {
+    if (this.getTypeDispatcher() === 'video') {
       this._codecCallback(chunk);
     } else {
       this._playChunk(chunk);
@@ -211,7 +211,7 @@ class BaseDispatcher extends Writable {
       this.streams.ffmpeg?.pause();
       this.streams.video.unpipe(this);
     }
-    if (this.getTypeDispatcher() === "audio") {
+    if (this.getTypeDispatcher() === 'audio') {
       if (silence) {
         this.streams.silence?.pipe(this);
         this._silence = true;
@@ -237,7 +237,7 @@ class BaseDispatcher extends Writable {
     if (!this.pausedSince) {
       return;
     }
-    if (this.getTypeDispatcher() === "audio") {
+    if (this.getTypeDispatcher() === 'audio') {
       this.streams.silence?.unpipe(this);
     }
     if (this.streams.opus) {
@@ -254,7 +254,7 @@ class BaseDispatcher extends Writable {
       this._pausedTime += performance.now() - this.pausedSince;
     }
     this.pausedSince = null;
-    if (typeof this._writeCallback === "function") {
+    if (typeof this._writeCallback === 'function') {
       this._writeCallback();
     }
   }
@@ -333,7 +333,7 @@ class BaseDispatcher extends Writable {
   _encrypt(buffer: Buffer, additionalData: Buffer): [Buffer, Buffer] {
     const { secret_key, mode } = this.player.voiceConnection.authentication;
     if (!secret_key) {
-      throw new Error("VOICE_ENCRYPTION_KEY_MISSING");
+      throw new Error('VOICE_ENCRYPTION_KEY_MISSING');
     }
     // Both supported encryption methods want the nonce to be an incremental integer
     this._nonce++;
@@ -352,9 +352,9 @@ class BaseDispatcher extends Writable {
     let encrypted: Buffer | Uint8Array;
 
     switch (mode) {
-      case "aead_aes256_gcm_rtpsize": {
+      case 'aead_aes256_gcm_rtpsize': {
         const cipher: CipherGCM = crypto.createCipheriv(
-          "aes-256-gcm",
+          'aes-256-gcm',
           secret_key,
           nonceBuffer
         );
@@ -368,7 +368,7 @@ class BaseDispatcher extends Writable {
 
         return [Buffer.from(encrypted), noncePadding];
       }
-      case "aead_xchacha20_poly1305_rtpsize": {
+      case 'aead_xchacha20_poly1305_rtpsize': {
         encrypted =
           secretbox.methods.crypto_aead_xchacha20poly1305_ietf_encrypt(
             buffer,
@@ -420,7 +420,7 @@ class BaseDispatcher extends Writable {
       rtpHeader = Buffer.concat([rtpHeader, this.createHeaderExtension()]);
       rtpHeader[0] |= 1 << 4;
     }
-    if (this.getTypeDispatcher() === "video" && isLastPacket) {
+    if (this.getTypeDispatcher() === 'video' && isLastPacket) {
       // Marker bit.
       rtpHeader[1] |= 1 << 7;
     }
@@ -429,7 +429,7 @@ class BaseDispatcher extends Writable {
     rtpHeader.writeUIntBE(this.timestamp, 4, 4);
     rtpHeader.writeUIntBE(
       this.player.voiceConnection.authentication.ssrc +
-        Number(this.getTypeDispatcher() === "video"),
+        Number(this.getTypeDispatcher() === 'video'),
       8,
       4
     );
@@ -437,29 +437,29 @@ class BaseDispatcher extends Writable {
   }
 
   _sendPacket(packet: Buffer) {
-    if (this.getTypeDispatcher() === "audio") {
+    if (this.getTypeDispatcher() === 'audio') {
       // 1 << 0 = SPEAKING, 1 << 1 = SOUND SHARE.
       this._setSpeaking(this.player.isScreenSharing ? 1 << 1 : Math.trunc(1));
-    } else if (this.getTypeDispatcher() === "video") {
+    } else if (this.getTypeDispatcher() === 'video') {
       this._setVideoStatus(true);
       this._setStreamStatus(false);
     }
     const { udp } = this.player.voiceConnection.sockets;
     if (!udp) {
-      this.emit("debug", "Failed to send a packet - no UDP socket");
+      this.emit('debug', 'Failed to send a packet - no UDP socket');
       return;
     }
     const send = async () => {
       try {
         await udp.send(packet);
       } catch (error: unknown) {
-        if (this.getTypeDispatcher() === "audio") {
+        if (this.getTypeDispatcher() === 'audio') {
           this._setSpeaking(0);
-        } else if (this.getTypeDispatcher() === "video") {
+        } else if (this.getTypeDispatcher() === 'video') {
           this._setVideoStatus(false);
           this._setStreamStatus(true);
         }
-        this.emit("debug", `Failed to send a packet - ${error}`);
+        this.emit('debug', `Failed to send a packet - ${error}`);
       }
     };
     void send();
@@ -469,25 +469,25 @@ class BaseDispatcher extends Writable {
     if (this.player.voiceConnection !== undefined) {
       this.player.voiceConnection.setSpeaking(value);
     }
-    this.emit("speaking", value);
+    this.emit('speaking', value);
   }
 
   _setVideoStatus(value: boolean) {
     if (this.player.voiceConnection !== undefined) {
       this.player.voiceConnection.setVideoStatus(value);
     }
-    this.emit("videoStatus", value);
+    this.emit('videoStatus', value);
   }
 
   _setStreamStatus(value: boolean) {
     const connection = this.player.voiceConnection;
     if (
-      "sendScreenshareState" in connection &&
-      typeof connection.sendScreenshareState === "function"
+      'sendScreenshareState' in connection &&
+      typeof connection.sendScreenshareState === 'function'
     ) {
       connection.sendScreenshareState(value);
     }
-    this.emit("streamStatus", value);
+    this.emit('streamStatus', value);
   }
 }
 

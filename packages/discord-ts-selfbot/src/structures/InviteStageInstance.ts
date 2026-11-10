@@ -1,18 +1,18 @@
-import { Collection } from "@discordjs/collection";
-import Base from "./Base";
-import type { RawInviteStageInstance } from "../../typings/rawDataTypes";
-import type { InviteStageInstanceEntity } from "../types/entities/invite-stage-instance";
-import type { PatchOf } from "../types/schema";
-import type Client from "../client/Client";
-import type { GuildMember } from "./GuildMember";
+import { Collection } from '@discordjs/collection';
+import Base from './Base';
+import type { RawInviteStageInstance } from '../../typings/rawDataTypes';
+import type { InviteStageInstanceEntity } from '../types/entities/invite-stage-instance';
+import type { PatchOf } from '../types/schema';
+import type Client from '../client/Client';
+import type { GuildMember } from './GuildMember';
 
 class InviteStageInstance extends Base implements InviteStageInstanceEntity {
-  declare channelId: InviteStageInstanceEntity["channelId"];
-  declare guildId: InviteStageInstanceEntity["guildId"];
-  declare members: InviteStageInstanceEntity["members"];
-  declare topic: InviteStageInstanceEntity["topic"];
-  declare participantCount: InviteStageInstanceEntity["participantCount"];
-  declare speakerCount: InviteStageInstanceEntity["speakerCount"];
+  declare channelId: InviteStageInstanceEntity['channelId'];
+  declare guildId: InviteStageInstanceEntity['guildId'];
+  declare members: InviteStageInstanceEntity['members'];
+  declare topic: InviteStageInstanceEntity['topic'];
+  declare participantCount: InviteStageInstanceEntity['participantCount'];
+  declare speakerCount: InviteStageInstanceEntity['speakerCount'];
 
   constructor(
     client: Client,
@@ -31,7 +31,7 @@ class InviteStageInstance extends Base implements InviteStageInstanceEntity {
     this._patch(data);
   }
 
-  _patch(data: PatchOf<"InviteStageInstance">) {
+  _patch(data: PatchOf<'InviteStageInstance'>) {
     if (data.topic !== undefined) {
       this.topic = data.topic;
     }

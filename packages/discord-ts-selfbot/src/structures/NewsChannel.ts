@@ -1,14 +1,14 @@
-import BaseGuildTextChannel from "./BaseGuildTextChannel";
-import _errorsModule from "../errors";
+import BaseGuildTextChannel from './BaseGuildTextChannel';
+import _errorsModule from '../errors';
 
 const { Error } = _errorsModule;
-import type { TextChannelResolvable } from "../../typings";
+import type { TextChannelResolvable } from '../../typings';
 
 class NewsChannel extends BaseGuildTextChannel {
   async addFollower(channel: TextChannelResolvable, reason?: string) {
     const channelId = this.guild.channels.resolveId(channel);
     if (!channelId) {
-      throw new Error("GUILD_CHANNEL_RESOLVE");
+      throw new Error('GUILD_CHANNEL_RESOLVE');
     }
     await this.client.api
       .channels(this.id)

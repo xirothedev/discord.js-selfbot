@@ -1,11 +1,11 @@
-import AutocompleteInteraction from "../../../structures/AutocompleteInteraction";
-import ButtonInteraction from "../../../structures/ButtonInteraction";
-import CommandInteraction from "../../../structures/CommandInteraction";
-import MessageContextMenuInteraction from "../../../structures/MessageContextMenuInteraction";
-import ModalSubmitInteraction from "../../../structures/ModalSubmitInteraction";
-import SelectMenuInteraction from "../../../structures/SelectMenuInteraction";
-import UserContextMenuInteraction from "../../../structures/UserContextMenuInteraction";
-import _ConstantsModule from "../../../util/Constants";
+import AutocompleteInteraction from '../../../structures/AutocompleteInteraction';
+import ButtonInteraction from '../../../structures/ButtonInteraction';
+import CommandInteraction from '../../../structures/CommandInteraction';
+import MessageContextMenuInteraction from '../../../structures/MessageContextMenuInteraction';
+import ModalSubmitInteraction from '../../../structures/ModalSubmitInteraction';
+import SelectMenuInteraction from '../../../structures/SelectMenuInteraction';
+import UserContextMenuInteraction from '../../../structures/UserContextMenuInteraction';
+import _ConstantsModule from '../../../util/Constants';
 
 const {
   ApplicationCommandTypes,
@@ -13,16 +13,16 @@ const {
   InteractionTypes,
   MessageComponentTypes,
 } = _ConstantsModule;
-import type { Client } from "../../Client";
-import type { WebSocketShard } from "../WebSocketShard";
-import type { RawInteractionData } from "../../../../typings/rawDataTypes";
+import type { Client } from '../../Client';
+import type { WebSocketShard } from '../WebSocketShard';
+import type { RawInteractionData } from '../../../../typings/rawDataTypes';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  return typeof value === 'object' && value !== null;
 }
 
 function isInteractionData(value: unknown): value is RawInteractionData {
-  return isRecord(value) && typeof value.type === "number";
+  return isRecord(value) && typeof value.type === 'number';
 }
 
 type InteractionConstructor = new (...args: never[]) => unknown;

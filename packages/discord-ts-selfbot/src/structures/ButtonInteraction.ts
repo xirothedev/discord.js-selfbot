@@ -1,5 +1,5 @@
-import MessageComponentInteraction from "./MessageComponentInteraction";
-import type { CacheType } from "../../typings";
+import MessageComponentInteraction from './MessageComponentInteraction';
+import type { CacheType } from '../../typings';
 
 class ButtonInteraction<
   Cached extends CacheType = CacheType,

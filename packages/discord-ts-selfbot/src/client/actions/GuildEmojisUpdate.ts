@@ -1,5 +1,5 @@
-import Action from "./Action";
-import type { GatewayGuildEmojisUpdateDispatchData } from "discord-api-types/v10";
+import Action from './Action';
+import type { GatewayGuildEmojisUpdateDispatchData } from 'discord-api-types/v10';
 
 class GuildEmojisUpdateAction extends Action {
   handle(data: GatewayGuildEmojisUpdateDispatchData) {

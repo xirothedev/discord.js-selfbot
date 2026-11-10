@@ -1,7 +1,7 @@
-import BaseGuild from "./BaseGuild";
-import Permissions from "../util/Permissions";
-import type { RawOAuth2GuildData } from "../../typings/rawDataTypes";
-import type Client from "../client/Client";
+import BaseGuild from './BaseGuild';
+import Permissions from '../util/Permissions';
+import type { RawOAuth2GuildData } from '../../typings/rawDataTypes';
+import type Client from '../client/Client';
 
 class OAuth2Guild extends BaseGuild {
   declare owner: boolean;

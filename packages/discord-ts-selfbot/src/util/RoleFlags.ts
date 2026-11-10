@@ -1,4 +1,4 @@
-import BitField from "./BitField";
+import BitField from './BitField';
 
 class RoleFlags extends BitField {}
 

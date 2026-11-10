@@ -1,25 +1,25 @@
-import { afterAll, beforeAll, expect, test } from "bun:test";
+import { afterAll, beforeAll, expect, test } from 'bun:test';
 
-import { startFakeDiscord } from "@discord-ts-selfbot/test-harness";
+import { startFakeDiscord } from '@discord-ts-selfbot/test-harness';
 
-import { Client, Invite } from "../src/index";
+import { Client, Invite } from '../src/index';
 
-const API = "/v9";
+const API = '/v9';
 
 const FRIEND_INVITES = [
   {
-    code: "friend-code-1",
-    created_at: "2026-01-01T00:00:00.000Z",
-    expires_at: "2026-01-08T00:00:00.000Z",
+    code: 'friend-code-1',
+    created_at: '2026-01-01T00:00:00.000Z',
+    expires_at: '2026-01-08T00:00:00.000Z',
     max_age: 604_800,
     max_uses: 1,
     type: 2,
     uses: 0,
   },
   {
-    code: "friend-code-2",
-    created_at: "2026-01-02T00:00:00.000Z",
-    expires_at: "2026-01-09T00:00:00.000Z",
+    code: 'friend-code-2',
+    created_at: '2026-01-02T00:00:00.000Z',
+    expires_at: '2026-01-09T00:00:00.000Z',
     max_age: 604_800,
     max_uses: 1,
     type: 2,
@@ -38,7 +38,7 @@ beforeAll(async () => {
     },
   });
   client = new Client({ http: { api: fake.url, version: 9 } });
-  await client.login("fake-token");
+  await client.login('fake-token');
 }, 15_000);
 
 afterAll(() => {
@@ -52,7 +52,7 @@ function lastRequest() {
   return request;
 }
 
-test("ClientUser#createFriendInvite POSTs /users/@me/invites with an empty body", async () => {
+test('ClientUser#createFriendInvite POSTs /users/@me/invites with an empty body', async () => {
   const before = fake.getRequests().length;
 
   const invite = await client.user.createFriendInvite();
@@ -60,17 +60,17 @@ test("ClientUser#createFriendInvite POSTs /users/@me/invites with an empty body"
   expect(fake.getRequests()).toHaveLength(before + 1);
   expect(lastRequest()).toMatchObject({
     body: {},
-    method: "POST",
+    method: 'POST',
     path: `${API}/users/@me/invites`,
   });
   expect(invite).toBeInstanceOf(Invite);
-  expect(invite.code).toBe("friend-code-1");
+  expect(invite.code).toBe('friend-code-1');
   expect(invite.type).toBe(2);
   expect(invite.maxAge).toBe(604_800);
   expect(invite.maxUses).toBe(1);
 });
 
-test("ClientUser#getAllFriendInvites GETs /users/@me/invites and keys the collection by code", async () => {
+test('ClientUser#getAllFriendInvites GETs /users/@me/invites and keys the collection by code', async () => {
   const before = fake.getRequests().length;
 
   const invites = await client.user.getAllFriendInvites();
@@ -78,18 +78,18 @@ test("ClientUser#getAllFriendInvites GETs /users/@me/invites and keys the collec
   expect(fake.getRequests()).toHaveLength(before + 1);
   expect(lastRequest()).toMatchObject({
     body: null,
-    method: "GET",
+    method: 'GET',
     path: `${API}/users/@me/invites`,
   });
   expect(invites).toHaveLength(2);
-  expect([...invites.keys()]).toEqual(["friend-code-1", "friend-code-2"]);
+  expect([...invites.keys()]).toEqual(['friend-code-1', 'friend-code-2']);
   for (const [code, invite] of invites) {
     expect(invite).toBeInstanceOf(Invite);
     expect(invite.code).toBe(code);
   }
 });
 
-test("ClientUser#revokeAllFriendInvites DELETEs /users/@me/invites", async () => {
+test('ClientUser#revokeAllFriendInvites DELETEs /users/@me/invites', async () => {
   const before = fake.getRequests().length;
 
   await client.user.revokeAllFriendInvites();
@@ -97,7 +97,7 @@ test("ClientUser#revokeAllFriendInvites DELETEs /users/@me/invites", async () =>
   expect(fake.getRequests()).toHaveLength(before + 1);
   expect(lastRequest()).toMatchObject({
     body: null,
-    method: "DELETE",
+    method: 'DELETE',
     path: `${API}/users/@me/invites`,
   });
 });

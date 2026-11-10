@@ -1,24 +1,24 @@
-import USER_REQUIRED_ACTION from "./USER_REQUIRED_ACTION_UPDATE";
-import type { UserRequiredActionData } from "./USER_REQUIRED_ACTION_UPDATE";
-import Application from "../../../structures/interfaces/Application";
-import _ConstantsModule from "../../../util/Constants";
+import USER_REQUIRED_ACTION from './USER_REQUIRED_ACTION_UPDATE';
+import type { UserRequiredActionData } from './USER_REQUIRED_ACTION_UPDATE';
+import Application from '../../../structures/interfaces/Application';
+import _ConstantsModule from '../../../util/Constants';
 
 const { Opcodes } = _ConstantsModule;
-import ClientUser from "../../../structures/ClientUser";
-import type { Snowflake } from "discord-api-types/v10";
-import type { Client } from "../../Client";
-import type { WebSocketShard } from "../WebSocketShard";
+import ClientUser from '../../../structures/ClientUser';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { Client } from '../../Client';
+import type { WebSocketShard } from '../WebSocketShard';
 import type {
   RawApplicationData,
   RawChannelData,
   RawGuildData,
   RawUserData,
-} from "../../../../typings/rawDataTypes";
+} from '../../../../typings/rawDataTypes';
 import type {
   RawGuildSettingsData,
   RawUserSettingsData,
-} from "../../../../typings";
-import type { RelationshipData } from "../../../managers/RelationshipManager";
+} from '../../../../typings';
+import type { RelationshipData } from '../../../managers/RelationshipManager';
 
 type ReadyGuildData = RawGuildData & { shardId?: number };
 
@@ -49,14 +49,14 @@ interface ReadyData extends UserRequiredActionData {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  return typeof value === 'object' && value !== null;
 }
 
 function isReadyData(value: unknown): value is ReadyData {
   return (
     isRecord(value) &&
     isRecord(value.user) &&
-    typeof value.user.id === "string" &&
+    typeof value.user.id === 'string' &&
     Array.isArray(value.private_channels) &&
     Array.isArray(value.guilds)
   );

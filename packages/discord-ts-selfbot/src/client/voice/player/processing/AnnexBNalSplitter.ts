@@ -1,6 +1,6 @@
-import { Buffer } from "node:buffer";
-import { Transform } from "node:stream";
-import type { TransformCallback } from "node:stream";
+import { Buffer } from 'node:buffer';
+import { Transform } from 'node:stream';
+import type { TransformCallback } from 'node:stream';
 /*
 Credit: https://github.com/dank074/Discord-video-stream
 The use of video streaming in this library is an incomplete implementation with many bugs, primarily aimed at lazy users.

@@ -1,7 +1,7 @@
-import { test, describe } from "bun:test";
+import { test, describe } from 'bun:test';
 
-import * as discord from "../../src/index";
-import { skip, makeClient, login, makeStepRecorder } from "./_helpers";
+import * as discord from '../../src/index';
+import { skip, makeClient, login, makeStepRecorder } from './_helpers';
 
 interface JsonSerializable {
   toJSON: () => unknown;
@@ -12,15 +12,15 @@ interface SettableCollection {
 }
 
 const CONSTANT_EXPORTS = new Set([
-  "Constants",
-  "Events",
-  "Options",
-  "Partials",
-  "Status",
+  'Constants',
+  'Events',
+  'Options',
+  'Partials',
+  'Status',
 ]);
 
 function tryConstruct(value: unknown, args: unknown[]): unknown {
-  if (typeof value !== "function") {
+  if (typeof value !== 'function') {
     return undefined;
   }
   try {
@@ -36,19 +36,19 @@ function canConstruct(value: unknown, args: unknown[]): boolean {
 
 function hasToJSON(value: unknown): value is JsonSerializable {
   return (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value !== null &&
-    "toJSON" in value &&
-    typeof value.toJSON === "function"
+    'toJSON' in value &&
+    typeof value.toJSON === 'function'
   );
 }
 
 function hasSet(value: unknown): value is SettableCollection {
   return (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value !== null &&
-    "set" in value &&
-    typeof value.set === "function"
+    'set' in value &&
+    typeof value.set === 'function'
   );
 }
 
@@ -66,12 +66,12 @@ function touchBuilder(value: unknown): void {
 function touchBitField(value: unknown): void {
   const instance = tryConstruct(value, [0]) ?? tryConstruct(value, []);
   if (instance === undefined) {
-    throw new Error("bitfield is not constructible");
+    throw new Error('bitfield is not constructible');
   }
 }
 
 function touchError(value: unknown): void {
-  if (!canConstruct(value, ["msg"])) {
+  if (!canConstruct(value, ['msg'])) {
     canConstruct(value, []);
   }
 }
@@ -79,27 +79,27 @@ function touchError(value: unknown): void {
 function touchCollection(value: unknown): void {
   const instance = tryConstruct(value, []);
   if (hasSet(instance)) {
-    instance.set("entry", 1);
+    instance.set('entry', 1);
   }
 }
 
 function touchUtility(key: string): boolean {
-  if (key === "Util") {
+  if (key === 'Util') {
     discord.Util.resolveColor(0xff_00_00);
     discord.Util.flatten({ outer: { inner: 1 } });
     return true;
   }
-  if (key === "SnowflakeUtil") {
+  if (key === 'SnowflakeUtil') {
     discord.SnowflakeUtil.generate();
     return true;
   }
-  if (key === "DataResolver") {
-    discord.DataResolver.resolveBase64("x");
+  if (key === 'DataResolver') {
+    discord.DataResolver.resolveBase64('x');
     return true;
   }
-  if (key === "Formatters") {
-    if (typeof discord.Formatters.bold === "function") {
-      discord.Formatters.bold("x");
+  if (key === 'Formatters') {
+    if (typeof discord.Formatters.bold === 'function') {
+      discord.Formatters.bold('x');
     }
     return true;
   }
@@ -112,25 +112,25 @@ function touchExport(
   client: ReturnType<typeof makeClient>
 ): void {
   if (value === undefined || value === null) {
-    throw new Error("undefined export");
+    throw new Error('undefined export');
   }
   // Builders: construct + toJSON (best effort)
-  if (key.endsWith("Builder")) {
+  if (key.endsWith('Builder')) {
     touchBuilder(value);
     return;
   }
   // BitFields / Flags: construct
-  if (key.endsWith("BitField") || key.endsWith("Flags")) {
+  if (key.endsWith('BitField') || key.endsWith('Flags')) {
     touchBitField(value);
     return;
   }
   // Errors: construct
-  if (key.endsWith("Error")) {
+  if (key.endsWith('Error')) {
     touchError(value);
     return;
   }
   // Collections
-  if (key === "Collection" || key === "LimitedCollection") {
+  if (key === 'Collection' || key === 'LimitedCollection') {
     touchCollection(value);
     return;
   }
@@ -139,23 +139,23 @@ function touchExport(
     return;
   }
   // Client: verify the logged in user exists
-  if (key === "Client") {
+  if (key === 'Client') {
     if (!client.user) {
-      throw new Error("no user");
+      throw new Error('no user');
     }
     return;
   }
   // Constants / Events / Options / Partials / Status: verify object
   if (CONSTANT_EXPORTS.has(key)) {
-    if (typeof value !== "object" && typeof value !== "function") {
-      throw new TypeError("not object/function");
+    if (typeof value !== 'object' && typeof value !== 'function') {
+      throw new TypeError('not object/function');
     }
     return;
   }
   // Structures that can be fetched from client
-  if (key === "Guild" || key === "User") {
-    if (typeof value !== "function") {
-      throw new TypeError("not a class");
+  if (key === 'Guild' || key === 'User') {
+    if (typeof value !== 'function') {
+      throw new TypeError('not a class');
     }
     return;
   }
@@ -163,8 +163,8 @@ function touchExport(
   tryConstruct(value, []);
 }
 
-describe.skipIf(skip)("manual: full-coverage (all exports)", () => {
-  test("touch every export", async () => {
+describe.skipIf(skip)('manual: full-coverage (all exports)', () => {
+  test('touch every export', async () => {
     const client = makeClient();
     const { step, summary, writeArtifact } = makeStepRecorder();
     try {
@@ -183,7 +183,7 @@ describe.skipIf(skip)("manual: full-coverage (all exports)", () => {
     } finally {
       client.destroy();
     }
-    summary("manual: full-coverage");
-    await writeArtifact("manual-full-coverage-results");
+    summary('manual: full-coverage');
+    await writeArtifact('manual-full-coverage-results');
   }, 600_000);
 });

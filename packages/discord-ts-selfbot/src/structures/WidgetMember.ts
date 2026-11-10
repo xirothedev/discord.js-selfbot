@@ -1,7 +1,7 @@
-import Base from "./Base";
-import type { PresenceStatus, WidgetActivity } from "../../typings";
-import type { RawWidgetMemberData } from "../../typings/rawDataTypes";
-import type Client from "../client/Client";
+import Base from './Base';
+import type { PresenceStatus, WidgetActivity } from '../../typings';
+import type { RawWidgetMemberData } from '../../typings/rawDataTypes';
+import type Client from '../client/Client';
 
 type RawWidgetMemberSource = RawWidgetMemberData & {
   deaf?: boolean;

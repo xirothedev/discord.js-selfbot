@@ -1,29 +1,29 @@
-import Base, { patchValue } from "./Base";
-import _errorsModule from "../errors";
+import Base, { patchValue } from './Base';
+import _errorsModule from '../errors';
 
 const { Error, TypeError } = _errorsModule;
-import type { RawVoiceStateData } from "../../typings/rawDataTypes";
-import type { GuildVoiceChannelResolvable } from "../../typings";
-import type Client from "../client/Client";
-import type { Guild } from "./Guild";
-import type { VoiceStateEntity } from "../types/entities/voice-state";
-import type { PatchOf } from "../types/schema";
-import type { GuildMember } from "./GuildMember";
-import type User from "./User";
+import type { RawVoiceStateData } from '../../typings/rawDataTypes';
+import type { GuildVoiceChannelResolvable } from '../../typings';
+import type Client from '../client/Client';
+import type { Guild } from './Guild';
+import type { VoiceStateEntity } from '../types/entities/voice-state';
+import type { PatchOf } from '../types/schema';
+import type { GuildMember } from './GuildMember';
+import type User from './User';
 
 class VoiceState extends Base implements VoiceStateEntity {
-  declare channelId: VoiceStateEntity["channelId"];
-  declare guild: VoiceStateEntity["guild"];
-  declare id: VoiceStateEntity["id"];
-  declare selfDeaf: VoiceStateEntity["selfDeaf"];
-  declare selfMute: VoiceStateEntity["selfMute"];
-  declare serverDeaf: VoiceStateEntity["serverDeaf"];
-  declare serverMute: VoiceStateEntity["serverMute"];
-  declare sessionId: VoiceStateEntity["sessionId"];
-  declare streaming: VoiceStateEntity["streaming"];
-  declare selfVideo: VoiceStateEntity["selfVideo"];
-  declare suppress: VoiceStateEntity["suppress"];
-  declare requestToSpeakTimestamp: VoiceStateEntity["requestToSpeakTimestamp"];
+  declare channelId: VoiceStateEntity['channelId'];
+  declare guild: VoiceStateEntity['guild'];
+  declare id: VoiceStateEntity['id'];
+  declare selfDeaf: VoiceStateEntity['selfDeaf'];
+  declare selfMute: VoiceStateEntity['selfMute'];
+  declare serverDeaf: VoiceStateEntity['serverDeaf'];
+  declare serverMute: VoiceStateEntity['serverMute'];
+  declare sessionId: VoiceStateEntity['sessionId'];
+  declare streaming: VoiceStateEntity['streaming'];
+  declare selfVideo: VoiceStateEntity['selfVideo'];
+  declare suppress: VoiceStateEntity['suppress'];
+  declare requestToSpeakTimestamp: VoiceStateEntity['requestToSpeakTimestamp'];
 
   constructor(
     client: Client,
@@ -38,7 +38,7 @@ class VoiceState extends Base implements VoiceStateEntity {
     this._patch(data);
   }
 
-  _patch(data: PatchOf<"VoiceState">) {
+  _patch(data: PatchOf<'VoiceState'>) {
     this.serverDeaf = patchValue(data.deaf, this.serverDeaf);
     this.serverMute = patchValue(data.mute, this.serverMute);
     this.selfDeaf = patchValue(data.self_deaf, this.selfDeaf);
@@ -119,18 +119,18 @@ class VoiceState extends Base implements VoiceStateEntity {
   }
 
   async setRequestToSpeak(request = true) {
-    if (this.channel?.type !== "GUILD_STAGE_VOICE") {
-      throw new Error("VOICE_NOT_STAGE_CHANNEL");
+    if (this.channel?.type !== 'GUILD_STAGE_VOICE') {
+      throw new Error('VOICE_NOT_STAGE_CHANNEL');
     }
     if (!this.guild) {
-      throw new Error("VOICE_GUILD_NOT_FOUND");
+      throw new Error('VOICE_GUILD_NOT_FOUND');
     }
 
     if (this.client.user?.id !== this.id) {
-      throw new Error("VOICE_STATE_NOT_OWN");
+      throw new Error('VOICE_STATE_NOT_OWN');
     }
 
-    await this.client.api.guilds(this.guild.id, "voice-states", "@me").patch({
+    await this.client.api.guilds(this.guild.id, 'voice-states', '@me').patch({
       data: {
         channel_id: this.channelId,
         request_to_speak_timestamp: request ? new Date().toISOString() : null,
@@ -139,20 +139,20 @@ class VoiceState extends Base implements VoiceStateEntity {
   }
 
   async setSuppressed(suppressed = true) {
-    if (typeof suppressed !== "boolean") {
-      throw new TypeError("VOICE_STATE_INVALID_TYPE", "suppressed");
+    if (typeof suppressed !== 'boolean') {
+      throw new TypeError('VOICE_STATE_INVALID_TYPE', 'suppressed');
     }
     if (!this.guild) {
-      throw new Error("VOICE_GUILD_NOT_FOUND");
+      throw new Error('VOICE_GUILD_NOT_FOUND');
     }
 
-    if (this.channel?.type !== "GUILD_STAGE_VOICE") {
-      throw new Error("VOICE_NOT_STAGE_CHANNEL");
+    if (this.channel?.type !== 'GUILD_STAGE_VOICE') {
+      throw new Error('VOICE_NOT_STAGE_CHANNEL');
     }
 
-    const target = this.client.user?.id === this.id ? "@me" : this.id;
+    const target = this.client.user?.id === this.id ? '@me' : this.id;
 
-    await this.client.api.guilds(this.guild.id, "voice-states", target).patch({
+    await this.client.api.guilds(this.guild.id, 'voice-states', target).patch({
       data: {
         channel_id: this.channelId,
         request_to_speak_timestamp: null,
@@ -161,12 +161,12 @@ class VoiceState extends Base implements VoiceStateEntity {
     });
   }
 
-  setStatus(status = "") {
+  setStatus(status = '') {
     if (!this.channel) {
-      throw new Error("VOICE_CHANNEL_NOT_FOUND");
+      throw new Error('VOICE_CHANNEL_NOT_FOUND');
     }
     // PUT https://discord.com/api/v9/channels/:id/voice-status
-    return this.client.api.channels(this.channel.id, "voice-status").put({
+    return this.client.api.channels(this.channel.id, 'voice-status').put({
       data: {
         status,
       },
@@ -175,7 +175,7 @@ class VoiceState extends Base implements VoiceStateEntity {
 
   async getPreview() {
     if (!this.streaming) {
-      throw new Error("USER_NOT_STREAMING");
+      throw new Error('USER_NOT_STREAMING');
     }
     // URL: https://discord.com/api/v9/streams/guild:guildid:voicechannelid:userid/preview
     // URL: https://discord.com/api/v9/streams/call:channelId:userId/preview
@@ -190,7 +190,7 @@ class VoiceState extends Base implements VoiceStateEntity {
 
   postPreview(base64Image: string) {
     if (this.client.user?.id !== this.id || !this.streaming) {
-      throw new Error("USER_NOT_STREAMING");
+      throw new Error('USER_NOT_STREAMING');
     }
     // URL: https://discord.com/api/v9/streams/guild:guildid:voicechannelid:userid/preview
     // URL: https://discord.com/api/v9/streams/call:channelId:userId/preview
@@ -206,14 +206,14 @@ class VoiceState extends Base implements VoiceStateEntity {
 
   fetch(force = true) {
     if (!this.guild) {
-      throw new Error("VOICE_GUILD_NOT_FOUND");
+      throw new Error('VOICE_GUILD_NOT_FOUND');
     }
     return this.guild.voiceStates.fetch(this.id, { force });
   }
 
   toJSON() {
     return super.toJSON({
-      channelId: "channel",
+      channelId: 'channel',
       id: true,
       selfDeaf: true,
       selfMute: true,

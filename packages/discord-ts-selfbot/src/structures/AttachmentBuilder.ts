@@ -1,11 +1,11 @@
-import type { Stream } from "node:stream";
-import Util from "../util/Util";
+import type { Stream } from 'node:stream';
+import Util from '../util/Util';
 import type {
   AttachmentData,
   AttachmentPayload,
   BufferResolvable,
   MessageAttachment,
-} from "../../typings";
+} from '../../typings';
 
 class AttachmentBuilder {
   declare attachment: BufferResolvable | Stream;
@@ -68,7 +68,7 @@ class AttachmentBuilder {
 
     if (!spoiler) {
       while (this.spoiler) {
-        this.name = this.name?.slice("SPOILER_".length) ?? null;
+        this.name = this.name?.slice('SPOILER_'.length) ?? null;
       }
       return this;
     }
@@ -78,7 +78,7 @@ class AttachmentBuilder {
   }
 
   get spoiler() {
-    return this.name ? Util.basename(this.name).startsWith("SPOILER_") : false;
+    return this.name ? Util.basename(this.name).startsWith('SPOILER_') : false;
   }
 
   toJSON() {

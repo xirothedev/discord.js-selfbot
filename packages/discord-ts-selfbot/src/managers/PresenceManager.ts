@@ -1,11 +1,11 @@
-import CachedManager from "./CachedManager";
-import _PresenceModule from "../structures/Presence";
+import CachedManager from './CachedManager';
+import _PresenceModule from '../structures/Presence';
 
 const { Presence } = _PresenceModule;
-import type { RawPresenceData } from "../../typings/rawDataTypes";
-import type { GatewayGuildMembersChunkPresence } from "discord-api-types/v10";
-import type { Client } from "../client/Client";
-import type { Presence as PresenceType } from "../structures/Presence";
+import type { RawPresenceData } from '../../typings/rawDataTypes';
+import type { GatewayGuildMembersChunkPresence } from 'discord-api-types/v10';
+import type { Client } from '../client/Client';
+import type { Presence as PresenceType } from '../structures/Presence';
 
 class PresenceManager extends CachedManager<PresenceType> {
   constructor(

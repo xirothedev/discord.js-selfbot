@@ -1,21 +1,21 @@
-import ThreadManager from "./ThreadManager";
-import _errorsModule from "../errors";
+import ThreadManager from './ThreadManager';
+import _errorsModule from '../errors';
 
 const { TypeError } = _errorsModule;
-import _ConstantsModule, { resolveEnumValue } from "../util/Constants";
+import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
 
 const { ChannelTypes } = _ConstantsModule;
-import _UtilModule from "../util/Util";
-import type { GuildTextThreadCreateOptions } from "../../typings";
+import _UtilModule from '../util/Util';
+import type { GuildTextThreadCreateOptions } from '../../typings';
 import type {
   RESTPostAPIChannelThreadsResult,
   Snowflake,
-} from "discord-api-types/v10";
-import type { Message } from "../structures/Message";
+} from 'discord-api-types/v10';
+import type { Message } from '../structures/Message';
 
 type SourceGuildTextThreadCreateOptions<AllowedThreadType> = Omit<
   GuildTextThreadCreateOptions<AllowedThreadType>,
-  "startMessage"
+  'startMessage'
 > & {
   startMessage?: Message | Snowflake;
 };
@@ -32,15 +32,15 @@ class GuildTextThreadManager<AllowedThreadType> extends ThreadManager {
     rateLimitPerUser,
   }: SourceGuildTextThreadCreateOptions<AllowedThreadType>) {
     let path = this.client.api.channels(this.channel.id);
-    if (type && typeof type !== "string" && typeof type !== "number") {
+    if (type && typeof type !== 'string' && typeof type !== 'number') {
       throw new TypeError(
-        "INVALID_TYPE",
-        "type",
-        "ThreadChannelType or Number"
+        'INVALID_TYPE',
+        'type',
+        'ThreadChannelType or Number'
       );
     }
     let resolvedType: number | undefined =
-      this.channel.type === "GUILD_NEWS"
+      this.channel.type === 'GUILD_NEWS'
         ? ChannelTypes.GUILD_NEWS_THREAD
         : ChannelTypes.GUILD_PUBLIC_THREAD;
     if (startMessage) {
@@ -48,22 +48,22 @@ class GuildTextThreadManager<AllowedThreadType> extends ThreadManager {
       const startMessageId = messages?.resolveId(startMessage);
       if (!startMessageId) {
         throw new TypeError(
-          "INVALID_TYPE",
-          "startMessage",
-          "MessageResolvable"
+          'INVALID_TYPE',
+          'startMessage',
+          'MessageResolvable'
         );
       }
       path = path.messages(startMessageId);
-    } else if (this.channel.type !== "GUILD_NEWS") {
-      if (typeof type === "string") {
+    } else if (this.channel.type !== 'GUILD_NEWS') {
+      if (typeof type === 'string') {
         resolvedType = resolveEnumValue(ChannelTypes, type);
-      } else if (typeof type === "number") {
+      } else if (typeof type === 'number') {
         resolvedType = type;
       }
     }
 
     const resolvedAutoArchiveDuration =
-      autoArchiveDuration === "MAX"
+      autoArchiveDuration === 'MAX'
         ? resolveAutoArchiveMaxLimit(this.channel.guild)
         : autoArchiveDuration;
 

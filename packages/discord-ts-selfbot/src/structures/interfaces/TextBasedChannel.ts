@@ -1,35 +1,35 @@
-import MessageCollector from "../MessageCollector";
-import MessagePayload from "../MessagePayload";
-import _ConstantsModule from "../../util/Constants";
+import MessageCollector from '../MessageCollector';
+import MessagePayload from '../MessagePayload';
+import _ConstantsModule from '../../util/Constants';
 
 const { InteractionTypes, ApplicationCommandOptionTypes, Events } =
   _ConstantsModule;
-import _errorsModule from "../../errors";
+import _errorsModule from '../../errors';
 
 const { Error } = _errorsModule;
-import SnowflakeUtil from "../../util/SnowflakeUtil";
-import { setTimeout } from "node:timers";
-import { s } from "@sapphire/shapeshift";
-import Util from "../../util/Util";
-import User from "../User";
-import _GuildMemberModule from "../GuildMember";
+import SnowflakeUtil from '../../util/SnowflakeUtil';
+import { setTimeout } from 'node:timers';
+import { s } from '@sapphire/shapeshift';
+import Util from '../../util/Util';
+import User from '../User';
+import _GuildMemberModule from '../GuildMember';
 
 const { GuildMember } = _GuildMemberModule;
-import MessageManager from "../../managers/MessageManager";
-import type { Collection } from "@discordjs/collection";
-import type { Snowflake } from "discord-api-types/v10";
-import type { Client } from "../../client/Client";
-import type { Message } from "../Message";
-import type { MessageCollectorSourceOptions } from "../MessageCollector";
+import MessageManager from '../../managers/MessageManager';
+import type { Collection } from '@discordjs/collection';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { Client } from '../../client/Client';
+import type { Message } from '../Message';
+import type { MessageCollectorSourceOptions } from '../MessageCollector';
 import type {
   ChannelWebhookCreateOptions,
   UserResolvable,
-} from "../../../typings";
-import type { SendOptions } from "../../types/channels";
-import type { RawMessageData } from "../../../typings/rawDataTypes";
-import type { UploadAttachment } from "../../types/uploads";
-import type ClientType from "../../client/Client";
-import type { Guild } from "../Guild";
+} from '../../../typings';
+import type { SendOptions } from '../../types/channels';
+import type { RawMessageData } from '../../../typings/rawDataTypes';
+import type { UploadAttachment } from '../../types/uploads';
+import type ClientType from '../../client/Client';
+import type { Guild } from '../Guild';
 
 const NESTED_ARRAY_FLAT_DEPTH = 2;
 const validateName = (stringName: unknown): string =>
@@ -138,7 +138,7 @@ interface SlashCommandContext {
 
 function isInteractionPacket(value: unknown): value is InteractionPacket {
   return (
-    typeof value === "object" && value !== null && "t" in value && "d" in value
+    typeof value === 'object' && value !== null && 't' in value && 'd' in value
   );
 }
 
@@ -159,7 +159,7 @@ function parseChoices(
   if (choice) {
     return choice.value;
   }
-  throw new Error("INVALID_SLASH_COMMAND_CHOICES", parent, value);
+  throw new Error('INVALID_SLASH_COMMAND_CHOICES', parent, value);
 }
 
 async function addDataFromAttachment(
@@ -172,7 +172,7 @@ async function addDataFromAttachment(
   const data = await Util.getUploadURL(client, channelId, [file]);
   const [upload] = data;
   if (!upload) {
-    throw new Error("INVALID_TYPE", "attachment", "FileOptions");
+    throw new Error('INVALID_TYPE', 'attachment', 'FileOptions');
   }
   await Util.uploadFile(file.file, upload.upload_url);
   const id = attachments.length;
@@ -195,7 +195,7 @@ function buildAutocompletePostData(
 ) {
   if (subGroup) {
     if (!subCommand) {
-      throw new Error("SLASH_COMMAND_SUB_COMMAND_INVALID", subGroup.name);
+      throw new Error('SLASH_COMMAND_SUB_COMMAND_INVALID', subGroup.name);
     }
     return [
       {
@@ -451,12 +451,12 @@ async function parseSlashArguments(
 
 // Utils
 function parseCommandName(commandNameString: string) {
-  const cmd = commandNameString.trim().split(" ");
+  const cmd = commandNameString.trim().split(' ');
   const commandName = validateName(cmd[0]);
   const sub = cmd.slice(1);
   for (const part of sub) {
     if (sub.length > 2) {
-      throw new Error("INVALID_COMMAND_NAME", cmd);
+      throw new Error('INVALID_COMMAND_NAME', cmd);
     }
     validateName(part);
   }
@@ -465,7 +465,7 @@ function parseCommandName(commandNameString: string) {
 
 function findSlashCommand(
   client: Client,
-  data: Pick<ApplicationCommandIndex, "applications" | "application_commands">,
+  data: Pick<ApplicationCommandIndex, 'applications' | 'application_commands'>,
   commandName: string,
   botOrApplicationId: UserResolvable
 ) {
@@ -480,7 +480,7 @@ function findSlashCommand(
   );
   if (!application) {
     throw new Error(
-      "INVALID_APPLICATION_COMMAND",
+      'INVALID_APPLICATION_COMMAND',
       "Bot/Application doesn't exist"
     );
   }
@@ -489,7 +489,7 @@ function findSlashCommand(
       candidate.application_id === application.id
   );
   if (!command) {
-    throw new Error("INVALID_APPLICATION_COMMAND", application.id);
+    throw new Error('INVALID_APPLICATION_COMMAND', application.id);
   }
   return { application, command };
 }
@@ -505,7 +505,7 @@ function resolveSubcommandOptions(
         [obj.name, obj.name_default].includes(sub[0])
     );
     if (!subGroup) {
-      throw new Error("SLASH_COMMAND_SUB_COMMAND_GROUP_INVALID", sub[0]);
+      throw new Error('SLASH_COMMAND_SUB_COMMAND_GROUP_INVALID', sub[0]);
     }
     const subCommand = (subGroup.options ?? []).find(
       (obj: ApplicationCommandIndexOption) =>
@@ -513,7 +513,7 @@ function resolveSubcommandOptions(
         [obj.name, obj.name_default].includes(sub[1])
     );
     if (!subCommand) {
-      throw new Error("SLASH_COMMAND_SUB_COMMAND_INVALID", sub[1]);
+      throw new Error('SLASH_COMMAND_SUB_COMMAND_INVALID', sub[1]);
     }
     return { optionsMaxdepth: subCommand.options ?? [], subCommand, subGroup };
   }
@@ -524,7 +524,7 @@ function resolveSubcommandOptions(
         [obj.name, obj.name_default].includes(sub[0])
     );
     if (!subCommand) {
-      throw new Error("SLASH_COMMAND_SUB_COMMAND_INVALID", sub[0]);
+      throw new Error('SLASH_COMMAND_SUB_COMMAND_INVALID', sub[0]);
     }
     return {
       optionsMaxdepth: subCommand.options ?? [],
@@ -546,7 +546,7 @@ function buildSlashPostData(
 ) {
   if (subGroup) {
     if (!subCommand) {
-      throw new Error("SLASH_COMMAND_SUB_COMMAND_INVALID", subGroup.name);
+      throw new Error('SLASH_COMMAND_SUB_COMMAND_INVALID', subGroup.name);
     }
     return [
       {
@@ -622,7 +622,7 @@ class TextBasedChannel {
       async (attachment: UploadAttachment) => {
         const file = fileList[Number(attachment.id)];
         if (!file) {
-          throw new Error("INVALID_TYPE", "attachment", "FileOptions");
+          throw new Error('INVALID_TYPE', 'attachment', 'FileOptions');
         }
         await Util.uploadFile(file.file, attachment.upload_url);
         return {
@@ -656,29 +656,29 @@ class TextBasedChannel {
     // API https://canary.discord.com/api/v9/guilds/:id/application-command-index // Guild
     //     https://canary.discord.com/api/v9/channels/:id/application-command-index // DM Channel
     // Updated: 07/01/2023
-    return this.client.api[this.guild ? "guilds" : "channels"][
+    return this.client.api[this.guild ? 'guilds' : 'channels'][
       this.guild?.id || this.id
-    ]["application-command-index"]
+    ]['application-command-index']
       .get<ApplicationCommandIndex>()
       .catch(() => ({
         application_commands: [],
         applications: [],
-        version: "",
+        version: '',
       }));
   }
 
   searchInteractionUserApps(): Promise<ApplicationCommandIndex> {
-    return this.client.api.users["@me"]["application-command-index"]
+    return this.client.api.users['@me']['application-command-index']
       .get<ApplicationCommandIndex>()
       .catch(() => ({
         application_commands: [],
         applications: [],
-        version: "",
+        version: '',
       }));
   }
 
   searchInteraction(): Promise<
-    Pick<ApplicationCommandIndex, "applications" | "application_commands">
+    Pick<ApplicationCommandIndex, 'applications' | 'application_commands'>
   > {
     return Promise.all([
       this.searchInteractionFromGuildAndPrivateChannel(),
@@ -730,7 +730,7 @@ class TextBasedChannel {
     ).length;
     if (valueRequired > args.length) {
       throw new Error(
-        "SLASH_COMMAND_REQUIRED_OPTIONS_MISSING",
+        'SLASH_COMMAND_REQUIRED_OPTIONS_MISSING',
         valueRequired,
         optionFormat.length
       );
@@ -772,7 +772,7 @@ class TextBasedChannel {
       Promise.withResolvers<Collection<Snowflake, Message>>();
     const collector = this.createMessageCollector(options);
     collector.once(
-      "end",
+      'end',
       (collection: Collection<Snowflake, Message>, reason: string) => {
         if (options.errors?.includes(reason)) {
           reject(collection);
@@ -787,7 +787,7 @@ class TextBasedChannel {
   fetchWebhooks() {
     const { guild } = this;
     if (!guild) {
-      throw new Error("GUILD_NOT_FOUND");
+      throw new Error('GUILD_NOT_FOUND');
     }
     return guild.channels.fetchWebhooks(this.id);
   }
@@ -795,7 +795,7 @@ class TextBasedChannel {
   createWebhook(name: string, options: ChannelWebhookCreateOptions = {}) {
     const { guild } = this;
     if (!guild) {
-      throw new Error("GUILD_NOT_FOUND");
+      throw new Error('GUILD_NOT_FOUND');
     }
     return guild.channels.createWebhook(this.id, name, options);
   }
@@ -813,22 +813,22 @@ class TextBasedChannel {
     full = false,
     ignore: string[] = []
   ) {
-    const props = ["send"];
+    const props = ['send'];
     if (full) {
       props.push(
-        "sendSlash",
-        "searchInteraction",
-        "searchInteractionFromGuildAndPrivateChannel",
-        "searchInteractionUserApps",
-        "lastMessage",
-        "lastPinAt",
-        "sendTyping",
-        "createMessageCollector",
-        "awaitMessages",
-        "fetchWebhooks",
-        "createWebhook",
-        "setRateLimitPerUser",
-        "setNSFW"
+        'sendSlash',
+        'searchInteraction',
+        'searchInteractionFromGuildAndPrivateChannel',
+        'searchInteractionUserApps',
+        'lastMessage',
+        'lastPinAt',
+        'sendTyping',
+        'createMessageCollector',
+        'awaitMessages',
+        'fetchWebhooks',
+        'createWebhook',
+        'setRateLimitPerUser',
+        'setNSFW'
       );
     }
     for (const prop of props) {

@@ -1,18 +1,18 @@
-import ThreadManager from "./ThreadManager";
-import _errorsModule from "../errors";
+import ThreadManager from './ThreadManager';
+import _errorsModule from '../errors';
 
 const { TypeError } = _errorsModule;
-import MessagePayload from "../structures/MessagePayload";
-import _UtilModule from "../util/Util";
+import MessagePayload from '../structures/MessagePayload';
+import _UtilModule from '../util/Util';
 
 const { resolveAutoArchiveMaxLimit, getUploadURL, uploadFile } = _UtilModule;
-import type { RESTPostAPIChannelThreadsResult } from "discord-api-types/v10";
-import type { GuildForumThreadCreateOptions } from "../../typings";
-import type { MessagePayloadOptions } from "../structures/MessagePayload";
+import type { RESTPostAPIChannelThreadsResult } from 'discord-api-types/v10';
+import type { GuildForumThreadCreateOptions } from '../../typings';
+import type { MessagePayloadOptions } from '../structures/MessagePayload';
 
 type GuildForumThreadCreateOptionsSource = Omit<
   GuildForumThreadCreateOptions,
-  "message"
+  'message'
 > & {
   message: MessagePayload | MessagePayloadOptions;
 };
@@ -27,7 +27,7 @@ class GuildForumThreadManager extends ThreadManager {
     appliedTags,
   }: GuildForumThreadCreateOptionsSource) {
     if (!message) {
-      throw new TypeError("GUILD_FORUM_MESSAGE_REQUIRED");
+      throw new TypeError('GUILD_FORUM_MESSAGE_REQUIRED');
     }
 
     const messagePayload =
@@ -48,7 +48,7 @@ class GuildForumThreadManager extends ThreadManager {
       const index = Number(attachment.id);
       const file = fileList[index];
       if (!file) {
-        throw new TypeError("GUILD_FORUM_ATTACHMENT_MISSING");
+        throw new TypeError('GUILD_FORUM_ATTACHMENT_MISSING');
       }
       await uploadFile(file.file, attachment.upload_url);
       return {
@@ -67,7 +67,7 @@ class GuildForumThreadManager extends ThreadManager {
     );
 
     let archiveDuration = autoArchiveDuration;
-    if (autoArchiveDuration === "MAX") {
+    if (autoArchiveDuration === 'MAX') {
       resolveAutoArchiveMaxLimit(this.channel.guild);
       archiveDuration = 10_080;
     }

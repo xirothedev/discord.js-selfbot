@@ -1,8 +1,8 @@
-import { Buffer } from "node:buffer";
-import VideoDispatcher from "./VideoDispatcher";
-import type MediaPlayer from "../player/MediaPlayer";
-import type { DispatcherStreams } from "./BaseDispatcher";
-import VoiceCodec from "../util/VoiceCodec";
+import { Buffer } from 'node:buffer';
+import VideoDispatcher from './VideoDispatcher';
+import type MediaPlayer from '../player/MediaPlayer';
+import type { DispatcherStreams } from './BaseDispatcher';
+import VoiceCodec from '../util/VoiceCodec';
 /*
 Credit: https://github.com/dank074/Discord-video-stream
 The use of video streaming in this library is an incomplete implementation with many bugs, primarily aimed at lazy users.
@@ -32,7 +32,7 @@ class VP8Dispatcher extends VideoDispatcher {
       highWaterMark,
       streams,
       fps,
-      VoiceCodec.getPayloadType("VP8")
+      VoiceCodec.getPayloadType('VP8')
     );
   }
 

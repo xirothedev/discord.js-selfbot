@@ -1,22 +1,22 @@
-import { Collection } from "@discordjs/collection";
-import Base from "./Base";
-import _StickerModule from "./Sticker";
+import { Collection } from '@discordjs/collection';
+import Base from './Base';
+import _StickerModule from './Sticker';
 
 const { Sticker } = _StickerModule;
-import SnowflakeUtil from "../util/SnowflakeUtil";
-import type { RawStickerPackData } from "../../typings/rawDataTypes";
-import type { StaticImageURLOptions } from "../../typings";
-import type { StickerPackEntity } from "../types/entities/sticker-pack";
-import type Client from "../client/Client";
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { RawStickerPackData } from '../../typings/rawDataTypes';
+import type { StaticImageURLOptions } from '../../typings';
+import type { StickerPackEntity } from '../types/entities/sticker-pack';
+import type Client from '../client/Client';
 
 class StickerPack extends Base implements StickerPackEntity {
-  declare bannerId: StickerPackEntity["bannerId"];
-  declare coverStickerId: StickerPackEntity["coverStickerId"];
-  declare description: StickerPackEntity["description"];
-  declare id: StickerPackEntity["id"];
-  declare name: StickerPackEntity["name"];
-  declare skuId: StickerPackEntity["skuId"];
-  declare stickers: StickerPackEntity["stickers"];
+  declare bannerId: StickerPackEntity['bannerId'];
+  declare coverStickerId: StickerPackEntity['coverStickerId'];
+  declare description: StickerPackEntity['description'];
+  declare id: StickerPackEntity['id'];
+  declare name: StickerPackEntity['name'];
+  declare skuId: StickerPackEntity['skuId'];
+  declare stickers: StickerPackEntity['stickers'];
 
   constructor(client: Client, pack: RawStickerPackData) {
     super(client);
@@ -51,7 +51,7 @@ class StickerPack extends Base implements StickerPackEntity {
       : null;
   }
 
-  bannerURL({ format = "webp", size }: StaticImageURLOptions = {}) {
+  bannerURL({ format = 'webp', size }: StaticImageURLOptions = {}) {
     return (
       this.bannerId &&
       this.client.rest.cdn.StickerPackBanner(this.bannerId, format, size)

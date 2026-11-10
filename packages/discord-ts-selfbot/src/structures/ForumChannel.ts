@@ -1,6 +1,6 @@
-import ThreadOnlyChannel from "./ThreadOnlyChannel";
-import _ConstantsModule, { resolveEnumMember } from "../util/Constants";
-import type { ForumLayoutTypes as ForumLayoutTypesType } from "../../typings/enums";
+import ThreadOnlyChannel from './ThreadOnlyChannel';
+import _ConstantsModule, { resolveEnumMember } from '../util/Constants';
+import type { ForumLayoutTypes as ForumLayoutTypesType } from '../../typings/enums';
 
 const { ForumLayoutTypes } = _ConstantsModule;
 

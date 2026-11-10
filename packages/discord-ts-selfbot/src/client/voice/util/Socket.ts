@@ -1,8 +1,8 @@
-import fs from "node:fs";
-import net from "node:net";
-import path from "node:path";
-import process from "node:process";
-import type { Writable } from "node:stream";
+import fs from 'node:fs';
+import net from 'node:net';
+import path from 'node:path';
+import process from 'node:process';
+import type { Writable } from 'node:stream';
 /*
 Credit: https://github.com/dank074/Discord-video-stream
 The use of video streaming in this library is an incomplete implementation with many bugs, primarily aimed at lazy users.
@@ -23,7 +23,7 @@ Please use the @dank074/discord-video-stream library for the best support.
 let counter = 0;
 
 interface StreamLike {
-  on: (event: "finish", listener: () => void) => unknown;
+  on: (event: 'finish', listener: () => void) => unknown;
   pipe: (destination: NodeJS.WritableStream) => unknown;
 }
 
@@ -32,8 +32,8 @@ class UnixStream {
   declare url: string;
 
   constructor(stream: StreamLike, onSocket: (socket: net.Socket) => void) {
-    if (process.platform === "win32") {
-      const pipePrefix = "\\\\.\\pipe\\";
+    if (process.platform === 'win32') {
+      const pipePrefix = '\\\\.\\pipe\\';
       const pipeName = `node-webrtc.${++counter}.sock`;
       this.socketPath = path.join(pipePrefix, pipeName);
       this.url = this.socketPath;
@@ -50,7 +50,7 @@ class UnixStream {
     }
 
     const server = net.createServer(onSocket);
-    stream.on("finish", () => {
+    stream.on('finish', () => {
       server.close();
     });
     server.listen(this.socketPath);

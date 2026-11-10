@@ -2,7 +2,7 @@ name: Force gate
 
 on:
   schedule:
-    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+    - cron: '0 6 * * 1' # Mondays 06:00 UTC
   workflow_dispatch:
 
 permissions:
@@ -31,5 +31,5 @@ jobs:
 
       - name: Uncached lint + check
         env:
-          TURBO_UI: "0"
+          TURBO_UI: '0'
         run: bunx turbo run lint check --force

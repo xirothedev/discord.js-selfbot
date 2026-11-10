@@ -4,8 +4,8 @@
 import type {
   APITemplateSerializedSourceGuild,
   Snowflake,
-} from "discord-api-types/v10";
-import type { User } from "../../structures/User";
+} from 'discord-api-types/v10';
+import type { User } from '../../structures/User';
 
 /**
  * The object shape of a `GuildTemplate`.

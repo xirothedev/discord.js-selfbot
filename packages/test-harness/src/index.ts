@@ -62,10 +62,10 @@ export interface FakeDiscord {
 }
 
 // Gateway dispatch type field, as named by the Discord gateway protocol.
-const GATEWAY_TYPE_FIELD = "t";
+const GATEWAY_TYPE_FIELD = 't';
 
 const DEFAULT_READY = {
-  auth_session_id_hash: "hash",
+  auth_session_id_hash: 'hash',
   guilds: [],
   notes: [],
   private_channels: [],
@@ -73,10 +73,10 @@ const DEFAULT_READY = {
   user: {
     avatar: null,
     bot: false,
-    discriminator: "0",
+    discriminator: '0',
     flags: 0,
-    id: "123",
-    username: "test",
+    id: '123',
+    username: 'test',
   },
   user_guild_settings: [],
   user_settings: {},
@@ -126,7 +126,7 @@ export function startFakeDiscord(
       }
       if (url.pathname.startsWith(`/v${apiVersion}/`)) {
         const bodyText =
-          req.method === "GET" || req.method === "HEAD"
+          req.method === 'GET' || req.method === 'HEAD'
             ? null
             : await req.text();
         let body: unknown = null;
@@ -173,12 +173,12 @@ export function startFakeDiscord(
           return Response.json(apiResponses[url.pathname]);
         }
         return Response.json({
-          discriminator: "0",
-          id: "123",
-          username: "test",
+          discriminator: '0',
+          id: '123',
+          username: 'test',
         });
       }
-      return new Response("Not found", { status: 404 });
+      return new Response('Not found', { status: 404 });
     },
     port: 0,
     websocket: {
@@ -188,7 +188,7 @@ export function startFakeDiscord(
       message(ws, msg) {
         try {
           const text =
-            typeof msg === "string" ? msg : new TextDecoder().decode(msg);
+            typeof msg === 'string' ? msg : new TextDecoder().decode(msg);
           const data = JSON.parse(text);
           if (data && data.op === 2) {
             lastIdentify = (data.d ?? null) as Record<string, unknown> | null;
@@ -199,7 +199,7 @@ export function startFakeDiscord(
               JSON.stringify({
                 d: readyPayload,
                 op: 0,
-                [GATEWAY_TYPE_FIELD]: "READY",
+                [GATEWAY_TYPE_FIELD]: 'READY',
               })
             );
           }
@@ -222,7 +222,7 @@ export function startFakeDiscord(
     port: server.port as number,
     sendGatewayPacket(packet) {
       if (!sockets.size) {
-        throw new Error("No gateway shard is connected");
+        throw new Error('No gateway shard is connected');
       }
       const payload = JSON.stringify(packet);
       for (const socket of sockets) {
@@ -241,7 +241,7 @@ export function startFakeDiscord(
         resolve: () => resolve(undefined),
         timer: setTimeout(() => {
           shardWaiters.delete(waiter);
-          reject(new Error("Timed out waiting for a gateway shard connection"));
+          reject(new Error('Timed out waiting for a gateway shard connection'));
         }, timeoutMs),
       };
       shardWaiters.add(waiter);

@@ -1,21 +1,21 @@
-import process from "node:process";
-import Base, { patchValue } from "./Base";
-import _errorsModule from "../errors";
+import process from 'node:process';
+import Base, { patchValue } from './Base';
+import _errorsModule from '../errors';
 
 const { Error } = _errorsModule;
-import _ConstantsModule from "../util/Constants";
+import _ConstantsModule from '../util/Constants';
 
 const { StickerFormatTypes, StickerTypes } = _ConstantsModule;
-import SnowflakeUtil from "../util/SnowflakeUtil";
-import type { Snowflake, APISticker } from "discord-api-types/v10";
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { Snowflake, APISticker } from 'discord-api-types/v10';
 import type {
   GuildStickerEditData,
   StickerFormatType,
   StickerType,
-} from "../../typings";
-import type { RawStickerData } from "../../typings/rawDataTypes";
-import type User from "./User";
-import type Client from "../client/Client";
+} from '../../typings';
+import type { RawStickerData } from '../../typings/rawDataTypes';
+import type User from './User';
+import type Client from '../client/Client';
 
 /**
  * @type {WeakSet<StageInstance>}
@@ -50,44 +50,44 @@ class Sticker extends Base {
   _patch(sticker: Partial<RawStickerData> & { id: Snowflake }) {
     this.id = sticker.id;
     this.description = patchValue(
-      "description" in sticker ? sticker.description : undefined,
+      'description' in sticker ? sticker.description : undefined,
       this.description
     );
     this.type =
-      "type" in sticker && typeof sticker.type === "number"
+      'type' in sticker && typeof sticker.type === 'number'
         ? StickerTypes[sticker.type]
         : (this.type ?? null);
     this.format =
-      "format_type" in sticker && typeof sticker.format_type === "number"
+      'format_type' in sticker && typeof sticker.format_type === 'number'
         ? StickerFormatTypes[sticker.format_type]
         : this.format;
     this.name =
-      "name" in sticker && typeof sticker.name === "string"
+      'name' in sticker && typeof sticker.name === 'string'
         ? sticker.name
         : this.name;
     this.packId = patchValue(
-      "pack_id" in sticker ? sticker.pack_id : undefined,
+      'pack_id' in sticker ? sticker.pack_id : undefined,
       this.packId
     );
     this.tags =
-      "tags" in sticker && typeof sticker.tags === "string"
-        ? sticker.tags.split(", ")
+      'tags' in sticker && typeof sticker.tags === 'string'
+        ? sticker.tags.split(', ')
         : (this.tags ?? null);
     this.available = patchValue(
-      "available" in sticker ? sticker.available : undefined,
+      'available' in sticker ? sticker.available : undefined,
       this.available
     );
     this.guildId = patchValue(
-      "guild_id" in sticker ? sticker.guild_id : undefined,
+      'guild_id' in sticker ? sticker.guild_id : undefined,
       this.guildId
     );
-    if ("user" in sticker) {
+    if ('user' in sticker) {
       this.user = sticker.user ? this.client.users._add(sticker.user) : null;
     } else {
       this.user ??= null;
     }
     this.sortValue = patchValue(
-      "sort_value" in sticker ? sticker.sort_value : undefined,
+      'sort_value' in sticker ? sticker.sort_value : undefined,
       this.sortValue
     );
   }
@@ -108,8 +108,8 @@ class Sticker extends Base {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
-        "Sticker#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.",
-        "DeprecationWarning"
+        'Sticker#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
+        'DeprecationWarning'
       );
     }
 
@@ -120,8 +120,8 @@ class Sticker extends Base {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
-        "Sticker#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.",
-        "DeprecationWarning"
+        'Sticker#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
+        'DeprecationWarning'
       );
     }
 
@@ -163,7 +163,7 @@ class Sticker extends Base {
       await this.fetch();
     }
     if (!this.guildId) {
-      throw new Error("NOT_GUILD_STICKER");
+      throw new Error('NOT_GUILD_STICKER');
     }
     const { guild } = this;
     if (!guild) {
@@ -175,7 +175,7 @@ class Sticker extends Base {
   edit(data: GuildStickerEditData, reason?: string) {
     const { guild } = this;
     if (!guild) {
-      throw new Error("INVALID_TYPE", "guildId", "Guild");
+      throw new Error('INVALID_TYPE', 'guildId', 'Guild');
     }
     return guild.stickers.edit(this, data, reason);
   }
@@ -183,7 +183,7 @@ class Sticker extends Base {
   async delete(reason?: string) {
     const { guild } = this;
     if (!guild) {
-      throw new Error("INVALID_TYPE", "guildId", "Guild");
+      throw new Error('INVALID_TYPE', 'guildId', 'Guild');
     }
     await guild.stickers.delete(this, reason);
     return this;
@@ -215,7 +215,7 @@ class Sticker extends Base {
       other.id === this.id &&
       other.description === this.description &&
       other.name === this.name &&
-      other.tags === this.tags?.join(", ")
+      other.tags === this.tags?.join(', ')
     );
   }
 

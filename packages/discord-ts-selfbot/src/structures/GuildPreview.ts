@@ -1,28 +1,28 @@
-import { Collection } from "@discordjs/collection";
-import Base from "./Base";
-import GuildPreviewEmoji from "./GuildPreviewEmoji";
-import _StickerModule from "./Sticker";
+import { Collection } from '@discordjs/collection';
+import Base from './Base';
+import GuildPreviewEmoji from './GuildPreviewEmoji';
+import _StickerModule from './Sticker';
 
 const { Sticker } = _StickerModule;
-import SnowflakeUtil from "../util/SnowflakeUtil";
-import type { RawGuildPreviewData } from "../../typings/rawDataTypes";
-import type { ImageURLOptions, StaticImageURLOptions } from "../../typings";
-import type { GuildPreviewEntity } from "../types/entities/guild-preview";
-import type { PatchOf } from "../types/schema";
-import type Client from "../client/Client";
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { RawGuildPreviewData } from '../../typings/rawDataTypes';
+import type { ImageURLOptions, StaticImageURLOptions } from '../../typings';
+import type { GuildPreviewEntity } from '../types/entities/guild-preview';
+import type { PatchOf } from '../types/schema';
+import type Client from '../client/Client';
 
 class GuildPreview extends Base implements GuildPreviewEntity {
-  declare approximateMemberCount: GuildPreviewEntity["approximateMemberCount"];
-  declare approximatePresenceCount: GuildPreviewEntity["approximatePresenceCount"];
-  declare description: GuildPreviewEntity["description"];
-  declare discoverySplash: GuildPreviewEntity["discoverySplash"];
-  declare emojis: GuildPreviewEntity["emojis"];
-  declare stickers: GuildPreviewEntity["stickers"];
-  declare features: GuildPreviewEntity["features"];
-  declare icon: GuildPreviewEntity["icon"];
-  declare id: GuildPreviewEntity["id"];
-  declare name: GuildPreviewEntity["name"];
-  declare splash: GuildPreviewEntity["splash"];
+  declare approximateMemberCount: GuildPreviewEntity['approximateMemberCount'];
+  declare approximatePresenceCount: GuildPreviewEntity['approximatePresenceCount'];
+  declare description: GuildPreviewEntity['description'];
+  declare discoverySplash: GuildPreviewEntity['discoverySplash'];
+  declare emojis: GuildPreviewEntity['emojis'];
+  declare stickers: GuildPreviewEntity['stickers'];
+  declare features: GuildPreviewEntity['features'];
+  declare icon: GuildPreviewEntity['icon'];
+  declare id: GuildPreviewEntity['id'];
+  declare name: GuildPreviewEntity['name'];
+  declare splash: GuildPreviewEntity['splash'];
 
   constructor(client: Client, data: RawGuildPreviewData) {
     super(client);
@@ -34,7 +34,7 @@ class GuildPreview extends Base implements GuildPreviewEntity {
     this._patch(data);
   }
 
-  _patch(data: PatchOf<"GuildPreview">) {
+  _patch(data: PatchOf<'GuildPreview'>) {
     if (data.id !== undefined) {
       this.id = data.id;
     }
@@ -101,14 +101,14 @@ class GuildPreview extends Base implements GuildPreviewEntity {
     return new Date(this.createdTimestamp);
   }
 
-  splashURL({ format = "webp", size }: StaticImageURLOptions = {}) {
+  splashURL({ format = 'webp', size }: StaticImageURLOptions = {}) {
     return (
       this.splash &&
       this.client.rest.cdn.Splash(this.id, this.splash, format, size)
     );
   }
 
-  discoverySplashURL({ format = "webp", size }: StaticImageURLOptions = {}) {
+  discoverySplashURL({ format = 'webp', size }: StaticImageURLOptions = {}) {
     return (
       this.discoverySplash &&
       this.client.rest.cdn.DiscoverySplash(
@@ -120,7 +120,7 @@ class GuildPreview extends Base implements GuildPreviewEntity {
     );
   }
 
-  iconURL({ format = "webp", size, dynamic }: ImageURLOptions = {}) {
+  iconURL({ format = 'webp', size, dynamic }: ImageURLOptions = {}) {
     return (
       this.icon &&
       this.client.rest.cdn.Icon(this.id, this.icon, format, size, dynamic)

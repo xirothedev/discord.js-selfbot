@@ -1,12 +1,12 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 
-import { convertMdx } from "./mdx";
-import { walk } from "./tree";
+import { convertMdx } from './mdx';
+import { walk } from './tree';
 
-const docsDir = path.resolve(import.meta.dir, "../..");
-const contentDir = path.join(docsDir, "content/docs");
-const siteBase = "https://xirothedev.github.io/discord.js-selfbot";
+const docsDir = path.resolve(import.meta.dir, '../..');
+const contentDir = path.join(docsDir, 'content/docs');
+const siteBase = 'https://xirothedev.github.io/discord.js-selfbot';
 
 export interface GeneratedPage {
   area: string;
@@ -27,7 +27,7 @@ export interface GeneratedGuide {
 
 function readIfExists(file: string): string | undefined {
   try {
-    return readFileSync(file, "utf-8");
+    return readFileSync(file, 'utf-8');
   } catch {
     return undefined;
   }
@@ -45,20 +45,20 @@ export function collectGuides(): GeneratedGuide[] {
     });
     guides.push({
       body: converted.body,
-      description: converted.description ?? "",
+      description: converted.description ?? '',
       source,
       target,
       title: converted.title,
     });
   };
 
-  add(path.join(contentDir, "index.mdx"), "index.md");
-  for (const group of ["getting-started", "guides", "examples"]) {
+  add(path.join(contentDir, 'index.mdx'), 'index.md');
+  for (const group of ['getting-started', 'guides', 'examples']) {
     const root = path.join(contentDir, group);
     for (const file of walk(root).filter((candidate) =>
-      candidate.endsWith(".mdx")
+      candidate.endsWith('.mdx')
     )) {
-      const name = path.basename(file, ".mdx");
+      const name = path.basename(file, '.mdx');
       add(file, `${group}/${name}.md`);
     }
   }
@@ -73,24 +73,24 @@ export function buildLinkMap(
   guides: GeneratedGuide[]
 ): Map<string, string> {
   const links = new Map([
-    ["/docs", "index.md"],
-    ["/docs/api", "reference/index.md"],
+    ['/docs', 'index.md'],
+    ['/docs/api', 'reference/index.md'],
   ]);
 
   for (const guide of guides) {
     const { target } = guide;
-    if (target === "index.md") {
+    if (target === 'index.md') {
       continue;
     }
-    const [group, name] = target.split("/");
-    if (group === "getting-started") {
-      links.set(`/docs/getting-started/${name.replace(/\.md$/u, "")}`, target);
+    const [group, name] = target.split('/');
+    if (group === 'getting-started') {
+      links.set(`/docs/getting-started/${name.replace(/\.md$/u, '')}`, target);
     }
-    if (group === "guides") {
-      links.set(`/docs/guides/${name.replace(/\.md$/u, "")}`, target);
+    if (group === 'guides') {
+      links.set(`/docs/guides/${name.replace(/\.md$/u, '')}`, target);
     }
-    if (group === "examples") {
-      links.set(`/docs/examples/${name.replace(/\.md$/u, "")}`, target);
+    if (group === 'examples') {
+      links.set(`/docs/examples/${name.replace(/\.md$/u, '')}`, target);
     }
   }
 
@@ -105,14 +105,14 @@ export function buildLinkMap(
 }
 
 function fallbackFor(target: string): string | undefined {
-  if (target === "/docs/examples") {
-    return "examples/index.md";
+  if (target === '/docs/examples') {
+    return 'examples/index.md';
   }
-  if (target === "/docs/getting-started") {
-    return "getting-started/installation.md";
+  if (target === '/docs/getting-started') {
+    return 'getting-started/installation.md';
   }
-  if (target.startsWith("/docs/api/")) {
-    return "reference/index.md";
+  if (target.startsWith('/docs/api/')) {
+    return 'reference/index.md';
   }
   return undefined;
 }
@@ -131,7 +131,7 @@ export function rewriteLinks(
           path.posix.dirname(current),
           mapped
         );
-        return `[${label}](${relative}${hash ?? ""})`;
+        return `[${label}](${relative}${hash ?? ''})`;
       }
 
       const fallback = fallbackFor(target);
@@ -140,11 +140,11 @@ export function rewriteLinks(
           path.posix.dirname(current),
           fallback
         );
-        return `[${label}](${relative}${hash ?? ""})`;
+        return `[${label}](${relative}${hash ?? ''})`;
       }
 
-      if (target.startsWith("/docs/project/")) {
-        return `[${label}](${siteBase}${target}${hash ?? ""})`;
+      if (target.startsWith('/docs/project/')) {
+        return `[${label}](${siteBase}${target}${hash ?? ''})`;
       }
 
       return match;
@@ -153,9 +153,9 @@ export function rewriteLinks(
 }
 
 export function oneLine(text: string | undefined, limit = 140): string {
-  const value = (text ?? "").replaceAll(/\s+/gu, " ").trim();
+  const value = (text ?? '').replaceAll(/\s+/gu, ' ').trim();
   if (!value) {
-    return "";
+    return '';
   }
   return value.length > limit ? `${value.slice(0, limit - 3)}...` : value;
 }

@@ -1,24 +1,24 @@
-import { Collection } from "@discordjs/collection";
-import ApplicationCommandPermissionsManager from "./ApplicationCommandPermissionsManager";
-import CachedManager from "./CachedManager";
-import _errorsModule from "../errors";
+import { Collection } from '@discordjs/collection';
+import ApplicationCommandPermissionsManager from './ApplicationCommandPermissionsManager';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
 
 const { TypeError } = _errorsModule;
-import ApplicationCommand from "../structures/ApplicationCommand";
-import _ConstantsModule, { resolveEnumValue } from "../util/Constants";
+import ApplicationCommand from '../structures/ApplicationCommand';
+import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
 
 const { ApplicationCommandTypes } = _ConstantsModule;
-import Permissions from "../util/Permissions";
-import type { Snowflake } from "discord-api-types/v10";
-import type { RawApplicationCommandData } from "../../typings/rawDataTypes";
+import Permissions from '../util/Permissions';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { RawApplicationCommandData } from '../../typings/rawDataTypes';
 import type {
   ApplicationCommandDataResolvable,
   ApplicationCommandResolvable,
   FetchApplicationCommandOptions,
-} from "../../typings";
-import type { Client } from "../client/Client";
-import type { Guild } from "../structures/Guild";
-import type { ApplicationCommandOptionSource } from "../structures/ApplicationCommand";
+} from '../../typings';
+import type { Client } from '../client/Client';
+import type { Guild } from '../structures/Guild';
+import type { ApplicationCommandOptionSource } from '../structures/ApplicationCommand';
 
 type ApplicationCommandResolvableSource =
   | ApplicationCommand
@@ -53,7 +53,7 @@ interface ApplicationCommandTransformable {
 function isTransformableCommand(
   value: unknown
 ): value is ApplicationCommandTransformable {
-  return typeof value === "object" && value !== null;
+  return typeof value === 'object' && value !== null;
 }
 
 class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
@@ -72,7 +72,7 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
     guildIdOrOptions?: Snowflake | { id?: string; extras?: unknown[] }
   ): ApplicationCommand {
     const options =
-      typeof guildIdOrOptions === "object"
+      typeof guildIdOrOptions === 'object'
         ? guildIdOrOptions
         : { extras: [this.guild, guildIdOrOptions] };
     return super._add(data, cache, options);
@@ -84,7 +84,7 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
   }: { id?: Snowflake; guildId?: Snowflake } = {}): CommandPath {
     const applicationId = this.client.application?.id;
     if (!applicationId) {
-      throw new TypeError("INVALID_TYPE", "application", "Application");
+      throw new TypeError('INVALID_TYPE', 'application', 'Application');
     }
     let path = this.client.api.applications(applicationId);
     if (this.guild ?? guildId) {
@@ -110,7 +110,7 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
     let { locale } = options;
     let { withLocalizations } = options;
 
-    if (typeof id === "object") {
+    if (typeof id === 'object') {
       ({
         guildId,
         cache = true,
@@ -136,10 +136,10 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
       RawApplicationCommandData[]
     >({
       headers: {
-        "X-Discord-Locale": locale,
+        'X-Discord-Locale': locale,
       },
       query:
-        typeof withLocalizations === "boolean"
+        typeof withLocalizations === 'boolean'
           ? { with_localizations: withLocalizations }
           : undefined,
     });
@@ -188,9 +188,9 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
     const id = this.resolveId(command);
     if (!id) {
       throw new TypeError(
-        "INVALID_TYPE",
-        "command",
-        "ApplicationCommandResolvable"
+        'INVALID_TYPE',
+        'command',
+        'ApplicationCommandResolvable'
       );
     }
 
@@ -210,9 +210,9 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
     const id = this.resolveId(command);
     if (!id) {
       throw new TypeError(
-        "INVALID_TYPE",
-        "command",
-        "ApplicationCommandResolvable"
+        'INVALID_TYPE',
+        'command',
+        'ApplicationCommandResolvable'
       );
     }
 
@@ -226,26 +226,26 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
   static transformCommand(command: unknown) {
     if (!isTransformableCommand(command)) {
       throw new TypeError(
-        "INVALID_TYPE",
-        "command",
-        "ApplicationCommandDataResolvable"
+        'INVALID_TYPE',
+        'command',
+        'ApplicationCommandDataResolvable'
       );
     }
-    if (typeof command.toJSON === "function") {
+    if (typeof command.toJSON === 'function') {
       return command.toJSON();
     }
 
     let default_member_permissions: string | null | undefined;
 
-    if ("default_member_permissions" in command) {
+    if ('default_member_permissions' in command) {
       const value = command.default_member_permissions;
       default_member_permissions =
-        typeof value === "string" || typeof value === "number"
+        typeof value === 'string' || typeof value === 'number'
           ? new Permissions(BigInt(value)).bitfield.toString()
           : value;
     }
 
-    if ("defaultMemberPermissions" in command) {
+    if ('defaultMemberPermissions' in command) {
       default_member_permissions =
         command.defaultMemberPermissions === null
           ? command.defaultMemberPermissions
@@ -255,9 +255,9 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
     }
 
     let type: number | string | undefined;
-    if (typeof command.type === "number") {
+    if (typeof command.type === 'number') {
       ({ type } = command);
-    } else if (typeof command.type === "string") {
+    } else if (typeof command.type === 'string') {
       type = resolveEnumValue(ApplicationCommandTypes, command.type);
     }
 

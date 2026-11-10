@@ -1,7 +1,7 @@
-import Action from "./Action";
-import type { GatewayVoiceStateUpdateDispatchData } from "discord-api-types/v10";
-import VoiceState from "../../structures/VoiceState";
-import _ConstantsModule from "../../util/Constants";
+import Action from './Action';
+import type { GatewayVoiceStateUpdateDispatchData } from 'discord-api-types/v10';
+import VoiceState from '../../structures/VoiceState';
+import _ConstantsModule from '../../util/Constants';
 
 const { Events } = _ConstantsModule;
 
@@ -35,7 +35,7 @@ class VoiceStateUpdate extends Action {
     // Emit event
     if (data.user_id === client.user?.id) {
       client.emit(
-        "debug",
+        'debug',
         `[VOICE] received voice state update: ${JSON.stringify(data)}`
       );
       client.voice.onVoiceStateUpdate(data);

@@ -1,12 +1,12 @@
-import { setTimeout as delay } from "node:timers/promises";
-import { AsyncQueue } from "@sapphire/async-queue";
-import DiscordAPIError from "./DiscordAPIError";
-import type APIRequest from "./APIRequest";
-import HTTPError from "./HTTPError";
-import RateLimitError from "./RateLimitError";
-import Constants from "../util/Constants";
-import type { Captcha } from "../../typings";
-import type RESTManager from "./RESTManager";
+import { setTimeout as delay } from 'node:timers/promises';
+import { AsyncQueue } from '@sapphire/async-queue';
+import DiscordAPIError from './DiscordAPIError';
+import type APIRequest from './APIRequest';
+import HTTPError from './HTTPError';
+import RateLimitError from './RateLimitError';
+import Constants from '../util/Constants';
+import type { Captcha } from '../../typings';
+import type RESTManager from './RESTManager';
 
 const { Events } = Constants;
 const {
@@ -18,15 +18,15 @@ const {
 } = Events;
 
 const captchaMessage = [
-  "incorrect-captcha",
-  "response-already-used",
-  "captcha-required",
-  "invalid-input-response",
-  "invalid-response",
-  "You need to update your app",
-  "response-already-used-error",
-  "rqkey-mismatch",
-  "sitekey-secret-mismatch",
+  'incorrect-captcha',
+  'response-already-used',
+  'captcha-required',
+  'invalid-input-response',
+  'invalid-response',
+  'You need to update your app',
+  'response-already-used-error',
+  'rqkey-mismatch',
+  'sitekey-secret-mismatch',
 ];
 
 interface RestResponse {
@@ -46,7 +46,7 @@ function parseResponse(res: unknown): Promise<Record<string, unknown>> {
     json: () => Promise<unknown>;
     arrayBuffer: () => Promise<unknown>;
   };
-  if (r.headers.get("content-type")?.startsWith("application/json")) {
+  if (r.headers.get('content-type')?.startsWith('application/json')) {
     return r.json() as Promise<Record<string, unknown>>;
   }
   return r.arrayBuffer() as Promise<Record<string, unknown>>;
@@ -60,23 +60,23 @@ function readCaptcha(data: Record<string, unknown>): Captcha | null {
   const key = data.captcha_key;
   const sitekey = data.captcha_sitekey;
   if (
-    data.captcha_service !== "hcaptcha" ||
+    data.captcha_service !== 'hcaptcha' ||
     !Array.isArray(key) ||
-    typeof sitekey !== "string"
+    typeof sitekey !== 'string'
   ) {
     return null;
   }
   return {
     captcha_key: key.filter(
-      (value): value is string => typeof value === "string"
+      (value): value is string => typeof value === 'string'
     ),
     captcha_rqdata:
-      typeof data.captcha_rqdata === "string" ? data.captcha_rqdata : undefined,
+      typeof data.captcha_rqdata === 'string' ? data.captcha_rqdata : undefined,
     captcha_rqtoken:
-      typeof data.captcha_rqtoken === "string"
+      typeof data.captcha_rqtoken === 'string'
         ? data.captcha_rqtoken
         : undefined,
-    captcha_service: "hcaptcha",
+    captcha_service: 'hcaptcha',
     captcha_sitekey: sitekey,
   };
 }
@@ -174,7 +174,7 @@ class RequestHandler {
       timeout,
     };
     const shouldThrow =
-      typeof options.rejectOnRateLimit === "function"
+      typeof options.rejectOnRateLimit === 'function'
         ? await options.rejectOnRateLimit(rateLimitData)
         : (options.rejectOnRateLimit as string[]).some((route: string) =>
             rateLimitData.route.startsWith(route.toLowerCase())
@@ -217,8 +217,8 @@ class RequestHandler {
       };
       if (request.retries === this.manager.client.options.retryLimit) {
         throw new HTTPError(
-          e.message ?? "Unknown error",
-          e.constructor?.name ?? "Error",
+          e.message ?? 'Unknown error',
+          e.constructor?.name ?? 'Error',
           e.status,
           request
         );
@@ -339,11 +339,11 @@ class RequestHandler {
       return sublimitTimeout;
     }
 
-    const serverDate = res.headers.get("date");
-    const limit = res.headers.get("x-ratelimit-limit");
-    const remaining = res.headers.get("x-ratelimit-remaining");
-    const reset = res.headers.get("x-ratelimit-reset");
-    const resetAfter = res.headers.get("x-ratelimit-reset-after");
+    const serverDate = res.headers.get('date');
+    const limit = res.headers.get('x-ratelimit-limit');
+    const remaining = res.headers.get('x-ratelimit-remaining');
+    const reset = res.headers.get('x-ratelimit-reset');
+    const resetAfter = res.headers.get('x-ratelimit-reset-after');
     this.limit = limit ? Number(limit) : Infinity;
     this.remaining = remaining ? Number(remaining) : 1;
 
@@ -353,7 +353,7 @@ class RequestHandler {
         : Date.now();
 
     // https://github.com/discord/discord-api-docs/issues/182
-    if (!resetAfter && request.route.includes("reactions")) {
+    if (!resetAfter && request.route.includes('reactions')) {
       this.reset =
         new Date(serverDate as string).getTime() -
         getAPIOffset(serverDate) +
@@ -361,13 +361,13 @@ class RequestHandler {
     }
 
     // Handle retryAfter, which means we have actually hit a rate limit
-    const retryAfterHeader = res.headers.get("retry-after");
+    const retryAfterHeader = res.headers.get('retry-after');
     const retryAfter: number = retryAfterHeader
       ? Number(retryAfterHeader) * 1000
       : -1;
     if (retryAfter > 0) {
       // If the global rate limit header is set, that means we hit the global rate limit
-      if (res.headers.get("x-ratelimit-global")) {
+      if (res.headers.get('x-ratelimit-global')) {
         this.manager.globalRemaining = 0;
         this.manager.globalReset = Date.now() + retryAfter;
       } else if (!this.localLimited) {
@@ -424,14 +424,14 @@ class RequestHandler {
       const captcha = readCaptcha(data);
       if (
         captcha &&
-        typeof this.manager.client.options.captchaSolver === "function" &&
+        typeof this.manager.client.options.captchaSolver === 'function' &&
         request.retries < this.manager.client.options.captchaRetryLimit &&
         captchaMessage.some((value) => captcha.captcha_key[0]?.includes(value))
       ) {
         // Retry the request after a captcha is solved
         this.manager.client.emit(
           DEBUG,
-          `[Request Handler] Hit a captcha while executing a request (${captcha.captcha_key.join(", ")})
+          `[Request Handler] Hit a captcha while executing a request (${captcha.captcha_key.join(', ')})
     Method  : ${request.method}
     Path    : ${request.path}
     Route   : ${request.route}
@@ -448,7 +448,7 @@ class RequestHandler {
     Method  : ${request.method}
     Path    : ${request.path}
     Route   : ${request.route}
-    Key     : ${captchaSolution ? `${captchaSolution.slice(0, 120)}...` : "[Captcha not solved]"}
+    Key     : ${captchaSolution ? `${captchaSolution.slice(0, 120)}...` : '[Captcha not solved]'}
     rqToken : ${data.captcha_rqtoken}`
         );
         request.retries++;
@@ -466,8 +466,8 @@ class RequestHandler {
         status?: number;
       };
       throw new HTTPError(
-        e.message ?? "Unknown error",
-        e.constructor?.name ?? "Error",
+        e.message ?? 'Unknown error',
+        e.constructor?.name ?? 'Error',
         e.status,
         request
       );
@@ -496,9 +496,9 @@ class RequestHandler {
     };
     if (
       !mfa?.methods?.find(
-        (option: { type: string }) => option.type === "totp"
+        (option: { type: string }) => option.type === 'totp'
       ) ||
-      typeof this.manager.client.options.TOTPKey !== "string"
+      typeof this.manager.client.options.TOTPKey !== 'string'
     ) {
       return { handled: false };
     }
@@ -519,7 +519,7 @@ class RequestHandler {
     const mfaPost = (await this.manager.client.api.mfa.finish.post({
       data: {
         data: otp,
-        mfa_type: "totp",
+        mfa_type: 'totp',
         ticket: mfa?.ticket,
       },
     })) as { token?: string };
@@ -550,7 +550,7 @@ class RequestHandler {
     Route   : ${request.route}
     Limit   : ${limit}
     Timeout : ${timeout}ms
-    Sublimit: ${sublimitTimeout ? `${sublimitTimeout}ms` : "None"}`
+    Sublimit: ${sublimitTimeout ? `${sublimitTimeout}ms` : 'None'}`
     );
 
     await this.onRateLimit(request, limit, timeout, isGlobal);
@@ -568,7 +568,7 @@ class RequestHandler {
   ): Promise<unknown> {
     // Retry the specified number of times for possible serverside issues
     if (request.retries === this.manager.client.options.retryLimit) {
-      throw new HTTPError(res.statusText, "HTTPError", res.status, request);
+      throw new HTTPError(res.statusText, 'HTTPError', res.status, request);
     }
 
     request.retries++;

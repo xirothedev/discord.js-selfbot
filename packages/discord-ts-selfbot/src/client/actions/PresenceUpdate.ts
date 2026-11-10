@@ -1,19 +1,19 @@
-import Action from "./Action";
+import Action from './Action';
 import type {
   GatewayPresenceUpdateDispatchData,
   APIUser,
-} from "discord-api-types/v10";
-import _ConstantsModule from "../../util/Constants";
+} from 'discord-api-types/v10';
+import _ConstantsModule from '../../util/Constants';
 
 const { Events } = _ConstantsModule;
 const { PartialTypes } = _ConstantsModule;
 
 function isUserData(value: unknown): value is APIUser {
   return (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value !== null &&
-    "username" in value &&
-    typeof value.username === "string"
+    'username' in value &&
+    typeof value.username === 'string'
   );
 }
 
@@ -25,7 +25,7 @@ class PresenceUpdateAction extends Action {
     }
     if (
       !user &&
-      ("username" in data.user ||
+      ('username' in data.user ||
         this.client.options.partials.includes(PartialTypes.USER))
     ) {
       user = this.client.users._add(data.user);
@@ -42,7 +42,7 @@ class PresenceUpdateAction extends Action {
 
     if (guild) {
       let member = guild.members.cache.get(user.id);
-      if (!member && data.status !== "offline") {
+      if (!member && data.status !== 'offline') {
         member = guild.members._add({
           deaf: false,
           mute: false,

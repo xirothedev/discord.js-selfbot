@@ -1,25 +1,25 @@
-import { Collection } from "@discordjs/collection";
-import CachedManager from "./CachedManager";
-import _errorsModule from "../errors";
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
 
 const { TypeError } = _errorsModule;
-import AutoModerationRule from "../structures/AutoModerationRule";
-import _ConstantsModule from "../util/Constants";
+import AutoModerationRule from '../structures/AutoModerationRule';
+import _ConstantsModule from '../util/Constants';
 import type {
   APIAutoModerationRule,
   RESTGetAPIAutoModerationRuleResult,
   RESTPatchAPIAutoModerationRuleResult,
   RESTPostAPIAutoModerationRuleResult,
   Snowflake,
-} from "discord-api-types/v10";
+} from 'discord-api-types/v10';
 import type {
   AutoModerationActionOptions,
   AutoModerationRuleCreateOptions,
   AutoModerationRuleEditOptions,
   FetchAutoModerationRuleOptions,
   FetchAutoModerationRulesOptions,
-} from "../../typings";
-import type { Guild } from "../structures/Guild";
+} from '../../typings';
+import type { Guild } from '../structures/Guild';
 
 type AutoModerationRuleResolvableSource = AutoModerationRule | Snowflake;
 
@@ -27,14 +27,14 @@ function isFetchRuleOptions(
   value: unknown
 ): value is FetchAutoModerationRuleOptions {
   return (
-    typeof value === "object" && value !== null && "autoModerationRule" in value
+    typeof value === 'object' && value !== null && 'autoModerationRule' in value
   );
 }
 
 function isFetchRulesOptions(
   value: unknown
 ): value is FetchAutoModerationRulesOptions {
-  return typeof value === "object" && value !== null && "cache" in value;
+  return typeof value === 'object' && value !== null && 'cache' in value;
 }
 
 interface FetchSingleAutoModerationRuleOptions {
@@ -62,7 +62,7 @@ function mapAction(
       duration_seconds: action.metadata?.durationSeconds,
     },
     type:
-      typeof action.type === "number"
+      typeof action.type === 'number'
         ? action.type
         : AutoModerationActionTypes[action.type],
   };
@@ -91,7 +91,7 @@ class AutoModerationRuleManager extends CachedManager<AutoModerationRule> {
     exemptChannels,
     reason,
   }: AutoModerationRuleCreateOptions): Promise<AutoModerationRule> {
-    const { rules } = this.client.api.guilds(this.guild.id)["auto-moderation"];
+    const { rules } = this.client.api.guilds(this.guild.id)['auto-moderation'];
     const data = await rules.post<RESTPostAPIAutoModerationRuleResult>({
       data: {
         actions: actions.map((action: AutoModerationActionOptions) =>
@@ -99,7 +99,7 @@ class AutoModerationRuleManager extends CachedManager<AutoModerationRule> {
         ),
         enabled,
         event_type:
-          typeof eventType === "number"
+          typeof eventType === 'number'
             ? eventType
             : AutoModerationRuleEventTypes[eventType],
         exempt_channels: (exemptChannels instanceof Collection
@@ -118,14 +118,14 @@ class AutoModerationRuleManager extends CachedManager<AutoModerationRule> {
             triggerMetadata.mentionRaidProtectionEnabled,
           mention_total_limit: triggerMetadata.mentionTotalLimit,
           presets: triggerMetadata.presets?.map((preset) =>
-            typeof preset === "number"
+            typeof preset === 'number'
               ? preset
               : AutoModerationRuleKeywordPresetTypes[preset]
           ),
           regex_patterns: triggerMetadata.regexPatterns,
         },
         trigger_type:
-          typeof triggerType === "number"
+          typeof triggerType === 'number'
             ? triggerType
             : AutoModerationRuleTriggerTypes[triggerType],
       },
@@ -151,14 +151,14 @@ class AutoModerationRuleManager extends CachedManager<AutoModerationRule> {
     const autoModerationRuleId = this.resolveId(autoModerationRule);
 
     let resolvedEventType: number | string | undefined;
-    if (typeof eventType === "number") {
+    if (typeof eventType === 'number') {
       resolvedEventType = eventType;
     } else if (eventType) {
       resolvedEventType = AutoModerationRuleEventTypes[eventType];
     }
 
     const data = await this.client.api
-      .guilds(this.guild.id)("auto-moderation")
+      .guilds(this.guild.id)('auto-moderation')
       .rules(autoModerationRuleId)
       .patch<RESTPatchAPIAutoModerationRuleResult>({
         data: {
@@ -185,7 +185,7 @@ class AutoModerationRuleManager extends CachedManager<AutoModerationRule> {
               triggerMetadata.mentionRaidProtectionEnabled,
             mention_total_limit: triggerMetadata.mentionTotalLimit,
             presets: triggerMetadata.presets?.map((preset) =>
-              typeof preset === "number"
+              typeof preset === 'number'
                 ? preset
                 : AutoModerationRuleKeywordPresetTypes[preset]
             ),
@@ -240,7 +240,7 @@ class AutoModerationRuleManager extends CachedManager<AutoModerationRule> {
     }
 
     const data = await this.client.api
-      .guilds(this.guild.id)("auto-moderation")
+      .guilds(this.guild.id)('auto-moderation')
       .rules(autoModerationRule)
       .get<RESTGetAPIAutoModerationRuleResult>();
     return this._add(data, cache);
@@ -250,7 +250,7 @@ class AutoModerationRuleManager extends CachedManager<AutoModerationRule> {
     options: FetchAutoModerationRulesOptions = {}
   ): Promise<Collection<Snowflake, AutoModerationRule>> {
     const data: APIAutoModerationRule[] = await this.client.api
-      .guilds(this.guild.id)("auto-moderation")
+      .guilds(this.guild.id)('auto-moderation')
       .rules.get();
 
     const rules = new Collection<Snowflake, AutoModerationRule>();
@@ -270,13 +270,13 @@ class AutoModerationRuleManager extends CachedManager<AutoModerationRule> {
     const autoModerationRuleId = this.resolveId(autoModerationRule);
     if (!autoModerationRuleId) {
       throw new TypeError(
-        "INVALID_TYPE",
-        "autoModerationRule",
-        "AutoModerationRuleResolvable"
+        'INVALID_TYPE',
+        'autoModerationRule',
+        'AutoModerationRuleResolvable'
       );
     }
     await this.client.api
-      .guilds(this.guild.id)("auto-moderation")
+      .guilds(this.guild.id)('auto-moderation')
       .rules(autoModerationRuleId)
       .delete({ reason });
   }

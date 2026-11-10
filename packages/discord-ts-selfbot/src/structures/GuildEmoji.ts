@@ -1,26 +1,26 @@
-import BaseGuildEmoji from "./BaseGuildEmoji";
-import _errorsModule from "../errors";
+import BaseGuildEmoji from './BaseGuildEmoji';
+import _errorsModule from '../errors';
 
 const { Error } = _errorsModule;
-import GuildEmojiRoleManager from "../managers/GuildEmojiRoleManager";
-import Permissions from "../util/Permissions";
-import type { RawGuildEmojiData } from "../../typings/rawDataTypes";
-import type { APIEmoji } from "discord-api-types/v10";
-import type { GuildEmojiEntity } from "../types/entities/guild-emoji";
-import type { PatchOf } from "../types/schema";
-import type { Guild } from "./Guild";
-import type Client from "../client/Client";
+import GuildEmojiRoleManager from '../managers/GuildEmojiRoleManager';
+import Permissions from '../util/Permissions';
+import type { RawGuildEmojiData } from '../../typings/rawDataTypes';
+import type { APIEmoji } from 'discord-api-types/v10';
+import type { GuildEmojiEntity } from '../types/entities/guild-emoji';
+import type { PatchOf } from '../types/schema';
+import type { Guild } from './Guild';
+import type Client from '../client/Client';
 
 class GuildEmoji extends BaseGuildEmoji implements GuildEmojiEntity {
   declare guild: Guild;
-  declare author: GuildEmojiEntity["author"];
-  declare _roles: GuildEmojiEntity["_roles"];
+  declare author: GuildEmojiEntity['author'];
+  declare _roles: GuildEmojiEntity['_roles'];
   constructor(client: Client, data: RawGuildEmojiData, guild: Guild) {
     super(client, data, guild);
 
     this.author = null;
 
-    Object.defineProperty(this, "_roles", { value: [], writable: true });
+    Object.defineProperty(this, '_roles', { value: [], writable: true });
 
     this._patch(data);
   }
@@ -31,7 +31,7 @@ class GuildEmoji extends BaseGuildEmoji implements GuildEmojiEntity {
     return clone;
   }
 
-  _patch(data: PatchOf<"GuildEmoji">) {
+  _patch(data: PatchOf<'GuildEmoji'>) {
     super._patch(data);
 
     if (data.user) {
@@ -44,7 +44,7 @@ class GuildEmoji extends BaseGuildEmoji implements GuildEmojiEntity {
 
   get deletable() {
     if (!this.guild.members.me) {
-      throw new Error("GUILD_UNCACHED_ME");
+      throw new Error('GUILD_UNCACHED_ME');
     }
     return (
       !this.managed &&

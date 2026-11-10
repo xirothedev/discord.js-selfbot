@@ -1,6 +1,6 @@
-import { escapeMdx, inlineCode, plainText, renderSummary } from "./comment";
-import { renderType, renderTypeParameters } from "./render-type";
-import { Kind } from "./types";
+import { escapeMdx, inlineCode, plainText, renderSummary } from './comment';
+import { renderType, renderTypeParameters } from './render-type';
+import { Kind } from './types';
 import type {
   Comment,
   Parameter,
@@ -8,9 +8,9 @@ import type {
   Signature,
   TypeNode,
   TypeParameter,
-} from "./types";
+} from './types';
 
-export type MemberKind = "constructor" | "property" | "method" | "accessor";
+export type MemberKind = 'constructor' | 'property' | 'method' | 'accessor';
 
 export interface MergedMember {
   name: string;
@@ -33,29 +33,29 @@ export function frontmatter(data: {
   sourceUrl?: string;
 }): string {
   const lines = [
-    "---",
+    '---',
     `title: ${JSON.stringify(data.title)}`,
     `description: ${JSON.stringify(data.description)}`,
   ];
   if (data.sourceUrl) {
     lines.push(`sourceUrl: ${JSON.stringify(data.sourceUrl)}`);
   }
-  lines.push("---", "");
-  return lines.join("\n");
+  lines.push('---', '');
+  return lines.join('\n');
 }
 
 function memberKind(kind: number): MemberKind | undefined {
   if (kind === Kind.Constructor) {
-    return "constructor";
+    return 'constructor';
   }
   if (kind === Kind.Property) {
-    return "property";
+    return 'property';
   }
   if (kind === Kind.Method) {
-    return "method";
+    return 'method';
   }
   if (kind === Kind.Accessor) {
-    return "accessor";
+    return 'accessor';
   }
   return undefined;
 }
@@ -128,7 +128,7 @@ export function mergeSignature(
 ): MergedSignature {
   return {
     comment: source?.comment ?? typings?.comment,
-    name: source?.name ?? typings?.name ?? "",
+    name: source?.name ?? typings?.name ?? '',
     parameters: mergeParameters(source, typings),
     returnType: typings?.type ?? source?.type,
     typeParameters: typings?.typeParameters ?? source?.typeParameters,
@@ -144,11 +144,11 @@ export function signatureLine(
     .map((parameter) => {
       const optional =
         parameter.flags?.isOptional || parameter.defaultValue !== undefined
-          ? "?"
-          : "";
+          ? '?'
+          : '';
       return `${parameter.name}${optional}: ${renderType(parameter.type)}`;
     })
-    .join(", ");
+    .join(', ');
 
   return `${name}${typeParameters}(${parameters}): ${renderType(signature.returnType)}`;
 }
@@ -158,8 +158,8 @@ export function renderParameterList(parameters: Parameter[]): string {
     .map((parameter) => {
       const optional =
         parameter.flags?.isOptional || parameter.defaultValue !== undefined
-          ? "?"
-          : "";
+          ? '?'
+          : '';
       const description = plainText(parameter.comment?.summary);
       const code = inlineCode(
         `${parameter.name}${optional}: ${renderType(parameter.type)}`
@@ -168,7 +168,7 @@ export function renderParameterList(parameters: Parameter[]): string {
         ? `- ${code} — ${escapeMdx(description)}`
         : `- ${code}`;
     })
-    .join("\n");
+    .join('\n');
 }
 
 export function renderMemberBody(
@@ -182,22 +182,22 @@ export function renderMemberBody(
     const merged = mergeSignature(sourceSignature, typingsSignature);
     const code = signatureLine(
       merged,
-      source?.name ?? typings?.name ?? "method"
+      source?.name ?? typings?.name ?? 'method'
     );
     const description = renderSummary(merged.comment);
     const parameters = renderParameterList(merged.parameters);
     const returns = merged.returnType
       ? `**Returns:** ${inlineCode(renderType(merged.returnType))}`
-      : "";
+      : '';
 
-    return [description, "```ts", code, "```", parameters, returns]
+    return [description, '```ts', code, '```', parameters, returns]
       .filter(Boolean)
-      .join("\n\n");
+      .join('\n\n');
   }
 
   const propertyType = renderType(typings?.type ?? source?.type);
   const description = renderSummary(source?.comment ?? typings?.comment);
   return [description, `**Type:** ${inlineCode(propertyType)}`]
     .filter(Boolean)
-    .join("\n\n");
+    .join('\n\n');
 }

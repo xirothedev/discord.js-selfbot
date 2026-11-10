@@ -7,16 +7,16 @@
  * Set DISCORD_TOKEN in the environment before you start the example.
  */
 
-import { Client, Events } from "discord-ts-selfbot";
+import { Client, Events } from 'discord-ts-selfbot';
 
 const commands = [
   {
-    description: "Replies with Pong!",
-    name: "ping",
+    description: 'Replies with Pong!',
+    name: 'ping',
   },
   {
-    description: "Says hello to the selected user",
-    name: "hello",
+    description: 'Says hello to the selected user',
+    name: 'hello',
   },
 ];
 
@@ -31,12 +31,12 @@ client.once(Events.CLIENT_READY, async (readyClient) => {
 });
 
 client.on(Events.Error, (error) => {
-  console.error("Client error:", error);
+  console.error('Client error:', error);
 });
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) {
-  throw new Error("Set DISCORD_TOKEN before running this example.");
+  throw new Error('Set DISCORD_TOKEN before running this example.');
 }
 
 await client.login(token);

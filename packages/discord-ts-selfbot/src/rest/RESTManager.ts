@@ -1,17 +1,17 @@
-import { setInterval } from "node:timers";
-import { Collection } from "@discordjs/collection";
-import makeFetchCookie from "fetch-cookie";
-import { CookieJar } from "tough-cookie";
-import { fetch as fetchOriginal } from "undici";
-import APIRequest from "./APIRequest";
-import type { ApiRouter } from "./APIRouter";
-import routeBuilder from "./APIRouter";
-import RequestHandler from "./RequestHandler";
-import _errorsModule from "../errors";
+import { setInterval } from 'node:timers';
+import { Collection } from '@discordjs/collection';
+import makeFetchCookie from 'fetch-cookie';
+import { CookieJar } from 'tough-cookie';
+import { fetch as fetchOriginal } from 'undici';
+import APIRequest from './APIRequest';
+import type { ApiRouter } from './APIRouter';
+import routeBuilder from './APIRouter';
+import RequestHandler from './RequestHandler';
+import _errorsModule from '../errors';
 
 const { Error } = _errorsModule;
-import _ConstantsModule from "../util/Constants";
-import type { BaseClient } from "../client/BaseClient";
+import _ConstantsModule from '../util/Constants';
+import type { BaseClient } from '../client/BaseClient';
 
 const { Endpoints } = _ConstantsModule;
 
@@ -58,9 +58,9 @@ class RESTManager {
     };
     const token = authClient.token ?? authClient.accessToken;
     if (token) {
-      return token.replaceAll("Bot ", "");
+      return token.replaceAll('Bot ', '');
     }
-    throw new Error("TOKEN_MISSING");
+    throw new Error('TOKEN_MISSING');
   }
 
   get cdn(): ReturnType<typeof Endpoints.CDN> {

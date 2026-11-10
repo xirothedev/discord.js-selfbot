@@ -21,12 +21,12 @@ class DiscordAPIError extends Error {
     const ErrorClass = new.target as typeof DiscordAPIError;
     const flattened = ErrorClass.flattenErrors(
       (error.errors ?? error) as unknown
-    ).join("\n");
+    ).join('\n');
     super(
       errMsg && flattened ? `${errMsg}\n${flattened}` : (errMsg ?? flattened)
     );
 
-    this.name = "DiscordAPIError";
+    this.name = 'DiscordAPIError';
 
     this.method = request.method;
 
@@ -51,13 +51,13 @@ class DiscordAPIError extends Error {
     return this.code === 40_333;
   }
 
-  static flattenErrors(obj: unknown, key = ""): string[] {
+  static flattenErrors(obj: unknown, key = ''): string[] {
     const messages: string[] = [];
 
     for (const [entryKey, value] of Object.entries(
       (obj ?? {}) as Record<string, unknown>
     )) {
-      if (entryKey === "message") {
+      if (entryKey === 'message') {
         continue;
       }
       let newKey = entryKey;
@@ -72,13 +72,13 @@ class DiscordAPIError extends Error {
         messages.push(
           `${newKey}: ${(nested._errors as { message: string }[])
             .map((entry) => entry.message)
-            .join(" ")}`
+            .join(' ')}`
         );
       } else if (nested && (nested.code ?? nested.message)) {
         messages.push(
-          `${nested.code ? `${nested.code}: ` : ""}${nested.message}`.trim()
+          `${nested.code ? `${nested.code}: ` : ''}${nested.message}`.trim()
         );
-      } else if (typeof value === "string") {
+      } else if (typeof value === 'string') {
         messages.push(value);
       } else {
         messages.push(...this.flattenErrors(value, newKey));

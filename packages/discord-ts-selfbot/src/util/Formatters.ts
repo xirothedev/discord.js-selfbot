@@ -16,7 +16,7 @@ import {
   TimestampStyles,
   underscore,
   userMention,
-} from "@discordjs/builders";
+} from '@discordjs/builders';
 
 const Formatters: Record<string, unknown> =
   class extends null {} as unknown as Record<string, unknown>;

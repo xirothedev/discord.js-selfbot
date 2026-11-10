@@ -1,6 +1,6 @@
-import process from "node:process";
-import BaseGuildVoiceChannel from "./BaseGuildVoiceChannel";
-import Permissions from "../util/Permissions";
+import process from 'node:process';
+import BaseGuildVoiceChannel from './BaseGuildVoiceChannel';
+import Permissions from '../util/Permissions';
 
 let deprecationEmittedForEditable = false;
 
@@ -14,8 +14,8 @@ class VoiceChannel extends BaseGuildVoiceChannel {
   get editable() {
     if (!deprecationEmittedForEditable) {
       process.emitWarning(
-        "The VoiceChannel#editable getter is deprecated. Use VoiceChannel#manageable instead.",
-        "DeprecationWarning"
+        'The VoiceChannel#editable getter is deprecated. Use VoiceChannel#manageable instead.',
+        'DeprecationWarning'
       );
 
       deprecationEmittedForEditable = true;

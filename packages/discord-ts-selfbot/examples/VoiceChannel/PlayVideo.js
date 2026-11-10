@@ -25,51 +25,51 @@ Install:
 - ffmpeg (install and add to your system environment)
 */
 
-import { Client } from "../../src/index";
+import { Client } from '../../src/index';
 
 const client = new Client();
 
-client.on("ready", async () => {
+client.on('ready', async () => {
   console.log(`${client.user.username} is ready!`);
-  const channel = client.channels.cache.get("voice_channel");
+  const channel = client.channels.cache.get('voice_channel');
   const connection = await client.voice.joinChannel(channel, {
     selfDeaf: true,
     selfMute: true,
     // Turn on the camera? If you turn on the camera, use the connection similar to
     // PlayAudio.js, and it will stream video through the camera. This is an implementation of screen sharing.
     selfVideo: false,
-    videoCodec: "H264",
+    videoCodec: 'H264',
   });
   const stream = await connection.createStreamConnection();
   // You can also access it by using `connection.streamConnection` (only after it has been initialized by the `createStreamConnection` function).
   // Split it into two separate streams (audio / video)
   // Or with a combined stream that will be automatically processed by FFmpeg.
   const input =
-    "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+    'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
   // Play
   const dispatcher = stream.playVideo(input, {
     bitrate: 4000,
     fps: 60,
   });
   const dispatcher2 = stream.playAudio(input);
-  dispatcher.on("start", () => {
-    console.log("video is now playing!");
+  dispatcher.on('start', () => {
+    console.log('video is now playing!');
   });
 
-  dispatcher.on("finish", () => {
-    console.log("video has finished playing!");
+  dispatcher.on('finish', () => {
+    console.log('video has finished playing!');
   });
-  dispatcher.on("error", console.error);
+  dispatcher.on('error', console.error);
 
-  dispatcher2.on("start", () => {
-    console.log("audio is now playing!");
+  dispatcher2.on('start', () => {
+    console.log('audio is now playing!');
   });
 
-  dispatcher2.on("finish", () => {
-    console.log("audio has finished playing!");
+  dispatcher2.on('finish', () => {
+    console.log('audio has finished playing!');
   });
-  dispatcher2.on("error", console.error);
+  dispatcher2.on('error', console.error);
   // Of course, you can also pause the stream using the `pause` function, but remember to pause both video and audio.
 });
 
-client.login("token");
+client.login('token');

@@ -1,9 +1,9 @@
-import Action from "./Action";
-import type { GuildEmoji } from "../../structures/GuildEmoji";
-import _EmojiModule from "../../structures/Emoji";
+import Action from './Action';
+import type { GuildEmoji } from '../../structures/GuildEmoji';
+import _EmojiModule from '../../structures/Emoji';
 
 const { deletedEmojis } = _EmojiModule;
-import _ConstantsModule from "../../util/Constants";
+import _ConstantsModule from '../../util/Constants';
 
 const { Events } = _ConstantsModule;
 

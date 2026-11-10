@@ -1,17 +1,17 @@
-import Interaction from "./Interaction";
-import InteractionWebhook from "./InteractionWebhook";
-import ModalSubmitFieldsResolver from "./ModalSubmitFieldsResolver";
-import InteractionResponses from "./interfaces/InteractionResponses";
-import _ConstantsModule from "../util/Constants";
-import type { APIMessage } from "discord-api-types/v10";
+import Interaction from './Interaction';
+import InteractionWebhook from './InteractionWebhook';
+import ModalSubmitFieldsResolver from './ModalSubmitFieldsResolver';
+import InteractionResponses from './interfaces/InteractionResponses';
+import _ConstantsModule from '../util/Constants';
+import type { APIMessage } from 'discord-api-types/v10';
 import type {
   CacheType,
   PartialModalActionRow,
   PartialTextInputData,
-} from "../../typings";
-import type { RawModalSubmitInteractionData } from "../../typings/rawDataTypes";
-import type { Message } from "./Message";
-import type Client from "../client/Client";
+} from '../../typings';
+import type { RawModalSubmitInteractionData } from '../../typings/rawDataTypes';
+import type { Message } from './Message';
+import type Client from '../client/Client';
 
 class ModalSubmitInteraction<
   Cached extends CacheType = CacheType,
@@ -33,10 +33,10 @@ class ModalSubmitInteraction<
     this.components =
       data.data.components?.map((component) => ({
         components:
-          "components" in component
+          'components' in component
             ? ModalSubmitInteraction.transformComponent(component)
             : [],
-        type: "TEXT_INPUT" as const,
+        type: 'TEXT_INPUT' as const,
       })) ?? [];
 
     this.message = data.message
@@ -63,7 +63,7 @@ class ModalSubmitInteraction<
   }): PartialTextInputData[] {
     return rawComponent.components.map((component) => ({
       customId: component.custom_id,
-      type: "TEXT_INPUT" as const,
+      type: 'TEXT_INPUT' as const,
       value: component.value,
     }));
   }
@@ -100,8 +100,8 @@ class ModalSubmitInteraction<
 }
 
 InteractionResponses.applyToClass(ModalSubmitInteraction, [
-  "showModal",
-  "awaitModalSubmit",
+  'showModal',
+  'awaitModalSubmit',
 ]);
 
 export default ModalSubmitInteraction;

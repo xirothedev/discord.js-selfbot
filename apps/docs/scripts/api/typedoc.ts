@@ -1,13 +1,13 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import path from "node:path";
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
 
-import type { Project, PublicExport, Reflection } from "./types";
+import type { Project, PublicExport, Reflection } from './types';
 
 const decoder = new TextDecoder();
 
 export interface RunTypeDocOptions {
   entryPoints: string[];
-  entryPointStrategy: "resolve" | "expand";
+  entryPointStrategy: 'resolve' | 'expand';
   outputJson: string;
   packageDir: string;
 }
@@ -15,7 +15,7 @@ export interface RunTypeDocOptions {
 export function runTypeDoc(options: RunTypeDocOptions): Project {
   const tempTsconfig = path.join(
     options.packageDir,
-    "node_modules/.cache/typedoc/tsconfig.json"
+    'node_modules/.cache/typedoc/tsconfig.json'
   );
   mkdirSync(path.dirname(tempTsconfig), { recursive: true });
   writeFileSync(
@@ -23,13 +23,13 @@ export function runTypeDoc(options: RunTypeDocOptions): Project {
     JSON.stringify(
       {
         compilerOptions: {
-          module: "CommonJS",
-          moduleResolution: "node",
+          module: 'CommonJS',
+          moduleResolution: 'node',
           noEmit: true,
-          types: ["node"],
+          types: ['node'],
         },
-        extends: "../../../tsconfig.json",
-        include: ["../../../typings/**/*.ts"],
+        extends: '../../../tsconfig.json',
+        include: ['../../../typings/**/*.ts'],
       },
       null,
       2
@@ -37,28 +37,28 @@ export function runTypeDoc(options: RunTypeDocOptions): Project {
   );
 
   const args = [
-    "typedoc",
-    "--json",
+    'typedoc',
+    '--json',
     options.outputJson,
-    "--out",
-    path.join(path.dirname(options.outputJson), "html"),
-    "--entryPoints",
+    '--out',
+    path.join(path.dirname(options.outputJson), 'html'),
+    '--entryPoints',
     ...options.entryPoints,
-    "--entryPointStrategy",
+    '--entryPointStrategy',
     options.entryPointStrategy,
-    "--tsconfig",
+    '--tsconfig',
     tempTsconfig,
-    "--gitRevision",
-    "main",
-    "--readme",
-    "none",
+    '--gitRevision',
+    'main',
+    '--readme',
+    'none',
   ];
 
   const result = Bun.spawnSync({
-    cmd: ["bunx", ...args],
+    cmd: ['bunx', ...args],
     cwd: options.packageDir,
-    stderr: "pipe",
-    stdout: "pipe",
+    stderr: 'pipe',
+    stdout: 'pipe',
   });
 
   if (result.exitCode !== 0) {
@@ -68,7 +68,7 @@ export function runTypeDoc(options: RunTypeDocOptions): Project {
     );
   }
 
-  return JSON.parse(readFileSync(options.outputJson, "utf-8")) as Project;
+  return JSON.parse(readFileSync(options.outputJson, 'utf-8')) as Project;
 }
 
 export function modulesByName(project: Project): Map<string, Reflection> {
@@ -95,7 +95,7 @@ export function findExportedReflection(
   }
 
   const exportEquals = module.children.find(
-    (child) => child.name === "export="
+    (child) => child.name === 'export='
   );
   if (exportEquals) {
     const named = exportEquals.type?.declaration?.children?.find(

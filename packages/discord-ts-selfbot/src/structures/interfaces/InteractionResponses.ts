@@ -1,17 +1,17 @@
-import _errorsModule from "../../errors";
+import _errorsModule from '../../errors';
 
 const { Error, TypeError } = _errorsModule;
-import _ConstantsModule from "../../util/Constants";
+import _ConstantsModule from '../../util/Constants';
 
 const { InteractionResponseTypes, InteractionTypes } = _ConstantsModule;
-import MessageFlags from "../../util/MessageFlags";
-import InteractionCollector from "../InteractionCollector";
-import MessagePayload from "../MessagePayload";
-import type { MessagePayloadOptions } from "../MessagePayload";
-import Modal from "../Modal";
-import type { Snowflake } from "discord-api-types/v10";
-import type { Collection } from "@discordjs/collection";
-import type InteractionWebhook from "../InteractionWebhook";
+import MessageFlags from '../../util/MessageFlags';
+import InteractionCollector from '../InteractionCollector';
+import MessagePayload from '../MessagePayload';
+import type { MessagePayloadOptions } from '../MessagePayload';
+import Modal from '../Modal';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { Collection } from '@discordjs/collection';
+import type InteractionWebhook from '../InteractionWebhook';
 import type {
   AwaitModalSubmitOptions,
   InteractionDeferReplyOptions,
@@ -19,8 +19,8 @@ import type {
   InteractionEditReplyOptions,
   ModalOptions,
   ModalSubmitInteraction,
-} from "../../../typings";
-import type Client from "../../client/Client";
+} from '../../../typings';
+import type Client from '../../client/Client';
 
 type InteractionReplySourceOptions = MessagePayloadOptions & {
   ephemeral?: boolean;
@@ -41,7 +41,7 @@ class InteractionResponses {
 
   async deferReply(options: InteractionDeferReplyOptions = {}) {
     if (this.deferred || this.replied) {
-      throw new Error("INTERACTION_ALREADY_REPLIED");
+      throw new Error('INTERACTION_ALREADY_REPLIED');
     }
     this.ephemeral = options.ephemeral ?? false;
     await this.client.api.interactions(this.id, this.token).callback.post({
@@ -62,10 +62,10 @@ class InteractionResponses {
     options: string | MessagePayload | InteractionReplySourceOptions
   ) {
     if (this.deferred || this.replied) {
-      throw new Error("INTERACTION_ALREADY_REPLIED");
+      throw new Error('INTERACTION_ALREADY_REPLIED');
     }
     const replyOptions =
-      typeof options === "string" || options instanceof MessagePayload
+      typeof options === 'string' || options instanceof MessagePayload
         ? {}
         : options;
     this.ephemeral = replyOptions.ephemeral ?? false;
@@ -90,7 +90,7 @@ class InteractionResponses {
     return replyOptions.fetchReply ? this.fetchReply() : undefined;
   }
 
-  fetchReply(message = "@original") {
+  fetchReply(message = '@original') {
     return this.webhook.fetchMessage(message);
   }
 
@@ -98,18 +98,18 @@ class InteractionResponses {
     options: string | MessagePayload | InteractionEditReplyOptions
   ) {
     if (!this.deferred && !this.replied) {
-      throw new Error("INTERACTION_NOT_REPLIED");
+      throw new Error('INTERACTION_NOT_REPLIED');
     }
     const messageId =
-      typeof options === "string" || options instanceof MessagePayload
-        ? "@original"
-        : (options.message ?? "@original");
+      typeof options === 'string' || options instanceof MessagePayload
+        ? '@original'
+        : (options.message ?? '@original');
     const message = await this.webhook.editMessage(messageId, options);
     this.replied = true;
     return message;
   }
 
-  async deleteReply(message = "@original") {
+  async deleteReply(message = '@original') {
     await this.webhook.deleteMessage(message);
   }
 
@@ -117,14 +117,14 @@ class InteractionResponses {
     options: string | MessagePayload | InteractionReplySourceOptions
   ) {
     if (!this.deferred && !this.replied) {
-      throw new Error("INTERACTION_NOT_REPLIED");
+      throw new Error('INTERACTION_NOT_REPLIED');
     }
     return this.webhook.send(options);
   }
 
   async deferUpdate(options: InteractionDeferUpdateOptions = {}) {
     if (this.deferred || this.replied) {
-      throw new Error("INTERACTION_ALREADY_REPLIED");
+      throw new Error('INTERACTION_ALREADY_REPLIED');
     }
     await this.client.api.interactions(this.id, this.token).callback.post({
       auth: false,
@@ -141,10 +141,10 @@ class InteractionResponses {
     options: string | MessagePayload | InteractionUpdateSourceOptions
   ) {
     if (this.deferred || this.replied) {
-      throw new Error("INTERACTION_ALREADY_REPLIED");
+      throw new Error('INTERACTION_ALREADY_REPLIED');
     }
     const updateOptions =
-      typeof options === "string" || options instanceof MessagePayload
+      typeof options === 'string' || options instanceof MessagePayload
         ? {}
         : options;
 
@@ -170,7 +170,7 @@ class InteractionResponses {
 
   async showModal(modal: Modal | ModalOptions) {
     if (this.deferred || this.replied) {
-      throw new Error("INTERACTION_ALREADY_REPLIED");
+      throw new Error('INTERACTION_ALREADY_REPLIED');
     }
 
     const _modal = modal instanceof Modal ? modal : new Modal(modal);
@@ -186,8 +186,8 @@ class InteractionResponses {
   awaitModalSubmit(
     options: AwaitModalSubmitOptions<ModalSubmitInteraction>
   ): Promise<ModalSubmitInteraction> {
-    if (typeof options.time !== "number") {
-      throw new TypeError("INVALID_TYPE", "time", "number");
+    if (typeof options.time !== 'number') {
+      throw new TypeError('INVALID_TYPE', 'time', 'number');
     }
     const _options = {
       ...options,
@@ -201,7 +201,7 @@ class InteractionResponses {
       _options
     );
     collector.once(
-      "end",
+      'end',
       (
         interactions: Collection<Snowflake, ModalSubmitInteraction>,
         reason: string
@@ -210,7 +210,7 @@ class InteractionResponses {
         if (interaction) {
           resolve(interaction);
         } else {
-          reject(new Error("INTERACTION_COLLECTOR_ERROR", reason));
+          reject(new Error('INTERACTION_COLLECTOR_ERROR', reason));
         }
       }
     );
@@ -219,16 +219,16 @@ class InteractionResponses {
 
   static applyToClass(structure: { prototype: object }, ignore: string[] = []) {
     const props = [
-      "deferReply",
-      "reply",
-      "fetchReply",
-      "editReply",
-      "deleteReply",
-      "followUp",
-      "deferUpdate",
-      "update",
-      "showModal",
-      "awaitModalSubmit",
+      'deferReply',
+      'reply',
+      'fetchReply',
+      'editReply',
+      'deleteReply',
+      'followUp',
+      'deferUpdate',
+      'update',
+      'showModal',
+      'awaitModalSubmit',
     ];
 
     for (const prop of props) {

@@ -1,29 +1,29 @@
-import { Collection } from "@discordjs/collection";
-import CachedManager from "./CachedManager";
-import _errorsModule from "../errors";
+import { Collection } from '@discordjs/collection';
+import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
 
 const { Error } = _errorsModule;
-import Invite from "../structures/Invite";
-import DataResolver from "../util/DataResolver";
+import Invite from '../structures/Invite';
+import DataResolver from '../util/DataResolver';
 import type {
   RESTPostAPIChannelInviteResult,
   Snowflake,
-} from "discord-api-types/v10";
-import type { RawInviteData } from "../../typings/rawDataTypes";
-import type { RawInviteDataSource } from "../structures/Invite";
+} from 'discord-api-types/v10';
+import type { RawInviteData } from '../../typings/rawDataTypes';
+import type { RawInviteDataSource } from '../structures/Invite';
 import type {
   ApplicationResolvable,
   CreateInviteOptions,
   GuildInvitableChannelResolvable,
   InviteResolvable,
   UserResolvable,
-} from "../../typings";
-import type { Guild } from "../structures/Guild";
-import type { GuildChannel } from "../structures/GuildChannel";
-import type { User } from "../structures/User";
-import type { GuildMember } from "../structures/GuildMember";
-import type { Message } from "../structures/Message";
-import type { ThreadMember } from "../structures/ThreadMember";
+} from '../../typings';
+import type { Guild } from '../structures/Guild';
+import type { GuildChannel } from '../structures/GuildChannel';
+import type { User } from '../structures/User';
+import type { GuildMember } from '../structures/GuildMember';
+import type { Message } from '../structures/Message';
+import type { ThreadMember } from '../structures/ThreadMember';
 
 type UserResolvableSource =
   | User
@@ -54,7 +54,7 @@ interface FetchInvitesOptionsSource {
 
 export type CreateInviteOptionsSource = Omit<
   CreateInviteOptions,
-  "targetUser" | "targetApplication"
+  'targetUser' | 'targetApplication'
 > & {
   targetUser?: UserResolvableSource;
   targetApplication?: ApplicationResolvableSource | ApplicationResolvable;
@@ -85,30 +85,30 @@ class GuildInviteManager extends CachedManager<Invite> {
     if (!options) {
       return this._fetchMany();
     }
-    if (typeof options === "string") {
+    if (typeof options === 'string') {
       const code = DataResolver.resolveInviteCode(options);
       if (!code) {
-        throw new Error("INVITE_RESOLVE_CODE");
+        throw new Error('INVITE_RESOLVE_CODE');
       }
       return this._fetchSingle({ cache: true, code });
     }
-    if (!("code" in options)) {
+    if (!('code' in options)) {
       if (options.channelId) {
         const id = this.guild.channels.resolveId(options.channelId);
         if (!id) {
-          throw new Error("GUILD_CHANNEL_RESOLVE");
+          throw new Error('GUILD_CHANNEL_RESOLVE');
         }
         return this._fetchChannelMany(id, options.cache);
       }
 
-      if ("cache" in options) {
+      if ('cache' in options) {
         return this._fetchMany(options.cache);
       }
-      throw new Error("INVITE_RESOLVE_CODE");
+      throw new Error('INVITE_RESOLVE_CODE');
     }
     const code = DataResolver.resolveInviteCode(options.code);
     if (!code) {
-      throw new Error("INVITE_RESOLVE_CODE");
+      throw new Error('INVITE_RESOLVE_CODE');
     }
     return this._fetchSingle({ ...options, code });
   }
@@ -128,7 +128,7 @@ class GuildInviteManager extends CachedManager<Invite> {
     const invites = await this._fetchMany(cache);
     const invite = invites.get(code);
     if (!invite) {
-      throw new Error("INVITE_NOT_FOUND");
+      throw new Error('INVITE_NOT_FOUND');
     }
     return invite;
   }
@@ -172,19 +172,19 @@ class GuildInviteManager extends CachedManager<Invite> {
   ): Promise<Invite> {
     const id = this.guild.channels.resolveId(channel);
     if (!id) {
-      throw new Error("GUILD_CHANNEL_RESOLVE");
+      throw new Error('GUILD_CHANNEL_RESOLVE');
     }
 
     const target = targetApplication;
     let targetApplicationId: string | undefined;
-    if (typeof target === "string") {
+    if (typeof target === 'string') {
       targetApplicationId = target;
-    } else if (target && typeof target === "object") {
-      if ("id" in target && typeof target.id === "string") {
+    } else if (target && typeof target === 'object') {
+      if ('id' in target && typeof target.id === 'string') {
         targetApplicationId = target.id;
       } else if (
-        "applicationId" in target &&
-        typeof target.applicationId === "string"
+        'applicationId' in target &&
+        typeof target.applicationId === 'string'
       ) {
         targetApplicationId = target.applicationId;
       }

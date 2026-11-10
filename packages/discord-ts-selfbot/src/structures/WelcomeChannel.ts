@@ -1,10 +1,10 @@
-import Base from "./Base";
-import _EmojiModule from "./Emoji";
+import Base from './Base';
+import _EmojiModule from './Emoji';
 
 const { Emoji } = _EmojiModule;
-import type { Guild } from "./Guild";
-import type InviteGuild from "./InviteGuild";
-import type { RawWelcomeChannelData } from "../../typings/rawDataTypes";
+import type { Guild } from './Guild';
+import type InviteGuild from './InviteGuild';
+import type { RawWelcomeChannelData } from '../../typings/rawDataTypes';
 
 class WelcomeChannel extends Base {
   declare guild: Guild | InviteGuild;
@@ -17,7 +17,7 @@ class WelcomeChannel extends Base {
 
     this.guild = guild;
 
-    this.description = data.description ?? "";
+    this.description = data.description ?? '';
 
     this._emoji = {
       id: data.emoji_id,

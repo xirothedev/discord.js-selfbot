@@ -1,14 +1,14 @@
-import type { Collection } from "@discordjs/collection";
-import BaseManager from "./BaseManager";
-import _errorsModule from "../errors";
-import type Client from "../client/Client";
+import type { Collection } from '@discordjs/collection';
+import BaseManager from './BaseManager';
+import _errorsModule from '../errors';
+import type Client from '../client/Client';
 
 const { Error } = _errorsModule;
 
 type DataHold = object;
 
 function readId(hold: object): string | undefined {
-  return "id" in hold && typeof hold.id === "string" ? hold.id : undefined;
+  return 'id' in hold && typeof hold.id === 'string' ? hold.id : undefined;
 }
 
 class DataManager<Holds extends DataHold = DataHold> extends BaseManager {
@@ -17,18 +17,18 @@ class DataManager<Holds extends DataHold = DataHold> extends BaseManager {
   constructor(client: Client, holds: new (...args: never[]) => Holds) {
     super(client);
 
-    Object.defineProperty(this, "holds", { value: holds });
+    Object.defineProperty(this, 'holds', { value: holds });
   }
 
   get cache(): Collection<string, Holds> {
-    throw new Error("NOT_IMPLEMENTED", "get cache", this.constructor.name);
+    throw new Error('NOT_IMPLEMENTED', 'get cache', this.constructor.name);
   }
 
   resolve(idOrInstance: unknown): Holds | null {
     if (idOrInstance instanceof this.holds) {
       return idOrInstance;
     }
-    if (typeof idOrInstance === "string") {
+    if (typeof idOrInstance === 'string') {
       return this.cache.get(idOrInstance) ?? null;
     }
     return null;
@@ -38,7 +38,7 @@ class DataManager<Holds extends DataHold = DataHold> extends BaseManager {
     if (idOrInstance instanceof this.holds) {
       return readId(idOrInstance) ?? null;
     }
-    if (typeof idOrInstance === "string") {
+    if (typeof idOrInstance === 'string') {
       return idOrInstance;
     }
     return null;

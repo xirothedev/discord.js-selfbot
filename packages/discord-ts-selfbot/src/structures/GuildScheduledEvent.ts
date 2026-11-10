@@ -1,8 +1,8 @@
-import Base, { patchValue } from "./Base";
-import _errorsModule from "../errors";
+import Base, { patchValue } from './Base';
+import _errorsModule from '../errors';
 
 const { Error } = _errorsModule;
-import _ConstantsModule from "../util/Constants";
+import _ConstantsModule from '../util/Constants';
 
 const {
   GuildScheduledEventEntityTypes,
@@ -10,42 +10,42 @@ const {
   GuildScheduledEventPrivacyLevels,
   Endpoints,
 } = _ConstantsModule;
-import SnowflakeUtil from "../util/SnowflakeUtil";
-import type { RawGuildScheduledEventData } from "../../typings/rawDataTypes";
+import SnowflakeUtil from '../util/SnowflakeUtil';
+import type { RawGuildScheduledEventData } from '../../typings/rawDataTypes';
 import type {
   CreateGuildScheduledEventInviteURLOptions,
   DateResolvable,
   GuildScheduledEventStatus,
   StaticImageURLOptions,
-} from "../../typings";
-import type { GuildScheduledEventEntity } from "../types/entities/guild-scheduled-event";
-import type { PatchOf } from "../types/schema";
-import type Client from "../client/Client";
-import type { GuildScheduledEventEditOptionsSource } from "../managers/GuildScheduledEventManager";
+} from '../../typings';
+import type { GuildScheduledEventEntity } from '../types/entities/guild-scheduled-event';
+import type { PatchOf } from '../types/schema';
+import type Client from '../client/Client';
+import type { GuildScheduledEventEditOptionsSource } from '../managers/GuildScheduledEventManager';
 
 class GuildScheduledEvent extends Base implements GuildScheduledEventEntity {
-  declare id: GuildScheduledEventEntity["id"];
-  declare guildId: GuildScheduledEventEntity["guildId"];
-  declare channelId: GuildScheduledEventEntity["channelId"];
-  declare creatorId: GuildScheduledEventEntity["creatorId"];
-  declare name: GuildScheduledEventEntity["name"];
-  declare description: GuildScheduledEventEntity["description"];
-  declare scheduledStartTimestamp: GuildScheduledEventEntity["scheduledStartTimestamp"];
-  declare scheduledEndTimestamp: GuildScheduledEventEntity["scheduledEndTimestamp"];
-  declare privacyLevel: GuildScheduledEventEntity["privacyLevel"];
-  declare status: GuildScheduledEventEntity["status"];
-  declare entityType: GuildScheduledEventEntity["entityType"];
-  declare entityId: GuildScheduledEventEntity["entityId"];
-  declare entityMetadata: GuildScheduledEventEntity["entityMetadata"];
-  declare userCount: GuildScheduledEventEntity["userCount"];
-  declare creator: GuildScheduledEventEntity["creator"];
-  declare recurrenceRule: GuildScheduledEventEntity["recurrenceRule"];
-  declare image: GuildScheduledEventEntity["image"];
+  declare id: GuildScheduledEventEntity['id'];
+  declare guildId: GuildScheduledEventEntity['guildId'];
+  declare channelId: GuildScheduledEventEntity['channelId'];
+  declare creatorId: GuildScheduledEventEntity['creatorId'];
+  declare name: GuildScheduledEventEntity['name'];
+  declare description: GuildScheduledEventEntity['description'];
+  declare scheduledStartTimestamp: GuildScheduledEventEntity['scheduledStartTimestamp'];
+  declare scheduledEndTimestamp: GuildScheduledEventEntity['scheduledEndTimestamp'];
+  declare privacyLevel: GuildScheduledEventEntity['privacyLevel'];
+  declare status: GuildScheduledEventEntity['status'];
+  declare entityType: GuildScheduledEventEntity['entityType'];
+  declare entityId: GuildScheduledEventEntity['entityId'];
+  declare entityMetadata: GuildScheduledEventEntity['entityMetadata'];
+  declare userCount: GuildScheduledEventEntity['userCount'];
+  declare creator: GuildScheduledEventEntity['creator'];
+  declare recurrenceRule: GuildScheduledEventEntity['recurrenceRule'];
+  declare image: GuildScheduledEventEntity['image'];
 
   constructor(
     client: Client,
-    data: PatchOf<"GuildScheduledEvent"> &
-      Pick<RawGuildScheduledEventData, "id" | "guild_id">
+    data: PatchOf<'GuildScheduledEvent'> &
+      Pick<RawGuildScheduledEventData, 'id' | 'guild_id'>
   ) {
     super(client);
 
@@ -56,7 +56,7 @@ class GuildScheduledEvent extends Base implements GuildScheduledEventEntity {
     this._patch(data);
   }
 
-  _patch(data: PatchOf<"GuildScheduledEvent">) {
+  _patch(data: PatchOf<'GuildScheduledEvent'>) {
     this.channelId = patchValue(data.channel_id, this.channelId);
     this.creatorId = patchValue(data.creator_id, this.creatorId);
     this.name = patchValue(data.name, this.name);
@@ -98,7 +98,7 @@ class GuildScheduledEvent extends Base implements GuildScheduledEventEntity {
     this.image = patchValue(data.image, this.image);
   }
 
-  private _patchEntityMetadata(data: PatchOf<"GuildScheduledEvent">) {
+  private _patchEntityMetadata(data: PatchOf<'GuildScheduledEvent'>) {
     if (data.entity_metadata === undefined) {
       this.entityMetadata ??= null;
       return;
@@ -113,7 +113,7 @@ class GuildScheduledEvent extends Base implements GuildScheduledEventEntity {
       : null;
   }
 
-  private _patchRecurrenceRule(data: PatchOf<"GuildScheduledEvent">) {
+  private _patchRecurrenceRule(data: PatchOf<'GuildScheduledEvent'>) {
     if (data.recurrence_rule === undefined) {
       this.recurrenceRule ??= null;
       return;
@@ -140,7 +140,7 @@ class GuildScheduledEvent extends Base implements GuildScheduledEventEntity {
     };
   }
 
-  coverImageURL({ format = "webp", size }: StaticImageURLOptions = {}) {
+  coverImageURL({ format = 'webp', size }: StaticImageURLOptions = {}) {
     return (
       this.image &&
       this.client.rest.cdn.GuildScheduledEventCover(
@@ -191,7 +191,7 @@ class GuildScheduledEvent extends Base implements GuildScheduledEventEntity {
   fetch(force = true) {
     const { guild } = this;
     if (!guild) {
-      throw new Error("GUILD_NOT_FOUND");
+      throw new Error('GUILD_NOT_FOUND');
     }
     return guild.scheduledEvents.fetch({ force, guildScheduledEvent: this.id });
   }
@@ -199,20 +199,20 @@ class GuildScheduledEvent extends Base implements GuildScheduledEventEntity {
   async createInviteURL(options?: CreateGuildScheduledEventInviteURLOptions) {
     const { guild } = this;
     if (!guild) {
-      throw new Error("GUILD_NOT_FOUND");
+      throw new Error('GUILD_NOT_FOUND');
     }
     let { channelId } = this;
-    if (this.entityType === "EXTERNAL") {
+    if (this.entityType === 'EXTERNAL') {
       if (!options?.channel) {
-        throw new Error("INVITE_OPTIONS_MISSING_CHANNEL");
+        throw new Error('INVITE_OPTIONS_MISSING_CHANNEL');
       }
       channelId = guild.channels.resolveId(options.channel);
       if (!channelId) {
-        throw new Error("GUILD_CHANNEL_RESOLVE");
+        throw new Error('GUILD_CHANNEL_RESOLVE');
       }
     }
     if (!channelId) {
-      throw new Error("GUILD_CHANNEL_RESOLVE");
+      throw new Error('GUILD_CHANNEL_RESOLVE');
     }
     const invite = await guild.invites.create(channelId, options);
     return Endpoints.invite(
@@ -225,7 +225,7 @@ class GuildScheduledEvent extends Base implements GuildScheduledEventEntity {
   edit(options: GuildScheduledEventEditOptionsSource) {
     const { guild } = this;
     if (!guild) {
-      throw new Error("GUILD_NOT_FOUND");
+      throw new Error('GUILD_NOT_FOUND');
     }
     return guild.scheduledEvents.edit(this.id, options);
   }
@@ -233,7 +233,7 @@ class GuildScheduledEvent extends Base implements GuildScheduledEventEntity {
   async delete() {
     const { guild } = this;
     if (!guild) {
-      throw new Error("GUILD_NOT_FOUND");
+      throw new Error('GUILD_NOT_FOUND');
     }
     await guild.scheduledEvents.delete(this.id);
     return this;
@@ -267,7 +267,7 @@ class GuildScheduledEvent extends Base implements GuildScheduledEventEntity {
   fetchSubscribers(options?: Record<string, unknown>) {
     const { guild } = this;
     if (!guild) {
-      throw new Error("GUILD_NOT_FOUND");
+      throw new Error('GUILD_NOT_FOUND');
     }
     return guild.scheduledEvents.fetchSubscribers(this.id, options);
   }

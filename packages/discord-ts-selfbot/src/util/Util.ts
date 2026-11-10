@@ -1,31 +1,31 @@
-import Sweepers from "./Sweepers";
-import { Agent } from "node:http";
-import nodePath from "node:path";
-import process from "node:process";
-import { setTimeout } from "node:timers";
-import { Collection } from "@discordjs/collection";
-import { fetch } from "undici";
-import type { APIIncidentsData, APIPartialEmoji } from "discord-api-types/v10";
-import type Client from "../client/Client";
-import type { Message } from "../structures/Message";
-import type { Modal } from "../structures/Modal";
-import _ConstantsModule from "./Constants";
+import Sweepers from './Sweepers';
+import { Agent } from 'node:http';
+import nodePath from 'node:path';
+import process from 'node:process';
+import { setTimeout } from 'node:timers';
+import { Collection } from '@discordjs/collection';
+import { fetch } from 'undici';
+import type { APIIncidentsData, APIPartialEmoji } from 'discord-api-types/v10';
+import type Client from '../client/Client';
+import type { Message } from '../structures/Message';
+import type { Modal } from '../structures/Modal';
+import _ConstantsModule from './Constants';
 
 const { Colors, Events } = _ConstantsModule;
-import _errorsModule from "../errors";
+import _errorsModule from '../errors';
 
 const { Error: DiscordError, RangeError, TypeError } = _errorsModule;
-import VoiceCodec from "../client/voice/util/VoiceCodec";
-import type { UploadAttachment } from "../types/uploads";
-import { isGuildBasedChannel } from "../types/channels";
-import { createRequire } from "node:module";
-import type { Channel } from "../structures/Channel";
+import VoiceCodec from '../client/voice/util/VoiceCodec';
+import type { UploadAttachment } from '../types/uploads';
+import { isGuildBasedChannel } from '../types/channels';
+import { createRequire } from 'node:module';
+import type { Channel } from '../structures/Channel';
 
 const require = createRequire(import.meta.url);
 
 const has = (o: unknown, k: unknown) =>
   Object.hasOwn(o as object, k as PropertyKey);
-const isObject = (d: unknown) => typeof d === "object" && d !== null;
+const isObject = (d: unknown) => typeof d === 'object' && d !== null;
 const isCodeChunk = (index: number, array: unknown[]) =>
   index % 2 > 0 && index !== array.length - 1;
 
@@ -34,12 +34,12 @@ let deprecationEmittedForRemoveMentions = false;
 let deprecationEmittedForResolveAutoArchiveMaxLimit = false;
 
 const TextSortableGroupTypes = [
-  "GUILD_TEXT",
-  "GUILD_ANNOUCMENT",
-  "GUILD_FORUM",
+  'GUILD_TEXT',
+  'GUILD_ANNOUCMENT',
+  'GUILD_FORUM',
 ];
-const VoiceSortableGroupTypes = ["GUILD_VOICE", "GUILD_STAGE_VOICE"];
-const CategorySortableGroupTypes = ["GUILD_CATEGORY"];
+const VoiceSortableGroupTypes = ['GUILD_VOICE', 'GUILD_STAGE_VOICE'];
+const CategorySortableGroupTypes = ['GUILD_CATEGORY'];
 
 class Util extends null {
   static flatten(obj: unknown, ...props: unknown[]): Record<string, unknown> {
@@ -48,7 +48,7 @@ class Util extends null {
     }
 
     const objProps = Object.keys(obj as Record<string, unknown>)
-      .filter((key) => !key.startsWith("_"))
+      .filter((key) => !key.startsWith('_'))
       .map((key) => ({ [key]: true }));
 
     props = (
@@ -77,12 +77,12 @@ class Util extends null {
       const elemIsObj = isObject(element);
       const valueOf =
         elemIsObj &&
-        typeof (element as { valueOf?: () => unknown }).valueOf === "function"
+        typeof (element as { valueOf?: () => unknown }).valueOf === 'function'
           ? (element as { valueOf: () => unknown }).valueOf()
           : null;
       const hasToJSON =
         elemIsObj &&
-        typeof (element as { toJSON?: unknown }).toJSON === "function";
+        typeof (element as { toJSON?: unknown }).toJSON === 'function';
 
       // If it's a Collection, make the array of keys
       const key = newProp as string;
@@ -100,7 +100,7 @@ class Util extends null {
         );
       }
       // If it's an object with a primitive `valueOf`, use that value
-      else if (typeof valueOf !== "object") {
+      else if (typeof valueOf !== 'object') {
         out[key] = valueOf;
       }
       // If it's an object with a toJSON function, use the return value of it
@@ -108,7 +108,7 @@ class Util extends null {
         out[key] = (element as { toJSON: () => unknown }).toJSON();
       }
       // If element is an object, use the flattened version of it
-      else if (typeof element === "object") {
+      else if (typeof element === 'object') {
         out[key] = Util.flatten(element);
       }
       // If it's a primitive
@@ -131,9 +131,9 @@ class Util extends null {
     text: string,
     {
       maxLength = 2000,
-      char = "\n",
-      prepend = "",
-      append = "",
+      char = '\n',
+      prepend = '',
+      append = '',
     }: {
       maxLength?: number;
       char?: string | string[] | RegExp | RegExp[];
@@ -143,8 +143,8 @@ class Util extends null {
   ) {
     if (!deprecationEmittedForSplitMessage) {
       process.emitWarning(
-        "The Util.splitMessage method is deprecated and will be removed in the next major version.",
-        "DeprecationWarning"
+        'The Util.splitMessage method is deprecated and will be removed in the next major version.',
+        'DeprecationWarning'
       );
 
       deprecationEmittedForSplitMessage = true;
@@ -171,16 +171,16 @@ class Util extends null {
       splitText = content.split(char as string | RegExp);
     }
     if (splitText.some((elem) => elem.length > maxLength)) {
-      throw new RangeError("SPLIT_MAX_LEN");
+      throw new RangeError('SPLIT_MAX_LEN');
     }
     const messages = [];
-    let msg = "";
+    let msg = '';
     for (const chunk of splitText) {
       if (msg && (msg + char + chunk + append).length > maxLength) {
         messages.push(msg + append);
         msg = prepend;
       }
-      msg += (msg && msg !== prepend ? char : "") + chunk;
+      msg += (msg && msg !== prepend ? char : '') + chunk;
     }
     return [...messages, msg].filter(Boolean);
   }
@@ -222,7 +222,7 @@ class Util extends null {
     const inlineCodeContent = options.inlineCodeContent !== false;
     if (!codeBlockContent) {
       return text
-        .split("```")
+        .split('```')
         .map((subString: unknown, index: number, array: unknown[]): unknown => {
           if (isCodeChunk(index, array)) {
             return subString;
@@ -242,7 +242,7 @@ class Util extends null {
             underline,
           });
         })
-        .join(codeBlock ? "\\`\\`\\`" : "```");
+        .join(codeBlock ? '\\`\\`\\`' : '```');
     }
     if (!inlineCodeContent) {
       return text
@@ -265,7 +265,7 @@ class Util extends null {
             underline,
           });
         })
-        .join(inlineCode ? "\\`" : "`");
+        .join(inlineCode ? '\\`' : '`');
     }
     const escapers: [boolean, (value: string) => string][] = [
       [escape, Util.escapeEscape],
@@ -289,12 +289,12 @@ class Util extends null {
   }
 
   static escapeCodeBlock(text: string) {
-    return text.replaceAll("```", "\\`\\`\\`");
+    return text.replaceAll('```', '\\`\\`\\`');
   }
 
   static escapeInlineCode(text: string) {
     return text.replaceAll(/(?<=^|[^`])``?(?=[^`]|$)/gu, (match) =>
-      match.length === 2 ? "\\`\\`" : "\\`"
+      match.length === 2 ? '\\`\\`' : '\\`'
     );
   }
 
@@ -303,7 +303,7 @@ class Util extends null {
     const withItalic = text.replaceAll(
       /(?<=^|[^*])\*(?<body>[^*]|\*\*|$)/gu,
       (_full, match) => {
-        if (match === "**") {
+        if (match === '**') {
           return ++count % 2 ? `\\*${match}` : `${match}\\*`;
         }
         return `\\*${match}`;
@@ -313,7 +313,7 @@ class Util extends null {
     return withItalic.replaceAll(
       /(?<=^|[^_])_(?<body>[^_]|__|$)/gu,
       (_full, match) => {
-        if (match === "__") {
+        if (match === '__') {
           return ++count % 2 ? `\\_${match}` : `${match}\\_`;
         }
         return `\\_${match}`;
@@ -327,7 +327,7 @@ class Util extends null {
       if (match) {
         return ++count % 2 ? `${match}\\*\\*` : `\\*\\*${match}`;
       }
-      return "\\*\\*";
+      return '\\*\\*';
     });
   }
 
@@ -337,48 +337,48 @@ class Util extends null {
       if (match) {
         return ++count % 2 ? `${match}\\_\\_` : `\\_\\_${match}`;
       }
-      return "\\_\\_";
+      return '\\_\\_';
     });
   }
 
   static escapeStrikethrough(text: string) {
-    return text.replaceAll("~~", "\\~\\~");
+    return text.replaceAll('~~', '\\~\\~');
   }
 
   static escapeSpoiler(text: string) {
-    return text.replaceAll("||", "\\|\\|");
+    return text.replaceAll('||', '\\|\\|');
   }
 
   static escapeEscape(text: string) {
-    return text.replaceAll("\\", "\\\\");
+    return text.replaceAll('\\', '\\\\');
   }
 
   static escapeHeading(text: string) {
     return text.replaceAll(
       /^(?<prefix> {0,2}[*-] +)?(?<heading>#{1,3} )/gmu,
-      "$1\\$2"
+      '$1\\$2'
     );
   }
 
   static escapeBulletedList(text: string) {
-    return text.replaceAll(/^(?<indent> *)[*-](?<spaces> +)/gmu, "$1\\-$2");
+    return text.replaceAll(/^(?<indent> *)[*-](?<spaces> +)/gmu, '$1\\-$2');
   }
 
   static escapeNumberedList(text: string) {
-    return text.replaceAll(/^(?<indent> *\d+)\./gmu, "$1\\.");
+    return text.replaceAll(/^(?<indent> *\d+)\./gmu, '$1\\.');
   }
 
   static escapeMaskedLink(text: string) {
-    return text.replaceAll(/\[(?<text>.+)\]\((?<url>.+)\)/gmu, "\\$&");
+    return text.replaceAll(/\[(?<text>.+)\]\((?<url>.+)\)/gmu, '\\$&');
   }
 
   static fetchRecommendedShards() {
-    throw new DiscordError("INVALID_USER_API");
+    throw new DiscordError('INVALID_USER_API');
   }
 
   static parseEmoji(text: string) {
-    const content = text.includes("%") ? decodeURIComponent(text) : text;
-    if (!content.includes(":")) {
+    const content = text.includes('%') ? decodeURIComponent(text) : text;
+    if (!content.includes(':')) {
       return { animated: false, id: null, name: content };
     }
     const match = content.match(
@@ -397,7 +397,7 @@ class Util extends null {
     if (!emoji) {
       return null;
     }
-    if (typeof emoji === "string") {
+    if (typeof emoji === 'string') {
       if (/^\d{17,19}$/u.test(emoji)) {
         return { id: emoji, name: null };
       }
@@ -411,19 +411,19 @@ class Util extends null {
         name: parsed.name,
       };
     }
-    if (typeof emoji !== "object") {
+    if (typeof emoji !== 'object') {
       return null;
     }
-    const id = "id" in emoji ? emoji.id : undefined;
-    const name = "name" in emoji ? emoji.name : undefined;
-    const animated = "animated" in emoji ? emoji.animated : undefined;
+    const id = 'id' in emoji ? emoji.id : undefined;
+    const name = 'name' in emoji ? emoji.name : undefined;
+    const animated = 'animated' in emoji ? emoji.animated : undefined;
     if (!id && !name) {
       return null;
     }
     return {
       animated: Boolean(animated),
-      id: typeof id === "string" ? id : null,
-      name: typeof name === "string" ? name : null,
+      id: typeof id === 'string' ? id : null,
+      name: typeof name === 'string' ? name : null,
     };
   }
 
@@ -451,11 +451,11 @@ class Util extends null {
   }
 
   static makeError(obj: unknown) {
-    const data = typeof obj === "object" && obj !== null ? obj : {};
-    const err = new Error(String("message" in data ? data.message : obj));
-    err.name = String("name" in data ? data.name : "Error");
-    const stack = "stack" in data ? data.stack : undefined;
-    if (typeof stack === "string") {
+    const data = typeof obj === 'object' && obj !== null ? obj : {};
+    const err = new Error(String('message' in data ? data.message : obj));
+    err.name = String('name' in data ? data.name : 'Error');
+    const stack = 'stack' in data ? data.stack : undefined;
+    if (typeof stack === 'string') {
       err.stack = stack;
     }
     return err;
@@ -465,7 +465,7 @@ class Util extends null {
     if (err instanceof Error) {
       return { message: err.message, name: err.name, stack: err.stack };
     }
-    return { message: String(err), name: "Error", stack: undefined };
+    return { message: String(err), name: 'Error', stack: undefined };
   }
 
   static moveElementInArray(
@@ -489,7 +489,7 @@ class Util extends null {
     errorMessage = `Expected a string, got ${data} instead.`,
     allowEmpty = true
   ) {
-    if (typeof data !== "string") {
+    if (typeof data !== 'string') {
       throw new error(errorMessage);
     }
     if (!allowEmpty && data.length === 0) {
@@ -500,24 +500,24 @@ class Util extends null {
 
   static resolveColor(color: unknown) {
     let resolved = color;
-    if (typeof color === "string") {
-      if (color === "RANDOM") {
+    if (typeof color === 'string') {
+      if (color === 'RANDOM') {
         return Math.floor(Math.random() * (0xff_ff_ff + 1));
       }
-      if (color === "DEFAULT") {
+      if (color === 'DEFAULT') {
         return 0;
       }
       resolved =
         Colors[color as string] ??
-        Number.parseInt((color as string).replace("#", ""), 16);
+        Number.parseInt((color as string).replace('#', ''), 16);
     } else if (Array.isArray(color)) {
       resolved = (color[0] << 16) + (color[1] << 8) + color[2];
     }
 
     if ((resolved as number) < 0 || (resolved as number) > 0xff_ff_ff) {
-      throw new RangeError("COLOR_RANGE");
+      throw new RangeError('COLOR_RANGE');
     } else if (Number.isNaN(resolved)) {
-      throw new TypeError("COLOR_CONVERT");
+      throw new TypeError('COLOR_CONVERT');
     }
 
     return resolved as number;
@@ -526,7 +526,7 @@ class Util extends null {
   static discordSort(
     collection: unknown
   ): Collection<string, { id: string; rawPosition: number }> {
-    const GuildChannel = require("../structures/GuildChannel");
+    const GuildChannel = require('../structures/GuildChannel');
     const sortable = collection as {
       first: () => unknown;
       toSorted: (
@@ -575,7 +575,7 @@ class Util extends null {
     const res = nodePath.parse(path as string);
     return ext && res.ext.startsWith(ext as string)
       ? res.name
-      : res.base.split("?")[0];
+      : res.base.split('?')[0];
   }
 
   /**
@@ -587,8 +587,8 @@ class Util extends null {
   static removeMentions(str: string) {
     if (!deprecationEmittedForRemoveMentions) {
       process.emitWarning(
-        "The Util.removeMentions method is deprecated. Use MessageOptions#allowedMentions instead.",
-        "DeprecationWarning"
+        'The Util.removeMentions method is deprecated. Use MessageOptions#allowedMentions instead.',
+        'DeprecationWarning'
       );
 
       deprecationEmittedForRemoveMentions = true;
@@ -598,15 +598,15 @@ class Util extends null {
   }
 
   static _removeMentions(str: string) {
-    return str.replaceAll("@", "@\u200B");
+    return str.replaceAll('@', '@\u200B');
   }
 
   static cleanContent(str: string, channel: Channel) {
     const guild = isGuildBasedChannel(channel) ? channel.guild : null;
     const content = str
       .replaceAll(/<@!?[0-9]+>/gu, (input) => {
-        const id = input.replaceAll(/<|!|>|@/gu, "");
-        if (channel.type === "DM") {
+        const id = input.replaceAll(/<|!|>|@/gu, '');
+        if (channel.type === 'DM') {
           const user = channel.client.users.cache.get(id);
           return user ? Util._removeMentions(`@${user.username}`) : input;
         }
@@ -620,29 +620,29 @@ class Util extends null {
       })
       .replaceAll(/<#[0-9]+>/gu, (input) => {
         const mentionedChannel = channel.client.channels.cache.get(
-          input.replaceAll(/<|#|>/gu, "")
+          input.replaceAll(/<|#|>/gu, '')
         );
         if (
           !mentionedChannel ||
-          !("name" in mentionedChannel) ||
-          typeof mentionedChannel.name !== "string"
+          !('name' in mentionedChannel) ||
+          typeof mentionedChannel.name !== 'string'
         ) {
           return input;
         }
         return `#${mentionedChannel.name}`;
       })
       .replaceAll(/<@&[0-9]+>/gu, (input) => {
-        if (channel.type === "DM" || !guild) {
+        if (channel.type === 'DM' || !guild) {
           return input;
         }
-        const role = guild.roles.cache.get(input.replaceAll(/<|@|>|&/gu, ""));
+        const role = guild.roles.cache.get(input.replaceAll(/<|@|>|&/gu, ''));
         return role ? `@${role.name}` : input;
       });
     return content;
   }
 
   static cleanCodeBlockContent(text: string) {
-    return text.replaceAll("```", "`\u200B``");
+    return text.replaceAll('```', '`\u200B``');
   }
 
   /**
@@ -667,7 +667,7 @@ class Util extends null {
     if (!deprecationEmittedForResolveAutoArchiveMaxLimit) {
       process.emitWarning(
         "The Util.resolveAutoArchiveMaxLimit method and the 'MAX' option are deprecated and will be removed in the next major version.",
-        "DeprecationWarning"
+        'DeprecationWarning'
       );
       deprecationEmittedForResolveAutoArchiveMaxLimit = true;
     }
@@ -688,15 +688,15 @@ class Util extends null {
   } {
     return {
       emoji:
-        typeof tag.emoji_id === "string" || typeof tag.emoji_name === "string"
+        typeof tag.emoji_id === 'string' || typeof tag.emoji_name === 'string'
           ? {
-              id: typeof tag.emoji_id === "string" ? tag.emoji_id : null,
-              name: typeof tag.emoji_name === "string" ? tag.emoji_name : null,
+              id: typeof tag.emoji_id === 'string' ? tag.emoji_id : null,
+              name: typeof tag.emoji_name === 'string' ? tag.emoji_name : null,
             }
           : null,
-      id: typeof tag.id === "string" ? tag.id : "",
+      id: typeof tag.id === 'string' ? tag.id : '',
       moderated: Boolean(tag.moderated),
-      name: typeof tag.name === "string" ? tag.name : "",
+      name: typeof tag.name === 'string' ? tag.name : '',
     };
   }
 
@@ -724,11 +724,11 @@ class Util extends null {
   } {
     return {
       id:
-        typeof defaultReaction.emoji_id === "string"
+        typeof defaultReaction.emoji_id === 'string'
           ? defaultReaction.emoji_id
           : null,
       name:
-        typeof defaultReaction.emoji_name === "string"
+        typeof defaultReaction.emoji_name === 'string'
           ? defaultReaction.emoji_name
           : null,
     };
@@ -777,16 +777,16 @@ class Util extends null {
 
   static getSortableGroupTypes(type: unknown) {
     switch (type) {
-      case "GUILD_TEXT":
-      case "GUILD_ANNOUNCEMENT":
-      case "GUILD_FORUM": {
+      case 'GUILD_TEXT':
+      case 'GUILD_ANNOUNCEMENT':
+      case 'GUILD_FORUM': {
         return TextSortableGroupTypes;
       }
-      case "GUILD_VOICE":
-      case "GUILD_STAGE_VOICE": {
+      case 'GUILD_VOICE':
+      case 'GUILD_STAGE_VOICE': {
         return VoiceSortableGroupTypes;
       }
-      case "GUILD_CATEGORY": {
+      case 'GUILD_CATEGORY': {
         return CategorySortableGroupTypes;
       }
       default: {
@@ -841,8 +841,8 @@ class Util extends null {
     const response = await fetch(url as string, {
       body: data as never,
       // Node.js v20 requires the half duplex option for streamed bodies.
-      duplex: "half",
-      method: "PUT",
+      duplex: 'half',
+      method: 'PUT',
     });
     if (!response.ok) {
       throw response;
@@ -858,14 +858,14 @@ class Util extends null {
   static verifyProxyAgent(object: unknown): object is Agent {
     const o = object as { httpAgent?: unknown; httpsAgent?: unknown };
     return (
-      typeof object === "object" &&
+      typeof object === 'object' &&
       o.httpAgent instanceof Agent &&
       o.httpsAgent instanceof Agent
     );
   }
 
   static checkUndiciProxyAgent(data: unknown) {
-    if (typeof data === "string") {
+    if (typeof data === 'string') {
       return {
         uri: data,
       };
@@ -876,9 +876,9 @@ class Util extends null {
       };
     }
     if (
-      typeof data === "object" &&
+      typeof data === 'object' &&
       data !== null &&
-      typeof (data as { uri?: unknown }).uri === "string"
+      typeof (data as { uri?: unknown }).uri === 'string'
     ) {
       return data as { uri: string };
     }
@@ -920,7 +920,7 @@ class Util extends null {
       if (
         isHandlerDeferUpdate &&
         packet.d?.nonce === nonce &&
-        packet["t"] === "INTERACTION_SUCCESS"
+        packet['t'] === 'INTERACTION_SUCCESS'
       ) {
         // Interaction#deferUpdate
         client.removeListener(Events.MESSAGE_CREATE, handler);
@@ -952,7 +952,7 @@ class Util extends null {
         client.removeListener(Events.UNHANDLED_PACKET, handler);
       }
       client.decrementMaxListeners();
-      reject(new DiscordError("INTERACTION_FAILED"));
+      reject(new DiscordError('INTERACTION_FAILED'));
     }, timeoutMs).unref();
     client.incrementMaxListeners();
     client.on(Events.MESSAGE_CREATE, handler);
@@ -975,7 +975,7 @@ class Util extends null {
         (Array.isArray(value) && value.length === 0)
       ) {
         continue;
-      } else if (!Array.isArray(value) && typeof value === "object") {
+      } else if (!Array.isArray(value) && typeof value === 'object') {
         const cleanedValue = Util.clearNullOrUndefinedObject(value);
         if (cleanedValue !== undefined) {
           data[key] = cleanedValue;

@@ -1,53 +1,53 @@
-import { setTimeout } from "node:timers";
-import Base from "./Base";
-import _ConstantsModule from "../util/Constants";
+import { setTimeout } from 'node:timers';
+import Base from './Base';
+import _ConstantsModule from '../util/Constants';
 
 const { Events } = _ConstantsModule;
-import DataResolver from "../util/DataResolver";
+import DataResolver from '../util/DataResolver';
 import type {
   RawGuildTemplateData,
   RawGuildData,
-} from "../../typings/rawDataTypes";
-import type { GuildTemplateEntity } from "../types/entities/guild-template";
-import type { PatchOf } from "../types/schema";
+} from '../../typings/rawDataTypes';
+import type { GuildTemplateEntity } from '../types/entities/guild-template';
+import type { PatchOf } from '../types/schema';
 import type {
   Base64Resolvable,
   BufferResolvable,
   EditGuildTemplateOptions,
-} from "../../typings";
-import type { Guild } from "./Guild";
-import type Client from "../client/Client";
+} from '../../typings';
+import type { Guild } from './Guild';
+import type Client from '../client/Client';
 
 class GuildTemplate extends Base implements GuildTemplateEntity {
-  declare code: GuildTemplateEntity["code"];
-  declare name: GuildTemplateEntity["name"];
-  declare description: GuildTemplateEntity["description"];
-  declare usageCount: GuildTemplateEntity["usageCount"];
-  declare creator: GuildTemplateEntity["creator"];
-  declare creatorId: GuildTemplateEntity["creatorId"];
-  declare createdAt: GuildTemplateEntity["createdAt"];
-  declare updatedAt: GuildTemplateEntity["updatedAt"];
-  declare guildId: GuildTemplateEntity["guildId"];
-  declare serializedGuild: GuildTemplateEntity["serializedGuild"];
-  declare unSynced: GuildTemplateEntity["unSynced"];
+  declare code: GuildTemplateEntity['code'];
+  declare name: GuildTemplateEntity['name'];
+  declare description: GuildTemplateEntity['description'];
+  declare usageCount: GuildTemplateEntity['usageCount'];
+  declare creator: GuildTemplateEntity['creator'];
+  declare creatorId: GuildTemplateEntity['creatorId'];
+  declare createdAt: GuildTemplateEntity['createdAt'];
+  declare updatedAt: GuildTemplateEntity['updatedAt'];
+  declare guildId: GuildTemplateEntity['guildId'];
+  declare serializedGuild: GuildTemplateEntity['serializedGuild'];
+  declare unSynced: GuildTemplateEntity['unSynced'];
   static GUILD_TEMPLATES_PATTERN = /./u;
   constructor(client: Client, data: RawGuildTemplateData) {
     super(client);
     this._patch(data);
   }
 
-  _patch(data: PatchOf<"GuildTemplate">) {
+  _patch(data: PatchOf<'GuildTemplate'>) {
     this.code = data.code ?? this.code;
     this.name = data.name ?? this.name;
 
-    if ("description" in data) {
+    if ('description' in data) {
       this.description = data.description ?? null;
     }
 
     this.usageCount = data.usage_count ?? this.usageCount;
     this.creatorId = data.creator_id ?? this.creatorId;
 
-    if ("creator" in data) {
+    if ('creator' in data) {
       this.creator = this.client.users._add(data.creator);
     }
 
@@ -62,7 +62,7 @@ class GuildTemplate extends Base implements GuildTemplateEntity {
     this.guildId = data.source_guild_id ?? this.guildId;
     this.serializedGuild = data.serialized_source_guild ?? this.serializedGuild;
 
-    this.unSynced = "is_dirty" in data ? Boolean(data.is_dirty) : null;
+    this.unSynced = 'is_dirty' in data ? Boolean(data.is_dirty) : null;
 
     return this;
   }

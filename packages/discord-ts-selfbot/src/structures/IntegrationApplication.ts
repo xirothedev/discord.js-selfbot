@@ -1,6 +1,6 @@
-import Application from "./interfaces/Application";
-import { patchValue } from "./Base";
-import type { APIUser } from "discord-api-types/v10";
+import Application from './interfaces/Application';
+import { patchValue } from './Base';
+import type { APIUser } from 'discord-api-types/v10';
 
 class IntegrationApplication extends Application {
   declare summary: string | null;
@@ -11,7 +11,7 @@ class IntegrationApplication extends Application {
   ) {
     super._patch(data);
 
-    if ("bot" in data) {
+    if ('bot' in data) {
       this.bot = this.client.users._add(data.bot);
     } else {
       this.bot ??= null;

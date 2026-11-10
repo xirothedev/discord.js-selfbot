@@ -1,6 +1,6 @@
-import CachedManager from "./CachedManager";
-import InteractionResponse from "../structures/interfaces/InteractionResponses";
-import type { TextBasedChannel } from "../types/channels";
+import CachedManager from './CachedManager';
+import InteractionResponse from '../structures/interfaces/InteractionResponses';
+import type { TextBasedChannel } from '../types/channels';
 
 class InteractionManager extends CachedManager<InteractionResponse> {
   declare channel: TextBasedChannel;
@@ -28,7 +28,7 @@ class InteractionManager extends CachedManager<InteractionResponse> {
       ...data,
       channelId: this.channel.id,
       guildId:
-        "guild" in this.channel && this.channel.guild
+        'guild' in this.channel && this.channel.guild
           ? this.channel.guild.id
           : undefined,
     };

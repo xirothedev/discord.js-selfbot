@@ -1,15 +1,15 @@
-import { Collection } from "@discordjs/collection";
-import type { Snowflake } from "discord-api-types/v10";
-import Collector from "./interfaces/Collector";
-import type { CollectorOptions } from "../../typings";
-import type { Guild } from "./Guild";
-import type GuildChannel from "./GuildChannel";
+import { Collection } from '@discordjs/collection';
+import type { Snowflake } from 'discord-api-types/v10';
+import Collector from './interfaces/Collector';
+import type { CollectorOptions } from '../../typings';
+import type { Guild } from './Guild';
+import type GuildChannel from './GuildChannel';
 
-import type { Message } from "./Message";
-import type MessageReaction from "./MessageReaction";
-import type ThreadChannel from "./ThreadChannel";
-import type User from "./User";
-import _ConstantsModule from "../util/Constants";
+import type { Message } from './Message';
+import type MessageReaction from './MessageReaction';
+import type ThreadChannel from './ThreadChannel';
+import type User from './User';
+import _ConstantsModule from '../util/Constants';
 
 const { Events } = _ConstantsModule;
 
@@ -48,7 +48,7 @@ class ReactionCollector extends Collector<
 
     const bulkDeleteListener = (messages: Collection<Snowflake, Message>) => {
       if (messages.has(this.message.id)) {
-        this.stop("messageDelete");
+        this.stop('messageDelete');
       }
     };
 
@@ -62,7 +62,7 @@ class ReactionCollector extends Collector<
     this.client.on(Events.THREAD_DELETE, this._handleThreadDeletion);
     this.client.on(Events.GUILD_DELETE, this._handleGuildDeletion);
 
-    this.once("end", () => {
+    this.once('end', () => {
       this.client.removeListener(
         Events.MESSAGE_REACTION_ADD,
         this.handleCollect
@@ -98,15 +98,15 @@ class ReactionCollector extends Collector<
       this.client.decrementMaxListeners();
     });
 
-    this.on("collect", (reaction: MessageReaction, user: User) => {
+    this.on('collect', (reaction: MessageReaction, user: User) => {
       if (reaction.count === 1) {
-        this.emit("create", reaction, user);
+        this.emit('create', reaction, user);
       }
       this.total++;
       this.users.set(user.id, user);
     });
 
-    this.on("remove", (_reaction: MessageReaction, user: User) => {
+    this.on('remove', (_reaction: MessageReaction, user: User) => {
       this.total--;
       if (
         !this.collected.some((reaction) => reaction.users.cache.has(user.id))
@@ -133,7 +133,7 @@ class ReactionCollector extends Collector<
       this.collected.has(ReactionCollector.key(reaction)) &&
       this.users.has(user.id)
     ) {
-      this.emit("remove", reaction, user);
+      this.emit('remove', reaction, user);
     }
     return reaction.count ? null : ReactionCollector.key(reaction);
   }
@@ -147,23 +147,23 @@ class ReactionCollector extends Collector<
 
   get endReason(): string | null {
     if (this.options.max && this.total >= this.options.max) {
-      return "limit";
+      return 'limit';
     }
     if (
       this.options.maxEmojis &&
       this.collected.size >= this.options.maxEmojis
     ) {
-      return "emojiLimit";
+      return 'emojiLimit';
     }
     if (this.options.maxUsers && this.users.size >= this.options.maxUsers) {
-      return "userLimit";
+      return 'userLimit';
     }
     return null;
   }
 
   _handleMessageDeletion(message: Message) {
     if (message.id === this.message.id) {
-      this.stop("messageDelete");
+      this.stop('messageDelete');
     }
   }
 
@@ -176,24 +176,24 @@ class ReactionCollector extends Collector<
       channel.id === this.message.channelId ||
       channel.threads?.cache.has(this.message.channelId)
     ) {
-      this.stop("channelDelete");
+      this.stop('channelDelete');
     }
   }
 
   _handleThreadDeletion(thread: ThreadChannel) {
     if (thread.id === this.message.channelId) {
-      this.stop("threadDelete");
+      this.stop('threadDelete');
     }
   }
 
   _handleGuildDeletion(guild: Guild) {
     if (guild.id === this.message.guild?.id) {
-      this.stop("guildDelete");
+      this.stop('guildDelete');
     }
   }
 
   static key(reaction: MessageReaction): Snowflake | string {
-    return reaction.emoji.id ?? reaction.emoji.name ?? "";
+    return reaction.emoji.id ?? reaction.emoji.name ?? '';
   }
 }
 

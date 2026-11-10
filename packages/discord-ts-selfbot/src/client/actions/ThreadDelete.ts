@@ -1,13 +1,13 @@
-import Action from "./Action";
-import { isThreadChannel } from "../../types/channels";
-import type { GatewayThreadDeleteDispatchData } from "discord-api-types/v10";
-import _ChannelModule from "../../structures/Channel";
+import Action from './Action';
+import { isThreadChannel } from '../../types/channels';
+import type { GatewayThreadDeleteDispatchData } from 'discord-api-types/v10';
+import _ChannelModule from '../../structures/Channel';
 
 const { deletedChannels } = _ChannelModule;
-import _MessageModule from "../../structures/Message";
+import _MessageModule from '../../structures/Message';
 
 const { deletedMessages } = _MessageModule;
-import _ConstantsModule from "../../util/Constants";
+import _ConstantsModule from '../../util/Constants';
 
 const { Events } = _ConstantsModule;
 

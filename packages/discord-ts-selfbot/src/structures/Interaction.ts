@@ -1,36 +1,36 @@
-import Base from "./Base";
-import _ConstantsModule from "../util/Constants";
+import Base from './Base';
+import _ConstantsModule from '../util/Constants';
 
 const { InteractionTypes, MessageComponentTypes, ApplicationCommandTypes } =
   _ConstantsModule;
-import Permissions from "../util/Permissions";
-import SnowflakeUtil from "../util/SnowflakeUtil";
+import Permissions from '../util/Permissions';
+import SnowflakeUtil from '../util/SnowflakeUtil';
 import type {
   APIInteractionGuildMember,
   Snowflake,
-} from "discord-api-types/v10";
+} from 'discord-api-types/v10';
 import type {
   CacheType,
   InteractionType,
   MessageComponentType,
-} from "../../typings";
-import type { RawInteractionData } from "../../typings/rawDataTypes";
-import type { Guild } from "./Guild";
-import type { GuildMember } from "./GuildMember";
-import type { User } from "./User";
-import { isTextBasedChannel } from "../types/channels";
-import type { TextBasedChannel } from "../types/channels";
-import type BaseCommandInteraction from "./BaseCommandInteraction";
-import type ButtonInteraction from "./ButtonInteraction";
-import type AutocompleteInteraction from "./AutocompleteInteraction";
-import type CommandInteraction from "./CommandInteraction";
-import type ContextMenuInteraction from "./ContextMenuInteraction";
-import type MessageComponentInteraction from "./MessageComponentInteraction";
-import type ModalSubmitInteraction from "./ModalSubmitInteraction";
-import type SelectMenuInteraction from "./SelectMenuInteraction";
-import type UserContextMenuInteraction from "./UserContextMenuInteraction";
-import type MessageContextMenuInteraction from "./MessageContextMenuInteraction";
-import type Client from "../client/Client";
+} from '../../typings';
+import type { RawInteractionData } from '../../typings/rawDataTypes';
+import type { Guild } from './Guild';
+import type { GuildMember } from './GuildMember';
+import type { User } from './User';
+import { isTextBasedChannel } from '../types/channels';
+import type { TextBasedChannel } from '../types/channels';
+import type BaseCommandInteraction from './BaseCommandInteraction';
+import type ButtonInteraction from './ButtonInteraction';
+import type AutocompleteInteraction from './AutocompleteInteraction';
+import type CommandInteraction from './CommandInteraction';
+import type ContextMenuInteraction from './ContextMenuInteraction';
+import type MessageComponentInteraction from './MessageComponentInteraction';
+import type ModalSubmitInteraction from './ModalSubmitInteraction';
+import type SelectMenuInteraction from './SelectMenuInteraction';
+import type UserContextMenuInteraction from './UserContextMenuInteraction';
+import type MessageContextMenuInteraction from './MessageContextMenuInteraction';
+import type Client from '../client/Client';
 
 class Interaction<Cached extends CacheType = CacheType> extends Base {
   declare type: InteractionType;
@@ -56,7 +56,7 @@ class Interaction<Cached extends CacheType = CacheType> extends Base {
 
     this.id = data.id;
 
-    Object.defineProperty(this, "token", { value: data.token });
+    Object.defineProperty(this, 'token', { value: data.token });
 
     this.applicationId = data.application_id;
 
@@ -66,7 +66,7 @@ class Interaction<Cached extends CacheType = CacheType> extends Base {
 
     const user = data.user ?? data.member?.user;
     if (!user) {
-      throw new TypeError("An interaction user is required");
+      throw new TypeError('An interaction user is required');
     }
     this.user = this.client.users._add(user);
 
@@ -84,7 +84,7 @@ class Interaction<Cached extends CacheType = CacheType> extends Base {
       ? new Permissions(data.member.permissions).freeze()
       : null;
 
-    this.locale = "locale" in data ? data.locale : "en-US";
+    this.locale = 'locale' in data ? data.locale : 'en-US';
 
     this.guildLocale = data.guild_locale ?? null;
   }
@@ -110,15 +110,15 @@ class Interaction<Cached extends CacheType = CacheType> extends Base {
       : null;
   }
 
-  inGuild(): this is Interaction<"raw" | "cached"> {
+  inGuild(): this is Interaction<'raw' | 'cached'> {
     return Boolean(this.guildId && this.member);
   }
 
-  inCachedGuild(): this is Interaction<"cached"> {
+  inCachedGuild(): this is Interaction<'cached'> {
     return Boolean(this.guild && this.member);
   }
 
-  inRawGuild(): this is Interaction<"raw"> {
+  inRawGuild(): this is Interaction<'raw'> {
     return Boolean(this.guildId && !this.guild && this.member);
   }
 

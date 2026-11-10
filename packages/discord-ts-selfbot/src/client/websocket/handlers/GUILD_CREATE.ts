@@ -1,9 +1,9 @@
-import _ConstantsModule from "../../../util/Constants";
+import _ConstantsModule from '../../../util/Constants';
 
 const { Events, Opcodes, Status } = _ConstantsModule;
-import type { Client } from "../../Client";
-import type { WebSocketShard } from "../WebSocketShard";
-import type { GatewayGuildCreateDispatchData } from "discord-api-types/v10";
+import type { Client } from '../../Client';
+import type { WebSocketShard } from '../WebSocketShard';
+import type { GatewayGuildCreateDispatchData } from 'discord-api-types/v10';
 
 interface GuildCreateData extends GatewayGuildCreateDispatchData {
   shardId?: number;
@@ -15,10 +15,10 @@ interface GuildLike {
 
 function isGuildCreateData(value: unknown): value is GuildCreateData {
   return (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value !== null &&
-    "id" in value &&
-    typeof value.id === "string"
+    'id' in value &&
+    typeof value.id === 'string'
   );
 }
 

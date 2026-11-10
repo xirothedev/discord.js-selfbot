@@ -1,10 +1,10 @@
-import Action from "./Action";
-import type { GatewayGuildMemberRemoveDispatchData } from "discord-api-types/v10";
-import _GuildMemberModule from "../../structures/GuildMember";
+import Action from './Action';
+import type { GatewayGuildMemberRemoveDispatchData } from 'discord-api-types/v10';
+import _GuildMemberModule from '../../structures/GuildMember';
 
 const { deletedGuildMembers } = _GuildMemberModule;
-import _ConstantsModule from "../../util/Constants";
-import type { WebSocketShard } from "../websocket/WebSocketShard";
+import _ConstantsModule from '../../util/Constants';
+import type { WebSocketShard } from '../websocket/WebSocketShard';
 
 const { Events, Status } = _ConstantsModule;
 

@@ -1,5 +1,5 @@
-import type { BitFieldResolvable } from "./BitField";
-import BitField from "./BitField";
+import type { BitFieldResolvable } from './BitField';
+import BitField from './BitField';
 
 class Permissions extends BitField {
   static ALL = 0n;

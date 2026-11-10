@@ -1,13 +1,13 @@
-import _ConstantsModule from "../util/Constants";
+import _ConstantsModule from '../util/Constants';
 
 const { AutoModerationRuleTriggerTypes } = _ConstantsModule;
 import type {
   APIAutoModerationAction,
   GatewayAutoModerationActionExecutionDispatchData,
   Snowflake,
-} from "discord-api-types/v10";
-import type { AutoModerationRuleTriggerType } from "../../typings";
-import type { Guild } from "./Guild";
+} from 'discord-api-types/v10';
+import type { AutoModerationRuleTriggerType } from '../../typings';
+import type { Guild } from './Guild';
 
 class AutoModerationActionExecution {
   declare guild: Guild;

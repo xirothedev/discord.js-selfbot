@@ -1,4 +1,4 @@
-import BitField from "./BitField";
+import BitField from './BitField';
 
 class Intents extends BitField {
   static FLAGS: Record<string, number> = {};

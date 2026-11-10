@@ -1,16 +1,16 @@
-import EventEmitter from "node:events";
-import { setTimeout, clearTimeout } from "node:timers";
-import { Collection } from "@discordjs/collection";
-import _errorsModule from "../../errors";
+import EventEmitter from 'node:events';
+import { setTimeout, clearTimeout } from 'node:timers';
+import { Collection } from '@discordjs/collection';
+import _errorsModule from '../../errors';
 
 const { TypeError } = _errorsModule;
-import Util from "../../util/Util";
+import Util from '../../util/Util';
 import type {
   CollectorFilter,
   CollectorOptions,
   CollectorResetTimerOptions,
-} from "../../../typings";
-import type Client from "../../client/Client";
+} from '../../../typings';
+import type Client from '../../client/Client';
 
 class Collector<
   TKey = unknown,
@@ -31,7 +31,7 @@ class Collector<
   ) {
     super();
 
-    Object.defineProperty(this, "client", { value: client });
+    Object.defineProperty(this, 'client', { value: client });
 
     this.filter = options.filter ?? (() => true);
 
@@ -45,19 +45,19 @@ class Collector<
 
     this._idletimeout = null;
 
-    if (typeof this.filter !== "function") {
-      throw new TypeError("INVALID_TYPE", "options.filter", "function");
+    if (typeof this.filter !== 'function') {
+      throw new TypeError('INVALID_TYPE', 'options.filter', 'function');
     }
 
     this.handleCollect = this.handleCollect.bind(this);
     this.handleDispose = this.handleDispose.bind(this);
 
     if (options.time) {
-      this._timeout = setTimeout(() => this.stop("time"), options.time).unref();
+      this._timeout = setTimeout(() => this.stop('time'), options.time).unref();
     }
     if (options.idle) {
       this._idletimeout = setTimeout(
-        () => this.stop("idle"),
+        () => this.stop('idle'),
         options.idle
       ).unref();
     }
@@ -74,12 +74,12 @@ class Collector<
     ) {
       this.collected.set(collect, args[0]);
 
-      this.emit("collect", ...args);
+      this.emit('collect', ...args);
 
       if (this._idletimeout) {
         clearTimeout(this._idletimeout);
         this._idletimeout = setTimeout(
-          () => this.stop("idle"),
+          () => this.stop('idle'),
           this.options.idle
         ).unref();
       }
@@ -102,7 +102,7 @@ class Collector<
     }
     this.collected.delete(dispose);
 
-    this.emit("dispose", ...args);
+    this.emit('dispose', ...args);
     this.checkEnd();
   }
 
@@ -118,8 +118,8 @@ class Collector<
       onEnd: () => void;
     } = { onCollect: () => null, onEnd: () => null };
     const cleanup = () => {
-      this.removeListener("collect", state.onCollect);
-      this.removeListener("end", state.onEnd);
+      this.removeListener('collect', state.onCollect);
+      this.removeListener('end', state.onEnd);
     };
 
     state.onCollect = (item: TValue) => {
@@ -132,12 +132,12 @@ class Collector<
       reject(this.collected);
     };
 
-    this.on("collect", state.onCollect);
-    this.on("end", state.onEnd);
+    this.on('collect', state.onCollect);
+    this.on('end', state.onEnd);
     return promise;
   }
 
-  stop(reason = "user") {
+  stop(reason = 'user') {
     if (this.ended) {
       return;
     }
@@ -152,21 +152,21 @@ class Collector<
     }
     this.ended = true;
 
-    this.emit("end", this.collected, reason);
+    this.emit('end', this.collected, reason);
   }
 
   resetTimer({ time, idle }: CollectorResetTimerOptions = {}) {
     if (this._timeout) {
       clearTimeout(this._timeout);
       this._timeout = setTimeout(
-        () => this.stop("time"),
+        () => this.stop('time'),
         time ?? this.options.time
       ).unref();
     }
     if (this._idletimeout) {
       clearTimeout(this._idletimeout);
       this._idletimeout = setTimeout(
-        () => this.stop("idle"),
+        () => this.stop('idle'),
         idle ?? this.options.idle
       ).unref();
     }
@@ -183,7 +183,7 @@ class Collector<
   async *[Symbol.asyncIterator](): AsyncIterableIterator<TValue> {
     const queue: TValue[] = [];
     const onCollect = (item: TValue) => queue.push(item);
-    this.on("collect", onCollect);
+    this.on('collect', onCollect);
 
     try {
       while (queue.length || !this.ended) {
@@ -195,17 +195,17 @@ class Collector<
         } else {
           const { promise, resolve } = Promise.withResolvers<undefined>();
           const tick = () => {
-            this.removeListener("collect", tick);
-            this.removeListener("end", tick);
+            this.removeListener('collect', tick);
+            this.removeListener('end', tick);
             resolve(undefined);
           };
-          this.on("collect", tick);
-          this.on("end", tick);
+          this.on('collect', tick);
+          this.on('end', tick);
           await promise;
         }
       }
     } finally {
-      this.removeListener("collect", onCollect);
+      this.removeListener('collect', onCollect);
     }
   }
 

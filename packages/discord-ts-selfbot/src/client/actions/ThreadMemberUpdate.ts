@@ -1,7 +1,7 @@
-import Action from "./Action";
-import { isThreadChannel } from "../../types/channels";
-import type { GatewayThreadMemberUpdateDispatchData } from "discord-api-types/v10";
-import _ConstantsModule from "../../util/Constants";
+import Action from './Action';
+import { isThreadChannel } from '../../types/channels';
+import type { GatewayThreadMemberUpdateDispatchData } from 'discord-api-types/v10';
+import _ConstantsModule from '../../util/Constants';
 
 const { Events } = _ConstantsModule;
 

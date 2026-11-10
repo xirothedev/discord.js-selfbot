@@ -1,19 +1,19 @@
-import Base from "./Base";
-import _RoleModule from "./Role";
+import Base from './Base';
+import _RoleModule from './Role';
 
 const { Role } = _RoleModule;
-import _errorsModule from "../errors";
+import _errorsModule from '../errors';
 
 const { TypeError } = _errorsModule;
-import _ConstantsModule, { resolveEnumValue } from "../util/Constants";
+import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
 
 const { OverwriteTypes } = _ConstantsModule;
-import Permissions from "../util/Permissions";
-import type { Snowflake } from "discord-api-types/v10";
-import type { OverwriteType, PermissionOverwriteOptions } from "../../typings";
-import type GuildChannel from "./GuildChannel";
-import type Client from "../client/Client";
-import type { Guild } from "./Guild";
+import Permissions from '../util/Permissions';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { OverwriteType, PermissionOverwriteOptions } from '../../typings';
+import type GuildChannel from './GuildChannel';
+import type Client from '../client/Client';
+import type { Guild } from './Guild';
 
 interface PermissionOverwriteData {
   id: string;
@@ -36,7 +36,7 @@ class PermissionOverwrites extends Base {
   ) {
     super(client);
 
-    Object.defineProperty(this, "channel", { value: channel });
+    Object.defineProperty(this, 'channel', { value: channel });
 
     if (data) {
       this._patch(data);
@@ -46,21 +46,21 @@ class PermissionOverwrites extends Base {
   _patch(data: PermissionOverwriteData | PermissionOverwrites) {
     this.id = data.id;
 
-    if ("type" in data && data.type !== undefined) {
+    if ('type' in data && data.type !== undefined) {
       const type =
-        typeof data.type === "number" ? OverwriteTypes[data.type] : data.type;
-      if (type === "role" || type === "member") {
+        typeof data.type === 'number' ? OverwriteTypes[data.type] : data.type;
+      if (type === 'role' || type === 'member') {
         this.type = type;
       }
     }
 
-    if ("deny" in data) {
+    if ('deny' in data) {
       this.deny = new Permissions(
         Permissions.resolve(data.deny ?? 0n)
       ).freeze();
     }
 
-    if ("allow" in data) {
+    if ('allow' in data) {
       this.allow = new Permissions(
         Permissions.resolve(data.allow ?? 0n)
       ).freeze();
@@ -119,19 +119,19 @@ class PermissionOverwrites extends Base {
       return overwrite.toJSON();
     }
     if (
-      typeof overwrite !== "object" ||
+      typeof overwrite !== 'object' ||
       overwrite === null ||
-      !("id" in overwrite)
+      !('id' in overwrite)
     ) {
-      throw new TypeError("INVALID_TYPE", "parameter", "cached User or Role");
+      throw new TypeError('INVALID_TYPE', 'parameter', 'cached User or Role');
     }
 
-    const id = typeof overwrite.id === "string" ? overwrite.id : undefined;
-    const type = "type" in overwrite ? overwrite.type : undefined;
-    const allow = "allow" in overwrite ? overwrite.allow : undefined;
-    const deny = "deny" in overwrite ? overwrite.deny : undefined;
+    const id = typeof overwrite.id === 'string' ? overwrite.id : undefined;
+    const type = 'type' in overwrite ? overwrite.type : undefined;
+    const allow = 'allow' in overwrite ? overwrite.allow : undefined;
+    const deny = 'deny' in overwrite ? overwrite.deny : undefined;
     const resolvedType =
-      typeof type === "string" || typeof type === "number"
+      typeof type === 'string' || typeof type === 'number'
         ? resolveEnumValue(OverwriteTypes, type)
         : undefined;
 
@@ -145,12 +145,12 @@ class PermissionOverwrites extends Base {
     }
 
     if (!id) {
-      throw new TypeError("INVALID_TYPE", "parameter", "cached User or Role");
+      throw new TypeError('INVALID_TYPE', 'parameter', 'cached User or Role');
     }
     const userOrRole =
       guild.roles.resolve(id) ?? guild.client.users.resolve(id);
     if (!userOrRole) {
-      throw new TypeError("INVALID_TYPE", "parameter", "cached User or Role");
+      throw new TypeError('INVALID_TYPE', 'parameter', 'cached User or Role');
     }
 
     return PermissionOverwrites.toJSON({

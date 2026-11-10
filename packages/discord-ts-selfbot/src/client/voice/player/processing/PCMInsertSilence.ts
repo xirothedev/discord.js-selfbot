@@ -1,6 +1,6 @@
-import { Buffer } from "node:buffer";
-import { Transform } from "node:stream";
-import type { TransformCallback, TransformOptions } from "node:stream";
+import { Buffer } from 'node:buffer';
+import { Transform } from 'node:stream';
+import type { TransformCallback, TransformOptions } from 'node:stream';
 
 class PCMInsertSilence extends Transform {
   declare sampleRate: number;

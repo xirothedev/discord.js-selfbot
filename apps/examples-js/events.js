@@ -7,14 +7,14 @@
  * Set DISCORD_TOKEN in the environment before you start the example.
  */
 
-import { Client, Events, Partials, Status } from "discord-ts-selfbot";
+import { Client, Events, Partials, Status } from 'discord-ts-selfbot';
 
 const client = new Client({
   partials: [Partials.Channel, Partials.Message, Partials.Reaction],
 });
 
 const announceReady = (readyClient) => {
-  const gatewayStatus = Status[readyClient.ws.status] ?? "unknown";
+  const gatewayStatus = Status[readyClient.ws.status] ?? 'unknown';
   console.log(
     `${readyClient.user.tag} is ready (gateway status: ${gatewayStatus}).`
   );
@@ -30,18 +30,18 @@ client.on(Events.MessageCreate, async (message) => {
     return;
   }
 
-  if (message.content === "!hello") {
-    await message.reply("Hello from the events example!");
+  if (message.content === '!hello') {
+    await message.reply('Hello from the events example!');
   }
 });
 
 client.on(Events.Error, (error) => {
-  console.error("Client error:", error);
+  console.error('Client error:', error);
 });
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) {
-  throw new Error("Set DISCORD_TOKEN before running this example.");
+  throw new Error('Set DISCORD_TOKEN before running this example.');
 }
 
 await client.login(token);

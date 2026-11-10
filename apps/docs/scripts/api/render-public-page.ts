@@ -1,14 +1,14 @@
-import { renderSummary } from "./comment";
-import type { DocgenClass, DocgenType } from "./enrich";
-import { renderClassPage } from "./render-class";
+import { renderSummary } from './comment';
+import type { DocgenClass, DocgenType } from './enrich';
+import { renderClassPage } from './render-class';
 import {
   renderEnumMembersPage,
   renderFunctionPage,
   renderVariablePage,
-} from "./render-misc";
-import { renderTypingsPage } from "./render-typings";
-import { Kind } from "./types";
-import type { PublicExport, Reflection } from "./types";
+} from './render-misc';
+import { renderTypingsPage } from './render-typings';
+import { Kind } from './types';
+import type { PublicExport, Reflection } from './types';
 
 function enumMembers(
   reflection: Reflection | undefined
@@ -20,7 +20,7 @@ function enumMembers(
   if (!members?.length) {
     return undefined;
   }
-  return members.every((member) => member.type?.type === "literal")
+  return members.every((member) => member.type?.type === 'literal')
     ? members
     : undefined;
 }
