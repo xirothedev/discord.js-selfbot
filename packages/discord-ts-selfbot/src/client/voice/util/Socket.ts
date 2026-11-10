@@ -2,6 +2,7 @@ import fs from 'fs';
 import net from 'net';
 import path from 'path';
 import process from 'process';
+import type { Writable } from 'node:stream';
 /*
 Credit: https://github.com/dank074/Discord-video-stream
 The use of video streaming in this library is an incomplete implementation with many bugs, primarily aimed at lazy users.
@@ -21,11 +22,16 @@ Please use the @dank074/discord-video-stream library for the best support.
 
 let counter = 0;
 
+interface StreamLike {
+  on(event: 'finish', listener: () => void): unknown;
+  pipe(destination: unknown): unknown;
+}
+
 class UnixStream {
   declare socketPath: string;
   declare url: string;
 
-  constructor(stream: any, onSocket: any) {
+  constructor(stream: StreamLike, onSocket: (socket: net.Socket) => void) {
     if (process.platform === 'win32') {
       const pipePrefix = '\\\\.\\pipe\\';
       const pipeName = `node-webrtc.${++counter}.sock`;
@@ -51,12 +57,12 @@ class UnixStream {
   }
 }
 
-function StreamInput(stream: any) {
-  return new UnixStream(stream, (socket: any) => stream.pipe(socket));
+function StreamInput(stream: StreamLike) {
+  return new UnixStream(stream, socket => stream.pipe(socket));
 }
 
-function StreamOutput(stream: any) {
-  return new UnixStream(stream, (socket: any) => socket.pipe(stream));
+function StreamOutput(stream: Writable) {
+  return new UnixStream(stream, socket => socket.pipe(stream));
 }
 
 export { StreamOutput, StreamInput, UnixStream };
