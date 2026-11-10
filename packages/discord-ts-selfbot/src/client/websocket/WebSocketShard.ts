@@ -366,6 +366,7 @@ class WebSocketShard extends EventEmitter {
       this.connectedAt = Date.now();
 
       // Adding a handshake timeout to just make sure no zombie connection appears.
+      if (!gateway) return;
       const ws = (this.connection = WebSocket.create(gateway, wsQuery, {
         handshakeTimeout: 30_000,
         agent: Util.verifyProxyAgent(client.options.ws.agent) ? client.options.ws.agent : undefined,
@@ -391,20 +392,27 @@ class WebSocketShard extends EventEmitter {
    * @param {MessageEvent} event Event received
    * @private
    */
-  onMessage({ data }: { data: Uint8Array | ArrayBuffer | Buffer | string }) {
+  onMessage({ data }: { data: unknown }) {
     let raw: unknown;
-    if (data instanceof ArrayBuffer) data = new Uint8Array(data);
+    const chunk =
+      typeof data === 'string'
+        ? Buffer.from(data)
+        : data instanceof Uint8Array
+          ? data
+          : data instanceof ArrayBuffer
+            ? new Uint8Array(data)
+            : null;
+    if (!chunk) return;
     if (zlib) {
-      const l = data.length;
+      const l = chunk.length;
       const flush =
-        l >= 4 && data[l - 4] === 0x00 && data[l - 3] === 0x00 && data[l - 2] === 0xff && data[l - 1] === 0xff;
+        l >= 4 && chunk[l - 4] === 0x00 && chunk[l - 3] === 0x00 && chunk[l - 2] === 0xff && chunk[l - 1] === 0xff;
 
-      const chunk = typeof data === 'string' ? Buffer.from(data) : data;
       this.inflate!.push(chunk, flush ? zlib.Z_SYNC_FLUSH : undefined);
       if (!flush) return;
       raw = this.inflate!.result;
     } else {
-      raw = data;
+      raw = chunk;
     }
     let packet: unknown;
     try {

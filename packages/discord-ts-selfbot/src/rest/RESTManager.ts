@@ -9,11 +9,11 @@ import RequestHandler from './RequestHandler';
 import _errorsModule from '../errors';
 const { Error } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
-import type { Client } from '../client/Client';
+import type { BaseClient } from '../client/BaseClient';
 const { Endpoints } = _ConstantsModule;
 
 class RESTManager {
-  client: Client;
+  client: BaseClient;
   handlers: Collection<string, RequestHandler>;
   versioned: boolean;
   globalLimit: number;
@@ -24,7 +24,7 @@ class RESTManager {
   fetch: typeof fetchOriginal;
   sweepInterval?: ReturnType<typeof setInterval>;
 
-  constructor(client: Client) {
+  constructor(client: BaseClient) {
     this.client = client;
     this.handlers = new Collection();
     this.versioned = true;

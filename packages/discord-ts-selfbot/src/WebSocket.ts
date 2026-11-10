@@ -3,42 +3,71 @@ import { createRequire } from 'node:module';
 import WebSocket from 'ws';
 const require = createRequire(import.meta.url);
 
-let erlpack: any;
+interface ErlpackModule {
+  pack(data: unknown): Buffer;
+  unpack(data: Buffer): unknown;
+}
+
+interface WebSocketModule {
+  WebSocket: typeof WebSocket;
+  encoding: 'json' | 'etf';
+  pack: (data: unknown) => string | Buffer;
+  unpack: (data: unknown, type?: string) => unknown;
+  create: (gateway: string, query?: Record<string, unknown>, options?: WebSocket.ClientOptions) => WebSocket;
+  CONNECTING: number;
+  OPEN: number;
+  CLOSING: number;
+  CLOSED: number;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isErlpack(value: unknown): value is ErlpackModule {
+  return isRecord(value) && typeof value.pack === 'function' && typeof value.unpack === 'function';
+}
+
+function toUint8Array(data: unknown): Uint8Array {
+  if (data instanceof Uint8Array) return data;
+  if (data instanceof ArrayBuffer) return new Uint8Array(data);
+  return new Uint8Array(0);
+}
+
+let erlpack: ErlpackModule | null = null;
 
 try {
-  erlpack = require('erlpack');
-  if (!erlpack.pack) erlpack = null;
+  const candidate: unknown = require('erlpack');
+  if (isErlpack(candidate)) erlpack = candidate;
 } catch {} // eslint-disable-line no-empty
 
 const ab = new TextDecoder();
 
-const websocket: any = {
+const websocket: WebSocketModule = {
   WebSocket,
   encoding: erlpack ? 'etf' : 'json',
-  pack: erlpack ? erlpack.pack : JSON.stringify,
-};
-
-websocket.unpack = (data: any, type: any) => {
-  if (websocket.encoding === 'json' || type === 'json') {
-    if (typeof data !== 'string') {
-      data = ab.decode(data);
+  pack: erlpack ? erlpack.pack : data => JSON.stringify(data) ?? '',
+  unpack: (data: unknown, type?: string) => {
+    if (websocket.encoding === 'json' || type === 'json') {
+      const text = typeof data === 'string' ? data : ab.decode(toUint8Array(data));
+      return JSON.parse(text);
     }
-    return JSON.parse(data);
-  }
-  if (!Buffer.isBuffer(data)) data = Buffer.from(new Uint8Array(data));
-  return erlpack.unpack(data);
+    const buffer = Buffer.isBuffer(data) ? data : Buffer.from(toUint8Array(data));
+    return erlpack ? erlpack.unpack(buffer) : null;
+  },
+  create: (gateway: string, query: Record<string, unknown> = {}, options?: WebSocket.ClientOptions) => {
+    const [g, q] = gateway.split('?');
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) params.set(key, String(value));
+    params.set('encoding', websocket.encoding);
+    if (q) new URLSearchParams(q).forEach((value, key) => params.set(key, value));
+    return new WebSocket(`${g}?${params}`, options);
+  },
+  CONNECTING: WebSocket.CONNECTING,
+  OPEN: WebSocket.OPEN,
+  CLOSING: WebSocket.CLOSING,
+  CLOSED: WebSocket.CLOSED,
 };
-
-websocket.create = (gateway: string, query: any = {}, ...args: any[]) => {
-  const [g, q] = gateway.split('?');
-  query.encoding = websocket.encoding;
-  query = new URLSearchParams(query);
-  if (q) new URLSearchParams(q).forEach((v, k) => query.set(k, v));
-  const ws = new websocket.WebSocket(`${g}?${query}`, ...args);
-  return ws;
-};
-
-for (const state of ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED']) websocket[state] = websocket.WebSocket[state];
 
 export default websocket;
 export { websocket };

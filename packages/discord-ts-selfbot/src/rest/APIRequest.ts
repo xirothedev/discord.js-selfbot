@@ -9,7 +9,7 @@ let agent: unknown = null;
 
 class APIRequest {
   rest: import('../rest/RESTManager').default;
-  client: import('../client/Client').default;
+  client: import('../client/BaseClient').BaseClient;
   method: string;
   route: string;
   options: Record<string, unknown>;

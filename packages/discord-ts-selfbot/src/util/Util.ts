@@ -463,7 +463,9 @@ class Util extends null {
    * @returns {Object}
    * @private
    */
-  static mergeDefault(def: unknown, given?: unknown) {
+  static mergeDefault<T extends object>(def: T, given?: object): T;
+  static mergeDefault(def: unknown, given?: unknown): unknown;
+  static mergeDefault(def: unknown, given?: unknown): unknown {
     if (!given) return def;
     const d = def as Record<string, unknown>;
     const g = given as Record<string, unknown>;
@@ -475,7 +477,7 @@ class Util extends null {
       }
     }
 
-    return given;
+    return g;
   }
 
   /**

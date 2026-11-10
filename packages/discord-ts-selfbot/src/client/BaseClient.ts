@@ -10,6 +10,7 @@ import Util from '../util/Util';
  */
 class BaseClient extends EventEmitter {
   declare options: any;
+  declare authenticator: typeof import('otplib').authenticator;
   declare rest: any;
 
   constructor(options: any = {}) {
@@ -30,7 +31,7 @@ class BaseClient extends EventEmitter {
      * @type {RESTManager}
      * @private
      */
-    this.rest = new RESTManager(this as unknown as import('../client/Client').default);
+    this.rest = new RESTManager(this);
   }
 
   /**
@@ -73,7 +74,7 @@ class BaseClient extends EventEmitter {
     }
   }
 
-  toJSON(...props: any[]) {
+  toJSON(...props: unknown[]) {
     return Util.flatten(this, { domain: false }, ...props);
   }
 }

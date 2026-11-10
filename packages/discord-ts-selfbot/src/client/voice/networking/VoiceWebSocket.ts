@@ -21,6 +21,10 @@ interface VoiceGatewayPacket {
   d?: VoiceGatewayData;
 }
 
+function isVoiceGatewayPacket(value: unknown): value is VoiceGatewayPacket {
+  return typeof value === 'object' && value !== null;
+}
+
 interface CloseEventLike {
   code?: number;
   reason?: string;
@@ -166,7 +170,9 @@ class VoiceWebSocket extends EventEmitter {
    */
   onMessage(event: { data: unknown }) {
     try {
-      return this.onPacket(WebSocket.unpack(event.data, 'json'));
+      const packet = WebSocket.unpack(event.data, 'json');
+      if (isVoiceGatewayPacket(packet)) return this.onPacket(packet);
+      return undefined;
     } catch (error) {
       return this.onError(error);
     }
