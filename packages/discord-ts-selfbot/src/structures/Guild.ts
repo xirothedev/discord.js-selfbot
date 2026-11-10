@@ -24,7 +24,6 @@ import StageInstanceManager from '../managers/StageInstanceManager';
 import VoiceStateManager from '../managers/VoiceStateManager';
 import _ConstantsModule from '../util/Constants';
 const {
-  ChannelTypes,
   DefaultMessageNotificationLevels,
   VerificationLevels,
   ExplicitContentFilterLevels,
@@ -1730,7 +1729,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
    * @private
    */
   _sortedChannels(channel: GuildChannel) {
-    const category = channel.type === ChannelTypes.GUILD_CATEGORY;
+    const category = channel.type === 'GUILD_CATEGORY';
     return Util.discordSort(
       this.channels.cache.filter(
         (c: GuildChannel) =>

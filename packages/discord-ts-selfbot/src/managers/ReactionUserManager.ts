@@ -8,7 +8,7 @@ import type { FetchReactionUsersOptions, UserResolvable } from '../../typings';
 
 type UserResolvableSource = User | UserResolvable;
 type FetchReactionUsersOptionsSource = Omit<FetchReactionUsersOptions, 'type'> & { type?: string | number };
-import _ConstantsModule from '../util/Constants';
+import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
 const { ReactionTypes } = _ConstantsModule;
 
 /**
@@ -50,7 +50,7 @@ class ReactionUserManager extends CachedManager<User> {
     const message = this.reaction.message;
     const data = await this.client.api.channels[message.channelId].messages[message.id].reactions[
       this.reaction.emoji.identifier
-    ].get({ query: { limit, after, type: typeof type == 'number' ? type : ReactionTypes[type] } });
+    ].get({ query: { limit, after, type: resolveEnumValue(ReactionTypes, type) } });
     const users = new Collection<string, User>();
     for (const rawUser of data) {
       const user = this.client.users._add(rawUser);

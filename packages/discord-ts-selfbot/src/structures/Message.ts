@@ -31,7 +31,7 @@ import Application from './interfaces/Application';
 import _errorsModule from '../errors';
 const { Error } = _errorsModule;
 import ReactionManager from '../managers/ReactionManager';
-import _ConstantsModule from '../util/Constants';
+import _ConstantsModule, { resolveEnumMember } from '../util/Constants';
 const { InteractionTypes, MessageTypes, SystemMessageTypes, MessageComponentTypes, MessageReferenceTypes } =
   _ConstantsModule;
 import MessageFlags from '../util/MessageFlags';
@@ -377,13 +377,13 @@ class Message extends Base {
        * The type of the message
        * @type {?MessageType}
        */
-      this.type = MessageTypes[data.type];
+      this.type = MessageTypes[data.type] ?? null;
 
       /**
        * Whether or not this message was sent by Discord, not actually a user (e.g. pin notifications)
        * @type {?boolean}
        */
-      this.system = SystemMessageTypes.includes(this.type);
+      this.system = this.type !== null && SystemMessageTypes.includes(this.type);
     } else {
       this.system ??= null;
       this.type ??= null;
@@ -646,7 +646,8 @@ class Message extends Base {
         channelId: data.message_reference.channel_id,
         guildId: data.message_reference.guild_id,
         messageId: data.message_reference.message_id,
-        type: MessageReferenceTypes[data.message_reference.type ?? 0],
+        type:
+          resolveEnumMember(MessageReferenceTypes, data.message_reference.type ?? 0) ?? MessageReferenceTypes.DEFAULT,
       };
     } else {
       this.reference ??= null;

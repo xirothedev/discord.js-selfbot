@@ -4,7 +4,7 @@ import CachedManager from './CachedManager';
 import _errorsModule from '../errors';
 const { TypeError } = _errorsModule;
 import ApplicationCommand from '../structures/ApplicationCommand';
-import _ConstantsModule from '../util/Constants';
+import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
 const { ApplicationCommandTypes } = _ConstantsModule;
 import Permissions from '../util/Permissions';
 import type { Snowflake } from 'discord-api-types/v10';
@@ -325,7 +325,7 @@ class ApplicationCommandManager extends CachedManager<ApplicationCommand> {
         typeof command.type === 'number'
           ? command.type
           : typeof command.type === 'string'
-            ? ApplicationCommandTypes[command.type]
+            ? resolveEnumValue(ApplicationCommandTypes, command.type)
             : undefined,
       options: command.options?.map(o => ApplicationCommand.transformOption(o)),
       default_permission: command.defaultPermission ?? command.default_permission,

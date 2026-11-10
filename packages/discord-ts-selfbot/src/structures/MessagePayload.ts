@@ -1,13 +1,13 @@
 import { Buffer } from 'node:buffer';
 import type { Stream } from 'node:stream';
-import { AllowedMentionsTypes } from 'discord-api-types/v10';
+import { AllowedMentionsTypes, MessageReferenceType } from 'discord-api-types/v10';
 import type { APIAllowedMentions } from 'discord-api-types/v10';
 import BaseMessageComponent from './BaseMessageComponent';
 import MessageEmbed from './MessageEmbed';
 import _errorsModule from '../errors';
 const { RangeError, Error: DjsError } = _errorsModule;
-import _ConstantsModule from '../util/Constants';
-const { PollLayoutTypes, MessageReferenceTypes } = _ConstantsModule;
+import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
+const { PollLayoutTypes } = _ConstantsModule;
 import DataResolver from '../util/DataResolver';
 import MessageFlags from '../util/MessageFlags';
 import SnowflakeUtil from '../util/SnowflakeUtil';
@@ -257,7 +257,7 @@ class MessagePayload {
       if (message_id) {
         message_reference = {
           message_id,
-          type: MessageReferenceTypes.DEFAULT,
+          type: MessageReferenceType.Default,
           fail_if_not_exists: this.options.reply.failIfNotExists ?? this.target.client.options.failIfNotExists,
         };
       }
@@ -275,7 +275,7 @@ class MessagePayload {
       if (message_id) {
         if (!channel_id) throw new DjsError('INVALID_TYPE', 'channelId', 'TextBasedChannelResolvable');
         message_reference = {
-          type: MessageReferenceTypes.FORWARD,
+          type: MessageReferenceType.Forward,
           message_id,
           channel_id,
           guild_id: guild_id ?? undefined,
@@ -317,12 +317,7 @@ class MessagePayload {
         })),
         duration: this.options.poll.duration,
         allow_multiselect: this.options.poll.allowMultiselect,
-        layout_type:
-          typeof this.options.poll.layoutType == 'number'
-            ? this.options.poll.layoutType
-            : this.options.poll.layoutType
-              ? PollLayoutTypes[this.options.poll.layoutType]
-              : undefined,
+        layout_type: resolveEnumValue(PollLayoutTypes, this.options.poll.layoutType),
       };
     }
 

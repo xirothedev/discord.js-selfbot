@@ -21,7 +21,7 @@ type ThreadOnlyChannelPatch = PatchOf<'GuildChannel'> & {
   default_sort_order?: number | null;
 };
 import type { Guild } from './Guild';
-import _ConstantsModule from '../util/Constants';
+import _ConstantsModule, { resolveEnumMember } from '../util/Constants';
 const { SortOrderTypes } = _ConstantsModule;
 import _UtilModule from '../util/Util';
 const { transformAPIGuildForumTag, transformAPIGuildDefaultReaction } = _UtilModule;
@@ -162,8 +162,7 @@ class ThreadOnlyChannel extends GuildChannel {
        * The default sort order mode used to order posts
        * @type {?SortOrderType}
        */
-      this.defaultSortOrder =
-        typeof data.default_sort_order === 'number' ? SortOrderTypes[data.default_sort_order] : null;
+      this.defaultSortOrder = resolveEnumMember(SortOrderTypes, data.default_sort_order) ?? null;
     } else {
       this.defaultSortOrder ??= null;
     }

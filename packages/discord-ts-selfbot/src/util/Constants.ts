@@ -1,8 +1,23 @@
 import _errorsModule from '../errors';
 const { Error, RangeError, TypeError } = _errorsModule;
+import type {
+  ApplicationRoleConnectionMetadataTypes,
+  ForumLayoutTypes,
+  MessageReferenceTypes,
+  PollLayoutTypes,
+  SortOrderTypes,
+} from '../../typings/enums';
+import type { MessageType } from '../../typings';
 ('use strict');
 
-const Constants: any = {};
+/**
+ * A runtime enum object with forward name-to-value and reverse value-to-name entries.
+ * `V` carries the public enum type through forward lookups without a cast.
+ */
+type EnumOf<T extends string, V extends number = number> = { [K in T]: V } & { [key: number]: T };
+type KeyMirrorOf<T extends string> = { [K in T]: K };
+
+const Constants: ConstantsShape = Object.create(Object.prototype);
 
 /**
  * Max bulk deletable message age
@@ -65,6 +80,50 @@ const AllowedImageSizes = [16, 32, 56, 64, 96, 128, 256, 300, 512, 600, 1024, 20
 interface ImageURLOptions {
   format?: string;
   size?: number;
+}
+
+interface CdnEndpoints {
+  Emoji: (emojiId: string, format?: string) => string;
+  Asset: (name: string) => string;
+  DefaultAvatar: (index: number) => string;
+  Avatar: (userId: string, hash: string, format: string, size?: number, dynamic?: boolean) => string;
+  AvatarDecoration: (hash: string) => string;
+  GuildTagBadge: (guildId: string, hash: string) => string;
+  GuildMemberAvatar: (
+    guildId: string,
+    memberId: string,
+    hash: string,
+    format?: string,
+    size?: number,
+    dynamic?: boolean,
+  ) => string;
+  GuildMemberBanner: (
+    guildId: string,
+    memberId: string,
+    hash: string,
+    format?: string,
+    size?: number,
+    dynamic?: boolean,
+  ) => string;
+  Banner: (id: string, hash: string, format: string, size?: number, dynamic?: boolean) => string;
+  Icon: (guildId: string, hash: string, format: string, size?: number, dynamic?: boolean) => string;
+  AppIcon: (appId: string, hash: string, options: ImageURLOptions) => string;
+  AppAsset: (appId: string, hash: string, options: ImageURLOptions) => string;
+  StickerPackBanner: (bannerId: string, format: string, size?: number) => string;
+  GDMIcon: (channelId: string, hash: string, format: string, size?: number) => string;
+  Splash: (guildId: string, hash: string, format: string, size?: number) => string;
+  DiscoverySplash: (guildId: string, hash: string, format: string, size?: number) => string;
+  TeamIcon: (teamId: string, hash: string, options: ImageURLOptions) => string;
+  Sticker: (stickerId: string, stickerFormat: string) => string;
+  RoleIcon: (roleId: string, hash: string, format?: string, size?: number) => string;
+  GuildScheduledEventCover: (scheduledEventId: string, coverHash: string, format: string, size?: number) => string;
+}
+
+interface EndpointsShape {
+  CDN(root: string): CdnEndpoints;
+  invite(root: string, code: string, eventId?: string): string;
+  scheduledEvent(root: string, guildId: string, eventId: string): string;
+  botGateway: string;
 }
 
 function makeImageUrl(root: string, { format = 'webp', size }: ImageURLOptions = {}) {
@@ -825,7 +884,7 @@ Constants.MessageTypes = [
  * @typedef {string} MessageReferenceType
  * @see {@link https://discord.com/developers/docs/resources/message#message-reference-types}
  */
-Constants.MessageReferenceTypes = createEnum([
+Constants.MessageReferenceTypes = createEnum<'DEFAULT' | 'FORWARD', MessageReferenceTypes>([
   'DEFAULT', // 0
   'FORWARD',
 ]);
@@ -876,7 +935,8 @@ Constants.SweeperKeys = [
  * @typedef {string} SystemMessageType
  */
 Constants.SystemMessageTypes = Constants.MessageTypes.filter(
-  (type: string) => type && !['DEFAULT', 'REPLY', 'APPLICATION_COMMAND', 'CONTEXT_MENU_COMMAND'].includes(type),
+  (type): type is MessageType =>
+    type !== null && !['DEFAULT', 'REPLY', 'APPLICATION_COMMAND', 'CONTEXT_MENU_COMMAND'].includes(type),
 );
 
 /**
@@ -917,7 +977,7 @@ Constants.ActivityTypes = createEnum(['PLAYING', 'STREAMING', 'LISTENING', 'WATC
  * @typedef {string} ChannelType
  * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-channel-types}
  */
-Constants.ChannelTypes = createEnum([
+Constants.ChannelTypes = createEnum<ChannelTypeName>([
   'GUILD_TEXT',
   'DM',
   'GUILD_VOICE',
@@ -925,7 +985,7 @@ Constants.ChannelTypes = createEnum([
   'GUILD_CATEGORY',
   'GUILD_NEWS',
   'GUILD_STORE',
-  ...Array(3).fill(null),
+  ...Array.from({ length: 3 }, () => null),
   // 10
   'GUILD_NEWS_THREAD',
   'GUILD_PUBLIC_THREAD',
@@ -1539,7 +1599,17 @@ Constants.ApplicationCommandPermissionTypes = createEnum([null, 'ROLE', 'USER'])
  * @typedef {string} ApplicationRoleConnectionMetadataType
  * @see{@link https://discord.com/developers/docs/resources/application-role-connection-metadata#application-role-connection-metadata-object-application-role-connection-metadata-type}
  */
-Constants.ApplicationRoleConnectionMetadataTypes = createEnum([
+Constants.ApplicationRoleConnectionMetadataTypes = createEnum<
+  | 'INTEGER_LESS_THAN_OR_EQUAL'
+  | 'INTEGER_GREATER_THAN_OR_EQUAL'
+  | 'INTEGER_EQUAL'
+  | 'INTEGER_NOT_EQUAL'
+  | 'DATATIME_LESS_THAN_OR_EQUAL'
+  | 'DATATIME_GREATER_THAN_OR_EQUAL'
+  | 'BOOLEAN_EQUAL'
+  | 'BOOLEAN_NOT_EQUAL',
+  ApplicationRoleConnectionMetadataTypes
+>([
   null,
   'INTEGER_LESS_THAN_OR_EQUAL',
   'INTEGER_GREATER_THAN_OR_EQUAL',
@@ -1686,7 +1756,7 @@ Constants.MessageComponentTypes = createEnum([
  * @see {@link https://discord.com/developers/docs/interactions/message-components#component-object-component-types}
  */
 Constants.SelectMenuComponentTypes = createEnum([
-  ...new Array(3).fill(null),
+  ...Array.from({ length: 3 }, () => null),
   'STRING_MENU',
   null,
   'USER_SELECT',
@@ -1812,7 +1882,11 @@ Constants.ReactionTypes = createEnum(['NORMAL', 'BURST']);
  * @typedef {string} SortOrderType
  * @see {@link https://discord.com/developers/docs/resources/channel/#channel-object-sort-order-types}
  */
-Constants.SortOrderTypes = createEnum([null, 'LATEST_ACTIVITY', 'CREATION_DATE']);
+Constants.SortOrderTypes = createEnum<'LATEST_ACTIVITY' | 'CREATION_DATE', SortOrderTypes>([
+  null,
+  'LATEST_ACTIVITY',
+  'CREATION_DATE',
+]);
 
 /**
  * The default forum layout to set on the {@link ForumChannel}
@@ -1822,7 +1896,11 @@ Constants.SortOrderTypes = createEnum([null, 'LATEST_ACTIVITY', 'CREATION_DATE']
  * @typedef {string} ForumLayoutType
  * @see {@link https://discord.com/developers/docs/resources/channel/#channel-object-forum-layout-types}
  */
-Constants.ForumLayoutTypes = createEnum(['NOT_SET', 'LIST_VIEW', 'GALLERY_VIEW']);
+Constants.ForumLayoutTypes = createEnum<'NOT_SET' | 'LIST_VIEW' | 'GALLERY_VIEW', ForumLayoutTypes>([
+  'NOT_SET',
+  'LIST_VIEW',
+  'GALLERY_VIEW',
+]);
 
 /**
  * Different layouts for {@link MessagePoll} will come in the future. For now though, this value will always be `DEFAULT`.
@@ -1831,7 +1909,11 @@ Constants.ForumLayoutTypes = createEnum(['NOT_SET', 'LIST_VIEW', 'GALLERY_VIEW']
  * @typedef {string} PollLayoutType
  * @see {@link https://docs.discord.food/resources/message#poll-layout-type}
  */
-Constants.PollLayoutTypes = createEnum([null, 'DEFAULT', 'IMAGE_ONLY_ANSWERS']);
+Constants.PollLayoutTypes = createEnum<'DEFAULT' | 'IMAGE_ONLY_ANSWERS', PollLayoutTypes>([
+  null,
+  'DEFAULT',
+  'IMAGE_ONLY_ANSWERS',
+]);
 
 /**
  * Relationship Enums:
@@ -1858,20 +1940,253 @@ Constants.SeparatorSpacingSizes = createEnum([null, 'SMALL', 'LARGE']);
 
 Constants._cleanupSymbol = Symbol('djsCleanup');
 
-function keyMirror<T extends string>(arr: readonly T[]): Record<T, T> {
-  const tmp: Record<T, T> = Object.create(null);
+function keyMirror<T extends string>(arr: readonly T[]): KeyMirrorOf<T> {
+  const tmp: KeyMirrorOf<T> = Object.create(null);
   for (const value of arr) tmp[value] = value;
   return tmp;
 }
 
-function createEnum<T extends string>(keys: readonly (T | null)[]): Record<string | number, string | number> {
-  const obj: Record<string | number, string | number> = {};
+function createEnum<T extends string, V extends number = number>(keys: readonly (T | null)[]): EnumOf<T, V> {
+  const obj: EnumOf<T, V> = Object.create(Object.prototype);
   for (const [index, key] of keys.entries()) {
     if (key === null) continue;
-    obj[key] = index;
+    Object.assign(obj, { [key]: index });
     obj[index] = key;
   }
   return obj;
+}
+
+function isEnumKey<T extends string>(enumObject: EnumOf<T>, value: string): value is T {
+  return !/^\d+$/.test(value) && Object.prototype.hasOwnProperty.call(enumObject, value);
+}
+
+/**
+ * Resolves a string enum name or numeric value to its numeric value.
+ */
+function resolveEnumValue<T extends string>(
+  enumObject: EnumOf<T>,
+  value: string | number | null | undefined,
+): number | undefined {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string' && isEnumKey(enumObject, value)) return enumObject[value];
+  return undefined;
+}
+
+/**
+ * Resolves a string enum name or numeric value to the enum member value.
+ */
+function resolveEnumMember<T extends string, V extends number>(
+  enumObject: EnumOf<T, V>,
+  value: string | number | null | undefined,
+): V | undefined {
+  if (typeof value === 'number') {
+    const name = enumObject[value];
+    return name === undefined ? undefined : enumObject[name];
+  }
+  if (typeof value === 'string' && isEnumKey(enumObject, value)) return enumObject[value];
+  return undefined;
+}
+
+type PartialTypeName = 'USER' | 'CHANNEL' | 'GUILD_MEMBER' | 'MESSAGE' | 'REACTION' | 'GUILD_SCHEDULED_EVENT';
+
+type WSEventName =
+  | 'READY'
+  | 'RESUMED'
+  | 'APPLICATION_COMMAND_CREATE'
+  | 'APPLICATION_COMMAND_DELETE'
+  | 'APPLICATION_COMMAND_UPDATE'
+  | 'APPLICATION_COMMAND_PERMISSIONS_UPDATE'
+  | 'AUTO_MODERATION_ACTION_EXECUTION'
+  | 'AUTO_MODERATION_RULE_CREATE'
+  | 'AUTO_MODERATION_RULE_DELETE'
+  | 'AUTO_MODERATION_RULE_UPDATE'
+  | 'GUILD_CREATE'
+  | 'GUILD_DELETE'
+  | 'GUILD_UPDATE'
+  | 'INVITE_CREATE'
+  | 'INVITE_DELETE'
+  | 'GUILD_MEMBER_ADD'
+  | 'GUILD_MEMBER_REMOVE'
+  | 'GUILD_MEMBER_UPDATE'
+  | 'GUILD_MEMBERS_CHUNK'
+  | 'GUILD_INTEGRATIONS_UPDATE'
+  | 'GUILD_ROLE_CREATE'
+  | 'GUILD_ROLE_DELETE'
+  | 'GUILD_ROLE_UPDATE'
+  | 'GUILD_BAN_ADD'
+  | 'GUILD_BAN_REMOVE'
+  | 'GUILD_EMOJIS_UPDATE'
+  | 'CHANNEL_CREATE'
+  | 'CHANNEL_DELETE'
+  | 'CHANNEL_UPDATE'
+  | 'CHANNEL_PINS_UPDATE'
+  | 'MESSAGE_CREATE'
+  | 'MESSAGE_DELETE'
+  | 'MESSAGE_UPDATE'
+  | 'MESSAGE_DELETE_BULK'
+  | 'MESSAGE_REACTION_ADD'
+  | 'MESSAGE_REACTION_REMOVE'
+  | 'MESSAGE_REACTION_REMOVE_ALL'
+  | 'MESSAGE_REACTION_REMOVE_EMOJI'
+  | 'THREAD_CREATE'
+  | 'THREAD_UPDATE'
+  | 'THREAD_DELETE'
+  | 'THREAD_LIST_SYNC'
+  | 'THREAD_MEMBER_UPDATE'
+  | 'THREAD_MEMBERS_UPDATE'
+  | 'USER_UPDATE'
+  | 'PRESENCE_UPDATE'
+  | 'TYPING_START'
+  | 'VOICE_STATE_UPDATE'
+  | 'VOICE_SERVER_UPDATE'
+  | 'WEBHOOKS_UPDATE'
+  | 'STAGE_INSTANCE_CREATE'
+  | 'STAGE_INSTANCE_UPDATE'
+  | 'STAGE_INSTANCE_DELETE'
+  | 'GUILD_STICKERS_UPDATE'
+  | 'GUILD_SCHEDULED_EVENT_CREATE'
+  | 'GUILD_SCHEDULED_EVENT_UPDATE'
+  | 'GUILD_SCHEDULED_EVENT_DELETE'
+  | 'GUILD_SCHEDULED_EVENT_USER_ADD'
+  | 'GUILD_SCHEDULED_EVENT_USER_REMOVE'
+  | 'GUILD_AUDIT_LOG_ENTRY_CREATE';
+
+type ChannelTypeName =
+  | 'GUILD_TEXT'
+  | 'DM'
+  | 'GUILD_VOICE'
+  | 'GROUP_DM'
+  | 'GUILD_CATEGORY'
+  | 'GUILD_NEWS'
+  | 'GUILD_STORE'
+  | 'GUILD_NEWS_THREAD'
+  | 'GUILD_PUBLIC_THREAD'
+  | 'GUILD_PRIVATE_THREAD'
+  | 'GUILD_STAGE_VOICE'
+  | 'GUILD_DIRECTORY'
+  | 'GUILD_FORUM'
+  | 'GUILD_MEDIA';
+
+type ActivityTypeName = 'PLAYING' | 'STREAMING' | 'LISTENING' | 'WATCHING' | 'CUSTOM' | 'COMPETING' | 'HANG';
+
+type ApplicationCommandOptionTypeName =
+  | 'SUB_COMMAND'
+  | 'SUB_COMMAND_GROUP'
+  | 'STRING'
+  | 'INTEGER'
+  | 'BOOLEAN'
+  | 'USER'
+  | 'CHANNEL'
+  | 'ROLE'
+  | 'MENTIONABLE'
+  | 'NUMBER'
+  | 'ATTACHMENT';
+
+type MessageComponentTypeName =
+  | 'ACTION_ROW'
+  | 'BUTTON'
+  | 'STRING_SELECT'
+  | 'TEXT_INPUT'
+  | 'USER_SELECT'
+  | 'ROLE_SELECT'
+  | 'MENTIONABLE_SELECT'
+  | 'CHANNEL_SELECT'
+  | 'SECTION'
+  | 'TEXT_DISPLAY'
+  | 'THUMBNAIL'
+  | 'MEDIA_GALLERY'
+  | 'FILE'
+  | 'SEPARATOR'
+  | 'CONTAINER';
+
+interface ConstantsShape {
+  MaxBulkDeletableMessageAge: number;
+  UserAgent: string;
+  ciphers: string[];
+  WSCodes: Record<number, string>;
+  Endpoints: EndpointsShape;
+  Status: Record<string, number>;
+  VoiceStatus: Record<string, number>;
+  Opcodes: Record<string, number>;
+  VoiceOpcodes: Record<string, number>;
+  Events: Record<string, string>;
+  ShardEvents: Record<string, string>;
+  PartialTypes: KeyMirrorOf<PartialTypeName>;
+  WSEvents: KeyMirrorOf<WSEventName>;
+  InviteScopes: string[];
+  IntegrationExpireBehaviors: EnumOf<'REMOVE_ROLE' | 'KICK'>;
+  MessageTypes: (MessageType | null)[];
+  MessageReferenceTypes: EnumOf<'DEFAULT' | 'FORWARD', MessageReferenceTypes>;
+  SweeperKeys: string[];
+  SystemMessageTypes: MessageType[];
+  ActivityTypes: EnumOf<ActivityTypeName>;
+  ChannelTypes: EnumOf<ChannelTypeName>;
+  TextBasedChannelTypes: string[];
+  ThreadChannelTypes: string[];
+  VoiceBasedChannelTypes: string[];
+  ClientApplicationAssetTypes: { SMALL: number; BIG: number };
+  Colors: Record<string, number>;
+  HolographicStyles: { PRIMARY: number; SECONDARY: number; TERTIARY: number };
+  ExplicitContentFilterLevels: EnumOf<'DISABLED' | 'MEMBERS_WITHOUT_ROLES' | 'ALL_MEMBERS'>;
+  VerificationLevels: EnumOf<'NONE' | 'LOW' | 'MEDIUM' | 'HIGH' | 'VERY_HIGH'>;
+  APIErrors: Record<string, number>;
+  DefaultMessageNotificationLevels: EnumOf<'ALL_MESSAGES' | 'ONLY_MENTIONS'>;
+  MembershipStates: EnumOf<'INVITED' | 'ACCEPTED'>;
+  WebhookTypes: EnumOf<'Incoming' | 'Channel Follower' | 'Application'>;
+  StickerTypes: EnumOf<'STANDARD' | 'GUILD'>;
+  StickerFormatTypes: EnumOf<'PNG' | 'APNG' | 'LOTTIE' | 'GIF'>;
+  OverwriteTypes: EnumOf<'role' | 'member'>;
+  ApplicationCommandTypes: EnumOf<'CHAT_INPUT' | 'USER' | 'MESSAGE'>;
+  ApplicationCommandOptionTypes: EnumOf<ApplicationCommandOptionTypeName>;
+  ApplicationCommandPermissionTypes: EnumOf<'ROLE' | 'USER'>;
+  ApplicationRoleConnectionMetadataTypes: EnumOf<
+    | 'INTEGER_LESS_THAN_OR_EQUAL'
+    | 'INTEGER_GREATER_THAN_OR_EQUAL'
+    | 'INTEGER_EQUAL'
+    | 'INTEGER_NOT_EQUAL'
+    | 'DATATIME_LESS_THAN_OR_EQUAL'
+    | 'DATATIME_GREATER_THAN_OR_EQUAL'
+    | 'BOOLEAN_EQUAL'
+    | 'BOOLEAN_NOT_EQUAL',
+    ApplicationRoleConnectionMetadataTypes
+  >;
+  AutoModerationRuleTriggerTypes: EnumOf<'KEYWORD' | 'SPAM' | 'KEYWORD_PRESET' | 'MENTION_SPAM'>;
+  AutoModerationRuleKeywordPresetTypes: EnumOf<'PROFANITY' | 'SEXUAL_CONTENT' | 'SLURS'>;
+  AutoModerationActionTypes: EnumOf<'BLOCK_MESSAGE' | 'SEND_ALERT_MESSAGE' | 'TIMEOUT'>;
+  AutoModerationRuleEventTypes: EnumOf<'MESSAGE_SEND'>;
+  InteractionTypes: EnumOf<
+    'PING' | 'APPLICATION_COMMAND' | 'MESSAGE_COMPONENT' | 'APPLICATION_COMMAND_AUTOCOMPLETE' | 'MODAL_SUBMIT'
+  >;
+  InteractionResponseTypes: EnumOf<
+    | 'PONG'
+    | 'CHANNEL_MESSAGE_WITH_SOURCE'
+    | 'DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE'
+    | 'DEFERRED_MESSAGE_UPDATE'
+    | 'UPDATE_MESSAGE'
+    | 'APPLICATION_COMMAND_AUTOCOMPLETE_RESULT'
+    | 'MODAL'
+  >;
+  MessageComponentTypes: EnumOf<MessageComponentTypeName>;
+  SelectMenuComponentTypes: EnumOf<
+    'STRING_MENU' | 'USER_SELECT' | 'ROLE_SELECT' | 'MENTIONABLE_SELECT' | 'CHANNEL_SELECT'
+  >;
+  MessageButtonStyles: EnumOf<'PRIMARY' | 'SECONDARY' | 'SUCCESS' | 'DANGER' | 'LINK'>;
+  MFALevels: EnumOf<'NONE' | 'ELEVATED'>;
+  NSFWLevels: EnumOf<'DEFAULT' | 'EXPLICIT' | 'SAFE' | 'AGE_RESTRICTED'>;
+  PrivacyLevels: EnumOf<'PUBLIC' | 'GUILD_ONLY'>;
+  TextInputStyles: EnumOf<'SHORT' | 'PARAGRAPH'>;
+  GuildScheduledEventPrivacyLevels: EnumOf<'GUILD_ONLY'>;
+  PremiumTiers: EnumOf<'NONE' | 'TIER_1' | 'TIER_2' | 'TIER_3'>;
+  GuildScheduledEventStatuses: EnumOf<'SCHEDULED' | 'ACTIVE' | 'COMPLETED' | 'CANCELED'>;
+  GuildScheduledEventEntityTypes: EnumOf<'STAGE_INSTANCE' | 'VOICE' | 'EXTERNAL'>;
+  VideoQualityModes: EnumOf<'AUTO' | 'FULL'>;
+  ReactionTypes: EnumOf<'NORMAL' | 'BURST'>;
+  SortOrderTypes: EnumOf<'LATEST_ACTIVITY' | 'CREATION_DATE', SortOrderTypes>;
+  ForumLayoutTypes: EnumOf<'NOT_SET' | 'LIST_VIEW' | 'GALLERY_VIEW', ForumLayoutTypes>;
+  PollLayoutTypes: EnumOf<'DEFAULT' | 'IMAGE_ONLY_ANSWERS', PollLayoutTypes>;
+  RelationshipTypes: EnumOf<'NONE' | 'FRIEND' | 'BLOCKED' | 'PENDING_INCOMING' | 'PENDING_OUTGOING' | 'IMPLICIT'>;
+  SeparatorSpacingSizes: EnumOf<'SMALL' | 'LARGE'>;
+  _cleanupSymbol: symbol;
 }
 
 /**
@@ -1949,4 +2264,4 @@ function createEnum<T extends string>(keys: readonly (T | null)[]): Record<strin
  */
 
 export default Constants;
-export { Constants };
+export { Constants, resolveEnumValue, resolveEnumMember };

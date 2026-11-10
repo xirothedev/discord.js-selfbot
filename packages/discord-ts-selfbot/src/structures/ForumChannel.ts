@@ -1,5 +1,5 @@
 import ThreadOnlyChannel from './ThreadOnlyChannel';
-import _ConstantsModule from '../util/Constants';
+import _ConstantsModule, { resolveEnumMember } from '../util/Constants';
 const { ForumLayoutTypes } = _ConstantsModule;
 
 /**
@@ -15,7 +15,7 @@ class ForumChannel extends ThreadOnlyChannel {
      * @type {ForumLayoutType}
      */
     this.defaultForumLayout =
-      typeof data.default_forum_layout === 'number' ? ForumLayoutTypes[data.default_forum_layout] : null;
+      resolveEnumMember(ForumLayoutTypes, data.default_forum_layout ?? 0) ?? ForumLayoutTypes.NOT_SET;
   }
 
   /**

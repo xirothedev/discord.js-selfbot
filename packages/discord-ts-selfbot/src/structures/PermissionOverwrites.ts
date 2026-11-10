@@ -3,7 +3,7 @@ import _RoleModule from './Role';
 const { Role } = _RoleModule;
 import _errorsModule from '../errors';
 const { TypeError } = _errorsModule;
-import _ConstantsModule from '../util/Constants';
+import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
 const { OverwriteTypes } = _ConstantsModule;
 import Permissions from '../util/Permissions';
 import type { Snowflake } from 'discord-api-types/v10';
@@ -53,12 +53,13 @@ class PermissionOverwrites extends Base {
      */
     this.id = data.id;
 
-    if ('type' in data) {
+    if ('type' in data && data.type !== undefined) {
       /**
        * The type of this overwrite
        * @type {OverwriteType}
        */
-      this.type = typeof data.type === 'number' ? OverwriteTypes[data.type] : data.type;
+      const type = typeof data.type === 'number' ? OverwriteTypes[data.type] : data.type;
+      if (type === 'role' || type === 'member') this.type = type;
     }
 
     if ('deny' in data) {
@@ -203,15 +204,13 @@ class PermissionOverwrites extends Base {
     const type = 'type' in overwrite ? overwrite.type : undefined;
     const allow = 'allow' in overwrite ? overwrite.allow : undefined;
     const deny = 'deny' in overwrite ? overwrite.deny : undefined;
+    let resolvedType =
+      typeof type === 'string' || typeof type === 'number' ? resolveEnumValue(OverwriteTypes, type) : undefined;
 
-    if (
-      id &&
-      type !== undefined &&
-      (typeof type === 'number' || (typeof type === 'string' && type in OverwriteTypes))
-    ) {
+    if (id && resolvedType !== undefined) {
       return {
         id,
-        type: typeof type === 'number' ? type : OverwriteTypes[type],
+        type: resolvedType,
         allow: Permissions.resolve(allow ?? Permissions.defaultBit).toString(),
         deny: Permissions.resolve(deny ?? Permissions.defaultBit).toString(),
       };
@@ -222,7 +221,7 @@ class PermissionOverwrites extends Base {
     if (!userOrRole) {
       throw new TypeError('INVALID_TYPE', 'parameter', 'cached User or Role');
     }
-    const resolvedType = userOrRole instanceof Role ? OverwriteTypes.role : OverwriteTypes.member;
+    resolvedType = userOrRole instanceof Role ? OverwriteTypes.role : OverwriteTypes.member;
 
     return {
       id: userOrRole.id,

@@ -307,7 +307,7 @@ class Interaction<Cached extends CacheType = CacheType> extends Base {
     return (
       InteractionTypes[this.type] === InteractionTypes.MESSAGE_COMPONENT &&
       typeof this.componentType !== 'undefined' &&
-      MessageComponentTypes[this.componentType] === MessageComponentTypes.SELECT_MENU
+      MessageComponentTypes[this.componentType] === MessageComponentTypes.STRING_SELECT
     );
   }
 
