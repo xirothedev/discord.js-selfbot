@@ -3,13 +3,14 @@ import GuildEmoji from '../structures/GuildEmoji';
 import ReactionEmoji from '../structures/ReactionEmoji';
 import _UtilModule from '../util/Util';
 const { parseEmoji } = _UtilModule;
+import type { Client } from '../client/Client';
 
 /**
  * Holds methods to resolve GuildEmojis and stores their cache.
  * @extends {CachedManager}
  */
 class BaseGuildEmojiManager extends CachedManager<GuildEmoji> {
-  constructor(client: any, iterable?: any) {
+  constructor(client: Client, iterable?: Iterable<GuildEmoji>) {
     super(client, GuildEmoji, iterable);
   }
 
@@ -32,7 +33,7 @@ class BaseGuildEmojiManager extends CachedManager<GuildEmoji> {
    * @param {EmojiResolvable} emoji The Emoji resolvable to identify
    * @returns {?GuildEmoji}
    */
-  resolve(emoji: any) {
+  resolve(emoji: unknown): GuildEmoji | null {
     if (emoji instanceof ReactionEmoji) return emoji.id ? (this.cache.get(emoji.id) ?? null) : null;
     return super.resolve(emoji);
   }
@@ -42,7 +43,7 @@ class BaseGuildEmojiManager extends CachedManager<GuildEmoji> {
    * @param {EmojiResolvable} emoji The Emoji resolvable to identify
    * @returns {?Snowflake}
    */
-  resolveId(emoji: any) {
+  resolveId(emoji: unknown): string | null {
     if (emoji instanceof ReactionEmoji) return emoji.id;
     return super.resolveId(emoji);
   }
@@ -60,17 +61,18 @@ class BaseGuildEmojiManager extends CachedManager<GuildEmoji> {
    * @param {EmojiIdentifierResolvable} emoji The emoji resolvable to resolve
    * @returns {?string}
    */
-  resolveIdentifier(emoji: any) {
+  resolveIdentifier(emoji: unknown): string | null {
     const emojiResolvable = this.resolve(emoji);
     if (emojiResolvable) return emojiResolvable.identifier;
     if (emoji instanceof ReactionEmoji) return emoji.identifier;
     if (typeof emoji === 'string') {
-      const res = parseEmoji(emoji);
+      let value = emoji;
+      const res = parseEmoji(value);
       if (res?.name.length) {
-        emoji = `${res.animated ? 'a:' : ''}${res.name}${res.id ? `:${res.id}` : ''}`;
+        value = `${res.animated ? 'a:' : ''}${res.name}${res.id ? `:${res.id}` : ''}`;
       }
-      if (!emoji.includes('%')) return encodeURIComponent(emoji);
-      return emoji;
+      if (!value.includes('%')) return encodeURIComponent(value);
+      return value;
     }
     return null;
   }

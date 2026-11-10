@@ -4,14 +4,30 @@ import _errorsModule from '../errors';
 const { Error, TypeError } = _errorsModule;
 import DataResolver from '../util/DataResolver';
 import Permissions from '../util/Permissions';
+import type { Snowflake } from 'discord-api-types/v10';
+import type { RawGuildEmojiData } from '../../typings/rawDataTypes';
+import type {
+  BaseFetchOptions,
+  BufferResolvable,
+  Base64Resolvable,
+  EmojiResolvable,
+  GuildEmojiCreateOptions,
+  GuildEmojiEditData,
+} from '../../typings';
+import type { Guild } from '../structures/Guild';
+import type { GuildEmoji } from '../structures/GuildEmoji';
+import type { ReactionEmoji } from '../structures/ReactionEmoji';
+import type { User } from '../structures/User';
+
+type EmojiResolvableSource = GuildEmoji | ReactionEmoji | Snowflake | EmojiResolvable;
 
 /**
  * Manages API methods for GuildEmojis and stores their cache.
  * @extends {BaseGuildEmojiManager}
  */
 class GuildEmojiManager extends BaseGuildEmojiManager {
-  declare guild: import('../structures/Guild').Guild;
-  constructor(guild: any, iterable?: any) {
+  declare guild: Guild;
+  constructor(guild: Guild, iterable?: Iterable<GuildEmoji>) {
     super(guild.client, iterable);
 
     /**
@@ -21,7 +37,7 @@ class GuildEmojiManager extends BaseGuildEmojiManager {
     this.guild = guild;
   }
 
-  _add(data: any, cache: any = true) {
+  _add(data: RawGuildEmojiData, cache = true): GuildEmoji {
     return super._add(data, cache, { extras: [this.guild] });
   }
 
@@ -49,11 +65,15 @@ class GuildEmojiManager extends BaseGuildEmojiManager {
    *   .then(emoji => console.log(`Created new emoji with name ${emoji.name}!`))
    *   .catch(console.error);
    */
-  async create(attachment: any, name: any, { roles, reason }: any = {}) {
-    attachment = await DataResolver.resolveImage(attachment);
-    if (!attachment) throw new TypeError('REQ_RESOURCE_TYPE');
+  async create(
+    attachment: BufferResolvable | Base64Resolvable,
+    name: string,
+    { roles, reason }: GuildEmojiCreateOptions = {},
+  ): Promise<GuildEmoji> {
+    const resolvedImage = await DataResolver.resolveImage(attachment);
+    if (!resolvedImage) throw new TypeError('REQ_RESOURCE_TYPE');
 
-    const data: any = { image: attachment, name };
+    const data: { image: string; name: string; roles?: Snowflake[] } = { image: resolvedImage, name };
     if (roles) {
       if (!Array.isArray(roles) && !(roles instanceof Collection)) {
         throw new TypeError('INVALID_TYPE', 'options.roles', 'Array or Collection of Roles or Snowflakes', true);
@@ -86,19 +106,26 @@ class GuildEmojiManager extends BaseGuildEmojiManager {
    *   .then(emoji => console.log(`The emoji name is: ${emoji.name}`))
    *   .catch(console.error);
    */
-  async fetch(id: any, { cache = true, force = false }: any = {}) {
+  async fetch(id: Snowflake, options?: BaseFetchOptions): Promise<GuildEmoji>;
+  async fetch(id?: undefined, options?: BaseFetchOptions): Promise<Collection<Snowflake, GuildEmoji>>;
+  async fetch(
+    id?: Snowflake,
+    { cache = true, force = false }: BaseFetchOptions = {},
+  ): Promise<GuildEmoji | Collection<Snowflake, GuildEmoji>> {
     if (id) {
       if (!force) {
         const existing = this.cache.get(id);
         if (existing) return existing;
       }
-      const emoji = await this.client.api.guilds(this.guild.id).emojis(id).get();
+      const emoji: RawGuildEmojiData = await this.client.api.guilds(this.guild.id).emojis(id).get();
       return this._add(emoji, cache);
     }
 
-    const data = await this.client.api.guilds(this.guild.id).emojis.get();
-    const emojis = new Collection();
-    for (const emoji of data) emojis.set(emoji.id, this._add(emoji, cache));
+    const data: RawGuildEmojiData[] = await this.client.api.guilds(this.guild.id).emojis.get();
+    const emojis = new Collection<Snowflake, GuildEmoji>();
+    for (const emoji of data) {
+      if (emoji.id) emojis.set(emoji.id, this._add(emoji, cache));
+    }
     return emojis;
   }
 
@@ -108,7 +135,7 @@ class GuildEmojiManager extends BaseGuildEmojiManager {
    * @param {string} [reason] Reason for deleting the emoji
    * @returns {Promise<void>}
    */
-  async delete(emoji: any, reason: any) {
+  async delete(emoji: EmojiResolvableSource, reason?: string): Promise<void> {
     const id = this.resolveId(emoji);
     if (!id) throw new TypeError('INVALID_TYPE', 'emoji', 'EmojiResolvable', true);
     await this.client.api.guilds(this.guild.id).emojis(id).delete({ reason });
@@ -121,10 +148,14 @@ class GuildEmojiManager extends BaseGuildEmojiManager {
    * @param {string} [reason] Reason for editing this emoji
    * @returns {Promise<GuildEmoji>}
    */
-  async edit(emoji: any, data: any, reason: any) {
+  async edit(emoji: EmojiResolvableSource, data: GuildEmojiEditData, reason?: string): Promise<GuildEmoji> {
     const id = this.resolveId(emoji);
     if (!id) throw new TypeError('INVALID_TYPE', 'emoji', 'EmojiResolvable', true);
-    const roles = data.roles?.map((r: any) => this.guild.roles.resolveId(r));
+    const roles = data.roles
+      ? (data.roles instanceof Collection ? [...data.roles.values()] : data.roles).map(r =>
+          this.guild.roles.resolveId(r),
+        )
+      : undefined;
     const newData = await this.client.api
       .guilds(this.guild.id)
       .emojis(id)
@@ -149,10 +180,10 @@ class GuildEmojiManager extends BaseGuildEmojiManager {
    * @param {EmojiResolvable} emoji The emoji to fetch the author of
    * @returns {Promise<User>}
    */
-  async fetchAuthor(emoji: any) {
-    emoji = this.resolve(emoji);
-    if (!emoji) throw new TypeError('INVALID_TYPE', 'emoji', 'EmojiResolvable', true);
-    if (emoji.managed) {
+  async fetchAuthor(emoji: EmojiResolvableSource): Promise<User> {
+    const resolved = this.resolve(emoji);
+    if (!resolved) throw new TypeError('INVALID_TYPE', 'emoji', 'EmojiResolvable', true);
+    if (resolved.managed) {
       throw new Error('EMOJI_MANAGED');
     }
 
@@ -162,9 +193,10 @@ class GuildEmojiManager extends BaseGuildEmojiManager {
       throw new Error('MISSING_MANAGE_EMOJIS_AND_STICKERS_PERMISSION', this.guild);
     }
 
-    const data = await this.client.api.guilds(this.guild.id).emojis(emoji.id).get();
-    emoji._patch(data);
-    return emoji.author;
+    const data: RawGuildEmojiData = await this.client.api.guilds(this.guild.id).emojis(resolved.id).get();
+    resolved._patch(data);
+    if (!resolved.author) throw new Error('EMOJI_AUTHOR_UNKNOWN');
+    return resolved.author;
   }
 }
 

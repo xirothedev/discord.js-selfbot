@@ -4,16 +4,24 @@ import _errorsModule from '../errors';
 const { TypeError } = _errorsModule;
 import _RoleModule from '../structures/Role';
 const { Role } = _RoleModule;
+import type { Snowflake } from 'discord-api-types/v10';
+import type { RoleResolvable } from '../../typings';
+import type { Guild } from '../structures/Guild';
+import type { GuildEmoji } from '../structures/GuildEmoji';
+
+type RoleResolvableSource = InstanceType<typeof Role> | RoleResolvable;
+type RoleOrRolesSource =
+  RoleResolvableSource | readonly RoleResolvableSource[] | Collection<Snowflake, InstanceType<typeof Role>>;
 
 /**
  * Manages API methods for roles belonging to emojis and stores their cache.
  * @extends {DataManager}
  */
 class GuildEmojiRoleManager extends DataManager<import('../structures/Role').Role> {
-  declare emoji: import('../structures/GuildEmoji').GuildEmoji;
-  declare guild: import('../structures/Guild').Guild;
+  declare emoji: GuildEmoji;
+  declare guild: Guild;
 
-  constructor(emoji: import('../structures/GuildEmoji').GuildEmoji) {
+  constructor(emoji: GuildEmoji) {
     super(emoji.client, Role);
 
     /**
@@ -33,8 +41,8 @@ class GuildEmojiRoleManager extends DataManager<import('../structures/Role').Rol
    * @type {Collection<Snowflake, Role>}
    * @readonly
    */
-  get cache() {
-    return this.guild.roles.cache.filter((role: any) => this.emoji._roles.includes(role.id));
+  get cache(): Collection<Snowflake, InstanceType<typeof Role>> {
+    return this.guild.roles.cache.filter(role => this.emoji._roles.includes(role.id));
   }
 
   /**
@@ -42,11 +50,16 @@ class GuildEmojiRoleManager extends DataManager<import('../structures/Role').Rol
    * @param {RoleResolvable|RoleResolvable[]|Collection<Snowflake, Role>} roleOrRoles The role or roles to add
    * @returns {Promise<GuildEmoji>}
    */
-  async add(roleOrRoles: any) {
-    if (!Array.isArray(roleOrRoles) && !(roleOrRoles instanceof Collection)) roleOrRoles = [roleOrRoles];
+  async add(roleOrRoles: RoleOrRolesSource): Promise<GuildEmoji> {
+    const roles =
+      roleOrRoles instanceof Collection
+        ? [...roleOrRoles.values()]
+        : Array.isArray(roleOrRoles)
+          ? roleOrRoles
+          : [roleOrRoles];
 
-    const resolvedRoles: any[] = [];
-    for (const role of roleOrRoles.values()) {
+    const resolvedRoles: Snowflake[] = [];
+    for (const role of roles) {
       const resolvedRole = this.guild.roles.resolveId(role);
       if (!resolvedRole) {
         throw new TypeError('INVALID_ELEMENT', 'Array or Collection', 'roles', role);
@@ -54,7 +67,7 @@ class GuildEmojiRoleManager extends DataManager<import('../structures/Role').Rol
       resolvedRoles.push(resolvedRole);
     }
 
-    const newRoles = [...new Set(resolvedRoles.concat(...this.cache.keys()))];
+    const newRoles = [...new Set([...resolvedRoles, ...this.cache.keys()])];
     return this.set(newRoles);
   }
 
@@ -63,11 +76,16 @@ class GuildEmojiRoleManager extends DataManager<import('../structures/Role').Rol
    * @param {RoleResolvable|RoleResolvable[]|Collection<Snowflake, Role>} roleOrRoles The role or roles to remove
    * @returns {Promise<GuildEmoji>}
    */
-  async remove(roleOrRoles: any) {
-    if (!Array.isArray(roleOrRoles) && !(roleOrRoles instanceof Collection)) roleOrRoles = [roleOrRoles];
+  async remove(roleOrRoles: RoleOrRolesSource): Promise<GuildEmoji> {
+    const roles =
+      roleOrRoles instanceof Collection
+        ? [...roleOrRoles.values()]
+        : Array.isArray(roleOrRoles)
+          ? roleOrRoles
+          : [roleOrRoles];
 
-    const resolvedRoleIds: any[] = [];
-    for (const role of roleOrRoles.values()) {
+    const resolvedRoleIds: Snowflake[] = [];
+    for (const role of roles) {
       const roleId = this.guild.roles.resolveId(role);
       if (!roleId) {
         throw new TypeError('INVALID_ELEMENT', 'Array or Collection', 'roles', role);
@@ -75,7 +93,7 @@ class GuildEmojiRoleManager extends DataManager<import('../structures/Role').Rol
       resolvedRoleIds.push(roleId);
     }
 
-    const newRoles = [...this.cache.keys()].filter((id: any) => !resolvedRoleIds.includes(id));
+    const newRoles = [...this.cache.keys()].filter(id => !resolvedRoleIds.includes(id));
     return this.set(newRoles);
   }
 
@@ -94,12 +112,12 @@ class GuildEmojiRoleManager extends DataManager<import('../structures/Role').Rol
    *    .then(console.log)
    *    .catch(console.error);
    */
-  set(roles: any) {
+  set(roles: readonly RoleResolvableSource[] | Collection<Snowflake, InstanceType<typeof Role>>) {
     return this.emoji.edit({ roles });
   }
 
-  clone() {
-    const clone = new (this.constructor as any)(this.emoji);
+  clone(): GuildEmojiRoleManager {
+    const clone = new GuildEmojiRoleManager(this.emoji);
     clone._patch([...this.cache.keys()]);
     return clone;
   }
@@ -109,7 +127,7 @@ class GuildEmojiRoleManager extends DataManager<import('../structures/Role').Rol
    * @param {Snowflake[]} roles The new roles
    * @private
    */
-  _patch(roles: any) {
+  _patch(roles: Snowflake[]) {
     this.emoji._roles = roles;
   }
 
