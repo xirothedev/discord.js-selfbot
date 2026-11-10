@@ -20,6 +20,27 @@ const BeforeReadyWhitelist = [
   WSEvents.GUILD_MEMBER_REMOVE,
 ];
 
+interface GatewayPacket {
+  t?: string;
+  d?: unknown;
+  op?: number;
+  s?: number;
+}
+
+interface GatewayInfo {
+  url: string;
+}
+
+interface CloseEventLike {
+  code?: number;
+  reason?: string;
+  wasClean?: boolean;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
 const UNRECOVERABLE_CLOSE_CODES = Object.keys(WSCodes).slice(2).map(Number);
 const UNRESUMABLE_CLOSE_CODES = [
   RPCErrorCodes.UnknownError,
@@ -39,7 +60,7 @@ class WebSocketManager extends EventEmitter {
   declare totalShards: number;
   declare shards: Collection<number, WebSocketShard>;
   declare shardQueue: Set<WebSocketShard>;
-  declare packetQueue: { packet: unknown; shard: unknown }[];
+  declare packetQueue: { packet: GatewayPacket; shard?: WebSocketShard }[];
   declare status: number;
   declare destroyed: boolean;
   declare reconnecting: boolean;
@@ -118,7 +139,7 @@ class WebSocketManager extends EventEmitter {
    * @readonly
    */
   get ping() {
-    const sum = this.shards.reduce((a: any, b: any) => a + b.ping, 0);
+    const sum = this.shards.reduce((a, b) => a + b.ping, 0);
     return sum / this.shards.size;
   }
 
@@ -128,7 +149,7 @@ class WebSocketManager extends EventEmitter {
    * @param {?WebSocketShard} [shard] The shard that emitted this message, if any
    * @private
    */
-  debug(message: any, shard?: any) {
+  debug(message: string, shard?: WebSocketShard) {
     this.client.emit(Events.DEBUG, `[WS => ${shard ? `Shard ${shard.id}` : 'Manager'}] ${message}`);
   }
 
@@ -140,7 +161,7 @@ class WebSocketManager extends EventEmitter {
     let gatewayURL = 'wss://gateway.discord.gg';
     await this.client.api.gateway
       .get({ auth: false })
-      .then((r: any) => (gatewayURL = r.url))
+      .then((r: GatewayInfo) => (gatewayURL = r.url))
       .catch(() => {});
 
     const total = Infinity;
@@ -167,7 +188,7 @@ class WebSocketManager extends EventEmitter {
 
     this.totalShards = shards.length;
     this.debug(`Spawning shards: ${shards.join(', ')}`);
-    this.shardQueue = new Set(shards.map((id: any) => new WebSocketShard(this, id)));
+    this.shardQueue = new Set(shards.map((id: number) => new WebSocketShard(this, id)));
 
     return this.createShards();
   }
@@ -186,7 +207,7 @@ class WebSocketManager extends EventEmitter {
     this.shardQueue.delete(shard);
 
     if (!shard.eventsAttached) {
-      shard.on(ShardEvents.ALL_READY, (unavailableGuilds: any) => {
+      shard.on(ShardEvents.ALL_READY, (unavailableGuilds?: Set<string> | null) => {
         /**
          * Emitted when a shard turns ready.
          * @event Client#shardReady
@@ -199,8 +220,12 @@ class WebSocketManager extends EventEmitter {
         this.checkShardsReady();
       });
 
-      shard.on(ShardEvents.CLOSE, (event: any) => {
-        if (event.code === 1_000 ? this.destroyed : UNRECOVERABLE_CLOSE_CODES.includes(event.code)) {
+      shard.on(ShardEvents.CLOSE, (event: CloseEventLike) => {
+        if (
+          event.code === 1_000
+            ? this.destroyed
+            : event.code !== undefined && UNRECOVERABLE_CLOSE_CODES.includes(event.code)
+        ) {
           /**
            * Emitted when a shard's WebSocket disconnects and will no longer reconnect.
            * @event Client#shardDisconnect
@@ -208,11 +233,11 @@ class WebSocketManager extends EventEmitter {
            * @param {number} id The shard id that disconnected
            */
           this.client.emit(Events.SHARD_DISCONNECT, event, shard.id);
-          this.debug(WSCodes[event.code], shard);
+          if (event.code !== undefined) this.debug(WSCodes[event.code], shard);
           return;
         }
 
-        if (UNRESUMABLE_CLOSE_CODES.includes(event.code)) {
+        if (event.code !== undefined && UNRESUMABLE_CLOSE_CODES.includes(event.code)) {
           // These event codes cannot be resumed
           shard.sessionId = null;
         }
@@ -250,11 +275,12 @@ class WebSocketManager extends EventEmitter {
 
     try {
       await shard.connect();
-    } catch (error: any) {
-      if (error?.code && UNRECOVERABLE_CLOSE_CODES.includes(error.code)) {
-        throw new Error(WSCodes[error.code]);
+    } catch (error: unknown) {
+      const code = isRecord(error) && typeof error.code === 'number' ? error.code : undefined;
+      if (code && UNRECOVERABLE_CLOSE_CODES.includes(code)) {
+        throw new Error(WSCodes[code]);
         // Undefined if session is invalid, error event for regular closes
-      } else if (!error || error.code) {
+      } else if (!error || code) {
         this.debug('Failed to connect to the gateway, requeueing...', shard);
         this.shardQueue.add(shard);
       } else {
@@ -281,9 +307,10 @@ class WebSocketManager extends EventEmitter {
     this.reconnecting = true;
     try {
       await this.createShards();
-    } catch (error: any) {
-      this.debug(`Couldn't reconnect or fetch information about the gateway. ${error}`);
-      if (error.httpStatus !== 401) {
+    } catch (error: unknown) {
+      this.debug(`Couldn't reconnect or fetch information about the gateway. ${String(error)}`);
+      const httpStatus = isRecord(error) && typeof error.httpStatus === 'number' ? error.httpStatus : undefined;
+      if (httpStatus !== 401) {
         this.debug(`Possible network error occurred. Retrying in 5s...`);
         await sleep(5_000);
         this.reconnecting = false;
@@ -314,7 +341,7 @@ class WebSocketManager extends EventEmitter {
    * @param {Object} packet The packet to send
    * @private
    */
-  broadcast(packet: any) {
+  broadcast(packet: unknown) {
     for (const shard of this.shards.values()) shard.send(packet);
   }
 
@@ -337,9 +364,9 @@ class WebSocketManager extends EventEmitter {
    * @returns {boolean}
    * @private
    */
-  handlePacket(packet?: any, shard?: any) {
+  handlePacket(packet?: GatewayPacket, shard?: WebSocketShard) {
     if (packet && this.status !== Status.READY) {
-      if (!BeforeReadyWhitelist.includes(packet.t)) {
+      if (!BeforeReadyWhitelist.includes(packet.t ?? '')) {
         this.packetQueue.push({ packet, shard });
         return false;
       }
@@ -354,12 +381,12 @@ class WebSocketManager extends EventEmitter {
       }
     }
 
-    if (packet && PacketHandlers[packet.t]) {
+    if (packet?.t && PacketHandlers[packet.t]) {
       PacketHandlers[packet.t](this.client, packet, shard);
     } else if (packet) {
       const actionName = String(packet.t || '')
         .split('_')
-        .map((part: any) => part.charAt(0) + part.slice(1).toLowerCase())
+        .map(part => part.charAt(0) + part.slice(1).toLowerCase())
         .join('');
       const action = Reflect.get(this.client.actions, actionName);
       if (action && typeof action === 'object' && 'handle' in action && typeof action.handle === 'function') {
@@ -369,7 +396,7 @@ class WebSocketManager extends EventEmitter {
       /**
        * Emitted whenever a packet isn't handled.
        * @event Client#unhandledPacket
-       * @param {Object} packet The packet (t: EVENT_NAME, d: any)
+       * @param {Object} packet The packet (t: EVENT_NAME, d: unknown)
        * @param {Number} shard The shard that received the packet (Shard 0)
        */
       this.client.emit(Events.UNHANDLED_PACKET, packet, shard);
@@ -384,7 +411,7 @@ class WebSocketManager extends EventEmitter {
    */
   checkShardsReady() {
     if (this.status === Status.READY) return;
-    if (this.shards.size !== this.totalShards || this.shards.some((s: any) => s.status !== Status.READY)) {
+    if (this.shards.size !== this.totalShards || this.shards.some(s => s.status !== Status.READY)) {
       return;
     }
 
