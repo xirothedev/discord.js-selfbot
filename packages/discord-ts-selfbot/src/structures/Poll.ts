@@ -79,7 +79,7 @@ class Poll extends Base {
     this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: APIPoll) {
     if (data.results) {
       /**
        * Whether this poll's results have been precisely counted

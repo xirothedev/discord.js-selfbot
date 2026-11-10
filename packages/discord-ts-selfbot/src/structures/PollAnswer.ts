@@ -19,7 +19,11 @@ class PollAnswer extends Base {
   declare _emoji: APIPartialEmoji | null;
   declare voteCount: number;
 
-  constructor(client: import('../client/Client').default, data: APIPollAnswer & { count?: number }, poll: Poll) {
+  constructor(
+    client: import('../client/Client').default,
+    data: Partial<APIPollAnswer> & { count?: number; answer_id?: number },
+    poll: Poll,
+  ) {
     super(client);
 
     /**
@@ -34,13 +38,13 @@ class PollAnswer extends Base {
      * The id of this answer
      * @type {number}
      */
-    this.id = data.answer_id;
+    this.id = data.answer_id ?? 0;
 
     /**
      * The text of this answer
      * @type {?string}
      */
-    this.text = data.poll_media.text ?? null;
+    this.text = data.poll_media?.text ?? null;
 
     /**
      * The raw emoji of this answer
@@ -48,12 +52,12 @@ class PollAnswer extends Base {
      * @type {?APIPartialEmoji}
      * @private
      */
-    Object.defineProperty(this, '_emoji', { value: data.poll_media.emoji ?? null });
+    Object.defineProperty(this, '_emoji', { value: data.poll_media?.emoji ?? null });
 
     this._patch(data);
   }
 
-  _patch(data: APIPollAnswer & { count?: number }) {
+  _patch(data: Partial<APIPollAnswer> & { count?: number }) {
     // This `count` field comes from `poll.results.answer_counts`
     if ('count' in data) {
       /**

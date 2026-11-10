@@ -16,7 +16,11 @@ type ManagerCache<Holds> = Collection<string, Holds> & {
 class CachedManager<Holds extends DataHold = DataHold> extends DataManager<Holds> {
   declare _cache: ManagerCache<Holds>;
 
-  constructor(client: any, holds: new (...args: never[]) => Holds, iterable?: Iterable<Holds>) {
+  constructor(
+    client: import('../client/Client').default,
+    holds: new (...args: never[]) => Holds,
+    iterable?: Iterable<Holds>,
+  ) {
     super(client, holds);
 
     /**

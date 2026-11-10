@@ -10,6 +10,13 @@ import type { Snowflake } from 'discord-api-types/v10';
 import type { OverwriteType, PermissionOverwriteOptions } from '../../typings';
 import type GuildChannel from './GuildChannel';
 
+interface PermissionOverwriteData {
+  id: string;
+  type?: string | number;
+  allow?: unknown;
+  deny?: unknown;
+}
+
 /**
  * Represents a permission overwrite for a role or member in a guild channel.
  * @extends {Base}
@@ -21,7 +28,11 @@ class PermissionOverwrites extends Base {
   declare deny: Readonly<Permissions>;
   declare allow: Readonly<Permissions>;
 
-  constructor(client: import('../client/Client').default, data: any, channel: GuildChannel) {
+  constructor(
+    client: import('../client/Client').default,
+    data: PermissionOverwriteData | PermissionOverwrites | undefined,
+    channel: GuildChannel,
+  ) {
     super(client);
 
     /**
@@ -35,7 +46,7 @@ class PermissionOverwrites extends Base {
     if (data) this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: PermissionOverwriteData | PermissionOverwrites) {
     /**
      * The overwrite's id, either a {@link User} or a {@link Role} id
      * @type {Snowflake}
@@ -55,7 +66,7 @@ class PermissionOverwrites extends Base {
        * The permissions that are denied for the user or role.
        * @type {Readonly<Permissions>}
        */
-      this.deny = new Permissions(BigInt(data.deny)).freeze();
+      this.deny = new Permissions(Permissions.resolve(data.deny ?? 0n)).freeze();
     }
 
     if ('allow' in data) {
@@ -63,7 +74,7 @@ class PermissionOverwrites extends Base {
        * The permissions that are allowed for the user or role.
        * @type {Readonly<Permissions>}
        */
-      this.allow = new Permissions(BigInt(data.allow)).freeze();
+      this.allow = new Permissions(Permissions.resolve(data.allow ?? 0n)).freeze();
     }
   }
 

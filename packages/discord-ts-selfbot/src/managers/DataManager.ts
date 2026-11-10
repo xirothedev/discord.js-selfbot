@@ -20,7 +20,7 @@ function readId(hold: object): string | undefined {
 class DataManager<Holds extends DataHold = DataHold> extends BaseManager {
   declare holds: new (...args: never[]) => Holds;
 
-  constructor(client: any, holds: new (...args: never[]) => Holds) {
+  constructor(client: import('../client/Client').default, holds: new (...args: never[]) => Holds) {
     super(client);
 
     /**

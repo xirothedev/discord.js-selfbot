@@ -30,7 +30,7 @@ class Typing extends Base {
     this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: RawTypingData) {
     if ('timestamp' in data) {
       /**
        * The UNIX timestamp in milliseconds the user started typing at

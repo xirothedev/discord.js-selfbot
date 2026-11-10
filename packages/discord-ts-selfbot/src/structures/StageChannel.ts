@@ -1,12 +1,13 @@
 import BaseGuildVoiceChannel from './BaseGuildVoiceChannel';
 import type { StageInstanceCreateOptions } from '../../typings';
+import type { PatchOf } from '../types/schema';
 
 /**
  * Represents a guild stage channel on Discord.
  * @extends {BaseGuildVoiceChannel}
  */
 class StageChannel extends BaseGuildVoiceChannel {
-  _patch(data: any) {
+  _patch(data: PatchOf<'GuildChannel'> & { topic?: string | null }) {
     super._patch(data);
 
     if ('topic' in data) {
@@ -24,7 +25,7 @@ class StageChannel extends BaseGuildVoiceChannel {
    * @readonly
    */
   get stageInstance() {
-    return this.guild.stageInstances.cache.find((stageInstance: any) => stageInstance.channelId === this.id) ?? null;
+    return this.guild.stageInstances.cache.find(stageInstance => stageInstance.channelId === this.id) ?? null;
   }
 
   /**

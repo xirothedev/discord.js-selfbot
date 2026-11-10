@@ -66,7 +66,7 @@ class Emoji extends Base implements EmojiEntity {
     return deletedEmojis.has(this);
   }
 
-  set deleted(value: any) {
+  set deleted(value: boolean) {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(

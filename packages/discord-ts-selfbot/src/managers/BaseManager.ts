@@ -4,7 +4,7 @@
  */
 class BaseManager {
   declare client: import('../client/Client').default;
-  constructor(client: any) {
+  constructor(client: import('../client/Client').default) {
     /**
      * The client that instantiated this Manager
      * @name BaseManager#client

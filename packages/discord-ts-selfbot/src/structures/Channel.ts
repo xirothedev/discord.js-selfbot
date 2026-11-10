@@ -2,11 +2,13 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 import process from 'node:process';
 import Base from './Base';
+import type { Client } from '../client/Client';
+import type { Guild } from './Guild';
+import type { RawChannelData } from '../../typings/rawDataTypes';
 import ChannelFlags from '../util/ChannelFlags';
 import _ConstantsModule from '../util/Constants';
 const { ChannelTypes, ThreadChannelTypes, VoiceBasedChannelTypes } = _ConstantsModule;
 import SnowflakeUtil from '../util/SnowflakeUtil';
-import type { RawChannelData } from '../../typings/rawDataTypes';
 import type { ChannelEntity } from '../types/entities/channel';
 import type { PatchOf } from '../types/schema';
 let CategoryChannel;
@@ -202,7 +204,12 @@ class Channel extends Base implements ChannelEntity {
     return this.type === 'GUILD_DIRECTORY';
   }
 
-  static create(client: any, data: any, guild: any, { allowUnknownGuild }: any = {}) {
+  static create(
+    client: Client,
+    data: RawChannelData,
+    guild?: Guild | null,
+    { allowUnknownGuild = false }: { allowUnknownGuild?: boolean } = {},
+  ) {
     CategoryChannel ??= require('./CategoryChannel').default;
     DMChannel ??= require('./DMChannel').default;
     NewsChannel ??= require('./NewsChannel').default;
@@ -216,46 +223,50 @@ class Channel extends Base implements ChannelEntity {
     MediaChannel ??= require('./MediaChannel').default;
 
     let channel;
-    if (!data.guild_id && !guild) {
-      if ((data.recipients && data.type !== ChannelTypes.GROUP_DM) || data.type === ChannelTypes.DM) {
+    const guildId = 'guild_id' in data ? data.guild_id : undefined;
+    if (!guildId && !guild) {
+      if (
+        ('recipients' in data && data.recipients && data.type !== ChannelTypes.GROUP_DM) ||
+        data.type === ChannelTypes.DM
+      ) {
         channel = new DMChannel(client, data);
       } else if (data.type === ChannelTypes.GROUP_DM) {
         const GroupDMChannel = require('./GroupDMChannel').default;
         channel = new GroupDMChannel(client, data);
       }
     } else {
-      guild ??= client.guilds.cache.get(data.guild_id);
+      guild ??= guildId ? client.guilds.cache.get(guildId) : undefined;
 
       if (guild || allowUnknownGuild) {
         switch (data.type) {
           case ChannelTypes.GUILD_TEXT: {
-            channel = new TextChannel(guild, data, client);
+            channel = new TextChannel(guild!, data, client);
             break;
           }
           case ChannelTypes.GUILD_VOICE: {
-            channel = new VoiceChannel(guild, data, client);
+            channel = new VoiceChannel(guild!, data, client);
             break;
           }
           case ChannelTypes.GUILD_CATEGORY: {
-            channel = new CategoryChannel(guild, data, client);
+            channel = new CategoryChannel(guild!, data, client);
             break;
           }
           case ChannelTypes.GUILD_NEWS: {
-            channel = new NewsChannel(guild, data, client);
+            channel = new NewsChannel(guild!, data, client);
             break;
           }
           case ChannelTypes.GUILD_STORE: {
-            channel = new StoreChannel(guild, data, client);
+            channel = new StoreChannel(guild!, data, client);
             break;
           }
           case ChannelTypes.GUILD_STAGE_VOICE: {
-            channel = new StageChannel(guild, data, client);
+            channel = new StageChannel(guild!, data, client);
             break;
           }
           case ChannelTypes.GUILD_NEWS_THREAD:
           case ChannelTypes.GUILD_PUBLIC_THREAD:
           case ChannelTypes.GUILD_PRIVATE_THREAD: {
-            channel = new ThreadChannel(guild, data, client);
+            channel = new ThreadChannel(guild!, data, client);
             if (!allowUnknownGuild) channel.parent?.threads.cache.set(channel.id, channel);
             break;
           }
@@ -265,20 +276,20 @@ class Channel extends Base implements ChannelEntity {
             break;
 
           case ChannelTypes.GUILD_FORUM:
-            channel = new ForumChannel(guild, data, client);
+            channel = new ForumChannel(guild!, data, client);
             break;
 
           case ChannelTypes.GUILD_MEDIA:
-            channel = new MediaChannel(guild, data, client);
+            channel = new MediaChannel(guild!, data, client);
             break;
         }
-        if (channel && !allowUnknownGuild) guild.channels?.cache.set(channel.id, channel);
+        if (channel && !allowUnknownGuild && guild) guild.channels.cache.set(channel.id, channel);
       }
     }
     return channel;
   }
 
-  toJSON(...props: any[]) {
+  toJSON(...props: unknown[]) {
     return super.toJSON({ createdTimestamp: true }, ...props);
   }
 }

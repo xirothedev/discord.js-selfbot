@@ -357,7 +357,7 @@ class Invite extends Base implements InviteEntity {
    * @param {string} [reason] Reason for deleting this invite
    * @returns {Promise<Invite>}
    */
-  async delete(reason: any) {
+  async delete(reason?: string) {
     await this.client.api.invites[this.code].delete({ reason });
     return this;
   }

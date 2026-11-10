@@ -6,8 +6,8 @@ import InteractionResponse from '../structures/interfaces/InteractionResponses';
  * @extends {CachedManager}
  */
 class InteractionManager extends CachedManager<InteractionResponse> {
-  declare channel: import('../structures/interfaces/TextBasedChannel').default;
-  constructor(channel: any, iterable?: any) {
+  declare channel: import('../types/channels').TextBasedChannel;
+  constructor(channel: import('../types/channels').TextBasedChannel, iterable?: Iterable<InteractionResponse>) {
     super(channel.client, InteractionResponse, iterable);
 
     /**
@@ -23,11 +23,11 @@ class InteractionManager extends CachedManager<InteractionResponse> {
    * @name InteractionManager#cache
    */
 
-  _add(data: any, cache: any = true, _options?: unknown) {
+  _add(data: Record<string, unknown>, cache = true, _options?: unknown) {
     data = {
       ...data,
       channelId: this.channel.id,
-      guildId: this.channel.guild?.id,
+      guildId: 'guild' in this.channel && this.channel.guild ? this.channel.guild.id : undefined,
     };
     if (!data.id) return;
     // eslint-disable-next-line consistent-return

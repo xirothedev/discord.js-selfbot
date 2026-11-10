@@ -7,7 +7,6 @@ import type { APIMessage } from 'discord-api-types/v10';
 import type { CacheType, PartialModalActionRow, PartialTextInputData } from '../../typings';
 import type { RawModalSubmitInteractionData } from '../../typings/rawDataTypes';
 import type { Message } from './Message';
-const { MessageComponentTypes } = _ConstantsModule;
 
 /**
  * Represents a modal submit interaction.
@@ -51,9 +50,9 @@ class ModalSubmitInteraction<Cached extends CacheType = CacheType> extends Inter
      * @type {PartialModalActionRow[]}
      */
     this.components =
-      data.data.components?.map((c: any) => ({
-        type: MessageComponentTypes[c.type],
-        components: ModalSubmitInteraction.transformComponent(c),
+      data.data.components?.map(component => ({
+        type: 'TEXT_INPUT' as const,
+        components: 'components' in component ? ModalSubmitInteraction.transformComponent(component) : [],
       })) ?? [];
 
     /**
@@ -101,10 +100,10 @@ class ModalSubmitInteraction<Cached extends CacheType = CacheType> extends Inter
   static transformComponent(rawComponent: {
     components: { value: string; type: number; custom_id: string }[];
   }): PartialTextInputData[] {
-    return rawComponent.components.map((c: any) => ({
-      value: c.value,
-      type: MessageComponentTypes[c.type],
-      customId: c.custom_id,
+    return rawComponent.components.map(component => ({
+      value: component.value,
+      type: 'TEXT_INPUT' as const,
+      customId: component.custom_id,
     }));
   }
 

@@ -1,4 +1,7 @@
 import Base from './Base';
+import type { Client } from '../client/Client';
+import type { Guild } from './Guild';
+import type { RawGuildBanData } from '../../typings/rawDataTypes';
 
 /**
  * Represents a ban in a guild on Discord.
@@ -8,7 +11,7 @@ class GuildBan extends Base {
   declare guild: import('./Guild').Guild;
   declare user: import('./User').User;
   declare reason?: string | null;
-  constructor(client: any, data: any, guild: any) {
+  constructor(client: Client, data: RawGuildBanData, guild: Guild) {
     super(client);
 
     /**
@@ -20,7 +23,7 @@ class GuildBan extends Base {
     this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: RawGuildBanData) {
     if ('user' in data) {
       /**
        * The user this ban applies to

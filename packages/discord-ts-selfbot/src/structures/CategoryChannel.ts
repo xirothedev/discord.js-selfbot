@@ -1,4 +1,5 @@
 import GuildChannel from './GuildChannel';
+import type { CategoryCreateChannelOptions } from '../../typings';
 
 /**
  * Represents a guild category channel on Discord.
@@ -24,7 +25,7 @@ class CategoryChannel extends GuildChannel {
    * @readonly
    */
   get children() {
-    return this.guild.channels.cache.filter((c: any) => c.parentId === this.id);
+    return this.guild.channels.cache.filter(channel => channel.parentId === this.id);
   }
 
   /**
@@ -72,7 +73,7 @@ class CategoryChannel extends GuildChannel {
    * @param {CategoryCreateChannelOptions} options Options for creating the new channel
    * @returns {Promise<GuildChannel>}
    */
-  createChannel(name: any, options: any) {
+  createChannel(name: string, options: CategoryCreateChannelOptions) {
     return this.guild.channels.create(name, {
       ...options,
       parent: this.id,

@@ -1,5 +1,7 @@
 import CachedManager from './CachedManager';
 import MessageReaction from '../structures/MessageReaction';
+import type { Message } from '../structures/Message';
+import type { RawMessageReactionSource } from '../structures/MessageReaction';
 
 /**
  * Manages API methods for reactions and holds their cache.
@@ -7,7 +9,7 @@ import MessageReaction from '../structures/MessageReaction';
  */
 class ReactionManager extends CachedManager<MessageReaction> {
   declare message: import('../structures/Message').Message;
-  constructor(message: any, iterable?: any) {
+  constructor(message: Message, iterable?: Iterable<MessageReaction>) {
     super(message.client, MessageReaction, iterable);
 
     /**
@@ -17,8 +19,8 @@ class ReactionManager extends CachedManager<MessageReaction> {
     this.message = message;
   }
 
-  _add(data: any, cache: any = true) {
-    return super._add(data, cache, { id: data.emoji.id ?? data.emoji.name, extras: [this.message] });
+  _add(data: RawMessageReactionSource, cache = true): MessageReaction {
+    return super._add(data, cache, { id: data.emoji.id ?? data.emoji.name ?? undefined, extras: [this.message] });
   }
 
   /**

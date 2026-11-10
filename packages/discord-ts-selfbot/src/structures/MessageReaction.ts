@@ -5,7 +5,9 @@ import Util from '../util/Util';
 import type { ReactionCountDetailsData } from '../../typings';
 import type { RawMessageReactionData } from '../../typings/rawDataTypes';
 
-type RawMessageReactionSource = RawMessageReactionData & {
+export type RawMessageReactionSource = Omit<Partial<RawMessageReactionData>, 'count'> & {
+  emoji: import('discord-api-types/v10').APIPartialEmoji;
+  count?: number | null;
   me?: boolean;
   me_burst?: boolean;
 };
@@ -16,6 +18,18 @@ type RawMessageReactionPatch = {
   count_details?: ReactionCountDetailsData;
 };
 import type { Message } from './Message';
+import type { User } from './User';
+
+function isReactionCountDetails(value: unknown): value is ReactionCountDetailsData {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'burst' in value &&
+    typeof value.burst === 'number' &&
+    'normal' in value &&
+    typeof value.normal === 'number'
+  );
+}
 
 /**
  * Represents a reaction to a message.
@@ -68,7 +82,12 @@ class MessageReaction {
 
     this.burstColors = null;
 
-    this._patch(data);
+    this._patch({
+      burst_colors: data.burst_colors,
+      count: data.count ?? undefined,
+      count_details:
+        'count_details' in data && isReactionCountDetails(data.count_details) ? data.count_details : undefined,
+    });
   }
 
   _patch(data: RawMessageReactionPatch) {
@@ -180,7 +199,7 @@ class MessageReaction {
     return Util.flatten(this, { emoji: 'emojiId', message: 'messageId' });
   }
 
-  _add(user: any, burst: any) {
+  _add(user: User, burst = false) {
     if (this.partial) return;
     this.users.cache.set(user.id, user);
     if (!this.me || user.id !== this.message.client.user!.id || this.count === 0) {
@@ -194,7 +213,7 @@ class MessageReaction {
     }
   }
 
-  _remove(user: any, burst: any) {
+  _remove(user: User, burst = false) {
     if (this.partial) return;
     this.users.cache.delete(user.id);
     if (!this.me || user.id !== this.message.client.user!.id) {
