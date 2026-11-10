@@ -73,10 +73,6 @@ interface ApplicationCommandComparable {
   default_member_permissions?: string | null;
 }
 
-/**
- * Represents an application command.
- * @extends {Base}
- */
 class ApplicationCommand extends Base {
   declare id: Snowflake;
   declare applicationId: Snowflake;
@@ -104,41 +100,16 @@ class ApplicationCommand extends Base {
   ) {
     super(client);
 
-    /**
-     * The command's id
-     * @type {Snowflake}
-     */
     this.id = data.id;
 
-    /**
-     * The parent application's id
-     * @type {Snowflake}
-     */
     this.applicationId = data.application_id;
 
-    /**
-     * The guild this command is part of
-     * @type {?Guild}
-     */
     this.guild = guild ?? null;
 
-    /**
-     * The guild's id this command is part of, this may be non-null when `guild` is `null` if the command
-     * was fetched from the `ApplicationCommandManager`
-     * @type {?Snowflake}
-     */
     this.guildId = guild?.id ?? guildId ?? null;
 
-    /**
-     * The manager for permissions of this command on its guild or arbitrary guilds when the command is global
-     * @type {ApplicationCommandPermissionsManager}
-     */
     this.permissions = new ApplicationCommandPermissionsManager(this);
 
-    /**
-     * The type of this application command
-     * @type {ApplicationCommandType}
-     */
     this.type = ApplicationCommandTypes[data.type];
 
     this._patch(data);
@@ -146,66 +117,38 @@ class ApplicationCommand extends Base {
 
   _patch(data: ApplicationCommandPatch) {
     if ('name' in data) {
-      /**
-       * The name of this command
-       * @type {string}
-       */
       this.name = data.name!;
     }
 
     if ('name_localizations' in data) {
-      /**
-       * The name localizations for this command
-       * @type {?Object<Locale, string>}
-       */
       this.nameLocalizations = data.name_localizations ?? null;
     } else {
       this.nameLocalizations ??= null;
     }
 
     if ('name_localized' in data) {
-      /**
-       * The localized name for this command
-       * @type {?string}
-       */
       this.nameLocalized = data.name_localized ?? null;
     } else {
       this.nameLocalized ??= null;
     }
 
     if ('description' in data) {
-      /**
-       * The description of this command
-       * @type {string}
-       */
       this.description = data.description!;
     }
 
     if ('description_localizations' in data) {
-      /**
-       * The description localizations for this command
-       * @type {?Object<Locale, string>}
-       */
       this.descriptionLocalizations = data.description_localizations ?? null;
     } else {
       this.descriptionLocalizations ??= null;
     }
 
     if ('description_localized' in data) {
-      /**
-       * The localized description for this command
-       * @type {?string}
-       */
       this.descriptionLocalized = data.description_localized ?? null;
     } else {
       this.descriptionLocalized ??= null;
     }
 
     if ('options' in data) {
-      /**
-       * The options of this command
-       * @type {ApplicationCommandOption[]}
-       */
       this.options = (data.options ?? []).map(o => ApplicationCommand.transformOption(o, true));
     } else {
       this.options ??= [];
@@ -223,10 +166,6 @@ class ApplicationCommand extends Base {
     /* eslint-disable max-len */
 
     if ('default_member_permissions' in data) {
-      /**
-       * The default bitfield used to determine whether this command be used in a guild
-       * @type {?Readonly<Permissions>}
-       */
       this.defaultMemberPermissions = data.default_member_permissions
         ? new Permissions(BigInt(data.default_member_permissions)).freeze()
         : null;
@@ -235,165 +174,45 @@ class ApplicationCommand extends Base {
     }
 
     if ('dm_permission' in data) {
-      /**
-       * Whether the command can be used in DMs
-       * <info>This property is always `null` on guild commands</info>
-       * @type {?boolean}
-       */
       this.dmPermission = data.dm_permission ?? null;
     } else {
       this.dmPermission ??= null;
     }
 
     if ('version' in data) {
-      /**
-       * Autoincrementing version identifier updated during substantial record changes
-       * @type {Snowflake}
-       */
       this.version = data.version!;
     }
   }
 
-  /**
-   * The timestamp the command was created at
-   * @type {number}
-   * @readonly
-   */
   get createdTimestamp() {
     return SnowflakeUtil.timestampFrom(this.id);
   }
 
-  /**
-   * The time the command was created at
-   * @type {Date}
-   * @readonly
-   */
   get createdAt() {
     return new Date(this.createdTimestamp);
   }
 
-  /**
-   * The manager that this command belongs to
-   * @type {ApplicationCommandManager}
-   * @readonly
-   */
   get manager() {
     if (!this.client.application) throw new Error('CLIENT_NOT_READY');
     return this.client.application.commands;
   }
 
-  /**
-   * Data for creating or editing an application command.
-   * @typedef {Object} ApplicationCommandData
-   * @property {string} name The name of the command
-   * @property {Object<Locale, string>} [nameLocalizations] The localizations for the command name
-   * @property {string} description The description of the command
-   * @property {Object<Locale, string>} [descriptionLocalizations] The localizations for the command description
-   * @property {ApplicationCommandType} [type] The type of the command
-   * @property {ApplicationCommandOptionData[]} [options] Options for the command
-   * @property {boolean} [defaultPermission] Whether the command is enabled by default when the app is added to a guild
-   * @property {?PermissionResolvable} [defaultMemberPermissions] The bitfield used to determine the default permissions
-   * a member needs in order to run the command
-   * @property {boolean} [dmPermission] Whether the command is enabled in DMs
-   */
-
-  /**
-   * An option for an application command or subcommand.
-   * <info>In addition to the listed properties, when used as a parameter,
-   * API style `snake_case` properties can be used for compatibility with generators like `@discordjs/builders`.</info>
-   * <warn>Note that providing a value for the `camelCase` counterpart for any `snake_case` property
-   * will discard the provided `snake_case` property.</warn>
-   * @typedef {Object} ApplicationCommandOptionData
-   * @property {ApplicationCommandOptionType|number} type The type of the option
-   * @property {string} name The name of the option
-   * @property {Object<Locale, string>} [nameLocalizations] The name localizations for the option
-   * @property {string} description The description of the option
-   * @property {Object<Locale, string>} [descriptionLocalizations] The description localizations for the option
-   * @property {boolean} [autocomplete] Whether the option is an autocomplete option
-   * @property {boolean} [required] Whether the option is required
-   * @property {ApplicationCommandOptionChoiceData[]} [choices] The choices of the option for the user to pick from
-   * @property {ApplicationCommandOptionData[]} [options] Additional options if this option is a subcommand (group)
-   * @property {ChannelType[]|number[]} [channelTypes] When the option type is channel,
-   * the allowed types of channels that can be selected
-   * @property {number} [minValue] The minimum value for an `INTEGER` or `NUMBER` option
-   * @property {number} [maxValue] The maximum value for an `INTEGER` or `NUMBER` option
-   * @property {number} [minLength] The minimum length for a `STRING` option
-   * (maximum of `6000`)
-   * @property {number} [maxLength] The maximum length for a `STRING` option
-   * (maximum of `6000`)
-   */
-
-  /**
-   * @typedef {Object} ApplicationCommandOptionChoiceData
-   * @property {string} name The name of the choice
-   * @property {Object<Locale, string>} [nameLocalizations] The localized names for this choice
-   * @property {string|number} value The value of the choice
-   */
-
-  /**
-   * Edits this application command.
-   * @param {Partial<ApplicationCommandData>} data The data to update the command with
-   * @returns {Promise<ApplicationCommand>}
-   * @example
-   * // Edit the description of this command
-   * command.edit({
-   *   description: 'New description',
-   * })
-   *   .then(console.log)
-   *   .catch(console.error);
-   */
   edit(data: Partial<ApplicationCommandData>) {
     return this.manager.edit(this, data, this.guildId ?? undefined);
   }
 
-  /**
-   * Edits the name of this ApplicationCommand
-   * @param {string} name The new name of the command
-   * @returns {Promise<ApplicationCommand>}
-   */
   setName(name: string) {
     return this.edit({ name });
   }
 
-  /**
-   * Edits the localized names of this ApplicationCommand
-   * @param {Object<Locale, string>} nameLocalizations The new localized names for the command
-   * @returns {Promise<ApplicationCommand>}
-   * @example
-   * // Edit the name localizations of this command
-   * command.setLocalizedNames({
-   *   'en-GB': 'test',
-   *   'pt-BR': 'teste',
-   * })
-   *   .then(console.log)
-   *   .catch(console.error)
-   */
   setNameLocalizations(nameLocalizations: LocalizationMap) {
     return this.edit({ nameLocalizations });
   }
 
-  /**
-   * Edits the description of this ApplicationCommand
-   * @param {string} description The new description of the command
-   * @returns {Promise<ApplicationCommand>}
-   */
   setDescription(description: string) {
     return this.edit({ description });
   }
 
-  /**
-   * Edits the localized descriptions of this ApplicationCommand
-   * @param {Object<Locale, string>} descriptionLocalizations The new localized descriptions for the command
-   * @returns {Promise<ApplicationCommand>}
-   * @example
-   * // Edit the description localizations of this command
-   * command.setLocalizedDescriptions({
-   *   'en-GB': 'A test command',
-   *   'pt-BR': 'Um comando de teste',
-   * })
-   *   .then(console.log)
-   *   .catch(console.error)
-   */
   setDescriptionLocalizations(descriptionLocalizations: LocalizationMap) {
     return this.edit({ descriptionLocalizations });
   }
@@ -410,55 +229,22 @@ class ApplicationCommand extends Base {
   }
   /* eslint-enable max-len */
 
-  /**
-   * Edits the default member permissions of this ApplicationCommand
-   * @param {?PermissionResolvable} defaultMemberPermissions The default member permissions required to run this command
-   * @returns {Promise<ApplicationCommand>}
-   */
   setDefaultMemberPermissions(defaultMemberPermissions: PermissionResolvable | null) {
     return this.edit({ defaultMemberPermissions });
   }
 
-  /**
-   * Edits the DM permission of this ApplicationCommand
-   * @param {boolean} [dmPermission=true] Whether the command can be used in DMs
-   * @returns {Promise<ApplicationCommand>}
-   */
   setDMPermission(dmPermission = true) {
     return this.edit({ dmPermission });
   }
 
-  /**
-   * Edits the options of this ApplicationCommand
-   * @param {ApplicationCommandOptionData[]} options The options to set for this command
-   * @returns {Promise<ApplicationCommand>}
-   */
   setOptions(options: ApplicationCommandOptionData[]) {
     return this.edit({ options });
   }
 
-  /**
-   * Deletes this command.
-   * @returns {Promise<ApplicationCommand>}
-   * @example
-   * // Delete this command
-   * command.delete()
-   *   .then(console.log)
-   *   .catch(console.error);
-   */
   delete() {
     return this.manager.delete(this, this.guildId ?? undefined);
   }
 
-  /**
-   * Whether this command equals another command. It compares all properties, so for most operations
-   * it is advisable to just compare `command.id === command2.id` as it is much faster and is often
-   * what most users need.
-   * @param {ApplicationCommand|ApplicationCommandData|APIApplicationCommand} command The command to compare with
-   * @param {boolean} [enforceOptionOrder=false] Whether to strictly check that options and choices are in the same
-   * order in the array <info>The client may not always respect this ordering!</info>
-   * @returns {boolean}
-   */
   equals(command: ApplicationCommand | ApplicationCommandComparable, enforceOptionOrder = false) {
     // If given an id, check if the id matches
     if (command.id && this.id !== command.id) return false;
@@ -506,16 +292,6 @@ class ApplicationCommand extends Base {
     return true;
   }
 
-  /**
-   * Recursively checks that all options for an {@link ApplicationCommand} are equal to the provided options.
-   * In most cases it is better to compare using {@link ApplicationCommand#equals}
-   * @param {ApplicationCommandOptionData[]} existing The options on the existing command,
-   * should be {@link ApplicationCommand#options}
-   * @param {ApplicationCommandOptionData[]|APIApplicationCommandOption[]} options The options to compare against
-   * @param {boolean} [enforceOptionOrder=false] Whether to strictly check that options and choices are in the same
-   * order in the array <info>The client may not always respect this ordering!</info>
-   * @returns {boolean}
-   */
   static optionsEqual(
     existing: ApplicationCommandOptionSource[],
     options: ApplicationCommandOptionSource[],
@@ -533,17 +309,6 @@ class ApplicationCommand extends Base {
     return true;
   }
 
-  /**
-   * Checks that an option for an {@link ApplicationCommand} is equal to the provided option
-   * In most cases it is better to compare using {@link ApplicationCommand#equals}
-   * @param {ApplicationCommandOptionData} existing The option on the existing command,
-   * should be from {@link ApplicationCommand#options}
-   * @param {ApplicationCommandOptionData|APIApplicationCommandOption} option The option to compare against
-   * @param {boolean} [enforceOptionOrder=false] Whether to strictly check that options or choices are in the same
-   * order in their array <info>The client may not always respect this ordering!</info>
-   * @returns {boolean}
-   * @private
-   */
   static _optionEquals(
     existing: ApplicationCommandOptionSource,
     option: ApplicationCommandOptionSource,
@@ -602,46 +367,6 @@ class ApplicationCommand extends Base {
     return true;
   }
 
-  /**
-   * An option for an application command or subcommand.
-   * @typedef {Object} ApplicationCommandOption
-   * @property {ApplicationCommandOptionType} type The type of the option
-   * @property {string} name The name of the option
-   * @property {Object<string, string>} [nameLocalizations] The localizations for the option name
-   * @property {string} [nameLocalized] The localized name for this option
-   * @property {string} description The description of the option
-   * @property {Object<string, string>} [descriptionLocalizations] The localizations for the option description
-   * @property {string} [descriptionLocalized] The localized description for this option
-   * @property {boolean} [required] Whether the option is required
-   * @property {boolean} [autocomplete] Whether the option is an autocomplete option
-   * @property {ApplicationCommandOptionChoice[]} [choices] The choices of the option for the user to pick from
-   * @property {ApplicationCommandOption[]} [options] Additional options if this option is a subcommand (group)
-   * @property {ChannelType[]} [channelTypes] When the option type is channel,
-   * the allowed types of channels that can be selected
-   * @property {number} [minValue] The minimum value for an `INTEGER` or `NUMBER` option
-   * @property {number} [maxValue] The maximum value for an `INTEGER` or `NUMBER` option
-   * @property {number} [minLength] The minimum length for a `STRING` option
-   * (maximum of `6000`)
-   * @property {number} [maxLength] The maximum length for a `STRING` option
-   * (maximum of `6000`)
-   */
-
-  /**
-   * A choice for an application command option.
-   * @typedef {Object} ApplicationCommandOptionChoice
-   * @property {string} name The name of the choice
-   * @property {?string} nameLocalized The localized name of the choice in the provided locale, if any
-   * @property {?Object<string, string>} [nameLocalizations] The localized names for this choice
-   * @property {string|number} value The value of the choice
-   */
-
-  /**
-   * Transforms an {@link ApplicationCommandOptionData} object into something that can be used with the API.
-   * @param {ApplicationCommandOptionData|ApplicationCommandOption} option The option to transform
-   * @param {boolean} [received] Whether this option has been received from Discord
-   * @returns {APIApplicationCommandOption}
-   * @private
-   */
   static transformOption(option: ApplicationCommandOptionSource, received: true): ApplicationCommandOptionSource;
   static transformOption(option: ApplicationCommandOptionSource, received?: false): Record<string, unknown>;
   static transformOption(
@@ -697,12 +422,3 @@ export default ApplicationCommand;
 export { ApplicationCommand };
 
 /* eslint-disable max-len */
-/**
- * @external APIApplicationCommand
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure}
- */
-
-/**
- * @external APIApplicationCommandOption
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
- */

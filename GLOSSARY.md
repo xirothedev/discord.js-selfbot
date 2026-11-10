@@ -68,7 +68,19 @@ The static Fumadocs application in `apps/docs`. It renders guides, examples, pro
 
 ## API reference
 
-The generated docs under `apps/docs/content/docs/api`. It is built from source JSDoc and `typings/index.d.ts`; do not edit the generated MDX by hand.
+The generated docs under `apps/docs/content/docs/api`. It is built from the **API prose store** and `typings/index.d.ts`; do not edit the generated MDX by hand.
+
+## API prose store
+
+The checked-in `apps/docs/scripts/agent/api.json` file that holds the descriptions, parameters, examples, and events extracted once from the old source JSDoc. It is the live prose source for the **API reference** and the **Agent docs**; the old source JSDoc is no longer read.
+
+## Agent docs
+
+The plain-Markdown documentation corpus that ships with the package, written for coding agents. It holds usage guides, recipes, an event catalog, and a generated reference for the runtime exports.
+
+## Gateway tool
+
+The MCP tool that returns the installed **Agent docs** path and reading instructions. It does not serve documentation content.
 
 ## Raw data
 

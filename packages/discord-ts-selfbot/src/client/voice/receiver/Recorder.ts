@@ -24,10 +24,6 @@ interface RecorderOptions {
   streamOutput?: typeof StreamOutput;
 }
 
-/**
- * Represents a FFmpeg handler
- * @extends {EventEmitter}
- */
 class Recorder extends EventEmitter {
   declare receiver: import('./PacketHandler').default;
   declare spawn: typeof spawnProcess;
@@ -68,10 +64,6 @@ class Recorder extends EventEmitter {
     this.killProcess = killProcess;
     this.streamOutput = streamOutput;
 
-    /**
-     * The user ID
-     * @type {Snowflake}
-     */
     this.userId = userId;
 
     this.portUdpH264 = portUdpH264 ?? null;
@@ -88,16 +80,8 @@ class Recorder extends EventEmitter {
       });
     }
 
-    /**
-     * The output of the stream
-     * @type {string|Readable}
-     */
     this.output = output;
 
-    /**
-     * The FFmpeg process is ready or not
-     * @type {boolean}
-     */
     this.ready = false;
 
     this.socket = createSocket('udp4');
@@ -148,10 +132,6 @@ class Recorder extends EventEmitter {
       isStream ? this.outputStream!.url : output,
     ]);
 
-    /**
-     * The FFmpeg process
-     * @type {ChildProcessWithoutNullStreams}
-     */
     this.stream = stream;
     this.stream.stdin.write(sdpData);
     this.stream.stdin.end();
@@ -161,11 +141,6 @@ class Recorder extends EventEmitter {
       this.emit('ready');
     });
   }
-  /**
-   * Send a payload to FFmpeg via UDP
-   * @param {RtpPacket|string|Buffer} payload The payload
-   * @param {*} callback Callback
-   */
   feed(
     payload: RtpPacket | string | Buffer,
     callback: (error?: Error | null) => void = error => {
@@ -194,9 +169,6 @@ class Recorder extends EventEmitter {
     this.socket.send(message, 0, message.length, port, '127.0.0.1', callback);
   }
 
-  /**
-   * Stops FFmpeg and flushes the recording output.
-   */
   stop() {
     if (!this.stream) return;
     this.stream.stdin.end();
@@ -219,16 +191,6 @@ class Recorder extends EventEmitter {
       }
     });
   }
-
-  /**
-   * Emitted when the Recorder becomes ready to start working.
-   * @event Recorder#ready
-   */
-
-  /**
-   * Emitted when the Recorder is closed.
-   * @event Recorder#closed
-   */
 }
 
 export default Recorder;

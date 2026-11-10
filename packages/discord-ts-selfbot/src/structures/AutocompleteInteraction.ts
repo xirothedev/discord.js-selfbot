@@ -12,10 +12,6 @@ import type {
 import type { ApplicationCommandOptionChoiceData, CacheType } from '../../typings';
 import type { CommandInteractionOption } from './CommandInteractionOptionResolver';
 
-/**
- * Represents an autocomplete interaction.
- * @extends {Interaction}
- */
 class AutocompleteInteraction<Cached extends CacheType = CacheType> extends Interaction<Cached> {
   declare commandId: Snowflake;
   declare commandName: string;
@@ -25,55 +21,23 @@ class AutocompleteInteraction<Cached extends CacheType = CacheType> extends Inte
   constructor(client: import('../client/Client').default, data: APIChatInputApplicationCommandInteraction) {
     super(client, data);
 
-    /**
-     * The id of the channel this interaction was sent in
-     * @type {Snowflake}
-     * @name AutocompleteInteraction#channelId
-     */
-
-    /**
-     * The invoked application command's id
-     * @type {Snowflake}
-     */
     this.commandId = data.data.id;
 
-    /**
-     * The invoked application command's name
-     * @type {string}
-     */
     this.commandName = data.data.name;
 
-    /**
-     * Whether this interaction has already received a response
-     * @type {boolean}
-     */
     this.responded = false;
 
-    /**
-     * The options passed to the command
-     * @type {CommandInteractionOptionResolver}
-     */
     this.options = new CommandInteractionOptionResolver<Cached>(
       this.client,
       data.data.options?.map(option => this.transformOption(option)) ?? [],
     );
   }
 
-  /**
-   * The invoked application command, if it was fetched before
-   * @type {?ApplicationCommand}
-   */
   get command() {
     const id = this.commandId;
     return this.client.application?.commands.cache.get(id) ?? null;
   }
 
-  /**
-   * Transforms an option received from the API.
-   * @param {APIApplicationCommandOption} option The received option
-   * @returns {CommandInteractionOption}
-   * @private
-   */
   transformOption(option: APIApplicationCommandInteractionDataOption): CommandInteractionOption<Cached> {
     const result: CommandInteractionOption<Cached> = {
       name: option.name,
@@ -87,21 +51,6 @@ class AutocompleteInteraction<Cached extends CacheType = CacheType> extends Inte
     return result;
   }
 
-  /**
-   * Sends results for the autocomplete of this interaction.
-   * @param {ApplicationCommandOptionChoiceData[]} options The options for the autocomplete
-   * @returns {Promise<void>}
-   * @example
-   * // respond to autocomplete interaction
-   * interaction.respond([
-   *  {
-   *    name: 'Option 1',
-   *    value: 'option1',
-   *  },
-   * ])
-   *  .then(console.log)
-   *  .catch(console.error);
-   */
   async respond(options: ApplicationCommandOptionChoiceData[]): Promise<void> {
     if (this.responded) throw new Error('INTERACTION_ALREADY_REPLIED');
 

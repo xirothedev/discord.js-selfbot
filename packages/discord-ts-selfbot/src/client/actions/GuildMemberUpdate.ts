@@ -30,11 +30,6 @@ class GuildMemberUpdateAction extends Action {
         if (shard.status === Status.READY && !member.equals(old)) client.emit(Events.GUILD_MEMBER_UPDATE, old, member);
       } else {
         const newMember = guild.members._add(data);
-        /**
-         * Emitted whenever a member becomes available.
-         * @event Client#guildMemberAvailable
-         * @param {GuildMember} member The member that became available
-         */
         this.client.emit(Events.GUILD_MEMBER_AVAILABLE, newMember);
       }
     }

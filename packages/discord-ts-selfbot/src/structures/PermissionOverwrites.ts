@@ -17,10 +17,6 @@ interface PermissionOverwriteData {
   deny?: unknown;
 }
 
-/**
- * Represents a permission overwrite for a role or member in a guild channel.
- * @extends {Base}
- */
 class PermissionOverwrites extends Base {
   declare channel: GuildChannel;
   declare id: Snowflake;
@@ -35,73 +31,33 @@ class PermissionOverwrites extends Base {
   ) {
     super(client);
 
-    /**
-     * The GuildChannel this overwrite is for
-     * @name PermissionOverwrites#channel
-     * @type {GuildChannel}
-     * @readonly
-     */
     Object.defineProperty(this, 'channel', { value: channel });
 
     if (data) this._patch(data);
   }
 
   _patch(data: PermissionOverwriteData | PermissionOverwrites) {
-    /**
-     * The overwrite's id, either a {@link User} or a {@link Role} id
-     * @type {Snowflake}
-     */
     this.id = data.id;
 
     if ('type' in data && data.type !== undefined) {
-      /**
-       * The type of this overwrite
-       * @type {OverwriteType}
-       */
       const type = typeof data.type === 'number' ? OverwriteTypes[data.type] : data.type;
       if (type === 'role' || type === 'member') this.type = type;
     }
 
     if ('deny' in data) {
-      /**
-       * The permissions that are denied for the user or role.
-       * @type {Readonly<Permissions>}
-       */
       this.deny = new Permissions(Permissions.resolve(data.deny ?? 0n)).freeze();
     }
 
     if ('allow' in data) {
-      /**
-       * The permissions that are allowed for the user or role.
-       * @type {Readonly<Permissions>}
-       */
       this.allow = new Permissions(Permissions.resolve(data.allow ?? 0n)).freeze();
     }
   }
 
-  /**
-   * Edits this Permission Overwrite.
-   * @param {PermissionOverwriteOptions} options The options for the update
-   * @param {string} [reason] Reason for creating/editing this overwrite
-   * @returns {Promise<PermissionOverwrites>}
-   * @example
-   * // Update permission overwrites
-   * permissionOverwrites.edit({
-   *   SEND_MESSAGES: false
-   * })
-   *   .then(channel => console.log(channel.permissionOverwrites.get(message.author.id)))
-   *   .catch(console.error);
-   */
   async edit(options: PermissionOverwriteOptions, reason?: string) {
     await this.channel.permissionOverwrites.upsert(this.id, options, { type: OverwriteTypes[this.type], reason }, this);
     return this;
   }
 
-  /**
-   * Deletes this Permission Overwrite.
-   * @param {string} [reason] Reason for deleting this overwrite
-   * @returns {Promise<PermissionOverwrites>}
-   */
   async delete(reason?: string) {
     await this.channel.permissionOverwrites.delete(this.id, reason);
     return this;
@@ -116,30 +72,6 @@ class PermissionOverwrites extends Base {
     };
   }
 
-  /**
-   * An object mapping permission flags to `true` (enabled), `null` (unset) or `false` (disabled).
-   * ```js
-   * {
-   *  'SEND_MESSAGES': true,
-   *  'EMBED_LINKS': null,
-   *  'ATTACH_FILES': false,
-   * }
-   * ```
-   * @typedef {Object} PermissionOverwriteOptions
-   */
-
-  /**
-   * @typedef {Object} ResolvedOverwriteOptions
-   * @property {Permissions} allow The allowed permissions
-   * @property {Permissions} deny The denied permissions
-   */
-
-  /**
-   * Resolves bitfield permissions overwrites from an object.
-   * @param {PermissionOverwriteOptions} options The options for the update
-   * @param {ResolvedOverwriteOptions} initialPermissions The initial permissions
-   * @returns {ResolvedOverwriteOptions}
-   */
   static resolveOverwriteOptions(
     options: PermissionOverwriteOptions,
     { allow, deny }: { allow?: unknown; deny?: unknown } = {},
@@ -163,37 +95,6 @@ class PermissionOverwrites extends Base {
     return { allow: allowPermissions, deny: denyPermissions };
   }
 
-  /**
-   * The raw data for a permission overwrite
-   * @typedef {Object} RawOverwriteData
-   * @property {Snowflake} id The id of the {@link Role} or {@link User} this overwrite belongs to
-   * @property {string} allow The permissions to allow
-   * @property {string} deny The permissions to deny
-   * @property {number} type The type of this OverwriteData
-   */
-
-  /**
-   * Data that can be resolved into {@link RawOverwriteData}. This can be:
-   * * PermissionOverwrites
-   * * OverwriteData
-   * @typedef {PermissionOverwrites|OverwriteData} OverwriteResolvable
-   */
-
-  /**
-   * Data that can be used for a permission overwrite
-   * @typedef {Object} OverwriteData
-   * @property {GuildMemberResolvable|RoleResolvable} id Member or role this overwrite is for
-   * @property {PermissionResolvable} [allow] The permissions to allow
-   * @property {PermissionResolvable} [deny] The permissions to deny
-   * @property {OverwriteType} [type] The type of this OverwriteData
-   */
-
-  /**
-   * Resolves an overwrite into {@link RawOverwriteData}.
-   * @param {OverwriteResolvable} overwrite The overwrite-like data to resolve
-   * @param {Guild} [guild] The guild to resolve from
-   * @returns {RawOverwriteData}
-   */
   static resolve(overwrite: unknown, guild: import('./Guild').Guild) {
     if (overwrite instanceof this) return overwrite.toJSON();
     if (typeof overwrite !== 'object' || overwrite === null || !('id' in overwrite)) {

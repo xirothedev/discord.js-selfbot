@@ -22,9 +22,6 @@ export interface RelationshipData {
   since?: string;
 }
 
-/**
- * Manages API methods for Relationships and stores their cache.
- */
 class RelationshipManager extends BaseManager {
   declare cache: Collection<string, number>;
   declare friendNicknames: Collection<string, string | null>;
@@ -32,27 +29,12 @@ class RelationshipManager extends BaseManager {
 
   constructor(client: Client, users?: RelationshipData[]) {
     super(client);
-    /**
-     * A collection of users this manager is caching. (Type: Number)
-     * @type {Collection<Snowflake, RelationshipType>}
-     */
     this.cache = new Collection();
-    /**
-     * @type {Collection<Snowflake, string>}
-     */
     this.friendNicknames = new Collection();
-    /**
-     * @type {Collection<Snowflake, Date>}
-     */
     this.sinceCache = new Collection();
     this._setup(users);
   }
 
-  /**
-   * Get all friends
-   * @type {Collection<Snowflake, User>}
-   * @readonly
-   */
   get friendCache(): Collection<Snowflake, User> {
     const users = new Collection<Snowflake, User>();
     for (const key of this.cache.filter(value => value === RelationshipTypes.FRIEND).keys()) {
@@ -62,11 +44,6 @@ class RelationshipManager extends BaseManager {
     return users;
   }
 
-  /**
-   * Get all blocked users
-   * @type {Collection<Snowflake, User>}
-   * @readonly
-   */
   get blockedCache(): Collection<Snowflake, User> {
     const users = new Collection<Snowflake, User>();
     for (const key of this.cache.filter(value => value === RelationshipTypes.BLOCKED).keys()) {
@@ -76,11 +53,6 @@ class RelationshipManager extends BaseManager {
     return users;
   }
 
-  /**
-   * Get all incoming friend requests
-   * @type {Collection<Snowflake, User>}
-   * @readonly
-   */
   get incomingCache(): Collection<Snowflake, User> {
     const users = new Collection<Snowflake, User>();
     for (const key of this.cache.filter(value => value === RelationshipTypes.PENDING_INCOMING).keys()) {
@@ -90,11 +62,6 @@ class RelationshipManager extends BaseManager {
     return users;
   }
 
-  /**
-   * Get all outgoing friend requests
-   * @type {Collection<Snowflake, User>}
-   * @readonly
-   */
   get outgoingCache(): Collection<Snowflake, User> {
     const users = new Collection<Snowflake, User>();
     for (const key of this.cache.filter(value => value === RelationshipTypes.PENDING_OUTGOING).keys()) {
@@ -104,18 +71,6 @@ class RelationshipManager extends BaseManager {
     return users;
   }
 
-  /**
-   * @typedef {Object} RelationshipJSONData
-   * @property {Snowflake} id The ID of the target user
-   * @property {RelationshipType} type The type of relationship
-   * @property {string | null} nickname The nickname of the user in this relationship (1-32 characters)
-   * @property {string} since When the user requested a relationship (ISO8601 timestamp)
-   */
-
-  /**
-   * Return array of cache
-   * @returns {RelationshipJSONData[]}
-   */
   toJSON() {
     return this.cache.map((value, key) => ({
       id: key,
@@ -125,11 +80,6 @@ class RelationshipManager extends BaseManager {
     }));
   }
 
-  /**
-   * @private
-   * @param {Array<User>} users An array of users to add to the cache
-   * @returns {void}
-   */
   _setup(users?: RelationshipData[]) {
     if (!Array.isArray(users)) return;
     for (const relationShip of users) {
@@ -139,11 +89,6 @@ class RelationshipManager extends BaseManager {
     }
   }
 
-  /**
-   * Resolves a {@link UserResolvable} to a {@link User} id.
-   * @param {UserResolvable} user The UserResolvable to identify
-   * @returns {?Snowflake}
-   */
   resolveId(user: UserResolvableSource): string | null {
     if (user instanceof ThreadMember) return user.id;
     if (user instanceof GuildMember) return user.user.id;
@@ -152,11 +97,6 @@ class RelationshipManager extends BaseManager {
     return user.match(/\d{17,19}/)?.[0] || null;
   }
 
-  /**
-   * Resolves a {@link UserResolvable} to a {@link User} username.
-   * @param {UserResolvable} user The UserResolvable to identify
-   * @returns {?string}
-   */
   resolveUsername(user: UserResolvableSource): string | null {
     if (user instanceof ThreadMember) return user.guildMember?.user.username ?? null;
     if (user instanceof GuildMember) return user.user.username;
@@ -165,12 +105,6 @@ class RelationshipManager extends BaseManager {
     return user;
   }
 
-  /**
-   * Obtains a user from Discord, or the user cache if it's already available.
-   * @param {UserResolvable} [user] The user to fetch
-   * @param {BaseFetchOptions} [options] Additional options for this fetch
-   * @returns {Promise<RelationshipType|RelationshipManager>}
-   */
   async fetch(
     user?: UserResolvableSource,
     { force = false }: BaseFetchOptions = {},
@@ -234,12 +168,6 @@ class RelationshipManager extends BaseManager {
     throw new Error('Risky action, not finished yet.');
   }
 
-  /**
-   * Changes the nickname of a friend.
-   * @param {UserResolvable} user The user to change the nickname
-   * @param {?string} nickname New nickname
-   * @returns {Promise<boolean>}
-   */
   async setNickname(user: UserResolvableSource, nickname: string | null = null): Promise<boolean> {
     const id = this.resolveId(user);
     if (!id || this.cache.get(id) !== RelationshipTypes.FRIEND) return Promise.resolve(false);

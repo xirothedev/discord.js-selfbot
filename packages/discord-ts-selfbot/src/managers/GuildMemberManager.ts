@@ -31,7 +31,6 @@ import type {
   FetchMemberOptions,
   FetchMembersOptions,
   GuildMemberEditData,
-  GuildMemberResolvable,
   GuildPruneMembersOptions,
   GuildSearchMembersOptions,
   RoleResolvable,
@@ -85,45 +84,19 @@ interface GuildMemberEditPayload {
 }
 /* eslint-disable newline-per-chained-call */
 
-/**
- * Manages API methods for GuildMembers and stores their cache.
- * @extends {CachedManager}
- */
 class GuildMemberManager extends CachedManager<import('../structures/GuildMember').GuildMember> {
   declare guild: Guild;
   constructor(guild: Guild, iterable?: Iterable<GuildMemberType>) {
     super(guild.client, GuildMember, iterable);
 
-    /**
-     * The guild this manager belongs to
-     * @type {Guild}
-     */
     this.guild = guild;
   }
-
-  /**
-   * The cache of this Manager
-   * @type {Collection<Snowflake, GuildMemberType>}
-   * @name GuildMemberManager#cache
-   */
 
   _add(data: RawGuildMemberData | { user: { id: string } }, cache = true): GuildMemberType {
     const userId = 'user' in data && data.user ? data.user.id : undefined;
     return super._add(data, cache, { id: userId, extras: [this.guild] });
   }
 
-  /**
-   * Data that resolves to give a GuildMemberType object. This can be:
-   * * A GuildMemberType object
-   * * A User resolvable
-   * @typedef {GuildMemberType|UserResolvable} GuildMemberResolvable
-   */
-
-  /**
-   * Resolves a {@link GuildMemberResolvable} to a {@link GuildMemberType} object.
-   * @param {GuildMemberResolvable} member The user that is part of the guild
-   * @returns {?GuildMemberType}
-   */
   resolve(member: unknown): GuildMemberType | null {
     const memberResolvable = super.resolve(member);
     if (memberResolvable) return memberResolvable;
@@ -132,11 +105,6 @@ class GuildMemberManager extends CachedManager<import('../structures/GuildMember
     return null;
   }
 
-  /**
-   * Resolves a {@link GuildMemberResolvable} to a member id.
-   * @param {GuildMemberResolvable} member The user that is part of the guild
-   * @returns {?Snowflake}
-   */
   resolveId(member: unknown): string | null {
     const memberResolvable = super.resolveId(member);
     if (memberResolvable) return memberResolvable;
@@ -145,26 +113,6 @@ class GuildMemberManager extends CachedManager<import('../structures/GuildMember
     return this.cache.has(userId) ? userId : null;
   }
 
-  /**
-   * Options used to add a user to a guild using OAuth2.
-   * @typedef {Object} AddGuildMemberOptions
-   * @property {string} accessToken An OAuth2 access token for the user with the `guilds.join` scope granted to the
-   * bot's application
-   * @property {string} [nick] The nickname to give to the member (requires `MANAGE_NICKNAMES`)
-   * @property {Collection<Snowflake, Role>|RoleResolvable[]} [roles] The roles to add to the member
-   * (requires `MANAGE_ROLES`)
-   * @property {boolean} [mute] Whether the member should be muted (requires `MUTE_MEMBERS`)
-   * @property {boolean} [deaf] Whether the member should be deafened (requires `DEAFEN_MEMBERS`)
-   * @property {boolean} [force] Whether to skip the cache check and call the API directly
-   * @property {boolean} [fetchWhenExisting=true] Whether to fetch the user if not cached and already a member
-   */
-
-  /**
-   * Adds a user to the guild using OAuth2. Requires the `CREATE_INSTANT_INVITE` permission.
-   * @param {UserResolvable} user The user to add to the guild
-   * @param {AddGuildMemberOptions} options Options for adding the user to the guild
-   * @returns {Promise<GuildMemberType|null>}
-   */
   async add(user: GuildMemberResolvableSource, options: AddGuildMemberOptions): Promise<GuildMemberType | null> {
     const userId = this.client.users.resolveId(user);
     if (!userId) throw new TypeError('INVALID_TYPE', 'user', 'UserResolvable');
@@ -204,11 +152,6 @@ class GuildMemberManager extends CachedManager<import('../structures/GuildMember
     return data instanceof Buffer ? (options.fetchWhenExisting === false ? null : this.fetch(userId)) : this._add(data);
   }
 
-  /**
-   * The client user as a GuildMemberType of this guild
-   * @type {?GuildMemberType}
-   * @readonly
-   */
   get me(): import('../structures/GuildMember').GuildMember | null {
     return (
       this.cache.get(this.client.user!.id) ??
@@ -218,61 +161,6 @@ class GuildMemberManager extends CachedManager<import('../structures/GuildMember
     );
   }
 
-  /**
-   * Options used to fetch a single member from a guild.
-   * @typedef {BaseFetchOptions} FetchMemberOptions
-   * @property {UserResolvable} user The user to fetch
-   */
-
-  /**
-   * Options used to fetch multiple members from a guild.
-   * @typedef {Object} FetchMembersOptions
-   * @property {UserResolvable|UserResolvable[]} user The user(s) to fetch
-   * @property {?string} query Limit fetch to members with similar usernames
-   * @property {number} [limit=0] Maximum number of members to request
-   * @property {boolean} [withPresences=false] Whether or not to include the presences
-   * @property {number} [time=120e3] Timeout for receipt of members
-   * @property {?string} nonce Nonce for this request (32 characters max - default to base 16 now timestamp)
-   * @property {boolean} [force=false] Whether to skip the cache check and request the API
-   */
-
-  /**
-   * Fetches member(s) from Discord, even if they're offline.
-   * @param {UserResolvable|FetchMemberOptions|FetchMembersOptions} [options] If a UserResolvable, the user to fetch.
-   * If undefined, fetches all members.
-   * If a query, it limits the results to users with similar usernames.
-   * @returns {Promise<GuildMemberType|Collection<Snowflake, GuildMemberType>>}
-   * @example
-   * // Fetch all members from a guild
-   * guild.members.fetch()
-   *   .then(console.log)
-   *   .catch(console.error);
-   * @example
-   * // Fetch a single member
-   * guild.members.fetch('66564597481480192')
-   *   .then(console.log)
-   *   .catch(console.error);
-   * @example
-   * // Fetch a single member without checking cache
-   * guild.members.fetch({ user, force: true })
-   *   .then(console.log)
-   *   .catch(console.error)
-   * @example
-   * // Fetch a single member without caching
-   * guild.members.fetch({ user, cache: false })
-   *   .then(console.log)
-   *   .catch(console.error);
-   * @example
-   * // Fetch by an array of users including their presences
-   * guild.members.fetch({ user: ['66564597481480192', '191615925336670208'], withPresences: true })
-   *   .then(console.log)
-   *   .catch(console.error);
-   * @example
-   * // Fetch by query
-   * guild.members.fetch({ query: 'hydra', limit: 1 })
-   *   .then(console.log)
-   *   .catch(console.error);
-   */
   fetch(
     options: UserResolvable | FetchMemberOptions | (FetchMembersOptions & { user: UserResolvable }),
   ): Promise<GuildMemberType>;
@@ -313,28 +201,10 @@ class GuildMemberManager extends CachedManager<import('../structures/GuildMember
     return this._fetchMany(isMemberFetchOptions(options) ? options : undefined);
   }
 
-  /**
-   * Fetches the client user as a GuildMemberType of the guild.
-   * @param {BaseFetchOptions} [options] The options for fetching the member
-   * @returns {Promise<GuildMemberType>}
-   */
   fetchMe(options?: BaseFetchOptions): Promise<GuildMemberType> {
     return this.fetch({ ...options, user: this.client.user!.id });
   }
 
-  /**
-   * Options used for searching guild members.
-   * @typedef {Object} GuildSearchMembersOptions
-   * @property {string} query Filter members whose username or nickname start with this query
-   * @property {number} [limit=1] Maximum number of members to search
-   * @property {boolean} [cache=true] Whether or not to cache the fetched member(s)
-   */
-
-  /**
-   * Searches for members in the guild based on a query.
-   * @param {GuildSearchMembersOptions} options Options for searching members
-   * @returns {Promise<Collection<Snowflake, GuildMemberType>>}
-   */
   async search({
     query,
     limit = 1,
@@ -350,31 +220,6 @@ class GuildMemberManager extends CachedManager<import('../structures/GuildMember
     return members;
   }
 
-  /**
-   * The data for editing a guild member.
-   * @typedef {Object} GuildMemberEditData
-   * @property {?string} [nick] The nickname to set for the member
-   * @property {Collection<Snowflake, Role>|RoleResolvable[]} [roles] The roles or role ids to apply
-   * @property {boolean} [mute] Whether or not the member should be muted
-   * @property {boolean} [deaf] Whether or not the member should be deafened
-   * @property {GuildVoiceChannelResolvable|null} [channel] Channel to move the member to
-   * (if they are connected to voice), or `null` if you want to disconnect them from voice
-   * @property {DateResolvable|null} [communicationDisabledUntil] The date or timestamp
-   * for the member's communication to be disabled until. Provide `null` to enable communication again.
-   * @property {GuildMemberFlagsResolvable} [flags] The flags to set for the member
-   * @property {?(BufferResolvable|Base64Resolvable)} [avatar] The new guild avatar
-   * @property {?(BufferResolvable|Base64Resolvable)} [banner] The new guild banner
-   * @property {?string} [bio] The new guild about me
-   */
-
-  /**
-   * Edits a member of the guild.
-   * <info>The user must be a member of the guild</info>
-   * @param {UserResolvable} user The member to edit
-   * @param {GuildMemberEditData} data The data to edit the member with
-   * @param {string} [reason] Reason for editing this user
-   * @returns {Promise<GuildMemberType>}
-   */
   async edit(user: GuildMemberResolvableSource, data: GuildMemberEditData, reason?: string): Promise<GuildMemberType> {
     const id = this.client.users.resolveId(user);
     if (!id) throw new TypeError('INVALID_TYPE', 'user', 'UserResolvable');
@@ -426,38 +271,6 @@ class GuildMemberManager extends CachedManager<import('../structures/GuildMember
     return clone ?? this._add(d, false);
   }
 
-  /**
-   * Options used for pruning guild members.
-   * <info>It's recommended to set {@link GuildPruneMembersOptions#count options.count}
-   * to `false` for large guilds.</info>
-   * @typedef {Object} GuildPruneMembersOptions
-   * @property {number} [days=7] Number of days of inactivity required to kick
-   * @property {boolean} [dry=false] Get the number of users that will be kicked, without actually kicking them
-   * @property {boolean} [count=true] Whether or not to return the number of users that have been kicked.
-   * @property {RoleResolvable[]} [roles] Array of roles to bypass the "...and no roles" constraint when pruning
-   * @property {string} [reason] Reason for this prune
-   */
-
-  /**
-   * Prunes members from the guild based on how long they have been inactive.
-   * @param {GuildPruneMembersOptions} [options] Options for pruning
-   * @returns {Promise<number|null>} The number of members that were/will be kicked
-   * @example
-   * // See how many members will be pruned
-   * guild.members.prune({ dry: true })
-   *   .then(pruned => console.log(`This will prune ${pruned} people!`))
-   *   .catch(console.error);
-   * @example
-   * // Actually prune the members
-   * guild.members.prune({ days: 1, reason: 'too many people!' })
-   *   .then(pruned => console.log(`I just pruned ${pruned} people!`))
-   *   .catch(console.error);
-   * @example
-   * // Include members with a specified role
-   * guild.members.prune({ days: 7, roles: ['657259391652855808'] })
-   *    .then(pruned => console.log(`I just pruned ${pruned} people!`))
-   *    .catch(console.error);
-   */
   async prune(options: GuildPruneMembersOptions = {}): Promise<number | null> {
     const { days = 7, dry = false, count: compute_prune_count = true, roles = [], reason } = options;
     if (typeof days !== 'number') throw new TypeError('PRUNE_DAYS_TYPE');
@@ -486,20 +299,6 @@ class GuildMemberManager extends CachedManager<import('../structures/GuildMember
     return pruned;
   }
 
-  /**
-   * Kicks a user from the guild.
-   * <info>The user must be a member of the guild</info>
-   * @param {UserResolvable} user The member to kick
-   * @param {string} [reason] Reason for kicking
-   * @returns {Promise<GuildMemberType|User|Snowflake>} Result object will be resolved as specifically as possible.
-   * If the GuildMemberType cannot be resolved, the User will instead be attempted to be resolved. If that also cannot
-   * be resolved, the user's id will be the result.
-   * @example
-   * // Kick a user by id (or with a user/guild member object)
-   * guild.members.kick('84484653687267328')
-   *   .then(kickInfo => console.log(`Kicked ${kickInfo.user?.tag ?? kickInfo.tag ?? kickInfo}`))
-   *   .catch(console.error);
-   */
   async kick(user: GuildMemberResolvableSource, reason?: string): Promise<GuildMemberType | User | Snowflake> {
     const id = this.client.users.resolveId(user);
     if (!id) throw new TypeError('INVALID_TYPE', 'user', 'UserResolvable');
@@ -509,35 +308,10 @@ class GuildMemberManager extends CachedManager<import('../structures/GuildMember
     return this.resolve(user) ?? this.client.users.resolve(user) ?? id;
   }
 
-  /**
-   * Bans a user from the guild.
-   * @param {UserResolvable} user The user to ban
-   * @param {BanOptions} [options] Options for the ban
-   * @returns {Promise<GuildMemberType|User|Snowflake>} Result object will be resolved as specifically as possible.
-   * If the GuildMemberType cannot be resolved, the User will instead be attempted to be resolved. If that also cannot
-   * be resolved, the user id will be the result.
-   * Internally calls the GuildBanManager#create method.
-   * @example
-   * // Ban a user by id (or with a user/guild member object)
-   * guild.members.ban('84484653687267328')
-   *   .then(banInfo => console.log(`Banned ${banInfo.user?.tag ?? banInfo.tag ?? banInfo}`))
-   *   .catch(console.error);
-   */
   ban(user: GuildMemberResolvableSource, options?: BanOptions) {
     return this.guild.bans.create(user, options);
   }
 
-  /**
-   * Unbans a user from the guild. Internally calls the {@link GuildBanManager#remove} method.
-   * @param {UserResolvable} user The user to unban
-   * @param {string} [reason] Reason for unbanning user
-   * @returns {Promise<?User>} The user that was unbanned
-   * @example
-   * // Unban a user by id (or with a user/guild member object)
-   * guild.members.unban('84484653687267328')
-   *   .then(user => console.log(`Unbanned ${user.username} from ${guild.name}`))
-   *   .catch(console.error);
-   */
   unban(user: GuildMemberResolvableSource, reason?: string) {
     return this.guild.bans.remove(user, reason);
   }
@@ -552,13 +326,6 @@ class GuildMemberManager extends CachedManager<import('../structures/GuildMember
     return this._add(data, cache);
   }
 
-  /**
-   * Adds a role to a member.
-   * @param {GuildMemberResolvable} user The user to add the role from
-   * @param {RoleResolvable} role The role to add
-   * @param {string} [reason] Reason for adding the role
-   * @returns {Promise<GuildMemberType|User|Snowflake>}
-   */
   async addRole(user: GuildMemberResolvableSource, role: RoleResolvable, reason?: string) {
     const userId = this.resolveId(user);
     if (!userId) throw new TypeError('INVALID_TYPE', 'user', 'GuildMemberResolvable');
@@ -570,13 +337,6 @@ class GuildMemberManager extends CachedManager<import('../structures/GuildMember
     return this.resolve(user) ?? this.client.users.resolve(user) ?? userId;
   }
 
-  /**
-   * Removes a role from a member.
-   * @param {UserResolvable} user The user to remove the role from
-   * @param {RoleResolvable} role The role to remove
-   * @param {string} [reason] Reason for removing the role
-   * @returns {Promise<GuildMemberType|User|Snowflake>}
-   */
   async removeRole(user: GuildMemberResolvableSource, role: RoleResolvable, reason?: string) {
     const userId = this.resolveId(user);
     if (!userId) throw new TypeError('INVALID_TYPE', 'user', 'GuildMemberResolvable');
@@ -588,12 +348,6 @@ class GuildMemberManager extends CachedManager<import('../structures/GuildMember
     return this.resolve(user) ?? this.client.users.resolve(user) ?? userId;
   }
 
-  /**
-   * Experimental method to fetch members from the guild.
-   * <info>Lists up to 10000 members of the guild.</info>
-   * @param {number} [timeout=15_000] Timeout for receipt of members in ms
-   * @returns {Promise<Collection<Snowflake, GuildMemberType>>}
-   */
   fetchByMemberSafety(timeout = 15_000): Promise<Collection<Snowflake, GuildMemberType>> {
     return new Promise<Collection<Snowflake, GuildMemberType>>(resolve => {
       const nonce = SnowflakeUtil.generate();

@@ -31,11 +31,6 @@ class ChannelDeleteAction extends Action {
           deletedMessages.add(message);
         }
       }
-      /**
-       * Emitted whenever a channel is deleted.
-       * @event Client#channelDelete
-       * @param {DMChannel|GuildChannel} channel The channel that was deleted
-       */
       client.emit(Events.CHANNEL_DELETE, channel);
     }
 

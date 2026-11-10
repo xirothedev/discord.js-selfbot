@@ -8,11 +8,6 @@ import _ConstantsModule from '../../../util/Constants';
 const { VoiceOpcodes } = _ConstantsModule;
 import VoiceCodec from '../util/VoiceCodec';
 
-/**
- * Represents a UDP client for a Voice Connection.
- * @extends {EventEmitter}
- * @private
- */
 class VoiceConnectionUDPClient extends EventEmitter {
   declare voiceConnection: import('../VoiceConnection').default;
   declare socket: udp.Socket | null;
@@ -23,34 +18,14 @@ class VoiceConnectionUDPClient extends EventEmitter {
   constructor(voiceConnection: import('../VoiceConnection').default) {
     super();
 
-    /**
-     * The voice connection that this UDP client serves
-     * @type {VoiceConnection}
-     */
     this.voiceConnection = voiceConnection;
 
-    /**
-     * The UDP socket
-     * @type {?Socket}
-     */
     this.socket = null;
 
-    /**
-     * The address of the Discord voice server
-     * @type {?string}
-     */
     this.discordAddress = null;
 
-    /**
-     * The local IP address
-     * @type {?string}
-     */
     this.localAddress = null;
 
-    /**
-     * The local port
-     * @type {?string}
-     */
     this.localPort = null;
 
     this.voiceConnection.on('closing', this.shutdown.bind(this));
@@ -68,20 +43,10 @@ class VoiceConnectionUDPClient extends EventEmitter {
     }
   }
 
-  /**
-   * The port of the Discord voice server
-   * @type {number}
-   * @readonly
-   */
   get discordPort() {
     return this.voiceConnection.authentication.port;
   }
 
-  /**
-   * Send a packet to the UDP client.
-   * @param {Object} packet The packet to send
-   * @returns {Promise<Object>}
-   */
   send(packet: Buffer): Promise<Buffer> {
     return new Promise<Buffer>((resolve, reject) => {
       if (!this.socket) throw new Error('UDP_SEND_FAIL');

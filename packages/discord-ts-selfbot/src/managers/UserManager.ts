@@ -16,48 +16,16 @@ import type { DMChannel } from '../structures/DMChannel';
 type UserResolvableSource =
   User | InstanceType<typeof GuildMember> | InstanceType<typeof Message> | ThreadMember | Snowflake | UserResolvable;
 
-/**
- * Manages API methods for users and stores their cache.
- * @extends {CachedManager}
- */
 class UserManager extends CachedManager<User> {
   constructor(client: Client, iterable?: Iterable<User>) {
     super(client, User, iterable);
   }
 
-  /**
-   * The cache of this manager
-   * @type {Collection<Snowflake, User>}
-   * @name UserManager#cache
-   */
-
-  /**
-   * Data that resolves to give a User object. This can be:
-   * * A User object
-   * * A Snowflake
-   * * A Message object (resolves to the message author)
-   * * A GuildMember object
-   * * A ThreadMember object
-   * @typedef {User|Snowflake|Message|GuildMember|ThreadMember} UserResolvable
-   */
-
-  /**
-   * The DM between the client's user and a user
-   * @param {Snowflake} userId The user id
-   * @returns {?DMChannel}
-   * @private
-   */
   dmChannel(userId: Snowflake): DMChannel | null {
     const channel = this.client.channels.cache.find(c => isDMChannel(c) && c.recipient.id === userId);
     return channel && isDMChannel(channel) ? channel : null;
   }
 
-  /**
-   * Creates a {@link DMChannel} between the client and a user.
-   * @param {UserResolvable} user The UserResolvable to identify
-   * @param {BaseFetchOptions} [options] Additional options for this fetch
-   * @returns {Promise<DMChannel>}
-   */
   async createDM(
     user: UserResolvableSource,
     { cache = true, force = false }: BaseFetchOptions = {},
@@ -85,11 +53,6 @@ class UserManager extends CachedManager<User> {
     return dm_channel;
   }
 
-  /**
-   * Deletes a {@link DMChannel} (if one exists) between the client and a user. Resolves with the channel if successful.
-   * @param {UserResolvable} user The UserResolvable to identify
-   * @returns {Promise<DMChannel>}
-   */
   async deleteDM(user: UserResolvableSource): Promise<DMChannel> {
     const id = this.resolveId(user);
     if (!id) throw new Error('USER_RESOLVE_ID');
@@ -100,12 +63,6 @@ class UserManager extends CachedManager<User> {
     return dmChannel;
   }
 
-  /**
-   * Obtains a user from Discord, or the user cache if it's already available.
-   * @param {UserResolvable} user The user to fetch
-   * @param {BaseFetchOptions} [options] Additional options for this fetch
-   * @returns {Promise<User>}
-   */
   async fetch(
     user: UserResolvableSource,
     { cache = true, force = false }: BaseFetchOptions = {},
@@ -121,32 +78,16 @@ class UserManager extends CachedManager<User> {
     return this._add(data, cache);
   }
 
-  /**
-   * Sends a message to a user.
-   * @param {UserResolvable} user The UserResolvable to identify
-   * @param {string|MessagePayload|MessageOptions} options The options to provide
-   * @returns {Promise<Message>}
-   */
   async send(user: UserResolvableSource, options: import('../types/channels').SendOptions) {
     return (await this.createDM(user)).send(options);
   }
 
-  /**
-   * Resolves a {@link UserResolvable} to a {@link User} object.
-   * @param {UserResolvable} user The UserResolvable to identify
-   * @returns {?User}
-   */
   resolve(user: unknown): User | null {
     if (user instanceof GuildMember || user instanceof ThreadMember) return user.user;
     if (user instanceof Message) return user.author;
     return super.resolve(user);
   }
 
-  /**
-   * Resolves a {@link UserResolvable} to a {@link User} id.
-   * @param {UserResolvable} user The UserResolvable to identify
-   * @returns {?Snowflake}
-   */
   resolveId(user: unknown): string | null {
     if (user instanceof ThreadMember) return user.id;
     if (user instanceof GuildMember) return user.user.id;

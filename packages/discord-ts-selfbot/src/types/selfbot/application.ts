@@ -1,13 +1,6 @@
 import type { APIApplication } from 'discord-api-types/v10';
 import type { ApplicationType } from '../../../typings/enums';
 
-/**
- * The partial shape that `Application._patch` accepts.
- *
- * `RawApplicationData` is a union of full and partial application shapes. The
- * explicit patch keeps the API fields optional and adds the selfbot-only
- * fields that are not part of `APIApplication`.
- */
 export interface ApplicationPatch extends Partial<APIApplication> {
   type?: ApplicationType | null;
   splash?: string | null;

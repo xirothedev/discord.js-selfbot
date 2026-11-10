@@ -1,27 +1,13 @@
 import CachedManager from './CachedManager';
 import InteractionResponse from '../structures/interfaces/InteractionResponses';
 
-/**
- * Manages API methods for InteractionResponse and holds their cache.
- * @extends {CachedManager}
- */
 class InteractionManager extends CachedManager<InteractionResponse> {
   declare channel: import('../types/channels').TextBasedChannel;
   constructor(channel: import('../types/channels').TextBasedChannel, iterable?: Iterable<InteractionResponse>) {
     super(channel.client, InteractionResponse, iterable);
 
-    /**
-     * The channel that the messages belong to
-     * @type {TextBasedChannels}
-     */
     this.channel = channel;
   }
-
-  /**
-   * The cache of InteractionResponse
-   * @type {Collection<Snowflake, InteractionResponse>}
-   * @name InteractionManager#cache
-   */
 
   _add(data: Record<string, unknown>, cache = true, _options?: unknown) {
     data = {

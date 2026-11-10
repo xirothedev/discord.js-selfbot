@@ -33,14 +33,6 @@ const baseURL = 'https://webembed-sb.onrender.com/embed?';
 const hiddenCharter =
   '||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||';
 
-/**
- * Send Embedlink to Discord
- * <info>Only works with Discord Web and Discord Client (no custom theme installed)</info>
- * - No Timestamp, Footer, Fields, Author iconURL
- * - Video with Embed working
- * - Can only choose between image and thumbnail
- * - Description limit 350 characters
- */
 class WebEmbed {
   declare author: MessageEmbedAuthor | null;
   declare baseURL?: string;
@@ -56,86 +48,20 @@ class WebEmbed {
   declare redirect?: string;
 
   declare static hiddenEmbed: string;
-  /**
-   * @param {WebEmbed} [data={}] Raw data
-   */
   constructor(data: WebEmbed | WebEmbedInput = {}) {
-    /**
-     * A `Partial` object is a representation of any existing object.
-     * This object contains between 0 and all of the original objects parameters.
-     * This is true regardless of whether the parameters are optional in the base object.
-     * @typedef {Object} Partial
-     */
-
-    /**
-     * Represents the possible options for a WebEmbed
-     * @typedef {Object} WebEmbedOptions
-     * @property {string} [title] The title of this embed
-     * @property {string} [description] The description of this embed
-     * @property {string} [url] The URL of this embed
-     * @property {ColorResolvable} [color] The color of this embed
-     * @property {Partial<WebEmbedAuthor>} [author] The author of this embed
-     * @property {Partial<WebEmbedThumbnail>} [thumbnail] The thumbnail of this embed
-     * @property {Partial<WebEmbedImage>} [image] The image of this embed
-     * @property {Partial<WebEmbedVideo>} [video] The video of this embed
-     * @property {Partial<WebEmbedFooter>} [footer] The footer of this embed
-     * @property {Partial<WebEmbedProvider>} [provider] The provider of this embed
-     * @property {string} [redirect] Redirect URL
-     */
-
     // eslint-disable-next-line valid-jsdoc
-    /**
-     * @param {WebEmbed|WebEmbedOptions|APIEmbed} [data={}] WebEmbed to clone or raw embed data
-     */
     this._setup(data);
   }
-  /**
-   * @private
-   * @param {Object} data The data for the embed
-   */
   _setup(data: WebEmbedInput) {
-    /**
-     * Type image of this embed
-     * @type {?thumbnail | image}
-     */
     this.imageType = 'thumbnail';
-    /**
-     * The title of this embed
-     * @type {?string}
-     */
     this.title = data.title ?? null;
 
-    /**
-     * The description of this embed
-     * @type {?string}
-     */
     this.description = data.description ?? null;
 
-    /**
-     * The URL of this embed
-     * @type {?string}
-     */
     this.url = data.url ?? null;
 
-    /**
-     * The color of this embed
-     * @type {?number}
-     */
     this.color = 'color' in data ? Util.resolveColor(data.color) : null;
 
-    /**
-     * Represents the image of a WebEmbed
-     * @typedef {Object} WebEmbedImage
-     * @property {string} url URL for this image
-     * @property {string} proxyURL ProxyURL for this image
-     * @property {number} height Height of this image
-     * @property {number} width Width of this image
-     */
-
-    /**
-     * The image of this embed, if there is one
-     * @type {?WebEmbedImage}
-     */
     this.image = data.image
       ? {
           url: data.image.url ?? '',
@@ -145,10 +71,6 @@ class WebEmbed {
         }
       : null;
 
-    /**
-     * The thumbnail of this embed (if there is one)
-     * @type {?WebEmbedThumbnail}
-     */
     this.thumbnail = data.thumbnail
       ? {
           url: data.thumbnail.url ?? '',
@@ -158,20 +80,6 @@ class WebEmbed {
         }
       : null;
 
-    /**
-     * Represents the video of a WebEmbed
-     * @typedef {Object} WebEmbedVideo
-     * @property {string} url URL of this video
-     * @property {string} proxyURL ProxyURL for this video
-     * @property {number} height Height of this video
-     * @property {number} width Width of this video
-     */
-
-    /**
-     * The video of this embed (if there is one)
-     * @type {?WebEmbedVideo}
-     * @readonly
-     */
     this.video = data.video
       ? {
           url: data.video.url ?? '',
@@ -181,17 +89,6 @@ class WebEmbed {
         }
       : null;
 
-    /**
-     * Represents the author field of a WebEmbed
-     * @typedef {Object} WebEmbedAuthor
-     * @property {string} name The name of this author
-     * @property {string} url URL of this author
-     */
-
-    /**
-     * The author of this embed (if there is one)
-     * @type {?WebEmbedAuthor}
-     */
     this.author = data.author
       ? {
           name: data.author.name ?? '',
@@ -199,17 +96,6 @@ class WebEmbed {
         }
       : null;
 
-    /**
-     * Represents the provider of a WebEmbed
-     * @typedef {Object} WebEmbedProvider
-     * @property {string} name The name of this provider
-     * @property {string} url URL of this provider
-     */
-
-    /**
-     * The provider of this embed (if there is one)
-     * @type {?WebEmbedProvider}
-     */
     this.provider = data.provider
       ? {
           name: data.provider.name ?? '',
@@ -217,24 +103,9 @@ class WebEmbed {
         }
       : null;
 
-    /**
-     * Redirect URL
-     * @type {string}
-     */
     this.redirect = data.redirect;
   }
-  /**
-   * The options to provide for setting an author for a {@link WebEmbed}.
-   * @typedef {Object} EmbedAuthorData
-   * @property {string} name The name of this author.
-   */
 
-  /**
-   * Sets the author of this embed.
-   * @param {string|EmbedAuthorData|null} options The options to provide for the author.
-   * Provide `null` to remove the author data.
-   * @returns {WebEmbed}
-   */
   setAuthor(options: EmbedAuthorData | null) {
     if (options === null) {
       this.author = null;
@@ -248,18 +119,6 @@ class WebEmbed {
     return this;
   }
 
-  /**
-   * The options to provide for setting an provider for a {@link WebEmbed}.
-   * @typedef {Object} EmbedProviderData
-   * @property {string} name The name of this provider.
-   */
-
-  /**
-   * Sets the provider of this embed.
-   * @param {string|EmbedProviderData|null} options The options to provide for the provider.
-   * Provide `null` to remove the provider data.
-   * @returns {WebEmbed}
-   */
   setProvider(options: Partial<MessageEmbedProvider> | null) {
     if (options === null) {
       this.provider = null;
@@ -273,31 +132,16 @@ class WebEmbed {
     return this;
   }
 
-  /**
-   * Sets the color of this embed.
-   * @param {ColorResolvable} color The color of the embed
-   * @returns {WebEmbed}
-   */
   setColor(color: ColorResolvable) {
     this.color = Util.resolveColor(color);
     return this;
   }
 
-  /**
-   * Sets the description of this embed.
-   * @param {string} description The description (Limit 350 characters)
-   * @returns {WebEmbed}
-   */
   setDescription(description: string) {
     this.description = Util.verifyString(description, RangeError, 'EMBED_DESCRIPTION');
     return this;
   }
 
-  /**
-   * Sets the image of this embed.
-   * @param {string} url The URL of the image
-   * @returns {WebEmbed}
-   */
   setImage(url: string) {
     if (this.thumbnail && this.thumbnail.url) {
       console.warn('You can only set image or thumbnail per embed.');
@@ -308,11 +152,6 @@ class WebEmbed {
     return this;
   }
 
-  /**
-   * Sets the thumbnail of this embed.
-   * @param {string} url The URL of the image
-   * @returns {WebEmbed}
-   */
   setThumbnail(url: string) {
     if (this.image && this.image.url) {
       console.warn('You can only set image or thumbnail per embed.');
@@ -323,41 +162,21 @@ class WebEmbed {
     return this;
   }
 
-  /**
-   * Sets the video of this embed.
-   * @param {string} url The URL of the video
-   * @returns {WebEmbed}
-   */
   setVideo(url: string) {
     this.video = { url };
     return this;
   }
 
-  /**
-   * Sets the title of this embed.
-   * @param {string} title The title
-   * @returns {WebEmbed}
-   */
   setTitle(title: string) {
     this.title = Util.verifyString(title, RangeError, 'EMBED_TITLE');
     return this;
   }
 
-  /**
-   * Sets the URL of this embed.
-   * @param {string} url The URL
-   * @returns {WebEmbed}
-   */
   setURL(url: string) {
     this.url = url;
     return this;
   }
 
-  /**
-   * Sets the redirect URL of this embed.
-   * @param {string} url The URL
-   * @returns {WebEmbed}
-   */
   setRedirect(url: string) {
     this.redirect = url;
     return this;

@@ -23,11 +23,6 @@ class MessageCreateAction extends Action {
       const message = existing ?? channel.messages._add(data);
       channel.lastMessageId = data.id;
 
-      /**
-       * Emitted whenever a message is created.
-       * @event Client#messageCreate
-       * @param {Message} message The created message
-       */
       client.emit(Events.MESSAGE_CREATE, message);
 
       /**

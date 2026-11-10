@@ -19,12 +19,6 @@ class MessagePollVoteAddAction extends Action {
 
     answer.voteCount++;
 
-    /**
-     * Emitted whenever a user votes in a poll.
-     * @event Client#messagePollVoteAdd
-     * @param {PollAnswer} pollAnswer The answer that was voted on
-     * @param {Snowflake} userId The id of the user that voted
-     */
     this.client.emit(Events.MESSAGE_POLL_VOTE_ADD, answer, data.user_id);
 
     return { poll };

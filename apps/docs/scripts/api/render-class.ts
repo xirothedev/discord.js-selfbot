@@ -10,8 +10,7 @@ import {
 import { renderType, renderHeritage, renderTypeParameters } from './render-type';
 import { frontmatter, mergeMembers, mergeSignature, renderParameterList, signatureLine } from './render-shared';
 import type { MergedMember } from './render-shared';
-import type { DocgenEvent } from './docgen';
-import type { Reflection } from './types';
+import type { DocgenEvent, Reflection } from './types';
 
 export interface ClassPageInput {
   name: string;

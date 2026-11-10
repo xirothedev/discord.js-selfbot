@@ -88,100 +88,41 @@ function toAllowedMentions(mentions: MessageMentionOptions): APIAllowedMentions 
   };
 }
 
-/**
- * Represents a message to be sent to the API.
- */
 class MessagePayload {
   declare target: MessagePayloadTarget;
   declare options: MessagePayloadOptions;
   declare data: RawMessagePayloadData | null;
   declare files: HTTPAttachmentData[] | null;
-  /**
-   * @param {MessageTarget} target The target for this message to be sent to
-   * @param {MessageOptions|WebhookMessageOptions} options Options passed in from send
-   */
   constructor(target: MessagePayloadTarget, options: MessagePayloadOptions = {}) {
-    /**
-     * The target for this message to be sent to
-     * @type {MessageTarget}
-     */
     this.target = target;
 
-    /**
-     * Options passed in from send
-     * @type {MessageOptions|WebhookMessageOptions}
-     */
     this.options = options;
 
-    /**
-     * Data sendable to the API
-     * @type {?APIMessage}
-     */
     this.data = null;
 
-    /**
-     * @typedef {Object} MessageFile
-     * @property {Buffer|string|Stream} attachment The original attachment that generated this file
-     * @property {string} name The name of this file
-     * @property {Buffer|Stream} file The file to be sent to the API
-     */
-
-    /**
-     * Files sendable to the API
-     * @type {?MessageFile[]}
-     */
     this.files = null;
   }
 
-  /**
-   * Whether or not the target is a {@link Webhook} or a {@link WebhookClient}
-   * @type {boolean}
-   * @readonly
-   */
   get isWebhook() {
     return this.target instanceof Webhook || this.target instanceof WebhookClient;
   }
 
-  /**
-   * Whether or not the target is a {@link User}
-   * @type {boolean}
-   * @readonly
-   */
   get isUser() {
     return this.target instanceof User || this.target instanceof GuildMember;
   }
 
-  /**
-   * Whether or not the target is a {@link Message}
-   * @type {boolean}
-   * @readonly
-   */
   get isMessage() {
     return this.target instanceof Message;
   }
 
-  /**
-   * Whether or not the target is a {@link MessageManager}
-   * @type {boolean}
-   * @readonly
-   */
   get isMessageManager() {
     return this.target instanceof MessageManager;
   }
 
-  /**
-   * Whether or not the target is an {@link Interaction} or an {@link InteractionWebhook}
-   * @type {boolean}
-   * @readonly
-   */
   get isInteraction() {
     return this.target instanceof Interaction || this.target instanceof InteractionWebhook;
   }
 
-  /**
-   * Makes the content of this message.
-   * @returns {?string}
-   */
   makeContent(): string | undefined {
     let content: string | undefined;
     if (this.options.content === null) {
@@ -193,10 +134,6 @@ class MessagePayload {
     return content;
   }
 
-  /**
-   * Resolves data.
-   * @returns {MessagePayload}
-   */
   resolveData() {
     if (this.data) return this;
     const isInteraction = this.isInteraction;
@@ -353,10 +290,6 @@ class MessagePayload {
     return this;
   }
 
-  /**
-   * Resolves files.
-   * @returns {Promise<MessagePayload>}
-   */
   async resolveFiles() {
     if (this.files) return this;
 
@@ -364,11 +297,6 @@ class MessagePayload {
     return this;
   }
 
-  /**
-   * Resolves a single file into an object sendable to the API.
-   * @param {BufferResolvable|Stream|FileOptions|MessageAttachment} fileLike Something that could be resolved to a file
-   * @returns {Promise<MessageFile>}
-   */
   static async resolveFile(fileLike: unknown): Promise<HTTPAttachmentData> {
     let attachment: BufferResolvable | Stream;
     let name: string;
@@ -418,13 +346,6 @@ class MessagePayload {
     };
   }
 
-  /**
-   * Creates a {@link MessagePayload} from user-level arguments.
-   * @param {MessageTarget} target Target to send to
-   * @param {string|MessageOptions|WebhookMessageOptions} options Options or content to use
-   * @param {MessageOptions|WebhookMessageOptions} [extra={}] Extra options to add onto specified options
-   * @returns {MessagePayload}
-   */
   static create(
     target: MessagePayloadTarget,
     options: string | MessagePayloadOptions,
@@ -436,17 +357,6 @@ class MessagePayload {
     );
   }
 }
-
-/**
- * A target for a message.
- * @typedef {TextBasedChannels|User|GuildMember|Webhook|WebhookClient|Interaction|InteractionWebhook|
- * Message|MessageManager} MessageTarget
- */
-
-/**
- * @external APIMessage
- * @see {@link https://discord.com/developers/docs/resources/channel#message-object}
- */
 
 export default MessagePayload;
 export { MessagePayload };

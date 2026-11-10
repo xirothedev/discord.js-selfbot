@@ -17,11 +17,6 @@ class TypingStart extends Action {
 
     const user = this.getUserFromMember(data);
     if (user) {
-      /**
-       * Emitted whenever a user starts typing in a channel.
-       * @event Client#typingStart
-       * @param {Typing} typing The typing state
-       */
       this.client.emit(Events.TYPING_START, new Typing(channel, user, data));
     }
   }

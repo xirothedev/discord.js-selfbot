@@ -48,12 +48,6 @@ const UNRESUMABLE_CLOSE_CODES = [
   RPCErrorCodes.InvalidClientId,
 ];
 
-/**
- * The WebSocket manager for this client.
- * <info>This class forwards raw dispatch events,
- * read more about it here {@link https://discord.com/developers/docs/topics/gateway}</info>
- * @extends {EventEmitter}
- */
 class WebSocketManager extends EventEmitter {
   declare client: import('../Client').default;
   declare gateway: string | null;
@@ -68,25 +62,10 @@ class WebSocketManager extends EventEmitter {
   constructor(client: import('../Client').default) {
     super();
 
-    /**
-     * The client that instantiated this WebSocketManager
-     * @type {Client}
-     * @readonly
-     * @name WebSocketManager#client
-     */
     Object.defineProperty(this, 'client', { value: client });
 
-    /**
-     * The gateway this manager uses
-     * @type {?string}
-     */
     this.gateway = null;
 
-    /**
-     * The amount of shards this manager handles
-     * @private
-     * @type {number}
-     */
     this.totalShards =
       this.client.options.shards === 'auto'
         ? this.client.options.shardCount
@@ -94,73 +73,28 @@ class WebSocketManager extends EventEmitter {
           ? this.client.options.shards.length
           : this.client.options.shardCount;
 
-    /**
-     * A collection of all shards this manager handles
-     * @type {Collection<number, WebSocketShard>}
-     */
     this.shards = new Collection();
 
-    /**
-     * An array of shards to be connected or that need to reconnect
-     * @type {Set<WebSocketShard>}
-     * @private
-     * @name WebSocketManager#shardQueue
-     */
     Object.defineProperty(this, 'shardQueue', { value: new Set(), writable: true });
 
-    /**
-     * An array of queued events before this WebSocketManager became ready
-     * @type {Object[]}
-     * @private
-     * @name WebSocketManager#packetQueue
-     */
     Object.defineProperty(this, 'packetQueue', { value: [] });
 
-    /**
-     * The current status of this WebSocketManager
-     * @type {Status}
-     */
     this.status = Status.IDLE;
 
-    /**
-     * If this manager was destroyed. It will prevent shards from reconnecting
-     * @type {boolean}
-     * @private
-     */
     this.destroyed = false;
 
-    /**
-     * If this manager is currently reconnecting one or multiple shards
-     * @type {boolean}
-     * @private
-     */
     this.reconnecting = false;
   }
 
-  /**
-   * The average ping of all WebSocketShards
-   * @type {number}
-   * @readonly
-   */
   get ping() {
     const sum = this.shards.reduce((a, b) => a + b.ping, 0);
     return sum / this.shards.size;
   }
 
-  /**
-   * Emits a debug message.
-   * @param {string} message The debug message
-   * @param {?WebSocketShard} [shard] The shard that emitted this message, if any
-   * @private
-   */
   debug(message: string, shard?: WebSocketShard) {
     this.client.emit(Events.DEBUG, `[WS => ${shard ? `Shard ${shard.id}` : 'Manager'}] ${message}`);
   }
 
-  /**
-   * Connects this manager to the gateway.
-   * @private
-   */
   async connect() {
     let gatewayURL = 'wss://gateway.discord.gg';
     await this.client.api.gateway
@@ -201,11 +135,6 @@ class WebSocketManager extends EventEmitter {
     return this.createShards();
   }
 
-  /**
-   * Handles the creation of a shard.
-   * @returns {Promise<boolean>}
-   * @private
-   */
   async createShards(): Promise<boolean> {
     // If we don't have any shards to handle, return
     if (!this.shardQueue.size) return false;
@@ -216,12 +145,6 @@ class WebSocketManager extends EventEmitter {
 
     if (!shard.eventsAttached) {
       shard.on(ShardEvents.ALL_READY, (unavailableGuilds?: Set<string> | null) => {
-        /**
-         * Emitted when a shard turns ready.
-         * @event Client#shardReady
-         * @param {number} id The shard id that turned ready
-         * @param {?Set<Snowflake>} unavailableGuilds Set of unavailable guild ids, if any
-         */
         this.client.emit(Events.SHARD_READY, shard.id, unavailableGuilds);
 
         if (!this.shardQueue.size) this.reconnecting = false;
@@ -234,12 +157,6 @@ class WebSocketManager extends EventEmitter {
             ? this.destroyed
             : event.code !== undefined && UNRECOVERABLE_CLOSE_CODES.includes(event.code)
         ) {
-          /**
-           * Emitted when a shard's WebSocket disconnects and will no longer reconnect.
-           * @event Client#shardDisconnect
-           * @param {CloseEvent} event The WebSocket close event
-           * @param {number} id The shard id that disconnected
-           */
           this.client.emit(Events.SHARD_DISCONNECT, event, shard.id);
           if (event.code !== undefined) this.debug(WSCodes[event.code], shard);
           return;
@@ -250,11 +167,6 @@ class WebSocketManager extends EventEmitter {
           shard.sessionId = null;
         }
 
-        /**
-         * Emitted when a shard is attempting to reconnect or re-identify.
-         * @event Client#shardReconnecting
-         * @param {number} id The shard id that is attempting to reconnect
-         */
         this.client.emit(Events.SHARD_RECONNECTING, shard.id);
 
         this.shardQueue.add(shard);
@@ -305,11 +217,6 @@ class WebSocketManager extends EventEmitter {
     return true;
   }
 
-  /**
-   * Handles reconnects for this manager.
-   * @private
-   * @returns {Promise<boolean>}
-   */
   async reconnect(): Promise<boolean> {
     if (this.reconnecting || this.status !== Status.READY) return false;
     this.reconnecting = true;
@@ -326,12 +233,6 @@ class WebSocketManager extends EventEmitter {
       }
       // If we get an error at this point, it means we cannot reconnect anymore
       if (this.client.listenerCount(Events.INVALIDATED)) {
-        /**
-         * Emitted when the client's session becomes invalidated.
-         * You are expected to handle closing the process gracefully and preventing a boot loop
-         * if you are listening to this event.
-         * @event Client#invalidated
-         */
         this.client.emit(Events.INVALIDATED);
         // Destroy just the shards. This means you have to handle the cleanup yourself
         this.destroy();
@@ -344,19 +245,10 @@ class WebSocketManager extends EventEmitter {
     return true;
   }
 
-  /**
-   * Broadcasts a packet to every shard this manager handles.
-   * @param {Object} packet The packet to send
-   * @private
-   */
   broadcast(packet: unknown) {
     for (const shard of this.shards.values()) shard.send(packet);
   }
 
-  /**
-   * Destroys this manager and all its shards.
-   * @private
-   */
   destroy() {
     if (this.destroyed) return;
     this.debug(`Manager was destroyed. Called by:\n${new Error('MANAGER_DESTROYED').stack}`);
@@ -365,13 +257,6 @@ class WebSocketManager extends EventEmitter {
     for (const shard of this.shards.values()) shard.destroy({ closeCode: 1_000, reset: true, emit: false, log: false });
   }
 
-  /**
-   * Processes a packet and queues it if this WebSocketManager is not ready.
-   * @param {Object} [packet] The packet to be handled
-   * @param {WebSocketShard} [shard] The shard that will handle this packet
-   * @returns {boolean}
-   * @private
-   */
   handlePacket(packet?: GatewayPacket, shard?: WebSocketShard) {
     if (packet && this.status !== Status.READY) {
       if (!BeforeReadyWhitelist.includes(packet.t ?? '')) {
@@ -401,22 +286,12 @@ class WebSocketManager extends EventEmitter {
         Reflect.apply(action.handle, action, [packet.d, shard]);
         return true;
       }
-      /**
-       * Emitted whenever a packet isn't handled.
-       * @event Client#unhandledPacket
-       * @param {Object} packet The packet (t: EVENT_NAME, d: unknown)
-       * @param {Number} shard The shard that received the packet (Shard 0)
-       */
       this.client.emit(Events.UNHANDLED_PACKET, packet, shard);
     }
 
     return true;
   }
 
-  /**
-   * Checks whether the client is ready to be marked as ready.
-   * @private
-   */
   checkShardsReady() {
     if (this.status === Status.READY) return;
     if (this.shards.size !== this.totalShards || this.shards.some(s => s.status !== Status.READY)) {
@@ -426,20 +301,11 @@ class WebSocketManager extends EventEmitter {
     this.triggerClientReady();
   }
 
-  /**
-   * Causes the client to be marked as ready and emits the ready event.
-   * @private
-   */
   triggerClientReady() {
     this.status = Status.READY;
 
     this.client.readyAt = new Date();
 
-    /**
-     * Emitted when the client becomes ready to start working.
-     * @event Client#ready
-     * @param {Client} client The client
-     */
     this.client.emit(Events.CLIENT_READY, this.client);
 
     this.handlePacket();

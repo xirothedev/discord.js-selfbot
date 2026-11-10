@@ -20,12 +20,6 @@ class ThreadMembersUpdateAction extends Action {
         thread.members.cache.delete(memberId);
       });
 
-      /**
-       * Emitted whenever members are added or removed from a thread. Requires `GUILD_MEMBERS` privileged intent
-       * @event Client#threadMembersUpdate
-       * @param {Collection<Snowflake, ThreadMember>} oldMembers The members before the update
-       * @param {Collection<Snowflake, ThreadMember>} newMembers The members after the update
-       */
       client.emit(Events.THREAD_MEMBERS_UPDATE, old, thread.members.cache);
     }
     return {};

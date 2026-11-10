@@ -1,0 +1,35 @@
+{
+  "name": "discord-ts-selfbot-mcp",
+  "version": "14.0.0",
+  "description": "MCP gateway to the version-matched discord-ts-selfbot agent docs",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "discord-ts-selfbot-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "bun build src/index.ts --target=node --format=esm --outdir=dist --packages=external",
+    "prepack": "bun run build",
+    "check": "tsc --noEmit -p tsconfig.json",
+    "lint": "bun lint",
+    "fmt": "bun fmt src package.json tsconfig.json",
+    "fmt:check": "bun fmt --check src package.json tsconfig.json",
+    "test": "bun test --pass-with-no-tests"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.0",
+    "@types/node": "^22.10.7",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

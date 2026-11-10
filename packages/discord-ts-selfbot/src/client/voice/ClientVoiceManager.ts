@@ -7,10 +7,6 @@ const { Error } = _errorsModule;
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
 
-/**
- * Manages voice connections for the client
- * Feat: Support both lib & djs/voice
- */
 interface VoiceServerUpdatePayload {
   guild_id?: Snowflake | null;
   channel_id?: Snowflake | null;
@@ -49,32 +45,13 @@ class ClientVoiceManager {
   declare adapters: Map<string, VoiceAdapter>;
 
   constructor(client: Client, options: ClientVoiceManagerOptions = {}) {
-    /**
-     * The client that instantiated this voice manager
-     * @type {Client}
-     * @readonly
-     * @name ClientVoiceManager#client
-     */
     Object.defineProperty(this, 'client', { value: client });
 
-    /**
-     * Factory used to create new voice connections. Overridable so tests can inject fake sockets.
-     * @type {Function}
-     * @private
-     */
     this.connectionFactory =
       options.connectionFactory ?? ((voiceManager, channel) => new VoiceConnection(voiceManager, channel));
 
-    /**
-     * A current connection objects
-     * @type {?VoiceConnection}
-     */
     this.connection = null;
 
-    /**
-     * Maps guild ids to voice adapters created for use with @discordjs/voice.
-     * @type {Map<Snowflake, Object>}
-     */
     this.adapters = new Map();
 
     client.on(Events.SHARD_DISCONNECT, (_: unknown, shardId: number) => {
@@ -132,20 +109,6 @@ class ClientVoiceManager {
     }
   }
 
-  /**
-   * @property {boolean} [selfMute=false]
-   * @property {boolean} [selfDeaf=false]
-   * @property {boolean} [selfVideo=false]
-   * @property {VideoCodec} [videoCodec='H264']
-   * @typedef {Object} JoinChannelConfig
-   */
-
-  /**
-   * Sets up a request to join a voice channel.
-   * @param {VoiceChannel | StageChannel | DMChannel | GroupDMChannel | Snowflake} channel The voice channel to join
-   * @param {JoinChannelConfig} config Config to join voice channel
-   * @returns {Promise<VoiceConnection>}
-   */
   joinChannel(channel: VoiceConnectionChannel | Snowflake, config: JoinChannelConfig = {}): Promise<VoiceConnection> {
     return new Promise((resolve, reject) => {
       const resolved = this.client.channels.resolve(channel);

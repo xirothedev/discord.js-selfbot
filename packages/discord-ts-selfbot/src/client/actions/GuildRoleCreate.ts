@@ -11,11 +11,6 @@ class GuildRoleCreate extends Action {
     if (guild) {
       const already = guild.roles.cache.has(data.role.id);
       role = guild.roles._add(data.role);
-      /**
-       * Emitted whenever a role is created.
-       * @event Client#roleCreate
-       * @param {Role} role The role that was created
-       */
       if (!already) client.emit(Events.GUILD_ROLE_CREATE, role);
     }
     return { role };

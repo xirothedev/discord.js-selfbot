@@ -27,19 +27,6 @@ import type { User } from './User';
 import type { CategoryChannel } from './CategoryChannel';
 import type PermissionOverwrites from './PermissionOverwrites';
 
-/**
- * Represents a guild channel from any of the following:
- * - {@link TextChannel}
- * - {@link VoiceChannel}
- * - {@link CategoryChannel}
- * - {@link NewsChannel}
- * - {@link StoreChannel}
- * - {@link StageChannel}
- * - {@link ForumChannel}
- * - {@link MediaChannel}
- * @extends {Channel}
- * @abstract
- */
 class GuildChannel extends Channel implements GuildChannelEntity {
   declare guild: GuildChannelEntity['guild'];
   declare guildId: GuildChannelEntity['guildId'];
@@ -63,23 +50,11 @@ class GuildChannel extends Channel implements GuildChannelEntity {
   ) {
     super(guild.client ?? client, data, false);
 
-    /**
-     * The guild the channel is in
-     * @type {Guild}
-     */
     this.guild = guild;
 
-    /**
-     * The id of the guild the channel is in
-     * @type {Snowflake}
-     */
     this.guildId = guild.id;
 
     this.parentId = this.parentId ?? null;
-    /**
-     * A manager of permission overwrites that belong to this channel
-     * @type {PermissionOverwriteManager}
-     */
     this.permissionOverwrites = new PermissionOverwriteManager(this);
 
     if (data && immediatePatch) this._patch(data);
@@ -89,18 +64,10 @@ class GuildChannel extends Channel implements GuildChannelEntity {
     super._patch(data);
 
     if ('name' in data && typeof data.name === 'string') {
-      /**
-       * The name of the guild channel
-       * @type {string}
-       */
       this.name = data.name;
     }
 
     if ('position' in data && data.position !== undefined) {
-      /**
-       * The raw position of the channel from Discord
-       * @type {number}
-       */
       this.rawPosition = data.position;
     }
 
@@ -109,10 +76,6 @@ class GuildChannel extends Channel implements GuildChannelEntity {
     }
 
     if ('parent_id' in data && data.parent_id !== undefined) {
-      /**
-       * The id of the category parent of this channel
-       * @type {?Snowflake}
-       */
       this.parentId = data.parent_id;
     }
 
@@ -130,21 +93,11 @@ class GuildChannel extends Channel implements GuildChannelEntity {
     return clone;
   }
 
-  /**
-   * The category parent of this channel
-   * @type {?CategoryChannel}
-   * @readonly
-   */
   get parent(): CategoryChannel | null {
     const parent = this.parentId ? this.guild.channels.resolve(this.parentId) : null;
     return parent && isCategoryChannel(parent) ? parent : null;
   }
 
-  /**
-   * If the permissionOverwrites match the parent channel, null if no parent
-   * @type {?boolean}
-   * @readonly
-   */
   get permissionsLocked(): boolean | null {
     const parent = this.parent;
     if (!parent) return null;
@@ -180,11 +133,6 @@ class GuildChannel extends Channel implements GuildChannelEntity {
     });
   }
 
-  /**
-   * The position of the channel
-   * @type {number}
-   * @readonly
-   */
   get position(): number {
     const selfIsCategory = this.type === 'GUILD_CATEGORY';
     const types = Util.getSortableGroupTypes(this.type);
@@ -203,12 +151,6 @@ class GuildChannel extends Channel implements GuildChannelEntity {
     return count;
   }
 
-  /**
-   * Gets the overall set of permissions for a member or role in this channel, taking into account channel overwrites.
-   * @param {GuildMemberResolvable|RoleResolvable} memberOrRole The member or role to obtain the overall permissions for
-   * @param {boolean} [checkAdmin=true] Whether having `ADMINISTRATOR` will return all permissions
-   * @returns {?Readonly<Permissions>}
-   */
   permissionsFor(memberOrRole: GuildMember | Role | User | Snowflake, checkAdmin = true): Readonly<Permissions> | null {
     const member = this.guild.members.resolve(memberOrRole);
     if (member) return this.memberPermissions(member, checkAdmin);
@@ -246,13 +188,6 @@ class GuildChannel extends Channel implements GuildChannelEntity {
     };
   }
 
-  /**
-   * Gets the overall set of permissions for a member in this channel, taking into account channel overwrites.
-   * @param {GuildMember} member The member to obtain the overall permissions for
-   * @param {boolean} checkAdmin=true Whether having `ADMINISTRATOR` will return all permissions
-   * @returns {Readonly<Permissions>}
-   * @private
-   */
   memberPermissions(member: GuildMember, checkAdmin: boolean): Readonly<Permissions> {
     if (checkAdmin && member.id === this.guild.ownerId) return new Permissions(Permissions.ALL).freeze();
 
@@ -275,13 +210,6 @@ class GuildChannel extends Channel implements GuildChannelEntity {
       .freeze();
   }
 
-  /**
-   * Gets the overall set of permissions for a role in this channel, taking into account channel overwrites.
-   * @param {Role} role The role to obtain the overall permissions for
-   * @param {boolean} checkAdmin Whether having `ADMINISTRATOR` will return all permissions
-   * @returns {Readonly<Permissions>}
-   * @private
-   */
   rolePermissions(role: Role, checkAdmin: boolean): Readonly<Permissions> {
     if (checkAdmin && role.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
       return new Permissions(Permissions.ALL).freeze();
@@ -302,10 +230,6 @@ class GuildChannel extends Channel implements GuildChannelEntity {
       .freeze();
   }
 
-  /**
-   * Locks in the permission overwrites from the parent channel.
-   * @returns {Promise<GuildChannel>}
-   */
   async lockPermissions(): Promise<this> {
     if (!this.parent) throw new Error('GUILD_CHANNEL_ORPHAN');
     const permissionOverwrites: import('../../typings').OverwriteData[] = this.parent.permissionOverwrites.cache.map(
@@ -319,30 +243,12 @@ class GuildChannel extends Channel implements GuildChannelEntity {
     return this.edit({ permissionOverwrites });
   }
 
-  /**
-   * A collection of cached members of this channel, mapped by their ids.
-   * Members that can view this channel, if the channel is text-based.
-   * Members in the channel, if the channel is voice-based.
-   * @type {Collection<Snowflake, GuildMember>}
-   * @readonly
-   */
   get members(): Collection<Snowflake, GuildMember> {
     return this.guild.members.cache.filter(
       (member: GuildMember) => this.permissionsFor(member)?.has(Permissions.FLAGS.VIEW_CHANNEL, false) ?? false,
     );
   }
 
-  /**
-   * Edits the channel.
-   * @param {ChannelData} data The new data for the channel
-   * @param {string} [reason] Reason for editing this channel
-   * @returns {Promise<GuildChannel>}
-   * @example
-   * // Edit a channel
-   * channel.edit({ name: 'new-channel' })
-   *   .then(console.log)
-   *   .catch(console.error);
-   */
   edit(data: ChannelData, reason?: string): Promise<this>;
   edit(data: import('../managers/GuildChannelManager').ChannelDataSource, reason?: string): Promise<this>;
   edit(
@@ -352,39 +258,10 @@ class GuildChannel extends Channel implements GuildChannelEntity {
     return this.guild.channels.edit<this>(this, data, reason);
   }
 
-  /**
-   * Sets a new name for the guild channel.
-   * @param {string} name The new name for the guild channel
-   * @param {string} [reason] Reason for changing the guild channel's name
-   * @returns {Promise<GuildChannel>}
-   * @example
-   * // Set a new channel name
-   * channel.setName('not_general')
-   *   .then(newChannel => console.log(`Channel's new name is ${newChannel.name}`))
-   *   .catch(console.error);
-   */
   setName(name: string, reason?: string): Promise<this> {
     return this.edit({ name }, reason);
   }
 
-  /**
-   * Options used to set the parent of a channel.
-   * @typedef {Object} SetParentOptions
-   * @property {boolean} [lockPermissions=true] Whether to lock the permissions to what the parent's permissions are
-   * @property {string} [reason] The reason for modifying the parent of the channel
-   */
-
-  /**
-   * Sets the parent of this channel.
-   * @param {?CategoryChannelResolvable} channel The category channel to set as the parent
-   * @param {SetParentOptions} [options={}] The options for setting the parent
-   * @returns {Promise<GuildChannel>}
-   * @example
-   * // Add a parent to a channel
-   * message.channel.setParent('355908108431917066', { lockPermissions: false })
-   *   .then(channel => console.log(`New parent of ${message.channel.name}: ${channel.name}`))
-   *   .catch(console.error);
-   */
   setParent(
     channel: CategoryChannelResolvable | null,
     { lockPermissions = true, reason }: SetParentOptions = {},
@@ -398,40 +275,11 @@ class GuildChannel extends Channel implements GuildChannelEntity {
     );
   }
 
-  /**
-   * Options used to set the position of a channel.
-   * @typedef {Object} SetChannelPositionOptions
-   * @property {boolean} [relative=false] Whether or not to change the position relative to its current value
-   * @property {string} [reason] The reason for changing the position
-   */
-
-  /**
-   * Sets a new position for the guild channel.
-   * @param {number} position The new position for the guild channel
-   * @param {SetChannelPositionOptions} [options] Options for setting position
-   * @returns {Promise<GuildChannel>}
-   * @example
-   * // Set a new channel position
-   * channel.setPosition(2)
-   *   .then(newChannel => console.log(`Channel's new position is ${newChannel.position}`))
-   *   .catch(console.error);
-   */
   async setPosition(position: number, options: SetChannelPositionOptions = {}): Promise<this> {
     await this.guild.channels.setPosition(this, position, options);
     return this;
   }
 
-  /**
-   * Options used to clone a guild channel.
-   * @typedef {GuildChannelCreateOptions} GuildChannelCloneOptions
-   * @property {string} [name=this.name] Name of the new channel
-   */
-
-  /**
-   * Clones this channel.
-   * @param {GuildChannelCloneOptions} [options] The options for cloning this channel
-   * @returns {Promise<GuildChannel>}
-   */
   async clone(options: GuildChannelCloneOptions = {}): Promise<this> {
     return this.guild.channels.create<this>(options.name ?? this.name, {
       permissionOverwrites: this.permissionOverwrites.cache,
@@ -448,12 +296,6 @@ class GuildChannel extends Channel implements GuildChannelEntity {
     });
   }
 
-  /**
-   * Checks if this channel has the same type, topic, position, name, overwrites, and id as another channel.
-   * In most cases, a simple `channel.id === channel2.id` will do, and is much faster too.
-   * @param {GuildChannel} channel Channel to compare with
-   * @returns {boolean}
-   */
   equals(channel: GuildChannel): boolean {
     let equal =
       channel &&
@@ -474,20 +316,10 @@ class GuildChannel extends Channel implements GuildChannelEntity {
     return equal;
   }
 
-  /**
-   * Whether the channel is deletable by the client user
-   * @type {boolean}
-   * @readonly
-   */
   get deletable(): boolean {
     return this.manageable && this.guild.rulesChannelId !== this.id && this.guild.publicUpdatesChannelId !== this.id;
   }
 
-  /**
-   * Whether the channel is manageable by the client user
-   * @type {boolean}
-   * @readonly
-   */
   get manageable(): boolean {
     if (this.client.user!.id === this.guild.ownerId) return true;
     const permissions = this.permissionsFor(this.client.user!);
@@ -506,11 +338,6 @@ class GuildChannel extends Channel implements GuildChannelEntity {
     return permissions.has(bitfield, false);
   }
 
-  /**
-   * Whether the channel is viewable by the client user
-   * @type {boolean}
-   * @readonly
-   */
   get viewable(): boolean {
     if (this.client.user!.id === this.guild.ownerId) return true;
     const permissions = this.permissionsFor(this.client.user!);
@@ -518,16 +345,6 @@ class GuildChannel extends Channel implements GuildChannelEntity {
     return permissions.has(Permissions.FLAGS.VIEW_CHANNEL, false);
   }
 
-  /**
-   * Deletes this channel.
-   * @param {string} [reason] Reason for deleting this channel
-   * @returns {Promise<GuildChannel>}
-   * @example
-   * // Delete the channel
-   * channel.delete('making room for new channels')
-   *   .then(console.log)
-   *   .catch(console.error);
-   */
   async delete(reason?: string): Promise<this> {
     await this.guild.channels.delete(this.id, reason);
     return this;

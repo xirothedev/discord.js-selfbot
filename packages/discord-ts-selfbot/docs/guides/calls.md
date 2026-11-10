@@ -1,0 +1,84 @@
+# Calls
+
+## Ring a DM
+
+```ts
+import { Events } from 'discord-ts-selfbot';
+
+const channel = client.channels.cache.get('dm-channel-id');
+if (channel?.type !== 'DM') throw new Error('Not a DM channel.');
+
+await channel.ring();
+```
+
+`DMChannel#ring` posts to `/channels/:id/call/ring`. The other user receives a normal Discord call notification.
+
+## Ring a group DM
+
+```ts
+if (channel.type !== 'GROUP_DM') throw new Error('Not a group DM.');
+
+await channel.ring([userA, userB]);
+```
+
+`GroupDMChannel#ring` accepts an array of recipients. If you pass an empty array or omit the argument, the request rings with `recipients: null`, which asks Discord to use the default set.
+
+## Follow call state
+
+```ts
+client.on(Events.CALL_CREATE, (call) => {
+  console.log(`Call in ${call.channelId}, ringing: ${call.ringing.size}`);
+});
+
+client.on(Events.CALL_UPDATE, (call) => {
+  console.log(`Call region: ${call.region}`);
+});
+
+client.on(Events.CALL_DELETE, (call) => {
+  console.log(`Call ended in ${call.channelId}.`);
+});
+```
+
+`CallState` exposes:
+
+- `channelId` and `channel`
+- `region`
+- `ringing`, a collection of the users being rung
+- `setRTCRegion(region)`
+
+## Message requests
+
+A DM from a stranger can arrive as a message request. Accept or cancel it from the channel:
+
+```ts
+if (channel.messageRequest) {
+  await channel.acceptMessageRequest();
+}
+
+// Or reject it:
+if (channel.messageRequest) {
+  await channel.cancelMessageRequest();
+}
+```
+
+`acceptMessageRequest()` sets the consent status and returns the updated channel. `cancelMessageRequest()` deletes the request and returns the channel.
+
+## Sync voice state
+
+DM and group DM channels can broadcast a `DM_UPDATE` voice state:
+
+```ts
+channel.sync();
+```
+
+This is useful after joining or leaving a call when the client cache is stale.
+
+## Interop with @discordjs/voice
+
+DM and group DM channels expose `voiceAdapterCreator`. The function has the shape expected by `@discordjs/voice` adapters. The fork tests the shape and the payload boundary; it does not bundle `@discordjs/voice`.
+
+## Next
+
+- [Voice](voice.md)
+- [Recording](recording.md)
+- [API: DMChannel](../reference/structures/dm-channel.md) and [GroupDMChannel](../reference/structures/group-dm-channel.md)

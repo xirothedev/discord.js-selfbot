@@ -13,11 +13,6 @@ class GuildScheduledEventDeleteAction extends Action {
       if (guildScheduledEvent) {
         guild.scheduledEvents.cache.delete(guildScheduledEvent.id);
 
-        /**
-         * Emitted whenever a guild scheduled event is deleted.
-         * @event Client#guildScheduledEventDelete
-         * @param {GuildScheduledEvent} guildScheduledEvent The deleted guild scheduled event
-         */
         client.emit(Events.GUILD_SCHEDULED_EVENT_DELETE, guildScheduledEvent);
 
         return { guildScheduledEvent };

@@ -25,11 +25,6 @@ class GuildDeleteAction extends Action {
         // Guild is unavailable
         guild.available = false;
 
-        /**
-         * Emitted whenever a guild becomes unavailable, likely due to a server outage.
-         * @event Client#guildUnavailable
-         * @param {Guild} guild The guild that has become unavailable
-         */
         client.emit(Events.GUILD_UNAVAILABLE, guild);
 
         // Stops the GuildDelete packet thinking a guild was actually deleted,
@@ -46,11 +41,6 @@ class GuildDeleteAction extends Action {
       client.guilds.cache.delete(guild.id);
       deletedGuilds.add(guild);
 
-      /**
-       * Emitted whenever a guild kicks the client or the guild is deleted/left.
-       * @event Client#guildDelete
-       * @param {Guild} guild The guild that was deleted
-       */
       client.emit(Events.GUILD_DELETE, guild);
 
       this.deleted.set(guild.id, guild);

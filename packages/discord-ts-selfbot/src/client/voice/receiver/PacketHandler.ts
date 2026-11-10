@@ -154,13 +154,6 @@ class PacketHandler extends EventEmitter {
     streamInfo.feed(packet);
   }
 
-  /**
-   * Test
-   * @param {number} ssrc ssrc
-   * @param {Object} userStat { userId, hasVideo }
-   * @param {RtpPacket} packet RtpPacket
-   * @returns {void}
-   */
   videoReceiver(_ssrc: number, userStat: UserStat, packet: RtpPacket | Error) {
     const streamInfo = this.videoStreams.get(userStat.userId);
     // If the user is in video, we need to check if the packet is just silence

@@ -11,8 +11,8 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 import { frontmatterDescription, renderSummary } from './comment';
-import { enrichClass, enrichType, loadDocgen } from './docgen';
-import type { DocgenClass, DocgenType } from './docgen';
+import { enrichClass, enrichType, loadApiStore } from './enrich';
+import type { DocgenClass, DocgenType } from './enrich';
 import { AREA_ORDER, areaFor, parseIndexExports, slugify } from './exports';
 import { renderClassPage } from './render-class';
 import { renderApiIndex, renderAreaIndex } from './render-index';
@@ -97,9 +97,14 @@ function enumMembers(reflection: Reflection | undefined): Reflection[] | undefin
   return members.every((member) => member.type?.type === 'literal') ? members : undefined;
 }
 
-function docgenSourceUrl(entry: DocgenClass | DocgenType | undefined): string | undefined {
+function sourceUrlForExport(exportedPath: string): string {
+  const relative = exportedPath === './index' ? 'src/index.ts' : `src/${exportedPath.slice(2)}.ts`;
+  return `https://github.com/xirothedev/discord.js-selfbot/blob/main/packages/discord-ts-selfbot/${relative}#L1`;
+}
+
+function sourceUrlForEntry(entry: DocgenClass | DocgenType | undefined, exportedPath: string): string {
   const meta = entry?.meta;
-  if (!meta?.file) return undefined;
+  if (!meta?.file) return sourceUrlForExport(exportedPath);
   const full = [meta.path, meta.file].filter(Boolean).join('/').replace(/\.js$/, '.ts');
   return `https://github.com/xirothedev/discord.js-selfbot/blob/main/packages/discord-ts-selfbot/${full}#L${
     meta.line ?? 1
@@ -209,11 +214,7 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
   const version = (JSON.parse(readFileSync(path.join(packageDir, 'package.json'), 'utf8')) as { version: string })
     .version;
   const typingsReflections = reflectionsByName(typingsProject);
-  const docgen = loadDocgen({
-    packageDir,
-    docsDir,
-    outputJson: path.join(tempDir, 'docgen.json'),
-  });
+  const store = loadApiStore(path.join(docsDir, 'scripts/agent/api.json'));
   const outputs = new Map<string, string>();
   const areaItems = new Map<string, PageItem[]>();
   const areaCounts = new Map<string, number>();
@@ -228,21 +229,21 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
       continue;
     }
 
-    const docgenEntry = docgen.get(exported.name);
-    enrichClass(undefined, typings, docgenEntry);
-    enrichType(typings, docgenEntry);
+    const storeEntry = store.get(exported.name);
+    enrichClass(undefined, typings, storeEntry);
+    enrichType(typings, storeEntry);
     const privateMembers =
-      (docgenEntry as DocgenClass | undefined)?.props
-        ?.filter((prop) => prop.access === 'private')
-        .map((prop) => prop.name) ?? [];
-    const sourceUrl = docgenSourceUrl(docgenEntry) ?? sourceUrlFor(typings);
+      typings.children
+        ?.filter((child) => child.flags?.isPrivate || child.flags?.isProtected)
+        .map((child) => child.name) ?? [];
+    const sourceUrl = sourceUrlForEntry(storeEntry, exported.path);
     const area = areaFor(exported.path);
     const slug = slugify(exported.name);
     const page = renderPublicPage({
       exported,
       typings,
       sourceUrl,
-      docgen: docgenEntry,
+      docgen: storeEntry,
       privateMembers,
     });
     if (!page) {
@@ -270,7 +271,7 @@ export function generateApi(options: { check?: boolean } = {}): GenerateResult {
     (reflection) =>
       !publicNames.has(reflection.name) && referencedNames.has(reflection.name) && isTypingsKind(reflection.kind),
   );
-  for (const reflection of typingsOnly) enrichType(reflection, docgen.get(reflection.name));
+  for (const reflection of typingsOnly) enrichType(reflection, store.get(reflection.name));
 
   const typingsGroups = new Map<TypingsGroupId, Reflection[]>();
   for (const reflection of typingsOnly) {

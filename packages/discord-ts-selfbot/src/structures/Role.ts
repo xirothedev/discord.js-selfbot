@@ -19,10 +19,6 @@ let deprecationEmittedForComparePositions = false;
 const deletedRoles = new WeakSet();
 let deprecationEmittedForDeleted = false;
 
-/**
- * Represents a role on Discord.
- * @extends {Base}
- */
 class Role extends Base implements RoleEntity {
   declare color: RoleEntity['color'];
   declare colors: RoleEntity['colors'];
@@ -42,38 +38,18 @@ class Role extends Base implements RoleEntity {
   constructor(client: import('../client/Client').default, data: RawRoleData, guild: import('./Guild').Guild) {
     super(client);
 
-    /**
-     * The guild that the role belongs to
-     * @type {Guild}
-     */
     this.guild = guild;
 
-    /**
-     * The icon hash of the role
-     * @type {?string}
-     */
     this.icon = null;
 
-    /**
-     * The unicode emoji for the role
-     * @type {?string}
-     */
     this.unicodeEmoji = null;
 
     if (data) this._patch(data);
   }
 
   _patch(data: PatchOf<'Role'>) {
-    /**
-     * The role's id (unique to the guild it is part of)
-     * @type {Snowflake}
-     */
     this.id = data.id ?? this.id;
     if (data.name !== undefined) {
-      /**
-       * The name of the role
-       * @type {string}
-       */
       this.name = data.name;
     }
 
@@ -86,23 +62,7 @@ class Role extends Base implements RoleEntity {
       this.color = data.color;
     }
 
-    /**
-     * @typedef {Object} RoleColors
-     * @property {number} primaryColor The primary color of the role
-     * @property {?number} secondaryColor The secondary color of the role.
-     * This will make the role a gradient between the other provided colors
-     * @property {?number} tertiaryColor The tertiary color of the role.
-     * When sending `tertiaryColor` the API enforces the role color to be a holographic style
-     * with values of `primaryColor = 11127295`, `secondaryColor = 16759788`, and `tertiaryColor = 16761760`.
-     * These values are available as a constant: `Constants.HolographicStyle`
-     */
-
     if (data.colors !== undefined) {
-      /**
-       * The colors of the role
-       *
-       * @type {RoleColors}
-       */
       const colors = data.colors;
       this.colors = {
         primaryColor: colors.primary_color,
@@ -112,42 +72,22 @@ class Role extends Base implements RoleEntity {
     }
 
     if (data.hoist !== undefined) {
-      /**
-       * If true, users that are part of this role will appear in a separate category in the users list
-       * @type {boolean}
-       */
       this.hoist = data.hoist;
     }
 
     if (data.position !== undefined) {
-      /**
-       * The raw position of the role from the API
-       * @type {number}
-       */
       this.rawPosition = data.position;
     }
 
     if (data.permissions !== undefined) {
-      /**
-       * The permissions of the role
-       * @type {Readonly<Permissions>}
-       */
       this.permissions = new Permissions(BigInt(data.permissions)).freeze();
     }
 
     if (data.managed !== undefined) {
-      /**
-       * Whether or not the role is managed by an external service
-       * @type {boolean}
-       */
       this.managed = data.managed;
     }
 
     if (data.mentionable !== undefined) {
-      /**
-       * Whether or not the role can be mentioned by anyone
-       * @type {boolean}
-       */
       this.mentionable = data.mentionable;
     }
 
@@ -155,16 +95,6 @@ class Role extends Base implements RoleEntity {
 
     if (data.unicode_emoji !== undefined) this.unicodeEmoji = data.unicode_emoji;
 
-    /**
-     * The tags this role has
-     * @type {?Object}
-     * @property {Snowflake} [botId] The id of the bot this role belongs to
-     * @property {Snowflake|string} [integrationId] The id of the integration this role belongs to
-     * @property {true} [premiumSubscriberRole] Whether this is the guild's premium subscription role
-     * @property {Snowflake} [subscriptionListingId] The id of this role's subscription SKU and listing
-     * @property {true} [availableForPurchase] Whether this role is available for purchase
-     * @property {true} [guildConnections] Whether this role is a guild's linked role
-     */
     const tags = data.tags;
     if (tags) {
       const mapped: NonNullable<RoleEntity['tags']> = {};
@@ -180,30 +110,16 @@ class Role extends Base implements RoleEntity {
     }
 
     if (data.flags !== undefined) {
-      /**
-       * The flags of this role
-       * @type {Readonly<RoleFlags>}
-       */
       this.flags = new RoleFlags(data.flags).freeze();
     } else {
       this.flags ??= new RoleFlags().freeze();
     }
   }
 
-  /**
-   * The timestamp the role was created at
-   * @type {number}
-   * @readonly
-   */
   get createdTimestamp() {
     return SnowflakeUtil.timestampFrom(this.id);
   }
 
-  /**
-   * The time the role was created at
-   * @type {Date}
-   * @readonly
-   */
   get createdAt() {
     return new Date(this.createdTimestamp);
   }
@@ -238,29 +154,14 @@ class Role extends Base implements RoleEntity {
     else deletedRoles.delete(this);
   }
 
-  /**
-   * The hexadecimal version of the role color, with a leading hashtag
-   * @type {string}
-   * @readonly
-   */
   get hexColor() {
     return `#${this.colors.primaryColor.toString(16).padStart(6, '0')}`;
   }
 
-  /**
-   * The cached guild members that have this role
-   * @type {Collection<Snowflake, GuildMember>}
-   * @readonly
-   */
   get members() {
     return this.guild.members.cache.filter((m: import('./GuildMember').GuildMember) => m.roles.cache.has(this.id));
   }
 
-  /**
-   * Whether the role is editable by the client user
-   * @type {boolean}
-   * @readonly
-   */
   get editable(): boolean {
     if (this.managed) return false;
     const clientMember: import('./GuildMember').GuildMember | null = this.guild.members.resolve(this.client.user);
@@ -268,11 +169,6 @@ class Role extends Base implements RoleEntity {
     return clientMember.roles.highest.comparePositionTo(this) > 0;
   }
 
-  /**
-   * The position of the role in the role manager
-   * @type {number}
-   * @readonly
-   */
   get position() {
     let count = 0;
     for (const role of this.guild.roles.cache.values()) {
@@ -283,76 +179,20 @@ class Role extends Base implements RoleEntity {
     return count;
   }
 
-  /**
-   * Compares this role's position to another role's.
-   * @param {RoleResolvable} role Role to compare to this one
-   * @returns {number} Negative number if this role's position is lower (other role's is higher),
-   * positive number if this one is higher (other's is lower), 0 if equal
-   * @example
-   * // Compare the position of a role to another
-   * const roleCompare = role.comparePositionTo(otherRole);
-   * if (roleCompare >= 1) console.log(`${role.name} is higher than ${otherRole.name}`);
-   */
   comparePositionTo(role: unknown) {
     return this.guild.roles.comparePositions(this, role);
   }
 
-  /**
-   * The data for a role.
-   * @typedef {Object} RoleData
-   * @property {string} [name] The name of the role
-   * @property {ColorResolvable} [color] The color of the role, either a hex string or a base 10 number
-   * <warn>This property is deprecated. Use `colors` instead.</warn>
-   * @property {RoleColorsResolvable} [colors] The colors of the role
-   * @property {boolean} [hoist] Whether or not the role should be hoisted
-   * @property {number} [position] The position of the role
-   * @property {PermissionResolvable} [permissions] The permissions of the role
-   * @property {boolean} [mentionable] Whether or not the role should be mentionable
-   * @property {?(BufferResolvable|Base64Resolvable|EmojiResolvable)} [icon] The icon for the role
-   * <warn>The `EmojiResolvable` should belong to the same guild as the role.
-   * If not, pass the emoji's URL directly</warn>
-   * @property {?string} [unicodeEmoji] The unicode emoji for the role
-   */
-
-  /**
-   * Edits the role.
-   * @param {RoleData} data The new data for the role
-   * @param {string} [reason] Reason for editing this role
-   * @returns {Promise<Role>}
-   * @example
-   * // Edit a role
-   * role.edit({ name: 'new role' })
-   *   .then(updated => console.log(`Edited role name to ${updated.name}`))
-   *   .catch(console.error);
-   */
   edit(data: Record<string, unknown>, reason?: string) {
     return this.guild.roles.edit(this, data, reason);
   }
 
-  /**
-   * Returns `channel.permissionsFor(role)`. Returns permissions for a role in a guild channel,
-   * taking into account permission overwrites.
-   * @param {GuildChannel|Snowflake} channel The guild channel to use as context
-   * @param {boolean} [checkAdmin=true] Whether having `ADMINISTRATOR` will return all permissions
-   * @returns {Readonly<Permissions>}
-   */
   permissionsIn(channel: import('./GuildChannel').GuildChannel | string, checkAdmin: boolean = true) {
     const resolved = this.guild.channels.resolve(channel);
     if (!resolved) throw new Error('GUILD_CHANNEL_RESOLVE');
     return resolved.rolePermissions(this, checkAdmin);
   }
 
-  /**
-   * Sets a new name for the role.
-   * @param {string} name The new name of the role
-   * @param {string} [reason] Reason for changing the role's name
-   * @returns {Promise<Role>}
-   * @example
-   * // Set the name of the role
-   * role.setName('new role')
-   *   .then(updated => console.log(`Updated role name to ${updated.name}`))
-   *   .catch(console.error);
-   */
   setName(name: string, reason?: string) {
     return this.edit({ name }, reason);
   }
@@ -368,171 +208,48 @@ class Role extends Base implements RoleEntity {
     return this.edit({ color }, reason);
   }
 
-  /**
-   * Sets new colors for the role.
-   *
-   * @param {RoleColorsResolvable} colors The colors of the role
-   * @param {string} [reason] Reason for changing the role's colors
-   * @returns {Promise<Role>}
-   * @example
-   * // Set the colors of a role
-   * role.setColors({ primaryColor: '#FF0000', secondaryColor: '#00FF00', tertiaryColor: '#0000FF' })
-   *   .then(updated => console.log(`Set colors of role to ${updated.colors}`))
-   *   .catch(console.error);
-   * @example
-   * // Set holographic colors using constants
-   * role.setColors({
-   *   primaryColor: Constants.HolographicStyle.Primary,
-   *   secondaryColor: Constants.HolographicStyle.Secondary,
-   *   tertiaryColor: Constants.HolographicStyle.Tertiary,
-   * })
-   *   .then(updated => console.log(`Set holographic colors for role ${updated.name}`))
-   *   .catch(console.error);
-   */
   setColors(colors: unknown, reason?: string) {
     return this.edit({ colors, reason });
   }
 
-  /**
-   * Sets whether or not the role should be hoisted.
-   * @param {boolean} [hoist=true] Whether or not to hoist the role
-   * @param {string} [reason] Reason for setting whether or not the role should be hoisted
-   * @returns {Promise<Role>}
-   * @example
-   * // Set the hoist of the role
-   * role.setHoist(true)
-   *   .then(updated => console.log(`Role hoisted: ${updated.hoist}`))
-   *   .catch(console.error);
-   */
   setHoist(hoist: boolean = true, reason?: string) {
     return this.edit({ hoist }, reason);
   }
 
-  /**
-   * Sets the permissions of the role.
-   * @param {PermissionResolvable} permissions The permissions of the role
-   * @param {string} [reason] Reason for changing the role's permissions
-   * @returns {Promise<Role>}
-   * @example
-   * // Set the permissions of the role
-   * role.setPermissions([Permissions.FLAGS.KICK_MEMBERS, Permissions.FLAGS.BAN_MEMBERS])
-   *   .then(updated => console.log(`Updated permissions to ${updated.permissions.bitfield}`))
-   *   .catch(console.error);
-   * @example
-   * // Remove all permissions from a role
-   * role.setPermissions(0n)
-   *   .then(updated => console.log(`Updated permissions to ${updated.permissions.bitfield}`))
-   *   .catch(console.error);
-   */
   setPermissions(permissions: unknown, reason?: string) {
     return this.edit({ permissions }, reason);
   }
 
-  /**
-   * Sets whether this role is mentionable.
-   * @param {boolean} [mentionable=true] Whether this role should be mentionable
-   * @param {string} [reason] Reason for setting whether or not this role should be mentionable
-   * @returns {Promise<Role>}
-   * @example
-   * // Make the role mentionable
-   * role.setMentionable(true)
-   *   .then(updated => console.log(`Role updated ${updated.name}`))
-   *   .catch(console.error);
-   */
   setMentionable(mentionable: boolean = true, reason?: string) {
     return this.edit({ mentionable }, reason);
   }
 
-  /**
-   * Sets a new icon for the role.
-   * @param {?(BufferResolvable|Base64Resolvable|EmojiResolvable)} icon The icon for the role
-   * <warn>The `EmojiResolvable` should belong to the same guild as the role.
-   * If not, pass the emoji's URL directly</warn>
-   * @param {string} [reason] Reason for changing the role's icon
-   * @returns {Promise<Role>}
-   */
   setIcon(icon: unknown, reason?: string) {
     return this.edit({ icon }, reason);
   }
 
-  /**
-   * Sets a new unicode emoji for the role.
-   * @param {?string} unicodeEmoji The new unicode emoji for the role
-   * @param {string} [reason] Reason for changing the role's unicode emoji
-   * @returns {Promise<Role>}
-   * @example
-   * // Set a new unicode emoji for the role
-   * role.setUnicodeEmoji('🤖')
-   *   .then(updated => console.log(`Set unicode emoji for the role to ${updated.unicodeEmoji}`))
-   *   .catch(console.error);
-   */
   setUnicodeEmoji(unicodeEmoji: unknown, reason?: string) {
     return this.edit({ unicodeEmoji }, reason);
   }
 
-  /**
-   * Options used to set the position of a role.
-   * @typedef {Object} SetRolePositionOptions
-   * @property {boolean} [relative=false] Whether to change the position relative to its current value or not
-   * @property {string} [reason] The reason for changing the position
-   */
-
-  /**
-   * Sets the new position of the role.
-   * @param {number} position The new position for the role
-   * @param {SetRolePositionOptions} [options] Options for setting the position
-   * @returns {Promise<Role>}
-   * @example
-   * // Set the position of the role
-   * role.setPosition(1)
-   *   .then(updated => console.log(`Role position: ${updated.position}`))
-   *   .catch(console.error);
-   */
   setPosition(position: number, options: import('../../typings').SetRolePositionOptions = {}) {
     return this.guild.roles.setPosition(this, position, options);
   }
 
-  /**
-   * Deletes the role.
-   * @param {string} [reason] Reason for deleting this role
-   * @returns {Promise<Role>}
-   * @example
-   * // Delete a role
-   * role.delete('The role needed to go')
-   *   .then(deleted => console.log(`Deleted role ${deleted.name}`))
-   *   .catch(console.error);
-   */
   async delete(reason?: string) {
     await this.guild.roles.delete(this.id, reason);
     return this;
   }
 
-  /**
-   * Fetches the member ids for this role in the guild.
-   * <info>This only returns 100 member ids</info>
-   * @returns {Promise<Snowflake[]>}
-   */
   fetchMemberIds() {
     return this.guild.roles.fetchMemberIds(this.id);
   }
 
-  /**
-   * A link to the role's icon
-   * @param {StaticImageURLOptions} [options={}] Options for the image URL
-   * @returns {?string}
-   */
   iconURL({ format, size }: { format?: string; size?: number } = {}) {
     if (!this.icon) return null;
     return this.client.rest.cdn.RoleIcon(this.id, this.icon, format, size);
   }
 
-  /**
-   * Whether this role equals another role. It compares all properties, so for most operations
-   * it is advisable to just compare `role.id === role2.id` as it is much faster and is often
-   * what most users need.
-   * @param {Role} role Role to compare with
-   * @returns {boolean}
-   */
   equals(role: Role | null) {
     return (
       role &&
@@ -550,13 +267,6 @@ class Role extends Base implements RoleEntity {
     );
   }
 
-  /**
-   * When concatenated with a string, this automatically returns the role's mention instead of the Role object.
-   * @returns {string}
-   * @example
-   * // Logs: Role: <@&123456789012345678>
-   * console.log(`Role: ${role}`);
-   */
   toString() {
     if (this.id === this.guild.id) return '@everyone';
     return `<@&${this.id}>`;
@@ -590,11 +300,6 @@ class Role extends Base implements RoleEntity {
     return role1.guild.roles.comparePositions(role1, role2);
   }
 }
-
-/**
- * @external APIRole
- * @see {@link https://discord.com/developers/docs/topics/permissions#role-object}
- */
 
 export { Role, deletedRoles };
 export default { Role, deletedRoles };

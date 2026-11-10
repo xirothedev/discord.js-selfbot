@@ -31,16 +31,7 @@ const TextSortableGroupTypes = ['GUILD_TEXT', 'GUILD_ANNOUCMENT', 'GUILD_FORUM']
 const VoiceSortableGroupTypes = ['GUILD_VOICE', 'GUILD_STAGE_VOICE'];
 const CategorySortableGroupTypes = ['GUILD_CATEGORY'];
 
-/**
- * Contains various general-purpose utility methods.
- */
 class Util extends null {
-  /**
-   * Flatten an object. Any properties that are collections will get converted to an array of keys.
-   * @param {Object} obj The object to flatten.
-   * @param {...Object<string, boolean|string>} [props] Specific properties to include/exclude.
-   * @returns {Object}
-   */
   static flatten(obj: unknown, ...props: unknown[]): Record<string, unknown> {
     if (!isObject(obj)) return obj as Record<string, unknown>;
 
@@ -88,16 +79,6 @@ class Util extends null {
 
     return out;
   }
-
-  /**
-   * Options for splitting a message.
-   * @typedef {Object} SplitOptions
-   * @property {number} [maxLength=2000] Maximum character length per message piece
-   * @property {string|string[]|RegExp|RegExp[]} [char='\n'] Character(s) or Regex(es) to split the message with,
-   * an array can be used to split multiple times
-   * @property {string} [prepend=''] Text to prepend to every piece except the first
-   * @property {string} [append=''] Text to append to every piece except the last
-   */
 
   /**
    * Splits a string into multiple chunks at a designated character that do not exceed a specific length.
@@ -152,31 +133,6 @@ class Util extends null {
     return messages.concat(msg).filter(m => m);
   }
 
-  /**
-   * Options used to escape markdown.
-   * @typedef {Object} EscapeMarkdownOptions
-   * @property {boolean} [codeBlock=true] Whether to escape code blocks
-   * @property {boolean} [inlineCode=true] Whether to escape inline code
-   * @property {boolean} [bold=true] Whether to escape bolds
-   * @property {boolean} [italic=true] Whether to escape italics
-   * @property {boolean} [underline=true] Whether to escape underlines
-   * @property {boolean} [strikethrough=true] Whether to escape strikethroughs
-   * @property {boolean} [spoiler=true] Whether to escape spoilers
-   * @property {boolean} [codeBlockContent=true] Whether to escape text inside code blocks
-   * @property {boolean} [inlineCodeContent=true] Whether to escape text inside inline code
-   * @property {boolean} [escape=true] Whether to escape escape characters
-   * @property {boolean} [heading=false] Whether to escape headings
-   * @property {boolean} [bulletedList=false] Whether to escape bulleted lists
-   * @property {boolean} [numberedList=false] Whether to escape numbered lists
-   * @property {boolean} [maskedLink=false] Whether to escape masked links
-   */
-
-  /**
-   * Escapes any Discord-flavour markdown in a string.
-   * @param {string} text Content to escape
-   * @param {EscapeMarkdownOptions} [options={}] Options for escaping the markdown
-   * @returns {string}
-   */
   static escapeMarkdown(
     text: string,
     {
@@ -269,29 +225,14 @@ class Util extends null {
     return text;
   }
 
-  /**
-   * Escapes code block markdown in a string.
-   * @param {string} text Content to escape
-   * @returns {string}
-   */
   static escapeCodeBlock(text: string) {
     return text.replaceAll('```', '\\`\\`\\`');
   }
 
-  /**
-   * Escapes inline code markdown in a string.
-   * @param {string} text Content to escape
-   * @returns {string}
-   */
   static escapeInlineCode(text: string) {
     return text.replace(/(?<=^|[^`])``?(?=[^`]|$)/g, match => (match.length === 2 ? '\\`\\`' : '\\`'));
   }
 
-  /**
-   * Escapes italic markdown in a string.
-   * @param {string} text Content to escape
-   * @returns {string}
-   */
   static escapeItalic(text: string) {
     let i = 0;
     text = text.replace(/(?<=^|[^*])\*([^*]|\*\*|$)/g, (_, match) => {
@@ -305,11 +246,6 @@ class Util extends null {
     });
   }
 
-  /**
-   * Escapes bold markdown in a string.
-   * @param {string} text Content to escape
-   * @returns {string}
-   */
   static escapeBold(text: string) {
     let i = 0;
     return text.replace(/\*\*(\*)?/g, (_, match) => {
@@ -318,11 +254,6 @@ class Util extends null {
     });
   }
 
-  /**
-   * Escapes underline markdown in a string.
-   * @param {string} text Content to escape
-   * @returns {string}
-   */
   static escapeUnderline(text: string) {
     let i = 0;
     return text.replace(/__(_)?/g, (_, match) => {
@@ -331,88 +262,38 @@ class Util extends null {
     });
   }
 
-  /**
-   * Escapes strikethrough markdown in a string.
-   * @param {string} text Content to escape
-   * @returns {string}
-   */
   static escapeStrikethrough(text: string) {
     return text.replaceAll('~~', '\\~\\~');
   }
 
-  /**
-   * Escapes spoiler markdown in a string.
-   * @param {string} text Content to escape
-   * @returns {string}
-   */
   static escapeSpoiler(text: string) {
     return text.replaceAll('||', '\\|\\|');
   }
 
-  /**
-   * Escapes escape characters in a string.
-   * @param {string} text Content to escape
-   * @returns {string}
-   */
   static escapeEscape(text: string) {
     return text.replaceAll('\\', '\\\\');
   }
 
-  /**
-   * Escapes heading characters in a string.
-   * @param {string} text Content to escape
-   * @returns {string}
-   */
   static escapeHeading(text: string) {
     return text.replaceAll(/^( {0,2}[*-] +)?(#{1,3} )/gm, '$1\\$2');
   }
 
-  /**
-   * Escapes bulleted list characters in a string.
-   * @param {string} text Content to escape
-   * @returns {string}
-   */
   static escapeBulletedList(text: string) {
     return text.replaceAll(/^( *)[*-]( +)/gm, '$1\\-$2');
   }
 
-  /**
-   * Escapes numbered list characters in a string.
-   * @param {string} text Content to escape
-   * @returns {string}
-   */
   static escapeNumberedList(text: string) {
     return text.replaceAll(/^( *\d+)\./gm, '$1\\.');
   }
 
-  /**
-   * Escapes masked link characters in a string.
-   * @param {string} text Content to escape
-   * @returns {string}
-   */
   static escapeMaskedLink(text: string) {
     return text.replaceAll(/\[.+\]\(.+\)/gm, '\\$&');
   }
-
-  /**
-   * @typedef {Object} FetchRecommendedShardsOptions
-   * @property {number} [guildsPerShard=1000] Number of guilds assigned per shard
-   * @property {number} [multipleOf=1] The multiple the shard count should round up to. (16 for large bot sharding)
-   */
 
   static fetchRecommendedShards() {
     throw new DiscordError('INVALID_USER_API');
   }
 
-  /**
-   * Parses emoji info out of a string. The string must be one of:
-   * * A UTF-8 emoji (no id)
-   * * A URL-encoded UTF-8 emoji (no id)
-   * * A Discord custom emoji (`<:name:id>` or `<a:name:id>`)
-   * @param {string} text Emoji string to parse
-   * @returns {APIEmoji} Object with `animated`, `name`, and `id` properties
-   * @private
-   */
   static parseEmoji(text: string) {
     if (text.includes('%')) text = decodeURIComponent(text);
     if (!text.includes(':')) return { animated: false, name: text, id: null };
@@ -420,12 +301,6 @@ class Util extends null {
     return match && { animated: Boolean(match[1]), name: match[2], id: match[3] ?? null };
   }
 
-  /**
-   * Resolves a partial emoji object from an {@link EmojiIdentifierResolvable}, without checking a Client.
-   * @param {EmojiIdentifierResolvable} emoji Emoji identifier to resolve
-   * @returns {?RawEmoji}
-   * @private
-   */
   static resolvePartialEmoji(emoji: unknown): APIPartialEmoji | null {
     if (!emoji) return null;
     if (typeof emoji === 'string') {
@@ -446,23 +321,10 @@ class Util extends null {
     };
   }
 
-  /**
-   * Shallow-copies an object with its class/prototype intact.
-   * @param {Object} obj Object to clone
-   * @returns {Object}
-   * @private
-   */
   static cloneObject(obj: unknown) {
     return Object.assign(Object.create(obj as object), obj);
   }
 
-  /**
-   * Sets default properties on an object that aren't already specified.
-   * @param {Object} def Default properties
-   * @param {Object} given Object to assign defaults to
-   * @returns {Object}
-   * @private
-   */
   static mergeDefault<T extends object>(def: T, given?: object): T;
   static mergeDefault(def: unknown, given?: unknown): unknown;
   static mergeDefault(def: unknown, given?: unknown): unknown {
@@ -480,20 +342,6 @@ class Util extends null {
     return g;
   }
 
-  /**
-   * Options used to make an error object.
-   * @typedef {Object} MakeErrorOptions
-   * @property {string} name Error type
-   * @property {string} message Message for the error
-   * @property {string} stack Stack for the error
-   */
-
-  /**
-   * Makes an Error from a plain info object.
-   * @param {MakeErrorOptions} obj Error info
-   * @returns {Error}
-   * @private
-   */
   static makeError(obj: unknown) {
     const data = typeof obj === 'object' && obj !== null ? obj : {};
     const err = new Error(String('message' in data ? data.message : obj));
@@ -503,12 +351,6 @@ class Util extends null {
     return err;
   }
 
-  /**
-   * Makes a plain error info object from an Error.
-   * @param {Error} err Error to get info from
-   * @returns {MakeErrorOptions}
-   * @private
-   */
   static makePlainError(err: unknown) {
     if (err instanceof Error) {
       return { name: err.name, message: err.message, stack: err.stack };
@@ -516,15 +358,6 @@ class Util extends null {
     return { name: 'Error', message: String(err), stack: undefined };
   }
 
-  /**
-   * Moves an element in an array *in place*.
-   * @param {Array<*>} array Array to modify
-   * @param {*} element Element to move
-   * @param {number} newIndex Index or offset to move the element to
-   * @param {boolean} [offset=false] Move the element by an offset amount rather than to a set index
-   * @returns {number}
-   * @private
-   */
   static moveElementInArray(array: unknown[], element: unknown, newIndex: number, offset = false) {
     const index = array.indexOf(element);
     newIndex = (offset ? index : 0) + newIndex;
@@ -535,14 +368,6 @@ class Util extends null {
     return array.indexOf(element);
   }
 
-  /**
-   * Verifies the provided data is a string, otherwise throws provided error.
-   * @param {string} data The string resolvable to resolve
-   * @param {Function} [error] The Error constructor to instantiate. Defaults to Error
-   * @param {string} [errorMessage] The error message to throw with. Defaults to "Expected string, got <data> instead."
-   * @param {boolean} [allowEmpty=true] Whether an empty string should be allowed
-   * @returns {string}
-   */
   static verifyString(
     data: unknown,
     error: new (message: string) => Error = Error,
@@ -554,19 +379,6 @@ class Util extends null {
     return data;
   }
 
-  /**
-   * Can be a number, hex string, a {@link Color}, or an RGB array like:
-   * ```js
-   * [255, 0, 255] // purple
-   * ```
-   * @typedef {string|Color|number|number[]} ColorResolvable
-   */
-
-  /**
-   * Resolves a ColorResolvable into a color number.
-   * @param {ColorResolvable} color Color to resolve
-   * @returns {number} A color
-   */
   static resolveColor(color: unknown) {
     if (typeof color === 'string') {
       if (color === 'RANDOM') return Math.floor(Math.random() * (0xffffff + 1));
@@ -582,11 +394,6 @@ class Util extends null {
     return color as number;
   }
 
-  /**
-   * Sorts by Discord's position and id.
-   * @param {Collection} collection Collection of objects to sort
-   * @returns {Collection}
-   */
   static discordSort(
     collection: unknown,
   ): import('@discordjs/collection').Collection<string, { id: string; rawPosition: number }> {
@@ -611,17 +418,6 @@ class Util extends null {
     );
   }
 
-  /**
-   * Sets the position of a Channel or Role.
-   * @param {Channel|Role} item Object to set the position of
-   * @param {number} position New position for the object
-   * @param {boolean} relative Whether `position` is relative to its current position
-   * @param {Collection<string, Channel|Role>} sorted A collection of the objects sorted properly
-   * @param {APIRouter} route Route to call PATCH on
-   * @param {string} [reason] Reason for the change
-   * @returns {Promise<Channel[]|Role[]>} Updated item list, with `id` and `position` properties
-   * @private
-   */
   static async setPosition<T extends { id: unknown }>(
     item: T,
     position: number,
@@ -637,13 +433,6 @@ class Util extends null {
     return updatedItems;
   }
 
-  /**
-   * Alternative to Node's `path.basename`, removing query string after the extension if it exists.
-   * @param {string} path Path to get the basename of
-   * @param {string} [ext] File extension to remove
-   * @returns {string} Basename of the path
-   * @private
-   */
   static basename(path: unknown, ext?: unknown) {
     const res = parse(path as string);
     return ext && res.ext.startsWith(ext as string) ? res.name : res.base.split('?')[0];
@@ -672,14 +461,6 @@ class Util extends null {
     return str.replaceAll('@', '@\u200b');
   }
 
-  /**
-   * The content to have all mentions replaced by the equivalent text.
-   * <warn>When {@link Util.removeMentions} is removed, this method will no longer sanitize mentions.
-   * Use {@link BaseMessageOptions#allowedMentions} instead to prevent mentions when sending a message.</warn>
-   * @param {string} str The string to be converted
-   * @param {TextBasedChannels} channel The channel the string was sent in
-   * @returns {string}
-   */
   static cleanContent(str: string, channel: import('../structures/Channel').Channel) {
     const guild = isGuildBasedChannel(channel) ? channel.guild : null;
     str = str
@@ -713,11 +494,6 @@ class Util extends null {
     return str;
   }
 
-  /**
-   * The content to put in a code block with all code block fences replaced by the equivalent backticks.
-   * @param {string} text The string to be converted
-   * @returns {string}
-   */
   static cleanCodeBlockContent(text: string) {
     return text.replaceAll('```', '`\u200b``');
   }
@@ -752,12 +528,6 @@ class Util extends null {
     return 10080;
   }
 
-  /**
-   * Transforms an API guild forum tag to camel-cased guild forum tag.
-   * @param {APIGuildForumTag} tag The tag to transform
-   * @returns {GuildForumTag}
-   * @ignore
-   */
   static transformAPIGuildForumTag(tag: {
     id?: unknown;
     name?: unknown;
@@ -779,12 +549,6 @@ class Util extends null {
     };
   }
 
-  /**
-   * Transforms a camel-cased guild forum tag to an API guild forum tag.
-   * @param {GuildForumTag} tag The tag to transform
-   * @returns {APIGuildForumTag}
-   * @ignore
-   */
   static transformGuildForumTag(tag: { id?: unknown; name?: unknown; moderated?: unknown; emoji?: unknown }) {
     return {
       id: tag.id,
@@ -795,13 +559,6 @@ class Util extends null {
     };
   }
 
-  /**
-   * Transforms an API guild forum default reaction object to a
-   * camel-cased guild forum default reaction object.
-   * @param {APIGuildForumDefaultReactionEmoji} defaultReaction The default reaction to transform
-   * @returns {DefaultReactionEmoji}
-   * @ignore
-   */
   static transformAPIGuildDefaultReaction(defaultReaction: { emoji_id?: unknown; emoji_name?: unknown }): {
     id: string | null;
     name: string | null;
@@ -812,13 +569,6 @@ class Util extends null {
     };
   }
 
-  /**
-   * Transforms a camel-cased guild forum default reaction object to an
-   * API guild forum default reaction object.
-   * @param {DefaultReactionEmoji} defaultReaction The default reaction to transform
-   * @returns {APIGuildForumDefaultReactionEmoji}
-   * @ignore
-   */
   static transformGuildDefaultReaction(defaultReaction: { id?: unknown; name?: unknown }) {
     return {
       emoji_id: defaultReaction.id,
@@ -826,12 +576,6 @@ class Util extends null {
     };
   }
 
-  /**
-   * Transforms a guild scheduled event recurrence rule object to a snake-cased variant.
-   * @param {GuildScheduledEventRecurrenceRuleOptions} recurrenceRule The recurrence rule to transform
-   * @returns {APIGuildScheduledEventRecurrenceRule}
-   * @ignore
-   */
   static transformGuildScheduledEventRecurrenceRule(recurrenceRule: Record<string, unknown>) {
     return {
       start: new Date(recurrenceRule.startAt as string).toISOString(),
@@ -844,12 +588,6 @@ class Util extends null {
     };
   }
 
-  /**
-   * Transforms API incidents data to a camel-cased variant.
-   * @param {APIIncidentsData} data The incidents data to transform
-   * @returns {IncidentActions}
-   * @ignore
-   */
   static transformAPIIncidentsData(data: import('discord-api-types/v10').APIIncidentsData) {
     return {
       invitesDisabledUntil: data.invites_disabled_until ? new Date(data.invites_disabled_until) : null,
@@ -859,15 +597,6 @@ class Util extends null {
     };
   }
 
-  /**
-   * Gets an array of the channel types that can be moved in the channel group. For example, a GuildText channel would
-   * return an array containing the types that can be ordered within the text channels (always at the top), and a voice
-   * channel would return an array containing the types that can be ordered within the voice channels (always at the
-   * bottom).
-   * @param {ChannelType} type The type of the channel
-   * @returns {ChannelType[]}
-   * @ignore
-   */
   static getSortableGroupTypes(type: unknown) {
     switch (type) {
       case 'GUILD_TEXT':
@@ -884,11 +613,6 @@ class Util extends null {
     }
   }
 
-  /**
-   * Calculates the default avatar index for a given user id.
-   * @param {Snowflake} userId - The user id to calculate the default avatar index for
-   * @returns {number}
-   */
   static calculateUserDefaultAvatarIndex(userId: unknown) {
     return Number(BigInt(userId as string | number | bigint) >> 22n) % 6;
   }
@@ -936,24 +660,11 @@ class Util extends null {
     });
   }
 
-  /**
-   * Lazily evaluates a callback function (yea it's v14 :yay:)
-   * @param {Function} cb The callback to lazily evaluate
-   * @returns {Function}
-   * @example
-   * const User = lazy(() => require('./User'));
-   * const user = new (User())(client, data);
-   */
   static lazy(cb: unknown) {
     let defaultValue: unknown;
     return () => (defaultValue ??= (cb as () => unknown)());
   }
 
-  /**
-   * Hacking check object instanceof Proxy-agent
-   * @param {Object} object any
-   * @returns {boolean}
-   */
   static verifyProxyAgent(object: unknown): object is Agent {
     const o = object as { httpAgent?: unknown; httpsAgent?: unknown };
     return typeof object == 'object' && o.httpAgent instanceof Agent && o.httpsAgent instanceof Agent;
@@ -1062,11 +773,6 @@ class Util extends null {
     return VoiceCodec.getAllPayloadType();
   }
 
-  /**
-   * Get the payload type of the codec
-   * @param {'opus' | 'H264' | 'H265' | 'VP8' | 'VP9' | 'AV1'} codecName - Codec name
-   * @returns {number}
-   */
   static getPayloadType(codecName: string) {
     return VoiceCodec.getPayloadType(codecName);
   }

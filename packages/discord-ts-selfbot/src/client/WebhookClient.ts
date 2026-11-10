@@ -4,26 +4,9 @@ import BaseClient from './BaseClient';
 import _errorsModule from '../errors';
 const { Error } = _errorsModule;
 
-/**
- * The webhook client.
- * @implements {Webhook}
- * @extends {BaseClient}
- */
 class WebhookClient extends BaseClient {
   declare id: string | null;
 
-  /**
-   * The data for the webhook client containing either an id and token or just a URL
-   * @typedef {Object} WebhookClientData
-   * @property {Snowflake} [id] The id of the webhook
-   * @property {string} [token] The token of the webhook
-   * @property {string} [url] The full URL for the webhook client
-   */
-
-  /**
-   * @param {WebhookClientData} data The data of the webhook
-   * @param {ClientOptions} [options] Options for the client
-   */
   constructor(data: import('../../typings').WebhookClientData, options?: import('../../typings').ClientOptions) {
     super(options);
     Object.defineProperty(this, 'client', { value: this });

@@ -1,6 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
+import { readFileSync } from 'node:fs';
 import type { Comment, Reflection } from './types';
 
 export interface DocgenParam {
@@ -16,7 +14,7 @@ export interface DocgenMethod {
   description?: string;
   examples?: string[];
   params?: DocgenParam[];
-  returns?: { description?: string; types?: unknown } | unknown;
+  returns?: { description?: string } | unknown;
   async?: boolean;
   access?: string;
 }
@@ -47,7 +45,7 @@ export interface DocgenClass {
   name: string;
   description?: string;
   meta?: DocgenMeta;
-  construct?: { name: string; params?: DocgenParam[]; description?: string };
+  construct?: { name?: string; params?: DocgenParam[]; description?: string };
   props?: DocgenProp[];
   methods?: DocgenMethod[];
   events?: DocgenEvent[];
@@ -67,89 +65,17 @@ export interface DocgenData {
   typedefs: DocgenType[];
 }
 
-const SHIM = path.join(import.meta.dir, 'util-shim.cjs');
-
-// @discordjs/docgen parses JavaScript with jsdoc 3.6.11. It cannot read TypeScript,
-// so the docs build compiles the source to a temporary JavaScript mirror first.
-// Nothing is written into the repository.
-function emitDocgenSources(options: { packageDir: string; workDir: string }): void {
-  const outDir = path.join(options.workDir, 'src');
-  const tsconfig = path.join(options.workDir, 'tsconfig.json');
-
-  writeFileSync(
-    tsconfig,
-    JSON.stringify(
-      {
-        extends: path.join(options.packageDir, 'tsconfig.json'),
-        compilerOptions: {
-          module: 'CommonJS',
-          moduleResolution: 'node',
-          noEmit: false,
-          outDir,
-          rootDir: path.join(options.packageDir, 'src'),
-          allowJs: false,
-          declaration: false,
-          sourceMap: false,
-          types: ['node'],
-        },
-        include: [path.join(options.packageDir, 'src/**/*.ts')],
-      },
-      null,
-      2,
-    ),
-  );
-
-  const tsc = Bun.resolveSync('typescript/bin/tsc', options.packageDir);
-  const result = Bun.spawnSync({
-    cmd: ['bun', tsc, '-p', tsconfig],
-    cwd: options.packageDir,
-    stdout: 'pipe',
-    stderr: 'pipe',
-  });
-
-  if (!existsSync(path.join(outDir, 'index.js'))) {
-    const stderr = new TextDecoder().decode(result.stderr);
-    throw new Error(`docgen source emit failed (${result.exitCode}):\n${stderr.slice(-4000)}`);
-  }
+export interface ApiStore {
+  classes?: DocgenClass[];
+  interfaces?: DocgenType[];
+  typedefs?: DocgenType[];
 }
 
-export function loadDocgen(options: {
-  packageDir: string;
-  docsDir: string;
-  outputJson: string;
-}): Map<string, DocgenClass | DocgenType> {
-  // A stable path keeps jsdoc's metadata relative to `src` and avoids leaking
-  // a random temp directory into the generated source links.
-  const workDir = path.join(os.tmpdir(), 'discord-ts-selfbot-docgen');
-  rmSync(workDir, { recursive: true, force: true });
-  mkdirSync(workDir, { recursive: true });
-  emitDocgenSources({ packageDir: options.packageDir, workDir });
-
-  // jsdoc-api caches parsed template data by file contents and relative paths.
-  // A stale entry keeps the temp path from an older build in `meta.path`.
-  rmSync(path.join(os.tmpdir(), 'jsdoc-api'), { recursive: true, force: true });
-
-  const docgenConfig = path.join(options.docsDir, 'docgen.yml');
-  const docgenBin = Bun.resolveSync('@discordjs/docgen/src/index.js', options.docsDir);
-  const nodeOptions = [process.env.NODE_OPTIONS, `--require ${SHIM}`].filter(Boolean).join(' ');
-
-  const result = Bun.spawnSync({
-    cmd: ['bun', docgenBin, '--source', 'src', '--custom', docgenConfig, '--output', options.outputJson],
-    cwd: workDir,
-    env: { ...process.env, NODE_OPTIONS: nodeOptions },
-    stdout: 'pipe',
-    stderr: 'pipe',
-  });
-
-  if (result.exitCode !== 0) {
-    const stderr = new TextDecoder().decode(result.stderr);
-    throw new Error(`docgen failed (${result.exitCode}):\n${stderr.slice(-4000)}`);
-  }
-
-  const data = JSON.parse(readFileSync(options.outputJson, 'utf8')) as DocgenData;
+export function loadApiStore(file: string): Map<string, DocgenClass | DocgenType> {
+  const store = JSON.parse(readFileSync(file, 'utf8')) as ApiStore;
   const byName = new Map<string, DocgenClass | DocgenType>();
-  for (const item of [...data.classes, ...data.interfaces, ...data.typedefs]) {
-    byName.set(item.name, item);
+  for (const entry of [...(store.classes ?? []), ...(store.interfaces ?? []), ...(store.typedefs ?? [])]) {
+    byName.set(entry.name, entry);
   }
   return byName;
 }

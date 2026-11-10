@@ -1,0 +1,42 @@
+# Coding agents
+
+Every install of `discord-ts-selfbot` ships a plain-Markdown corpus at `node_modules/discord-ts-selfbot/docs/`. The corpus is version-matched to the package, so an agent reads the API that is actually installed.
+
+## Read the index first
+
+Start at `node_modules/discord-ts-selfbot/docs/llms.txt`. It lists the getting-started pages, guides, examples, reference, and event catalog. Read only the page for the task.
+
+The reference is generated from the public typings. Exact types stay in `typings/index.d.ts`; the reference pages show the usage shape.
+
+## Connect the MCP gateway
+
+The gateway exposes one tool, `selfbot_docs`. It does not fetch documentation. It resolves the installed package and returns the absolute docs path with reading instructions.
+
+```json title=".mcp.json"
+{
+  "mcpServers": {
+    "discord-ts-selfbot": {
+      "command": "npx",
+      "args": ["-y", "discord-ts-selfbot-mcp@latest"]
+    }
+  }
+}
+```
+
+Ask the agent to call `selfbot_docs` before it writes code. In a monorepo, pass `project_path` when the package is not installed at the project root.
+
+## Point AGENTS.md at the docs
+
+Add this line to the project `AGENTS.md`:
+
+```md
+Before you write discord-ts-selfbot code, read `node_modules/discord-ts-selfbot/docs/llms.txt` and the page for the task.
+```
+
+A coding agent that reads `AGENTS.md` does not need the MCP gateway. The gateway is for clients that discover tools instead of instruction files.
+
+## Status values
+
+- `use_bundled_docs`: the installed package has the docs. Read `indexPath` first.
+- `install_required`: the package is not installed. Install dependencies and call the tool again.
+- `missing_docs`: the installed package has no bundled docs. Reinstall or upgrade.

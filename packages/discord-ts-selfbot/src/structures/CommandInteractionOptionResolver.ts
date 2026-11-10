@@ -19,11 +19,6 @@ import type {
 
 type OptionType = ApplicationCommandOptionType | '_MESSAGE';
 
-/**
- * The source-level option shape. The public typings use the typings
- * `MessageAttachment` class; the runtime builds the source class, so the
- * internal shape keeps the source attachment.
- */
 export type CommandInteractionOption<Cached extends CacheType = CacheType> = Omit<
   PublicCommandInteractionOption<Cached>,
   'attachment' | 'options' | 'user' | 'member' | 'channel' | 'role' | 'message'
@@ -50,9 +45,6 @@ function isAutocompleteOptionType(type: ApplicationCommandOptionType): type is '
   return type === 'STRING' || type === 'INTEGER' || type === 'NUMBER';
 }
 
-/**
- * A resolver for command interaction options.
- */
 class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
   declare readonly client: Client;
   declare readonly data: readonly CommandInteractionOption<Cached>[];
@@ -66,34 +58,12 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     options: CommandInteractionOption<Cached>[],
     resolved: CommandInteractionResolvedData<Cached> | null = null,
   ) {
-    /**
-     * The client that instantiated this.
-     * @name CommandInteractionOptionResolver#client
-     * @type {Client}
-     * @readonly
-     */
     Object.defineProperty(this, 'client', { value: client });
 
-    /**
-     * The name of the subcommand group.
-     * @type {?string}
-     * @private
-     */
     this._group = null;
 
-    /**
-     * The name of the subcommand.
-     * @type {?string}
-     * @private
-     */
     this._subcommand = null;
 
-    /**
-     * The bottom-level options for the interaction.
-     * If there is a subcommand (or subcommand and group), this is the options for the subcommand.
-     * @type {CommandInteractionOption[]}
-     * @private
-     */
     this._hoistedOptions = options;
 
     // Hoist subcommand group if present
@@ -107,28 +77,11 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
       this._hoistedOptions = this._hoistedOptions[0].options as CommandInteractionOption<Cached>[];
     }
 
-    /**
-     * The interaction options array.
-     * @name CommandInteractionOptionResolver#data
-     * @type {ReadonlyArray<CommandInteractionOption>}
-     * @readonly
-     */
     Object.defineProperty(this, 'data', { value: Object.freeze([...options]) });
 
-    /**
-     * The interaction resolved data
-     * @name CommandInteractionOptionResolver#resolved
-     * @type {?Readonly<CommandInteractionResolvedData>}
-     */
     Object.defineProperty(this, 'resolved', { value: resolved ? Object.freeze(resolved) : null });
   }
 
-  /**
-   * Gets an option by its name.
-   * @param {string} name The name of the option.
-   * @param {boolean} [required=false] Whether to throw an error if the option is not found.
-   * @returns {?CommandInteractionOption} The option, if found.
-   */
   get(name: string, required: true): CommandInteractionOption<Cached>;
   get(name: string, required?: boolean): CommandInteractionOption<Cached> | null;
   get(name: string, required = false) {
@@ -142,15 +95,6 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     return option;
   }
 
-  /**
-   * Gets an option by name and property and checks its type.
-   * @param {string} name The name of the option.
-   * @param {ApplicationCommandOptionType} type The type of the option.
-   * @param {string[]} properties The properties to check for for `required`.
-   * @param {boolean} required Whether to throw an error if the option is not found.
-   * @returns {?CommandInteractionOption} The option, if found.
-   * @private
-   */
   _getTypedOption(
     name: string,
     type: OptionType,
@@ -175,11 +119,6 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     return option;
   }
 
-  /**
-   * Gets the selected subcommand.
-   * @param {boolean} [required=true] Whether to throw an error if there is no subcommand.
-   * @returns {?string} The name of the selected subcommand, or null if not set and not required.
-   */
   getSubcommand(required?: true): string;
   getSubcommand(required: boolean): string | null;
   getSubcommand(required = true) {
@@ -189,11 +128,6 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     return this._subcommand;
   }
 
-  /**
-   * Gets the selected subcommand group.
-   * @param {boolean} [required=true] Whether to throw an error if there is no subcommand group.
-   * @returns {?string} The name of the selected subcommand group, or null if not set and not required.
-   */
   getSubcommandGroup(required?: true): string;
   getSubcommandGroup(required: boolean): string | null;
   getSubcommandGroup(required = true) {
@@ -203,12 +137,6 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     return this._group;
   }
 
-  /**
-   * Gets a boolean option.
-   * @param {string} name The name of the option.
-   * @param {boolean} [required=false] Whether to throw an error if the option is not found.
-   * @returns {?boolean} The value of the option, or null if not set and not required.
-   */
   getBoolean(name: string, required: true): boolean;
   getBoolean(name: string, required?: boolean): boolean | null;
   getBoolean(name: string, required = false) {
@@ -216,13 +144,6 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     return option?.value ?? null;
   }
 
-  /**
-   * Gets a channel option.
-   * @param {string} name The name of the option.
-   * @param {boolean} [required=false] Whether to throw an error if the option is not found.
-   * @returns {?(GuildChannel|ThreadChannel|APIChannel)}
-   * The value of the option, or null if not set and not required.
-   */
   getChannel(name: string, required: true): NonNullable<CommandInteractionOption<Cached>['channel']>;
   getChannel(name: string, required?: boolean): NonNullable<CommandInteractionOption<Cached>['channel']> | null;
   getChannel(name: string, required = false) {
@@ -230,12 +151,6 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     return option?.channel ?? null;
   }
 
-  /**
-   * Gets a string option.
-   * @param {string} name The name of the option.
-   * @param {boolean} [required=false] Whether to throw an error if the option is not found.
-   * @returns {?string} The value of the option, or null if not set and not required.
-   */
   getString(name: string, required: true): string;
   getString(name: string, required?: boolean): string | null;
   getString(name: string, required = false) {
@@ -243,12 +158,6 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     return option?.value ?? null;
   }
 
-  /**
-   * Gets an integer option.
-   * @param {string} name The name of the option.
-   * @param {boolean} [required=false] Whether to throw an error if the option is not found.
-   * @returns {?number} The value of the option, or null if not set and not required.
-   */
   getInteger(name: string, required: true): number;
   getInteger(name: string, required?: boolean): number | null;
   getInteger(name: string, required = false) {
@@ -256,12 +165,6 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     return option?.value ?? null;
   }
 
-  /**
-   * Gets a number option.
-   * @param {string} name The name of the option.
-   * @param {boolean} [required=false] Whether to throw an error if the option is not found.
-   * @returns {?number} The value of the option, or null if not set and not required.
-   */
   getNumber(name: string, required: true): number;
   getNumber(name: string, required?: boolean): number | null;
   getNumber(name: string, required = false) {
@@ -269,12 +172,6 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     return option?.value ?? null;
   }
 
-  /**
-   * Gets a user option.
-   * @param {string} name The name of the option.
-   * @param {boolean} [required=false] Whether to throw an error if the option is not found.
-   * @returns {?User} The value of the option, or null if not set and not required.
-   */
   getUser(name: string, required: true): NonNullable<CommandInteractionOption<Cached>['user']>;
   getUser(name: string, required?: boolean): NonNullable<CommandInteractionOption<Cached>['user']> | null;
   getUser(name: string, required = false) {
@@ -282,13 +179,6 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     return option?.user ?? null;
   }
 
-  /**
-   * Gets a member option.
-   * @param {string} name The name of the option.
-   * @param {boolean} [required=false] Whether to throw an error if the option is not found.
-   * @returns {?(GuildMember|APIGuildMember)}
-   * The value of the option, or null if not set and not required.
-   */
   getMember(name: string, required: true): NonNullable<CommandInteractionOption<Cached>['member']>;
   getMember(name: string, required?: boolean): NonNullable<CommandInteractionOption<Cached>['member']> | null;
   getMember(name: string, required = false) {
@@ -296,12 +186,6 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     return option?.member ?? null;
   }
 
-  /**
-   * Gets a role option.
-   * @param {string} name The name of the option.
-   * @param {boolean} [required=false] Whether to throw an error if the option is not found.
-   * @returns {?(Role|APIRole)} The value of the option, or null if not set and not required.
-   */
   getRole(name: string, required: true): NonNullable<CommandInteractionOption<Cached>['role']>;
   getRole(name: string, required?: boolean): NonNullable<CommandInteractionOption<Cached>['role']> | null;
   getRole(name: string, required = false) {
@@ -309,13 +193,6 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     return option?.role ?? null;
   }
 
-  /**
-   * Gets a mentionable option.
-   * @param {string} name The name of the option.
-   * @param {boolean} [required=false] Whether to throw an error if the option is not found.
-   * @returns {?(User|GuildMember|APIGuildMember|Role|APIRole)}
-   * The value of the option, or null if not set and not required.
-   */
   getMentionable(
     name: string,
     required: true,
@@ -329,13 +206,6 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     return option?.member ?? option?.user ?? option?.role ?? null;
   }
 
-  /**
-   * Gets a message option.
-   * @param {string} name The name of the option.
-   * @param {boolean} [required=false] Whether to throw an error if the option is not found.
-   * @returns {?(Message|APIMessage)}
-   * The value of the option, or null if not set and not required.
-   */
   getMessage(name: string, required: true): NonNullable<CommandInteractionOption<Cached>['message']>;
   getMessage(name: string, required?: boolean): NonNullable<CommandInteractionOption<Cached>['message']> | null;
   getMessage(name: string, required = false) {
@@ -343,21 +213,6 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     return option?.message ?? null;
   }
 
-  /**
-   * The full autocomplete option object.
-   * @typedef {Object} AutocompleteFocusedOption
-   * @property {string} name The name of the option
-   * @property {ApplicationCommandOptionType} type The type of the application command option
-   * @property {string} value The value of the option
-   * @property {boolean} focused Whether this option is currently in focus for autocomplete
-   */
-
-  /**
-   * Gets the focused option.
-   * @param {boolean} [getFull=false] Whether to get the full option object
-   * @returns {string|AutocompleteFocusedOption}
-   * The value of the option, or the whole option if getFull is true
-   */
   getFocused(getFull: true): AutocompleteFocusedOption;
   getFocused(getFull?: boolean): string;
   getFocused(getFull = false): AutocompleteFocusedOption | string {
@@ -373,12 +228,6 @@ class CommandInteractionOptionResolver<Cached extends CacheType = CacheType> {
     return value;
   }
 
-  /**
-   * Gets an attachment option.
-   * @param {string} name The name of the option.
-   * @param {boolean} [required=false] Whether to throw an error if the option is not found.
-   * @returns {?MessageAttachment} The value of the option, or null if not set and not required.
-   */
   getAttachment(name: string, required: true): NonNullable<CommandInteractionOption<Cached>['attachment']>;
   getAttachment(name: string, required?: boolean): NonNullable<CommandInteractionOption<Cached>['attachment']> | null;
   getAttachment(name: string, required = false) {

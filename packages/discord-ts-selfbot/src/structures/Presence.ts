@@ -19,34 +19,6 @@ import _ConstantsModule from '../util/Constants';
 const { ActivityTypes } = _ConstantsModule;
 import Util from '../util/Util';
 
-/**
- * Activity sent in a message.
- * @typedef {Object} MessageActivity
- * @property {string} [partyId] Id of the party represented in activity
- * @property {MessageActivityType} type Type of activity sent
- */
-
-/**
- * The status of this presence:
- * * **`online`** - user is online
- * * **`idle`** - user is AFK
- * * **`offline`** - user is offline or invisible
- * * **`dnd`** - user is in Do Not Disturb
- * @typedef {string} PresenceStatus
- */
-
-/**
- * The status of this presence:
- * * **`online`** - user is online
- * * **`idle`** - user is AFK
- * * **`dnd`** - user is in Do Not Disturb
- * @typedef {string} ClientPresenceStatus
- */
-
-/**
- * Represents a user's presence.
- * @extends {Base}
- */
 interface PresencePatch {
   status?: PresenceStatus;
   activities?: Partial<RawActivityData>[];
@@ -71,55 +43,29 @@ class Presence extends Base {
   constructor(client: Client, data: PresencePatch = { user: { id: '' } }) {
     super(client);
 
-    /**
-     * The presence's user id
-     * @type {Snowflake}
-     */
     this.userId = data.user?.id ?? '';
 
-    /**
-     * The guild this presence is in
-     * @type {?Guild}
-     */
     this.guild = data.guild ?? null;
 
     this._patch(data);
   }
 
-  /**
-   * The user of this presence
-   * @type {?User}
-   * @readonly
-   */
   get user(): import('./User').default | null {
     return this.client.users.resolve(this.userId);
   }
 
-  /**
-   * The member of this presence
-   * @type {?GuildMember}
-   * @readonly
-   */
   get member(): import('./GuildMember').GuildMember | null {
     return this.guild?.members.resolve(this.userId) ?? null;
   }
 
   _patch(data: PresencePatch) {
     if (typeof data.status === 'string') {
-      /**
-       * The status of this presence
-       * @type {PresenceStatus}
-       */
       this.status = data.status;
     } else {
       this.status ??= 'offline';
     }
 
     if (data.activities) {
-      /**
-       * The activities of this presence (Always `Activity[]` if not ClientUser)
-       * @type {CustomStatus[]|RichPresence[]|SpotifyRPC[]|Activity[]}
-       */
       this.activities = data.activities.map(activity => {
         if (this.userId === this.client.user?.id) {
           if (activity.type !== undefined && [ActivityTypes.CUSTOM, 'CUSTOM'].includes(activity.type)) {
@@ -138,13 +84,6 @@ class Presence extends Base {
     }
 
     if ('client_status' in data) {
-      /**
-       * The devices this presence is on
-       * @type {?Object}
-       * @property {?ClientPresenceStatus} web The current presence in the web application
-       * @property {?ClientPresenceStatus} mobile The current presence in the mobile application
-       * @property {?ClientPresenceStatus} desktop The current presence in the desktop application
-       */
       if (data.client_status) {
         const clientStatus: Record<string, string> = {};
         for (const key of ['web', 'mobile', 'desktop'] as const) {
@@ -160,10 +99,6 @@ class Presence extends Base {
     }
 
     if ('last_modified' in data && typeof data.last_modified === 'number') {
-      /**
-       * The timestamp this presence was last updated
-       * @type {number}
-       */
       this.lastModified = data.last_modified;
     }
 
@@ -188,11 +123,6 @@ class Presence extends Base {
     return clone;
   }
 
-  /**
-   * Whether this presence is equal to another.
-   * @param {Presence} presence The presence to compare with
-   * @returns {boolean}
-   */
   equals(presence: Presence) {
     return (
       this === presence ||
@@ -211,22 +141,6 @@ class Presence extends Base {
   }
 }
 
-/**
- * The platform of this activity:
- * * **`desktop`**
- * * **`samsung`** - playing on Samsung Galaxy
- * * **`xbox`** - playing on Xbox Live
- * * **`ios`**
- * * **`android`**
- * * **`embedded`**
- * * **`ps4`**
- * * **`ps5`**
- * @typedef {string} ActivityPlatform
- */
-
-/**
- * Represents an activity that is part of a user's presence.
- */
 type ActivityPatch = Partial<RawActivityData> & {
   createdTimestamp?: number;
   applicationId?: Snowflake;
@@ -308,12 +222,6 @@ class Activity {
     if (!(presence instanceof Presence)) {
       throw new Error("Class constructor Activity cannot be invoked without 'presence'");
     }
-    /**
-     * The presence of the Activity
-     * @type {Presence}
-     * @readonly
-     * @name Activity#presence
-     */
     Object.defineProperty(this, 'presence', { value: presence });
 
     this._patch(data);
@@ -321,79 +229,41 @@ class Activity {
 
   _patch(data: ActivityPatch) {
     if (typeof data.id === 'string') {
-      /**
-       * The activity's id
-       * @type {string}
-       */
       this.id = data.id;
     }
 
     if (typeof data.name === 'string') {
-      /**
-       * The activity's name
-       * @type {string}
-       */
       this.name = data.name;
     }
 
     if ('type' in data && data.type !== undefined) {
-      /**
-       * The activity status's type
-       * @type {ActivityType}
-       */
       this.type = typeof data.type === 'number' ? ActivityTypes[data.type] : data.type;
     }
 
     if ('url' in data) {
-      /**
-       * If the activity is being streamed, a link to the stream
-       * @type {?string}
-       */
       this.url = data.url ?? null;
     } else {
       this.url = null;
     }
 
     if (data.created_at !== undefined || data.createdTimestamp !== undefined) {
-      /**
-       * Creation date of the activity
-       * @type {number}
-       */
       this.createdTimestamp = data.created_at ?? data.createdTimestamp ?? 0;
     }
 
     if ('session_id' in data) {
-      /**
-       * The game's or Spotify session's id
-       * @type {?string}
-       */
       this.sessionId = data.session_id ?? null;
     } else {
       this.sessionId = this.presence.client?.sessionId ?? null;
     }
 
     if ('platform' in data) {
-      /**
-       * The platform the game is being played on
-       * @type {?ActivityPlatform}
-       */
       this.platform = isActivityPlatform(data.platform) ? data.platform : null;
     } else {
       this.platform = null;
     }
 
     if ('timestamps' in data && data.timestamps) {
-      /**
-       * Represents timestamps of an activity
-       * @typedef {Object} ActivityTimestamps
-       * @property {?number} start When the activity started
-       * @property {?number} end When the activity will end
-       */
 
-      /**
-       * Timestamps for the activity
-       * @type {?ActivityTimestamps}
-       */
       this.timestamps = {
         start: data.timestamps.start ? new Date(data.timestamps.start).getTime() : null,
         end: data.timestamps.end ? new Date(data.timestamps.end).getTime() : null,
@@ -403,105 +273,57 @@ class Activity {
     }
 
     if ('application_id' in data || 'applicationId' in data) {
-      /**
-       * The id of the application associated with this activity
-       * @type {?Snowflake}
-       */
       this.applicationId = data.application_id ?? data.applicationId ?? null;
     } else {
       this.applicationId = null;
     }
 
     if ('details' in data) {
-      /**
-       * Details about the activity
-       * @type {?string}
-       */
       this.details = data.details ?? null;
     } else {
       this.details = null;
     }
 
     if ('state' in data) {
-      /**
-       * State of the activity
-       * @type {?string}
-       */
       this.state = data.state ?? null;
     } else {
       this.state = null;
     }
 
     if ('sync_id' in data || 'syncId' in data) {
-      /**
-       * The sync id of the activity
-       * <info>This property is not documented by Discord and represents the track id in spotify activities.</info>
-       * @type {?string}
-       */
       this.syncId = data.sync_id ?? data.syncId ?? null;
     } else {
       this.syncId = null;
     }
 
     if ('flags' in data) {
-      /**
-       * Flags that describe the activity
-       * @type {Readonly<ActivityFlags>}
-       */
       this.flags = new ActivityFlags(data.flags).freeze();
     } else {
       this.flags = new ActivityFlags().freeze();
     }
 
     if ('buttons' in data) {
-      /**
-       * The labels of the buttons of this rich presence
-       * @type {string[]}
-       */
       this.buttons = data.buttons?.map(button => (typeof button === 'string' ? button : button.label)) ?? [];
     } else {
       this.buttons = [];
     }
 
     if ('emoji' in data && data.emoji) {
-      /**
-       * Emoji for a custom activity
-       * @type {?EmojiIdentifierResolvable}
-       */
       this.emoji = Util.resolvePartialEmoji(data.emoji);
     } else {
       this.emoji = null;
     }
 
     if ('party' in data) {
-      /**
-       * Represents a party of an activity
-       * @typedef {Object} ActivityParty
-       * @property {?string} id The party's id
-       * @property {number[]} size Size of the party as `[current, max]`
-       */
 
-      /**
-       * Party of the activity
-       * @type {?ActivityParty}
-       */
       this.party = data.party ? { id: data.party.id ?? null, size: data.party.size ?? [0, 0] } : null;
     } else {
       this.party = null;
     }
 
-    /**
-     * Assets for rich presence
-     * @type {?RichPresenceAssets}
-     */
     this.assets = new RichPresenceAssets(this, data.assets);
   }
 
-  /**
-   * Whether this activity is equal to another activity.
-   * @param {Activity} activity The activity to compare with
-   * @returns {boolean}
-   */
   equals(activity: Activity) {
     return (
       this === activity ||
@@ -516,19 +338,10 @@ class Activity {
     );
   }
 
-  /**
-   * The time the activity was created at
-   * @type {Date}
-   * @readonly
-   */
   get createdAt() {
     return new Date(this.createdTimestamp);
   }
 
-  /**
-   * When concatenated with a string, this automatically returns the activities' name instead of the Activity object.
-   * @returns {string}
-   */
   toString() {
     return this.name;
   }
@@ -546,9 +359,6 @@ class Activity {
   }
 }
 
-/**
- * Assets for a rich presence
- */
 class RichPresenceAssets {
   declare activity: Activity;
   declare largeImage: Snowflake | null;
@@ -557,12 +367,6 @@ class RichPresenceAssets {
   declare smallText: string | null;
 
   constructor(activity: Activity, assets: RichPresenceAssetData | undefined) {
-    /**
-     * The activity of the RichPresenceAssets
-     * @type {Activity}
-     * @readonly
-     * @name RichPresenceAssets#activity
-     */
     Object.defineProperty(this, 'activity', { value: activity });
 
     this._patch(assets);
@@ -570,51 +374,30 @@ class RichPresenceAssets {
 
   _patch(assets: RichPresenceAssetData = {}) {
     if ('large_text' in assets || 'largeText' in assets) {
-      /**
-       * Hover text for the large image
-       * @type {?string}
-       */
       this.largeText = assets.large_text ?? assets.largeText ?? null;
     } else {
       this.largeText = null;
     }
 
     if ('small_text' in assets || 'smallText' in assets) {
-      /**
-       * Hover text for the small image
-       * @type {?string}
-       */
       this.smallText = assets.small_text ?? assets.smallText ?? null;
     } else {
       this.smallText = null;
     }
 
     if ('large_image' in assets || 'largeImage' in assets) {
-      /**
-       * The large image asset's id
-       * @type {?Snowflake}
-       */
       this.largeImage = assets.large_image ?? assets.largeImage ?? null;
     } else {
       this.largeImage = null;
     }
 
     if ('small_image' in assets || 'smallImage' in assets) {
-      /**
-       * The small image asset's id
-       * @type {?Snowflake}
-       */
       this.smallImage = assets.small_image ?? assets.smallImage ?? null;
     } else {
       this.smallImage = null;
     }
   }
 
-  /**
-   * Gets the URL of the small image asset
-   * @param {StaticImageURLOptions} [options] Options for the image URL
-   * @returns {?string}
-   */
   smallImageURL({ format, size }: StaticImageURLOptions = {}) {
     if (!this.smallImage) return null;
     if (this.smallImage.includes(':')) {
@@ -639,11 +422,6 @@ class RichPresenceAssets {
     });
   }
 
-  /**
-   * Gets the URL of the large image asset
-   * @param {StaticImageURLOptions} [options] Options for the image URL
-   * @returns {?string}
-   */
   largeImageURL({ format, size }: StaticImageURLOptions = {}) {
     if (!this.largeImage) return null;
     if (this.largeImage.includes(':')) {
@@ -702,53 +480,21 @@ class RichPresenceAssets {
     };
   }
 
-  /**
-   * @typedef {string} RichPresenceImage
-   * Support:
-   * - cdn.discordapp.com
-   * - media.discordapp.net
-   * - Assets ID (https://discord.com/api/v9/oauth2/applications/{application_id}/assets)
-   * - Media Proxy (mp:external/{hash})
-   * - Twitch (twitch:{username})
-   * - YouTube (youtube:{video_id})
-   * - Spotify (spotify:{image_id})
-   */
-
-  /**
-   * Set the large image of this activity
-   * @param {?RichPresenceImage} image The large image asset's id
-   * @returns {RichPresenceAssets}
-   */
   setLargeImage(image?: string) {
     this.largeImage = RichPresenceAssets.parseImage(image ?? null);
     return this;
   }
 
-  /**
-   * Set the small image of this activity
-   * @param {?RichPresenceImage} image The small image asset's id
-   * @returns {RichPresenceAssets}
-   */
   setSmallImage(image?: string) {
     this.smallImage = RichPresenceAssets.parseImage(image ?? null);
     return this;
   }
 
-  /**
-   * Hover text for the large image
-   * @param {string} text Assets text
-   * @returns {RichPresenceAssets}
-   */
   setLargeText(text: string) {
     this.largeText = text;
     return this;
   }
 
-  /**
-   * Hover text for the small image
-   * @param {string} text Assets text
-   * @returns {RichPresenceAssets}
-   */
   setSmallText(text: string) {
     this.smallText = text;
     return this;
@@ -756,16 +502,7 @@ class RichPresenceAssets {
 }
 
 class CustomStatus extends Activity {
-  /**
-   * @typedef {Object} CustomStatusOptions
-   * @property {string} [state] The state to be displayed
-   * @property {EmojiIdentifierResolvable} [emoji] The emoji to be displayed
-   */
 
-  /**
-   * @param {Client} client Discord Client
-   * @param {CustomStatus|CustomStatusOptions} [data={}] CustomStatus to clone or raw data
-   */
   constructor(client: Client | Presence | Activity, data: Partial<RawActivityData> | CustomStatusOptions = {}) {
     if (!client) throw new Error("Class constructor CustomStatus cannot be invoked without 'client'");
     const { emoji, ...rest } = data;
@@ -780,31 +517,17 @@ class CustomStatus extends Activity {
     super(resolvePresence(client), raw);
   }
 
-  /**
-   * Set the emoji of this activity
-   * @param {EmojiIdentifierResolvable} emoji The emoji to be displayed
-   * @returns {CustomStatus}
-   */
   setEmoji(emoji: unknown) {
     this.emoji = Util.resolvePartialEmoji(emoji);
     return this;
   }
 
-  /**
-   * Set state of this activity
-   * @param {string | null} state The state to be displayed
-   * @returns {CustomStatus}
-   */
   setState(state: string | null) {
     if (typeof state == 'string' && state.length > 128) throw new Error('State must be less than 128 characters');
     this.state = state;
     return this;
   }
 
-  /**
-   * Returns an object that can be used to set the status
-   * @returns {CustomStatus}
-   */
   override toJSON(): ActivityOptions {
     if (!this.emoji && !this.state) throw new Error('CustomStatus must have at least one of emoji or state');
     return {
@@ -817,10 +540,6 @@ class CustomStatus extends Activity {
 class RichPresence extends Activity {
   declare metadata: RichPresenceMetadata;
   declare secrets: Record<string, string>;
-  /**
-   * @param {Client} client Discord client
-   * @param {RichPresence} [data={}] RichPresence to clone or raw data
-   */
   constructor(client: Client | Presence | Activity, data: RichPresenceData = {}) {
     if (!client) throw new Error("Class constructor RichPresence cannot be invoked without 'client'");
     const raw: RawActivityData = Object.assign(
@@ -836,11 +555,6 @@ class RichPresence extends Activity {
     this.setup(data);
   }
 
-  /**
-   * Sets the status from a JSON object
-   * @param {RichPresence} data data
-   * @private
-   */
   setup(data: RichPresenceData = {}) {
     const secrets: Record<string, string> = {};
     for (const [key, value] of Object.entries(data.secrets ?? {})) {
@@ -850,119 +564,57 @@ class RichPresence extends Activity {
     this.metadata = data.metadata ?? {};
   }
 
-  /**
-   * Set the large image of this activity
-   * @param {?RichPresenceImage} image The large image asset's id
-   * @returns {RichPresence}
-   */
   setAssetsLargeImage(image: string) {
     this.assets.setLargeImage(image);
     return this;
   }
 
-  /**
-   * Set the small image of this activity
-   * @param {?RichPresenceImage} image The small image asset's id
-   * @returns {RichPresence}
-   */
   setAssetsSmallImage(image: string) {
     this.assets.setSmallImage(image);
     return this;
   }
 
-  /**
-   * Hover text for the large image
-   * @param {string} text Assets text
-   * @returns {RichPresence}
-   */
   setAssetsLargeText(text: string) {
     this.assets.setLargeText(text);
     return this;
   }
 
-  /**
-   * Hover text for the small image
-   * @param {string} text Assets text
-   * @returns {RichPresence}
-   */
   setAssetsSmallText(text: string) {
     this.assets.setSmallText(text);
     return this;
   }
 
-  /**
-   * Set the name of the activity
-   * @param {?string} name The activity's name
-   * @returns {RichPresence}
-   */
   setName(name: string) {
     this.name = name;
     return this;
   }
 
-  /**
-   * If the activity is being streamed, a link to the stream
-   * @param {?string} url URL of the stream
-   * @returns {RichPresence}
-   */
   setURL(url: string | null) {
     if (typeof url == 'string' && !URL.canParse(url)) throw new Error('URL must be a valid URL');
     this.url = url;
     return this;
   }
 
-  /**
-   * The activity status's type
-   * @param {?ActivityTypes} type The type of activity
-   * @returns {RichPresence}
-   */
   setType(type: ActivityType | number) {
     this.type = typeof type == 'number' ? (ActivityTypes[type] ?? this.type) : type;
     return this;
   }
 
-  /**
-   * Set the application id of this activity
-   * @param {?Snowflake} id Bot's id
-   * @returns {RichPresence}
-   */
   setApplicationId(id: Snowflake | null) {
     this.applicationId = id;
     return this;
   }
 
-  /**
-   * Set the state of the activity
-   * @param {?string} state The state of the activity
-   * @returns {RichPresence}
-   */
   setState(state: string | null) {
     this.state = state;
     return this;
   }
 
-  /**
-   * Set the details of the activity
-   * @param {?string} details The details of the activity
-   * @returns {RichPresence}
-   */
   setDetails(details: string | null) {
     this.details = details;
     return this;
   }
 
-  /**
-   * @typedef {Object} RichParty
-   * @property {string} id The id of the party
-   * @property {number} max The maximum number of members in the party
-   * @property {number} current The current number of members in the party
-   */
-
-  /**
-   * Set the party of this activity
-   * @param {?RichParty} party The party to be displayed
-   * @returns {RichPresence}
-   */
   setParty(party: RichParty | null) {
     if (party) {
       if (!party.max || typeof party.max != 'number') throw new Error('Party must have max number');
@@ -979,38 +631,18 @@ class RichPresence extends Activity {
     return this;
   }
 
-  /**
-   * Sets the start timestamp of the activity
-   * @param {Date|number|null} timestamp The timestamp of the start of the activity
-   * @returns {RichPresence}
-   */
   setStartTimestamp(timestamp: Date | number | null) {
     if (!this.timestamps) this.timestamps = { start: null, end: null };
     this.timestamps.start = timestamp instanceof Date ? timestamp.getTime() : timestamp;
     return this;
   }
 
-  /**
-   * Sets the end timestamp of the activity
-   * @param {Date|number|null} timestamp The timestamp of the end of the activity
-   * @returns {RichPresence}
-   */
   setEndTimestamp(timestamp: Date | number | null) {
     if (!this.timestamps) this.timestamps = { start: null, end: null };
     this.timestamps.end = timestamp instanceof Date ? timestamp.getTime() : timestamp;
     return this;
   }
 
-  /**
-   * @typedef {object} RichButton
-   * @property {string} name The name of the button
-   * @property {string} url The url of the button
-   */
-  /**
-   * Set the buttons of the rich presence
-   * @param  {...?RichButton} button A list of buttons to set
-   * @returns {RichPresence}
-   */
   setButtons(...button: (RichButton | RichButton[])[]) {
     if (button.length == 0) {
       this.buttons = [];
@@ -1036,33 +668,17 @@ class RichPresence extends Activity {
     return this;
   }
 
-  /**
-   * The platform the activity is being played on
-   * @param {ActivityPlatform | null} platform Any platform
-   * @returns {RichPresence}
-   */
   setPlatform(platform: ActivityPlatform | null) {
     this.platform = platform;
     return this;
   }
 
-  /**
-   * Secrets for rich presence joining and spectating (send-only)
-   * @param {?string} join Secrets for rich presence joining
-   * @returns {RichPresence}
-   */
   setJoinSecret(join: string | null) {
     if (join) this.secrets.join = join;
     else delete this.secrets.join;
     return this;
   }
 
-  /**
-   * Add a button to the rich presence
-   * @param {string} name The name of the button
-   * @param {string} url The url of the button
-   * @returns {RichPresence}
-   */
   addButton(name: string, url: string) {
     if (!name || !url) {
       throw new Error('Button must have name and url');
@@ -1075,10 +691,6 @@ class RichPresence extends Activity {
     return this;
   }
 
-  /**
-   * Convert the rich presence to a JSON object
-   * @returns {Object}
-   */
   override toJSON(...props: unknown[]) {
     return super.toJSON(
       {
@@ -1091,19 +703,6 @@ class RichPresence extends Activity {
     );
   }
 
-  /**
-   * @typedef {Object} ExternalAssets
-   * @property {?string} url Orginal url of the image
-   * @property {?string} external_asset_path Proxy url of the image (Using to RPC)
-   */
-
-  /**
-   * Retrieves external assets from a RichPresence
-   * @param {Client} client - The Discord client instance.
-   * @param {Snowflake} applicationId - The application ID associated with the Rich Presence.
-   * @param {...string} images - 1 or 2 external image URLs (not hosted by Discord).
-   * @returns {Promise<ExternalAssets[]>}
-   */
   static async getExternal(client: Client, applicationId: Snowflake, ...images: string[]): Promise<ExternalAssets[]> {
     if (!client || !client.token || !client.api) throw new Error('Client must be set');
     // Check if applicationId is discord snowflake (17 , 18, 19 numbers)
@@ -1126,10 +725,6 @@ class RichPresence extends Activity {
     return res;
   }
 
-  /**
-   * When concatenated with a string, this automatically returns the activities' name instead of the Activity object.
-   * @returns {string}
-   */
   override toString() {
     return this.name;
   }
@@ -1139,15 +734,7 @@ class RichPresence extends Activity {
   }
 }
 
-/**
- * @extends {RichPresence}
- */
 class SpotifyRPC extends RichPresence {
-  /**
-   * Create a new RichPresence (Spotify style)
-   * @param {Client} client Discord Client
-   * @param {SpotifyRPC} [options] Options for the Spotify RPC
-   */
   constructor(client: Client | Presence | Activity, options: SpotifyRPCOptions = {}) {
     if (!client) throw new Error("Class constructor SpotifyRPC cannot be invoked without 'client'");
     super(client, {
@@ -1162,23 +749,8 @@ class SpotifyRPC extends RichPresence {
     });
     this.setup(options);
   }
-  /**
-   * Sets the status from a JSON object
-   * @param {SpotifyRPC} options data
-   * @private
-   */
   override setup(options: SpotifyRPCOptions) {
-    /**
-     * @typedef {Object} SpotifyMetadata
-     * @property {string} album_id The Spotify ID of the album of the song being played
-     * @property {Array<string>} artist_ids The Spotify IDs of the artists of the song being played
-     * @property {string} context_uri The Spotify URI of the current player context
-     */
 
-    /**
-     * Spotify metadata
-     * @type {SpotifyMetadata}
-     */
     const metadata: RichPresenceMetadata = {
       album_id: options.metadata?.album_id || undefined,
       artist_ids: options.metadata?.artist_ids || [],
@@ -1187,21 +759,11 @@ class SpotifyRPC extends RichPresence {
     this.metadata = metadata;
   }
 
-  /**
-   * Set Spotify song id to sync with
-   * @param {string} id Song id
-   * @returns {SpotifyRPC}
-   */
   setSongId(id: string) {
     this.syncId = id;
     return this;
   }
 
-  /**
-   * Add the artist id
-   * @param {string} id Artist id
-   * @returns {SpotifyRPC}
-   */
   addArtistId(id: string) {
     const artistIds = this.metadata.artist_ids ?? [];
     artistIds.push(id);
@@ -1209,11 +771,6 @@ class SpotifyRPC extends RichPresence {
     return this;
   }
 
-  /**
-   * Set the artist ids
-   * @param {string | Array<string>} ids Artist ids
-   * @returns {SpotifyRPC}
-   */
   setArtistIds(...ids: (string | string[])[]) {
     const artistIds = ids?.length ? (this.metadata.artist_ids ?? []) : [];
     ids.flat(2).forEach(id => artistIds.push(id));
@@ -1221,11 +778,6 @@ class SpotifyRPC extends RichPresence {
     return this;
   }
 
-  /**
-   * Set the album id
-   * @param {string} id Album id
-   * @returns {SpotifyRPC}
-   */
   setAlbumId(id: string) {
     this.metadata = { ...this.metadata, album_id: id, context_uri: `spotify:album:${id}` };
     return this;

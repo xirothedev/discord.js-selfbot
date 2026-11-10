@@ -9,11 +9,6 @@ class GuildStickerDeleteAction extends Action {
   handle(sticker: Sticker) {
     if (sticker.guild) sticker.guild.stickers.cache.delete(sticker.id);
     deletedStickers.add(sticker);
-    /**
-     * Emitted whenever a custom sticker is deleted in a guild.
-     * @event Client#stickerDelete
-     * @param {Sticker} sticker The sticker that was deleted
-     */
     this.client.emit(Events.GUILD_STICKER_DELETE, sticker);
     return { sticker };
   }

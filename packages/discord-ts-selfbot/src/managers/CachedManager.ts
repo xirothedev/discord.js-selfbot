@@ -8,11 +8,6 @@ type ManagerCache<Holds> = Collection<string, Holds> & {
   sweepFilter?: { isDefault?: boolean };
 };
 
-/**
- * Manages the API methods of a data model with a mutable cache of instances.
- * @extends {DataManager}
- * @abstract
- */
 class CachedManager<Holds extends DataHold = DataHold> extends DataManager<Holds> {
   declare _cache: ManagerCache<Holds>;
 
@@ -23,13 +18,6 @@ class CachedManager<Holds extends DataHold = DataHold> extends DataManager<Holds
   ) {
     super(client, holds);
 
-    /**
-     * The private cache of items for this manager.
-     * @type {Collection}
-     * @private
-     * @readonly
-     * @name CachedManager#_cache
-     */
     Object.defineProperty(this, '_cache', { value: this.client.options.makeCache(this.constructor, this.holds) });
 
     const cleanupFactory = Reflect.get(this._cache, _cleanupSymbol, this._cache) as
@@ -54,11 +42,6 @@ class CachedManager<Holds extends DataHold = DataHold> extends DataManager<Holds
     }
   }
 
-  /**
-   * The cache of items for this manager.
-   * @type {Collection}
-   * @abstract
-   */
   get cache(): ManagerCache<Holds> {
     return this._cache;
   }

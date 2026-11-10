@@ -15,10 +15,6 @@ import GroupDMChannel from '../structures/GroupDMChannel';
 
 let cacheWarningEmitted = false;
 
-/**
- * A manager of channels belonging to a client
- * @extends {CachedManager}
- */
 class ChannelManager extends CachedManager<import('../structures/Channel').Channel> {
   constructor(client: Client, iterable?: Iterable<import('../structures/Channel').Channel>) {
     super(client, Channel, iterable);
@@ -34,12 +30,6 @@ class ChannelManager extends CachedManager<import('../structures/Channel').Chann
       );
     }
   }
-
-  /**
-   * The cache of Channels
-   * @type {Collection<Snowflake, Channel>}
-   * @name ChannelManager#cache
-   */
 
   _add(
     data: RawChannelData | import('../structures/Channel').Channel,
@@ -98,49 +88,6 @@ class ChannelManager extends CachedManager<import('../structures/Channel').Chann
     }
   }
 
-  /**
-   * Data that can be resolved to give a Channel object. This can be:
-   * * A Channel object
-   * * A Snowflake
-   * @typedef {Channel|Snowflake} ChannelResolvable
-   */
-
-  /**
-   * Resolves a ChannelResolvable to a Channel object.
-   * @method resolve
-   * @memberof ChannelManager
-   * @instance
-   * @param {ChannelResolvable} channel The channel resolvable to resolve
-   * @returns {?Channel}
-   */
-
-  /**
-   * Resolves a ChannelResolvable to a channel id string.
-   * @method resolveId
-   * @memberof ChannelManager
-   * @instance
-   * @param {ChannelResolvable} channel The channel resolvable to resolve
-   * @returns {?Snowflake}
-   */
-
-  /**
-   * Options for fetching a channel from Discord
-   * @typedef {BaseFetchOptions} FetchChannelOptions
-   * @property {boolean} [allowUnknownGuild=false] Allows the channel to be returned even if the guild is not in cache,
-   * it will not be cached. <warn>Many of the properties and methods on the returned channel will throw errors</warn>
-   */
-
-  /**
-   * Obtains a channel from Discord, or the channel cache if it's already available.
-   * @param {Snowflake} id The channel's id
-   * @param {FetchChannelOptions} [options] Additional options for this fetch
-   * @returns {Promise<?Channel>}
-   * @example
-   * // Fetch a channel by its id
-   * client.channels.fetch('222109930545610754')
-   *   .then(channel => console.log(channel.name))
-   *   .catch(console.error);
-   */
   async fetch(
     id: Snowflake,
     { allowUnknownGuild = false, cache = true, force = false }: FetchChannelOptions = {},
@@ -154,13 +101,6 @@ class ChannelManager extends CachedManager<import('../structures/Channel').Chann
     return this._add(data, null, { cache, allowUnknownGuild });
   }
 
-  /**
-   * Create Group DM
-   * @param {UserResolvable[]} [recipients=[]] Array of recipients
-   * @returns {Promise<GroupDMChannel>} Channel
-   * @example
-   * client.channels.createGroupDM();
-   */
   async createGroupDM(recipients: UserResolvable[] = []): Promise<GroupDMChannel> {
     if (!Array.isArray(recipients)) throw new Error(`Expected an array of recipients (got ${typeof recipients})`);
     const resolvedRecipients = recipients

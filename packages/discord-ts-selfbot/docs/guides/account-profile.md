@@ -1,0 +1,86 @@
+# Account and profile
+
+## Presence and status
+
+```ts
+import { CustomStatus, Events } from 'discord-ts-selfbot';
+
+client.once(Events.CLIENT_READY, (readyClient) => {
+  readyClient.user.setPresence({
+    status: 'online',
+    afk: false,
+    activities: [new CustomStatus(readyClient).setEmoji('🎮').setState('discord-ts-selfbot')],
+  });
+});
+```
+
+`setStatus('idle' | 'dnd' | 'online' | 'invisible')` is a shortcut for a plain status. `setPresence` accepts a full presence object, including activities.
+
+## Edit the profile
+
+```ts
+await client.user.setAboutMe('Bun-first selfbot.');
+client.user.setPronouns('they/them');
+client.user.setGlobalName('Bun');
+
+await client.user.setBanner('https://example.com/banner.png');
+client.user.setAccentColor('#5865F2');
+client.user.setHypeSquad('BRAVERY');
+```
+
+The profile methods change the account, not a guild member. They require no bot permissions, but they do change how the account appears to everyone.
+
+## Samsung activity
+
+```ts
+await client.user.setSamsungActivity('com.samsung.android.game.gamehome', 'START');
+await client.user.setSamsungActivity('com.samsung.android.game.gamehome', 'STOP');
+```
+
+This sets the Samsung Game Launcher activity. It is a selfbot-only extension.
+
+## Burst credit
+
+```ts
+const credit = await client.user.fetchBurstCredit();
+console.log(credit);
+```
+
+The response shape is whatever Discord returns for the burst-credit endpoint. Treat it as an opaque object.
+
+## Friend invites
+
+```ts
+const invite = await client.user.createFriendInvite();
+const all = await client.user.getAllFriendInvites();
+await client.user.revokeAllFriendInvites();
+```
+
+- `createFriendInvite()` posts an empty body to `/users/@me/invites`.
+- `getAllFriendInvites()` returns a collection keyed by invite code.
+- `revokeAllFriendInvites()` deletes every friend invite.
+
+## Stop ringing
+
+```ts
+await client.user.stopRinging(channel);
+```
+
+Stops an outgoing call ring for a DM or group DM channel.
+
+## Risky mutations are stubbed
+
+These methods exist in the typings but reject without making a request:
+
+- `RelationshipManager#addFriend`
+- `RelationshipManager#deleteRelationship`
+- `RelationshipManager#sendFriendRequest`
+- `RelationshipManager#addBlocked`
+
+They are marked `@deprecated` and `@experimental`. Do not build automation around them until a separate safety review lands. See [Safety](https://xirothedev.github.io/discord.js-selfbot/docs/project/safety).
+
+## Next
+
+- [Guilds](guilds.md)
+- [API: ClientUser](../reference/structures/client-user.md)
+- [API: RelationshipManager](../reference/managers/relationship-manager.md)

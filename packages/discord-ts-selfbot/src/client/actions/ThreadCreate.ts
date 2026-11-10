@@ -9,12 +9,6 @@ class ThreadCreateAction extends Action {
     const existing = client.channels.cache.has(data.id);
     const thread = client.channels._add(data);
     if (!existing && thread) {
-      /**
-       * Emitted whenever a thread is created or when the client user is added to a thread.
-       * @event Client#threadCreate
-       * @param {ThreadChannel} thread The thread that was created
-       * @param {boolean} newlyCreated Whether the thread was newly created
-       */
       client.emit(Events.THREAD_CREATE, thread, data.newly_created ?? false);
     }
     return { thread };

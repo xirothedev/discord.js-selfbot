@@ -13,9 +13,6 @@ import { isGuildBasedChannel } from '../types/channels';
 import { ComponentType, type APITextInputComponent } from 'discord-api-types/v10';
 import type { Client } from '../client/Client';
 
-/**
- * Represents a modal (form) to be shown in response to an interaction
- */
 class Modal {
   declare components: MessageActionRow[];
   declare customId: string | null;
@@ -26,61 +23,25 @@ class Modal {
   declare channelId: string;
   declare replied: boolean;
   declare client: Client;
-  /**
-   * @param {Object} data Modal to clone or raw data
-   * @param {Client} client The client constructing this Modal, if provided
-   */
   constructor(data: unknown = {}, client: Client | null = null) {
     const source = isComponentDataSource(data) ? data : {};
-    /**
-     * A list of MessageActionRows in the modal
-     * @type {MessageActionRow[]}
-     */
     this.components = readComponentArray(source, 'components')
       .map(component => BaseMessageComponent.create(component, client))
       .filter((component): component is MessageActionRow => component instanceof MessageActionRow);
 
-    /**
-     * A unique string to be sent in the interaction when submitted
-     * @type {?string}
-     */
     this.customId = readComponentString(source, 'custom_id', 'customId') ?? null;
 
-    /**
-     * The title to be displayed on this modal
-     * @type {?string}
-     */
     this.title = readComponentString(source, 'title') ?? null;
 
-    /**
-     * Timestamp (Discord epoch) of when this modal was created
-     * @type {Snowflake}
-     */
     this.nonce = readComponentString(source, 'nonce') ?? '';
 
-    /**
-     * ID slash / button / menu when modal is displayed
-     * @type {Snowflake}
-     */
     this.id = readComponentString(source, 'id') ?? '';
 
-    /**
-     * Application sending the modal
-     * @type {Snowflake}
-     */
     const application = readComponentRecord(source, 'application');
     this.applicationId = (application ? readComponentString(application, 'id') : undefined) ?? '';
 
-    /**
-     * The id of the channel the message was sent in
-     * @type {Snowflake}
-     */
     this.channelId = readComponentString(source, 'channel_id', 'channelId') ?? '';
 
-    /**
-     * Whether this interaction has already been replied to
-     * @type {boolean}
-     */
     this.replied = false;
 
     Object.defineProperty(this, 'client', {
@@ -89,30 +50,15 @@ class Modal {
     });
   }
 
-  /**
-   * The id of the guild the message was sent in, if any
-   * @type {?Snowflake}
-   * @readonly
-   */
   get guildId() {
     const channel = this.client.channels.cache.get(this.channelId);
     return (channel && 'guildId' in channel ? channel.guildId : null) || null;
   }
 
-  /**
-   * The channel that the message was sent in
-   * @type {TextBasedChannels}
-   * @readonly
-   */
   get channel() {
     return this.client.channels.resolve(this.channelId);
   }
 
-  /**
-   * The guild the message was sent in (if in a guild channel)
-   * @type {?Guild}
-   * @readonly
-   */
   get guild() {
     const channel = this.channel;
     return this.client.guilds.resolve(this.guildId) ?? (channel && isGuildBasedChannel(channel) ? channel.guild : null);
@@ -130,17 +76,6 @@ class Modal {
     };
   }
 
-  /**
-   * Reply to this modal with data. (Event only)
-   * @returns {Promise<Message|Modal>}
-   * @example
-   * client.on('interactionModalCreate', modal => {
-   *    // Modal > ActionRow > TextInput
-   *    modal.components[0].components[0].setValue('1+1');
-   *    modal.components[1].components[0].setValue('hello');
-   *    modal.reply();
-   * })
-   */
   reply() {
     if (!this.applicationId || !this.client || !this.channelId || this.replied) throw new Error('Modal cannot reply');
     // Get Object
@@ -177,11 +112,6 @@ class Modal {
   }
 
   // TypeScript
-  /**
-   * Check data
-   * @type {boolean}
-   * @readonly
-   */
   get isMessage() {
     return false;
   }

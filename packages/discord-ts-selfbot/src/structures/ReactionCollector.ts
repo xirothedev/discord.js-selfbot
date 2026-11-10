@@ -12,63 +12,25 @@ import type User from './User';
 import _ConstantsModule from '../util/Constants';
 const { Events } = _ConstantsModule;
 
-/**
- * The source shape of {@link ReactionCollectorOptions}.
- *
- * The public options use the public `MessageReaction`/`User` classes; the
- * source collector operates on the concrete classes instead.
- */
 export type ReactionCollectorSourceOptions = CollectorOptions<[MessageReaction, User]> & {
   max?: number;
   maxEmojis?: number;
   maxUsers?: number;
 };
 
-/**
- * @typedef {CollectorOptions} ReactionCollectorOptions
- * @property {number} max The maximum total amount of reactions to collect
- * @property {number} maxEmojis The maximum number of emojis to collect
- * @property {number} maxUsers The maximum number of users to react
- */
-
-/**
- * Collects reactions on messages.
- * Will automatically stop if the message ({@link Client#event:messageDelete messageDelete} or
- * {@link Client#event:messageDeleteBulk messageDeleteBulk}),
- * channel ({@link Client#event:channelDelete channelDelete}),
- * thread ({@link Client#event:threadDelete threadDelete}), or
- * guild ({@link Client#event:guildDelete guildDelete}) is deleted.
- * @extends {Collector}
- */
 class ReactionCollector extends Collector<Snowflake | string, MessageReaction, [User]> {
   declare users: Collection<Snowflake, User>;
   declare options: ReactionCollectorSourceOptions;
   declare message: Message;
   declare total: number;
 
-  /**
-   * @param {Message} message The message upon which to collect reactions
-   * @param {ReactionCollectorOptions} [options={}] The options to apply to this collector
-   */
   constructor(message: Message, options: ReactionCollectorSourceOptions = {}) {
     super(message.client, options);
 
-    /**
-     * The message upon which to collect reactions
-     * @type {Message}
-     */
     this.message = message;
 
-    /**
-     * The users that have reacted to this message
-     * @type {Collection}
-     */
     this.users = new Collection<Snowflake, User>();
 
-    /**
-     * The total number of reactions collected
-     * @type {number}
-     */
     this.total = 0;
 
     this.empty = this.empty.bind(this);
@@ -104,14 +66,6 @@ class ReactionCollector extends Collector<Snowflake | string, MessageReaction, [
     });
 
     this.on('collect', (reaction: MessageReaction, user: User) => {
-      /**
-       * Emitted whenever a reaction is newly created on a message. Will emit only when a new reaction is
-       * added to the message, as opposed to {@link Collector#collect} which will
-       * be emitted even when a reaction has already been added to the message.
-       * @event ReactionCollector#create
-       * @param {MessageReaction} reaction The reaction that was added
-       * @param {User} user The user that added the reaction
-       */
       if (reaction.count === 1) {
         this.emit('create', reaction, user);
       }
@@ -125,55 +79,21 @@ class ReactionCollector extends Collector<Snowflake | string, MessageReaction, [
     });
   }
 
-  /**
-   * Handles an incoming reaction for possible collection.
-   * @param {MessageReaction} reaction The reaction to possibly collect
-   * @param {User} user The user that added the reaction
-   * @returns {?(Snowflake|string)}
-   * @private
-   */
   collect(reaction: MessageReaction): Snowflake | string | null {
-    /**
-     * Emitted whenever a reaction is collected.
-     * @event ReactionCollector#collect
-     * @param {MessageReaction} reaction The reaction that was collected
-     * @param {User} user The user that added the reaction
-     */
     if (reaction.message.id !== this.message.id) return null;
 
     return ReactionCollector.key(reaction);
   }
 
-  /**
-   * Handles a reaction deletion for possible disposal.
-   * @param {MessageReaction} reaction The reaction to possibly dispose of
-   * @param {User} user The user that removed the reaction
-   * @returns {?(Snowflake|string)}
-   */
   dispose(reaction: MessageReaction, user: User): Snowflake | string | null {
-    /**
-     * Emitted when the reaction had all the users removed and the `dispose` option is set to true.
-     * @event ReactionCollector#dispose
-     * @param {MessageReaction} reaction The reaction that was disposed of
-     * @param {User} user The user that removed the reaction
-     */
     if (reaction.message.id !== this.message.id) return null;
 
-    /**
-     * Emitted when the reaction had one user removed and the `dispose` option is set to true.
-     * @event ReactionCollector#remove
-     * @param {MessageReaction} reaction The reaction that was removed
-     * @param {User} user The user that removed the reaction
-     */
     if (this.collected.has(ReactionCollector.key(reaction)) && this.users.has(user.id)) {
       this.emit('remove', reaction, user);
     }
     return reaction.count ? null : ReactionCollector.key(reaction);
   }
 
-  /**
-   * Empties this reaction collector.
-   */
   empty() {
     this.total = 0;
     this.collected.clear();
@@ -181,11 +101,6 @@ class ReactionCollector extends Collector<Snowflake | string, MessageReaction, [
     this.checkEnd();
   }
 
-  /**
-   * The reason this collector has ended with, or null if it hasn't ended yet
-   * @type {?string}
-   * @readonly
-   */
   get endReason(): string | null {
     if (this.options.max && this.total >= this.options.max) return 'limit';
     if (this.options.maxEmojis && this.collected.size >= this.options.maxEmojis) return 'emojiLimit';
@@ -193,59 +108,30 @@ class ReactionCollector extends Collector<Snowflake | string, MessageReaction, [
     return null;
   }
 
-  /**
-   * Handles checking if the message has been deleted, and if so, stops the collector with the reason 'messageDelete'.
-   * @private
-   * @param {Message} message The message that was deleted
-   * @returns {void}
-   */
   _handleMessageDeletion(message: Message) {
     if (message.id === this.message.id) {
       this.stop('messageDelete');
     }
   }
 
-  /**
-   * Handles checking if the channel has been deleted, and if so, stops the collector with the reason 'channelDelete'.
-   * @private
-   * @param {GuildChannel} channel The channel that was deleted
-   * @returns {void}
-   */
   _handleChannelDeletion(channel: GuildChannel & { threads?: { cache: Collection<Snowflake, ThreadChannel> } }) {
     if (channel.id === this.message.channelId || channel.threads?.cache.has(this.message.channelId)) {
       this.stop('channelDelete');
     }
   }
 
-  /**
-   * Handles checking if the thread has been deleted, and if so, stops the collector with the reason 'threadDelete'.
-   * @private
-   * @param {ThreadChannel} thread The thread that was deleted
-   * @returns {void}
-   */
   _handleThreadDeletion(thread: ThreadChannel) {
     if (thread.id === this.message.channelId) {
       this.stop('threadDelete');
     }
   }
 
-  /**
-   * Handles checking if the guild has been deleted, and if so, stops the collector with the reason 'guildDelete'.
-   * @private
-   * @param {Guild} guild The guild that was deleted
-   * @returns {void}
-   */
   _handleGuildDeletion(guild: Guild) {
     if (guild.id === this.message.guild?.id) {
       this.stop('guildDelete');
     }
   }
 
-  /**
-   * Gets the collector key for a reaction.
-   * @param {MessageReaction} reaction The message reaction to get the key for
-   * @returns {Snowflake|string}
-   */
   static key(reaction: MessageReaction): Snowflake | string {
     return reaction.emoji.id ?? reaction.emoji.name ?? '';
   }

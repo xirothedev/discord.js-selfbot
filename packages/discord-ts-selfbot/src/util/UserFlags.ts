@@ -1,67 +1,8 @@
 import BitField from './BitField';
 ('use strict');
 
-/**
- * Data structure that makes it easy to interact with a {@link User#flags} bitfield.
- * @extends {BitField}
- */
 class UserFlags extends BitField {}
 
-/**
- * @name UserFlags
- * @kind constructor
- * @memberof UserFlags
- * @param {BitFieldResolvable} [bits=0] Bit(s) to read from
- */
-
-/**
- * Bitfield of the packed bits
- * @type {number}
- * @name UserFlags#bitfield
- */
-
-/**
- * Numeric user flags. All available properties:
- * * `DISCORD_EMPLOYEE`
- * * `PARTNERED_SERVER_OWNER`
- * * `HYPESQUAD_EVENTS`
- * * `BUGHUNTER_LEVEL_1`
- * * `MFA_SMS`
- * * `PREMIUM_PROMO_DISMISSED`
- * * `HOUSE_BRAVERY`
- * * `HOUSE_BRILLIANCE`
- * * `HOUSE_BALANCE`
- * * `EARLY_SUPPORTER`
- * * `TEAM_USER`
- * * `INTERNAL_APPLICATION`
- * * `SYSTEM`
- * * `HAS_UNREAD_URGENT_MESSAGES`
- * * `BUGHUNTER_LEVEL_2`
- * * `UNDERAGE_DELETED`
- * * `VERIFIED_BOT`
- * * `EARLY_VERIFIED_BOT_DEVELOPER`
- * * `DISCORD_CERTIFIED_MODERATOR`
- * * `BOT_HTTP_INTERACTIONS`
- * * `SPAMMER`
- * * `DISABLE_PREMIUM`
- * * `ACTIVE_DEVELOPER`
- * * `HIGH_GLOBAL_RATE_LIMIT`
- * * `DELETED`
- * * `DISABLED_SUSPICIOUS_ACTIVITY`
- * * `SELF_DELETED`
- * * `PREMIUM_DISCRIMINATOR`
- * * `USED_DESKTOP_CLIENT`
- * * `USED_WEB_CLIENT`
- * * `USED_MOBILE_CLIENT`
- * * `DISABLED`
- * * `VERIFIED_EMAIL`
- * * `QUARANTINED`
- * * `COLLABORATOR`
- * * `RESTRICTED_COLLABORATOR`
- * @type {Object}
- * @see {@link https://discord.com/developers/docs/resources/user#user-object-user-flags}
- * @see {@link https://github.com/LewisTehMinerz/discord-flags}
- */
 UserFlags.FLAGS = {
   DISCORD_EMPLOYEE: 1 << 0,
   PARTNERED_SERVER_OWNER: 1 << 1,

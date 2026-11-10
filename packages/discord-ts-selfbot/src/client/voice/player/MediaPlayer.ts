@@ -83,11 +83,6 @@ const FFMPEG_H265_ARGUMENTS = (options?: VideoOptionsSource) => [
   '0',
 ];
 
-/**
- * Player for a Voice Connection.
- * @private
- * @extends {EventEmitter}
- */
 class MediaPlayer extends EventEmitter {
   declare dispatcher: import('../dispatcher/BaseDispatcher').default | null;
   declare videoDispatcher: import('../dispatcher/BaseDispatcher').default | null;
@@ -100,10 +95,6 @@ class MediaPlayer extends EventEmitter {
     this.dispatcher = null;
 
     this.videoDispatcher = null;
-    /**
-     * The voice connection that the player serves
-     * @type {VoiceConnection}
-     */
     this.voiceConnection = voiceConnection;
 
     this.isScreenSharing = isScreenSharing;
@@ -314,13 +305,6 @@ class MediaPlayer extends EventEmitter {
     return dispatcher;
   }
 
-  /**
-   * Create
-   * @private
-   * @param {Object} options any
-   * @param {Object} streams any
-   * @returns {VideoDispatcher}
-   */
   createVideoDispatcher(options: VideoOptionsSource, streams: DispatcherStreams): VideoDispatcher {
     this.destroyVideoDispatcher();
     switch (this.voiceConnection.videoCodec) {

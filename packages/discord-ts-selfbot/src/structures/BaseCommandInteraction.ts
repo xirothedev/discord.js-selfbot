@@ -16,12 +16,6 @@ import type { CommandInteractionOption, CommandInteractionResolvedData } from '.
 
 type ResolvedData = APIInteractionDataResolved & { messages?: Record<Snowflake, APIMessage> };
 
-/**
- * Represents a command interaction.
- * @extends {Interaction}
- * @implements {InteractionResponses}
- * @abstract
- */
 class BaseCommandInteraction<Cached extends CacheType = CacheType> extends Interaction<Cached> {
   declare commandId: Snowflake;
   declare commandName: string;
@@ -37,75 +31,24 @@ class BaseCommandInteraction<Cached extends CacheType = CacheType> extends Inter
   ) {
     super(client, data);
 
-    /**
-     * The id of the channel this interaction was sent in
-     * @type {Snowflake}
-     * @name BaseCommandInteraction#channelId
-     */
-
-    /**
-     * The invoked application command's id
-     * @type {Snowflake}
-     */
     this.commandId = data.data.id;
 
-    /**
-     * The invoked application command's name
-     * @type {string}
-     */
     this.commandName = data.data.name;
 
-    /**
-     * Whether the reply to this interaction has been deferred
-     * @type {boolean}
-     */
     this.deferred = false;
 
-    /**
-     * Whether this interaction has already been replied to
-     * @type {boolean}
-     */
     this.replied = false;
 
-    /**
-     * Whether the reply to this interaction is ephemeral
-     * @type {?boolean}
-     */
     this.ephemeral = null;
 
-    /**
-     * An associated interaction webhook, can be used to further interact with this interaction
-     * @type {InteractionWebhook}
-     */
     this.webhook = new InteractionWebhook(this.client, this.applicationId, this.token);
   }
 
-  /**
-   * The invoked application command, if it was fetched before
-   * @type {?ApplicationCommand}
-   */
   get command() {
     const id = this.commandId;
     return this.client.application?.commands.cache.get(id) ?? null;
   }
 
-  /**
-   * Represents the resolved data of a received command interaction.
-   * @typedef {Object} CommandInteractionResolvedData
-   * @property {Collection<Snowflake, User>} [users] The resolved users
-   * @property {Collection<Snowflake, GuildMember|APIGuildMember>} [members] The resolved guild members
-   * @property {Collection<Snowflake, Role|APIRole>} [roles] The resolved roles
-   * @property {Collection<Snowflake, Channel|APIChannel>} [channels] The resolved channels
-   * @property {Collection<Snowflake, Message|APIMessage>} [messages] The resolved messages
-   * @property {Collection<Snowflake, MessageAttachment>} [attachments] The resolved attachments
-   */
-
-  /**
-   * Transforms the resolved received from the API.
-   * @param {APIInteractionDataResolved} resolved The received resolved objects
-   * @returns {CommandInteractionResolvedData}
-   * @private
-   */
   transformResolved({
     members,
     users,
@@ -163,29 +106,6 @@ class BaseCommandInteraction<Cached extends CacheType = CacheType> extends Inter
     return result;
   }
 
-  /**
-   * Represents an option of a received command interaction.
-   * @typedef {Object} CommandInteractionOption
-   * @property {string} name The name of the option
-   * @property {ApplicationCommandOptionType} type The type of the option
-   * @property {boolean} [autocomplete] Whether the option is an autocomplete option
-   * @property {string|number|boolean} [value] The value of the option
-   * @property {CommandInteractionOption[]} [options] Additional options if this option is a
-   * subcommand (group)
-   * @property {User} [user] The resolved user
-   * @property {GuildMember|APIGuildMember} [member] The resolved member
-   * @property {GuildChannel|ThreadChannel|APIChannel} [channel] The resolved channel
-   * @property {Role|APIRole} [role] The resolved role
-   * @property {MessageAttachment} [attachment] The resolved attachment
-   */
-
-  /**
-   * Transforms an option received from the API.
-   * @param {APIApplicationCommandOption} option The received option
-   * @param {APIInteractionDataResolved} resolved The resolved interaction data
-   * @returns {CommandInteractionOption}
-   * @private
-   */
   transformOption(
     option: APIApplicationCommandInteractionDataOption,
     resolved?: ResolvedData,
@@ -240,7 +160,3 @@ export default BaseCommandInteraction;
 export { BaseCommandInteraction };
 
 /* eslint-disable max-len */
-/**
- * @external APIInteractionDataResolved
- * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-resolved-data-structure}
- */

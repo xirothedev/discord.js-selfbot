@@ -2,6 +2,8 @@
 
 **Status:** Accepted
 
+**Superseded in part by:** [0005](./0005-agent-docs-and-mcp-gateway.md), which removes the docgen mirror and moves the prose to `apps/docs/scripts/agent/api.json`.
+
 The legacy docgen JSON and TypeDoc HTML could not run under Bun and did not look like a product docs site. We rebuilt the documentation as a Fumadocs 16 app in `apps/docs`, statically exported with Next.js 16 and deployed to GitHub Pages at `/discord.js-selfbot`. The API reference is generated at build time from TypeDoc over `typings/index.d.ts`, with descriptions merged from the legacy docgen parser through a Bun/Node 26 `util` shim. Docgen cannot read TypeScript, so the build compiles the source to a temporary JavaScript mirror that never enters the repository.
 
 ## Considered options

@@ -29,9 +29,6 @@ import type { Guild } from '../../structures/Guild';
 import type AudioDispatcher from './dispatcher/AudioDispatcher';
 import type VideoDispatcher from './dispatcher/VideoDispatcher';
 
-/**
- * The subset of a channel that a voice connection needs.
- */
 export interface VoiceConnectionChannel {
   id: Snowflake;
   type: string;
@@ -198,18 +195,6 @@ function routeStreamPacket(connection: VoiceConnection, packet: unknown) {
   }
 }
 
-/**
- * Represents a connection to a guild's voice server.
- * ```js
- * // Obtained using:
- * client.voice.joinChannel(channel)
- *   .then(connection => {
- *
- *   });
- * ```
- * @extends {EventEmitter}
- * @implements {PlayInterface}
- */
 class VoiceConnection extends EventEmitter {
   declare voiceManager: import('./ClientVoiceManager').default;
   declare channel: VoiceConnectionChannel;
@@ -259,163 +244,59 @@ class VoiceConnection extends EventEmitter {
   ) {
     super();
 
-    /**
-     * The voice manager that instantiated this connection
-     * @type {ClientVoiceManager}
-     */
     this.voiceManager = voiceManager;
 
-    /**
-     * The voice channel this connection is currently serving
-     * @type {VoiceChannel}
-     */
     this.channel = channel;
 
-    /**
-     * The current status of the voice connection
-     * @type {VoiceStatus}
-     */
     this.status = VoiceStatus.AUTHENTICATING;
 
-    /**
-     * Our current speaking state
-     * @type {Readonly<Speaking>}
-     */
     this.speaking = new Speaking().freeze();
 
-    /**
-     * Our current video state
-     * @type {boolean | null}
-     */
     this.videoStatus = null;
 
-    /**
-     * The authentication data needed to connect to the voice server
-     * @type {Object}
-     * @private
-     */
     this.authentication = { token: null, endpoint: null, sessionId: null, ssrc: 0 };
 
-    /**
-     * The audio player for this voice connection
-     * @type {MediaPlayer}
-     */
     this.player = new MediaPlayer(this, this.constructor.name === 'StreamConnection');
 
     this.player.on('debug', (m: string) => {
-      /**
-       * Debug info from the connection.
-       * @event VoiceConnection#debug
-       * @param {string} message The debug message
-       */
       this.emit('debug', `media player - ${m}`);
     });
 
     this.player.on('error', (e: Error) => {
-      /**
-       * Warning info from the connection.
-       * @event VoiceConnection#warn
-       * @param {string|Error} warning The warning
-       */
       this.emit('warn', e);
     });
 
     this.once('closing', () => this.player.destroy());
 
-    /**
-     * Map SSRC values to user IDs
-     * @type {Map<number, { userId: Snowflake, speaking: boolean, hasVideo: boolean }>}
-     * @private
-     */
     this.ssrcMap = new Map();
 
-    /**
-     * Tracks which users are talking
-     * @type {Map<Snowflake, Readonly<Speaking>>}
-     * @private
-     */
     this._speaking = new Map();
 
-    /**
-     * Object that wraps contains the `ws` and `udp` sockets of this voice connection
-     * @type {Object}
-     * @private
-     */
     this.sockets = {};
 
-    /**
-     * Factories used to create the voice networking sockets. Overridable so tests can inject fakes.
-     * @type {Object}
-     * @private
-     */
     this.socketFactory = options.socketFactory ?? {};
 
-    /**
-     * The voice receiver of this connection
-     * @type {VoiceReceiver}
-     */
     this.receiver = new VoiceReceiver(this);
 
-    /**
-     * Video codec
-     * * `VP8`
-     * * `VP9` (Not supported for encoding & decoding)
-     * * `H264`
-     * * `H265` (Not supported for encoding & decoding)
-     * * `AV1` (Not supported for encoding & decoding)
-     * @typedef {string} VideoCodec
-     */
-
-    /**
-     * Video codec (encoded) of this connection
-     * @type {VideoCodec}
-     */
     this.videoCodec = 'H264';
 
-    /**
-     * Create a stream connection ?
-     * @type {?StreamConnection}
-     */
     this.streamConnection = null;
 
-    /**
-     * All stream watch connection
-     * @type {Collection<Snowflake, StreamConnectionReadonly>}
-     */
     this.streamWatchConnection = new Collection();
   }
 
-  /**
-   * The client that instantiated this connection
-   * @type {Client}
-   * @readonly
-   */
   get client() {
     return this.voiceManager.client;
   }
 
-  /**
-   * The current audio dispatcher (if any)
-   * @type {?AudioDispatcher}
-   * @readonly
-   */
   get dispatcher() {
     return this.player.dispatcher;
   }
 
-  /**
-   * The current video dispatcher (if any)
-   * @type {?VideoDispatcher}
-   * @readonly
-   */
   get videoDispatcher() {
     return this.player.videoDispatcher;
   }
 
-  /**
-   * Sets whether the voice connection should display as "speaking", "soundshare" or "none".
-   * @param {BitFieldResolvable} value The new speaking state
-   */
   setSpeaking(value: BitFieldResolvable<SpeakingString, number>) {
     if (this.speaking.equals(value)) return;
     if (this.status !== VoiceStatus.CONNECTED) return;
@@ -434,21 +315,12 @@ class VoiceConnection extends EventEmitter {
       });
   }
 
-  /**
-   * Set video codec before select protocol
-   * @param {VideoCodec} value Codec
-   * @returns {VoiceConnection}
-   */
   setVideoCodec(value: SourceVideoCodec) {
     if (!SUPPORTED_CODECS.includes(value)) throw new Error('INVALID_VIDEO_CODEC', SUPPORTED_CODECS);
     this.videoCodec = value;
     return this;
   }
 
-  /**
-   * Sets video status
-   * @param {boolean} value Video on or off
-   */
   setVideoStatus(value: boolean) {
     if (value === this.videoStatus) return;
     if (this.status !== VoiceStatus.CONNECTED) return;
@@ -500,20 +372,10 @@ class VoiceConnection extends EventEmitter {
     }
   }
 
-  /**
-   * The voice state of this connection
-   * @type {?VoiceState}
-   */
   get voice() {
     return this.client.user!.voice;
   }
 
-  /**
-   * Sends a request to the main gateway to join a voice channel.
-   * @param {Object} [options] The options to provide
-   * @returns {Promise<Shard>}
-   * @private
-   */
   sendVoiceStateUpdate(options: VoiceStateUpdateOptions = {}): void {
     const data: Required<VoiceStateUpdateOptions> = {
       guild_id: this.channel.guild?.id ?? null,
@@ -533,13 +395,6 @@ class VoiceConnection extends EventEmitter {
     });
   }
 
-  /**
-   * Set the token and endpoint required to connect to the voice servers.
-   * @param {string} token The voice token
-   * @param {string} endpoint The voice endpoint
-   * @returns {void}
-   * @private
-   */
   setTokenAndEndpoint(token: string | null, endpoint: string | null) {
     this.emit('debug', `Token "${token}" and endpoint "${endpoint}"`);
     if (!endpoint) {
@@ -569,11 +424,6 @@ class VoiceConnection extends EventEmitter {
     }
   }
 
-  /**
-   * Sets the Session ID for the connection.
-   * @param {string} sessionId The voice session ID
-   * @private
-   */
   setSessionId(sessionId: string | null) {
     this.emit('debug', `Setting sessionId ${sessionId} (stored as "${this.authentication.sessionId}")`);
     if (!sessionId) {
@@ -586,102 +436,51 @@ class VoiceConnection extends EventEmitter {
       this.checkAuthenticated();
     } else if (sessionId !== this.authentication.sessionId) {
       this.authentication.sessionId = sessionId;
-      /**
-       * Emitted when a new session ID is received.
-       * @event VoiceConnection#newSession
-       * @private
-       */
       this.emit('newSession', sessionId);
     }
   }
 
-  /**
-   * Checks whether the voice connection is authenticated.
-   * @private
-   */
   checkAuthenticated() {
     const { token, endpoint, sessionId } = this.authentication;
     this.emit('debug', `Authenticated with sessionId ${sessionId}`);
     if (token && endpoint && sessionId) {
       this.status = VoiceStatus.CONNECTING;
-      /**
-       * Emitted when we successfully initiate a voice connection.
-       * @event VoiceConnection#authenticated
-       */
       this.emit('authenticated');
       this.connect();
     }
   }
 
-  /**
-   * Invoked when we fail to initiate a voice connection.
-   * @param {string} reason The reason for failure
-   * @private
-   */
   authenticateFailed(reason: string) {
     clearTimeout(this.connectTimeout);
     this.emit('debug', `Authenticate failed - ${reason}`);
     if (this.status === VoiceStatus.AUTHENTICATING) {
-      /**
-       * Emitted when we fail to initiate a voice connection.
-       * @event VoiceConnection#failed
-       * @param {Error} error The encountered error
-       */
       this.emit('failed', new Error(reason));
     } else {
-      /**
-       * Emitted whenever the connection encounters an error.
-       * @event VoiceConnection#error
-       * @param {Error} error The encountered error
-       */
       this.emit('error', new Error(reason));
     }
     this.status = VoiceStatus.DISCONNECTED;
   }
 
-  /**
-   * Move to a different voice channel in the same guild.
-   * @param {VoiceChannel} channel The channel to move to
-   * @private
-   */
   updateChannel(channel: VoiceConnectionChannel) {
     this.channel = channel;
     this.sendVoiceStateUpdate();
   }
 
-  /**
-   * Attempts to authenticate to the voice server.
-   * @param {Object} options Join config
-   * @private
-   */
   authenticate(options: VoiceStateUpdateOptions = {}) {
     this.sendVoiceStateUpdate(options);
     this.connectTimeout = setTimeout(() => this.authenticateFailed('VOICE_CONNECTION_TIMEOUT'), 15_000).unref();
   }
 
-  /**
-   * Attempts to reconnect to the voice server (typically after a region change).
-   * @param {string} token The voice token
-   * @param {string} endpoint The voice endpoint
-   * @private
-   */
   reconnect(token: string, endpoint: string) {
     this.authentication.token = token;
     this.authentication.endpoint = endpoint;
     this.speaking = new Speaking().freeze();
     this.status = VoiceStatus.RECONNECTING;
     this.emit('debug', `Reconnecting to ${endpoint}`);
-    /**
-     * Emitted when the voice connection is reconnecting (typically after a region change).
-     * @event VoiceConnection#reconnecting
-     */
     this.emit('reconnecting');
     this.connect();
   }
 
-  /**
-   * Disconnects the voice connection, causing a disconnect and closing event to be emitted.
-   */
   disconnect() {
     this.emit('closing');
     this.emit('debug', 'disconnect() triggered');
@@ -694,24 +493,12 @@ class VoiceConnection extends EventEmitter {
     this._disconnect();
   }
 
-  /**
-   * Internally disconnects (doesn't send disconnect packet).
-   * @private
-   */
   _disconnect() {
     this.cleanup();
     this.status = VoiceStatus.DISCONNECTED;
-    /**
-     * Emitted when the voice connection disconnects.
-     * @event VoiceConnection#disconnect
-     */
     this.emit('disconnect');
   }
 
-  /**
-   * Cleans up after disconnect.
-   * @private
-   */
   cleanup() {
     this.player.destroy();
     this.speaking = new Speaking().freeze();
@@ -733,10 +520,6 @@ class VoiceConnection extends EventEmitter {
     this.sockets.udp = null;
   }
 
-  /**
-   * Connect the voice connection.
-   * @private
-   */
   connect() {
     this.emit('debug', `Connect triggered`);
     if (this.status !== VoiceStatus.RECONNECTING) {
@@ -764,11 +547,6 @@ class VoiceConnection extends EventEmitter {
     this.sockets.ws.connect();
   }
 
-  /**
-   * Invoked when the voice websocket is ready.
-   * @param {Object} data The received data
-   * @private
-   */
   onReady(data: VoiceReadyData) {
     Object.assign(this.authentication, data);
     for (let mode of data.modes) {
@@ -781,22 +559,12 @@ class VoiceConnection extends EventEmitter {
     this.sockets.udp!.createUDPSocket(data.ip);
   }
 
-  /**
-   * Invoked when a session description is received.
-   * @param {Object} data The received data
-   * @private
-   */
   onSessionDescription(data: VoiceSessionDescriptionData) {
     Object.assign(this.authentication, data);
     this.status = VoiceStatus.CONNECTED;
     const ready = () => {
       clearTimeout(this.connectTimeout);
       this.emit('debug', `Ready with authentication details: ${JSON.stringify(this.authentication)}`);
-      /**
-       * Emitted once the connection is ready, when a promise to join a voice channel resolves,
-       * the connection will already be ready.
-       * @event VoiceConnection#ready
-       */
       this.emit('ready');
     };
     if (this.player.dispatcher || this.player.videoDispatcher) {
@@ -822,43 +590,14 @@ class VoiceConnection extends EventEmitter {
       userId: user_id,
       hasVideo: Boolean(video_ssrc), // Maybe ?
     });
-    /**
-{
-  video_ssrc: 0,
-  user_id: 'uid',
-  streams: [
-    {
-      ssrc: 27734,
-      rtx_ssrc: 27735,
-      rid: '100',
-      quality: 100,
-      max_resolution: { width: 0, type: 'source', height: 0 },,
-      max_framerate: 60,
-      active: false
-    }
-  ],
-  audio_ssrc: 27733
-}
-     */
   }
 
-  /**
-   * Invoked when a speaking event is received.
-   * @param {Object} data The received data
-   * @private
-   */
   onSpeaking({ user_id, speaking: speakingBits }: VoiceSpeakingData) {
     const speaking = new Speaking(speakingBits).freeze();
     const guild = this.channel.guild;
     const user = this.client.users.cache.get(user_id);
     const old = this._speaking.get(user_id) || new Speaking(0).freeze();
     this._speaking.set(user_id, speaking);
-    /**
-     * Emitted whenever a user changes speaking state.
-     * @event VoiceConnection#speaking
-     * @param {User} user The user that has changed speaking state
-     * @param {Readonly<Speaking>} speaking The speaking state of the user
-     */
     if (this.status === VoiceStatus.CONNECTED) {
       this.emit('speaking', user, speaking);
       if (!speaking.has(Speaking.FLAGS.SPEAKING)) {
@@ -869,12 +608,6 @@ class VoiceConnection extends EventEmitter {
     if (guild && user && !speaking.equals(old)) {
       const member = guild.members.cache.get(user_id);
       if (member) {
-        /**
-         * Emitted once a guild member changes speaking state.
-         * @event Client#guildMemberSpeaking
-         * @param {GuildMember} member The member that started/stopped speaking
-         * @param {Readonly<Speaking>} speaking The speaking state of the member
-         */
         this.client.emit(Events.GUILD_MEMBER_SPEAKING, member, speaking);
       }
     }
@@ -883,10 +616,6 @@ class VoiceConnection extends EventEmitter {
   declare playAudio: (resource: import('node:stream').Readable | string, options?: StreamOptions) => AudioDispatcher;
   declare playVideo: (resource: import('node:stream').Readable | string, options?: VideoOptions) => VideoDispatcher;
 
-  /**
-   * Create new connection to screenshare stream
-   * @returns {Promise<StreamConnection>}
-   */
   createStreamConnection(): Promise<StreamConnection> {
     // eslint-disable-next-line consistent-return
     return new Promise((resolve, reject) => {
@@ -932,11 +661,6 @@ class VoiceConnection extends EventEmitter {
     });
   }
 
-  /**
-   * Watch user stream
-   * @param {UserResolvable} user Discord user
-   * @returns {Promise<StreamConnectionReadonly>}
-   */
   async joinStreamConnection(user: UserResolvable): Promise<StreamConnectionReadonly> {
     const userId = this.client.users.resolveId(user);
     // Check if user is streaming
@@ -993,34 +717,8 @@ class VoiceConnection extends EventEmitter {
       }
     });
   }
-
-  /**
-   * @event VoiceConnection#streamUpdate
-   * @description Emitted when the StreamConnection or StreamConnectionReadonly
-   * state changes, providing the previous and current stream state.
-   *
-   * @param {StreamState} oldData - The previous state of the stream.
-   * @param {StreamState} newData - The current state of the stream.
-   *
-   * @typedef {Object} StreamState
-   * @property {boolean} isPaused - Indicates whether the stream is currently paused.
-   * @property {string|null} region - The region where the stream is hosted, or null if not specified.
-   * @property {Snowflake[]} viewerIds - An array of Snowflake IDs representing the viewers connected to the stream.
-   */
 }
 
-/**
- * Represents a connection to a guild's voice server.
- * ```js
- * // Obtained using:
- * client.voice.joinChannel(channel)
- *   .then(connection => connection.createStreamConnection())
- *    .then(connection => {
- *
- *   });
- * ```
- * @extends {VoiceConnection}
- */
 class StreamConnection extends VoiceConnection {
   #requestDisconnect = false;
   declare voiceConnection: VoiceConnection;
@@ -1028,11 +726,6 @@ class StreamConnection extends VoiceConnection {
   declare isPaused: boolean | null;
   declare viewerIds: string[];
   declare region: string | null;
-  /**
-   * @param {ClientVoiceManager} voiceManager Voice manager
-   * @param {Channel} channel any channel (joinable)
-   * @param {VoiceConnection} voiceConnection parent
-   */
   constructor(
     voiceManager: import('./ClientVoiceManager').default,
     channel: VoiceConnectionChannel,
@@ -1040,10 +733,6 @@ class StreamConnection extends VoiceConnection {
   ) {
     super(voiceManager, channel);
 
-    /**
-     * Current voice connection
-     * @type {VoiceConnection}
-     */
     this.voiceConnection = voiceConnection;
 
     Object.defineProperty(this, 'voiceConnection', {
@@ -1051,28 +740,12 @@ class StreamConnection extends VoiceConnection {
       writable: false,
     });
 
-    /**
-     * Server Id
-     * @type {string | null}
-     */
     this.serverId = null;
 
-    /**
-     * Stream state
-     * @type {boolean | null}
-     */
     this.isPaused = null;
 
-    /**
-     * Viewer IDs
-     * @type {Snowflake[]}
-     */
     this.viewerIds = [];
 
-    /**
-     * Voice region name
-     * @type {string | null}
-     */
     this.region = null;
   }
 
@@ -1110,10 +783,6 @@ class StreamConnection extends VoiceConnection {
     this._disconnect();
   }
 
-  /**
-   * Create new stream connection (WS packet)
-   * @returns {void}
-   */
   sendSignalScreenshare() {
     const data = {
       type: ['DM', 'GROUP_DM'].includes(this.channel.type) ? 'call' : 'guild',
@@ -1128,11 +797,6 @@ class StreamConnection extends VoiceConnection {
     });
   }
 
-  /**
-   * Send screenshare state... (WS)
-   * @param {boolean} isPaused screenshare paused ?
-   * @returns {void}
-   */
   sendScreenshareState(isPaused = false) {
     if (isPaused == this.isPaused) return;
     this.emit(
@@ -1158,11 +822,6 @@ class StreamConnection extends VoiceConnection {
     });
   }
 
-  /**
-   * Stop screenshare, delete this connection (WS)
-   * @returns {void}
-   * @private Using StreamConnection#disconnect()
-   */
   sendStopScreenshare() {
     this.#requestDisconnect = true;
     this.channel.client.ws.broadcast({
@@ -1191,10 +850,6 @@ class StreamConnection extends VoiceConnection {
     this.region = data.region;
   }
 
-  /**
-   * Current stream key
-   * @type {string}
-   */
   get streamKey() {
     return `${
       ['DM', 'GROUP_DM'].includes(this.channel.type) ? 'call' : `guild:${this.channel.guild?.id ?? this.channel.id}`
@@ -1202,18 +857,6 @@ class StreamConnection extends VoiceConnection {
   }
 }
 
-/**
- * Represents a connection to a guild's voice server.
- * ```js
- * // Obtained using:
- * client.voice.joinChannel(channel)
- *   .then(connection => connection.createStreamConnection())
- *    .then(connection => {
- *
- *   });
- * ```
- * @extends {VoiceConnection}
- */
 class StreamConnectionReadonly extends VoiceConnection {
   #requestDisconnect = false;
   declare voiceConnection: VoiceConnection;
@@ -1222,12 +865,6 @@ class StreamConnectionReadonly extends VoiceConnection {
   declare isPaused: boolean;
   declare viewerIds: string[];
   declare region: string | null;
-  /**
-   * @param {ClientVoiceManager} voiceManager Voice manager
-   * @param {Channel} channel any channel (joinable)
-   * @param {VoiceConnection} voiceConnection parent
-   * @param {Snowflake} userId User ID
-   */
   constructor(
     voiceManager: import('./ClientVoiceManager').default,
     channel: VoiceConnectionChannel,
@@ -1236,16 +873,8 @@ class StreamConnectionReadonly extends VoiceConnection {
   ) {
     super(voiceManager, channel);
 
-    /**
-     * Current voice connection
-     * @type {VoiceConnection}
-     */
     this.voiceConnection = voiceConnection;
 
-    /**
-     * User ID (who started the stream)
-     * @type {Snowflake}
-     */
     this.userId = userId;
 
     Object.defineProperty(this, 'voiceConnection', {
@@ -1253,28 +882,12 @@ class StreamConnectionReadonly extends VoiceConnection {
       writable: false,
     });
 
-    /**
-     * Server Id
-     * @type {string | null}
-     */
     this.serverId = null;
 
-    /**
-     * Stream state
-     * @type {boolean}
-     */
     this.isPaused = false;
 
-    /**
-     * Viewer IDs
-     * @type {Snowflake[]}
-     */
     this.viewerIds = [];
 
-    /**
-     * Voice region name
-     * @type {string | null}
-     */
     this.region = null;
   }
 
@@ -1312,10 +925,6 @@ class StreamConnectionReadonly extends VoiceConnection {
     this._disconnect();
   }
 
-  /**
-   * Create new stream connection (WS packet)
-   * @returns {void}
-   */
   sendSignalScreenshare() {
     this.emit('debug', `Signal Stream Watch: ${this.streamKey}`);
     return this.channel.client.ws.broadcast({
@@ -1326,11 +935,6 @@ class StreamConnectionReadonly extends VoiceConnection {
     });
   }
 
-  /**
-   * Stop screenshare, delete this connection (WS)
-   * @returns {void}
-   * @private Using StreamConnection#disconnect()
-   */
   sendStopScreenshare() {
     this.#requestDisconnect = true;
     this.channel.client.ws.broadcast({
@@ -1360,10 +964,6 @@ class StreamConnectionReadonly extends VoiceConnection {
     this.region = data.region;
   }
 
-  /**
-   * Current stream key
-   * @type {string}
-   */
   get streamKey() {
     return `${
       ['DM', 'GROUP_DM'].includes(this.channel.type) ? 'call' : `guild:${this.channel.guild?.id ?? this.channel.id}`
