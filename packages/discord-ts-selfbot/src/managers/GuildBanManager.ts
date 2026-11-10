@@ -6,6 +6,37 @@ const { TypeError, Error } = _errorsModule;
 import GuildBan from '../structures/GuildBan';
 import _GuildMemberModule from '../structures/GuildMember';
 const { GuildMember } = _GuildMemberModule;
+import type { Snowflake } from 'discord-api-types/v10';
+import type { RawGuildBanData } from '../../typings/rawDataTypes';
+import type {
+  BanOptions,
+  BaseFetchOptions,
+  BulkBanOptions,
+  BulkBanResult,
+  FetchBanOptions,
+  FetchBansOptions,
+  UserResolvable,
+} from '../../typings';
+import type { Guild } from '../structures/Guild';
+import type { User } from '../structures/User';
+import type { Message } from '../structures/Message';
+import type { ThreadMember } from '../structures/ThreadMember';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isFetchBanOptions(value: unknown): value is FetchBanOptions {
+  return isRecord(value) && 'user' in value;
+}
+
+function isFetchBansOptions(value: unknown): value is FetchBansOptions {
+  return isRecord(value) && ('limit' in value || 'before' in value || 'after' in value || 'cache' in value);
+}
+
+type UserResolvableSource =
+  User | InstanceType<typeof GuildMember> | Message | ThreadMember | Snowflake | UserResolvable;
+type GuildBanResolvableSource = GuildBan | UserResolvableSource;
 
 let deprecationEmittedForDays = false;
 
@@ -14,8 +45,8 @@ let deprecationEmittedForDays = false;
  * @extends {CachedManager}
  */
 class GuildBanManager extends CachedManager<GuildBan> {
-  declare guild: import('../structures/Guild').Guild;
-  constructor(guild: any, iterable?: any) {
+  declare guild: Guild;
+  constructor(guild: Guild, iterable?: Iterable<GuildBan>) {
     super(guild.client, GuildBan, iterable);
 
     /**
@@ -31,7 +62,7 @@ class GuildBanManager extends CachedManager<GuildBan> {
    * @name GuildBanManager#cache
    */
 
-  _add(data: any, cache: any = true) {
+  _add(data: RawGuildBanData, cache = true): GuildBan {
     return super._add(data, cache, { id: data.user.id, extras: [this.guild] });
   }
 
@@ -47,7 +78,7 @@ class GuildBanManager extends CachedManager<GuildBan> {
    * @param {GuildBanResolvable} ban The ban that is in the guild
    * @returns {?GuildBan}
    */
-  resolve(ban: any) {
+  resolve(ban: GuildBanResolvableSource): GuildBan | null {
     return super.resolve(ban) ?? super.resolve(this.client.users.resolveId(ban));
   }
 
@@ -96,35 +127,50 @@ class GuildBanManager extends CachedManager<GuildBan> {
    *   .then(console.log)
    *   .catch(console.error);
    */
-  async fetch(options: any) {
+  fetch(options: GuildBanResolvableSource | FetchBanOptions): Promise<GuildBan>;
+  fetch(options?: FetchBansOptions): Promise<Collection<Snowflake, GuildBan>>;
+  async fetch(
+    options?: GuildBanResolvableSource | FetchBanOptions | FetchBansOptions,
+  ): Promise<GuildBan | Collection<Snowflake, GuildBan>> {
     if (!options) return this._fetchMany();
-    const { user, cache, force, limit, before, after } = options;
-    const resolvedUser = this.client.users.resolveId(user ?? options);
-    if (resolvedUser) return this._fetchSingle({ user: resolvedUser, cache, force });
+    const banOptions = isFetchBanOptions(options) ? options : undefined;
+    const listOptions = isFetchBansOptions(options) ? options : undefined;
+    const resolvedUser = this.client.users.resolveId(banOptions?.user ?? options);
+    if (resolvedUser) {
+      return this._fetchSingle({ user: resolvedUser, cache: banOptions?.cache, force: banOptions?.force });
+    }
 
-    if (!before && !after && !limit && typeof cache === 'undefined') {
+    if (
+      !listOptions?.before &&
+      !listOptions?.after &&
+      !listOptions?.limit &&
+      typeof listOptions?.cache === 'undefined'
+    ) {
       throw new Error('FETCH_BAN_RESOLVE_ID');
     }
 
-    return this._fetchMany(options);
+    return this._fetchMany(listOptions);
   }
 
-  async _fetchSingle({ user, cache, force = false }: any) {
+  async _fetchSingle({ user, cache, force = false }: BaseFetchOptions & { user: Snowflake }): Promise<GuildBan> {
     if (!force) {
       const existing = this.cache.get(user);
       if (existing && !existing.partial) return existing;
     }
 
-    const data = await this.client.api.guilds(this.guild.id).bans(user).get();
+    const data: RawGuildBanData = await this.client.api.guilds(this.guild.id).bans(user).get();
     return this._add(data, cache);
   }
 
-  async _fetchMany(options: any = {}) {
-    const data = await this.client.api.guilds(this.guild.id).bans.get({
+  async _fetchMany(options: FetchBansOptions = {}): Promise<Collection<Snowflake, GuildBan>> {
+    const data: RawGuildBanData[] = await this.client.api.guilds(this.guild.id).bans.get({
       query: options,
     });
 
-    return data.reduce((col: any, ban: any) => col.set(ban.user.id, this._add(ban, options.cache)), new Collection());
+    return data.reduce(
+      (col, ban) => col.set(ban.user.id, this._add(ban, options.cache)),
+      new Collection<Snowflake, GuildBan>(),
+    );
   }
   /**
    * Options used to ban a user from a guild.
@@ -149,7 +195,10 @@ class GuildBanManager extends CachedManager<GuildBan> {
    *   .then(banInfo => console.log(`Banned ${banInfo.user?.tag ?? banInfo.tag ?? banInfo}`))
    *   .catch(console.error);
    */
-  async create(user: any, options: any = {}) {
+  async create(
+    user: UserResolvableSource,
+    options: BanOptions = {},
+  ): Promise<InstanceType<typeof GuildMember> | User | Snowflake> {
     if (typeof options !== 'object') throw new TypeError('INVALID_TYPE', 'options', 'object', true);
     const id = this.client.users.resolveId(user);
     if (!id) throw new Error('BAN_RESOLVE_ID', true);
@@ -194,7 +243,7 @@ class GuildBanManager extends CachedManager<GuildBan> {
    *   .then(user => console.log(`Unbanned ${user.username} from ${guild.name}`))
    *   .catch(console.error);
    */
-  async remove(user: any, reason: any) {
+  async remove(user: UserResolvableSource, reason?: string): Promise<User | null> {
     const id = this.client.users.resolveId(user);
     if (!id) throw new Error('BAN_RESOLVE_ID');
     await this.client.api.guilds(this.guild.id).bans(id).delete({ reason });
@@ -231,13 +280,18 @@ class GuildBanManager extends CachedManager<GuildBan> {
    *   .catch(console.error);
    * @deprecated This method will not be usable until an effective MFA implementation is in place.
    */
-  async bulkCreate(users: any, options: any = {}) {
+  async bulkCreate(
+    users: Collection<Snowflake, UserResolvableSource> | readonly UserResolvableSource[],
+    options: BulkBanOptions = {},
+  ): Promise<BulkBanResult> {
     if (!users || !(Array.isArray(users) || users instanceof Collection)) {
       throw new TypeError('INVALID_TYPE', 'users', 'Array or Collection of UserResolvable', true);
     }
     if (typeof options !== 'object') throw new TypeError('INVALID_TYPE', 'options', 'object', true);
 
-    const userIds = (users as any).map((user: any) => this.client.users.resolveId(user));
+    const userIds = (users instanceof Collection ? [...users.values()] : users).map(user =>
+      this.client.users.resolveId(user),
+    );
     if (userIds.length === 0) throw new Error('BULK_BAN_USERS_OPTION_EMPTY');
 
     const result = await this.client.api.guilds(this.guild.id)['bulk-ban'].post({

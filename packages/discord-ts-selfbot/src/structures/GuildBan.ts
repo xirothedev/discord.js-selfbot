@@ -52,8 +52,8 @@ class GuildBan extends Base {
    * @param {boolean} [force=true] Whether to skip the cache check and request the API
    * @returns {Promise<GuildBan>}
    */
-  fetch(force: any = true) {
-    return this.guild.bans.fetch({ user: this.user, cache: true, force });
+  fetch(force = true) {
+    return this.guild.bans.fetch({ user: this.user.id, cache: true, force });
   }
 }
 
