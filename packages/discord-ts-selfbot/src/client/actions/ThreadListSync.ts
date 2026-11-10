@@ -2,9 +2,20 @@ import { Collection } from '@discordjs/collection';
 import Action from './Action';
 import _ConstantsModule from '../../util/Constants';
 const { Events } = _ConstantsModule;
+import type { Snowflake } from 'discord-api-types/v10';
+import type { RawChannelData, RawThreadMemberData } from '../../../typings/rawDataTypes';
+import { isThreadChannel, isThreadParentChannel } from '../../types/channels';
+import type { Channel } from '../../structures/Channel';
+
+interface ThreadListSyncData {
+  guild_id: Snowflake;
+  channel_ids?: Snowflake[];
+  threads: RawChannelData[];
+  members?: Record<string, RawThreadMemberData>;
+}
 
 class ThreadListSyncAction extends Action {
-  handle(data: any) {
+  handle(data: ThreadListSyncData) {
     const client = this.client;
 
     const guild = client.guilds.cache.get(data.guild_id);
@@ -21,15 +32,16 @@ class ThreadListSyncAction extends Action {
       }
     }
 
-    const syncedThreads = data.threads.reduce((coll: any, rawThread: any) => {
+    const syncedThreads = data.threads.reduce((coll, rawThread) => {
       const thread = client.channels._add(rawThread);
-      return coll.set(thread.id, thread);
-    }, new Collection());
+      return thread && isThreadChannel(thread) ? coll.set(thread.id, thread) : coll;
+    }, new Collection<Snowflake, import('../../structures/ThreadChannel').ThreadChannel>());
 
-    for (const rawMember of Object.values(data.members || {}) as any[]) {
+    for (const rawMember of Object.values(data.members ?? {})) {
       // Discord sends the thread id as id in this object
-      const thread = client.channels.cache.get(rawMember.id);
-      if (thread) {
+      const threadId = rawMember.id;
+      const thread = threadId ? client.channels.cache.get(threadId) : undefined;
+      if (thread && isThreadChannel(thread)) {
         thread.members._add(rawMember);
       }
     }
@@ -46,8 +58,9 @@ class ThreadListSyncAction extends Action {
     };
   }
 
-  removeStale(channel: any) {
-    channel.threads?.cache.forEach((thread: any) => {
+  removeStale(channel: Channel) {
+    if (!isThreadParentChannel(channel)) return;
+    channel.threads.cache.forEach(thread => {
       if (!thread.archived) {
         this.client.channels._remove(thread.id);
       }
