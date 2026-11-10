@@ -12,7 +12,7 @@
 // The only thing you should ever need to edit here is PACKAGES_ROOT.
 
 /** Where packages live. One immediate child dir per package (flat, no nesting). */
-const PACKAGES_ROOT = 'src/packages';
+const PACKAGES_ROOT = "src/packages";
 
 // --- derived patterns (no need to edit) -------------------------------------
 const R = PACKAGES_ROOT;
@@ -27,17 +27,18 @@ const PACKAGE_INTERNALS = `^${R}/[^/]+/[^/]+/`;
 module.exports = {
   forbidden: [
     {
-      name: 'entrypoint-boundary-from-app',
-      comment: "App/root code may import a package's entry points (its root files), but nothing inside its subfolders.",
-      severity: 'error',
+      comment:
+        "App/root code may import a package's entry points (its root files), but nothing inside its subfolders.",
       from: { pathNot: `^${R}/` }, // importer is NOT inside any package
+      name: "entrypoint-boundary-from-app",
+      severity: "error",
       to: { path: PACKAGE_INTERNALS },
     },
     {
-      name: 'entrypoint-boundary-across-packages',
+      name: "entrypoint-boundary-across-packages",
       comment:
         "A package's own files import each other freely, but may reach OTHER packages only through their entry points, never their internals.",
-      severity: 'error',
+      severity: "error",
       // importer is inside a package ($1), but is not a test file
       from: { path: `^${R}/([^/]+)/`, pathNot: `^${R}/[^/]+/tests/` },
       to: {
@@ -46,28 +47,30 @@ module.exports = {
       },
     },
     {
-      name: 'tests-through-entrypoints',
       comment:
         "A package's tests exercise it through its entry points like everyone else: they may import any package's entry points and their own tests/ fixtures, but never any package's internals, not even their own.",
-      severity: 'error',
       from: { path: `^${R}/([^/]+)/tests/` }, // a test file, in package $1
+      name: "tests-through-entrypoints",
+      severity: "error",
       to: {
         path: PACKAGE_INTERNALS,
         pathNot: `^${R}/$1/tests/`, // own tests/ fixtures → allowed
       },
     },
     {
-      name: 'tests-folder-is-private',
-      comment: "A package's tests/ folder is reachable only from tests: nothing else may import fixtures.",
-      severity: 'error',
+      comment:
+        "A package's tests/ folder is reachable only from tests: nothing else may import fixtures.",
       from: { pathNot: `^${R}/[^/]+/tests/` }, // importer is not itself a test
+      name: "tests-folder-is-private",
+      severity: "error",
       to: { path: `^${R}/[^/]+/tests/` },
     },
     {
-      name: 'no-circular',
-      comment: 'No dependency cycles. Scope to `^${R}/` if you want to allow cycles outside packages.',
-      severity: 'error',
+      comment:
+        "No dependency cycles. Scope to `^${R}/` if you want to allow cycles outside packages.",
       from: {},
+      name: "no-circular",
+      severity: "error",
       to: { circular: true },
     },
 
@@ -84,10 +87,10 @@ module.exports = {
     // },
   ],
   options: {
-    doNotFollow: { path: 'node_modules' },
-    tsConfig: { fileName: 'tsconfig.json' },
+    doNotFollow: { path: "node_modules" },
     enhancedResolveOptions: {
-      extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
+      extensions: [".ts", ".tsx", ".js", ".jsx", ".json"],
     },
+    tsConfig: { fileName: "tsconfig.json" },
   },
 };

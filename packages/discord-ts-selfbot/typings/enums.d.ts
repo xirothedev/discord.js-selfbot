@@ -1,7 +1,7 @@
 // These are enums that are used in the typings file but do not exist as actual exported values. To prevent them from
 // showing up in an editor, they are imported from here instead of exporting them there directly.
 
-export const enum ActivityTypes {
+export enum ActivityTypes {
   PLAYING = 0,
   STREAMING = 1,
   LISTENING = 2,
@@ -11,13 +11,13 @@ export const enum ActivityTypes {
   HANG = 6,
 }
 
-export const enum ApplicationCommandTypes {
+export enum ApplicationCommandTypes {
   CHAT_INPUT = 1,
   USER = 2,
   MESSAGE = 3,
 }
 
-export const enum ApplicationCommandOptionTypes {
+export enum ApplicationCommandOptionTypes {
   SUB_COMMAND = 1,
   SUB_COMMAND_GROUP = 2,
   STRING = 3,
@@ -31,35 +31,35 @@ export const enum ApplicationCommandOptionTypes {
   ATTACHMENT = 11,
 }
 
-export const enum ApplicationCommandPermissionTypes {
+export enum ApplicationCommandPermissionTypes {
   ROLE = 1,
   USER = 2,
 }
 
-export const enum AutoModerationRuleTriggerTypes {
+export enum AutoModerationRuleTriggerTypes {
   KEYWORD = 1,
   SPAM = 2,
   KEYWORD_PRESET = 3,
   MENTION_SPAM = 4,
 }
 
-export const enum AutoModerationRuleKeywordPresetTypes {
+export enum AutoModerationRuleKeywordPresetTypes {
   PROFANITY = 1,
   SEXUAL_CONTENT = 2,
   SLURS = 3,
 }
 
-export const enum AutoModerationActionTypes {
+export enum AutoModerationActionTypes {
   BLOCK_MESSAGE = 1,
   SEND_ALERT_MESSAGE = 2,
   TIMEOUT = 3,
 }
 
-export const enum AutoModerationRuleEventTypes {
+export enum AutoModerationRuleEventTypes {
   MESSAGE_SEND = 1,
 }
 
-export const enum ChannelTypes {
+export enum ChannelTypes {
   GUILD_TEXT = 0,
   DM = 1,
   GUILD_VOICE = 2,
@@ -77,103 +77,103 @@ export const enum ChannelTypes {
   GUILD_MEDIA = 16,
 }
 
-export const enum SortOrderTypes {
+export enum SortOrderTypes {
   LATEST_ACTIVITY = 1,
   CREATION_DATE = 2,
 }
 
-export const enum ForumLayoutTypes {
+export enum ForumLayoutTypes {
   NOT_SET = 0,
   LIST_VIEW = 1,
   GALLERY_VIEW = 2,
 }
 
-export const enum PollLayoutTypes {
+export enum PollLayoutTypes {
   DEFAULT = 1,
-  IMAGE_ONLY_ANSWERS,
+  IMAGE_ONLY_ANSWERS = 1,
 }
 
-export const enum MessageTypes {
+export enum MessageTypes {
   DEFAULT = 0,
-  RECIPIENT_ADD,
-  RECIPIENT_REMOVE,
-  CALL,
-  CHANNEL_NAME_CHANGE,
-  CHANNEL_ICON_CHANGE,
-  CHANNEL_PINNED_MESSAGE,
-  GUILD_MEMBER_JOIN,
-  USER_PREMIUM_GUILD_SUBSCRIPTION,
-  USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_1,
-  USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_2,
-  USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3,
-  CHANNEL_FOLLOW_ADD,
+  RECIPIENT_ADD = 1,
+  RECIPIENT_REMOVE = 2,
+  CALL = 3,
+  CHANNEL_NAME_CHANGE = 4,
+  CHANNEL_ICON_CHANGE = 5,
+  CHANNEL_PINNED_MESSAGE = 6,
+  GUILD_MEMBER_JOIN = 7,
+  USER_PREMIUM_GUILD_SUBSCRIPTION = 8,
+  USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_1 = 9,
+  USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_2 = 10,
+  USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3 = 11,
+  CHANNEL_FOLLOW_ADD = 12,
   GUILD_DISCOVERY_DISQUALIFIED = 14,
-  GUILD_DISCOVERY_REQUALIFIED,
-  GUILD_DISCOVERY_GRACE_PERIOD_INITIAL_WARNING,
-  GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING,
-  THREAD_CREATED,
-  REPLY,
-  APPLICATION_COMMAND,
-  THREAD_STARTER_MESSAGE,
-  GUILD_INVITE_REMINDER,
-  CONTEXT_MENU_COMMAND,
-  AUTO_MODERATION_ACTION,
-  ROLE_SUBSCRIPTION_PURCHASE,
-  INTERACTION_PREMIUM_UPSELL,
-  STAGE_START,
-  STAGE_END,
-  STAGE_SPEAKER,
-  STAGE_RAISE_HAND,
-  STAGE_TOPIC,
-  GUILD_APPLICATION_PREMIUM_SUBSCRIPTION,
+  GUILD_DISCOVERY_REQUALIFIED = 14,
+  GUILD_DISCOVERY_GRACE_PERIOD_INITIAL_WARNING = 15,
+  GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING = 16,
+  THREAD_CREATED = 17,
+  REPLY = 18,
+  APPLICATION_COMMAND = 19,
+  THREAD_STARTER_MESSAGE = 20,
+  GUILD_INVITE_REMINDER = 21,
+  CONTEXT_MENU_COMMAND = 22,
+  AUTO_MODERATION_ACTION = 23,
+  ROLE_SUBSCRIPTION_PURCHASE = 24,
+  INTERACTION_PREMIUM_UPSELL = 25,
+  STAGE_START = 26,
+  STAGE_END = 27,
+  STAGE_SPEAKER = 28,
+  STAGE_RAISE_HAND = 29,
+  STAGE_TOPIC = 30,
+  GUILD_APPLICATION_PREMIUM_SUBSCRIPTION = 31,
   PREMIUM_REFERRAL = 35,
-  GUILD_INCIDENT_ALERT_MODE_ENABLED,
-  GUILD_INCIDENT_ALERT_MODE_DISABLED,
-  GUILD_INCIDENT_REPORT_RAID,
-  GUILD_INCIDENT_REPORT_FALSE_ALARM,
-  GUILD_DEADCHAT_REVIVE_PROMPT,
-  CUSTOM_GIFT,
-  GUILD_GAMING_STATS_PROMPT,
+  GUILD_INCIDENT_ALERT_MODE_ENABLED = 33,
+  GUILD_INCIDENT_ALERT_MODE_DISABLED = 34,
+  GUILD_INCIDENT_REPORT_RAID = 35,
+  GUILD_INCIDENT_REPORT_FALSE_ALARM = 36,
+  GUILD_DEADCHAT_REVIVE_PROMPT = 37,
+  CUSTOM_GIFT = 38,
+  GUILD_GAMING_STATS_PROMPT = 39,
   PURCHASE_NOTIFICATION = 44,
   POLL_RESULT = 46,
-  CHANGELOG,
-  NITRO_NOTIFICATION,
+  CHANGELOG = 42,
+  NITRO_NOTIFICATION = 43,
 }
 
-export const enum MessageReferenceTypes {
+export enum MessageReferenceTypes {
   DEFAULT = 0,
-  FORWARD,
+  FORWARD = 1,
 }
 
-export const enum DefaultMessageNotificationLevels {
+export enum DefaultMessageNotificationLevels {
   ALL_MESSAGES = 0,
   ONLY_MENTIONS = 1,
 }
 
-export const enum ExplicitContentFilterLevels {
+export enum ExplicitContentFilterLevels {
   DISABLED = 0,
   MEMBERS_WITHOUT_ROLES = 1,
   ALL_MEMBERS = 2,
 }
 
-export const enum GuildScheduledEventEntityTypes {
+export enum GuildScheduledEventEntityTypes {
   STAGE_INSTANCE = 1,
   VOICE = 2,
   EXTERNAL = 3,
 }
 
-export const enum GuildScheduledEventPrivacyLevels {
+export enum GuildScheduledEventPrivacyLevels {
   GUILD_ONLY = 2,
 }
 
-export const enum GuildScheduledEventStatuses {
+export enum GuildScheduledEventStatuses {
   SCHEDULED = 1,
   ACTIVE = 2,
   COMPLETED = 3,
   CANCELED = 4,
 }
 
-export const enum InteractionResponseTypes {
+export enum InteractionResponseTypes {
   PONG = 1,
   CHANNEL_MESSAGE_WITH_SOURCE = 4,
   DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE = 5,
@@ -183,7 +183,7 @@ export const enum InteractionResponseTypes {
   MODAL = 9,
 }
 
-export const enum InteractionTypes {
+export enum InteractionTypes {
   PING = 1,
   APPLICATION_COMMAND = 2,
   MESSAGE_COMPONENT = 3,
@@ -191,25 +191,25 @@ export const enum InteractionTypes {
   MODAL_SUBMIT = 5,
 }
 
-export const enum InviteTargetTypes {
+export enum InviteTargetTypes {
   STREAM = 1,
-  EMBEDDED_APPLICATION,
-  ROLE_SUBSCRIPTIONS,
-  CREATOR_PAGE,
+  EMBEDDED_APPLICATION = 1,
+  ROLE_SUBSCRIPTIONS = 2,
+  CREATOR_PAGE = 3,
 }
 
-export const enum InviteTypes {
-  GUILD,
-  GROUP_DM,
-  FRIEND,
+export enum InviteTypes {
+  GUILD = 0,
+  GROUP_DM = 1,
+  FRIEND = 2,
 }
 
-export const enum MembershipStates {
+export enum MembershipStates {
   INVITED = 1,
   ACCEPTED = 2,
 }
 
-export const enum MessageButtonStyles {
+export enum MessageButtonStyles {
   PRIMARY = 1,
   SECONDARY = 2,
   SUCCESS = 3,
@@ -217,7 +217,7 @@ export const enum MessageButtonStyles {
   LINK = 5,
 }
 
-export const enum MessageComponentTypes {
+export enum MessageComponentTypes {
   ACTION_ROW = 1,
   BUTTON = 2,
   STRING_SELECT = 3,
@@ -235,7 +235,7 @@ export const enum MessageComponentTypes {
   CONTAINER = 17,
 }
 
-export const enum MessageComponentInteractables {
+export enum MessageComponentInteractables {
   ACTION_ROW = 1,
   BUTTON = 2,
   STRING_SELECT = 3,
@@ -246,7 +246,7 @@ export const enum MessageComponentInteractables {
   CHANNEL_SELECT = 8,
 }
 
-export const enum SelectMenuComponentTypes {
+export enum SelectMenuComponentTypes {
   STRING_SELECT = 3,
   USER_SELECT = 5,
   ROLE_SELECT = 6,
@@ -254,12 +254,12 @@ export const enum SelectMenuComponentTypes {
   CHANNEL_SELECT = 8,
 }
 
-export const enum MFALevels {
+export enum MFALevels {
   NONE = 0,
   ELEVATED = 1,
 }
 
-export const enum NSFWLevels {
+export enum NSFWLevels {
   DEFAULT = 0,
   EXPLICIT = 1,
   SAFE = 2,
@@ -275,99 +275,99 @@ export enum NameplatePalette {
    * Value: none
    * Name: None
    */
-  None = 'none',
+  None = "none",
   /**
    * Value: crimson
    * Name: Crimson
    */
-  Crimson = 'crimson',
+  Crimson = "crimson",
   /**
    * Value: berry
    * Name: Berry
    */
-  Berry = 'berry',
+  Berry = "berry",
   /**
    * Value: sky
    * Name: Sky
    */
-  Sky = 'sky',
+  Sky = "sky",
   /**
    * Value: teal
    * Name: Teal
    */
-  Teal = 'teal',
+  Teal = "teal",
   /**
    * Value: forest
    * Name: Forest
    */
-  Forest = 'forest',
+  Forest = "forest",
   /**
    * Value: bubble_gum
    * Name: BubbleGum
    */
-  BubbleGum = 'bubble_gum',
+  BubbleGum = "bubble_gum",
   /**
    * Value: violet
    * Name: Violet
    */
-  Violet = 'violet',
+  Violet = "violet",
   /**
    * Value: cobalt
    * Name: Cobalt
    */
-  Cobalt = 'cobalt',
+  Cobalt = "cobalt",
   /**
    * Value: clover
    * Name: Clover
    */
-  Clover = 'clover',
+  Clover = "clover",
   /**
    * Value: lemon
    * Name: Lemon
    */
-  Lemon = 'lemon',
+  Lemon = "lemon",
   /**
    * Value: white
    * Name: White
    */
-  White = 'white',
+  White = "white",
 }
 
-export const enum OverwriteTypes {
+export enum OverwriteTypes {
   role = 0,
   member = 1,
 }
 
-export const enum PremiumTiers {
+export enum PremiumTiers {
   NONE = 0,
   TIER_1 = 1,
   TIER_2 = 2,
   TIER_3 = 3,
 }
 
-export const enum PrivacyLevels {
+export enum PrivacyLevels {
   PUBLIC = 1,
   GUILD_ONLY = 2,
 }
 
-export const enum StickerFormatTypes {
+export enum StickerFormatTypes {
   PNG = 1,
   APNG = 2,
   LOTTIE = 3,
   GIF = 4,
 }
 
-export const enum StickerTypes {
+export enum StickerTypes {
   STANDARD = 1,
   GUILD = 2,
 }
 
-export const enum TextInputStyles {
+export enum TextInputStyles {
   SHORT = 1,
   PARAGRAPH = 2,
 }
 
-export const enum VerificationLevels {
+export enum VerificationLevels {
   NONE = 0,
   LOW = 1,
   MEDIUM = 2,
@@ -375,34 +375,34 @@ export const enum VerificationLevels {
   VERY_HIGH = 4,
 }
 
-export const enum VideoQualityModes {
+export enum VideoQualityModes {
   AUTO = 1,
   FULL = 2,
 }
 
-export const enum ReactionTypes {
+export enum ReactionTypes {
   NORMAL = 0,
   BURST = 1,
 }
 
-export const enum WebhookTypes {
+export enum WebhookTypes {
   Incoming = 1,
-  'Channel Follower' = 2,
+  "Channel Follower" = 2,
   Application = 3,
 }
 
 export enum ApplicationRoleConnectionMetadataTypes {
   INTEGER_LESS_THAN_OR_EQUAL = 1,
-  INTEGER_GREATER_THAN_OR_EQUAL,
-  INTEGER_EQUAL,
-  INTEGER_NOT_EQUAL,
-  DATATIME_LESS_THAN_OR_EQUAL,
-  DATATIME_GREATER_THAN_OR_EQUAL,
-  BOOLEAN_EQUAL,
-  BOOLEAN_NOT_EQUAL,
+  INTEGER_GREATER_THAN_OR_EQUAL = 1,
+  INTEGER_EQUAL = 2,
+  INTEGER_NOT_EQUAL = 3,
+  DATATIME_LESS_THAN_OR_EQUAL = 4,
+  DATATIME_GREATER_THAN_OR_EQUAL = 5,
+  BOOLEAN_EQUAL = 6,
+  BOOLEAN_NOT_EQUAL = 7,
 }
 
-export const enum RelationshipTypes {
+export enum RelationshipTypes {
   NONE = 0,
   FRIEND = 1,
   BLOCKED = 2,
@@ -411,12 +411,12 @@ export const enum RelationshipTypes {
   IMPLICIT = 5,
 }
 
-export const enum SeparatorSpacingSizes {
+export enum SeparatorSpacingSizes {
   SMALL = 1,
   LARGE = 2,
 }
 
-export const enum ApplicationType {
+export enum ApplicationType {
   /**
    * A game integrating with Discord
    */

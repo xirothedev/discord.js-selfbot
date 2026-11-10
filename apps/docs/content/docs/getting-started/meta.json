@@ -1,4 +1,10 @@
 {
   "title": "Getting Started",
-  "pages": ["installation", "token-safety", "first-client", "agents", "migration-v13"]
+  "pages": [
+    "installation",
+    "token-safety",
+    "first-client",
+    "agents",
+    "migration-v13"
+  ]
 }

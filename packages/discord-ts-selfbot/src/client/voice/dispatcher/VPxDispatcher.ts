@@ -1,8 +1,8 @@
-import { Buffer } from 'node:buffer';
-import VideoDispatcher from './VideoDispatcher';
-import type MediaPlayer from '../player/MediaPlayer';
-import type { DispatcherStreams } from './BaseDispatcher';
-import VoiceCodec from '../util/VoiceCodec';
+import { Buffer } from "node:buffer";
+import VideoDispatcher from "./VideoDispatcher";
+import type MediaPlayer from "../player/MediaPlayer";
+import type { DispatcherStreams } from "./BaseDispatcher";
+import VoiceCodec from "../util/VoiceCodec";
 /*
 Credit: https://github.com/dank074/Discord-video-stream
 The use of video streaming in this library is an incomplete implementation with many bugs, primarily aimed at lazy users.
@@ -21,8 +21,19 @@ Please use the @dank074/discord-video-stream library for the best support.
 */
 
 class VP8Dispatcher extends VideoDispatcher {
-  constructor(player: MediaPlayer, highWaterMark = 12, streams: DispatcherStreams, fps: number) {
-    super(player, highWaterMark, streams, fps, VoiceCodec.getPayloadType('VP8'));
+  constructor(
+    player: MediaPlayer,
+    highWaterMark = 12,
+    streams: DispatcherStreams,
+    fps: number
+  ) {
+    super(
+      player,
+      highWaterMark,
+      streams,
+      fps,
+      VoiceCodec.getPayloadType("VP8")
+    );
   }
 
   makeChunk(buffer: Buffer, isFirstPacket: boolean): Buffer {
@@ -37,11 +48,18 @@ class VP8Dispatcher extends VideoDispatcher {
     const pictureIdBuf = Buffer.alloc(2);
     pictureIdBuf.writeUintBE(this.count, 0, 2);
     pictureIdBuf[0] |= 0x80;
-    return Buffer.concat([this.createPayloadExtension(), payloadDescriptorBuf, pictureIdBuf, buffer]);
+    return Buffer.concat([
+      this.createPayloadExtension(),
+      payloadDescriptorBuf,
+      pictureIdBuf,
+      buffer,
+    ]);
   }
 
   _codecCallback(chunk: Buffer) {
-    const chunkSplit = this.partitionMtu(chunk).map((c, i) => this.makeChunk(c, i === 0));
+    const chunkSplit = this.partitionMtu(chunk).map((c, i) =>
+      this.makeChunk(c, i === 0)
+    );
     for (let i = 0; i < chunkSplit.length; i++) {
       this._playChunk(chunkSplit[i], i + 1 === chunkSplit.length);
     }

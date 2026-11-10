@@ -1,7 +1,8 @@
-import Action from './Action';
-import type { GatewayAutoModerationActionExecutionDispatchData } from 'discord-api-types/v10';
-import AutoModerationActionExecution from '../../structures/AutoModerationActionExecution';
-import _ConstantsModule from '../../util/Constants';
+import Action from "./Action";
+import type { GatewayAutoModerationActionExecutionDispatchData } from "discord-api-types/v10";
+import AutoModerationActionExecution from "../../structures/AutoModerationActionExecution";
+import _ConstantsModule from "../../util/Constants";
+
 const { Events } = _ConstantsModule;
 
 class AutoModerationActionExecutionAction extends Action {
@@ -17,7 +18,10 @@ class AutoModerationActionExecutionAction extends Action {
        * @param {AutoModerationActionExecution} autoModerationActionExecution The data of the execution
        * @deprecated This event is not received by user accounts.
        */
-      client.emit(Events.AUTO_MODERATION_ACTION_EXECUTION, new AutoModerationActionExecution(data, guild));
+      client.emit(
+        Events.AUTO_MODERATION_ACTION_EXECUTION,
+        new AutoModerationActionExecution(data, guild)
+      );
     }
 
     return {};

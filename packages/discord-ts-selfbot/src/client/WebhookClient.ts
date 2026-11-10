@@ -1,25 +1,31 @@
-import { createRequire } from 'node:module';
+import { createRequire } from "node:module";
+
 const require = createRequire(import.meta.url);
-import BaseClient from './BaseClient';
-import _errorsModule from '../errors';
+import BaseClient from "./BaseClient";
+import _errorsModule from "../errors";
+import type { WebhookClientData } from "../../typings";
+import type { ClientOptions } from "../../typings";
+
 const { Error } = _errorsModule;
 
 class WebhookClient extends BaseClient {
   declare id: string | null;
 
-  constructor(data: import('../../typings').WebhookClientData, options?: import('../../typings').ClientOptions) {
+  constructor(data: WebhookClientData, options?: ClientOptions) {
     super(options);
-    Object.defineProperty(this, 'client', { value: this });
+    Object.defineProperty(this, "client", { value: this });
     let id: string | null = null;
     let token: string | null = null;
 
-    if ('url' in data) {
+    if ("url" in data) {
       const url = data.url.match(
         // eslint-disable-next-line no-useless-escape
-        /^https?:\/\/(?:canary|ptb)?\.?discord\.com\/api\/webhooks(?:\/v[0-9]\d*)?\/([^\/]+)\/([^\/]+)/i,
+        /^https?:\/\/(?:canary|ptb)?\.?discord\.com\/api\/webhooks(?:\/v[0-9]\d*)?\/([^\/]+)\/([^\/]+)/i
       );
 
-      if (!url || url.length <= 1) throw new Error('WEBHOOK_URL_INVALID');
+      if (!url || url.length <= 1) {
+        throw new Error("WEBHOOK_URL_INVALID");
+      }
 
       [, id, token] = url;
     } else {
@@ -28,7 +34,11 @@ class WebhookClient extends BaseClient {
     }
 
     this.id = id;
-    Object.defineProperty(this, 'token', { value: token, writable: true, configurable: true });
+    Object.defineProperty(this, "token", {
+      configurable: true,
+      value: token,
+      writable: true,
+    });
   }
 
   // These are here only for documentation purposes - they are implemented by Webhook
@@ -41,13 +51,13 @@ class WebhookClient extends BaseClient {
   delete() {}
   deleteMessage() {}
   get createdTimestamp() {
-    return undefined;
+    return;
   }
   get createdAt() {
-    return undefined;
+    return;
   }
   get url() {
-    return undefined;
+    return;
   }
 }
 
@@ -56,7 +66,7 @@ export { WebhookClient };
 
 setTimeout(() => {
   try {
-    const Webhook = require('../structures/Webhook');
+    const Webhook = require("../structures/Webhook");
     Webhook.applyToClass(WebhookClient);
   } catch {}
 }, 0);

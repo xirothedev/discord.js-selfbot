@@ -1,13 +1,15 @@
-import process from 'node:process';
-import Base from './Base';
-import _ConstantsModule from '../util/Constants';
-import _errorsModule from '../errors';
+import process from "node:process";
+import Base from "./Base";
+import _ConstantsModule from "../util/Constants";
+import _errorsModule from "../errors";
+
 const { Error } = _errorsModule;
 const { PrivacyLevels } = _ConstantsModule;
-import SnowflakeUtil from '../util/SnowflakeUtil';
-import type { RawStageInstanceData } from '../../typings/rawDataTypes';
-import type { StageInstanceEntity } from '../types/entities/stage-instance';
-import type { PatchOf } from '../types/schema';
+import SnowflakeUtil from "../util/SnowflakeUtil";
+import type { RawStageInstanceData } from "../../typings/rawDataTypes";
+import type { StageInstanceEntity } from "../types/entities/stage-instance";
+import type { PatchOf } from "../types/schema";
+import type Client from "../client/Client";
 
 /**
  * @type {WeakSet<StageInstance>}
@@ -18,15 +20,15 @@ const deletedStageInstances = new WeakSet();
 let deprecationEmittedForDeleted = false;
 
 class StageInstance extends Base implements StageInstanceEntity {
-  declare id: StageInstanceEntity['id'];
-  declare guildId: StageInstanceEntity['guildId'];
-  declare channelId: StageInstanceEntity['channelId'];
-  declare topic: StageInstanceEntity['topic'];
-  declare privacyLevel: StageInstanceEntity['privacyLevel'];
-  declare discoverableDisabled: StageInstanceEntity['discoverableDisabled'];
-  declare guildScheduledEventId: StageInstanceEntity['guildScheduledEventId'];
+  declare id: StageInstanceEntity["id"];
+  declare guildId: StageInstanceEntity["guildId"];
+  declare channelId: StageInstanceEntity["channelId"];
+  declare topic: StageInstanceEntity["topic"];
+  declare privacyLevel: StageInstanceEntity["privacyLevel"];
+  declare discoverableDisabled: StageInstanceEntity["discoverableDisabled"];
+  declare guildScheduledEventId: StageInstanceEntity["guildScheduledEventId"];
 
-  constructor(client: import('../client/Client').default, data: RawStageInstanceData) {
+  constructor(client: Client, data: RawStageInstanceData) {
     super(client);
 
     this.id = data.id;
@@ -34,7 +36,7 @@ class StageInstance extends Base implements StageInstanceEntity {
     this._patch(data);
   }
 
-  _patch(data: PatchOf<'StageInstance'>) {
+  _patch(data: PatchOf<"StageInstance">) {
     if (data.guild_id !== undefined) {
       this.guildId = data.guild_id;
     }
@@ -51,10 +53,10 @@ class StageInstance extends Base implements StageInstanceEntity {
       this.privacyLevel = PrivacyLevels[data.privacy_level];
     }
 
-    if (data.discoverable_disabled !== undefined) {
-      this.discoverableDisabled = data.discoverable_disabled;
-    } else {
+    if (data.discoverable_disabled === undefined) {
       this.discoverableDisabled ??= null;
+    } else {
+      this.discoverableDisabled = data.discoverable_disabled;
     }
 
     if (data.guild_scheduled_event_id !== undefined) {
@@ -67,8 +69,12 @@ class StageInstance extends Base implements StageInstanceEntity {
   }
 
   get guildScheduledEvent() {
-    if (!this.guildScheduledEventId) return null;
-    return this.guild?.scheduledEvents.resolve(this.guildScheduledEventId) ?? null;
+    if (!this.guildScheduledEventId) {
+      return null;
+    }
+    return (
+      this.guild?.scheduledEvents.resolve(this.guildScheduledEventId) ?? null
+    );
   }
 
   /**
@@ -80,8 +86,8 @@ class StageInstance extends Base implements StageInstanceEntity {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
-        'StageInstance#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
-        'DeprecationWarning',
+        "StageInstance#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.",
+        "DeprecationWarning"
       );
     }
 
@@ -92,13 +98,16 @@ class StageInstance extends Base implements StageInstanceEntity {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
-        'StageInstance#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
-        'DeprecationWarning',
+        "StageInstance#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.",
+        "DeprecationWarning"
       );
     }
 
-    if (value) deletedStageInstances.add(this);
-    else deletedStageInstances.delete(this);
+    if (value) {
+      deletedStageInstances.add(this);
+    } else {
+      deletedStageInstances.delete(this);
+    }
   }
 
   get guild() {
@@ -106,14 +115,18 @@ class StageInstance extends Base implements StageInstanceEntity {
   }
 
   edit(options: Record<string, unknown>) {
-    const guild = this.guild;
-    if (!guild) throw new Error('INVALID_TYPE', 'guildId', 'Guild');
+    const { guild } = this;
+    if (!guild) {
+      throw new Error("INVALID_TYPE", "guildId", "Guild");
+    }
     return guild.stageInstances.edit(this.channelId, options);
   }
 
   async delete() {
-    const guild = this.guild;
-    if (!guild) throw new Error('INVALID_TYPE', 'guildId', 'Guild');
+    const { guild } = this;
+    if (!guild) {
+      throw new Error("INVALID_TYPE", "guildId", "Guild");
+    }
     await guild.stageInstances.delete(this.channelId);
     const clone = this._clone();
     deletedStageInstances.add(clone);
@@ -121,8 +134,10 @@ class StageInstance extends Base implements StageInstanceEntity {
   }
 
   setTopic(topic: string) {
-    const guild = this.guild;
-    if (!guild) throw new Error('INVALID_TYPE', 'guildId', 'Guild');
+    const { guild } = this;
+    if (!guild) {
+      throw new Error("INVALID_TYPE", "guildId", "Guild");
+    }
     return guild.stageInstances.edit(this.channelId, { topic });
   }
 

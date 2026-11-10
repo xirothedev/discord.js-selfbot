@@ -12,7 +12,7 @@ import type {
   GatewayVoiceState,
   GuildFeature,
   Snowflake,
-} from 'discord-api-types/v10';
+} from "discord-api-types/v10";
 
 export interface GuildPatch {
   id?: Snowflake;

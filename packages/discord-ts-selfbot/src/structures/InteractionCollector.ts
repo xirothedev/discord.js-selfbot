@@ -1,6 +1,6 @@
-import { Collection } from '@discordjs/collection';
-import type { Snowflake } from 'discord-api-types/v10';
-import Collector from './interfaces/Collector';
+import { Collection } from "@discordjs/collection";
+import type { Snowflake } from "discord-api-types/v10";
+import Collector from "./interfaces/Collector";
 import type {
   Interaction,
   InteractionCollectorOptions,
@@ -8,19 +8,20 @@ import type {
   MessageComponentType,
   TextBasedChannelResolvable,
   User,
-} from '../../typings';
-import type Client from '../client/Client';
-import type { Guild } from './Guild';
-import type GuildChannel from './GuildChannel';
-import type { Message } from './Message';
-import type ThreadChannel from './ThreadChannel';
-import _ConstantsModule from '../util/Constants';
+} from "../../typings";
+import type Client from "../client/Client";
+import type { Guild } from "./Guild";
+import type GuildChannel from "./GuildChannel";
+import type { Message } from "./Message";
+import type ThreadChannel from "./ThreadChannel";
+import _ConstantsModule from "../util/Constants";
+
 const { Events } = _ConstantsModule;
 const { InteractionTypes, MessageComponentTypes } = _ConstantsModule;
 
 type InteractionCollectorSourceOptions<T extends Interaction> = Omit<
   InteractionCollectorOptions<T>,
-  'channel' | 'message'
+  "channel" | "message"
 > & {
   channel?: TextBasedChannelResolvable & { guild?: unknown };
   message?: {
@@ -34,7 +35,9 @@ type InteractionCollectorSourceOptions<T extends Interaction> = Omit<
   };
 };
 
-class InteractionCollector<T extends Interaction = Interaction> extends Collector<Snowflake, T> {
+class InteractionCollector<
+  T extends Interaction = Interaction,
+> extends Collector<Snowflake, T> {
   declare users: Collection<Snowflake, User>;
   declare options: InteractionCollectorSourceOptions<T>;
   declare messageId: Snowflake | null;
@@ -44,7 +47,10 @@ class InteractionCollector<T extends Interaction = Interaction> extends Collecto
   declare componentType: MessageComponentType | null;
   declare total: number;
 
-  constructor(client: Client, options: InteractionCollectorSourceOptions<T> = {}) {
+  constructor(
+    client: Client,
+    options: InteractionCollectorSourceOptions<T> = {}
+  ) {
     super(client, options);
 
     this.messageId = options.message?.id ?? null;
@@ -65,12 +71,12 @@ class InteractionCollector<T extends Interaction = Interaction> extends Collecto
       null;
 
     this.interactionType =
-      typeof options.interactionType === 'number'
+      typeof options.interactionType === "number"
         ? InteractionTypes[options.interactionType]
         : (options.interactionType ?? null);
 
     this.componentType =
-      typeof options.componentType === 'number'
+      typeof options.componentType === "number"
         ? MessageComponentTypes[options.componentType]
         : (options.componentType ?? null);
 
@@ -82,7 +88,9 @@ class InteractionCollector<T extends Interaction = Interaction> extends Collecto
     this.client.incrementMaxListeners();
 
     const bulkDeleteListener = (messages: Collection<Snowflake, Message>) => {
-      if (this.messageId && messages.has(this.messageId)) this.stop('messageDelete');
+      if (this.messageId && messages.has(this.messageId)) {
+        this.stop("messageDelete");
+      }
     };
 
     if (this.messageId) {
@@ -105,42 +113,81 @@ class InteractionCollector<T extends Interaction = Interaction> extends Collecto
 
     this.client.on(Events.INTERACTION_CREATE, this.handleCollect);
 
-    this.once('end', () => {
+    this.once("end", () => {
       this.client.removeListener(Events.INTERACTION_CREATE, this.handleCollect);
-      this.client.removeListener(Events.MESSAGE_DELETE, this._handleMessageDeletion);
-      this.client.removeListener(Events.MESSAGE_BULK_DELETE, bulkDeleteListener);
-      this.client.removeListener(Events.CHANNEL_DELETE, this._handleChannelDeletion);
-      this.client.removeListener(Events.THREAD_DELETE, this._handleThreadDeletion);
-      this.client.removeListener(Events.GUILD_DELETE, this._handleGuildDeletion);
+      this.client.removeListener(
+        Events.MESSAGE_DELETE,
+        this._handleMessageDeletion
+      );
+      this.client.removeListener(
+        Events.MESSAGE_BULK_DELETE,
+        bulkDeleteListener
+      );
+      this.client.removeListener(
+        Events.CHANNEL_DELETE,
+        this._handleChannelDeletion
+      );
+      this.client.removeListener(
+        Events.THREAD_DELETE,
+        this._handleThreadDeletion
+      );
+      this.client.removeListener(
+        Events.GUILD_DELETE,
+        this._handleGuildDeletion
+      );
       this.client.decrementMaxListeners();
     });
 
-    this.on('collect', (interaction: T) => {
+    this.on("collect", (interaction: T) => {
       this.total++;
       this.users.set(interaction.user.id, interaction.user);
     });
   }
 
   collect(interaction: T): Snowflake | null {
-    if (this.interactionType && interaction.type !== this.interactionType) return null;
-    if (this.componentType && (!('componentType' in interaction) || interaction.componentType !== this.componentType)) {
+    if (this.interactionType && interaction.type !== this.interactionType) {
       return null;
     }
-    if (this.messageId && getMessageId(interaction) !== this.messageId) return null;
-    if (this.channelId && interaction.channelId !== this.channelId) return null;
-    if (this.guildId && interaction.guildId !== this.guildId) return null;
+    if (
+      this.componentType &&
+      (!("componentType" in interaction) ||
+        interaction.componentType !== this.componentType)
+    ) {
+      return null;
+    }
+    if (this.messageId && getMessageId(interaction) !== this.messageId) {
+      return null;
+    }
+    if (this.channelId && interaction.channelId !== this.channelId) {
+      return null;
+    }
+    if (this.guildId && interaction.guildId !== this.guildId) {
+      return null;
+    }
 
     return interaction.id;
   }
 
   dispose(interaction: T): Snowflake | null {
-    if (this.interactionType && interaction.type !== this.interactionType) return null;
-    if (this.componentType && (!('componentType' in interaction) || interaction.componentType !== this.componentType)) {
+    if (this.interactionType && interaction.type !== this.interactionType) {
       return null;
     }
-    if (this.messageId && getMessageId(interaction) !== this.messageId) return null;
-    if (this.channelId && interaction.channelId !== this.channelId) return null;
-    if (this.guildId && interaction.guildId !== this.guildId) return null;
+    if (
+      this.componentType &&
+      (!("componentType" in interaction) ||
+        interaction.componentType !== this.componentType)
+    ) {
+      return null;
+    }
+    if (this.messageId && getMessageId(interaction) !== this.messageId) {
+      return null;
+    }
+    if (this.channelId && interaction.channelId !== this.channelId) {
+      return null;
+    }
+    if (this.guildId && interaction.guildId !== this.guildId) {
+      return null;
+    }
 
     return interaction.id;
   }
@@ -153,42 +200,62 @@ class InteractionCollector<T extends Interaction = Interaction> extends Collecto
   }
 
   get endReason(): string | null {
-    if (this.options.max && this.total >= this.options.max) return 'limit';
-    if (this.options.maxComponents && this.collected.size >= this.options.maxComponents) return 'componentLimit';
-    if (this.options.maxUsers && this.users.size >= this.options.maxUsers) return 'userLimit';
+    if (this.options.max && this.total >= this.options.max) {
+      return "limit";
+    }
+    if (
+      this.options.maxComponents &&
+      this.collected.size >= this.options.maxComponents
+    ) {
+      return "componentLimit";
+    }
+    if (this.options.maxUsers && this.users.size >= this.options.maxUsers) {
+      return "userLimit";
+    }
     return null;
   }
 
   _handleMessageDeletion(message: Message) {
     if (message.id === this.messageId) {
-      this.stop('messageDelete');
+      this.stop("messageDelete");
     }
   }
 
-  _handleChannelDeletion(channel: GuildChannel & { threads?: { cache: Collection<Snowflake, ThreadChannel> } }) {
-    if (channel.id === this.channelId || (this.channelId !== null && channel.threads?.cache.has(this.channelId))) {
-      this.stop('channelDelete');
+  _handleChannelDeletion(
+    channel: GuildChannel & {
+      threads?: { cache: Collection<Snowflake, ThreadChannel> };
+    }
+  ) {
+    if (
+      channel.id === this.channelId ||
+      (this.channelId !== null && channel.threads?.cache.has(this.channelId))
+    ) {
+      this.stop("channelDelete");
     }
   }
 
   _handleThreadDeletion(thread: ThreadChannel) {
     if (thread.id === this.channelId) {
-      this.stop('threadDelete');
+      this.stop("threadDelete");
     }
   }
 
   _handleGuildDeletion(guild: Guild) {
     if (guild.id === this.guildId) {
-      this.stop('guildDelete');
+      this.stop("guildDelete");
     }
   }
 }
 
 function getMessageId(interaction: Interaction): Snowflake | null {
-  if (!('message' in interaction)) return null;
+  if (!("message" in interaction)) {
+    return null;
+  }
   const { message } = interaction;
-  if (!message || typeof message !== 'object' || !('id' in message)) return null;
-  return typeof message.id === 'string' ? message.id : null;
+  if (!message || typeof message !== "object" || !("id" in message)) {
+    return null;
+  }
+  return typeof message.id === "string" ? message.id : null;
 }
 
 export default InteractionCollector;

@@ -1,5 +1,5 @@
-import Action from './Action';
-import type { Snowflake } from 'discord-api-types/v10';
+import Action from "./Action";
+import type { Snowflake } from "discord-api-types/v10";
 
 interface GuildChannelsPositionUpdateData {
   guild_id: Snowflake;
@@ -8,14 +8,21 @@ interface GuildChannelsPositionUpdateData {
 
 class GuildChannelsPositionUpdate extends Action {
   handle(data: GuildChannelsPositionUpdateData) {
-    const client = this.client;
+    const { client } = this;
 
     const guild = client.guilds.cache.get(data.guild_id);
     if (guild) {
       for (const partialChannel of data.channels) {
-        if (typeof partialChannel.id !== 'string' || typeof partialChannel.position !== 'number') continue;
+        if (
+          typeof partialChannel.id !== "string" ||
+          typeof partialChannel.position !== "number"
+        ) {
+          continue;
+        }
         const channel = guild.channels.cache.get(partialChannel.id);
-        if (channel) channel.rawPosition = partialChannel.position;
+        if (channel) {
+          channel.rawPosition = partialChannel.position;
+        }
       }
     }
 

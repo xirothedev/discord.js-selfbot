@@ -1,5 +1,5 @@
-import EventEmitter from 'events';
-import { Buffer } from 'node:buffer';
+import EventEmitter from "node:events";
+import { Buffer } from "node:buffer";
 
 class VolumeInterface extends EventEmitter {
   declare _volume: number;
@@ -22,17 +22,24 @@ class VolumeInterface extends EventEmitter {
   }
 
   get volumeLogarithmic() {
-    return Math.pow(this.volume, 1 / 1.660964);
+    return this.volume ** (1 / 1.660964);
   }
 
   applyVolume(buffer: Buffer, volume?: number) {
     volume = volume || this._volume;
-    if (volume === 1) return buffer;
+    if (volume === 1) {
+      return buffer;
+    }
 
     const out = Buffer.alloc(buffer.length);
     for (let i = 0; i < buffer.length; i += 2) {
-      if (i >= buffer.length - 1) break;
-      const uint = Math.min(32767, Math.max(-32767, Math.floor(volume * buffer.readInt16LE(i))));
+      if (i >= buffer.length - 1) {
+        break;
+      }
+      const uint = Math.min(
+        32_767,
+        Math.max(-32_767, Math.floor(volume * buffer.readInt16LE(i)))
+      );
       out.writeInt16LE(uint, i);
     }
 
@@ -40,24 +47,33 @@ class VolumeInterface extends EventEmitter {
   }
 
   setVolume(volume: number) {
-    this.emit('volumeChange', this._volume, volume);
+    this.emit("volumeChange", this._volume, volume);
     this._volume = volume;
   }
 
   setVolumeDecibels(db: number) {
-    this.setVolume(Math.pow(10, db / 20));
+    this.setVolume(10 ** (db / 20));
   }
 
   setVolumeLogarithmic(value: number) {
-    this.setVolume(Math.pow(value, 1.660964));
+    this.setVolume(value ** 1.660964);
   }
 }
 
-const props = ['volumeDecibels', 'volumeLogarithmic', 'setVolumeDecibels', 'setVolumeLogarithmic'];
+const props = [
+  "volumeDecibels",
+  "volumeLogarithmic",
+  "setVolumeDecibels",
+  "setVolumeLogarithmic",
+];
 
 function applyToClass(structure: { prototype: object }) {
   for (const prop of props) {
-    Object.defineProperty(structure.prototype, prop, Object.getOwnPropertyDescriptor(VolumeInterface.prototype, prop)!);
+    Object.defineProperty(
+      structure.prototype,
+      prop,
+      Object.getOwnPropertyDescriptor(VolumeInterface.prototype, prop)!
+    );
   }
 }
 

@@ -1,6 +1,6 @@
 interface PayloadType {
   name: string;
-  type: 'audio' | 'video';
+  type: "audio" | "video";
   priority: number;
   payload_type: number;
   rtx_payload_type?: number;
@@ -9,51 +9,73 @@ interface PayloadType {
 }
 
 const payloadTypes: PayloadType[] = [
-  { name: 'opus', type: 'audio', priority: 1000, payload_type: 120 },
+  { name: "opus", payload_type: 120, priority: 1000, type: "audio" },
   {
-    name: 'AV1',
-    type: 'video',
-    priority: 1000,
+    decode: false,
+    encode: false,
+    name: "AV1",
     payload_type: 101,
+    priority: 1000,
     rtx_payload_type: 102,
-    encode: false,
-    decode: false,
+    type: "video",
   },
   {
-    name: 'H265',
-    type: 'video',
-    priority: 2000,
+    decode: false,
+    encode: false,
+    name: "H265",
     payload_type: 103,
+    priority: 2000,
     rtx_payload_type: 104,
-    encode: false,
-    decode: false,
+    type: "video",
   },
-  { name: 'H264', type: 'video', priority: 3000, payload_type: 105, rtx_payload_type: 106, encode: true, decode: true },
-  { name: 'VP8', type: 'video', priority: 4000, payload_type: 107, rtx_payload_type: 108, encode: true, decode: false },
   {
-    name: 'VP9',
-    type: 'video',
-    priority: 5000,
-    payload_type: 109,
-    rtx_payload_type: 110,
-    encode: false,
+    decode: true,
+    encode: true,
+    name: "H264",
+    payload_type: 105,
+    priority: 3000,
+    rtx_payload_type: 106,
+    type: "video",
+  },
+  {
     decode: false,
+    encode: true,
+    name: "VP8",
+    payload_type: 107,
+    priority: 4000,
+    rtx_payload_type: 108,
+    type: "video",
+  },
+  {
+    decode: false,
+    encode: false,
+    name: "VP9",
+    payload_type: 109,
+    priority: 5000,
+    rtx_payload_type: 110,
+    type: "video",
   },
 ];
 
-class VoiceCodec {
-  static getAllPayloadType() {
+const VoiceCodec = {
+  getAllPayloadType() {
     return payloadTypes;
-  }
-  static getPayloadType(codecName: string): number {
-    const payloadType = payloadTypes.find(payload => payload.name === codecName);
+  },
+  getPayloadType(codecName: string): number {
+    const payloadType = payloadTypes.find(
+      (payload) => payload.name === codecName
+    );
     if (!payloadType) throw new Error(`Unknown codec: ${codecName}`);
     return payloadType.payload_type;
-  }
-  static getSDPCodecName(portUdpH264: number | null, portUdpH265: number | null, portUdpOpus: number | null) {
-    const payloadTypeH264 = VoiceCodec.getPayloadType('H264');
-    const payloadTypeH265 = VoiceCodec.getPayloadType('H265');
-    const payloadTypeOpus = VoiceCodec.getPayloadType('opus');
+  },
+  getSDPCodecName(
+    portUdpH264: number | null,
+    portUdpH265: number | null,
+    portUdpOpus: number | null
+  ) {
+    const payloadTypeH264 = VoiceCodec.getPayloadType("H264");
+    const payloadTypeH265 = VoiceCodec.getPayloadType("H265");
+    const payloadTypeOpus = VoiceCodec.getPayloadType("opus");
     let sdpData = `v=0
 o=- 0 0 IN IP4 0.0.0.0
 s=-
@@ -71,7 +93,7 @@ ${
 c=IN IP4 127.0.0.1
 b=AS:1000
 a=rtpmap:${payloadTypeH265} H265/90000`
-    : ''
+    : ""
 }
 m=audio ${portUdpOpus} RTP/AVP ${payloadTypeOpus}
 c=IN IP4 127.0.0.1
@@ -92,8 +114,8 @@ a=extmap:13 urn:3gpp:video-orientation
 a=extmap:14 urn:ietf:params:rtp-hdrext:toffset
 `;
     return sdpData;
-  }
-}
+  },
+};
 
 export default VoiceCodec;
 export { VoiceCodec };

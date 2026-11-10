@@ -2,14 +2,47 @@
   "name": "discord-ts-selfbot",
   "version": "14.0.0",
   "description": "An unofficial discord.js fork for creating selfbots, migrated to TypeScript and ESM",
+  "keywords": [
+    "api",
+    "bot",
+    "client",
+    "discord",
+    "discord.js",
+    "discordapp",
+    "djs",
+    "node",
+    "selfbot",
+    "selfbot v14"
+  ],
+  "homepage": "https://xirothedev.github.io/discord.js-selfbot/",
+  "bugs": {
+    "url": "https://github.com/xirothedev/discord.js-selfbot/issues"
+  },
+  "license": "GNU General Public License v3.0",
+  "author": "xirothedev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xirothedev/discord.js-selfbot.git"
+  },
+  "directories": {
+    "lib": "src",
+    "test": "tests"
+  },
+  "files": [
+    "src",
+    "typings",
+    "dist",
+    "docs",
+    "README.md"
+  ],
   "main": "./src/index.ts",
   "types": "./typings/index.d.ts",
   "scripts": {
     "build": "bun build src/index.ts --target=bun --format=esm --outdir=dist --packages=external",
     "check": "bun check && bun run schema:check && bun run ratchet:check && bun run docs:check",
     "lint": "bun lint",
-    "fmt": "bun fmt src typings tests tools",
-    "fmt:check": "bun fmt --check src typings tests tools",
+    "fmt": "bun fmt",
+    "fmt:check": "bun fmt --check",
     "test": "bun test",
     "test:types": "bun x tsc --noEmit -p tsconfig.test.json",
     "test:typescript": "bun check",
@@ -23,35 +56,6 @@
     "all": "bun run build && bun publish",
     "test:manual": "bun test tests/manual"
   },
-  "files": [
-    "src",
-    "typings",
-    "dist",
-    "docs",
-    "README.md"
-  ],
-  "directories": {
-    "lib": "src",
-    "test": "tests"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/xirothedev/discord.js-selfbot.git"
-  },
-  "keywords": [
-    "discord.js",
-    "selfbot",
-    "selfbot v14",
-    "djs",
-    "api",
-    "bot",
-    "node",
-    "discord",
-    "client",
-    "discordapp"
-  ],
-  "author": "xirothedev",
-  "license": "GNU General Public License v3.0",
   "dependencies": {
     "@discordjs/builders": "^1.6.3",
     "@discordjs/collection": "^2.1.1",
@@ -77,18 +81,12 @@
     "@types/ws": "^8.5.10",
     "dependency-cruiser": "^18.7.2",
     "dtslint": "^4.2.1",
-    "eslint": "^8.39.0",
-    "eslint-plugin-import": "^2.27.5",
     "tsd": "^0.32.0",
     "tslib": "^2.9.1",
-    "typescript": "^5.5.4",
-    "typedoc": "^0.28.20"
+    "typedoc": "^0.28.20",
+    "typescript": "^5.5.4"
   },
   "engines": {
     "bun": ">=1.4.4"
-  },
-  "homepage": "https://xirothedev.github.io/discord.js-selfbot/",
-  "bugs": {
-    "url": "https://github.com/xirothedev/discord.js-selfbot/issues"
   }
 }

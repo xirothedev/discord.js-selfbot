@@ -1,9 +1,13 @@
-import CachedManager from './CachedManager';
-import InteractionResponse from '../structures/interfaces/InteractionResponses';
+import CachedManager from "./CachedManager";
+import InteractionResponse from "../structures/interfaces/InteractionResponses";
+import type { TextBasedChannel } from "../types/channels";
 
 class InteractionManager extends CachedManager<InteractionResponse> {
-  declare channel: import('../types/channels').TextBasedChannel;
-  constructor(channel: import('../types/channels').TextBasedChannel, iterable?: Iterable<InteractionResponse>) {
+  declare channel: TextBasedChannel;
+  constructor(
+    channel: TextBasedChannel,
+    iterable?: Iterable<InteractionResponse>
+  ) {
     super(channel.client, InteractionResponse, iterable);
 
     this.channel = channel;
@@ -13,9 +17,14 @@ class InteractionManager extends CachedManager<InteractionResponse> {
     data = {
       ...data,
       channelId: this.channel.id,
-      guildId: 'guild' in this.channel && this.channel.guild ? this.channel.guild.id : undefined,
+      guildId:
+        "guild" in this.channel && this.channel.guild
+          ? this.channel.guild.id
+          : undefined,
     };
-    if (!data.id) return;
+    if (!data.id) {
+      return;
+    }
     // eslint-disable-next-line consistent-return
     return super._add(data, cache);
   }
@@ -25,7 +34,11 @@ class InteractionManager extends CachedManager<InteractionResponse> {
 // keep this manager assignable to its base.
 interface InteractionManager {
   _add(data: unknown, cache?: boolean): InteractionResponse | undefined;
-  _add(data: unknown, cache?: boolean, options?: { id?: string; extras?: unknown[] }): InteractionResponse;
+  _add(
+    data: unknown,
+    cache?: boolean,
+    options?: { id?: string; extras?: unknown[] }
+  ): InteractionResponse;
 }
 
 export default InteractionManager;

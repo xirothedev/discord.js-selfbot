@@ -1,6 +1,7 @@
-import Base from './Base';
-import type { PresenceStatus, WidgetActivity } from '../../typings';
-import type { RawWidgetMemberData } from '../../typings/rawDataTypes';
+import Base from "./Base";
+import type { PresenceStatus, WidgetActivity } from "../../typings";
+import type { RawWidgetMemberData } from "../../typings/rawDataTypes";
+import type Client from "../client/Client";
 
 type RawWidgetMemberSource = RawWidgetMemberData & {
   deaf?: boolean;
@@ -26,7 +27,7 @@ class WidgetMember extends Base {
   declare avatarURL: string;
   declare activity: WidgetActivity | null;
 
-  constructor(client: import('../client/Client').default, data: RawWidgetMemberSource) {
+  constructor(client: Client, data: RawWidgetMemberSource) {
     super(client);
 
     this.id = data.id;

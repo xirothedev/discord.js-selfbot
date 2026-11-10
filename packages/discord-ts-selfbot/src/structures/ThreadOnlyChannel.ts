@@ -1,18 +1,26 @@
-import GuildChannel from './GuildChannel';
-import TextBasedChannel from './interfaces/TextBasedChannel';
-import GuildForumThreadManager from '../managers/GuildForumThreadManager';
+import GuildChannel from "./GuildChannel";
+import TextBasedChannel from "./interfaces/TextBasedChannel";
+import GuildForumThreadManager from "../managers/GuildForumThreadManager";
 import type {
   CreateInviteOptions,
   DefaultReactionEmoji,
   GuildForumTagData,
   ThreadAutoArchiveDuration,
-} from '../../typings';
-import type { RawGuildChannelData } from '../../typings/rawDataTypes';
-import type { PatchOf } from '../types/schema';
+} from "../../typings";
+import type { RawGuildChannelData } from "../../typings/rawDataTypes";
+import type { PatchOf } from "../types/schema";
 
-type ThreadOnlyChannelPatch = PatchOf<'GuildChannel'> & {
-  available_tags?: { id?: string; name?: string; moderated?: boolean; emoji?: unknown }[];
-  default_reaction_emoji?: { emoji_id?: string | null; emoji_name?: string | null } | null;
+type ThreadOnlyChannelPatch = PatchOf<"GuildChannel"> & {
+  available_tags?: {
+    id?: string;
+    name?: string;
+    moderated?: boolean;
+    emoji?: unknown;
+  }[];
+  default_reaction_emoji?: {
+    emoji_id?: string | null;
+    emoji_name?: string | null;
+  } | null;
   default_thread_rate_limit_per_user?: number | null;
   rate_limit_per_user?: number | null;
   default_auto_archive_duration?: ThreadAutoArchiveDuration | null;
@@ -20,11 +28,16 @@ type ThreadOnlyChannelPatch = PatchOf<'GuildChannel'> & {
   topic?: string | null;
   default_sort_order?: number | null;
 };
-import type { Guild } from './Guild';
-import _ConstantsModule, { resolveEnumMember } from '../util/Constants';
+import type { Guild } from "./Guild";
+import _ConstantsModule, { resolveEnumMember } from "../util/Constants";
+
 const { SortOrderTypes } = _ConstantsModule;
-import _UtilModule from '../util/Util';
-const { transformAPIGuildForumTag, transformAPIGuildDefaultReaction } = _UtilModule;
+import _UtilModule from "../util/Util";
+import type { SortOrderTypes as SortOrderTypesType } from "../../typings/enums";
+import type Client from "../client/Client";
+
+const { transformAPIGuildForumTag, transformAPIGuildDefaultReaction } =
+  _UtilModule;
 
 class ThreadOnlyChannel extends GuildChannel {
   declare threads: GuildForumThreadManager;
@@ -35,9 +48,9 @@ class ThreadOnlyChannel extends GuildChannel {
   declare defaultAutoArchiveDuration: ThreadAutoArchiveDuration | null;
   declare nsfw: boolean;
   declare topic: string | null;
-  declare defaultSortOrder: import('../../typings/enums').SortOrderTypes | null;
+  declare defaultSortOrder: SortOrderTypesType | null;
 
-  constructor(guild: Guild, data: RawGuildChannelData, client?: import('../client/Client').default) {
+  constructor(guild: Guild, data: RawGuildChannelData, client?: Client) {
     super(guild, data, client, false);
 
     this.threads = new GuildForumThreadManager(this);
@@ -47,13 +60,15 @@ class ThreadOnlyChannel extends GuildChannel {
 
   _patch(data: ThreadOnlyChannelPatch) {
     super._patch(data);
-    if ('available_tags' in data) {
-      this.availableTags = (data.available_tags ?? []).map(tag => transformAPIGuildForumTag(tag));
+    if ("available_tags" in data) {
+      this.availableTags = (data.available_tags ?? []).map((tag) =>
+        transformAPIGuildForumTag(tag)
+      );
     } else {
       this.availableTags ??= [];
     }
 
-    if ('default_reaction_emoji' in data) {
+    if ("default_reaction_emoji" in data) {
       this.defaultReactionEmoji = data.default_reaction_emoji
         ? transformAPIGuildDefaultReaction(data.default_reaction_emoji)
         : null;
@@ -61,36 +76,39 @@ class ThreadOnlyChannel extends GuildChannel {
       this.defaultReactionEmoji ??= null;
     }
 
-    if ('default_thread_rate_limit_per_user' in data) {
-      this.defaultThreadRateLimitPerUser = data.default_thread_rate_limit_per_user ?? null;
+    if ("default_thread_rate_limit_per_user" in data) {
+      this.defaultThreadRateLimitPerUser =
+        data.default_thread_rate_limit_per_user ?? null;
     } else {
       this.defaultThreadRateLimitPerUser ??= null;
     }
 
-    if ('rate_limit_per_user' in data) {
+    if ("rate_limit_per_user" in data) {
       this.rateLimitPerUser = data.rate_limit_per_user ?? null;
     } else {
       this.rateLimitPerUser ??= null;
     }
 
-    if ('default_auto_archive_duration' in data) {
-      this.defaultAutoArchiveDuration = data.default_auto_archive_duration ?? null;
+    if ("default_auto_archive_duration" in data) {
+      this.defaultAutoArchiveDuration =
+        data.default_auto_archive_duration ?? null;
     } else {
       this.defaultAutoArchiveDuration ??= null;
     }
 
-    if ('nsfw' in data) {
+    if ("nsfw" in data) {
       this.nsfw = data.nsfw ?? false;
     } else {
       this.nsfw ??= false;
     }
 
-    if ('topic' in data) {
+    if ("topic" in data) {
       this.topic = data.topic ?? null;
     }
 
-    if ('default_sort_order' in data) {
-      this.defaultSortOrder = resolveEnumMember(SortOrderTypes, data.default_sort_order) ?? null;
+    if ("default_sort_order" in data) {
+      this.defaultSortOrder =
+        resolveEnumMember(SortOrderTypes, data.default_sort_order) ?? null;
     } else {
       this.defaultSortOrder ??= null;
     }
@@ -100,15 +118,27 @@ class ThreadOnlyChannel extends GuildChannel {
     return this.edit({ availableTags }, reason);
   }
 
-  setDefaultReactionEmoji(defaultReactionEmoji: DefaultReactionEmoji | null, reason?: string) {
-    return this.edit({ defaultReactionEmoji: defaultReactionEmoji ?? undefined }, reason);
+  setDefaultReactionEmoji(
+    defaultReactionEmoji: DefaultReactionEmoji | null,
+    reason?: string
+  ) {
+    return this.edit(
+      { defaultReactionEmoji: defaultReactionEmoji ?? undefined },
+      reason
+    );
   }
 
-  setDefaultThreadRateLimitPerUser(defaultThreadRateLimitPerUser: number, reason?: string) {
+  setDefaultThreadRateLimitPerUser(
+    defaultThreadRateLimitPerUser: number,
+    reason?: string
+  ) {
     return this.edit({ defaultThreadRateLimitPerUser }, reason);
   }
 
-  setDefaultSortOrder(defaultSortOrder: import('../../typings/enums').SortOrderTypes | null, reason?: string) {
+  setDefaultSortOrder(
+    defaultSortOrder: SortOrderTypesType | null,
+    reason?: string
+  ) {
     return this.edit({ defaultSortOrder }, reason);
   }
 
@@ -117,10 +147,13 @@ class ThreadOnlyChannel extends GuildChannel {
   }
 
   fetchInvites(cache = true) {
-    return this.guild.invites.fetch({ channelId: this.id, cache });
+    return this.guild.invites.fetch({ cache, channelId: this.id });
   }
 
-  setDefaultAutoArchiveDuration(defaultAutoArchiveDuration: ThreadAutoArchiveDuration, reason?: string) {
+  setDefaultAutoArchiveDuration(
+    defaultAutoArchiveDuration: ThreadAutoArchiveDuration,
+    reason?: string
+  ) {
     return this.edit({ defaultAutoArchiveDuration }, reason);
   }
 
@@ -137,15 +170,15 @@ class ThreadOnlyChannel extends GuildChannel {
 }
 
 TextBasedChannel.applyToClass(ThreadOnlyChannel, true, [
-  'send',
-  'lastMessage',
-  'lastPinAt',
-  'bulkDelete',
-  'sendTyping',
-  'createMessageCollector',
-  'awaitMessages',
-  'createMessageComponentCollector',
-  'awaitMessageComponent',
+  "send",
+  "lastMessage",
+  "lastPinAt",
+  "bulkDelete",
+  "sendTyping",
+  "createMessageCollector",
+  "awaitMessages",
+  "createMessageComponentCollector",
+  "awaitMessageComponent",
 ]);
 
 export default ThreadOnlyChannel;

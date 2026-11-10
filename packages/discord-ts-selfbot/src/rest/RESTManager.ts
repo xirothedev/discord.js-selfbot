@@ -1,15 +1,18 @@
-import { setInterval } from 'node:timers';
-import { Collection } from '@discordjs/collection';
-import makeFetchCookie from 'fetch-cookie';
-import { CookieJar } from 'tough-cookie';
-import { fetch as fetchOriginal } from 'undici';
-import APIRequest from './APIRequest';
-import routeBuilder, { ApiRouter } from './APIRouter';
-import RequestHandler from './RequestHandler';
-import _errorsModule from '../errors';
+import { setInterval } from "node:timers";
+import { Collection } from "@discordjs/collection";
+import makeFetchCookie from "fetch-cookie";
+import { CookieJar } from "tough-cookie";
+import { fetch as fetchOriginal } from "undici";
+import APIRequest from "./APIRequest";
+import type { ApiRouter } from "./APIRouter";
+import routeBuilder from "./APIRouter";
+import RequestHandler from "./RequestHandler";
+import _errorsModule from "../errors";
+
 const { Error } = _errorsModule;
-import _ConstantsModule from '../util/Constants';
-import type { BaseClient } from '../client/BaseClient';
+import _ConstantsModule from "../util/Constants";
+import type { BaseClient } from "../client/BaseClient";
+
 const { Endpoints } = _ConstantsModule;
 
 class RESTManager {
@@ -28,7 +31,10 @@ class RESTManager {
     this.client = client;
     this.handlers = new Collection();
     this.versioned = true;
-    this.globalLimit = client.options.restGlobalRateLimit > 0 ? client.options.restGlobalRateLimit : Infinity;
+    this.globalLimit =
+      client.options.restGlobalRateLimit > 0
+        ? client.options.restGlobalRateLimit
+        : Infinity;
     this.globalRemaining = this.globalLimit;
     this.globalReset = null;
     this.globalDelay = null;
@@ -37,7 +43,7 @@ class RESTManager {
     if (client.options.restSweepInterval > 0) {
       this.sweepInterval = setInterval(() => {
         this.handlers.sweep((handler: RequestHandler) => handler._inactive);
-      }, client.options.restSweepInterval * 1_000).unref();
+      }, client.options.restSweepInterval * 1000).unref();
     }
   }
 
@@ -48,15 +54,21 @@ class RESTManager {
   getAuth(): string {
     const c = this.client as { token?: string | null; accessToken?: string };
     const token = c.token ?? c.accessToken;
-    if (token) return token?.replace(/Bot /g, '');
-    throw new Error('TOKEN_MISSING');
+    if (token) {
+      return token?.replace(/Bot /g, "");
+    }
+    throw new Error("TOKEN_MISSING");
   }
 
   get cdn(): ReturnType<typeof Endpoints.CDN> {
     return Endpoints.CDN(this.client.options.http.cdn);
   }
 
-  request(method: string, url: string, options: Record<string, unknown> = {}): unknown {
+  request(
+    method: string,
+    url: string,
+    options: Record<string, unknown> = {}
+  ): unknown {
     const apiRequest = new APIRequest(this, method, url, options);
     let handler = this.handlers.get(apiRequest.route);
 

@@ -1,6 +1,7 @@
-import Action from './Action';
-import type { GatewayAutoModerationRuleDeleteDispatchData } from 'discord-api-types/v10';
-import _ConstantsModule from '../../util/Constants';
+import Action from "./Action";
+import type { GatewayAutoModerationRuleDeleteDispatchData } from "discord-api-types/v10";
+import _ConstantsModule from "../../util/Constants";
+
 const { Events } = _ConstantsModule;
 
 class AutoModerationRuleDeleteAction extends Action {

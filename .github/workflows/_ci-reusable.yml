@@ -45,7 +45,7 @@ jobs:
 
       - name: Type check
         env:
-          TURBO_UI: '0'
+          TURBO_UI: "0"
         run: bun run check
 
   lint:
@@ -65,24 +65,24 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Lint
-        env:
-          TURBO_UI: '0'
-        run: bun run lint
-
       - name: Format check
         env:
-          TURBO_UI: '0'
+          TURBO_UI: "0"
         run: bun run fmt:check
+
+      - name: Lint
+        env:
+          TURBO_UI: "0"
+        run: bun run lint
 
       - name: Boundaries
         env:
-          TURBO_UI: '0'
+          TURBO_UI: "0"
         run: bun run lint:boundaries
 
       - name: Docs snippets
         env:
-          TURBO_UI: '0'
+          TURBO_UI: "0"
         run: bun run docs:snippets
 
   test:
@@ -104,7 +104,7 @@ jobs:
 
       - name: Tests
         env:
-          TURBO_UI: '0'
+          TURBO_UI: "0"
         run: bunx turbo run test -- --parallel=2 --max-concurrency=4
 
   build-docs:
@@ -126,5 +126,5 @@ jobs:
 
       - name: Build docs
         env:
-          TURBO_UI: '0'
+          TURBO_UI: "0"
         run: bun run docs

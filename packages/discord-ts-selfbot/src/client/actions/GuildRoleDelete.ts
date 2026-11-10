@@ -1,13 +1,15 @@
-import Action from './Action';
-import type { GatewayGuildRoleDeleteDispatchData } from 'discord-api-types/v10';
-import _RoleModule from '../../structures/Role';
+import Action from "./Action";
+import type { GatewayGuildRoleDeleteDispatchData } from "discord-api-types/v10";
+import _RoleModule from "../../structures/Role";
+
 const { deletedRoles } = _RoleModule;
-import _ConstantsModule from '../../util/Constants';
+import _ConstantsModule from "../../util/Constants";
+
 const { Events } = _ConstantsModule;
 
 class GuildRoleDeleteAction extends Action {
   handle(data: GatewayGuildRoleDeleteDispatchData) {
-    const client = this.client;
+    const { client } = this;
     const guild = client.guilds.cache.get(data.guild_id);
     let role;
 

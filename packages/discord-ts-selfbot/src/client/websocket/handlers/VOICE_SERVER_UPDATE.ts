@@ -1,11 +1,20 @@
-import type { Client } from '../../Client';
-import type { WebSocketShard } from '../WebSocketShard';
+import type { Client } from "../../Client";
+import type { WebSocketShard } from "../WebSocketShard";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
+  return typeof value === "object" && value !== null;
 }
 
-export default (client: Client, packet: { d?: unknown }, _shard: WebSocketShard) => {
-  client.emit('debug', `[VOICE] received voice server: ${JSON.stringify(packet)}`);
-  if (isRecord(packet.d)) client.voice.onVoiceServer(packet.d);
+export default (
+  client: Client,
+  packet: { d?: unknown },
+  _shard: WebSocketShard
+) => {
+  client.emit(
+    "debug",
+    `[VOICE] received voice server: ${JSON.stringify(packet)}`
+  );
+  if (isRecord(packet.d)) {
+    client.voice.onVoiceServer(packet.d);
+  }
 };

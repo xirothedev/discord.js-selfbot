@@ -1,27 +1,29 @@
-import { Collection } from '@discordjs/collection';
-import Base from './Base';
-import _StickerModule from './Sticker';
+import { Collection } from "@discordjs/collection";
+import Base from "./Base";
+import _StickerModule from "./Sticker";
+
 const { Sticker } = _StickerModule;
-import SnowflakeUtil from '../util/SnowflakeUtil';
-import type { RawStickerPackData } from '../../typings/rawDataTypes';
-import type { StaticImageURLOptions } from '../../typings';
-import type { StickerPackEntity } from '../types/entities/sticker-pack';
+import SnowflakeUtil from "../util/SnowflakeUtil";
+import type { RawStickerPackData } from "../../typings/rawDataTypes";
+import type { StaticImageURLOptions } from "../../typings";
+import type { StickerPackEntity } from "../types/entities/sticker-pack";
+import type Client from "../client/Client";
 
 class StickerPack extends Base implements StickerPackEntity {
-  declare bannerId: StickerPackEntity['bannerId'];
-  declare coverStickerId: StickerPackEntity['coverStickerId'];
-  declare description: StickerPackEntity['description'];
-  declare id: StickerPackEntity['id'];
-  declare name: StickerPackEntity['name'];
-  declare skuId: StickerPackEntity['skuId'];
-  declare stickers: StickerPackEntity['stickers'];
+  declare bannerId: StickerPackEntity["bannerId"];
+  declare coverStickerId: StickerPackEntity["coverStickerId"];
+  declare description: StickerPackEntity["description"];
+  declare id: StickerPackEntity["id"];
+  declare name: StickerPackEntity["name"];
+  declare skuId: StickerPackEntity["skuId"];
+  declare stickers: StickerPackEntity["stickers"];
 
-  constructor(client: import('../client/Client').default, pack: RawStickerPackData) {
+  constructor(client: Client, pack: RawStickerPackData) {
     super(client);
     this.id = pack.id;
 
     this.stickers = new Collection<string, InstanceType<typeof Sticker>>(
-      pack.stickers.map(s => [s.id, new Sticker(client, s)]),
+      pack.stickers.map((s) => [s.id, new Sticker(client, s)])
     );
 
     this.name = pack.name;
@@ -44,11 +46,16 @@ class StickerPack extends Base implements StickerPackEntity {
   }
 
   get coverSticker() {
-    return this.coverStickerId ? (this.stickers.get(this.coverStickerId) ?? null) : null;
+    return this.coverStickerId
+      ? (this.stickers.get(this.coverStickerId) ?? null)
+      : null;
   }
 
-  bannerURL({ format = 'webp', size }: StaticImageURLOptions = {}) {
-    return this.bannerId && this.client.rest.cdn.StickerPackBanner(this.bannerId, format, size);
+  bannerURL({ format = "webp", size }: StaticImageURLOptions = {}) {
+    return (
+      this.bannerId &&
+      this.client.rest.cdn.StickerPackBanner(this.bannerId, format, size)
+    );
   }
 }
 

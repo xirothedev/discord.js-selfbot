@@ -1,18 +1,24 @@
-import { ComponentType, type APIActionRowComponent, type APIComponentInMessageActionRow } from 'discord-api-types/v10';
+import { ComponentType } from "discord-api-types/v10";
+import type {
+  APIActionRowComponent,
+  APIComponentInMessageActionRow,
+} from "discord-api-types/v10";
 import BaseMessageComponent, {
   isComponentDataSource,
   readComponentArray,
-  type MessageComponentInstance,
-} from './BaseMessageComponent';
-import MessageButton from './MessageButton';
-import MessageSelectMenu from './MessageSelectMenu';
-import TextInputComponent from './TextInputComponent';
-import type { Client } from '../client/Client';
-import type { MessageActionRowComponentResolvable } from '../../typings';
+} from "./BaseMessageComponent";
+import type { MessageComponentInstance } from "./BaseMessageComponent";
+import MessageButton from "./MessageButton";
+import MessageSelectMenu from "./MessageSelectMenu";
+import TextInputComponent from "./TextInputComponent";
+import type { Client } from "../client/Client";
+import type { MessageActionRowComponentResolvable } from "../../typings";
 
 type ActionRowChild = MessageButton | MessageSelectMenu | TextInputComponent;
 
-function isActionRowChild(component: MessageComponentInstance | null): component is ActionRowChild {
+function isActionRowChild(
+  component: MessageComponentInstance | null
+): component is ActionRowChild {
   return (
     component instanceof MessageButton ||
     component instanceof MessageSelectMenu ||
@@ -21,12 +27,18 @@ function isActionRowChild(component: MessageComponentInstance | null): component
 }
 
 function flattenComponents(
-  components: (MessageActionRowComponentResolvable | MessageActionRowComponentResolvable[])[],
+  components: (
+    | MessageActionRowComponentResolvable
+    | MessageActionRowComponentResolvable[]
+  )[]
 ): MessageActionRowComponentResolvable[] {
   const flattened: MessageActionRowComponentResolvable[] = [];
   for (const component of components) {
-    if (Array.isArray(component)) flattened.push(...component);
-    else flattened.push(component);
+    if (Array.isArray(component)) {
+      flattened.push(...component);
+    } else {
+      flattened.push(component);
+    }
   }
   return flattened;
 }
@@ -34,27 +46,40 @@ function flattenComponents(
 class MessageActionRow extends BaseMessageComponent {
   declare components: ActionRowChild[];
 
-  constructor(data: unknown = { components: [] }, client: Client | null = null) {
-    super({ type: 'ACTION_ROW' });
+  constructor(
+    data: unknown = { components: [] },
+    client: Client | null = null
+  ) {
+    super({ type: "ACTION_ROW" });
     const source = isComponentDataSource(data) ? data : {};
 
-    this.components = readComponentArray(source, 'components')
-      .map(component => BaseMessageComponent.create(component, client))
+    this.components = readComponentArray(source, "components")
+      .map((component) => BaseMessageComponent.create(component, client))
       .filter(isActionRowChild);
 
     super.setup(data);
   }
 
-  addComponents(...components: (MessageActionRowComponentResolvable | MessageActionRowComponentResolvable[])[]) {
+  addComponents(
+    ...components: (
+      | MessageActionRowComponentResolvable
+      | MessageActionRowComponentResolvable[]
+    )[]
+  ) {
     this.components.push(
       ...flattenComponents(components)
-        .map(component => BaseMessageComponent.create(component))
-        .filter(isActionRowChild),
+        .map((component) => BaseMessageComponent.create(component))
+        .filter(isActionRowChild)
     );
     return this;
   }
 
-  setComponents(...components: (MessageActionRowComponentResolvable | MessageActionRowComponentResolvable[])[]) {
+  setComponents(
+    ...components: (
+      | MessageActionRowComponentResolvable
+      | MessageActionRowComponentResolvable[]
+    )[]
+  ) {
     this.spliceComponents(0, this.components.length, ...components);
     return this;
   }
@@ -62,14 +87,17 @@ class MessageActionRow extends BaseMessageComponent {
   spliceComponents(
     index: number,
     deleteCount: number,
-    ...components: (MessageActionRowComponentResolvable | MessageActionRowComponentResolvable[])[]
+    ...components: (
+      | MessageActionRowComponentResolvable
+      | MessageActionRowComponentResolvable[]
+    )[]
   ) {
     this.components.splice(
       index,
       deleteCount,
       ...flattenComponents(components)
-        .map(component => BaseMessageComponent.create(component))
-        .filter(isActionRowChild),
+        .map((component) => BaseMessageComponent.create(component))
+        .filter(isActionRowChild)
     );
     return this;
   }
@@ -77,8 +105,11 @@ class MessageActionRow extends BaseMessageComponent {
   toJSON(): APIActionRowComponent<APIComponentInMessageActionRow> {
     return {
       components: this.components
-        .map(component => component.toJSON())
-        .filter((component): component is APIComponentInMessageActionRow => component.type !== ComponentType.TextInput),
+        .map((component) => component.toJSON())
+        .filter(
+          (component): component is APIComponentInMessageActionRow =>
+            component.type !== ComponentType.TextInput
+        ),
       type: ComponentType.ActionRow,
     };
   }

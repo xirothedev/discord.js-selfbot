@@ -1,7 +1,7 @@
-import Base from './Base';
-import type { TextBasedChannel } from '../types/channels';
-import type User from './User';
-import type { RawTypingData } from '../../typings/rawDataTypes';
+import Base from "./Base";
+import type { TextBasedChannel } from "../types/channels";
+import type User from "./User";
+import type { RawTypingData } from "../../typings/rawDataTypes";
 
 class Typing extends Base {
   declare channel: TextBasedChannel;
@@ -19,8 +19,8 @@ class Typing extends Base {
   }
 
   _patch(data: RawTypingData) {
-    if ('timestamp' in data) {
-      this.startedTimestamp = data.timestamp * 1_000;
+    if ("timestamp" in data) {
+      this.startedTimestamp = data.timestamp * 1000;
     }
   }
 
@@ -33,7 +33,7 @@ class Typing extends Base {
   }
 
   get guild() {
-    return 'guild' in this.channel ? this.channel.guild : null;
+    return "guild" in this.channel ? this.channel.guild : null;
   }
 
   get member() {

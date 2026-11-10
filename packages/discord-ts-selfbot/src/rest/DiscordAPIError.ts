@@ -15,15 +15,16 @@ class DiscordAPIError extends Error {
       path: string;
       options?: { data?: unknown; files?: unknown[]; headers?: unknown };
       retries?: number;
-    },
+    }
   ) {
     super();
     const errMsg = error.message as string | undefined;
     const flattened = (this.constructor as typeof DiscordAPIError)
       .flattenErrors((error.errors ?? error) as unknown)
-      .join('\n');
-    this.name = 'DiscordAPIError';
-    this.message = errMsg && flattened ? `${errMsg}\n${flattened}` : (errMsg ?? flattened);
+      .join("\n");
+    this.name = "DiscordAPIError";
+    this.message =
+      errMsg && flattened ? `${errMsg}\n${flattened}` : (errMsg ?? flattened);
 
     this.method = request.method;
 
@@ -34,9 +35,9 @@ class DiscordAPIError extends Error {
     this.httpStatus = status;
 
     this.requestData = {
-      json: request.options?.data,
       files: request.options?.files ?? [],
       headers: request.options?.headers,
+      json: request.options?.data,
     };
 
     this.retries = request.retries ?? 0;
@@ -45,22 +46,32 @@ class DiscordAPIError extends Error {
   }
 
   get isBlockedByCloudflare(): boolean {
-    return this.code === 40333;
+    return this.code === 40_333;
   }
 
-  static flattenErrors(obj: unknown, key = ''): string[] {
+  static flattenErrors(obj: unknown, key = ""): string[] {
     let messages: string[] = [];
 
-    for (const [k, v] of Object.entries((obj ?? {}) as Record<string, unknown>)) {
-      if (k === 'message') continue;
-      const newKey = key ? (isNaN(Number(k)) ? `${key}.${k}` : `${key}[${k}]`) : k;
+    for (const [k, v] of Object.entries(
+      (obj ?? {}) as Record<string, unknown>
+    )) {
+      if (k === "message") {
+        continue;
+      }
+      const newKey = key
+        ? Number.isNaN(Number(k))
+          ? `${key}.${k}`
+          : `${key}[${k}]`
+        : k;
 
       const vo = v as Record<string, unknown> | null;
       if (vo && Array.isArray(vo._errors)) {
-        messages.push(`${newKey}: ${(vo._errors as Array<{ message: string }>).map(e => e.message).join(' ')}`);
+        messages.push(
+          `${newKey}: ${(vo._errors as { message: string }[]).map((e) => e.message).join(" ")}`
+        );
       } else if (vo && (vo.code ?? vo.message)) {
-        messages.push(`${vo.code ? `${vo.code}: ` : ''}${vo.message}`.trim());
-      } else if (typeof v === 'string') {
+        messages.push(`${vo.code ? `${vo.code}: ` : ""}${vo.message}`.trim());
+      } else if (typeof v === "string") {
         messages.push(v);
       } else {
         messages = messages.concat(this.flattenErrors(v, newKey));

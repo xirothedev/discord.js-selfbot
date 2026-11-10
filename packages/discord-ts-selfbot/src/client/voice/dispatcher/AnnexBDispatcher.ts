@@ -1,9 +1,10 @@
-import { Buffer } from 'buffer';
-import VideoDispatcher from './VideoDispatcher';
-import type MediaPlayer from '../player/MediaPlayer';
-import type { DispatcherStreams } from './BaseDispatcher';
-import VoiceCodec from '../util/VoiceCodec';
-import _AnnexBNalSplitterModule from '../player/processing/AnnexBNalSplitter';
+import { Buffer } from "node:buffer";
+import VideoDispatcher from "./VideoDispatcher";
+import type MediaPlayer from "../player/MediaPlayer";
+import type { DispatcherStreams } from "./BaseDispatcher";
+import VoiceCodec from "../util/VoiceCodec";
+import _AnnexBNalSplitterModule from "../player/processing/AnnexBNalSplitter";
+
 const { H264Helpers, H265Helpers } = _AnnexBNalSplitterModule;
 /*
 Credit: https://github.com/dank074/Discord-video-stream
@@ -22,15 +23,21 @@ Thanks to mrjvs for discovering how Discord transmits data and the VP8 codec.
 Please use the @dank074/discord-video-stream library for the best support.
 */
 
-type NalFunctions = {
+interface NalFunctions {
   splitHeader(frame: Buffer): [Buffer, Buffer];
-};
+}
 
 class AnnexBDispatcher extends VideoDispatcher {
   declare _nalFunctions: NalFunctions;
 
-  makeFragmentationUnitHeader(_isFirstPacket: boolean, _isLastPacket: boolean, _naluHeader: Buffer): Buffer {
-    throw new Error('The makeFragmentationUnitHeader method must be implemented');
+  makeFragmentationUnitHeader(
+    _isFirstPacket: boolean,
+    _isLastPacket: boolean,
+    _naluHeader: Buffer
+  ): Buffer {
+    throw new Error(
+      "The makeFragmentationUnitHeader method must be implemented"
+    );
   }
 
   constructor(
@@ -39,14 +46,14 @@ class AnnexBDispatcher extends VideoDispatcher {
     streams: DispatcherStreams,
     fps: number,
     nalFunctions: NalFunctions,
-    payloadType: number,
+    payloadType: number
   ) {
     super(player, highWaterMark, streams, fps, payloadType);
     this._nalFunctions = nalFunctions;
   }
 
   _codecCallback(frame: Buffer) {
-    let accessUnit = frame;
+    const accessUnit = frame;
     let offset = 0;
 
     // Extract NALUs from the access unit
@@ -57,12 +64,19 @@ class AnnexBDispatcher extends VideoDispatcher {
       const isLastNal = offset + naluSize >= accessUnit.length;
       if (nalu.length <= this.mtu) {
         // Send as Single NAL Unit Packet.
-        this._playChunk(Buffer.concat([this.createPayloadExtension(), nalu]), isLastNal);
+        this._playChunk(
+          Buffer.concat([this.createPayloadExtension(), nalu]),
+          isLastNal
+        );
       } else {
         const [naluHeader, naluData] = this._nalFunctions.splitHeader(nalu);
         const dataFragments = this.partitionMtu(naluData);
         // Send as Fragmentation Unit A (FU-A):
-        for (let fragmentIndex = 0; fragmentIndex < dataFragments.length; fragmentIndex++) {
+        for (
+          let fragmentIndex = 0;
+          fragmentIndex < dataFragments.length;
+          fragmentIndex++
+        ) {
           const data = dataFragments[fragmentIndex];
           const isFirstPacket = fragmentIndex === 0;
           const isFinalPacket = fragmentIndex === dataFragments.length - 1;
@@ -70,10 +84,14 @@ class AnnexBDispatcher extends VideoDispatcher {
           this._playChunk(
             Buffer.concat([
               this.createPayloadExtension(),
-              this.makeFragmentationUnitHeader(isFirstPacket, isFinalPacket, naluHeader),
+              this.makeFragmentationUnitHeader(
+                isFirstPacket,
+                isFinalPacket,
+                naluHeader
+              ),
               data,
             ]),
-            isLastNal && isFinalPacket,
+            isLastNal && isFinalPacket
           );
         }
       }
@@ -83,11 +101,27 @@ class AnnexBDispatcher extends VideoDispatcher {
 }
 
 class H264Dispatcher extends AnnexBDispatcher {
-  constructor(player: MediaPlayer, highWaterMark = 12, streams: DispatcherStreams, fps: number) {
-    super(player, highWaterMark, streams, fps, H264Helpers, VoiceCodec.getPayloadType('H264'));
+  constructor(
+    player: MediaPlayer,
+    highWaterMark = 12,
+    streams: DispatcherStreams,
+    fps: number
+  ) {
+    super(
+      player,
+      highWaterMark,
+      streams,
+      fps,
+      H264Helpers,
+      VoiceCodec.getPayloadType("H264")
+    );
   }
 
-  makeFragmentationUnitHeader(isFirstPacket: boolean, isLastPacket: boolean, naluHeader: Buffer): Buffer {
+  makeFragmentationUnitHeader(
+    isFirstPacket: boolean,
+    isLastPacket: boolean,
+    naluHeader: Buffer
+  ): Buffer {
     const nal0 = naluHeader[0];
     const fuPayloadHeader = Buffer.alloc(2);
     const nalType = H264Helpers.getUnitType(naluHeader);
@@ -108,16 +142,32 @@ class H264Dispatcher extends AnnexBDispatcher {
 }
 
 class H265Dispatcher extends AnnexBDispatcher {
-  constructor(player: MediaPlayer, highWaterMark = 12, streams: DispatcherStreams, fps: number) {
-    super(player, highWaterMark, streams, fps, H265Helpers, VoiceCodec.getPayloadType('H265'));
+  constructor(
+    player: MediaPlayer,
+    highWaterMark = 12,
+    streams: DispatcherStreams,
+    fps: number
+  ) {
+    super(
+      player,
+      highWaterMark,
+      streams,
+      fps,
+      H265Helpers,
+      VoiceCodec.getPayloadType("H265")
+    );
   }
 
-  makeFragmentationUnitHeader(isFirstPacket: boolean, isLastPacket: boolean, naluHeader: Buffer): Buffer {
+  makeFragmentationUnitHeader(
+    isFirstPacket: boolean,
+    isLastPacket: boolean,
+    naluHeader: Buffer
+  ): Buffer {
     const fuIndicatorHeader = Buffer.allocUnsafe(3);
     naluHeader.copy(fuIndicatorHeader);
     const nalType = H265Helpers.getUnitType(naluHeader);
 
-    fuIndicatorHeader[0] = (fuIndicatorHeader[0] & 0b10000001) | (49 << 1);
+    fuIndicatorHeader[0] = (fuIndicatorHeader[0] & 0b1000_0001) | (49 << 1);
 
     if (isFirstPacket) {
       fuIndicatorHeader[2] = 0x80 | nalType;

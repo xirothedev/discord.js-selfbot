@@ -1,10 +1,10 @@
-import BaseDispatcher from './BaseDispatcher';
-import type MediaPlayer from '../player/MediaPlayer';
-import type { StreamOptions } from '../../../../typings';
-import type { DispatcherStreams } from './BaseDispatcher';
-import VoiceCodec from '../util/VoiceCodec';
-import Silence from '../util/Silence';
-import VolumeInterface from '../util/VolumeInterface';
+import BaseDispatcher from "./BaseDispatcher";
+import type MediaPlayer from "../player/MediaPlayer";
+import type { StreamOptions } from "../../../../typings";
+import type { DispatcherStreams } from "./BaseDispatcher";
+import VoiceCodec from "../util/VoiceCodec";
+import Silence from "../util/Silence";
+import VolumeInterface from "../util/VolumeInterface";
 
 const CHANNELS = 2;
 
@@ -20,18 +20,31 @@ class AudioDispatcher extends BaseDispatcher {
 
   constructor(
     player: MediaPlayer,
-    { seek = 0, volume = 1, fec, plp, bitrate = 96, highWaterMark = 12 }: StreamOptions = {},
-    streams: DispatcherStreams,
+    {
+      seek = 0,
+      volume = 1,
+      fec,
+      plp,
+      bitrate = 96,
+      highWaterMark = 12,
+    }: StreamOptions = {},
+    streams: DispatcherStreams
   ) {
     const streamOptions = {
-      seek,
-      volume: typeof volume === 'number' ? volume : 1,
+      bitrate: typeof bitrate === "number" ? bitrate : 96,
       fec: Boolean(fec),
-      plp: plp ?? 0,
-      bitrate: typeof bitrate === 'number' ? bitrate : 96,
       highWaterMark,
+      plp: plp ?? 0,
+      seek,
+      volume: typeof volume === "number" ? volume : 1,
     };
-    super(player, highWaterMark, VoiceCodec.getPayloadType('opus'), false, streams);
+    super(
+      player,
+      highWaterMark,
+      VoiceCodec.getPayloadType("opus"),
+      false,
+      streams
+    );
 
     this.streamOptions = streamOptions;
 
@@ -39,8 +52,12 @@ class AudioDispatcher extends BaseDispatcher {
 
     this.setVolume(volume);
     this.setBitrate(bitrate);
-    if (typeof fec !== 'undefined') this.setFEC(fec);
-    if (typeof plp !== 'undefined') this.setPLP(plp);
+    if (fec !== undefined) {
+      this.setFEC(fec);
+    }
+    if (plp !== undefined) {
+      this.setPLP(plp);
+    }
   }
 
   get TIMESTAMP_INC() {
@@ -52,24 +69,33 @@ class AudioDispatcher extends BaseDispatcher {
   }
 
   getTypeDispatcher() {
-    return 'audio';
+    return "audio";
   }
 
-  setBitrate(value: number | 'auto') {
-    if (!value || !this.bitrateEditable) return false;
-    const bitrate = value === 'auto' ? (this.player.voiceConnection.channel.bitrate ?? 96) : value;
+  setBitrate(value: number | "auto") {
+    if (!value || !this.bitrateEditable) {
+      return false;
+    }
+    const bitrate =
+      value === "auto"
+        ? (this.player.voiceConnection.channel.bitrate ?? 96)
+        : value;
     this.streams.opus!.setBitrate!(bitrate * 1000);
     return true;
   }
 
   setPLP(value: number) {
-    if (!this.bitrateEditable) return false;
+    if (!this.bitrateEditable) {
+      return false;
+    }
     this.streams.opus!.setPLP!(value);
     return true;
   }
 
   setFEC(enabled: boolean) {
-    if (!this.bitrateEditable) return false;
+    if (!this.bitrateEditable) {
+      return false;
+    }
     this.streams.opus!.setFEC!(enabled);
     return true;
   }
@@ -88,16 +114,20 @@ class AudioDispatcher extends BaseDispatcher {
   }
 
   setVolume(value: number | boolean) {
-    if (!this.streams.volume) return false;
-    if (typeof value !== 'number') return false;
-    this.emit('volumeChange', this.volume, value);
+    if (!this.streams.volume) {
+      return false;
+    }
+    if (typeof value !== "number") {
+      return false;
+    }
+    this.emit("volumeChange", this.volume, value);
     this.streams.volume!.setVolume!(value);
     return true;
   }
 
   setSyncVideoDispatcher(otherDispatcher: BaseDispatcher) {
-    if (otherDispatcher.getTypeDispatcher() !== 'video') {
-      throw new Error('Dispatcher must be a video dispatcher');
+    if (otherDispatcher.getTypeDispatcher() !== "video") {
+      throw new Error("Dispatcher must be a video dispatcher");
     }
     this._syncDispatcher = otherDispatcher;
   }
@@ -105,10 +135,10 @@ class AudioDispatcher extends BaseDispatcher {
   // Volume stubs for docs
   /* eslint-disable no-empty-function*/
   get volumeDecibels() {
-    return undefined;
+    return;
   }
   get volumeLogarithmic() {
-    return undefined;
+    return;
   }
   setVolumeDecibels() {}
   setVolumeLogarithmic() {}

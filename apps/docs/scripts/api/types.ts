@@ -1,15 +1,15 @@
 export const Kind = {
-  Module: 2,
-  Variable: 32,
-  Function: 64,
+  Accessor: 262_144,
   Class: 128,
-  Interface: 256,
   Constructor: 512,
-  Property: 1024,
+  Function: 64,
+  Interface: 256,
   Method: 2048,
+  Module: 2,
+  Property: 1024,
   Signature: 4096,
-  TypeAlias: 2097152,
-  Accessor: 262144,
+  TypeAlias: 2_097_152,
+  Variable: 32,
 } as const;
 
 export interface SourceRef {
@@ -126,7 +126,7 @@ export interface DocgenEvent {
 
 export interface ParsedExports {
   public: PublicExport[];
-  aliases: Array<{ name: string; target: string }>;
+  aliases: { name: string; target: string }[];
   external: string[];
   unparsed: string[];
 }

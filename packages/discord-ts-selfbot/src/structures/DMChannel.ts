@@ -1,29 +1,34 @@
-import { Collection } from '@discordjs/collection';
-import _ChannelModule from './Channel';
-const { Channel } = _ChannelModule;
-import TextBasedChannel from './interfaces/TextBasedChannel';
-import MessageManager from '../managers/MessageManager';
-import type { Snowflake } from 'discord-api-types/v10';
-import type { User } from './User';
-import type { RawChannelData } from '../../typings/rawDataTypes';
-import type { PatchOf } from '../types/schema';
-import type { Client } from '../client/Client';
-import type { Message } from './Message';
+import { Collection } from "@discordjs/collection";
+import _ChannelModule from "./Channel";
 
-type DMChannelPatch = PatchOf<'Channel'> & {
-  recipients?: import('discord-api-types/v10').APIUser[];
+const { Channel } = _ChannelModule;
+import TextBasedChannel from "./interfaces/TextBasedChannel";
+import MessageManager from "../managers/MessageManager";
+import type { Snowflake } from "discord-api-types/v10";
+import type { User } from "./User";
+import type { RawChannelData } from "../../typings/rawDataTypes";
+import type { PatchOf } from "../types/schema";
+import type { Client } from "../client/Client";
+import type { Message } from "./Message";
+
+type DMChannelPatch = PatchOf<"Channel"> & {
+  recipients?: APIUser[];
   last_message_id?: Snowflake | null;
   last_pin_timestamp?: string | null;
   is_message_request?: boolean;
   is_message_request_timestamp?: string | null;
 };
 
-type VoiceAdapter = {
+interface VoiceAdapter {
   destroy(): void;
   onVoiceServerUpdate(payload: unknown): void;
   onVoiceStateUpdate(payload: unknown): void;
-};
-import _ConstantsModule from '../util/Constants';
+}
+import _ConstantsModule from "../util/Constants";
+import type { APIUser } from "discord-api-types/v10";
+import type { SendOptions } from "../types/channels";
+import type { SendResult } from "../types/channels";
+
 const { Opcodes, Status } = _ConstantsModule;
 
 class DMChannel extends Channel {
@@ -37,7 +42,7 @@ class DMChannel extends Channel {
     super(client, data);
 
     // Override the channel type so partials have a known type
-    this.type = 'DM';
+    this.type = "DM";
 
     this.messages = new MessageManager(this);
   }
@@ -49,21 +54,23 @@ class DMChannel extends Channel {
       this.recipient = this.client.users._add(data.recipients[0]);
     }
 
-    if ('last_message_id' in data) {
+    if ("last_message_id" in data) {
       this.lastMessageId = data.last_message_id ?? null;
     }
 
-    if ('last_pin_timestamp' in data) {
-      this.lastPinTimestamp = data.last_pin_timestamp ? Date.parse(data.last_pin_timestamp) : null;
+    if ("last_pin_timestamp" in data) {
+      this.lastPinTimestamp = data.last_pin_timestamp
+        ? Date.parse(data.last_pin_timestamp)
+        : null;
     } else {
       this.lastPinTimestamp ??= null;
     }
 
-    if ('is_message_request' in data) {
+    if ("is_message_request" in data) {
       this.messageRequest = data.is_message_request;
     }
 
-    if ('is_message_request_timestamp' in data) {
+    if ("is_message_request_timestamp" in data) {
       this.messageRequestTimestamp = data.is_message_request_timestamp
         ? Date.parse(data.is_message_request_timestamp)
         : null;
@@ -72,9 +79,11 @@ class DMChannel extends Channel {
 
   async acceptMessageRequest() {
     if (!this.messageRequest) {
-      throw new Error('NOT_MESSAGE_REQUEST: This channel is not a message request');
+      throw new Error(
+        "NOT_MESSAGE_REQUEST: This channel is not a message request"
+      );
     }
-    const c = await this.client.api.channels[this.id].recipients['@me'].put({
+    const c = await this.client.api.channels[this.id].recipients["@me"].put({
       data: {
         consent_status: 2,
       },
@@ -85,14 +94,16 @@ class DMChannel extends Channel {
 
   async cancelMessageRequest() {
     if (!this.messageRequest) {
-      throw new Error('NOT_MESSAGE_REQUEST: This channel is not a message request');
+      throw new Error(
+        "NOT_MESSAGE_REQUEST: This channel is not a message request"
+      );
     }
-    await this.client.api.channels[this.id].recipients['@me'].delete();
+    await this.client.api.channels[this.id].recipients["@me"].delete();
     return this;
   }
 
   get partial() {
-    return typeof this.lastMessageId === 'undefined';
+    return this.lastMessageId === undefined;
   }
 
   fetch(force = true) {
@@ -105,15 +116,15 @@ class DMChannel extends Channel {
 
   sync() {
     this.client.ws.broadcast({
-      op: Opcodes.DM_UPDATE,
       d: {
         channel_id: this.id,
       },
+      op: Opcodes.DM_UPDATE,
     });
   }
 
   ring() {
-    return this.client.api.channels(this.id, 'call', 'ring').post({
+    return this.client.api.channels(this.id, "call", "ring").post({
       data: {
         recipients: null,
       },
@@ -138,13 +149,13 @@ class DMChannel extends Channel {
     return (methods: VoiceAdapter) => {
       this.client.voice.adapters.set(this.id, methods);
       return {
+        destroy: () => {
+          this.client.voice.adapters.delete(this.id);
+        },
         sendPayload: (data: unknown) => {
           if (!this.shard || this.shard.status !== Status.READY) return false;
           this.shard!.send(data);
           return true;
-        },
-        destroy: () => {
-          this.client.voice.adapters.delete(this.id);
         },
       };
     };
@@ -158,7 +169,7 @@ class DMChannel extends Channel {
   get lastPinAt(): Date | null {
     return null;
   }
-  declare send: (options: import('../types/channels').SendOptions) => import('../types/channels').SendResult;
+  declare send: (options: SendOptions) => SendResult;
   sendTyping() {}
   createMessageCollector() {}
   awaitMessages() {}
@@ -166,7 +177,12 @@ class DMChannel extends Channel {
   // Doesn't work on DM channels; setNSFW() {}
 }
 
-TextBasedChannel.applyToClass(DMChannel, true, ['fetchWebhooks', 'createWebhook', 'setRateLimitPerUser', 'setNSFW']);
+TextBasedChannel.applyToClass(DMChannel, true, [
+  "fetchWebhooks",
+  "createWebhook",
+  "setRateLimitPerUser",
+  "setNSFW",
+]);
 
 export default DMChannel;
 export { DMChannel };

@@ -1,7 +1,8 @@
-import { expect, test } from 'bun:test';
-import { Client, Intents } from '../src/index';
+import { expect, test } from "bun:test";
 
-test('Client options default to a single shard and full intents', () => {
+import { Client, Intents } from "../src/index";
+
+test("Client options default to a single shard and full intents", () => {
   const client = new Client();
 
   try {
@@ -13,7 +14,7 @@ test('Client options default to a single shard and full intents', () => {
   }
 });
 
-test('Client options honor an explicit shardCount', () => {
+test("Client options honor an explicit shardCount", () => {
   const client = new Client({ shardCount: 3 });
 
   try {
@@ -24,7 +25,7 @@ test('Client options honor an explicit shardCount', () => {
   }
 });
 
-test('Client options honor explicit shard IDs', () => {
+test("Client options honor explicit shard IDs", () => {
   const client = new Client({ shards: [0, 2] });
 
   try {
@@ -35,7 +36,7 @@ test('Client options honor explicit shard IDs', () => {
   }
 });
 
-test('Client options accept a single shard ID', () => {
+test("Client options accept a single shard ID", () => {
   const client = new Client({ shards: 1 });
 
   try {
@@ -46,7 +47,7 @@ test('Client options accept a single shard ID', () => {
   }
 });
 
-test('Client options keep an explicit shardCount alongside explicit shard IDs', () => {
+test("Client options keep an explicit shardCount alongside explicit shard IDs", () => {
   const client = new Client({ shardCount: 3, shards: [0, 2] });
 
   try {
@@ -57,18 +58,18 @@ test('Client options keep an explicit shardCount alongside explicit shard IDs', 
   }
 });
 
-test('Client options keep auto shard resolution for gateway connect', () => {
-  const client = new Client({ shards: 'auto' });
+test("Client options keep auto shard resolution for gateway connect", () => {
+  const client = new Client({ shards: "auto" });
 
   try {
-    expect(client.options.shards).toBe('auto');
+    expect(client.options.shards).toBe("auto");
     expect(client.ws.totalShards).toBe(1);
   } finally {
     client.destroy();
   }
 });
 
-test('Client options accept intents for type parity but ignore them', () => {
+test("Client options accept intents for type parity but ignore them", () => {
   const client = new Client({ intents: Intents.FLAGS.GUILDS });
 
   try {
@@ -78,9 +79,9 @@ test('Client options accept intents for type parity but ignore them', () => {
   }
 });
 
-test('Client options reject invalid shard settings', () => {
+test("Client options reject invalid shard settings", () => {
   expect(() => new Client({ shardCount: 0 })).toThrow();
   expect(() => new Client({ shardCount: 1.5 })).toThrow();
   expect(() => new Client({ shards: [] })).toThrow();
-  expect(() => new Client({ shards: 'invalid' })).toThrow();
+  expect(() => new Client({ shards: "invalid" })).toThrow();
 });

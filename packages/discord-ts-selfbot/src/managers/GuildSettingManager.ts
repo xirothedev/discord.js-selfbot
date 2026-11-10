@@ -1,9 +1,11 @@
-import BaseManager from './BaseManager';
-import type { RawGuildSettingsData } from '../../typings';
-import type { Guild } from '../structures/Guild';
+import BaseManager from "./BaseManager";
+import type { RawGuildSettingsData } from "../../typings";
+import type { Guild } from "../structures/Guild";
+import type { Snowflake } from "discord-api-types/v10";
+
 class GuildSettingManager extends BaseManager {
   #rawSetting: Partial<RawGuildSettingsData> = {};
-  declare guildId: import('discord-api-types/v10').Snowflake;
+  declare guildId: Snowflake;
   declare suppressEveryone?: boolean;
   declare suppressRoles?: boolean;
   declare muteScheduledEvents?: boolean;
@@ -31,29 +33,29 @@ class GuildSettingManager extends BaseManager {
 
   _patch(data: Partial<RawGuildSettingsData> = {}) {
     this.#rawSetting = Object.assign(this.#rawSetting, data);
-    this.client.emit('debug', `[SETTING > Guild ${this.guildId}] Sync setting`);
-    if ('suppress_everyone' in data) {
+    this.client.emit("debug", `[SETTING > Guild ${this.guildId}] Sync setting`);
+    if ("suppress_everyone" in data) {
       this.suppressEveryone = data.suppress_everyone;
     }
-    if ('suppress_roles' in data) {
+    if ("suppress_roles" in data) {
       this.suppressRoles = data.suppress_roles;
     }
-    if ('mute_scheduled_events' in data) {
+    if ("mute_scheduled_events" in data) {
       this.muteScheduledEvents = data.mute_scheduled_events;
     }
-    if ('message_notifications' in data) {
+    if ("message_notifications" in data) {
       this.messageNotifications = data.message_notifications;
     }
-    if ('flags' in data) {
+    if ("flags" in data) {
       this.flags = data.flags;
     }
-    if ('mobile_push' in data) {
+    if ("mobile_push" in data) {
       this.mobilePush = data.mobile_push;
     }
-    if ('muted' in data) {
+    if ("muted" in data) {
       this.muted = data.muted;
     }
-    if ('mute_config' in data && data.mute_config !== null) {
+    if ("mute_config" in data && data.mute_config !== null) {
       if (data.mute_config) {
         this.muteConfig = {
           endTime: new Date(data.mute_config.end_time),
@@ -63,23 +65,26 @@ class GuildSettingManager extends BaseManager {
     } else {
       this.muteConfig = null;
     }
-    if ('hide_muted_channels' in data) {
+    if ("hide_muted_channels" in data) {
       this.hideMutedChannels = data.hide_muted_channels;
     }
-    if ('channel_overrides' in data) {
+    if ("channel_overrides" in data) {
       this.channelOverrides = data.channel_overrides ?? [];
     }
-    if ('notify_highlights' in data) {
+    if ("notify_highlights" in data) {
       this.notifyHighlights = data.notify_highlights;
     }
-    if ('version' in data) {
+    if ("version" in data) {
       this.version = data.version;
     }
   }
   async edit(data: Partial<RawGuildSettingsData>) {
-    const data_ = await this.client.api.users('@me').guilds(this.guildId).settings.patch<RawGuildSettingsData>({
-      data,
-    });
+    const data_ = await this.client.api
+      .users("@me")
+      .guilds(this.guildId)
+      .settings.patch<RawGuildSettingsData>({
+        data,
+      });
     this._patch(data_);
     return this;
   }

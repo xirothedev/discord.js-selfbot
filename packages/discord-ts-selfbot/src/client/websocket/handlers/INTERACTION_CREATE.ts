@@ -1,30 +1,38 @@
-import AutocompleteInteraction from '../../../structures/AutocompleteInteraction';
-import ButtonInteraction from '../../../structures/ButtonInteraction';
-import CommandInteraction from '../../../structures/CommandInteraction';
-import MessageContextMenuInteraction from '../../../structures/MessageContextMenuInteraction';
-import ModalSubmitInteraction from '../../../structures/ModalSubmitInteraction';
-import SelectMenuInteraction from '../../../structures/SelectMenuInteraction';
-import UserContextMenuInteraction from '../../../structures/UserContextMenuInteraction';
-import _ConstantsModule from '../../../util/Constants';
-const { ApplicationCommandTypes, Events, InteractionTypes, MessageComponentTypes } = _ConstantsModule;
-import type { Client } from '../../Client';
-import type { WebSocketShard } from '../WebSocketShard';
-import type { RawInteractionData } from '../../../../typings/rawDataTypes';
+import AutocompleteInteraction from "../../../structures/AutocompleteInteraction";
+import ButtonInteraction from "../../../structures/ButtonInteraction";
+import CommandInteraction from "../../../structures/CommandInteraction";
+import MessageContextMenuInteraction from "../../../structures/MessageContextMenuInteraction";
+import ModalSubmitInteraction from "../../../structures/ModalSubmitInteraction";
+import SelectMenuInteraction from "../../../structures/SelectMenuInteraction";
+import UserContextMenuInteraction from "../../../structures/UserContextMenuInteraction";
+import _ConstantsModule from "../../../util/Constants";
+
+const {
+  ApplicationCommandTypes,
+  Events,
+  InteractionTypes,
+  MessageComponentTypes,
+} = _ConstantsModule;
+import type { Client } from "../../Client";
+import type { WebSocketShard } from "../WebSocketShard";
+import type { RawInteractionData } from "../../../../typings/rawDataTypes";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
+  return typeof value === "object" && value !== null;
 }
 
 function isInteractionData(value: unknown): value is RawInteractionData {
-  return isRecord(value) && typeof value.type === 'number';
+  return isRecord(value) && typeof value.type === "number";
 }
 
 type InteractionConstructor = new (...args: never[]) => unknown;
 
-function resolveInteractionType(data: RawInteractionData): InteractionConstructor | null {
+function resolveInteractionType(
+  data: RawInteractionData
+): InteractionConstructor | null {
   const payload: unknown = data.data;
   switch (data.type) {
-    case InteractionTypes.APPLICATION_COMMAND:
+    case InteractionTypes.APPLICATION_COMMAND: {
       switch (isRecord(payload) ? payload.type : undefined) {
         case ApplicationCommandTypes.USER:
           return UserContextMenuInteraction;
@@ -33,7 +41,8 @@ function resolveInteractionType(data: RawInteractionData): InteractionConstructo
         default:
           return CommandInteraction;
       }
-    case InteractionTypes.MESSAGE_COMPONENT:
+    }
+    case InteractionTypes.MESSAGE_COMPONENT: {
       switch (isRecord(payload) ? payload.component_type : undefined) {
         case MessageComponentTypes.BUTTON:
           return ButtonInteraction;
@@ -46,20 +55,32 @@ function resolveInteractionType(data: RawInteractionData): InteractionConstructo
         default:
           return null;
       }
-    case InteractionTypes.APPLICATION_COMMAND_AUTOCOMPLETE:
+    }
+    case InteractionTypes.APPLICATION_COMMAND_AUTOCOMPLETE: {
       return AutocompleteInteraction;
-    case InteractionTypes.MODAL_SUBMIT:
+    }
+    case InteractionTypes.MODAL_SUBMIT: {
       return ModalSubmitInteraction;
-    default:
+    }
+    default: {
       return null;
+    }
   }
 }
 
-export default (client: Client, packet: { d?: unknown }, _shard: WebSocketShard) => {
-  if (!isInteractionData(packet.d)) return;
+export default (
+  client: Client,
+  packet: { d?: unknown },
+  _shard: WebSocketShard
+) => {
+  if (!isInteractionData(packet.d)) {
+    return;
+  }
   const data = packet.d;
   const InteractionType = resolveInteractionType(data);
-  const interaction = InteractionType ? Reflect.construct(InteractionType, [client, data]) : data;
+  const interaction = InteractionType
+    ? Reflect.construct(InteractionType, [client, data])
+    : data;
 
   client.emit(Events.INTERACTION_CREATE, interaction);
 };

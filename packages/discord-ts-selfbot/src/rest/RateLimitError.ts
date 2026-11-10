@@ -21,9 +21,9 @@ class RateLimitError extends Error {
     route: string;
     global: boolean;
   }) {
-    super(`A ${global ? 'global ' : ''}rate limit was hit on route ${route}`);
+    super(`A ${global ? "global " : ""}rate limit was hit on route ${route}`);
 
-    this.name = 'RateLimitError';
+    this.name = "RateLimitError";
 
     this.timeout = timeout;
 

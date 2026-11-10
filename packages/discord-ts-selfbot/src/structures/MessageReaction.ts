@@ -1,38 +1,45 @@
-import GuildEmoji from './GuildEmoji';
-import ReactionEmoji from './ReactionEmoji';
-import ReactionUserManager from '../managers/ReactionUserManager';
-import Util from '../util/Util';
-import type { ReactionCountDetailsData } from '../../typings';
-import type { RawMessageReactionData } from '../../typings/rawDataTypes';
+import GuildEmoji from "./GuildEmoji";
+import ReactionEmoji from "./ReactionEmoji";
+import ReactionUserManager from "../managers/ReactionUserManager";
+import Util from "../util/Util";
+import type { ReactionCountDetailsData } from "../../typings";
+import type { RawMessageReactionData } from "../../typings/rawDataTypes";
 
-export type RawMessageReactionSource = Omit<Partial<RawMessageReactionData>, 'count'> & {
-  emoji: import('discord-api-types/v10').APIPartialEmoji;
+export type RawMessageReactionSource = Omit<
+  Partial<RawMessageReactionData>,
+  "count"
+> & {
+  emoji: APIPartialEmoji;
   count?: number | null;
   me?: boolean;
   me_burst?: boolean;
 };
 
-type RawMessageReactionPatch = {
+interface RawMessageReactionPatch {
   burst_colors?: string[] | null;
   count?: number;
   count_details?: ReactionCountDetailsData;
-};
-import type { Message } from './Message';
-import type { User } from './User';
+}
+import type { Message } from "./Message";
+import type { User } from "./User";
+import type { APIPartialEmoji } from "discord-api-types/v10";
+import type Client from "../client/Client";
 
-function isReactionCountDetails(value: unknown): value is ReactionCountDetailsData {
+function isReactionCountDetails(
+  value: unknown
+): value is ReactionCountDetailsData {
   return (
-    typeof value === 'object' &&
+    typeof value === "object" &&
     value !== null &&
-    'burst' in value &&
-    typeof value.burst === 'number' &&
-    'normal' in value &&
-    typeof value.normal === 'number'
+    "burst" in value &&
+    typeof value.burst === "number" &&
+    "normal" in value &&
+    typeof value.normal === "number"
   );
 }
 
 class MessageReaction {
-  declare client: import('../client/Client').default;
+  declare client: Client;
   declare message: Message;
   declare me: boolean;
   declare meBurst: boolean;
@@ -42,8 +49,12 @@ class MessageReaction {
   declare count: number;
   declare countDetails: ReactionCountDetailsData;
 
-  constructor(client: import('../client/Client').default, data: RawMessageReactionSource, message: Message) {
-    Object.defineProperty(this, 'client', { value: client });
+  constructor(
+    client: Client,
+    data: RawMessageReactionSource,
+    message: Message
+  ) {
+    Object.defineProperty(this, "client", { value: client });
 
     this.message = message;
 
@@ -51,7 +62,10 @@ class MessageReaction {
 
     this.meBurst = Boolean(data.me_burst);
 
-    this.users = new ReactionUserManager(this, this.me && client.user ? [client.user] : []);
+    this.users = new ReactionUserManager(
+      this,
+      this.me && client.user ? [client.user] : []
+    );
 
     this._emoji = new ReactionEmoji(this, data.emoji);
 
@@ -61,7 +75,9 @@ class MessageReaction {
       burst_colors: data.burst_colors,
       count: data.count ?? undefined,
       count_details:
-        'count_details' in data && isReactionCountDetails(data.count_details) ? data.count_details : undefined,
+        "count_details" in data && isReactionCountDetails(data.count_details)
+          ? data.count_details
+          : undefined,
     });
   }
 
@@ -95,7 +111,9 @@ class MessageReaction {
   }
 
   get emoji() {
-    if (this._emoji instanceof GuildEmoji) return this._emoji;
+    if (this._emoji instanceof GuildEmoji) {
+      return this._emoji;
+    }
     // Check to see if the emoji has become known to the client
     if (this._emoji.id) {
       const emojis = this.message.client.emojis.cache;
@@ -115,9 +133,10 @@ class MessageReaction {
   }
 
   async fetch() {
-    const message: import('./Message').Message = await this.message.fetch();
+    const message: Message = await this.message.fetch();
     const key = this.emoji.id ?? this.emoji.name;
-    const existing = key === null ? undefined : message.reactions.cache.get(key);
+    const existing =
+      key === null ? undefined : message.reactions.cache.get(key);
     // The reaction won't get set when it has been completely removed
     if (existing) {
       this._patch({
@@ -132,38 +151,60 @@ class MessageReaction {
   }
 
   toJSON() {
-    return Util.flatten(this, { emoji: 'emojiId', message: 'messageId' });
+    return Util.flatten(this, { emoji: "emojiId", message: "messageId" });
   }
 
   _add(user: User, burst = false) {
-    if (this.partial) return;
+    if (this.partial) {
+      return;
+    }
     this.users.cache.set(user.id, user);
-    if (!this.me || user.id !== this.message.client.user!.id || this.count === 0) {
+    if (
+      !this.me ||
+      user.id !== this.message.client.user!.id ||
+      this.count === 0
+    ) {
       this.count++;
-      if (burst) this.countDetails.burst++;
-      else this.countDetails.normal++;
+      if (burst) {
+        this.countDetails.burst++;
+      } else {
+        this.countDetails.normal++;
+      }
     }
     if (user.id === this.message.client.user!.id) {
-      if (burst) this.meBurst = true;
-      else this.me = true;
+      if (burst) {
+        this.meBurst = true;
+      } else {
+        this.me = true;
+      }
     }
   }
 
   _remove(user: User, burst = false) {
-    if (this.partial) return;
+    if (this.partial) {
+      return;
+    }
     this.users.cache.delete(user.id);
     if (!this.me || user.id !== this.message.client.user!.id) {
       this.count--;
-      if (burst) this.countDetails.burst--;
-      else this.countDetails.normal--;
+      if (burst) {
+        this.countDetails.burst--;
+      } else {
+        this.countDetails.normal--;
+      }
     }
     if (user.id === this.message.client.user!.id) {
-      if (burst) this.meBurst = false;
-      else this.me = false;
+      if (burst) {
+        this.meBurst = false;
+      } else {
+        this.me = false;
+      }
     }
     if (this.count <= 0 && this.users.cache.size === 0) {
       const key = this.emoji.id ?? this.emoji.name;
-      if (key !== null) this.message.reactions.cache.delete(key);
+      if (key !== null) {
+        this.message.reactions.cache.delete(key);
+      }
     }
   }
 }

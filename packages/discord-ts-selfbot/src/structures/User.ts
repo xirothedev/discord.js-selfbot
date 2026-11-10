@@ -1,37 +1,44 @@
-import Base from './Base';
-import VoiceState from './VoiceState';
-import TextBasedChannel from './interfaces/TextBasedChannel';
-import _errorsModule from '../errors';
+import Base from "./Base";
+import VoiceState from "./VoiceState";
+import TextBasedChannel from "./interfaces/TextBasedChannel";
+import _errorsModule from "../errors";
+
 const { Error } = _errorsModule;
-import _ConstantsModule from '../util/Constants';
+import _ConstantsModule from "../util/Constants";
+
 const { RelationshipTypes } = _ConstantsModule;
-import SnowflakeUtil from '../util/SnowflakeUtil';
-import UserFlags from '../util/UserFlags';
-import Util from '../util/Util';
-import type { APIUser } from 'discord-api-types/v10';
-import type { ImageURLOptions } from '../../typings';
-import type { SelfbotUserData } from '../types/selfbot/user';
-import type { UserEntity } from '../types/entities/user';
-import type { PatchOf } from '../types/schema';
+import SnowflakeUtil from "../util/SnowflakeUtil";
+import UserFlags from "../util/UserFlags";
+import Util from "../util/Util";
+import type { APIUser } from "discord-api-types/v10";
+import type { ImageURLOptions } from "../../typings";
+import type { SelfbotUserData } from "../types/selfbot/user";
+import type { UserEntity } from "../types/entities/user";
+import type { PatchOf } from "../types/schema";
+import type { SendOptions } from "../types/channels";
+import type { SendResult } from "../types/channels";
+import type Client from "../client/Client";
+import type { VoiceState as VoiceStateType } from "./VoiceState";
+import type { Guild } from "./Guild";
 
 class User extends Base implements UserEntity {
-  declare send: (options: import('../types/channels').SendOptions) => import('../types/channels').SendResult;
-  declare accentColor: UserEntity['accentColor'];
-  declare avatar: UserEntity['avatar'];
-  declare avatarDecorationData: UserEntity['avatarDecorationData'];
-  declare banner: UserEntity['banner'];
-  declare bannerColor: UserEntity['bannerColor'];
-  declare bot: UserEntity['bot'];
-  declare collectibles: UserEntity['collectibles'];
-  declare discriminator: UserEntity['discriminator'];
-  declare flags: UserEntity['flags'];
-  declare globalName: UserEntity['globalName'];
-  declare id: UserEntity['id'];
-  declare primaryGuild: UserEntity['primaryGuild'];
-  declare system: UserEntity['system'];
-  declare username: UserEntity['username'];
+  declare send: (options: SendOptions) => SendResult;
+  declare accentColor: UserEntity["accentColor"];
+  declare avatar: UserEntity["avatar"];
+  declare avatarDecorationData: UserEntity["avatarDecorationData"];
+  declare banner: UserEntity["banner"];
+  declare bannerColor: UserEntity["bannerColor"];
+  declare bot: UserEntity["bot"];
+  declare collectibles: UserEntity["collectibles"];
+  declare discriminator: UserEntity["discriminator"];
+  declare flags: UserEntity["flags"];
+  declare globalName: UserEntity["globalName"];
+  declare id: UserEntity["id"];
+  declare primaryGuild: UserEntity["primaryGuild"];
+  declare system: UserEntity["system"];
+  declare username: UserEntity["username"];
 
-  constructor(client: import('../client/Client').default, data: SelfbotUserData) {
+  constructor(client: Client, data: SelfbotUserData) {
     super(client);
 
     this.id = data.id;
@@ -45,15 +52,15 @@ class User extends Base implements UserEntity {
     this._patch(data);
   }
 
-  _patch(data: PatchOf<'User'>) {
+  _patch(data: PatchOf<"User">) {
     if (data.username !== undefined) {
       this.username = data.username;
     }
 
-    if (data.global_name !== undefined) {
-      this.globalName = data.global_name;
-    } else {
+    if (data.global_name === undefined) {
       this.globalName ??= null;
+    } else {
+      this.globalName = data.global_name;
     }
 
     if (data.bot !== undefined) {
@@ -66,10 +73,10 @@ class User extends Base implements UserEntity {
       this.discriminator = data.discriminator;
     }
 
-    if (data.avatar !== undefined) {
-      this.avatar = data.avatar;
-    } else {
+    if (data.avatar === undefined) {
       this.avatar ??= null;
+    } else {
+      this.avatar = data.avatar;
     }
 
     if (data.banner !== undefined) {
@@ -100,7 +107,9 @@ class User extends Base implements UserEntity {
       this.flags = new UserFlags(data.public_flags).freeze();
     }
 
-    if (data.avatar_decoration_data !== undefined) {
+    if (data.avatar_decoration_data === undefined) {
+      this.avatarDecorationData ??= null;
+    } else {
       if (data.avatar_decoration_data) {
         this.avatarDecorationData = {
           asset: data.avatar_decoration_data.asset,
@@ -109,11 +118,11 @@ class User extends Base implements UserEntity {
       } else {
         this.avatarDecorationData = null;
       }
-    } else {
-      this.avatarDecorationData ??= null;
     }
 
-    if (data.primary_guild !== undefined) {
+    if (data.primary_guild === undefined) {
+      this.primaryGuild ??= null;
+    } else {
       if (data.primary_guild) {
         this.primaryGuild = {
           identityGuildId: data.primary_guild.identity_guild_id,
@@ -124,18 +133,16 @@ class User extends Base implements UserEntity {
       } else {
         this.primaryGuild = null;
       }
-    } else {
-      this.primaryGuild ??= null;
     }
 
     if (data.collectibles) {
       if (data.collectibles.nameplate) {
         this.collectibles = {
           nameplate: {
-            skuId: data.collectibles.nameplate.sku_id,
             asset: data.collectibles.nameplate.asset,
             label: data.collectibles.nameplate.label,
             palette: data.collectibles.nameplate.palette,
+            skuId: data.collectibles.nameplate.sku_id,
           },
         };
       } else {
@@ -166,7 +173,7 @@ class User extends Base implements UserEntity {
   }
 
   get partial() {
-    return typeof this.username !== 'string';
+    return typeof this.username !== "string";
   }
 
   get createdTimestamp() {
@@ -177,14 +184,26 @@ class User extends Base implements UserEntity {
     return new Date(this.createdTimestamp);
   }
 
-  avatarURL({ format = 'webp', size, dynamic }: ImageURLOptions = {}) {
-    if (!this.avatar) return null;
-    return this.client.rest.cdn.Avatar(this.id, this.avatar, format, size, dynamic);
+  avatarURL({ format = "webp", size, dynamic }: ImageURLOptions = {}) {
+    if (!this.avatar) {
+      return null;
+    }
+    return this.client.rest.cdn.Avatar(
+      this.id,
+      this.avatar,
+      format,
+      size,
+      dynamic
+    );
   }
 
   avatarDecorationURL() {
-    if (!this.avatarDecorationData) return null;
-    return this.client.rest.cdn.AvatarDecoration(this.avatarDecorationData.asset);
+    if (!this.avatarDecorationData) {
+      return null;
+    }
+    return this.client.rest.cdn.AvatarDecoration(
+      this.avatarDecorationData.asset
+    );
   }
 
   /**
@@ -198,13 +217,15 @@ class User extends Base implements UserEntity {
 
   guildTagBadgeURL() {
     const pg = this.primaryGuild;
-    if (!pg?.identityGuildId || !pg.badge) return null;
+    if (!pg?.identityGuildId || !pg.badge) {
+      return null;
+    }
     return this.client.rest.cdn.GuildTagBadge(pg.identityGuildId, pg.badge);
   }
 
   get defaultAvatarURL() {
     const index =
-      this.discriminator === '0' || this.discriminator === '0000'
+      this.discriminator === "0" || this.discriminator === "0000"
         ? Util.calculateUserDefaultAvatarIndex(this.id)
         : Number(this.discriminator) % 5;
     return this.client.rest.cdn.DefaultAvatar(index);
@@ -215,19 +236,31 @@ class User extends Base implements UserEntity {
   }
 
   get hexAccentColor() {
-    if (typeof this.accentColor !== 'number') return this.accentColor;
-    return `#${this.accentColor.toString(16).padStart(6, '0')}`;
+    if (typeof this.accentColor !== "number") {
+      return this.accentColor;
+    }
+    return `#${this.accentColor.toString(16).padStart(6, "0")}`;
   }
 
-  bannerURL({ format = 'webp', size, dynamic }: ImageURLOptions = {}) {
-    if (typeof this.banner === 'undefined') throw new Error('USER_BANNER_NOT_FETCHED');
-    if (!this.banner) return null;
-    return this.client.rest.cdn.Banner(this.id, this.banner, format, size, dynamic);
+  bannerURL({ format = "webp", size, dynamic }: ImageURLOptions = {}) {
+    if (this.banner === undefined) {
+      throw new Error("USER_BANNER_NOT_FETCHED");
+    }
+    if (!this.banner) {
+      return null;
+    }
+    return this.client.rest.cdn.Banner(
+      this.id,
+      this.banner,
+      format,
+      size,
+      dynamic
+    );
   }
 
   get tag() {
-    return typeof this.username === 'string'
-      ? this.discriminator === '0' || this.discriminator === '0000'
+    return typeof this.username === "string"
+      ? this.discriminator === "0" || this.discriminator === "0000"
         ? this.username
         : `${this.username}#${this.discriminator}`
       : null;
@@ -241,7 +274,7 @@ class User extends Base implements UserEntity {
     return this.client.users.dmChannel(this.id);
   }
 
-  createDM(force: boolean = false) {
+  createDM(force = false) {
     return this.client.users.createDM(this.id, { force });
   }
 
@@ -262,12 +295,18 @@ class User extends Base implements UserEntity {
       this.accentColor === user.accentColor &&
       this.avatarDecorationData?.asset === user.avatarDecorationData?.asset &&
       this.avatarDecorationData?.skuId === user.avatarDecorationData?.skuId &&
-      this.collectibles?.nameplate?.skuId === user.collectibles?.nameplate?.skuId &&
-      this.collectibles?.nameplate?.asset === user.collectibles?.nameplate?.asset &&
-      this.collectibles?.nameplate?.label === user.collectibles?.nameplate?.label &&
-      this.collectibles?.nameplate?.palette === user.collectibles?.nameplate?.palette &&
-      this.primaryGuild?.identityGuildId === user.primaryGuild?.identityGuildId &&
-      this.primaryGuild?.identityEnabled === user.primaryGuild?.identityEnabled &&
+      this.collectibles?.nameplate?.skuId ===
+        user.collectibles?.nameplate?.skuId &&
+      this.collectibles?.nameplate?.asset ===
+        user.collectibles?.nameplate?.asset &&
+      this.collectibles?.nameplate?.label ===
+        user.collectibles?.nameplate?.label &&
+      this.collectibles?.nameplate?.palette ===
+        user.collectibles?.nameplate?.palette &&
+      this.primaryGuild?.identityGuildId ===
+        user.primaryGuild?.identityGuildId &&
+      this.primaryGuild?.identityEnabled ===
+        user.primaryGuild?.identityEnabled &&
       this.primaryGuild?.tag === user.primaryGuild?.tag &&
       this.primaryGuild?.badge === user.primaryGuild?.badge
     );
@@ -282,38 +321,48 @@ class User extends Base implements UserEntity {
       this.globalName === user.global_name &&
       this.avatar === user.avatar &&
       this.flags?.bitfield === user.public_flags &&
-      (user.banner !== undefined ? this.banner === user.banner : true) &&
-      (user.accent_color !== undefined ? this.accentColor === user.accent_color : true) &&
-      (user.avatar_decoration_data !== undefined
-        ? this.avatarDecorationData?.asset === user.avatar_decoration_data?.asset &&
-          this.avatarDecorationData?.skuId === user.avatar_decoration_data?.sku_id
-        : true) &&
-      (user.collectibles !== undefined
-        ? this.collectibles?.nameplate?.skuId === user.collectibles?.nameplate?.sku_id &&
-          this.collectibles?.nameplate?.asset === user.collectibles?.nameplate?.asset &&
-          this.collectibles?.nameplate?.label === user.collectibles?.nameplate?.label &&
-          this.collectibles?.nameplate?.palette === user.collectibles?.nameplate?.palette
-        : true) &&
-      (user.primary_guild !== undefined
-        ? this.primaryGuild?.identityGuildId === user.primary_guild?.identity_guild_id &&
-          this.primaryGuild?.identityEnabled === user.primary_guild?.identity_enabled &&
+      (user.banner === undefined ? true : this.banner === user.banner) &&
+      (user.accent_color === undefined
+        ? true
+        : this.accentColor === user.accent_color) &&
+      (user.avatar_decoration_data === undefined
+        ? true
+        : this.avatarDecorationData?.asset ===
+            user.avatar_decoration_data?.asset &&
+          this.avatarDecorationData?.skuId ===
+            user.avatar_decoration_data?.sku_id) &&
+      (user.collectibles === undefined
+        ? true
+        : this.collectibles?.nameplate?.skuId ===
+            user.collectibles?.nameplate?.sku_id &&
+          this.collectibles?.nameplate?.asset ===
+            user.collectibles?.nameplate?.asset &&
+          this.collectibles?.nameplate?.label ===
+            user.collectibles?.nameplate?.label &&
+          this.collectibles?.nameplate?.palette ===
+            user.collectibles?.nameplate?.palette) &&
+      (user.primary_guild === undefined
+        ? true
+        : this.primaryGuild?.identityGuildId ===
+            user.primary_guild?.identity_guild_id &&
+          this.primaryGuild?.identityEnabled ===
+            user.primary_guild?.identity_enabled &&
           this.primaryGuild?.tag === user.primary_guild?.tag &&
-          this.primaryGuild?.badge === user.primary_guild?.badge
-        : true)
+          this.primaryGuild?.badge === user.primary_guild?.badge)
     );
   }
 
-  fetch(force: boolean = true) {
+  fetch(force = true) {
     return this.client.users.fetch(this.id, { force });
   }
 
   getProfile(guildId?: string) {
     return this.client.api.users(this.id).profile.get({
       query: {
-        with_mutual_guilds: true,
+        guild_id: guildId,
         with_mutual_friends: true,
         with_mutual_friends_count: true,
-        guild_id: guildId,
+        with_mutual_guilds: true,
       },
     });
   }
@@ -330,7 +379,7 @@ class User extends Base implements UserEntity {
         hexAccentColor: true,
         tag: true,
       },
-      ...props,
+      ...props
     );
     json.avatarURL = this.avatarURL();
     json.displayAvatarURL = this.displayAvatarURL();
@@ -348,11 +397,11 @@ class User extends Base implements UserEntity {
     return this.client.notes.cache.get(this.id);
   }
 
-  get voice(): import('./VoiceState').VoiceState {
+  get voice(): VoiceStateType {
     return (
       this.client.voiceStates.cache.get(this.id) ??
       this.client.guilds.cache
-        .find((g: import('./Guild').Guild) => g.voiceStates.cache.get(this.id))
+        .find((g: Guild) => g.voiceStates.cache.get(this.id))
         ?.voiceStates.cache.get(this.id) ??
       new VoiceState(this.client, null, { user_id: this.id })
     );

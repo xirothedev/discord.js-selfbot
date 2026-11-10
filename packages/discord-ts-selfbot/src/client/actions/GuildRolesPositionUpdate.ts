@@ -1,5 +1,5 @@
-import Action from './Action';
-import type { Snowflake } from 'discord-api-types/v10';
+import Action from "./Action";
+import type { Snowflake } from "discord-api-types/v10";
 
 interface GuildRolesPositionUpdateData {
   guild_id: Snowflake;
@@ -8,14 +8,21 @@ interface GuildRolesPositionUpdateData {
 
 class GuildRolesPositionUpdate extends Action {
   handle(data: GuildRolesPositionUpdateData) {
-    const client = this.client;
+    const { client } = this;
 
     const guild = client.guilds.cache.get(data.guild_id);
     if (guild) {
       for (const partialRole of data.roles) {
-        if (typeof partialRole.id !== 'string' || typeof partialRole.position !== 'number') continue;
+        if (
+          typeof partialRole.id !== "string" ||
+          typeof partialRole.position !== "number"
+        ) {
+          continue;
+        }
         const role = guild.roles.cache.get(partialRole.id);
-        if (role) role.rawPosition = partialRole.position;
+        if (role) {
+          role.rawPosition = partialRole.position;
+        }
       }
     }
 

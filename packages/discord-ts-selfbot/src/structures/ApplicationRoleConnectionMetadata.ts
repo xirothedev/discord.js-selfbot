@@ -1,6 +1,11 @@
-import _ConstantsModule, { resolveEnumMember } from '../util/Constants';
+import _ConstantsModule, { resolveEnumMember } from "../util/Constants";
+
 const { ApplicationRoleConnectionMetadataTypes } = _ConstantsModule;
-import type { APIApplicationRoleConnectionMetadata, LocalizationMap } from 'discord-api-types/v10';
+import type {
+  APIApplicationRoleConnectionMetadata,
+  LocalizationMap,
+} from "discord-api-types/v10";
+import type { ApplicationRoleConnectionMetadataTypes as ApplicationRoleConnectionMetadataTypesType } from "../../typings/enums";
 
 class ApplicationRoleConnectionMetadata {
   declare name: string;
@@ -8,7 +13,7 @@ class ApplicationRoleConnectionMetadata {
   declare description: string;
   declare descriptionLocalizations: LocalizationMap | null;
   declare key: string;
-  declare type: import('../../typings/enums').ApplicationRoleConnectionMetadataTypes;
+  declare type: ApplicationRoleConnectionMetadataTypesType;
 
   constructor(data: APIApplicationRoleConnectionMetadata) {
     this.name = data.name;

@@ -9,7 +9,11 @@ class HTTPError extends Error {
     message: string,
     name: string,
     code: unknown,
-    request: { method: string; path: string; options?: { data?: unknown; files?: unknown[]; headers?: unknown } },
+    request: {
+      method: string;
+      path: string;
+      options?: { data?: unknown; files?: unknown[]; headers?: unknown };
+    }
   ) {
     super(message);
 
@@ -22,9 +26,9 @@ class HTTPError extends Error {
     this.path = request.path;
 
     this.requestData = {
-      json: request.options?.data,
       files: request.options?.files ?? [],
       headers: request.options?.headers,
+      json: request.options?.data,
     };
   }
 }

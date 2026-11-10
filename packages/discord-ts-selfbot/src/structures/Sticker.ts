@@ -1,15 +1,21 @@
-import process from 'node:process';
-import Base from './Base';
-import _errorsModule from '../errors';
+import process from "node:process";
+import Base from "./Base";
+import _errorsModule from "../errors";
+
 const { Error } = _errorsModule;
-import _ConstantsModule from '../util/Constants';
+import _ConstantsModule from "../util/Constants";
+
 const { StickerFormatTypes, StickerTypes } = _ConstantsModule;
-import SnowflakeUtil from '../util/SnowflakeUtil';
-import type { Snowflake } from 'discord-api-types/v10';
-import type { APISticker } from 'discord-api-types/v10';
-import type { GuildStickerEditData, StickerFormatType, StickerType } from '../../typings';
-import type { RawStickerData } from '../../typings/rawDataTypes';
-import type User from './User';
+import SnowflakeUtil from "../util/SnowflakeUtil";
+import type { Snowflake, APISticker } from "discord-api-types/v10";
+import type {
+  GuildStickerEditData,
+  StickerFormatType,
+  StickerType,
+} from "../../typings";
+import type { RawStickerData } from "../../typings/rawDataTypes";
+import type User from "./User";
+import type Client from "../client/Client";
 
 /**
  * @type {WeakSet<StageInstance>}
@@ -32,7 +38,10 @@ class Sticker extends Base {
   declare user: User | null;
   declare sortValue: number | null;
 
-  constructor(client: import('../client/Client').default, sticker: Partial<RawStickerData> & { id: Snowflake }) {
+  constructor(
+    client: Client,
+    sticker: Partial<RawStickerData> & { id: Snowflake }
+  ) {
     super(client);
 
     this._patch(sticker);
@@ -41,57 +50,65 @@ class Sticker extends Base {
   _patch(sticker: Partial<RawStickerData> & { id: Snowflake }) {
     this.id = sticker.id;
 
-    if ('description' in sticker) {
+    if ("description" in sticker) {
       this.description = sticker.description ?? null;
     } else {
       this.description ??= null;
     }
 
-    if ('type' in sticker) {
-      if (typeof sticker.type === 'number') this.type = StickerTypes[sticker.type];
+    if ("type" in sticker) {
+      if (typeof sticker.type === "number") {
+        this.type = StickerTypes[sticker.type];
+      }
     } else {
       this.type ??= null;
     }
 
-    if ('format_type' in sticker) {
-      if (typeof sticker.format_type === 'number') this.format = StickerFormatTypes[sticker.format_type];
+    if ("format_type" in sticker) {
+      if (typeof sticker.format_type === "number") {
+        this.format = StickerFormatTypes[sticker.format_type];
+      }
     }
 
-    if ('name' in sticker) {
-      if (typeof sticker.name === 'string') this.name = sticker.name;
+    if ("name" in sticker) {
+      if (typeof sticker.name === "string") {
+        this.name = sticker.name;
+      }
     }
 
-    if ('pack_id' in sticker) {
+    if ("pack_id" in sticker) {
       this.packId = sticker.pack_id ?? null;
     } else {
       this.packId ??= null;
     }
 
-    if ('tags' in sticker) {
-      if (typeof sticker.tags === 'string') this.tags = sticker.tags.split(', ');
+    if ("tags" in sticker) {
+      if (typeof sticker.tags === "string") {
+        this.tags = sticker.tags.split(", ");
+      }
     } else {
       this.tags ??= null;
     }
 
-    if ('available' in sticker) {
+    if ("available" in sticker) {
       this.available = sticker.available ?? null;
     } else {
       this.available ??= null;
     }
 
-    if ('guild_id' in sticker) {
+    if ("guild_id" in sticker) {
       this.guildId = sticker.guild_id ?? null;
     } else {
       this.guildId ??= null;
     }
 
-    if ('user' in sticker) {
+    if ("user" in sticker) {
       this.user = sticker.user ? this.client.users._add(sticker.user) : null;
     } else {
       this.user ??= null;
     }
 
-    if ('sort_value' in sticker) {
+    if ("sort_value" in sticker) {
       this.sortValue = sticker.sort_value ?? null;
     } else {
       this.sortValue ??= null;
@@ -115,8 +132,8 @@ class Sticker extends Base {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
-        'Sticker#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
-        'DeprecationWarning',
+        "Sticker#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.",
+        "DeprecationWarning"
       );
     }
 
@@ -127,13 +144,16 @@ class Sticker extends Base {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
-        'Sticker#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
-        'DeprecationWarning',
+        "Sticker#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.",
+        "DeprecationWarning"
       );
     }
 
-    if (value) deletedStickers.add(this);
-    else deletedStickers.delete(this);
+    if (value) {
+      deletedStickers.add(this);
+    } else {
+      deletedStickers.delete(this);
+    }
   }
 
   get partial() {
@@ -155,26 +175,40 @@ class Sticker extends Base {
   }
 
   async fetchPack() {
-    return (this.packId && (await this.client.fetchPremiumStickerPacks()).get(this.packId)) ?? null;
+    return (
+      (this.packId &&
+        (await this.client.fetchPremiumStickerPacks()).get(this.packId)) ??
+      null
+    );
   }
 
   async fetchUser() {
-    if (this.partial) await this.fetch();
-    if (!this.guildId) throw new Error('NOT_GUILD_STICKER');
-    const guild = this.guild;
-    if (!guild) return null;
+    if (this.partial) {
+      await this.fetch();
+    }
+    if (!this.guildId) {
+      throw new Error("NOT_GUILD_STICKER");
+    }
+    const { guild } = this;
+    if (!guild) {
+      return null;
+    }
     return guild.stickers.fetchUser(this);
   }
 
   edit(data: GuildStickerEditData, reason?: string) {
-    const guild = this.guild;
-    if (!guild) throw new Error('INVALID_TYPE', 'guildId', 'Guild');
+    const { guild } = this;
+    if (!guild) {
+      throw new Error("INVALID_TYPE", "guildId", "Guild");
+    }
     return guild.stickers.edit(this, data, reason);
   }
 
   async delete(reason?: string) {
-    const guild = this.guild;
-    if (!guild) throw new Error('INVALID_TYPE', 'guildId', 'Guild');
+    const { guild } = this;
+    if (!guild) {
+      throw new Error("INVALID_TYPE", "guildId", "Guild");
+    }
     await guild.stickers.delete(this, reason);
     return this;
   }
@@ -189,19 +223,18 @@ class Sticker extends Base {
         other.name === this.name &&
         other.packId === this.packId &&
         (other.tags?.length ?? 0) === (this.tags?.length ?? 0) &&
-        (other.tags ?? []).every(tag => (this.tags ?? []).includes(tag)) &&
+        (other.tags ?? []).every((tag) => (this.tags ?? []).includes(tag)) &&
         other.available === this.available &&
         other.guildId === this.guildId &&
         other.sortValue === this.sortValue
       );
-    } else {
-      return (
-        other.id === this.id &&
-        other.description === this.description &&
-        other.name === this.name &&
-        other.tags === this.tags?.join(', ')
-      );
     }
+    return (
+      other.id === this.id &&
+      other.description === this.description &&
+      other.name === this.name &&
+      other.tags === this.tags?.join(", ")
+    );
   }
 }
 

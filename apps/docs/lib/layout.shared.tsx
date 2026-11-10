@@ -1,8 +1,15 @@
-import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
-import { appName, gitConfig } from './shared';
+import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
+
+import { appName, gitConfig } from "./shared";
 
 export function baseOptions(): BaseLayoutProps {
   return {
+    githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
+    links: [
+      { active: "nested-url", text: "Docs", url: "/docs" },
+      { active: "nested-url", text: "API", url: "/docs/api" },
+      { active: "nested-url", text: "Examples", url: "/docs/examples" },
+    ],
     nav: {
       title: (
         <span className="flex items-center gap-2">
@@ -11,11 +18,5 @@ export function baseOptions(): BaseLayoutProps {
         </span>
       ),
     },
-    links: [
-      { text: 'Docs', url: '/docs', active: 'nested-url' },
-      { text: 'API', url: '/docs/api', active: 'nested-url' },
-      { text: 'Examples', url: '/docs/examples', active: 'nested-url' },
-    ],
-    githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
   };
 }

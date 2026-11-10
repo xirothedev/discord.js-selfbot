@@ -1,4 +1,4 @@
-export type Api = 'node' | 'bun';
+export type Api = "node" | "bun";
 
 export interface BenchContext {
   dir: string;

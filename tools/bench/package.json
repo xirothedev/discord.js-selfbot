@@ -2,15 +2,15 @@
   "name": "@discord-ts-selfbot/bench",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "description": "Node API vs Bun API benchmarks for the monorepo",
+  "type": "module",
   "scripts": {
     "start": "bun src/index.ts",
     "bench": "bun src/index.ts",
     "check": "bun check",
     "lint": "bun lint",
-    "fmt": "bun fmt src package.json tsconfig.json README.md",
-    "fmt:check": "bun fmt --check src package.json tsconfig.json README.md",
+    "fmt": "bun fmt",
+    "fmt:check": "bun fmt --check",
     "test": "bun test --pass-with-no-tests"
   },
   "devDependencies": {

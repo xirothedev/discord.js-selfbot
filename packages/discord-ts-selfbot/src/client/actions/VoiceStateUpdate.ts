@@ -1,13 +1,16 @@
-import Action from './Action';
-import type { GatewayVoiceStateUpdateDispatchData } from 'discord-api-types/v10';
-import VoiceState from '../../structures/VoiceState';
-import _ConstantsModule from '../../util/Constants';
+import Action from "./Action";
+import type { GatewayVoiceStateUpdateDispatchData } from "discord-api-types/v10";
+import VoiceState from "../../structures/VoiceState";
+import _ConstantsModule from "../../util/Constants";
+
 const { Events } = _ConstantsModule;
 
 class VoiceStateUpdate extends Action {
   handle(data: GatewayVoiceStateUpdateDispatchData) {
-    const client = this.client;
-    const guild = data.guild_id ? client.guilds.cache.get(data.guild_id) : undefined;
+    const { client } = this;
+    const guild = data.guild_id
+      ? client.guilds.cache.get(data.guild_id)
+      : undefined;
     if (guild) {
       // Update the state
       const oldState =
@@ -28,7 +31,8 @@ class VoiceStateUpdate extends Action {
     } else {
       // Update the state
       const oldState =
-        client.voiceStates.cache.get(data.user_id)?._clone() ?? new VoiceState(client, null, { user_id: data.user_id });
+        client.voiceStates.cache.get(data.user_id)?._clone() ??
+        new VoiceState(client, null, { user_id: data.user_id });
 
       const newState = client.voiceStates._add(data);
 
@@ -36,7 +40,10 @@ class VoiceStateUpdate extends Action {
     }
     // Emit event
     if (data.user_id === client.user?.id) {
-      client.emit('debug', `[VOICE] received voice state update: ${JSON.stringify(data)}`);
+      client.emit(
+        "debug",
+        `[VOICE] received voice state update: ${JSON.stringify(data)}`
+      );
       client.voice.onVoiceStateUpdate(data);
     }
   }

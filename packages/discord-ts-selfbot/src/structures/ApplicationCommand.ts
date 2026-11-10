@@ -1,19 +1,26 @@
-import Base from './Base';
-import ApplicationCommandPermissionsManager from '../managers/ApplicationCommandPermissionsManager';
-import _ConstantsModule from '../util/Constants';
-const { ApplicationCommandOptionTypes, ApplicationCommandTypes, ChannelTypes } = _ConstantsModule;
-import Permissions from '../util/Permissions';
-import SnowflakeUtil from '../util/SnowflakeUtil';
-import type { ChannelType, LocalizationMap, Snowflake } from 'discord-api-types/v10';
+import Base from "./Base";
+import ApplicationCommandPermissionsManager from "../managers/ApplicationCommandPermissionsManager";
+import _ConstantsModule from "../util/Constants";
+
+const { ApplicationCommandOptionTypes, ApplicationCommandTypes, ChannelTypes } =
+  _ConstantsModule;
+import Permissions from "../util/Permissions";
+import SnowflakeUtil from "../util/SnowflakeUtil";
+import type {
+  ChannelType,
+  LocalizationMap,
+  Snowflake,
+} from "discord-api-types/v10";
 import type {
   ApplicationCommandData,
   ApplicationCommandOptionData,
   ApplicationCommandOptionType,
   ApplicationCommandType,
   PermissionResolvable,
-} from '../../typings';
-import type { RawApplicationCommandData } from '../../typings/rawDataTypes';
-import type { Guild } from './Guild';
+} from "../../typings";
+import type { RawApplicationCommandData } from "../../typings/rawDataTypes";
+import type { Guild } from "./Guild";
+import type Client from "../client/Client";
 
 type ApplicationCommandPatch = Partial<RawApplicationCommandData> & {
   name_localized?: string;
@@ -93,10 +100,10 @@ class ApplicationCommand extends Base {
   declare version: Snowflake;
   declare autocomplete?: boolean;
   constructor(
-    client: import('../client/Client').default,
+    client: Client,
     data: RawApplicationCommandData,
     guild: Guild | null,
-    guildId: Snowflake | null = null,
+    guildId: Snowflake | null = null
   ) {
     super(client);
 
@@ -116,46 +123,48 @@ class ApplicationCommand extends Base {
   }
 
   _patch(data: ApplicationCommandPatch) {
-    if ('name' in data) {
+    if ("name" in data) {
       this.name = data.name!;
     }
 
-    if ('name_localizations' in data) {
+    if ("name_localizations" in data) {
       this.nameLocalizations = data.name_localizations ?? null;
     } else {
       this.nameLocalizations ??= null;
     }
 
-    if ('name_localized' in data) {
+    if ("name_localized" in data) {
       this.nameLocalized = data.name_localized ?? null;
     } else {
       this.nameLocalized ??= null;
     }
 
-    if ('description' in data) {
+    if ("description" in data) {
       this.description = data.description!;
     }
 
-    if ('description_localizations' in data) {
+    if ("description_localizations" in data) {
       this.descriptionLocalizations = data.description_localizations ?? null;
     } else {
       this.descriptionLocalizations ??= null;
     }
 
-    if ('description_localized' in data) {
+    if ("description_localized" in data) {
       this.descriptionLocalized = data.description_localized ?? null;
     } else {
       this.descriptionLocalized ??= null;
     }
 
-    if ('options' in data) {
-      this.options = (data.options ?? []).map(o => ApplicationCommand.transformOption(o, true));
+    if ("options" in data) {
+      this.options = (data.options ?? []).map((o) =>
+        ApplicationCommand.transformOption(o, true)
+      );
     } else {
       this.options ??= [];
     }
 
     /* eslint-disable max-len */
-    if ('default_permission' in data) {
+    if ("default_permission" in data) {
       /**
        * Whether the command is enabled by default when the app is added to a guild
        * @type {boolean}
@@ -165,7 +174,7 @@ class ApplicationCommand extends Base {
     }
     /* eslint-disable max-len */
 
-    if ('default_member_permissions' in data) {
+    if ("default_member_permissions" in data) {
       this.defaultMemberPermissions = data.default_member_permissions
         ? new Permissions(BigInt(data.default_member_permissions)).freeze()
         : null;
@@ -173,13 +182,13 @@ class ApplicationCommand extends Base {
       this.defaultMemberPermissions ??= null;
     }
 
-    if ('dm_permission' in data) {
+    if ("dm_permission" in data) {
       this.dmPermission = data.dm_permission ?? null;
     } else {
       this.dmPermission ??= null;
     }
 
-    if ('version' in data) {
+    if ("version" in data) {
       this.version = data.version!;
     }
   }
@@ -193,7 +202,9 @@ class ApplicationCommand extends Base {
   }
 
   get manager() {
-    if (!this.client.application) throw new Error('CLIENT_NOT_READY');
+    if (!this.client.application) {
+      throw new Error("CLIENT_NOT_READY");
+    }
     return this.client.application.commands;
   }
 
@@ -229,7 +240,9 @@ class ApplicationCommand extends Base {
   }
   /* eslint-enable max-len */
 
-  setDefaultMemberPermissions(defaultMemberPermissions: PermissionResolvable | null) {
+  setDefaultMemberPermissions(
+    defaultMemberPermissions: PermissionResolvable | null
+  ) {
     return this.edit({ defaultMemberPermissions });
   }
 
@@ -245,49 +258,65 @@ class ApplicationCommand extends Base {
     return this.manager.delete(this, this.guildId ?? undefined);
   }
 
-  equals(command: ApplicationCommand | ApplicationCommandComparable, enforceOptionOrder = false) {
+  equals(
+    command: ApplicationCommand | ApplicationCommandComparable,
+    enforceOptionOrder = false
+  ) {
     // If given an id, check if the id matches
-    if (command.id && this.id !== command.id) return false;
+    if (command.id && this.id !== command.id) {
+      return false;
+    }
 
     let defaultMemberPermissions = null;
-    let dmPermission = command.dmPermission ?? ('dm_permission' in command ? command.dm_permission : undefined);
+    const dmPermission =
+      command.dmPermission ??
+      ("dm_permission" in command ? command.dm_permission : undefined);
 
-    if ('default_member_permissions' in command) {
+    if ("default_member_permissions" in command) {
       defaultMemberPermissions = command.default_member_permissions
         ? new Permissions(BigInt(command.default_member_permissions)).bitfield
         : null;
     }
 
-    if ('defaultMemberPermissions' in command) {
+    if ("defaultMemberPermissions" in command) {
       defaultMemberPermissions =
-        command.defaultMemberPermissions !== null ? new Permissions(command.defaultMemberPermissions).bitfield : null;
+        command.defaultMemberPermissions === null
+          ? null
+          : new Permissions(command.defaultMemberPermissions).bitfield;
     }
 
     // Check top level parameters
     const commandType =
-      typeof command.type === 'string'
+      typeof command.type === "string"
         ? command.type
-        : typeof command.type === 'number'
+        : typeof command.type === "number"
           ? ApplicationCommandTypes[command.type]
           : undefined;
     if (
       command.name !== this.name ||
-      ('description' in command && command.description !== this.description) ||
-      ('version' in command && command.version !== this.version) ||
-      ('autocomplete' in command && command.autocomplete !== this.autocomplete) ||
+      ("description" in command && command.description !== this.description) ||
+      ("version" in command && command.version !== this.version) ||
+      ("autocomplete" in command &&
+        command.autocomplete !== this.autocomplete) ||
       (commandType && commandType !== this.type) ||
-      defaultMemberPermissions !== (this.defaultMemberPermissions?.bitfield ?? null) ||
-      (typeof dmPermission !== 'undefined' && dmPermission !== this.dmPermission) ||
+      defaultMemberPermissions !==
+        (this.defaultMemberPermissions?.bitfield ?? null) ||
+      (dmPermission !== undefined && dmPermission !== this.dmPermission) ||
       // Future proof for options being nullable
       // TODO: remove ?? 0 on each when nullable
       (command.options?.length ?? 0) !== (this.options?.length ?? 0) ||
-      (command.defaultPermission ?? command.default_permission ?? true) !== this.defaultPermission
+      (command.defaultPermission ?? command.default_permission ?? true) !==
+        this.defaultPermission
     ) {
       return false;
     }
 
     if (command.options) {
-      return ApplicationCommand.optionsEqual(this.options, command.options, enforceOptionOrder);
+      return ApplicationCommand.optionsEqual(
+        this.options,
+        command.options,
+        enforceOptionOrder
+      );
     }
     return true;
   }
@@ -295,16 +324,22 @@ class ApplicationCommand extends Base {
   static optionsEqual(
     existing: ApplicationCommandOptionSource[],
     options: ApplicationCommandOptionSource[],
-    enforceOptionOrder = false,
+    enforceOptionOrder = false
   ): boolean {
-    if (existing.length !== options.length) return false;
-    if (enforceOptionOrder) {
-      return existing.every((option, index) => this._optionEquals(option, options[index], enforceOptionOrder));
+    if (existing.length !== options.length) {
+      return false;
     }
-    const newOptions = new Map(options.map(option => [option.name, option]));
+    if (enforceOptionOrder) {
+      return existing.every((option, index) =>
+        this._optionEquals(option, options[index], enforceOptionOrder)
+      );
+    }
+    const newOptions = new Map(options.map((option) => [option.name, option]));
     for (const option of existing) {
       const foundOption = newOptions.get(option.name);
-      if (!foundOption || !this._optionEquals(option, foundOption)) return false;
+      if (!foundOption || !this._optionEquals(option, foundOption)) {
+        return false;
+      }
     }
     return true;
   }
@@ -312,19 +347,25 @@ class ApplicationCommand extends Base {
   static _optionEquals(
     existing: ApplicationCommandOptionSource,
     option: ApplicationCommandOptionSource,
-    enforceOptionOrder = false,
+    enforceOptionOrder = false
   ): boolean {
-    const optionType = typeof option.type === 'string' ? option.type : ApplicationCommandOptionTypes[option.type];
+    const optionType =
+      typeof option.type === "string"
+        ? option.type
+        : ApplicationCommandOptionTypes[option.type];
     if (
       option.name !== existing.name ||
       optionType !== existing.type ||
       option.description !== existing.description ||
       option.autocomplete !== existing.autocomplete ||
-      (option.required ?? (['SUB_COMMAND', 'SUB_COMMAND_GROUP'].includes(optionType) ? undefined : false)) !==
-        existing.required ||
+      (option.required ??
+        (["SUB_COMMAND", "SUB_COMMAND_GROUP"].includes(optionType)
+          ? undefined
+          : false)) !== existing.required ||
       option.choices?.length !== existing.choices?.length ||
       option.options?.length !== existing.options?.length ||
-      (option.channelTypes ?? option.channel_types)?.length !== existing.channelTypes?.length ||
+      (option.channelTypes ?? option.channel_types)?.length !==
+        existing.channelTypes?.length ||
       (option.minValue ?? option.min_value) !== existing.minValue ||
       (option.maxValue ?? option.max_value) !== existing.maxValue ||
       (option.minLength ?? option.min_length) !== existing.minLength ||
@@ -338,76 +379,116 @@ class ApplicationCommand extends Base {
         enforceOptionOrder &&
         !existing.choices.every(
           (choice, index) =>
-            choice.name === option.choices?.[index]?.name && choice.value === option.choices?.[index]?.value,
+            choice.name === option.choices?.[index]?.name &&
+            choice.value === option.choices?.[index]?.value
         )
       ) {
         return false;
       }
       if (!enforceOptionOrder) {
-        const newChoices = new Map(option.choices?.map(choice => [choice.name, choice]));
+        const newChoices = new Map(
+          option.choices?.map((choice) => [choice.name, choice])
+        );
         for (const choice of existing.choices) {
           const foundChoice = newChoices.get(choice.name);
-          if (!foundChoice || foundChoice.value !== choice.value) return false;
+          if (!foundChoice || foundChoice.value !== choice.value) {
+            return false;
+          }
         }
       }
     }
 
     if (existing.channelTypes) {
-      const newTypes: (string | number)[] = (option.channelTypes ?? option.channel_types ?? []).map(type =>
-        typeof type === 'number' ? ChannelTypes[type] : type,
-      );
+      const newTypes: (string | number)[] = (
+        option.channelTypes ??
+        option.channel_types ??
+        []
+      ).map((type) => (typeof type === "number" ? ChannelTypes[type] : type));
       for (const type of existing.channelTypes) {
-        if (!newTypes.includes(type)) return false;
+        if (!newTypes.includes(type)) {
+          return false;
+        }
       }
     }
 
     if (existing.options) {
-      return this.optionsEqual(existing.options, option.options ?? [], enforceOptionOrder);
+      return this.optionsEqual(
+        existing.options,
+        option.options ?? [],
+        enforceOptionOrder
+      );
     }
     return true;
   }
 
-  static transformOption(option: ApplicationCommandOptionSource, received: true): ApplicationCommandOptionSource;
-  static transformOption(option: ApplicationCommandOptionSource, received?: false): Record<string, unknown>;
   static transformOption(
     option: ApplicationCommandOptionSource,
-    received: boolean,
+    received: true
+  ): ApplicationCommandOptionSource;
+  static transformOption(
+    option: ApplicationCommandOptionSource,
+    received?: false
+  ): Record<string, unknown>;
+  static transformOption(
+    option: ApplicationCommandOptionSource,
+    received: boolean
   ): ApplicationCommandOptionSource | Record<string, unknown>;
   static transformOption(
     option: ApplicationCommandOptionSource,
-    received = false,
+    received = false
   ): ApplicationCommandOptionSource | Record<string, unknown> {
-    const stringType = typeof option.type === 'string' ? option.type : ApplicationCommandOptionTypes[option.type];
-    const channelTypesKey = received ? 'channelTypes' : 'channel_types';
-    const minValueKey = received ? 'minValue' : 'min_value';
-    const maxValueKey = received ? 'maxValue' : 'max_value';
-    const minLengthKey = received ? 'minLength' : 'min_length';
-    const maxLengthKey = received ? 'maxLength' : 'max_length';
-    const nameLocalizationsKey = received ? 'nameLocalizations' : 'name_localizations';
-    const nameLocalizedKey = received ? 'nameLocalized' : 'name_localized';
-    const descriptionLocalizationsKey = received ? 'descriptionLocalizations' : 'description_localizations';
-    const descriptionLocalizedKey = received ? 'descriptionLocalized' : 'description_localized';
+    const stringType =
+      typeof option.type === "string"
+        ? option.type
+        : ApplicationCommandOptionTypes[option.type];
+    const channelTypesKey = received ? "channelTypes" : "channel_types";
+    const minValueKey = received ? "minValue" : "min_value";
+    const maxValueKey = received ? "maxValue" : "max_value";
+    const minLengthKey = received ? "minLength" : "min_length";
+    const maxLengthKey = received ? "maxLength" : "max_length";
+    const nameLocalizationsKey = received
+      ? "nameLocalizations"
+      : "name_localizations";
+    const nameLocalizedKey = received ? "nameLocalized" : "name_localized";
+    const descriptionLocalizationsKey = received
+      ? "descriptionLocalizations"
+      : "description_localizations";
+    const descriptionLocalizedKey = received
+      ? "descriptionLocalized"
+      : "description_localized";
     return {
-      type: typeof option.type === 'number' && !received ? option.type : ApplicationCommandOptionTypes[option.type],
+      type:
+        typeof option.type === "number" && !received
+          ? option.type
+          : ApplicationCommandOptionTypes[option.type],
       name: option.name,
-      [nameLocalizationsKey]: option.nameLocalizations ?? option.name_localizations,
+      [nameLocalizationsKey]:
+        option.nameLocalizations ?? option.name_localizations,
       [nameLocalizedKey]: option.nameLocalized ?? option.name_localized,
       description: option.description,
-      [descriptionLocalizationsKey]: option.descriptionLocalizations ?? option.description_localizations,
-      [descriptionLocalizedKey]: option.descriptionLocalized ?? option.description_localized,
+      [descriptionLocalizationsKey]:
+        option.descriptionLocalizations ?? option.description_localizations,
+      [descriptionLocalizedKey]:
+        option.descriptionLocalized ?? option.description_localized,
       required:
-        option.required ?? (stringType === 'SUB_COMMAND' || stringType === 'SUB_COMMAND_GROUP' ? undefined : false),
+        option.required ??
+        (stringType === "SUB_COMMAND" || stringType === "SUB_COMMAND_GROUP"
+          ? undefined
+          : false),
       autocomplete: option.autocomplete,
-      choices: option.choices?.map(choice => ({
+      choices: option.choices?.map((choice) => ({
         name: choice.name,
         [nameLocalizedKey]: choice.nameLocalized ?? choice.name_localized,
-        [nameLocalizationsKey]: choice.nameLocalizations ?? choice.name_localizations,
+        [nameLocalizationsKey]:
+          choice.nameLocalizations ?? choice.name_localizations,
         value: choice.value,
       })),
-      options: option.options?.map(o => this.transformOption(o, received)),
+      options: option.options?.map((o) => this.transformOption(o, received)),
       [channelTypesKey]: received
-        ? option.channel_types?.map(type => ChannelTypes[type])
-        : (option.channelTypes?.map(type => (typeof type === 'string' ? ChannelTypes[type] : type)) ??
+        ? option.channel_types?.map((type) => ChannelTypes[type])
+        : (option.channelTypes?.map((type) =>
+            typeof type === "string" ? ChannelTypes[type] : type
+          ) ??
           // When transforming to API data, accept API data
           option.channel_types),
       [minValueKey]: option.minValue ?? option.min_value,

@@ -1,64 +1,66 @@
-import ApplicationCommandPermissionsUpdate from './ApplicationCommandPermissionsUpdate';
-import AutoModerationActionExecution from './AutoModerationActionExecution';
-import AutoModerationRuleCreate from './AutoModerationRuleCreate';
-import AutoModerationRuleDelete from './AutoModerationRuleDelete';
-import AutoModerationRuleUpdate from './AutoModerationRuleUpdate';
-import ChannelCreate from './ChannelCreate';
-import ChannelDelete from './ChannelDelete';
-import ChannelUpdate from './ChannelUpdate';
-import GuildAuditLogEntryCreate from './GuildAuditLogEntryCreate';
-import GuildBanAdd from './GuildBanAdd';
-import GuildBanRemove from './GuildBanRemove';
-import GuildChannelsPositionUpdate from './GuildChannelsPositionUpdate';
-import GuildDelete from './GuildDelete';
-import GuildEmojiCreate from './GuildEmojiCreate';
-import GuildEmojiDelete from './GuildEmojiDelete';
-import GuildEmojiUpdate from './GuildEmojiUpdate';
-import GuildEmojisUpdate from './GuildEmojisUpdate';
-import GuildIntegrationsUpdate from './GuildIntegrationsUpdate';
-import GuildMemberRemove from './GuildMemberRemove';
-import GuildMemberUpdate from './GuildMemberUpdate';
-import GuildRoleCreate from './GuildRoleCreate';
-import GuildRoleDelete from './GuildRoleDelete';
-import GuildRoleUpdate from './GuildRoleUpdate';
-import GuildRolesPositionUpdate from './GuildRolesPositionUpdate';
-import GuildScheduledEventCreate from './GuildScheduledEventCreate';
-import GuildScheduledEventDelete from './GuildScheduledEventDelete';
-import GuildScheduledEventUpdate from './GuildScheduledEventUpdate';
-import GuildScheduledEventUserAdd from './GuildScheduledEventUserAdd';
-import GuildScheduledEventUserRemove from './GuildScheduledEventUserRemove';
-import GuildStickerCreate from './GuildStickerCreate';
-import GuildStickerDelete from './GuildStickerDelete';
-import GuildStickerUpdate from './GuildStickerUpdate';
-import GuildStickersUpdate from './GuildStickersUpdate';
-import GuildUpdate from './GuildUpdate';
-import InviteCreate from './InviteCreate';
-import InviteDelete from './InviteDelete';
-import MessageCreate from './MessageCreate';
-import MessageDelete from './MessageDelete';
-import MessageDeleteBulk from './MessageDeleteBulk';
-import MessagePollVoteAdd from './MessagePollVoteAdd';
-import MessagePollVoteRemove from './MessagePollVoteRemove';
-import MessageReactionAdd from './MessageReactionAdd';
-import MessageReactionRemove from './MessageReactionRemove';
-import MessageReactionRemoveAll from './MessageReactionRemoveAll';
-import MessageReactionRemoveEmoji from './MessageReactionRemoveEmoji';
-import MessageUpdate from './MessageUpdate';
-import PresenceUpdate from './PresenceUpdate';
-import StageInstanceCreate from './StageInstanceCreate';
-import StageInstanceDelete from './StageInstanceDelete';
-import StageInstanceUpdate from './StageInstanceUpdate';
-import ThreadCreate from './ThreadCreate';
-import ThreadDelete from './ThreadDelete';
-import ThreadListSync from './ThreadListSync';
-import ThreadMemberUpdate from './ThreadMemberUpdate';
-import ThreadMembersUpdate from './ThreadMembersUpdate';
-import TypingStart from './TypingStart';
-import UserUpdate from './UserUpdate';
-import VoiceStateUpdate from './VoiceStateUpdate';
-import WebhooksUpdate from './WebhooksUpdate';
+import ApplicationCommandPermissionsUpdate from "./ApplicationCommandPermissionsUpdate";
+import AutoModerationActionExecution from "./AutoModerationActionExecution";
+import AutoModerationRuleCreate from "./AutoModerationRuleCreate";
+import AutoModerationRuleDelete from "./AutoModerationRuleDelete";
+import AutoModerationRuleUpdate from "./AutoModerationRuleUpdate";
+import ChannelCreate from "./ChannelCreate";
+import ChannelDelete from "./ChannelDelete";
+import ChannelUpdate from "./ChannelUpdate";
+import GuildAuditLogEntryCreate from "./GuildAuditLogEntryCreate";
+import GuildBanAdd from "./GuildBanAdd";
+import GuildBanRemove from "./GuildBanRemove";
+import GuildChannelsPositionUpdate from "./GuildChannelsPositionUpdate";
+import GuildDelete from "./GuildDelete";
+import GuildEmojiCreate from "./GuildEmojiCreate";
+import GuildEmojiDelete from "./GuildEmojiDelete";
+import GuildEmojiUpdate from "./GuildEmojiUpdate";
+import GuildEmojisUpdate from "./GuildEmojisUpdate";
+import GuildIntegrationsUpdate from "./GuildIntegrationsUpdate";
+import GuildMemberRemove from "./GuildMemberRemove";
+import GuildMemberUpdate from "./GuildMemberUpdate";
+import GuildRoleCreate from "./GuildRoleCreate";
+import GuildRoleDelete from "./GuildRoleDelete";
+import GuildRoleUpdate from "./GuildRoleUpdate";
+import GuildRolesPositionUpdate from "./GuildRolesPositionUpdate";
+import GuildScheduledEventCreate from "./GuildScheduledEventCreate";
+import GuildScheduledEventDelete from "./GuildScheduledEventDelete";
+import GuildScheduledEventUpdate from "./GuildScheduledEventUpdate";
+import GuildScheduledEventUserAdd from "./GuildScheduledEventUserAdd";
+import GuildScheduledEventUserRemove from "./GuildScheduledEventUserRemove";
+import GuildStickerCreate from "./GuildStickerCreate";
+import GuildStickerDelete from "./GuildStickerDelete";
+import GuildStickerUpdate from "./GuildStickerUpdate";
+import GuildStickersUpdate from "./GuildStickersUpdate";
+import GuildUpdate from "./GuildUpdate";
+import InviteCreate from "./InviteCreate";
+import InviteDelete from "./InviteDelete";
+import MessageCreate from "./MessageCreate";
+import MessageDelete from "./MessageDelete";
+import MessageDeleteBulk from "./MessageDeleteBulk";
+import MessagePollVoteAdd from "./MessagePollVoteAdd";
+import MessagePollVoteRemove from "./MessagePollVoteRemove";
+import MessageReactionAdd from "./MessageReactionAdd";
+import MessageReactionRemove from "./MessageReactionRemove";
+import MessageReactionRemoveAll from "./MessageReactionRemoveAll";
+import MessageReactionRemoveEmoji from "./MessageReactionRemoveEmoji";
+import MessageUpdate from "./MessageUpdate";
+import PresenceUpdate from "./PresenceUpdate";
+import StageInstanceCreate from "./StageInstanceCreate";
+import StageInstanceDelete from "./StageInstanceDelete";
+import StageInstanceUpdate from "./StageInstanceUpdate";
+import ThreadCreate from "./ThreadCreate";
+import ThreadDelete from "./ThreadDelete";
+import ThreadListSync from "./ThreadListSync";
+import ThreadMemberUpdate from "./ThreadMemberUpdate";
+import ThreadMembersUpdate from "./ThreadMembersUpdate";
+import TypingStart from "./TypingStart";
+import UserUpdate from "./UserUpdate";
+import VoiceStateUpdate from "./VoiceStateUpdate";
+import WebhooksUpdate from "./WebhooksUpdate";
+import type Client from "../Client";
+
 class ActionsManager {
-  declare client: import('../Client').default;
+  declare client: Client;
   declare injectedUser: symbol;
   declare injectedChannel: symbol;
   declare injectedMessage: symbol;
@@ -122,15 +124,15 @@ class ActionsManager {
   declare VoiceStateUpdate: VoiceStateUpdate;
   declare WebhooksUpdate: WebhooksUpdate;
 
-  constructor(client: import('../Client').default) {
+  constructor(client: Client) {
     this.client = client;
 
     // These symbols represent fully built data that we inject at times when calling actions manually.
     // Action#getUser for example, will return the injected data (which is assumed to be a built structure)
     // instead of trying to make it from provided data
-    this.injectedUser = Symbol('djs.actions.injectedUser');
-    this.injectedChannel = Symbol('djs.actions.injectedChannel');
-    this.injectedMessage = Symbol('djs.actions.injectedMessage');
+    this.injectedUser = Symbol("djs.actions.injectedUser");
+    this.injectedChannel = Symbol("djs.actions.injectedChannel");
+    this.injectedMessage = Symbol("djs.actions.injectedMessage");
 
     this.register(ApplicationCommandPermissionsUpdate);
     this.register(AutoModerationActionExecution);
@@ -193,8 +195,12 @@ class ActionsManager {
     this.register(WebhooksUpdate);
   }
 
-  register(action: { name: string; new (client: import('../Client').default): unknown }) {
-    Reflect.set(this, action.name.replace(/Action$/, ''), new action(this.client));
+  register(action: { name: string; new (client: Client): unknown }) {
+    Reflect.set(
+      this,
+      action.name.replace(/Action$/, ""),
+      new action(this.client)
+    );
   }
 }
 

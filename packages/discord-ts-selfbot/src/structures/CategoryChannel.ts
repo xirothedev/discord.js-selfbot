@@ -1,9 +1,11 @@
-import GuildChannel from './GuildChannel';
-import type { CategoryCreateChannelOptions } from '../../typings';
+import GuildChannel from "./GuildChannel";
+import type { CategoryCreateChannelOptions } from "../../typings";
 
 class CategoryChannel extends GuildChannel {
   get children() {
-    return this.guild.channels.cache.filter(channel => channel.parentId === this.id);
+    return this.guild.channels.cache.filter(
+      (channel) => channel.parentId === this.id
+    );
   }
 
   createChannel(name: string, options: CategoryCreateChannelOptions) {

@@ -247,7 +247,6 @@ Version-matched documentation for coding agents. Read this file first, then open
 ### Other
 
 - [GuildAuditLogsEntry](./reference/other/guild-audit-logs-entry.md): Audit logs entry.
-- [version](./reference/other/version.md): version reference.
 
 ## Events
 

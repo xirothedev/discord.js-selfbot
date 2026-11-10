@@ -1,8 +1,9 @@
-import _EmojiModule from './Emoji';
+import _EmojiModule from "./Emoji";
+
 const { Emoji } = _EmojiModule;
-import Util from '../util/Util';
-import type MessageReaction from './MessageReaction';
-import type { RawReactionEmojiData } from '../../typings/rawDataTypes';
+import Util from "../util/Util";
+import type MessageReaction from "./MessageReaction";
+import type { RawReactionEmojiData } from "../../typings/rawDataTypes";
 
 class ReactionEmoji extends Emoji {
   declare reaction: MessageReaction;
@@ -17,7 +18,7 @@ class ReactionEmoji extends Emoji {
   }
 
   valueOf() {
-    return this.id ?? '';
+    return this.id ?? "";
   }
 }
 

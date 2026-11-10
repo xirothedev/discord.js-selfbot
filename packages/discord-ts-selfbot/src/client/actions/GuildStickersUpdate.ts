@@ -1,10 +1,12 @@
-import Action from './Action';
-import type { GatewayGuildStickersUpdateDispatchData } from 'discord-api-types/v10';
+import Action from "./Action";
+import type { GatewayGuildStickersUpdateDispatchData } from "discord-api-types/v10";
 
 class GuildStickersUpdateAction extends Action {
   handle(data: GatewayGuildStickersUpdateDispatchData) {
     const guild = this.client.guilds.cache.get(data.guild_id);
-    if (!guild?.stickers) return;
+    if (!guild?.stickers) {
+      return;
+    }
 
     const deletions = new Map(guild.stickers.cache);
 

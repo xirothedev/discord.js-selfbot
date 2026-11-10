@@ -1,14 +1,21 @@
-import Interaction from './Interaction';
-import InteractionWebhook from './InteractionWebhook';
-import ModalSubmitFieldsResolver from './ModalSubmitFieldsResolver';
-import InteractionResponses from './interfaces/InteractionResponses';
-import _ConstantsModule from '../util/Constants';
-import type { APIMessage } from 'discord-api-types/v10';
-import type { CacheType, PartialModalActionRow, PartialTextInputData } from '../../typings';
-import type { RawModalSubmitInteractionData } from '../../typings/rawDataTypes';
-import type { Message } from './Message';
+import Interaction from "./Interaction";
+import InteractionWebhook from "./InteractionWebhook";
+import ModalSubmitFieldsResolver from "./ModalSubmitFieldsResolver";
+import InteractionResponses from "./interfaces/InteractionResponses";
+import _ConstantsModule from "../util/Constants";
+import type { APIMessage } from "discord-api-types/v10";
+import type {
+  CacheType,
+  PartialModalActionRow,
+  PartialTextInputData,
+} from "../../typings";
+import type { RawModalSubmitInteractionData } from "../../typings/rawDataTypes";
+import type { Message } from "./Message";
+import type Client from "../client/Client";
 
-class ModalSubmitInteraction<Cached extends CacheType = CacheType> extends Interaction<Cached> {
+class ModalSubmitInteraction<
+  Cached extends CacheType = CacheType,
+> extends Interaction<Cached> {
   declare customId: string;
   declare components: PartialModalActionRow[];
   declare deferred: boolean;
@@ -18,18 +25,23 @@ class ModalSubmitInteraction<Cached extends CacheType = CacheType> extends Inter
   declare replied: boolean;
   declare webhook: InteractionWebhook;
 
-  constructor(client: import('../client/Client').default, data: RawModalSubmitInteractionData) {
+  constructor(client: Client, data: RawModalSubmitInteractionData) {
     super(client, data);
 
     this.customId = data.data.custom_id;
 
     this.components =
-      data.data.components?.map(component => ({
-        type: 'TEXT_INPUT' as const,
-        components: 'components' in component ? ModalSubmitInteraction.transformComponent(component) : [],
+      data.data.components?.map((component) => ({
+        components:
+          "components" in component
+            ? ModalSubmitInteraction.transformComponent(component)
+            : [],
+        type: "TEXT_INPUT" as const,
       })) ?? [];
 
-    this.message = data.message ? (this.channel?.messages._add(data.message) ?? data.message) : null;
+    this.message = data.message
+      ? (this.channel?.messages._add(data.message) ?? data.message)
+      : null;
 
     this.fields = new ModalSubmitFieldsResolver(this.components);
 
@@ -39,16 +51,20 @@ class ModalSubmitInteraction<Cached extends CacheType = CacheType> extends Inter
 
     this.replied = false;
 
-    this.webhook = new InteractionWebhook(this.client, this.applicationId, this.token);
+    this.webhook = new InteractionWebhook(
+      this.client,
+      this.applicationId,
+      this.token
+    );
   }
 
   static transformComponent(rawComponent: {
     components: { value: string; type: number; custom_id: string }[];
   }): PartialTextInputData[] {
-    return rawComponent.components.map(component => ({
-      value: component.value,
-      type: 'TEXT_INPUT' as const,
+    return rawComponent.components.map((component) => ({
       customId: component.custom_id,
+      type: "TEXT_INPUT" as const,
+      value: component.value,
     }));
   }
 
@@ -68,7 +84,10 @@ class ModalSubmitInteraction<Cached extends CacheType = CacheType> extends Inter
   deferUpdate() {}
 }
 
-InteractionResponses.applyToClass(ModalSubmitInteraction, ['showModal', 'awaitModalSubmit']);
+InteractionResponses.applyToClass(ModalSubmitInteraction, [
+  "showModal",
+  "awaitModalSubmit",
+]);
 
 export default ModalSubmitInteraction;
 export { ModalSubmitInteraction };

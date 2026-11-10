@@ -1,76 +1,96 @@
-import { describe, expect, test } from 'bun:test';
-import { escapeMdx } from './comment';
-import { mergeSignature, signatureLine } from './render-shared';
-import { renderType } from './render-type';
+import { describe, expect, test } from "bun:test";
 
-describe('renderType', () => {
-  test('renders intrinsic, union, array, and reference types', () => {
-    expect(renderType({ type: 'intrinsic', name: 'string' })).toBe('string');
+import { escapeMdx } from "./comment";
+import { mergeSignature, signatureLine } from "./render-shared";
+import { renderType } from "./render-type";
+
+describe("renderType", () => {
+  test("renders intrinsic, union, array, and reference types", () => {
+    expect(renderType({ name: "string", type: "intrinsic" })).toBe("string");
     expect(
       renderType({
-        type: 'union',
+        type: "union",
         types: [
-          { type: 'intrinsic', name: 'string' },
-          { type: 'intrinsic', name: 'number' },
+          { name: "string", type: "intrinsic" },
+          { name: "number", type: "intrinsic" },
         ],
-      }),
-    ).toBe('string | number');
+      })
+    ).toBe("string | number");
     expect(
       renderType({
-        type: 'array',
         elementType: {
-          type: 'union',
+          type: "union",
           types: [
-            { type: 'intrinsic', name: 'string' },
-            { type: 'intrinsic', name: 'number' },
+            { name: "string", type: "intrinsic" },
+            { name: "number", type: "intrinsic" },
           ],
         },
-      }),
-    ).toBe('(string | number)[]');
+        type: "array",
+      })
+    ).toBe("(string | number)[]");
     expect(
       renderType({
-        type: 'reference',
-        name: 'Promise',
-        typeArguments: [{ type: 'intrinsic', name: 'string' }],
-      }),
-    ).toBe('Promise<string>');
+        name: "Promise",
+        type: "reference",
+        typeArguments: [{ name: "string", type: "intrinsic" }],
+      })
+    ).toBe("Promise<string>");
   });
 });
 
-describe('mergeSignature', () => {
-  test('prefers source descriptions and typings types', () => {
+describe("mergeSignature", () => {
+  test("prefers source descriptions and typings types", () => {
     const merged = mergeSignature(
       {
-        name: 'login',
+        name: "login",
         parameters: [
           {
-            name: 'token',
-            type: { type: 'intrinsic', name: 'any' },
+            comment: {
+              summary: [
+                { kind: "text", text: "Token of the account to log in with" },
+              ],
+            },
             flags: { isOptional: true },
-            comment: { summary: [{ kind: 'text', text: 'Token of the account to log in with' }] },
+            name: "token",
+            type: { name: "any", type: "intrinsic" },
           },
         ],
-        type: { type: 'intrinsic', name: 'any' },
+        type: { name: "any", type: "intrinsic" },
       },
       {
-        name: 'login',
-        parameters: [{ name: 'token', type: { type: 'intrinsic', name: 'string' }, flags: { isOptional: true } }],
+        name: "login",
+        parameters: [
+          {
+            flags: { isOptional: true },
+            name: "token",
+            type: { name: "string", type: "intrinsic" },
+          },
+        ],
         type: {
-          type: 'reference',
-          name: 'Promise',
-          typeArguments: [{ type: 'intrinsic', name: 'string' }],
+          name: "Promise",
+          type: "reference",
+          typeArguments: [{ name: "string", type: "intrinsic" }],
         },
-      },
+      }
     );
 
-    expect(merged.parameters[0]?.type).toEqual({ type: 'intrinsic', name: 'string' });
-    expect(merged.parameters[0]?.comment?.summary?.[0]?.text).toBe('Token of the account to log in with');
-    expect(signatureLine(merged, 'login')).toBe('login(token?: string): Promise<string>');
+    expect(merged.parameters[0]?.type).toEqual({
+      name: "string",
+      type: "intrinsic",
+    });
+    expect(merged.parameters[0]?.comment?.summary?.[0]?.text).toBe(
+      "Token of the account to log in with"
+    );
+    expect(signatureLine(merged, "login")).toBe(
+      "login(token?: string): Promise<string>"
+    );
   });
 });
 
-describe('escapeMdx', () => {
-  test('escapes JSX-significant characters in prose', () => {
-    expect(escapeMdx('Promise<string> { value }')).toBe('Promise\\<string\\> \\{ value \\}');
+describe("escapeMdx", () => {
+  test("escapes JSX-significant characters in prose", () => {
+    expect(escapeMdx("Promise<string> { value }")).toBe(
+      "Promise\\<string\\> \\{ value \\}"
+    );
   });
 });

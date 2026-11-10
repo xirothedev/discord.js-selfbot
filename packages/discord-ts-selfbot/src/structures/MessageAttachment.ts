@@ -1,11 +1,14 @@
-import type { Stream } from 'node:stream';
-import AttachmentFlags from '../util/AttachmentFlags';
-import Util from '../util/Util';
-import type { Snowflake } from 'discord-api-types/v10';
-import type { BufferResolvable } from '../../typings';
-import type { RawMessageAttachmentData } from '../../typings/rawDataTypes';
+import type { Stream } from "node:stream";
+import AttachmentFlags from "../util/AttachmentFlags";
+import Util from "../util/Util";
+import type { Snowflake } from "discord-api-types/v10";
+import type { BufferResolvable } from "../../typings";
+import type { RawMessageAttachmentData } from "../../typings/rawDataTypes";
 
-type MessageAttachmentPatch = Partial<RawMessageAttachmentData> & { flags?: number; title?: string };
+type MessageAttachmentPatch = Partial<RawMessageAttachmentData> & {
+  flags?: number;
+  title?: string;
+};
 
 class MessageAttachment {
   declare attachment: BufferResolvable | Stream;
@@ -24,10 +27,16 @@ class MessageAttachment {
   declare waveform: string | null;
   declare width: number | null;
 
-  constructor(attachment: BufferResolvable | Stream, name: string | null = null, data?: MessageAttachmentPatch) {
+  constructor(
+    attachment: BufferResolvable | Stream,
+    name: string | null = null,
+    data?: MessageAttachmentPatch
+  ) {
     this.attachment = attachment;
     this.name = name;
-    if (data) this._patch(data);
+    if (data) {
+      this._patch(data);
+    }
   }
 
   setDescription(description: string) {
@@ -47,11 +56,13 @@ class MessageAttachment {
   }
 
   setSpoiler(spoiler = true) {
-    if (spoiler === this.spoiler) return this;
+    if (spoiler === this.spoiler) {
+      return this;
+    }
 
     if (!spoiler) {
       while (this.spoiler) {
-        this.name = this.name?.slice('SPOILER_'.length) ?? null;
+        this.name = this.name?.slice("SPOILER_".length) ?? null;
       }
       return this;
     }
@@ -62,37 +73,37 @@ class MessageAttachment {
   _patch(data: MessageAttachmentPatch) {
     this.id = data.id!;
 
-    if ('size' in data) {
+    if ("size" in data) {
       this.size = data.size!;
     }
 
-    if ('url' in data) {
+    if ("url" in data) {
       this.url = data.url!;
     }
 
-    if ('proxy_url' in data) {
+    if ("proxy_url" in data) {
       this.proxyURL = data.proxy_url!;
     }
 
-    if ('height' in data) {
+    if ("height" in data) {
       this.height = data.height ?? null;
     } else {
       this.height ??= null;
     }
 
-    if ('width' in data) {
+    if ("width" in data) {
       this.width = data.width ?? null;
     } else {
       this.width ??= null;
     }
 
-    if ('content_type' in data) {
+    if ("content_type" in data) {
       this.contentType = data.content_type ?? null;
     } else {
       this.contentType ??= null;
     }
 
-    if ('description' in data) {
+    if ("description" in data) {
       this.description = data.description ?? null;
     } else {
       this.description ??= null;
@@ -100,25 +111,25 @@ class MessageAttachment {
 
     this.ephemeral = data.ephemeral ?? false;
 
-    if ('duration_secs' in data) {
+    if ("duration_secs" in data) {
       this.duration = data.duration_secs ?? null;
     } else {
       this.duration ??= null;
     }
 
-    if ('waveform' in data) {
+    if ("waveform" in data) {
       this.waveform = data.waveform ?? null;
     } else {
       this.waveform ??= null;
     }
 
-    if ('flags' in data) {
+    if ("flags" in data) {
       this.flags = new AttachmentFlags(data.flags).freeze();
     } else {
       this.flags ??= new AttachmentFlags().freeze();
     }
 
-    if ('title' in data) {
+    if ("title" in data) {
       this.title = data.title ?? null;
     } else {
       this.title ??= null;
@@ -126,7 +137,7 @@ class MessageAttachment {
   }
 
   get spoiler() {
-    return Util.basename(this.url ?? this.name).startsWith('SPOILER_');
+    return Util.basename(this.url ?? this.name).startsWith("SPOILER_");
   }
 
   toJSON() {

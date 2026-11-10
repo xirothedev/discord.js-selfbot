@@ -1,13 +1,14 @@
-import Action from './Action';
-import type { GatewayGuildAuditLogEntryCreateDispatchData } from 'discord-api-types/v10';
-import GuildAuditLogs from '../../structures/GuildAuditLogs';
-import _ConstantsModule from '../../util/Constants';
+import Action from "./Action";
+import type { GatewayGuildAuditLogEntryCreateDispatchData } from "discord-api-types/v10";
+import GuildAuditLogs from "../../structures/GuildAuditLogs";
+import _ConstantsModule from "../../util/Constants";
+
 const { Events } = _ConstantsModule;
 const GuildAuditLogsEntry = GuildAuditLogs.Entry;
 
 class GuildAuditLogEntryCreateAction extends Action {
   handle(data: GatewayGuildAuditLogEntryCreateDispatchData) {
-    const client = this.client;
+    const { client } = this;
     const guild = client.guilds.cache.get(data.guild_id);
     let auditLogEntry;
 

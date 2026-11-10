@@ -1,18 +1,24 @@
-import EventEmitter from 'events';
-import { Readable as ReadableStream } from 'stream';
-import prism from 'prism-media';
-import _AnnexBNalSplitterModule from './processing/AnnexBNalSplitter';
+import EventEmitter from "node:events";
+import { Readable as ReadableStream } from "node:stream";
+import prism from "prism-media";
+import _AnnexBNalSplitterModule from "./processing/AnnexBNalSplitter";
+
 const { H264NalSplitter, H265NalSplitter } = _AnnexBNalSplitterModule;
-import _IvfSplitterModule from './processing/IvfSplitter';
+import _IvfSplitterModule from "./processing/IvfSplitter";
+
 const { IvfTransformer } = _IvfSplitterModule;
-import _AnnexBDispatcherModule from '../dispatcher/AnnexBDispatcher';
+import _AnnexBDispatcherModule from "../dispatcher/AnnexBDispatcher";
+
 const { H264Dispatcher } = _AnnexBDispatcherModule;
-import AudioDispatcher from '../dispatcher/AudioDispatcher';
-import _VPxDispatcherModule from '../dispatcher/VPxDispatcher';
+import AudioDispatcher from "../dispatcher/AudioDispatcher";
+import _VPxDispatcherModule from "../dispatcher/VPxDispatcher";
+
 const { VP8Dispatcher } = _VPxDispatcherModule;
-import type { StreamOptions, VideoOptions } from '../../../../typings';
-import type VideoDispatcher from '../dispatcher/VideoDispatcher';
-import type { DispatcherStreams } from '../dispatcher/BaseDispatcher';
+import type { StreamOptions, VideoOptions } from "../../../../typings";
+import type VideoDispatcher from "../dispatcher/VideoDispatcher";
+import type { DispatcherStreams } from "../dispatcher/BaseDispatcher";
+import type BaseDispatcher from "../dispatcher/BaseDispatcher";
+import type VoiceConnection from "../VoiceConnection";
 /*
 Credit: https://github.com/dank074/Discord-video-stream
 The use of video streaming in this library is an incomplete implementation with many bugs, primarily aimed at lazy users.
@@ -31,65 +37,87 @@ Please use the @dank074/discord-video-stream library for the best support.
 */
 
 type VideoOptionsSource = VideoOptions & {
-  presetH265?: 'ultrafast' | 'superfast' | 'veryfast' | 'faster' | 'fast' | 'medium' | 'slow' | 'slower' | 'veryslow';
+  presetH265?:
+    | "ultrafast"
+    | "superfast"
+    | "veryfast"
+    | "faster"
+    | "fast"
+    | "medium"
+    | "slow"
+    | "slower"
+    | "veryslow";
 };
 
-const FFMPEG_OUTPUT_PREFIX = ['-use_wallclock_as_timestamps', '1', '-copyts', '-analyzeduration', '0'];
-const FFMPEG_INPUT_PREFIX = [
-  '-reconnect',
-  '1',
-  '-reconnect_at_eof',
-  '1',
-  '-reconnect_streamed',
-  '1',
-  '-reconnect_delay_max',
-  '4294',
+const FFMPEG_OUTPUT_PREFIX = [
+  "-use_wallclock_as_timestamps",
+  "1",
+  "-copyts",
+  "-analyzeduration",
+  "0",
 ];
-const FFMPEG_PCM_ARGUMENTS = ['-f', 's16le', '-ar', '48000', '-ac', '2'];
-const FFMPEG_VP8_ARGUMENTS = ['-f', 'ivf', '-deadline', 'realtime', '-c:v', 'libvpx'];
+const FFMPEG_INPUT_PREFIX = [
+  "-reconnect",
+  "1",
+  "-reconnect_at_eof",
+  "1",
+  "-reconnect_streamed",
+  "1",
+  "-reconnect_delay_max",
+  "4294",
+];
+const FFMPEG_PCM_ARGUMENTS = ["-f", "s16le", "-ar", "48000", "-ac", "2"];
+const FFMPEG_VP8_ARGUMENTS = [
+  "-f",
+  "ivf",
+  "-deadline",
+  "realtime",
+  "-c:v",
+  "libvpx",
+];
 const FFMPEG_H264_ARGUMENTS = (options?: VideoOptionsSource) => [
-  '-c:v',
-  'libx264',
-  '-f',
-  'h264',
-  '-tune',
-  'zerolatency',
+  "-c:v",
+  "libx264",
+  "-f",
+  "h264",
+  "-tune",
+  "zerolatency",
   // '-pix_fmt',
   // 'yuv420p',
-  '-preset',
-  options?.presetH26x || 'faster',
-  '-profile:v',
-  'baseline',
+  "-preset",
+  options?.presetH26x || "faster",
+  "-profile:v",
+  "baseline",
   // '-g',
   // `${options?.fps}`,
   // '-x264-params',
   // `keyint=${options?.fps}:min-keyint=${options?.fps}`,
-  '-bf',
-  '0',
-  '-bsf:v',
-  'h264_metadata=aud=insert',
+  "-bf",
+  "0",
+  "-bsf:v",
+  "h264_metadata=aud=insert",
 ];
 
 const FFMPEG_H265_ARGUMENTS = (options?: VideoOptionsSource) => [
-  '-c:v',
-  'libx265',
-  '-f',
-  'hevc',
-  '-preset',
-  options?.presetH265 || 'faster',
-  '-profile:v',
-  'main',
-  '-bf',
-  '0',
+  "-c:v",
+  "libx265",
+  "-f",
+  "hevc",
+  "-preset",
+  options?.presetH265 || "faster",
+  "-profile:v",
+  "main",
+  "-bf",
+  "0",
 ];
 
 class MediaPlayer extends EventEmitter {
-  declare dispatcher: import('../dispatcher/BaseDispatcher').default | null;
-  declare videoDispatcher: import('../dispatcher/BaseDispatcher').default | null;
-  declare voiceConnection: import('../VoiceConnection').default;
+  declare dispatcher: BaseDispatcher | null;
+  declare videoDispatcher: BaseDispatcher | null;
+  declare voiceConnection: VoiceConnection;
   declare isScreenSharing: boolean;
 
-  constructor(voiceConnection: import('../VoiceConnection').default, isScreenSharing: boolean) {
+  constructor(voiceConnection: VoiceConnection, isScreenSharing: boolean) {
     super();
 
     this.dispatcher = null;
@@ -122,23 +150,30 @@ class MediaPlayer extends EventEmitter {
   playUnknown(
     input: ReadableStream | string,
     options: StreamOptions,
-    streams: DispatcherStreams = {},
+    streams: DispatcherStreams = {}
   ): AudioDispatcher {
     this.destroyDispatcher();
     const isStream = input instanceof ReadableStream;
     const args = [...FFMPEG_OUTPUT_PREFIX, ...FFMPEG_PCM_ARGUMENTS];
-    if (!isStream) args.unshift('-i', input);
-    if (options.seek) args.unshift('-ss', String(options.seek));
+    if (!isStream) {
+      args.unshift("-i", input);
+    }
+    if (options.seek) {
+      args.unshift("-ss", String(options.seek));
+    }
     // Check input
-    if (typeof input == 'string' && input.startsWith('http')) {
+    if (typeof input === "string" && input.startsWith("http")) {
       args.unshift(...FFMPEG_INPUT_PREFIX);
     }
 
     const ffmpeg = new prism.FFmpeg({ args });
-    this.emit('debug', `[ffmpeg-audio_process] Spawn process with args:\n${args.join(' ')}`);
+    this.emit(
+      "debug",
+      `[ffmpeg-audio_process] Spawn process with args:\n${args.join(" ")}`
+    );
 
-    ffmpeg.process.stderr?.on('data', (data: Buffer) => {
-      this.emit('debug', `[ffmpeg-audio_process]: ${data.toString()}`);
+    ffmpeg.process.stderr?.on("data", (data: Buffer) => {
+      this.emit("debug", `[ffmpeg-audio_process]: ${data.toString()}`);
     });
 
     streams.ffmpeg = ffmpeg;
@@ -149,37 +184,55 @@ class MediaPlayer extends EventEmitter {
     return this.playPCMStream(ffmpeg, options, streams);
   }
 
-  playPCMStream(stream: ReadableStream, options: StreamOptions, streams: DispatcherStreams = {}): AudioDispatcher {
+  playPCMStream(
+    stream: ReadableStream,
+    options: StreamOptions,
+    streams: DispatcherStreams = {}
+  ): AudioDispatcher {
     this.destroyDispatcher();
-    const opus = (streams.opus = new prism.opus.Encoder({ channels: 2, rate: 48000, frameSize: 960 }));
+    const opus = (streams.opus = new prism.opus.Encoder({
+      channels: 2,
+      frameSize: 960,
+      rate: 48000,
+    }));
     if (options && options.volume === false) {
       stream.pipe(opus);
       return this.playOpusStream(opus, options, streams);
     }
     const volume = new prism.VolumeTransformer({
-      type: 's16le',
-      volume: typeof options.volume === 'number' ? options.volume : 1,
+      type: "s16le",
+      volume: typeof options.volume === "number" ? options.volume : 1,
     });
     streams.volume = volume;
     stream.pipe(volume).pipe(opus);
     return this.playOpusStream(opus, options, streams);
   }
 
-  playOpusStream(stream: ReadableStream, options: StreamOptions, streams: DispatcherStreams = {}): AudioDispatcher {
+  playOpusStream(
+    stream: ReadableStream,
+    options: StreamOptions,
+    streams: DispatcherStreams = {}
+  ): AudioDispatcher {
     this.destroyDispatcher();
     streams.opus = stream;
     if (options.volume !== false && !streams.input) {
       streams.input = stream;
-      const decoder = new prism.opus.Decoder({ channels: 2, rate: 48000, frameSize: 960 });
+      const decoder = new prism.opus.Decoder({
+        channels: 2,
+        frameSize: 960,
+        rate: 48000,
+      });
       const volume = new prism.VolumeTransformer({
-        type: 's16le',
-        volume: typeof options.volume === 'number' ? options.volume : 1,
+        type: "s16le",
+        volume: typeof options.volume === "number" ? options.volume : 1,
       });
       streams.volume = volume;
       const encoded = stream
         .pipe(decoder)
         .pipe(volume)
-        .pipe(new prism.opus.Encoder({ channels: 2, rate: 48000, frameSize: 960 }));
+        .pipe(
+          new prism.opus.Encoder({ channels: 2, frameSize: 960, rate: 48000 })
+        );
       streams.opus = encoded;
     }
     const dispatcher = this.createDispatcher(options, streams);
@@ -187,51 +240,58 @@ class MediaPlayer extends EventEmitter {
     return dispatcher;
   }
 
-  playUnknownVideo(input: ReadableStream | string, options: VideoOptionsSource = {}): VideoDispatcher {
+  playUnknownVideo(
+    input: ReadableStream | string,
+    options: VideoOptionsSource = {}
+  ): VideoDispatcher {
     this.destroyVideoDispatcher();
     const isStream = input instanceof ReadableStream;
-    if (!options?.fps) options.fps = 30;
+    if (!options?.fps) {
+      options.fps = 30;
+    }
 
     const args = [
-      '-i',
-      isStream ? '-' : input,
+      "-i",
+      isStream ? "-" : input,
       ...FFMPEG_OUTPUT_PREFIX,
-      '-flags',
-      'low_delay',
-      '-r',
+      "-flags",
+      "low_delay",
+      "-r",
       `${options?.fps}`,
     ];
 
-    if (options?.bitrate && typeof options?.bitrate === 'number') {
-      args.push('-b:v', `${options?.bitrate}K`);
+    if (options?.bitrate && typeof options?.bitrate === "number") {
+      args.push("-b:v", `${options?.bitrate}K`);
     }
 
     if (options?.hwAccel === true) {
-      args.unshift('-hwaccel', 'auto');
+      args.unshift("-hwaccel", "auto");
     }
 
-    if (options.seek) args.unshift('-ss', String(options.seek));
+    if (options.seek) {
+      args.unshift("-ss", String(options.seek));
+    }
 
     // Check input
-    if (typeof input == 'string' && input.startsWith('http')) {
+    if (typeof input === "string" && input.startsWith("http")) {
       args.unshift(...FFMPEG_INPUT_PREFIX);
     }
 
     // Get stream type
-    if (this.voiceConnection.videoCodec === 'VP8') {
+    if (this.voiceConnection.videoCodec === "VP8") {
       args.push(...FFMPEG_VP8_ARGUMENTS);
       // Remove  '-speed', '5' bc bad quality
     }
 
-    if (this.voiceConnection.videoCodec === 'H264') {
+    if (this.voiceConnection.videoCodec === "H264") {
       args.push(...FFMPEG_H264_ARGUMENTS(options));
     }
 
-    if (this.voiceConnection.videoCodec === 'H265') {
+    if (this.voiceConnection.videoCodec === "H265") {
       args.push(...FFMPEG_H265_ARGUMENTS(options));
     }
 
-    args.push('-force_key_frames', '00:02');
+    args.push("-force_key_frames", "00:02");
 
     if (options?.inputFFmpegArgs) {
       args.unshift(...options.inputFFmpegArgs);
@@ -249,26 +309,33 @@ class MediaPlayer extends EventEmitter {
       input.pipe(ffmpeg);
     }
 
-    this.emit('debug', `[ffmpeg-video_process] Spawn process with args:\n${args.join(' ')}`);
+    this.emit(
+      "debug",
+      `[ffmpeg-video_process] Spawn process with args:\n${args.join(" ")}`
+    );
 
-    ffmpeg.process.stderr?.on('data', (data: Buffer) => {
-      this.emit('debug', `[ffmpeg-video_process]: ${data.toString()}`);
+    ffmpeg.process.stderr?.on("data", (data: Buffer) => {
+      this.emit("debug", `[ffmpeg-video_process]: ${data.toString()}`);
     });
 
     switch (this.voiceConnection.videoCodec) {
-      case 'VP8': {
+      case "VP8": {
         return this.playIvfVideo(ffmpeg, options, streams);
       }
-      case 'H264': {
-        return this.playAnnexBVideo(ffmpeg, options, streams, 'H264');
+      case "H264": {
+        return this.playAnnexBVideo(ffmpeg, options, streams, "H264");
       }
       default: {
-        throw new Error('Invalid codec (Supported: VP8, H264)');
+        throw new Error("Invalid codec (Supported: VP8, H264)");
       }
     }
   }
 
-  playIvfVideo(stream: ReadableStream, options: VideoOptionsSource, streams: DispatcherStreams): VideoDispatcher {
+  playIvfVideo(
+    stream: ReadableStream,
+    options: VideoOptionsSource,
+    streams: DispatcherStreams
+  ): VideoDispatcher {
     this.destroyVideoDispatcher();
     const videoStream = new IvfTransformer();
     stream.pipe(videoStream);
@@ -283,11 +350,13 @@ class MediaPlayer extends EventEmitter {
     stream: ReadableStream,
     options: VideoOptionsSource,
     streams: DispatcherStreams,
-    type: 'H264' | 'H265',
+    type: "H264" | "H265"
   ): VideoDispatcher {
     this.destroyVideoDispatcher();
-    let videoStream: InstanceType<typeof H264NalSplitter> | InstanceType<typeof H265NalSplitter>;
-    if (type === 'H264') {
+    let videoStream:
+      | InstanceType<typeof H264NalSplitter>
+      | InstanceType<typeof H265NalSplitter>;
+    if (type === "H264") {
       videoStream = new H264NalSplitter();
     } else {
       videoStream = new H265NalSplitter();
@@ -299,35 +368,45 @@ class MediaPlayer extends EventEmitter {
     return dispatcher;
   }
 
-  createDispatcher(options: StreamOptions, streams: DispatcherStreams): AudioDispatcher {
+  createDispatcher(
+    options: StreamOptions,
+    streams: DispatcherStreams
+  ): AudioDispatcher {
     this.destroyDispatcher();
-    const dispatcher = (this.dispatcher = new AudioDispatcher(this, options, streams));
+    const dispatcher = (this.dispatcher = new AudioDispatcher(
+      this,
+      options,
+      streams
+    ));
     return dispatcher;
   }
 
-  createVideoDispatcher(options: VideoOptionsSource, streams: DispatcherStreams): VideoDispatcher {
+  createVideoDispatcher(
+    options: VideoOptionsSource,
+    streams: DispatcherStreams
+  ): VideoDispatcher {
     this.destroyVideoDispatcher();
     switch (this.voiceConnection.videoCodec) {
-      case 'VP8': {
+      case "VP8": {
         const dispatcher = (this.videoDispatcher = new VP8Dispatcher(
           this,
           options?.highWaterMark,
           streams,
-          options.fps ?? 30,
+          options.fps ?? 30
         ));
         return dispatcher;
       }
-      case 'H264': {
+      case "H264": {
         const dispatcher = (this.videoDispatcher = new H264Dispatcher(
           this,
           options?.highWaterMark,
           streams,
-          options.fps ?? 30,
+          options.fps ?? 30
         ));
         return dispatcher;
       }
       default: {
-        throw new Error('Invalid codec');
+        throw new Error("Invalid codec");
       }
     }
   }

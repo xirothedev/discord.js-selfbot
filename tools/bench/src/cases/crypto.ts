@@ -1,6 +1,7 @@
-import { createHash, randomUUID } from 'node:crypto';
-import { gunzipSync, gzipSync } from 'node:zlib';
-import type { BenchCase } from '../types';
+import { createHash, randomUUID } from "node:crypto";
+import { gunzipSync, gzipSync } from "node:zlib";
+
+import type { BenchCase } from "../types";
 
 const SIXTY_FOUR_B = 64;
 const SIXTY_FOUR_K = 64 * 1024;
@@ -14,57 +15,57 @@ export function createCryptoCases(): BenchCase[] {
 
   return [
     {
-      id: 'crypto.sha256.64b',
-      group: 'crypto',
-      label: 'SHA-256 64 B',
+      bun: () => Bun.CryptoHasher.hash("sha256", tiny, "base64"),
       bytes: SIXTY_FOUR_B,
-      iterations: 20000,
-      node: () => createHash('sha256').update(tiny).digest('base64'),
-      bun: () => Bun.CryptoHasher.hash('sha256', tiny, 'base64'),
+      group: "crypto",
+      id: "crypto.sha256.64b",
+      iterations: 20_000,
+      label: "SHA-256 64 B",
+      node: () => createHash("sha256").update(tiny).digest("base64"),
     },
     {
-      id: 'crypto.sha256.64k',
-      group: 'crypto',
-      label: 'SHA-256 64 KiB',
+      bun: () => Bun.CryptoHasher.hash("sha256", small, "base64"),
       bytes: SIXTY_FOUR_K,
+      group: "crypto",
+      id: "crypto.sha256.64k",
       iterations: 2000,
-      node: () => createHash('sha256').update(small).digest('base64'),
-      bun: () => Bun.CryptoHasher.hash('sha256', small, 'base64'),
+      label: "SHA-256 64 KiB",
+      node: () => createHash("sha256").update(small).digest("base64"),
     },
     {
-      id: 'crypto.sha256.1m',
-      group: 'crypto',
-      label: 'SHA-256 1 MiB',
+      bun: () => Bun.CryptoHasher.hash("sha256", large, "base64"),
       bytes: ONE_M,
+      group: "crypto",
+      id: "crypto.sha256.1m",
       iterations: 200,
-      node: () => createHash('sha256').update(large).digest('base64'),
-      bun: () => Bun.CryptoHasher.hash('sha256', large, 'base64'),
+      label: "SHA-256 1 MiB",
+      node: () => createHash("sha256").update(large).digest("base64"),
     },
     {
-      id: 'crypto.gzip.1m',
-      group: 'crypto',
-      label: 'gzip 1 MiB',
-      bytes: ONE_M,
-      iterations: 100,
-      node: () => gzipSync(large),
       bun: () => Bun.gzipSync(large),
-    },
-    {
-      id: 'crypto.gunzip.1m',
-      group: 'crypto',
-      label: 'gunzip 1 MiB',
       bytes: ONE_M,
+      group: "crypto",
+      id: "crypto.gzip.1m",
       iterations: 100,
-      node: () => gunzipSync(gzipped),
-      bun: () => Bun.gunzipSync(gzipped),
+      label: "gzip 1 MiB",
+      node: () => gzipSync(large),
     },
     {
-      id: 'crypto.uuid',
-      group: 'crypto',
-      label: 'UUID v4',
-      iterations: 50000,
-      node: () => randomUUID(),
+      bun: () => Bun.gunzipSync(gzipped),
+      bytes: ONE_M,
+      group: "crypto",
+      id: "crypto.gunzip.1m",
+      iterations: 100,
+      label: "gunzip 1 MiB",
+      node: () => gunzipSync(gzipped),
+    },
+    {
       bun: () => crypto.randomUUID(),
+      group: "crypto",
+      id: "crypto.uuid",
+      iterations: 50_000,
+      label: "UUID v4",
+      node: () => randomUUID(),
     },
   ];
 }

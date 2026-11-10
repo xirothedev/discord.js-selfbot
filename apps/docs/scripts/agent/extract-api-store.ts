@@ -1,6 +1,7 @@
 // One-time migration helper: builds api.json from the removed docgen JSON.
-import { readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
+import { readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
+
 import type {
   DocgenClass,
   DocgenData,
@@ -9,57 +10,69 @@ import type {
   DocgenParam,
   DocgenProp,
   DocgenType,
-} from '../api/enrich';
+} from "../api/enrich";
 
 const docgenPath = process.argv[2];
-if (!docgenPath) throw new Error('Usage: bun run extract-api-store.ts <docgen.json>');
+if (!docgenPath) {
+  throw new Error("Usage: bun run extract-api-store.ts <docgen.json>");
+}
 
-const data = JSON.parse(readFileSync(docgenPath, 'utf8')) as DocgenData;
+const data = JSON.parse(readFileSync(docgenPath, "utf-8")) as DocgenData;
 
 function compactParam(parameter: DocgenParam): DocgenParam {
   return {
-    name: parameter.name,
-    description: parameter.description,
-    optional: parameter.optional,
     default: parameter.default,
+    description: parameter.description,
+    name: parameter.name,
+    optional: parameter.optional,
   };
 }
 
 function compactProp(prop: DocgenProp): DocgenProp {
-  return { name: prop.name, description: prop.description, access: prop.access };
+  return {
+    access: prop.access,
+    description: prop.description,
+    name: prop.name,
+  };
 }
 
 function compactMethod(method: DocgenMethod): DocgenMethod {
   const returns =
-    method.returns && typeof method.returns === 'object' && 'description' in method.returns
+    method.returns &&
+    typeof method.returns === "object" &&
+    "description" in method.returns
       ? { description: method.returns.description }
       : undefined;
 
   return {
-    name: method.name,
+    access: method.access,
     description: method.description,
+    examples: method.examples,
+    name: method.name,
     params: method.params?.map(compactParam),
     returns,
-    examples: method.examples,
-    access: method.access,
   };
 }
 
 function compactEvent(event: DocgenEvent): DocgenEvent {
   return {
-    name: event.name,
     description: event.description,
+    name: event.name,
     params: event.params?.map(compactParam),
   };
 }
 
 function compactBase(entry: DocgenClass | DocgenType) {
   return {
-    name: entry.name,
     description: entry.description,
     meta: entry.meta,
-    props: entry.props?.filter(prop => prop.access !== 'private').map(compactProp),
-    methods: entry.methods?.filter(method => method.access !== 'private').map(compactMethod),
+    methods: entry.methods
+      ?.filter((method) => method.access !== "private")
+      .map(compactMethod),
+    name: entry.name,
+    props: entry.props
+      ?.filter((prop) => prop.access !== "private")
+      .map(compactProp),
   };
 }
 
@@ -81,14 +94,14 @@ function compactType(entry: DocgenType): DocgenType {
 }
 
 const store = {
-  _meta: { source: 'src JSDoc, one-time extraction' },
+  _meta: { source: "src JSDoc, one-time extraction" },
   classes: data.classes.map(compactClass),
   interfaces: data.interfaces.map(compactType),
   typedefs: data.typedefs.map(compactType),
 };
 
-const output = path.join(import.meta.dir, 'api.json');
+const output = path.join(import.meta.dir, "api.json");
 writeFileSync(output, `${JSON.stringify(store)}\n`);
 console.log(
-  `Wrote ${store.classes.length} classes, ${store.interfaces.length} interfaces, ${store.typedefs.length} typedefs.`,
+  `Wrote ${store.classes.length} classes, ${store.interfaces.length} interfaces, ${store.typedefs.length} typedefs.`
 );

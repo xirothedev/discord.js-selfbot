@@ -2,9 +2,10 @@ import BaseMessageComponent, {
   isComponentDataSource,
   readComponentBoolean,
   readComponentString,
-} from './BaseMessageComponent';
-import UnfurledMediaItem from './UnfurledMediaItem';
-import { ComponentType, type APIThumbnailComponent } from 'discord-api-types/v10';
+} from "./BaseMessageComponent";
+import UnfurledMediaItem from "./UnfurledMediaItem";
+import { ComponentType } from "discord-api-types/v10";
+import type { APIThumbnailComponent } from "discord-api-types/v10";
 
 class ThumbnailComponent extends BaseMessageComponent {
   declare media: UnfurledMediaItem;
@@ -12,7 +13,7 @@ class ThumbnailComponent extends BaseMessageComponent {
   declare spoiler: boolean;
 
   constructor(data: unknown = {}) {
-    super({ type: 'THUMBNAIL' });
+    super({ type: "THUMBNAIL" });
 
     this.setup(data);
   }
@@ -22,17 +23,17 @@ class ThumbnailComponent extends BaseMessageComponent {
     const source = isComponentDataSource(data) ? data : {};
     this.media = new UnfurledMediaItem(source.media);
 
-    this.description = readComponentString(source, 'description') ?? null;
+    this.description = readComponentString(source, "description") ?? null;
 
-    this.spoiler = readComponentBoolean(source, 'spoiler') ?? false;
+    this.spoiler = readComponentBoolean(source, "spoiler") ?? false;
   }
 
   toJSON(): APIThumbnailComponent {
     return {
-      type: ComponentType.Thumbnail,
-      media: this.media.toJSON(),
       description: this.description ?? undefined,
+      media: this.media.toJSON(),
       spoiler: this.spoiler,
+      type: ComponentType.Thumbnail,
     };
   }
 }

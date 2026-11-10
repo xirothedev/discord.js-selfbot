@@ -1,21 +1,27 @@
-import { Collection } from '@discordjs/collection';
-import GuildChannel from './GuildChannel';
-import TextBasedChannel from './interfaces/TextBasedChannel';
-import MessageManager from '../managers/MessageManager';
-import _ConstantsModule from '../util/Constants';
-const { VideoQualityModes } = _ConstantsModule;
-import Permissions from '../util/Permissions';
-import type { Snowflake } from 'discord-api-types/v10';
-import type { GuildMember } from './GuildMember';
-import type { VideoQualityMode } from '../../typings';
-import type { RawGuildChannelData, RawMessageData } from '../../typings/rawDataTypes';
-import type { PatchOf } from '../types/schema';
-import type { Guild } from './Guild';
-import type { Client } from '../client/Client';
-import type { Message } from './Message';
-import type { CreateInviteOptionsSource } from '../managers/GuildInviteManager';
+import { Collection } from "@discordjs/collection";
+import GuildChannel from "./GuildChannel";
+import TextBasedChannel from "./interfaces/TextBasedChannel";
+import MessageManager from "../managers/MessageManager";
+import _ConstantsModule from "../util/Constants";
 
-type BaseGuildVoiceChannelPatch = PatchOf<'GuildChannel'> & {
+const { VideoQualityModes } = _ConstantsModule;
+import Permissions from "../util/Permissions";
+import type { Snowflake } from "discord-api-types/v10";
+import type { GuildMember } from "./GuildMember";
+import type { VideoQualityMode } from "../../typings";
+import type {
+  RawGuildChannelData,
+  RawMessageData,
+} from "../../typings/rawDataTypes";
+import type { PatchOf } from "../types/schema";
+import type { Guild } from "./Guild";
+import type { Client } from "../client/Client";
+import type { Message } from "./Message";
+import type { CreateInviteOptionsSource } from "../managers/GuildInviteManager";
+import type { SendOptions } from "../types/channels";
+import type { SendResult } from "../types/channels";
+
+type BaseGuildVoiceChannelPatch = PatchOf<"GuildChannel"> & {
   bitrate?: number;
   rtc_region?: string | null;
   user_limit?: number;
@@ -37,7 +43,11 @@ class BaseGuildVoiceChannel extends GuildChannel {
   declare lastMessageId: Snowflake | null;
   declare rateLimitPerUser: number | null;
   declare status?: string;
-  constructor(guild: Guild, data: BaseGuildVoiceChannelPatch & RawGuildChannelData, client?: Client) {
+  constructor(
+    guild: Guild,
+    data: BaseGuildVoiceChannelPatch & RawGuildChannelData,
+    client?: Client
+  ) {
     super(guild, data, client, false);
     this.messages = new MessageManager(this);
 
@@ -49,41 +59,46 @@ class BaseGuildVoiceChannel extends GuildChannel {
   _patch(data: BaseGuildVoiceChannelPatch) {
     super._patch(data);
 
-    if ('bitrate' in data) {
+    if ("bitrate" in data) {
       this.bitrate = data.bitrate ?? 0;
     }
 
-    if ('rtc_region' in data) {
+    if ("rtc_region" in data) {
       this.rtcRegion = data.rtc_region ?? null;
     }
 
-    if ('user_limit' in data) {
+    if ("user_limit" in data) {
       this.userLimit = data.user_limit ?? 0;
     }
 
-    if ('video_quality_mode' in data) {
-      this.videoQualityMode = data.video_quality_mode !== undefined ? VideoQualityModes[data.video_quality_mode] : null;
+    if ("video_quality_mode" in data) {
+      this.videoQualityMode =
+        data.video_quality_mode === undefined
+          ? null
+          : VideoQualityModes[data.video_quality_mode];
     } else {
       this.videoQualityMode ??= null;
     }
 
-    if ('last_message_id' in data) {
+    if ("last_message_id" in data) {
       this.lastMessageId = data.last_message_id ?? null;
     }
 
     if (data.messages) {
-      for (const message of data.messages) this.messages._add(message);
+      for (const message of data.messages) {
+        this.messages._add(message);
+      }
     }
 
-    if ('rate_limit_per_user' in data) {
+    if ("rate_limit_per_user" in data) {
       this.rateLimitPerUser = data.rate_limit_per_user ?? null;
     }
 
-    if ('nsfw' in data) {
+    if ("nsfw" in data) {
       this.nsfw = data.nsfw ?? false;
     }
 
-    if ('status' in data) {
+    if ("status" in data) {
       this.status = data.status;
     }
   }
@@ -103,19 +118,25 @@ class BaseGuildVoiceChannel extends GuildChannel {
   }
 
   get joinable() {
-    if (!this.viewable) return false;
+    if (!this.viewable) {
+      return false;
+    }
     const permissions = this.permissionsFor(this.client.user!);
-    if (!permissions) return false;
+    if (!permissions) {
+      return false;
+    }
 
     // This flag allows joining even if timed out
-    if (permissions.has(Permissions.FLAGS.ADMINISTRATOR, false)) return true;
+    if (permissions.has(Permissions.FLAGS.ADMINISTRATOR, false)) {
+      return true;
+    }
 
-    const me = this.guild.members.me;
+    const { me } = this.guild.members;
     return Boolean(
       me &&
       me.communicationDisabledUntilTimestamp !== null &&
       me.communicationDisabledUntilTimestamp < Date.now() &&
-      permissions.has(Permissions.FLAGS.CONNECT, false),
+      permissions.has(Permissions.FLAGS.CONNECT, false)
     );
   }
 
@@ -124,7 +145,7 @@ class BaseGuildVoiceChannel extends GuildChannel {
   }
 
   fetchInvites(cache = true) {
-    return this.guild.invites.fetch({ channelId: this.id, cache });
+    return this.guild.invites.fetch({ cache, channelId: this.id });
   }
 
   setBitrate(bitrate: number, reason?: string) {
@@ -139,7 +160,10 @@ class BaseGuildVoiceChannel extends GuildChannel {
     return this.edit({ userLimit }, reason);
   }
 
-  setVideoQualityMode(videoQualityMode: VideoQualityMode | number, reason?: string) {
+  setVideoQualityMode(
+    videoQualityMode: VideoQualityMode | number,
+    reason?: string
+  ) {
     return this.edit({ videoQualityMode }, reason);
   }
 
@@ -148,7 +172,7 @@ class BaseGuildVoiceChannel extends GuildChannel {
   get lastMessage(): Message | null {
     return null;
   }
-  declare send: (options: import('../types/channels').SendOptions) => import('../types/channels').SendResult;
+  declare send: (options: SendOptions) => SendResult;
   sendTyping() {}
   createMessageCollector() {}
   awaitMessages() {}
@@ -158,7 +182,7 @@ class BaseGuildVoiceChannel extends GuildChannel {
   setNSFW() {}
 }
 
-TextBasedChannel.applyToClass(BaseGuildVoiceChannel, true, ['lastPinAt']);
+TextBasedChannel.applyToClass(BaseGuildVoiceChannel, true, ["lastPinAt"]);
 
 export default BaseGuildVoiceChannel;
 export { BaseGuildVoiceChannel };

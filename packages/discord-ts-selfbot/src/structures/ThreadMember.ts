@@ -1,9 +1,10 @@
-import Base from './Base';
-import ThreadMemberFlags from '../util/ThreadMemberFlags';
-import type { Snowflake } from 'discord-api-types/v10';
-import type { RawThreadMemberData } from '../../typings/rawDataTypes';
-import type { GuildMember } from './GuildMember';
-import type ThreadChannel from './ThreadChannel';
+import Base from "./Base";
+import ThreadMemberFlags from "../util/ThreadMemberFlags";
+import type { Snowflake } from "discord-api-types/v10";
+import type { RawThreadMemberData } from "../../typings/rawDataTypes";
+import type { GuildMember } from "./GuildMember";
+import type ThreadChannel from "./ThreadChannel";
+import type User from "./User";
 
 class ThreadMember extends Base {
   declare thread: ThreadChannel;
@@ -12,7 +13,11 @@ class ThreadMember extends Base {
   declare flags: Readonly<ThreadMemberFlags>;
   declare member: GuildMember | null;
 
-  constructor(thread: ThreadChannel, data?: RawThreadMemberData, extra: { cache?: boolean } = {}) {
+  constructor(
+    thread: ThreadChannel,
+    data?: RawThreadMemberData,
+    extra: { cache?: boolean } = {}
+  ) {
     super(thread.client);
 
     this.thread = thread;
@@ -21,24 +26,28 @@ class ThreadMember extends Base {
 
     this.id = data?.user_id ?? this.client.user!.id;
 
-    if (data) this._patch(data, extra);
+    if (data) {
+      this._patch(data, extra);
+    }
   }
 
   _patch(data: RawThreadMemberData, extra: { cache?: boolean } = {}) {
-    if ('join_timestamp' in data) this.joinedTimestamp = new Date(data.join_timestamp).getTime();
+    if ("join_timestamp" in data) {
+      this.joinedTimestamp = new Date(data.join_timestamp).getTime();
+    }
 
-    if ('flags' in data) {
+    if ("flags" in data) {
       this.flags = new ThreadMemberFlags(data.flags).freeze();
     }
 
-    if ('member' in data && data.member) {
+    if ("member" in data && data.member) {
       this.member = this.thread.guild.members._add(data.member, extra.cache);
     } else {
       this.member ??= null;
     }
   }
 
-  get guildMember(): import('./GuildMember').GuildMember | null {
+  get guildMember(): GuildMember | null {
     return this.member ?? this.thread.guild.members.cache.get(this.id) ?? null;
   }
 
@@ -46,7 +55,7 @@ class ThreadMember extends Base {
     return this.joinedTimestamp ? new Date(this.joinedTimestamp) : null;
   }
 
-  get user(): import('./User').default | null {
+  get user(): User | null {
     return this.client.users.cache.get(this.id) ?? null;
   }
 

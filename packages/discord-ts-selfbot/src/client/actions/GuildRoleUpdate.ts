@@ -1,11 +1,12 @@
-import Action from './Action';
-import type { GatewayGuildRoleUpdateDispatchData } from 'discord-api-types/v10';
-import _ConstantsModule from '../../util/Constants';
+import Action from "./Action";
+import type { GatewayGuildRoleUpdateDispatchData } from "discord-api-types/v10";
+import _ConstantsModule from "../../util/Constants";
+
 const { Events } = _ConstantsModule;
 
 class GuildRoleUpdateAction extends Action {
   handle(data: GatewayGuildRoleUpdateDispatchData) {
-    const client = this.client;
+    const { client } = this;
     const guild = client.guilds.cache.get(data.guild_id);
 
     if (guild) {

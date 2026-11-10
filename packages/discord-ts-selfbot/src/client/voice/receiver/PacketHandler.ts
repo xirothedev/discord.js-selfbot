@@ -1,18 +1,21 @@
-import { Readable as ReadableStream } from 'node:stream';
-import EventEmitter from 'events';
-import { setTimeout } from 'node:timers';
-import Recorder from './Recorder';
-import type { RtpPacket } from 'werift-rtp';
+import { Readable as ReadableStream } from "node:stream";
+import EventEmitter from "node:events";
+import { setTimeout } from "node:timers";
+import Recorder from "./Recorder";
+import type { RtpPacket } from "werift-rtp";
 
 interface UserStat {
   userId: string;
   speaking?: number;
   hasVideo?: boolean;
 }
-import Speaking from '../../../util/Speaking';
-import VoiceCodec from '../util/VoiceCodec';
-import RtpDecryptor from '../util/RtpDecryptor';
-import _SilenceModule from '../util/Silence';
+import Speaking from "../../../util/Speaking";
+import VoiceCodec from "../util/VoiceCodec";
+import RtpDecryptor from "../util/RtpDecryptor";
+import _SilenceModule from "../util/Silence";
+import type Receiver from "./Receiver";
+import type { Writable } from "node:stream";
+
 const { SILENCE_FRAME } = _SilenceModule;
 
 // The delay between packets when a user is considered to have stopped speaking
@@ -26,12 +29,12 @@ class Readable extends ReadableStream {
 }
 
 class PacketHandler extends EventEmitter {
-  declare receiver: import('./Receiver').default;
+  declare receiver: Receiver;
   declare streams: Map<string, { stream: Readable; end: string }>;
   declare videoStreams: Map<string, Recorder>;
   declare speakingTimeouts: Map<number, NodeJS.Timeout>;
 
-  constructor(receiver: import('./Receiver').default) {
+  constructor(receiver: Receiver) {
     super();
     this.receiver = receiver;
     this.streams = new Map();
@@ -40,7 +43,8 @@ class PacketHandler extends EventEmitter {
   }
 
   getNonceBuffer() {
-    return this.receiver.connection.authentication.mode === 'aead_aes256_gcm_rtpsize'
+    return this.receiver.connection.authentication.mode ===
+      "aead_aes256_gcm_rtpsize"
       ? Buffer.alloc(12)
       : Buffer.alloc(24);
   }
@@ -51,51 +55,62 @@ class PacketHandler extends EventEmitter {
 
   _stoppedSpeaking(userId: string) {
     const streamInfo = this.streams.get(userId);
-    if (streamInfo && streamInfo.end === 'silence') {
+    if (streamInfo && streamInfo.end === "silence") {
       this.streams.delete(userId);
       streamInfo.stream.push(null);
     }
   }
 
   makeStream(user: string, end: string) {
-    if (this.streams.has(user)) return this.streams.get(user)!.stream;
+    if (this.streams.has(user)) {
+      return this.streams.get(user)!.stream;
+    }
     const stream = new Readable();
-    stream.on('end', () => this.streams.delete(user));
-    this.streams.set(user, { stream, end });
+    stream.on("end", () => this.streams.delete(user));
+    this.streams.set(user, { end, stream });
     return stream;
   }
 
-  makeVideoStream(user: string, output: import('node:stream').Writable | string) {
-    if (this.videoStreams.has(user)) return this.videoStreams.get(user)!;
+  makeVideoStream(user: string, output: Writable | string) {
+    if (this.videoStreams.has(user)) {
+      return this.videoStreams.get(user)!;
+    }
     const stream = new Recorder(this, {
-      userId: user,
       output,
       portUdpH264: 65506,
       portUdpOpus: 65510,
+      userId: user,
     });
-    stream.on('ready', () => {
+    stream.on("ready", () => {
       this.videoStreams.set(user, stream);
     });
     return stream;
   }
 
   parseBuffer(buffer: Buffer): RtpPacket | Error {
-    return RtpDecryptor.decrypt(buffer, this.receiver.connection.authentication);
+    return RtpDecryptor.decrypt(
+      buffer,
+      this.receiver.connection.authentication
+    );
   }
 
-  audioReceiver(ssrc: number, userStat: UserStat, opusPacket: RtpPacket | Error) {
+  audioReceiver(
+    ssrc: number,
+    userStat: UserStat,
+    opusPacket: RtpPacket | Error
+  ) {
     const streamInfo = this.streams.get(userStat.userId);
     // If the user is in video, we need to check if the packet is just silence
     if (userStat.hasVideo) {
       if (opusPacket instanceof Error) {
         // Only emit an error if we were actively receiving packets from this user
         if (streamInfo) {
-          this.emit('error', opusPacket);
+          this.emit("error", opusPacket);
         }
         return;
       }
       // Check payload type
-      if (opusPacket.header.payloadType !== VoiceCodec.getPayloadType('opus')) {
+      if (opusPacket.header.payloadType !== VoiceCodec.getPayloadType("opus")) {
         return;
       }
       if (!opusPacket.payload) {
@@ -108,16 +123,24 @@ class PacketHandler extends EventEmitter {
     }
 
     let speakingTimeout = this.speakingTimeouts.get(ssrc);
-    if (typeof speakingTimeout === 'undefined') {
+    if (speakingTimeout === undefined) {
       // Ensure at least the speaking bit is set.
       // As the object is by reference, it's only needed once per client re-connect.
       if (userStat.speaking === 0) {
         userStat.speaking = Number(Speaking.FLAGS.SPEAKING);
       }
-      this.connection.onSpeaking({ user_id: userStat.userId, ssrc: ssrc, speaking: userStat.speaking ?? 0 });
+      this.connection.onSpeaking({
+        speaking: userStat.speaking ?? 0,
+        ssrc: ssrc,
+        user_id: userStat.userId,
+      });
       speakingTimeout = setTimeout(() => {
         try {
-          this.connection.onSpeaking({ user_id: userStat.userId, ssrc: ssrc, speaking: 0 });
+          this.connection.onSpeaking({
+            speaking: 0,
+            ssrc: ssrc,
+            user_id: userStat.userId,
+          });
           clearTimeout(speakingTimeout);
           this.speakingTimeouts.delete(ssrc);
         } catch {
@@ -132,23 +155,29 @@ class PacketHandler extends EventEmitter {
     if (streamInfo) {
       const { stream } = streamInfo;
       if (opusPacket instanceof Error) {
-        this.emit('error', opusPacket);
+        this.emit("error", opusPacket);
         return;
       }
-      if (opusPacket.header.payloadType !== VoiceCodec.getPayloadType('opus')) {
+      if (opusPacket.header.payloadType !== VoiceCodec.getPayloadType("opus")) {
         return;
       }
       stream.push(opusPacket.payload);
     }
   }
 
-  audioReceiverForStream(_ssrc: number, userStat: UserStat, packet: RtpPacket | Error) {
+  audioReceiverForStream(
+    _ssrc: number,
+    userStat: UserStat,
+    packet: RtpPacket | Error
+  ) {
     const streamInfo = this.videoStreams.get(userStat.userId);
-    if (!streamInfo) return;
+    if (!streamInfo) {
+      return;
+    }
     if (packet instanceof Error) {
       return;
     }
-    if (packet.header.payloadType !== VoiceCodec.getPayloadType('opus')) {
+    if (packet.header.payloadType !== VoiceCodec.getPayloadType("opus")) {
       return;
     }
     streamInfo.feed(packet);
@@ -162,7 +191,7 @@ class PacketHandler extends EventEmitter {
         return;
       }
 
-      if (packet.header.payloadType === VoiceCodec.getPayloadType('opus')) {
+      if (packet.header.payloadType === VoiceCodec.getPayloadType("opus")) {
         return;
       }
 
@@ -186,9 +215,13 @@ class PacketHandler extends EventEmitter {
     } else if (this.connection.ssrcMap.has(ssrc - 1)) {
       userStat = this.connection.ssrcMap.get(ssrc - 1); // Video_ssrc
       packet = this.parseBuffer(buffer);
-      if (userStat) this.videoReceiver(ssrc, userStat, packet);
+      if (userStat) {
+        this.videoReceiver(ssrc, userStat, packet);
+      }
     }
-    if (userStat && !(packet instanceof Error)) this.receiver.emit('receiverData', userStat, packet);
+    if (userStat && !(packet instanceof Error)) {
+      this.receiver.emit("receiverData", userStat, packet);
+    }
   }
 
   // When udp connection is closed (STREAM_DELETE), destroy all streams (Memory leak)

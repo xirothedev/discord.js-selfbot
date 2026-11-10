@@ -1,4 +1,4 @@
-import type { RawUserData } from '../../../typings/rawDataTypes';
+import type { RawUserData } from "../../../typings/rawDataTypes";
 
 export interface SelfbotUserFields {
   banner_color?: string | null;

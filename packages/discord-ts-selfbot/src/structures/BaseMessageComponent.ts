@@ -1,22 +1,27 @@
-import { createRequire } from 'node:module';
+import { createRequire } from "node:module";
+
 const require = createRequire(import.meta.url);
-import _errorsModule from '../errors';
+import _errorsModule from "../errors";
+
 const { TypeError } = _errorsModule;
-import _ConstantsModule, { resolveEnumValue } from '../util/Constants';
+import _ConstantsModule, { resolveEnumValue } from "../util/Constants";
+
 const { MessageComponentTypes, Events } = _ConstantsModule;
-import type { Client } from '../client/Client';
-import type { MessageComponentType } from '../../typings';
-import type MessageActionRow from './MessageActionRow';
-import type MessageButton from './MessageButton';
-import type MessageSelectMenu from './MessageSelectMenu';
-import type TextInputComponent from './TextInputComponent';
-import type SectionComponent from './SectionComponent';
-import type TextDisplayComponent from './TextDisplayComponent';
-import type ThumbnailComponent from './ThumbnailComponent';
-import type MediaGalleryComponent from './MediaGalleryComponent';
-import type FileComponent from './FileComponent';
-import type SeparatorComponent from './SeparatorComponent';
-import type ContainerComponent from './ContainerComponent';
+import type { Client } from "../client/Client";
+import type { MessageComponentType } from "../../typings";
+import type MessageActionRow from "./MessageActionRow";
+import type MessageButton from "./MessageButton";
+import type MessageSelectMenu from "./MessageSelectMenu";
+import type TextInputComponent from "./TextInputComponent";
+import type SectionComponent from "./SectionComponent";
+import type TextDisplayComponent from "./TextDisplayComponent";
+import type ThumbnailComponent from "./ThumbnailComponent";
+import type MediaGalleryComponent from "./MediaGalleryComponent";
+import type FileComponent from "./FileComponent";
+import type SeparatorComponent from "./SeparatorComponent";
+import type ContainerComponent from "./ContainerComponent";
+import type { APIComponentInContainer } from "discord-api-types/v10";
+import type { APIMessageTopLevelComponent } from "discord-api-types/v10";
 
 export type MessageComponentInstance =
   | MessageActionRow
@@ -54,46 +59,69 @@ export interface ComponentDataSource {
   [key: string]: unknown;
 }
 
-export function isComponentDataSource(value: unknown): value is ComponentDataSource {
-  return typeof value === 'object' && value !== null;
+export function isComponentDataSource(
+  value: unknown
+): value is ComponentDataSource {
+  return typeof value === "object" && value !== null;
 }
 
-export function readComponentString(data: ComponentDataSource, ...keys: string[]): string | undefined {
+export function readComponentString(
+  data: ComponentDataSource,
+  ...keys: string[]
+): string | undefined {
   for (const key of keys) {
     const value = data[key];
-    if (typeof value === 'string') return value;
+    if (typeof value === "string") {
+      return value;
+    }
   }
   return undefined;
 }
 
-export function readComponentNumber(data: ComponentDataSource, ...keys: string[]): number | undefined {
+export function readComponentNumber(
+  data: ComponentDataSource,
+  ...keys: string[]
+): number | undefined {
   for (const key of keys) {
     const value = data[key];
-    if (typeof value === 'number') return value;
+    if (typeof value === "number") {
+      return value;
+    }
   }
   return undefined;
 }
 
-export function readComponentBoolean(data: ComponentDataSource, ...keys: string[]): boolean | undefined {
+export function readComponentBoolean(
+  data: ComponentDataSource,
+  ...keys: string[]
+): boolean | undefined {
   for (const key of keys) {
     const value = data[key];
-    if (typeof value === 'boolean') return value;
+    if (typeof value === "boolean") {
+      return value;
+    }
   }
   return undefined;
 }
 
-export function readComponentArray(data: ComponentDataSource, key: string): unknown[] {
+export function readComponentArray(
+  data: ComponentDataSource,
+  key: string
+): unknown[] {
   const value = data[key];
   return Array.isArray(value) ? value : [];
 }
 
-export function readComponentRecord(data: ComponentDataSource, key: string): ComponentDataSource | undefined {
+export function readComponentRecord(
+  data: ComponentDataSource,
+  key: string
+): ComponentDataSource | undefined {
   const value = data[key];
   return isComponentDataSource(value) ? value : undefined;
 }
 
 function isMessageComponentType(value: unknown): value is MessageComponentType {
-  return typeof value === 'string' && value in MessageComponentTypes;
+  return typeof value === "string" && value in MessageComponentTypes;
 }
 
 class BaseMessageComponent {
@@ -102,7 +130,10 @@ class BaseMessageComponent {
 
   constructor(data: unknown) {
     const source = isComponentDataSource(data) ? data : {};
-    this.type = source.type !== undefined ? (BaseMessageComponent.resolveType(source.type) ?? null) : null;
+    this.type =
+      source.type === undefined
+        ? null
+        : (BaseMessageComponent.resolveType(source.type) ?? null);
   }
 
   setup(data: unknown) {
@@ -113,31 +144,40 @@ class BaseMessageComponent {
     return this.data.id!;
   }
 
-  static create(data: unknown, client: Client | null = null): MessageComponentInstance | null {
+  static create(
+    data: unknown,
+    client: Client | null = null
+  ): MessageComponentInstance | null {
     let component: MessageComponentInstance | null = null;
     const source = isComponentDataSource(data) ? data : {};
-    let type = source.type;
-    const FileComponent = require('./FileComponent').default;
-    const SeparatorComponent = require('./SeparatorComponent').default;
-    const ContainerComponent = require('./ContainerComponent').default;
-    const MessageActionRow = require('./MessageActionRow').default;
-    const MessageButton = require('./MessageButton').default;
-    const MessageSelectMenu = require('./MessageSelectMenu').default;
-    const TextInputComponent = require('./TextInputComponent').default;
-    const SectionComponent = require('./SectionComponent').default;
-    const TextDisplayComponent = require('./TextDisplayComponent').default;
-    const ThumbnailComponent = require('./ThumbnailComponent').default;
-    const MediaGalleryComponent = require('./MediaGalleryComponent').default;
+    let { type } = source;
+    const FileComponent = require("./FileComponent").default;
+    const SeparatorComponent = require("./SeparatorComponent").default;
+    const ContainerComponent = require("./ContainerComponent").default;
+    const MessageActionRow = require("./MessageActionRow").default;
+    const MessageButton = require("./MessageButton").default;
+    const MessageSelectMenu = require("./MessageSelectMenu").default;
+    const TextInputComponent = require("./TextInputComponent").default;
+    const SectionComponent = require("./SectionComponent").default;
+    const TextDisplayComponent = require("./TextDisplayComponent").default;
+    const ThumbnailComponent = require("./ThumbnailComponent").default;
+    const MediaGalleryComponent = require("./MediaGalleryComponent").default;
 
-    if (typeof type === 'string') type = resolveEnumValue(MessageComponentTypes, type);
+    if (typeof type === "string") {
+      type = resolveEnumValue(MessageComponentTypes, type);
+    }
 
     switch (type) {
       case MessageComponentTypes.ACTION_ROW: {
-        component = data instanceof MessageActionRow ? data : new MessageActionRow(data, client);
+        component =
+          data instanceof MessageActionRow
+            ? data
+            : new MessageActionRow(data, client);
         break;
       }
       case MessageComponentTypes.BUTTON: {
-        component = data instanceof MessageButton ? data : new MessageButton(data);
+        component =
+          data instanceof MessageButton ? data : new MessageButton(data);
         break;
       }
       case MessageComponentTypes.STRING_SELECT:
@@ -145,67 +185,102 @@ class BaseMessageComponent {
       case MessageComponentTypes.ROLE_SELECT:
       case MessageComponentTypes.MENTIONABLE_SELECT:
       case MessageComponentTypes.CHANNEL_SELECT: {
-        component = data instanceof MessageSelectMenu ? data : new MessageSelectMenu(data);
+        component =
+          data instanceof MessageSelectMenu
+            ? data
+            : new MessageSelectMenu(data);
         break;
       }
       case MessageComponentTypes.TEXT_INPUT: {
-        component = data instanceof TextInputComponent ? data : new TextInputComponent(data);
+        component =
+          data instanceof TextInputComponent
+            ? data
+            : new TextInputComponent(data);
         break;
       }
       case MessageComponentTypes.SECTION: {
-        component = data instanceof SectionComponent ? data : new SectionComponent(data);
+        component =
+          data instanceof SectionComponent ? data : new SectionComponent(data);
         break;
       }
       case MessageComponentTypes.TEXT_DISPLAY: {
-        component = data instanceof TextDisplayComponent ? data : new TextDisplayComponent(data);
+        component =
+          data instanceof TextDisplayComponent
+            ? data
+            : new TextDisplayComponent(data);
         break;
       }
       case MessageComponentTypes.THUMBNAIL: {
-        component = data instanceof ThumbnailComponent ? data : new ThumbnailComponent(data);
+        component =
+          data instanceof ThumbnailComponent
+            ? data
+            : new ThumbnailComponent(data);
         break;
       }
       case MessageComponentTypes.MEDIA_GALLERY: {
-        component = data instanceof MediaGalleryComponent ? data : new MediaGalleryComponent(data);
+        component =
+          data instanceof MediaGalleryComponent
+            ? data
+            : new MediaGalleryComponent(data);
         break;
       }
       case MessageComponentTypes.FILE: {
-        component = data instanceof FileComponent ? data : new FileComponent(data);
+        component =
+          data instanceof FileComponent ? data : new FileComponent(data);
         break;
       }
       case MessageComponentTypes.SEPARATOR: {
-        component = data instanceof SeparatorComponent ? data : new SeparatorComponent(data);
+        component =
+          data instanceof SeparatorComponent
+            ? data
+            : new SeparatorComponent(data);
         break;
       }
       case MessageComponentTypes.CONTAINER: {
-        component = data instanceof ContainerComponent ? data : new ContainerComponent(data);
+        component =
+          data instanceof ContainerComponent
+            ? data
+            : new ContainerComponent(data);
         break;
       }
-      default:
+      default: {
         if (client) {
-          client.emit(Events.DEBUG, `[BaseMessageComponent] Received component with unknown type: ${source.type}`);
+          client.emit(
+            Events.DEBUG,
+            `[BaseMessageComponent] Received component with unknown type: ${source.type}`
+          );
         } else {
-          throw new TypeError('INVALID_TYPE', 'data.type', 'valid MessageComponentType');
+          throw new TypeError(
+            "INVALID_TYPE",
+            "data.type",
+            "valid MessageComponentType"
+          );
         }
+      }
     }
     return component;
   }
 
-  static resolveType(type: string | number | undefined): MessageComponentType | undefined {
-    if (typeof type === 'number') {
+  static resolveType(
+    type: string | number | undefined
+  ): MessageComponentType | undefined {
+    if (typeof type === "number") {
       const name = MessageComponentTypes[type];
       return isMessageComponentType(name) ? name : undefined;
     }
     return isMessageComponentType(type) ? type : undefined;
   }
 
-  static isTopLevelComponent(component: MessageComponentInstance | null): component is TopLevelComponentSource {
-    const MessageActionRow = require('./MessageActionRow').default;
-    const SectionComponent = require('./SectionComponent').default;
-    const TextDisplayComponent = require('./TextDisplayComponent').default;
-    const MediaGalleryComponent = require('./MediaGalleryComponent').default;
-    const FileComponent = require('./FileComponent').default;
-    const SeparatorComponent = require('./SeparatorComponent').default;
-    const ContainerComponent = require('./ContainerComponent').default;
+  static isTopLevelComponent(
+    component: MessageComponentInstance | null
+  ): component is TopLevelComponentSource {
+    const MessageActionRow = require("./MessageActionRow").default;
+    const SectionComponent = require("./SectionComponent").default;
+    const TextDisplayComponent = require("./TextDisplayComponent").default;
+    const MediaGalleryComponent = require("./MediaGalleryComponent").default;
+    const FileComponent = require("./FileComponent").default;
+    const SeparatorComponent = require("./SeparatorComponent").default;
+    const ContainerComponent = require("./ContainerComponent").default;
 
     return (
       component instanceof MessageActionRow ||
@@ -218,13 +293,15 @@ class BaseMessageComponent {
     );
   }
 
-  static isContainerComponent(component: MessageComponentInstance | null): component is ContainerComponentSource {
-    const MessageActionRow = require('./MessageActionRow').default;
-    const SectionComponent = require('./SectionComponent').default;
-    const TextDisplayComponent = require('./TextDisplayComponent').default;
-    const MediaGalleryComponent = require('./MediaGalleryComponent').default;
-    const FileComponent = require('./FileComponent').default;
-    const SeparatorComponent = require('./SeparatorComponent').default;
+  static isContainerComponent(
+    component: MessageComponentInstance | null
+  ): component is ContainerComponentSource {
+    const MessageActionRow = require("./MessageActionRow").default;
+    const SectionComponent = require("./SectionComponent").default;
+    const TextDisplayComponent = require("./TextDisplayComponent").default;
+    const MediaGalleryComponent = require("./MediaGalleryComponent").default;
+    const FileComponent = require("./FileComponent").default;
+    const SeparatorComponent = require("./SeparatorComponent").default;
 
     return (
       component instanceof MessageActionRow ||
@@ -237,35 +314,48 @@ class BaseMessageComponent {
   }
 
   static serializeContainerComponent(
-    component: ContainerComponentSource,
-  ): import('discord-api-types/v10').APIComponentInContainer {
+    component: ContainerComponentSource
+  ): APIComponentInContainer {
     return component.toJSON();
   }
 
   static serializeTopLevelComponent(
-    component: TopLevelComponentSource,
-  ): import('discord-api-types/v10').APIMessageTopLevelComponent {
+    component: TopLevelComponentSource
+  ): APIMessageTopLevelComponent {
     return component.toJSON();
   }
 
-  static extractInteractiveComponents(component: MessageComponentInstance): MessageComponentInstance[] {
+  static extractInteractiveComponents(
+    component: MessageComponentInstance
+  ): MessageComponentInstance[] {
     const type =
-      typeof component.type === 'string' ? resolveEnumValue(MessageComponentTypes, component.type) : component.type;
+      typeof component.type === "string"
+        ? resolveEnumValue(MessageComponentTypes, component.type)
+        : component.type;
 
     switch (type) {
-      case MessageComponentTypes.ACTION_ROW:
-        return 'components' in component ? component.components : [component];
+      case MessageComponentTypes.ACTION_ROW: {
+        return "components" in component ? component.components : [component];
+      }
       case MessageComponentTypes.SECTION: {
-        const components = 'components' in component ? component.components : [];
-        const accessory = 'accessory' in component && component.accessory ? [component.accessory] : [];
+        const components =
+          "components" in component ? component.components : [];
+        const accessory =
+          "accessory" in component && component.accessory
+            ? [component.accessory]
+            : [];
         return [...components, ...accessory];
       }
-      case MessageComponentTypes.CONTAINER:
-        return 'components' in component
-          ? component.components.flatMap(child => BaseMessageComponent.extractInteractiveComponents(child))
+      case MessageComponentTypes.CONTAINER: {
+        return "components" in component
+          ? component.components.flatMap((child) =>
+              BaseMessageComponent.extractInteractiveComponents(child)
+            )
           : [component];
-      default:
+      }
+      default: {
         return [component];
+      }
     }
   }
 }

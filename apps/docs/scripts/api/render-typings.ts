@@ -1,21 +1,37 @@
-import { escapeMdx, frontmatterDescription, inlineCode, plainText, renderSummary } from './comment';
-import { renderHeritage, renderSignature, renderType, renderTypeParameters } from './render-type';
-import { frontmatter } from './render-shared';
-import { Kind } from './types';
-import type { Reflection } from './types';
+import {
+  escapeMdx,
+  frontmatterDescription,
+  inlineCode,
+  plainText,
+  renderSummary,
+} from "./comment";
+import { frontmatter } from "./render-shared";
+import {
+  renderHeritage,
+  renderSignature,
+  renderType,
+  renderTypeParameters,
+} from "./render-type";
+import { Kind } from "./types";
+import type { Reflection } from "./types";
 
 function renderInterface(reflection: Reflection): string {
   const typeParameters = renderTypeParameters(reflection.typeParameters);
-  const heritage = renderHeritage(reflection.extendedTypes, reflection.implementedTypes);
+  const heritage = renderHeritage(
+    reflection.extendedTypes,
+    reflection.implementedTypes
+  );
   const properties = (reflection.children ?? [])
-    .filter(child => child.kind === Kind.Property || child.kind === Kind.Accessor)
-    .map(child => {
-      const optional = child.flags?.isOptional ? '?' : '';
+    .filter(
+      (child) => child.kind === Kind.Property || child.kind === Kind.Accessor
+    )
+    .map((child) => {
+      const optional = child.flags?.isOptional ? "?" : "";
       return `  ${child.name}${optional}: ${renderType(child.type)};`;
     });
 
-  return `interface ${reflection.name}${typeParameters}${heritage ? ` ${heritage}` : ''} {\n${properties.join(
-    '\n',
+  return `interface ${reflection.name}${typeParameters}${heritage ? ` ${heritage}` : ""} {\n${properties.join(
+    "\n"
   )}\n}`;
 }
 
@@ -29,34 +45,56 @@ function renderVariable(reflection: Reflection): string {
 
 function renderFunction(reflection: Reflection): string {
   const signatures = reflection.signatures ?? [];
-  return signatures.map(signature => `${renderSignature(signature, `function ${reflection.name}`)};`).join('\n');
+  return signatures
+    .map(
+      (signature) =>
+        `${renderSignature(signature, `function ${reflection.name}`)};`
+    )
+    .join("\n");
 }
 
 function renderPropertyList(reflection: Reflection): string {
   return (reflection.children ?? [])
-    .filter(child => child.kind === Kind.Property || child.kind === Kind.Accessor)
-    .map(child => {
-      const optional = child.flags?.isOptional ? '?' : '';
+    .filter(
+      (child) => child.kind === Kind.Property || child.kind === Kind.Accessor
+    )
+    .map((child) => {
+      const optional = child.flags?.isOptional ? "?" : "";
       const description = plainText(child.comment?.summary);
-      const code = inlineCode(`${child.name}${optional}: ${renderType(child.type)}`);
-      return description ? `- ${code} — ${escapeMdx(description)}` : `- ${code}`;
+      const code = inlineCode(
+        `${child.name}${optional}: ${renderType(child.type)}`
+      );
+      return description
+        ? `- ${code} — ${escapeMdx(description)}`
+        : `- ${code}`;
     })
-    .join('\n');
+    .join("\n");
 }
 
 export function renderTypingsSection(reflection: Reflection): string {
   const description = renderSummary(reflection.comment);
-  const properties = reflection.kind === Kind.Interface ? renderPropertyList(reflection) : '';
+  const properties =
+    reflection.kind === Kind.Interface ? renderPropertyList(reflection) : "";
 
-  let signature = '';
-  if (reflection.kind === Kind.Interface) signature = renderInterface(reflection);
-  else if (reflection.kind === Kind.TypeAlias) signature = renderTypeAlias(reflection);
-  else if (reflection.kind === Kind.Variable) signature = renderVariable(reflection);
-  else if (reflection.kind === Kind.Function) signature = renderFunction(reflection);
+  let signature = "";
+  if (reflection.kind === Kind.Interface) {
+    signature = renderInterface(reflection);
+  } else if (reflection.kind === Kind.TypeAlias) {
+    signature = renderTypeAlias(reflection);
+  } else if (reflection.kind === Kind.Variable) {
+    signature = renderVariable(reflection);
+  } else if (reflection.kind === Kind.Function) {
+    signature = renderFunction(reflection);
+  }
 
-  return [`## \`${reflection.name}\``, description, signature ? `\`\`\`ts\n${signature}\n\`\`\`` : '', properties]
+  return [
+    `## \`${reflection.name}\``,
+    description,
+    signature ? `\`\`\`ts\n${signature}\n\`\`\`` : "",
+    properties,
+  ]
     .filter(Boolean)
-    .join('\n\n');
+    .join("\n\n");
 }
 
 export interface TypingsPageInput {
@@ -66,17 +104,22 @@ export interface TypingsPageInput {
 }
 
 export function renderTypingsPage(input: TypingsPageInput): string {
-  const reflections = [...input.reflections].sort((a, b) => a.name.localeCompare(b.name));
+  const reflections = [...input.reflections].toSorted((a, b) =>
+    a.name.localeCompare(b.name)
+  );
 
   return [
     frontmatter({
-      title: input.title,
-      description: frontmatterDescription(undefined, `${input.title} types from the public typings.`),
+      description: frontmatterDescription(
+        undefined,
+        `${input.title} types from the public typings.`
+      ),
       sourceUrl: input.sourceUrl,
+      title: input.title,
     }),
-    '{/* This file is generated by apps/docs/scripts/generate-api.ts. Do not edit. */}',
-    '',
+    "{/* This file is generated by apps/docs/scripts/generate-api.ts. Do not edit. */}",
+    "",
     `This page lists public ${input.title.toLowerCase()} types declared in \`typings/index.d.ts\`.`,
-    ...reflections.map(reflection => renderTypingsSection(reflection)),
-  ].join('\n\n');
+    ...reflections.map((reflection) => renderTypingsSection(reflection)),
+  ].join("\n\n");
 }

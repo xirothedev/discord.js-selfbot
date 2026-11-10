@@ -1,10 +1,10 @@
-import BitField from './BitField';
+import BitField from "./BitField";
 
 class PremiumUsageFlags extends BitField {}
 
 PremiumUsageFlags.FLAGS = {
-  PREMIUM_DISCRIMINATOR: 1 << 0,
   ANIMATED_AVATAR: 1 << 1,
+  PREMIUM_DISCRIMINATOR: 1 << 0,
   PROFILE_BANNER: 1 << 2,
 };
 

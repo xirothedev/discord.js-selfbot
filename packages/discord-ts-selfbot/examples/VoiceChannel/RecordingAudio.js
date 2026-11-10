@@ -10,43 +10,44 @@ Install:
 - ffmpeg (install and add to your system environment)
 */
 
-const { Client } = require('../../src/index');
+const { Client } = require("../../src/index");
+
 const client = new Client();
 
-const fs = require('fs');
-const Speaker = require('speaker');
+const fs = require("node:fs");
+const Speaker = require("speaker");
 
-client.on('ready', async client => {
+client.on("ready", async (client) => {
   console.log(`${client.user.username} is ready!`);
 
   const speaker = new Speaker({
-    channels: 2, // 2 channels
     bitDepth: 16, // 16-bit samples
-    sampleRate: 48000, // 48000 Hz sample rate
+    channels: 2, // 2 channels
+    sampleRate: 48_000, // 48000 Hz sample rate
   });
 
-  const channel = client.channels.cache.get('voice_id');
+  const channel = client.channels.cache.get("voice_id");
   const connection = await client.voice.joinChannel(channel, {
-    selfMute: true,
     selfDeaf: true,
+    selfMute: true,
     selfVideo: false,
   });
 
-  const audio = connection.receiver.createStream('user_id', {
-    mode: 'pcm',
-    end: 'manual',
+  const audio = connection.receiver.createStream("user_id", {
+    end: "manual",
+    mode: "pcm",
     paddingSilence: true,
   });
 
-  audio.pipe(fs.createWriteStream('test.pcm'));
+  audio.pipe(fs.createWriteStream("test.pcm"));
 
   // After 15s
   setTimeout(() => {
-    console.log('Stop recording');
+    console.log("Stop recording");
     audio.destroy();
     // Play this record...
-    fs.createReadStream('test.pcm').pipe(speaker);
+    fs.createReadStream("test.pcm").pipe(speaker);
   }, 15_000);
 });
 
-client.login('token');
+client.login("token");

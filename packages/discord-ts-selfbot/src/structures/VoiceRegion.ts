@@ -1,5 +1,5 @@
-import Util from '../util/Util';
-import type { RawVoiceRegionData } from '../../typings/rawDataTypes';
+import Util from "../util/Util";
+import type { RawVoiceRegionData } from "../../typings/rawDataTypes";
 
 class VoiceRegion {
   declare id: string;
@@ -19,7 +19,7 @@ class VoiceRegion {
      * @type {boolean}
      * @deprecated This property is no longer being sent by the API.
      */
-    this.vip = 'vip' in data ? Boolean(data.vip) : false;
+    this.vip = "vip" in data ? Boolean(data.vip) : false;
 
     this.deprecated = data.deprecated;
 

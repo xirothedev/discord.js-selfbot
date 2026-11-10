@@ -1,20 +1,29 @@
-import BitField, { BitFieldResolvable } from './BitField';
+import type { BitFieldResolvable } from "./BitField";
+import BitField from "./BitField";
 
 class Permissions extends BitField {
-  static ALL: bigint = BigInt(0);
-  static DEFAULT: bigint = BigInt(0);
-  static STAGE_MODERATOR: bigint = BigInt(0);
+  static ALL = 0n;
+  static DEFAULT = 0n;
+  static STAGE_MODERATOR = 0n;
 
   override missing(bits: BitFieldResolvable, checkAdmin = true): string[] {
-    return checkAdmin && this.has(Permissions.FLAGS.ADMINISTRATOR) ? [] : super.missing(bits);
+    return checkAdmin && this.has(Permissions.FLAGS.ADMINISTRATOR)
+      ? []
+      : super.missing(bits);
   }
 
   override any(permission: BitFieldResolvable, checkAdmin = true): boolean {
-    return (checkAdmin && super.has(Permissions.FLAGS.ADMINISTRATOR)) || super.any(permission);
+    return (
+      (checkAdmin && super.has(Permissions.FLAGS.ADMINISTRATOR)) ||
+      super.any(permission)
+    );
   }
 
   override has(permission: BitFieldResolvable, checkAdmin = true): boolean {
-    return (checkAdmin && super.has(Permissions.FLAGS.ADMINISTRATOR)) || super.has(permission);
+    return (
+      (checkAdmin && super.has(Permissions.FLAGS.ADMINISTRATOR)) ||
+      super.has(permission)
+    );
   }
 
   override toArray(): string[] {
@@ -81,17 +90,17 @@ Permissions.FLAGS = {
 
 Permissions.ALL = Object.values(Permissions.FLAGS).reduce(
   (all: bigint, p: number | bigint) => (all as bigint) | (p as bigint),
-  0n,
+  0n
 );
 
-Permissions.DEFAULT = BigInt(104324673);
+Permissions.DEFAULT = 104324673n;
 
 Permissions.STAGE_MODERATOR =
   (Permissions.FLAGS.MANAGE_CHANNELS as bigint) |
   (Permissions.FLAGS.MUTE_MEMBERS as bigint) |
   (Permissions.FLAGS.MOVE_MEMBERS as bigint);
 
-Permissions.defaultBit = BigInt(0);
+Permissions.defaultBit = 0n;
 
 export default Permissions;
 export { Permissions };

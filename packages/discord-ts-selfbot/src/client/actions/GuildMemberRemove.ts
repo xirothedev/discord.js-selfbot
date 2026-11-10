@@ -1,13 +1,16 @@
-import Action from './Action';
-import type { GatewayGuildMemberRemoveDispatchData } from 'discord-api-types/v10';
-import _GuildMemberModule from '../../structures/GuildMember';
+import Action from "./Action";
+import type { GatewayGuildMemberRemoveDispatchData } from "discord-api-types/v10";
+import _GuildMemberModule from "../../structures/GuildMember";
+
 const { deletedGuildMembers } = _GuildMemberModule;
-import _ConstantsModule from '../../util/Constants';
+import _ConstantsModule from "../../util/Constants";
+import type { WebSocketShard } from "../websocket/WebSocketShard";
+
 const { Events, Status } = _ConstantsModule;
 
 class GuildMemberRemoveAction extends Action {
-  handle(data: GatewayGuildMemberRemoveDispatchData, shard: import('../websocket/WebSocketShard').WebSocketShard) {
-    const client = this.client;
+  handle(data: GatewayGuildMemberRemoveDispatchData, shard: WebSocketShard) {
+    const { client } = this;
     const guild = client.guilds.cache.get(data.guild_id);
     let member = null;
     if (guild) {
@@ -22,7 +25,9 @@ class GuildMemberRemoveAction extends Action {
          * @param {GuildMember} member The member that has left/been kicked from the guild
          * @deprecated See {@link https://github.com/aiko-chan-ai/discord.js-selfbot-v13/issues/197 this issue} for more information.
          */
-        if (shard.status === Status.READY) client.emit(Events.GUILD_MEMBER_REMOVE, member);
+        if (shard.status === Status.READY) {
+          client.emit(Events.GUILD_MEMBER_REMOVE, member);
+        }
       }
       guild.presences.cache.delete(data.user.id);
       guild.voiceStates.cache.delete(data.user.id);

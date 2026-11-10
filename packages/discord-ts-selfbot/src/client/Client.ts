@@ -1,45 +1,47 @@
-import process from 'node:process';
-import { setInterval } from 'node:timers';
-import { setTimeout } from 'node:timers';
-import { Collection } from '@discordjs/collection';
-import { authenticator } from 'otplib';
-import BaseClient from './BaseClient';
-import ActionsManager from './actions/ActionsManager';
-import ClientVoiceManager from './voice/ClientVoiceManager';
-import WebSocketManager from './websocket/WebSocketManager';
-import _errorsModule from '../errors';
+import process from "node:process";
+import { setInterval, setTimeout } from "node:timers";
+import { Collection } from "@discordjs/collection";
+import { authenticator } from "otplib";
+import BaseClient from "./BaseClient";
+import ActionsManager from "./actions/ActionsManager";
+import ClientVoiceManager from "./voice/ClientVoiceManager";
+import WebSocketManager from "./websocket/WebSocketManager";
+import _errorsModule from "../errors";
+
 const { Error, TypeError } = _errorsModule;
-import BaseGuildEmojiManager from '../managers/BaseGuildEmojiManager';
-import BillingManager from '../managers/BillingManager';
-import ChannelManager from '../managers/ChannelManager';
-import ClientUserSettingManager from '../managers/ClientUserSettingManager';
-import GuildManager from '../managers/GuildManager';
-import PresenceManager from '../managers/PresenceManager';
-import RelationshipManager from '../managers/RelationshipManager';
-import SessionManager from '../managers/SessionManager';
-import UserManager from '../managers/UserManager';
-import UserNoteManager from '../managers/UserNoteManager';
-import VoiceStateManager from '../managers/VoiceStateManager';
-import ShardClientUtil from '../sharding/ShardClientUtil';
-import ClientPresence from '../structures/ClientPresence';
-import GuildPreview from '../structures/GuildPreview';
-import GuildTemplate from '../structures/GuildTemplate';
-import Invite from '../structures/Invite';
-import _StickerModule from '../structures/Sticker';
+import BaseGuildEmojiManager from "../managers/BaseGuildEmojiManager";
+import BillingManager from "../managers/BillingManager";
+import ChannelManager from "../managers/ChannelManager";
+import ClientUserSettingManager from "../managers/ClientUserSettingManager";
+import GuildManager from "../managers/GuildManager";
+import PresenceManager from "../managers/PresenceManager";
+import RelationshipManager from "../managers/RelationshipManager";
+import SessionManager from "../managers/SessionManager";
+import UserManager from "../managers/UserManager";
+import UserNoteManager from "../managers/UserNoteManager";
+import VoiceStateManager from "../managers/VoiceStateManager";
+import ShardClientUtil from "../sharding/ShardClientUtil";
+import ClientPresence from "../structures/ClientPresence";
+import GuildPreview from "../structures/GuildPreview";
+import GuildTemplate from "../structures/GuildTemplate";
+import Invite from "../structures/Invite";
+import _StickerModule from "../structures/Sticker";
+
 const { Sticker } = _StickerModule;
-import StickerPack from '../structures/StickerPack';
-import VoiceRegion from '../structures/VoiceRegion';
-import Webhook from '../structures/Webhook';
-import Widget from '../structures/Widget';
-import Application from '../structures/interfaces/Application';
-import _ConstantsModule from '../util/Constants';
+import StickerPack from "../structures/StickerPack";
+import VoiceRegion from "../structures/VoiceRegion";
+import Webhook from "../structures/Webhook";
+import Widget from "../structures/Widget";
+import Application from "../structures/interfaces/Application";
+import _ConstantsModule from "../util/Constants";
+
 const { Events, Status } = _ConstantsModule;
-import DataResolver from '../util/DataResolver';
-import Intents from '../util/Intents';
-import type { ResolvedClientOptions } from '../util/Options';
-import Permissions from '../util/Permissions';
-import DiscordAuthWebsocket from '../util/RemoteAuth';
-import Sweepers from '../util/Sweepers';
+import DataResolver from "../util/DataResolver";
+import Intents from "../util/Intents";
+import type { ResolvedClientOptions } from "../util/Options";
+import Permissions from "../util/Permissions";
+import DiscordAuthWebsocket from "../util/RemoteAuth";
+import Sweepers from "../util/Sweepers";
 import type {
   RawGuildPreviewData,
   RawGuildTemplateData,
@@ -48,9 +50,9 @@ import type {
   RawVoiceRegionData,
   RawWebhookData,
   RawWidgetData,
-} from '../../typings/rawDataTypes';
-import type { RawInviteDataSource } from '../structures/Invite';
-import type { Snowflake } from 'discord-api-types/v10';
+} from "../../typings/rawDataTypes";
+import type { RawInviteDataSource } from "../structures/Invite";
+import type { Snowflake } from "discord-api-types/v10";
 import type {
   AcceptInviteOptions,
   ClientFetchInviteOptions,
@@ -63,9 +65,9 @@ import type {
   StickerPackFetchOptions,
   TextChannelResolvable,
   WebhookDeleteOptions,
-} from '../../typings';
-import type ClientUser from '../structures/ClientUser';
-import type { Sticker as StickerType } from '../structures/Sticker';
+} from "../../typings";
+import type ClientUser from "../structures/ClientUser";
+import type { Sticker as StickerType } from "../structures/Sticker";
 /* eslint-disable no-unreachable */
 
 let deprecationEmitted = false;
@@ -93,7 +95,10 @@ interface AuthorizedToken {
 }
 
 interface InstalledApplicationData {
-  integration_types_config: Record<string, { oauth2_install_params: { scopes: string[] } } | undefined>;
+  integration_types_config: Record<
+    string,
+    { oauth2_install_params: { scopes: string[] } } | undefined
+  >;
 }
 
 type LoginResult = { token: string } | { ticket: string };
@@ -120,7 +125,11 @@ interface MemberVerificationData {
 
 class Client extends BaseClient {
   declare _cleanups: Set<() => void>;
-  declare _finalizers: FinalizationRegistry<{ cleanup: () => void; message?: string; name?: string }>;
+  declare _finalizers: FinalizationRegistry<{
+    cleanup: () => void;
+    message?: string;
+    name?: string;
+  }>;
   declare ws: WebSocketManager;
   declare actions: ActionsManager;
   declare voice: ClientVoiceManager;
@@ -164,7 +173,8 @@ class Client extends BaseClient {
 
     const shardingMode = process.env.SHARDING_MANAGER_MODE;
     this.shard =
-      process.env.SHARDING_MANAGER && (shardingMode === 'process' || shardingMode === 'worker')
+      process.env.SHARDING_MANAGER &&
+      (shardingMode === "process" || shardingMode === "worker")
         ? ShardClientUtil.singleton(this, shardingMode)
         : null;
 
@@ -190,8 +200,8 @@ class Client extends BaseClient {
 
     this.settings = new ClientUserSettingManager(this);
 
-    Object.defineProperty(this, 'token', { writable: true });
-    if (!this.token && 'DISCORD_TOKEN' in process.env) {
+    Object.defineProperty(this, "token", { writable: true });
+    if (!this.token && "DISCORD_TOKEN" in process.env) {
       this.token = process.env.DISCORD_TOKEN ?? null;
     } else {
       this.token = null;
@@ -206,18 +216,18 @@ class Client extends BaseClient {
     this.authenticator = authenticator;
 
     this.authenticator.options = {
-      step: 30,
       digits: 6,
+      step: 30,
     };
 
     if (this.options.messageSweepInterval > 0) {
       process.emitWarning(
-        'The message sweeping client options are deprecated, use the global sweepers instead.',
-        'DeprecationWarning',
+        "The message sweeping client options are deprecated, use the global sweepers instead.",
+        "DeprecationWarning"
       );
       this.sweepMessageInterval = setInterval(
         this.sweepMessages.bind(this),
-        this.options.messageSweepInterval * 1_000,
+        this.options.messageSweepInterval * 1000
       ).unref();
     } else {
       this.sweepMessageInterval = null;
@@ -229,7 +239,9 @@ class Client extends BaseClient {
     for (const guild of this.guilds.cache.values()) {
       if (guild.available) {
         for (const emoji of guild.emojis.cache.values()) {
-          if (emoji.id) emojis.cache.set(emoji.id, emoji);
+          if (emoji.id) {
+            emojis.cache.set(emoji.id, emoji);
+          }
         }
       }
     }
@@ -245,29 +257,33 @@ class Client extends BaseClient {
   }
 
   async login(token: string | null = this.token): Promise<string> {
-    if (!token || typeof token !== 'string') throw new Error('TOKEN_INVALID');
-    this.token = token = token.replace(/^(Bot|Bearer)\s*/i, '');
+    if (!token || typeof token !== "string") {
+      throw new Error("TOKEN_INVALID");
+    }
+    this.token = token = token.replace(/^(Bot|Bearer)\s*/i, "");
     this.emit(
       Events.DEBUG,
       `
       Logging on with a user token is unfortunately against the Discord
       \`Terms of Service\` <https://support.discord.com/hc/en-us/articles/115002192352>
       and doing so might potentially get your account banned.
-      Use this at your own risk.`,
+      Use this at your own risk.`
     );
     this.emit(
       Events.DEBUG,
       `Provided token: ${token
-        .split('.')
-        .map((val: string, i: number) => (i > 1 ? val.replace(/./g, '*') : val))
-        .join('.')}`,
+        .split(".")
+        .map((val: string, i: number) =>
+          i > 1 ? val.replaceAll(/./g, "*") : val
+        )
+        .join(".")}`
     );
 
     if (this.options.presence) {
       this.options.ws.presence = this.presence._parse(this.options.presence);
     }
 
-    this.emit(Events.DEBUG, 'Preparing to connect to the gateway...');
+    this.emit(Events.DEBUG, "Preparing to connect to the gateway...");
 
     try {
       await this.ws.connect();
@@ -280,7 +296,7 @@ class Client extends BaseClient {
 
   QRLogin() {
     const ws = new DiscordAuthWebsocket();
-    ws.once('ready', () => ws.generateQR());
+    ws.once("ready", () => ws.generateQR());
     return ws.connect(this);
   }
 
@@ -297,21 +313,34 @@ class Client extends BaseClient {
   async passLogin(email: string, password: string): Promise<string | null> {
     const initial = await this.api.auth.login.post<LoginResult>({
       auth: false,
+      data: {
+        gift_code_sku_id: null,
+        login: email,
+        login_source: null,
+        password,
+        undelete: false,
+      },
       versioned: true,
-      data: { gift_code_sku_id: null, login_source: null, undelete: false, login: email, password },
     });
 
-    if ('token' in initial) {
+    if ("token" in initial) {
       return this.login(initial.token);
-    } else if ('ticket' in initial) {
-      if (!this.options.TOTPKey) throw new Error('TOTPKEY_MISSING');
+    } else if ("ticket" in initial) {
+      if (!this.options.TOTPKey) {
+        throw new Error("TOTPKEY_MISSING");
+      }
       const otp = this.authenticator.generate(this.options.TOTPKey);
       const totp = await this.api.auth.mfa.totp.post<LoginResult>({
         auth: false,
+        data: {
+          code: otp,
+          gift_code_sku_id: null,
+          login_source: null,
+          ticket: initial.ticket,
+        },
         versioned: true,
-        data: { gift_code_sku_id: null, login_source: null, code: otp, ticket: initial.ticket },
       });
-      if ('token' in totp) {
+      if ("token" in totp) {
         return this.login(totp.token);
       }
     }
@@ -326,10 +355,14 @@ class Client extends BaseClient {
   destroy() {
     super.destroy();
 
-    for (const fn of this._cleanups) fn();
+    for (const fn of this._cleanups) {
+      fn();
+    }
     this._cleanups.clear();
 
-    if (this.sweepMessageInterval) clearInterval(this.sweepMessageInterval);
+    if (this.sweepMessageInterval) {
+      clearInterval(this.sweepMessageInterval);
+    }
 
     this.sweepers.destroy();
     this.ws.destroy();
@@ -346,17 +379,25 @@ class Client extends BaseClient {
     return this.destroy();
   }
 
-  async fetchInvite(invite: InviteResolvable, options?: ClientFetchInviteOptions) {
+  async fetchInvite(
+    invite: InviteResolvable,
+    options?: ClientFetchInviteOptions
+  ) {
     const code = DataResolver.resolveInviteCode(invite);
     const data = await this.api.invites(code).get<RawInviteDataSource>({
-      query: { with_counts: true, guild_scheduled_event_id: options?.guildScheduledEventId },
+      query: {
+        guild_scheduled_event_id: options?.guildScheduledEventId,
+        with_counts: true,
+      },
     });
     return new Invite(this, data);
   }
 
   async fetchGuildTemplate(template: GuildTemplateResolvable) {
     const code = DataResolver.resolveGuildTemplateCode(template);
-    const data = await this.api.guilds.templates(code).get<RawGuildTemplateData>();
+    const data = await this.api.guilds
+      .templates(code)
+      .get<RawGuildTemplateData>();
     return new GuildTemplate(this, data);
   }
 
@@ -365,16 +406,25 @@ class Client extends BaseClient {
     return new Webhook(this, { token, ...data });
   }
 
-  async deleteWebhook(id: Snowflake, { reason, token }: WebhookDeleteOptions = {}) {
-    if (typeof id !== 'string') throw new TypeError('INVALID_TYPE', 'id', 'Snowflake');
-    if (typeof token !== 'string') throw new TypeError('WEBHOOK_TOKEN_UNAVAILABLE');
+  async deleteWebhook(
+    id: Snowflake,
+    { reason, token }: WebhookDeleteOptions = {}
+  ) {
+    if (typeof id !== "string") {
+      throw new TypeError("INVALID_TYPE", "id", "Snowflake");
+    }
+    if (typeof token !== "string") {
+      throw new TypeError("WEBHOOK_TOKEN_UNAVAILABLE");
+    }
     await this.api.webhooks(id, token).delete({ reason });
   }
 
   async fetchVoiceRegions() {
     const apiRegions = await this.api.voice.regions.get<RawVoiceRegionData[]>();
     const regions = new Collection<string, VoiceRegion>();
-    for (const region of apiRegions) regions.set(region.id, new VoiceRegion(region));
+    for (const region of apiRegions) {
+      regions.set(region.id, new VoiceRegion(region));
+    }
     return regions;
   }
 
@@ -384,16 +434,26 @@ class Client extends BaseClient {
   }
 
   async fetchStickerPacks(options: { packId: Snowflake }): Promise<StickerPack>;
-  async fetchStickerPacks(options?: StickerPackFetchOptions): Promise<Collection<Snowflake, StickerPack>>;
+  async fetchStickerPacks(
+    options?: StickerPackFetchOptions
+  ): Promise<Collection<Snowflake, StickerPack>>;
   async fetchStickerPacks({ packId }: StickerPackFetchOptions = {}) {
     if (packId) {
-      const data = await this.api('sticker-packs', packId).get<RawStickerPackData>();
+      const data = await this.api(
+        "sticker-packs",
+        packId
+      ).get<RawStickerPackData>();
       return new StickerPack(this, data);
     }
 
-    const data = await this.api('sticker-packs').get<{ sticker_packs: RawStickerPackData[] }>();
+    const data = await this.api("sticker-packs").get<{
+      sticker_packs: RawStickerPackData[];
+    }>();
     return new Collection<Snowflake, StickerPack>(
-      data.sticker_packs.map((p: RawStickerPackData) => [p.id, new StickerPack(this, p)]),
+      data.sticker_packs.map((p: RawStickerPackData) => [
+        p.id,
+        new StickerPack(this, p),
+      ])
     );
   }
 
@@ -409,15 +469,23 @@ class Client extends BaseClient {
   fetchPremiumStickerPacks() {
     if (!deprecationEmitted) {
       process.emitWarning(
-        'The Client#fetchPremiumStickerPacks() method is deprecated. Use Client#fetchStickerPacks() instead.',
-        'DeprecationWarning',
+        "The Client#fetchPremiumStickerPacks() method is deprecated. Use Client#fetchStickerPacks() instead.",
+        "DeprecationWarning"
       );
       deprecationEmitted = true;
     }
 
     return this.fetchStickerPacks();
   }
-  _finalize({ cleanup, message, name }: { cleanup: () => void; message?: string; name?: string }) {
+  _finalize({
+    cleanup,
+    message,
+    name,
+  }: {
+    cleanup: () => void;
+    message?: string;
+    name?: string;
+  }) {
     try {
       cleanup();
       this._cleanups.delete(cleanup);
@@ -425,13 +493,16 @@ class Client extends BaseClient {
         this.emit(Events.DEBUG, message);
       }
     } catch {
-      this.emit(Events.DEBUG, `Garbage collection failed on ${name ?? 'an unknown item'}.`);
+      this.emit(
+        Events.DEBUG,
+        `Garbage collection failed on ${name ?? "an unknown item"}.`
+      );
     }
   }
 
   sweepMessages(lifetime: number = this.options.messageCacheLifetime) {
-    if (typeof lifetime !== 'number' || isNaN(lifetime)) {
-      throw new TypeError('INVALID_TYPE', 'lifetime', 'number');
+    if (typeof lifetime !== "number" || Number.isNaN(lifetime)) {
+      throw new TypeError("INVALID_TYPE", "lifetime", "number");
     }
     if (lifetime <= 0) {
       this.emit(Events.DEBUG, "Didn't sweep messages - lifetime is unlimited");
@@ -439,35 +510,44 @@ class Client extends BaseClient {
     }
 
     const filter = Sweepers.outdatedMessageSweepFilter(lifetime)();
-    if (!filter) return -1;
+    if (!filter) {
+      return -1;
+    }
     const messages = this.sweepers.sweepMessages(filter);
-    this.emit(Events.DEBUG, `Swept ${messages} messages older than ${lifetime} seconds`);
+    this.emit(
+      Events.DEBUG,
+      `Swept ${messages} messages older than ${lifetime} seconds`
+    );
     return messages;
   }
 
   async fetchGuildPreview(guild: GuildResolvable) {
     const id = this.guilds.resolveId(guild);
-    if (!id) throw new TypeError('INVALID_TYPE', 'guild', 'GuildResolvable');
+    if (!id) {
+      throw new TypeError("INVALID_TYPE", "guild", "GuildResolvable");
+    }
     const data = await this.api.guilds(id).preview.get<RawGuildPreviewData>();
     return new GuildPreview(this, data);
   }
 
   async fetchGuildWidget(guild: GuildResolvable) {
     const id = this.guilds.resolveId(guild);
-    if (!id) throw new TypeError('INVALID_TYPE', 'guild', 'GuildResolvable');
-    const data = await this.api.guilds(id, 'widget.json').get<RawWidgetData>();
+    if (!id) {
+      throw new TypeError("INVALID_TYPE", "guild", "GuildResolvable");
+    }
+    const data = await this.api.guilds(id, "widget.json").get<RawWidgetData>();
     return new Widget(this, data);
   }
 
   async refreshAttachmentURL(...urls: string[]) {
     // Clean up the URLs
-    urls = urls.map(url => {
+    urls = urls.map((url) => {
       const urlObject = new URL(url);
       // Clean query
-      urlObject.search = '';
+      urlObject.search = "";
       return urlObject.toString();
     });
-    const data = await this.api.attachments('refresh-urls').post<{
+    const data = await this.api.attachments("refresh-urls").post<{
       refreshed_urls: { original: string; refreshed: string }[];
     }>({
       data: { attachment_urls: urls },
@@ -476,47 +556,71 @@ class Client extends BaseClient {
   }
 
   generateInvite(options: Partial<InviteGenerationOptions> = {}): string {
-    if (typeof options !== 'object' || options === null) {
-      throw new TypeError('INVALID_TYPE', 'options', 'object', true);
+    if (typeof options !== "object" || options === null) {
+      throw new TypeError("INVALID_TYPE", "options", "object", true);
     }
-    if (!this.application) throw new Error('CLIENT_NOT_READY', 'generate an invite link');
+    if (!this.application) {
+      throw new Error("CLIENT_NOT_READY", "generate an invite link");
+    }
 
     const { scopes } = options;
     if (scopes === undefined || !Array.isArray(scopes)) {
-      throw new TypeError('INVALID_TYPE', 'scopes', 'Array of Invite Scopes', true);
+      throw new TypeError(
+        "INVALID_TYPE",
+        "scopes",
+        "Array of Invite Scopes",
+        true
+      );
     }
-    if (!scopes.some((scope: string) => ['bot', 'applications.commands'].includes(scope))) {
-      throw new TypeError('INVALID_TYPE', 'scopes', 'Array of Invite Scopes', true);
+    if (
+      !scopes.some((scope: string) =>
+        ["bot", "applications.commands"].includes(scope)
+      )
+    ) {
+      throw new TypeError(
+        "INVALID_TYPE",
+        "scopes",
+        "Array of Invite Scopes",
+        true
+      );
     }
-    if (!scopes.includes('bot') && options.permissions) {
-      throw new TypeError('INVALID_TYPE', 'permissions', 'null when scopes does not include bot');
+    if (!scopes.includes("bot") && options.permissions) {
+      throw new TypeError(
+        "INVALID_TYPE",
+        "permissions",
+        "null when scopes does not include bot"
+      );
     }
 
     const query = new URLSearchParams({
       client_id: this.application.id,
-      scope: scopes.join(' '),
+      scope: scopes.join(" "),
     });
 
     if (options.disableGuildSelect !== undefined) {
-      query.set('disable_guild_select', String(options.disableGuildSelect));
+      query.set("disable_guild_select", String(options.disableGuildSelect));
     }
 
     if (options.permissions) {
       const permissions = Permissions.resolve(options.permissions);
-      if (permissions) query.set('permissions', permissions.toString());
+      if (permissions) {
+        query.set("permissions", permissions.toString());
+      }
     }
 
     if (options.guild) {
       const guildId = this.guilds.resolveId(options.guild);
-      if (!guildId) throw new TypeError('INVALID_TYPE', 'options.guild', 'GuildResolvable');
-      query.set('guild_id', guildId);
+      if (!guildId) {
+        throw new TypeError("INVALID_TYPE", "options.guild", "GuildResolvable");
+      }
+      query.set("guild_id", guildId);
     }
 
     return `${this.options.http.api}/oauth2/authorize?${query.toString()}`;
   }
 
   sleep(timeout: number): Promise<void> {
-    return new Promise(r => setTimeout(r, timeout));
+    return new Promise((r) => setTimeout(r, timeout));
   }
 
   toJSON() {
@@ -531,16 +635,25 @@ class Client extends BaseClient {
 
   async acceptInvite(
     invite: InviteResolvable,
-    options: AcceptInviteOptions = { bypassOnboarding: true, bypassVerify: true },
+    options: AcceptInviteOptions = {
+      bypassOnboarding: true,
+      bypassVerify: true,
+    }
   ) {
     // ! throw new Error('METHOD_WARNING');
     const code = DataResolver.resolveInviteCode(invite);
-    if (!code) throw new Error('INVITE_RESOLVE_CODE');
+    if (!code) {
+      throw new Error("INVITE_RESOLVE_CODE");
+    }
     const i = await this.fetchInvite(code);
-    if (i.guild?.id && this.guilds.cache.has(i.guild?.id)) return this.guilds.cache.get(i.guild?.id);
-    if (i.channelId && this.channels.cache.has(i.channelId)) return this.channels.cache.get(i.channelId);
+    if (i.guild?.id && this.guilds.cache.has(i.guild?.id)) {
+      return this.guilds.cache.get(i.guild?.id);
+    }
+    if (i.channelId && this.channels.cache.has(i.channelId)) {
+      return this.channels.cache.get(i.channelId);
+    }
     const data = await this.api.invites(code).post<AcceptInviteResult>({
-      DiscordContext: { location: 'Markdown Link' },
+      DiscordContext: { location: "Markdown Link" },
       data: {
         session_id: this.sessionId,
       },
@@ -549,15 +662,16 @@ class Client extends BaseClient {
     // Guild
     if (i.guild?.id) {
       const guild = this.guilds.cache.get(i.guild?.id);
-      if (i.flags.has('GUEST')) {
+      if (i.flags.has("GUEST")) {
         this.emit(Events.DEBUG, `[Invite > Guild ${i.guild?.id}] Guest invite`);
         return guild;
       }
       if (options.bypassOnboarding) {
-        const onboardingData = await this.api.guilds[i.guild?.id].onboarding.get<OnboardingData>();
+        const onboardingData =
+          await this.api.guilds[i.guild?.id].onboarding.get<OnboardingData>();
         // Onboarding
         if (onboardingData.enabled) {
-          const prompts = onboardingData.prompts.filter(o => o.in_onboarding);
+          const prompts = onboardingData.prompts.filter((o) => o.in_onboarding);
           if (prompts.length) {
             const onboarding_prompts_seen: Record<string, number> = {};
             const onboarding_responses: Snowflake[] = [];
@@ -567,84 +681,120 @@ class Client extends BaseClient {
 
             prompts.forEach((prompt: OnboardingPrompt) => {
               onboarding_prompts_seen[prompt.id] = currentDate;
-              if (prompt.required) onboarding_responses.push(prompt.options[0].id);
+              if (prompt.required) {
+                onboarding_responses.push(prompt.options[0].id);
+              }
               prompt.options.forEach((option: OnboardingPromptOption) => {
                 onboarding_responses_seen[option.id] = currentDate;
               });
             });
 
-            await this.api.guilds[i.guild?.id]['onboarding-responses'].post({
+            await this.api.guilds[i.guild?.id]["onboarding-responses"].post({
               data: {
                 onboarding_prompts_seen,
                 onboarding_responses,
                 onboarding_responses_seen,
               },
             });
-            this.emit(Events.DEBUG, `[Invite > Guild ${i.guild?.id}] Bypassed onboarding`);
+            this.emit(
+              Events.DEBUG,
+              `[Invite > Guild ${i.guild?.id}] Bypassed onboarding`
+            );
           }
         }
       }
       // Read rule
       if (data.show_verification_form && options.bypassVerify) {
         // Check Guild
-        if (i.guild.verificationLevel == 'VERY_HIGH' && !this.user!.phone) {
-          this.emit(Events.DEBUG, `[Invite > Guild ${i.guild?.id}] Cannot bypass verify (Phone required)`);
+        if (i.guild.verificationLevel === "VERY_HIGH" && !this.user!.phone) {
+          this.emit(
+            Events.DEBUG,
+            `[Invite > Guild ${i.guild?.id}] Cannot bypass verify (Phone required)`
+          );
           return this.guilds.cache.get(i.guild?.id);
         }
-        if (i.guild.verificationLevel !== 'NONE' && !this.user!.email) {
-          this.emit(Events.DEBUG, `[Invite > Guild ${i.guild?.id}] Cannot bypass verify (Email required)`);
+        if (i.guild.verificationLevel !== "NONE" && !this.user!.email) {
+          this.emit(
+            Events.DEBUG,
+            `[Invite > Guild ${i.guild?.id}] Cannot bypass verify (Email required)`
+          );
           return this.guilds.cache.get(i.guild?.id);
         }
         const getForm = await this.api
           .guilds(i.guild?.id)
-          ['member-verification'].get<MemberVerificationData>({ query: { with_guild: false, invite_code: this.code } })
-          .catch(() => undefined);
+          ["member-verification"].get<MemberVerificationData>({
+            query: { invite_code: this.code, with_guild: false },
+          })
+          .catch(() => {});
         if (getForm && getForm.form_fields[0]) {
-          const form = Object.assign(getForm.form_fields[0], { response: true });
-          await this.api
-            .guilds(i.guild?.id)
-            .requests['@me'].put({ data: { form_fields: [form], version: getForm.version } });
-          this.emit(Events.DEBUG, `[Invite > Guild ${i.guild?.id}] Bypassed verify`);
+          const form = Object.assign(getForm.form_fields[0], {
+            response: true,
+          });
+          await this.api.guilds(i.guild?.id).requests["@me"].put({
+            data: { form_fields: [form], version: getForm.version },
+          });
+          this.emit(
+            Events.DEBUG,
+            `[Invite > Guild ${i.guild?.id}] Bypassed verify`
+          );
         }
       }
       return guild;
-    } else {
-      const channelId = i.channelId || data.channel?.id;
-      return channelId ? this.channels.cache.has(channelId) : false;
     }
+    const channelId = i.channelId || data.channel?.id;
+    return channelId ? this.channels.cache.has(channelId) : false;
   }
 
-  redeemNitro(nitro: string, channel?: TextChannelResolvable, paymentSourceId?: Snowflake): Promise<unknown> | false {
-    if (typeof nitro !== 'string') throw new Error('INVALID_NITRO');
+  redeemNitro(
+    nitro: string,
+    channel?: TextChannelResolvable,
+    paymentSourceId?: Snowflake
+  ): Promise<unknown> | false {
+    if (typeof nitro !== "string") {
+      throw new Error("INVALID_NITRO");
+    }
     const nitroCode =
-      nitro.match(/(discord.gift|discord.com|discordapp.com\/gifts)\/(\w{16,25})/) ||
-      nitro.match(/(discord\.gift\/|discord\.com\/gifts\/|discordapp\.com\/gifts\/)(\w+)/);
-    if (!nitroCode) return false;
+      nitro.match(
+        /(discord.gift|discord.com|discordapp.com\/gifts)\/(\w{16,25})/
+      ) ||
+      nitro.match(
+        /(discord\.gift\/|discord\.com\/gifts\/|discordapp\.com\/gifts\/)(\w+)/
+      );
+    if (!nitroCode) {
+      return false;
+    }
     const code = nitroCode[2];
     const channelId = this.channels.resolveId(channel);
-    return this.api.entitlements['gift-codes'](code).redeem.post({
+    return this.api.entitlements["gift-codes"](code).redeem.post({
       auth: true,
-      data: { channel_id: channelId || null, payment_source_id: paymentSourceId || null },
+      data: {
+        channel_id: channelId || null,
+        payment_source_id: paymentSourceId || null,
+      },
     });
   }
 
   authorizeURL(urlOAuth2: string, options: OAuth2AuthorizeOptions = {}) {
     // ! throw new Error('METHOD_WARNING');
     const url = new URL(urlOAuth2);
-    if (!/^https:\/\/(?:canary\.|ptb\.)?discord\.com(?:\/api(?:\/v\d{1,2})?)?\/oauth2\/authorize\?/.test(urlOAuth2)) {
-      throw new Error('INVALID_URL', urlOAuth2);
+    if (
+      !/^https:\/\/(?:canary\.|ptb\.)?discord\.com(?:\/api(?:\/v\d{1,2})?)?\/oauth2\/authorize\?/.test(
+        urlOAuth2
+      )
+    ) {
+      throw new Error("INVALID_URL", urlOAuth2);
     }
     const searchParams = Object.fromEntries(url.searchParams);
     // Assign options
     options = {
       authorize: true,
-      permissions: '0',
       integration_type: 0,
       location_context: {
-        guild_id: '10000',
-        channel_id: '10000',
+        channel_id: "10000",
         channel_type: 10000,
+        guild_id: "10000",
       },
+      permissions: "0",
       ...searchParams,
       ...options,
     };
@@ -652,8 +802,8 @@ class Client extends BaseClient {
     delete searchParams.integration_type;
     delete searchParams.guild_id;
     return this.api.oauth2.authorize.post<{ location: string }>({
-      query: searchParams,
       data: options,
+      query: searchParams,
     });
   }
 
@@ -665,60 +815,66 @@ class Client extends BaseClient {
           with_guild: false,
         },
       })
-      .then<{ location: string } | false>((rawData: InstalledApplicationData) => {
-        const installTypes = rawData.integration_types_config['1'];
-        if (installTypes) {
-          return this.api.oauth2.authorize.post<{ location: string }>({
-            query: {
-              client_id: applicationId,
-              scope: installTypes.oauth2_install_params.scopes.join(' '),
-            },
-            data: {
-              permissions: '0',
-              authorize: true,
-              integration_type: 1,
-            },
-          });
-        } else {
+      .then<{ location: string } | false>(
+        (rawData: InstalledApplicationData) => {
+          const installTypes = rawData.integration_types_config["1"];
+          if (installTypes) {
+            return this.api.oauth2.authorize.post<{ location: string }>({
+              data: {
+                authorize: true,
+                integration_type: 1,
+                permissions: "0",
+              },
+              query: {
+                client_id: applicationId,
+                scope: installTypes.oauth2_install_params.scopes.join(" "),
+              },
+            });
+          }
           return false;
         }
-      });
+      );
   }
 
-  deauthorize(id: Snowflake, type: 'application' | 'token' = 'application') {
-    if (type === 'application') {
+  deauthorize(id: Snowflake, type: "application" | "token" = "application") {
+    if (type === "application") {
       return this.api.oauth2.tokens
         .get<AuthorizedToken[]>()
-        .then((data: AuthorizedToken[]) => data.find(o => o.application.id === id))
-        .then((o: AuthorizedToken | undefined) => this.api.oauth2.tokens(o!.id).delete<void>());
-    } else {
-      return this.api.oauth2.tokens(id).delete<void>();
+        .then((data: AuthorizedToken[]) =>
+          data.find((o) => o.application.id === id)
+        )
+        .then((o: AuthorizedToken | undefined) =>
+          this.api.oauth2.tokens(o!.id).delete<void>()
+        );
     }
+    return this.api.oauth2.tokens(id).delete<void>();
   }
 
   authorizedApplications() {
-    return this.api.oauth2.tokens.get<AuthorizedToken[]>().then((data: AuthorizedToken[]) => {
-      const results = new Collection<
-        Snowflake,
-        {
-          application: Application;
-          authorizedApplicationId: Snowflake;
-          scopes: string[];
-          deauthorize: () => Promise<void>;
+    return this.api.oauth2.tokens
+      .get<AuthorizedToken[]>()
+      .then((data: AuthorizedToken[]) => {
+        const results = new Collection<
+          Snowflake,
+          {
+            application: Application;
+            authorizedApplicationId: Snowflake;
+            scopes: string[];
+            deauthorize: () => Promise<void>;
+          }
+        >();
+        for (const o of data) {
+          const application = new Application(this, o.application);
+          const data = {
+            application,
+            authorizedApplicationId: o.id,
+            deauthorize: () => this.deauthorize(o.id, "token"),
+            scopes: o.scopes,
+          };
+          results.set(o.application.id, data);
         }
-      >();
-      for (const o of data) {
-        const application = new Application(this, o.application);
-        const data = {
-          application,
-          authorizedApplicationId: o.id,
-          scopes: o.scopes,
-          deauthorize: () => this.deauthorize(o.id, 'token'),
-        };
-        results.set(o.application.id, data);
-      }
-      return results;
-    });
+        return results;
+      });
   }
 
   _eval(script: string) {
@@ -726,76 +882,176 @@ class Client extends BaseClient {
   }
 
   _validateOptions(options: ResolvedClientOptions = this.options) {
-    if (typeof options.makeCache !== 'function') {
-      throw new TypeError('CLIENT_INVALID_OPTION', 'makeCache', 'a function');
-    }
-    if (typeof options.messageCacheLifetime !== 'number' || isNaN(options.messageCacheLifetime)) {
-      throw new TypeError('CLIENT_INVALID_OPTION', 'The messageCacheLifetime', 'a number');
-    }
-    if (typeof options.messageSweepInterval !== 'number' || isNaN(options.messageSweepInterval)) {
-      throw new TypeError('CLIENT_INVALID_OPTION', 'messageSweepInterval', 'a number');
-    }
-    if (typeof options.sweepers !== 'object' || options.sweepers === null) {
-      throw new TypeError('CLIENT_INVALID_OPTION', 'sweepers', 'an object');
-    }
-    if (typeof options.invalidRequestWarningInterval !== 'number' || isNaN(options.invalidRequestWarningInterval)) {
-      throw new TypeError('CLIENT_INVALID_OPTION', 'invalidRequestWarningInterval', 'a number');
-    }
-    if (!Array.isArray(options.partials)) {
-      throw new TypeError('CLIENT_INVALID_OPTION', 'partials', 'an Array');
-    }
-    if (typeof options.DMChannelVoiceStatusSync !== 'number' || isNaN(options.DMChannelVoiceStatusSync)) {
-      throw new TypeError('CLIENT_INVALID_OPTION', 'DMChannelVoiceStatusSync', 'a number');
-    }
-    if (typeof options.waitGuildTimeout !== 'number' || isNaN(options.waitGuildTimeout)) {
-      throw new TypeError('CLIENT_INVALID_OPTION', 'waitGuildTimeout', 'a number');
-    }
-    if (typeof options.restWsBridgeTimeout !== 'number' || isNaN(options.restWsBridgeTimeout)) {
-      throw new TypeError('CLIENT_INVALID_OPTION', 'restWsBridgeTimeout', 'a number');
-    }
-    if (typeof options.restRequestTimeout !== 'number' || isNaN(options.restRequestTimeout)) {
-      throw new TypeError('CLIENT_INVALID_OPTION', 'restRequestTimeout', 'a number');
-    }
-    if (typeof options.restGlobalRateLimit !== 'number' || isNaN(options.restGlobalRateLimit)) {
-      throw new TypeError('CLIENT_INVALID_OPTION', 'restGlobalRateLimit', 'a number');
-    }
-    if (typeof options.restSweepInterval !== 'number' || isNaN(options.restSweepInterval)) {
-      throw new TypeError('CLIENT_INVALID_OPTION', 'restSweepInterval', 'a number');
-    }
-    if (typeof options.retryLimit !== 'number' || isNaN(options.retryLimit)) {
-      throw new TypeError('CLIENT_INVALID_OPTION', 'retryLimit', 'a number');
-    }
-    if (typeof options.failIfNotExists !== 'boolean') {
-      throw new TypeError('CLIENT_INVALID_OPTION', 'failIfNotExists', 'a boolean');
+    if (typeof options.makeCache !== "function") {
+      throw new TypeError("CLIENT_INVALID_OPTION", "makeCache", "a function");
     }
     if (
-      typeof options.rejectOnRateLimit !== 'undefined' &&
-      !(typeof options.rejectOnRateLimit === 'function' || Array.isArray(options.rejectOnRateLimit))
+      typeof options.messageCacheLifetime !== "number" ||
+      Number.isNaN(options.messageCacheLifetime)
     ) {
-      throw new TypeError('CLIENT_INVALID_OPTION', 'rejectOnRateLimit', 'an array or a function');
+      throw new TypeError(
+        "CLIENT_INVALID_OPTION",
+        "The messageCacheLifetime",
+        "a number"
+      );
     }
-    if (typeof options.TOTPKey === 'string') {
+    if (
+      typeof options.messageSweepInterval !== "number" ||
+      Number.isNaN(options.messageSweepInterval)
+    ) {
+      throw new TypeError(
+        "CLIENT_INVALID_OPTION",
+        "messageSweepInterval",
+        "a number"
+      );
+    }
+    if (typeof options.sweepers !== "object" || options.sweepers === null) {
+      throw new TypeError("CLIENT_INVALID_OPTION", "sweepers", "an object");
+    }
+    if (
+      typeof options.invalidRequestWarningInterval !== "number" ||
+      Number.isNaN(options.invalidRequestWarningInterval)
+    ) {
+      throw new TypeError(
+        "CLIENT_INVALID_OPTION",
+        "invalidRequestWarningInterval",
+        "a number"
+      );
+    }
+    if (!Array.isArray(options.partials)) {
+      throw new TypeError("CLIENT_INVALID_OPTION", "partials", "an Array");
+    }
+    if (
+      typeof options.DMChannelVoiceStatusSync !== "number" ||
+      Number.isNaN(options.DMChannelVoiceStatusSync)
+    ) {
+      throw new TypeError(
+        "CLIENT_INVALID_OPTION",
+        "DMChannelVoiceStatusSync",
+        "a number"
+      );
+    }
+    if (
+      typeof options.waitGuildTimeout !== "number" ||
+      Number.isNaN(options.waitGuildTimeout)
+    ) {
+      throw new TypeError(
+        "CLIENT_INVALID_OPTION",
+        "waitGuildTimeout",
+        "a number"
+      );
+    }
+    if (
+      typeof options.restWsBridgeTimeout !== "number" ||
+      Number.isNaN(options.restWsBridgeTimeout)
+    ) {
+      throw new TypeError(
+        "CLIENT_INVALID_OPTION",
+        "restWsBridgeTimeout",
+        "a number"
+      );
+    }
+    if (
+      typeof options.restRequestTimeout !== "number" ||
+      Number.isNaN(options.restRequestTimeout)
+    ) {
+      throw new TypeError(
+        "CLIENT_INVALID_OPTION",
+        "restRequestTimeout",
+        "a number"
+      );
+    }
+    if (
+      typeof options.restGlobalRateLimit !== "number" ||
+      Number.isNaN(options.restGlobalRateLimit)
+    ) {
+      throw new TypeError(
+        "CLIENT_INVALID_OPTION",
+        "restGlobalRateLimit",
+        "a number"
+      );
+    }
+    if (
+      typeof options.restSweepInterval !== "number" ||
+      Number.isNaN(options.restSweepInterval)
+    ) {
+      throw new TypeError(
+        "CLIENT_INVALID_OPTION",
+        "restSweepInterval",
+        "a number"
+      );
+    }
+    if (
+      typeof options.retryLimit !== "number" ||
+      Number.isNaN(options.retryLimit)
+    ) {
+      throw new TypeError("CLIENT_INVALID_OPTION", "retryLimit", "a number");
+    }
+    if (typeof options.failIfNotExists !== "boolean") {
+      throw new TypeError(
+        "CLIENT_INVALID_OPTION",
+        "failIfNotExists",
+        "a boolean"
+      );
+    }
+    if (
+      options.rejectOnRateLimit !== undefined &&
+      !(
+        typeof options.rejectOnRateLimit === "function" ||
+        Array.isArray(options.rejectOnRateLimit)
+      )
+    ) {
+      throw new TypeError(
+        "CLIENT_INVALID_OPTION",
+        "rejectOnRateLimit",
+        "an array or a function"
+      );
+    }
+    if (typeof options.TOTPKey === "string") {
       // Convert to base32 if not already
-      options.TOTPKey = options.TOTPKey.replace(/ +/g, '').toUpperCase();
+      options.TOTPKey = options.TOTPKey.replaceAll(/ +/g, "").toUpperCase();
     }
     // Selfbot divergence: a selfbot can shard when configured, but defaults to one shard.
     // discord.js also validates `intents` here. User accounts never send intents, so the
     // option is accepted for type parity and ignored below.
-    if (typeof options.shardCount !== 'number' || !Number.isInteger(options.shardCount) || options.shardCount < 1) {
-      throw new TypeError('CLIENT_INVALID_OPTION', 'shardCount', 'a number greater than or equal to 1');
+    if (
+      typeof options.shardCount !== "number" ||
+      !Number.isInteger(options.shardCount) ||
+      options.shardCount < 1
+    ) {
+      throw new TypeError(
+        "CLIENT_INVALID_OPTION",
+        "shardCount",
+        "a number greater than or equal to 1"
+      );
     }
-    if (options.shards === 'auto') {
+    if (options.shards === "auto") {
       // The recommended shard count is resolved on gateway connect.
-    } else if (typeof options.shards === 'number') {
+    } else if (typeof options.shards === "number") {
       options.shards = [options.shards];
     } else if (Array.isArray(options.shards)) {
-      options.shards = [...new Set(options.shards.filter((id: number) => Number.isInteger(id) && id >= 0))];
-      if (!options.shards.length) throw new RangeError('CLIENT_INVALID_PROVIDED_SHARDS');
-      if (options.shardCount === 1) options.shardCount = options.shards.length;
-    } else if (typeof options.shards === 'undefined') {
-      options.shards = Array.from({ length: options.shardCount }, (_, id) => id);
+      options.shards = [
+        ...new Set(
+          options.shards.filter((id: number) => Number.isInteger(id) && id >= 0)
+        ),
+      ];
+      if (!options.shards.length) {
+        throw new RangeError("CLIENT_INVALID_PROVIDED_SHARDS");
+      }
+      if (options.shardCount === 1) {
+        options.shardCount = options.shards.length;
+      }
+    } else if (options.shards === undefined) {
+      options.shards = Array.from(
+        { length: options.shardCount },
+        (_, id) => id
+      );
     } else {
-      throw new TypeError('CLIENT_INVALID_OPTION', 'shards', "'auto', a number or array of numbers");
+      throw new TypeError(
+        "CLIENT_INVALID_OPTION",
+        "shards",
+        "'auto', a number or array of numbers"
+      );
     }
     // Selfbot divergence: user accounts do not use gateway intents. Keep the option for type
     // parity and force full intents so guild-wait behaviour stays the same.

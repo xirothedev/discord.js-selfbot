@@ -1,30 +1,34 @@
-import { Collection } from '@discordjs/collection';
-import Action from './Action';
-import { isTextBasedChannel } from '../../types/channels';
-import type { GatewayMessageDeleteBulkDispatchData } from 'discord-api-types/v10';
-import _MessageModule from '../../structures/Message';
+import { Collection } from "@discordjs/collection";
+import Action from "./Action";
+import { isTextBasedChannel } from "../../types/channels";
+import type { GatewayMessageDeleteBulkDispatchData } from "discord-api-types/v10";
+import _MessageModule from "../../structures/Message";
+
 const { deletedMessages } = _MessageModule;
-import _ConstantsModule from '../../util/Constants';
+import _ConstantsModule from "../../util/Constants";
+
 const { Events } = _ConstantsModule;
 
 class MessageDeleteBulkAction extends Action {
   handle(data: GatewayMessageDeleteBulkDispatchData) {
-    const client = this.client;
+    const { client } = this;
     const channel = client.channels.cache.get(data.channel_id);
 
     if (channel) {
-      if (!isTextBasedChannel(channel)) return {};
+      if (!isTextBasedChannel(channel)) {
+        return {};
+      }
 
-      const ids = data.ids;
+      const { ids } = data;
       const messages = new Collection();
       for (const id of ids) {
         const message = this.getMessage(
           {
-            id,
             guild_id: data.guild_id,
+            id,
           },
           channel,
-          false,
+          false
         );
         if (message) {
           deletedMessages.add(message);
@@ -33,7 +37,9 @@ class MessageDeleteBulkAction extends Action {
         }
       }
 
-      if (messages.size > 0) client.emit(Events.MESSAGE_BULK_DELETE, messages);
+      if (messages.size > 0) {
+        client.emit(Events.MESSAGE_BULK_DELETE, messages);
+      }
       return { messages };
     }
     return {};

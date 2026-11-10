@@ -1,10 +1,11 @@
-@import 'tailwindcss';
-@import 'fumadocs-ui/css/neutral.css';
-@import 'fumadocs-ui/css/preset.css';
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
 
 @theme {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
+  --font-mono:
+    var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
 
   --color-fd-primary: #5865f2;
   --color-fd-primary-foreground: #ffffff;
@@ -57,7 +58,11 @@ html > body[data-scroll-locked] {
 }
 
 ::selection {
-  background: color-mix(in oklab, var(--color-discord-blurple) 35%, transparent);
+  background: color-mix(
+    in oklab,
+    var(--color-discord-blurple) 35%,
+    transparent
+  );
 }
 
 @layer components {

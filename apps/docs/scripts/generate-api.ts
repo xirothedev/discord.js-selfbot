@@ -1,11 +1,11 @@
-import { generateApi } from './api/generate';
+import { generateApi } from "./api/generate";
 
-const check = process.argv.includes('--check');
+const check = process.argv.includes("--check");
 const result = generateApi({ check });
 
 if (check) {
   if (result.ok) {
-    console.log('API reference is up to date.');
+    console.log("API reference is up to date.");
   } else {
     process.exitCode = 1;
   }

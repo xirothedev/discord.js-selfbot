@@ -1,27 +1,37 @@
-import BaseMessageComponent from './BaseMessageComponent';
-import { ButtonStyle, ComponentType } from 'discord-api-types/v10';
-import type { APIButtonComponent, APIMessageComponentEmoji, APIPartialEmoji } from 'discord-api-types/v10';
-import _errorsModule from '../errors';
+import BaseMessageComponent from "./BaseMessageComponent";
+import { ButtonStyle, ComponentType } from "discord-api-types/v10";
+import type {
+  APIButtonComponent,
+  APIMessageComponentEmoji,
+  APIPartialEmoji,
+} from "discord-api-types/v10";
+import _errorsModule from "../errors";
+
 const { RangeError } = _errorsModule;
-import _ConstantsModule from '../util/Constants';
+import _ConstantsModule from "../util/Constants";
+
 const { MessageButtonStyles } = _ConstantsModule;
-import Util from '../util/Util';
+import Util from "../util/Util";
 import type {
   EmojiIdentifierResolvable,
   MessageButtonOptions,
   MessageButtonStyle,
   MessageButtonStyleResolvable,
-} from '../../typings';
+} from "../../typings";
 
-type MessageButtonInput = {
+interface MessageButtonInput {
   label?: string | null;
   customId?: string | null;
   custom_id?: string | null;
   style?: MessageButtonStyleResolvable | ButtonStyle | null;
-  emoji?: EmojiIdentifierResolvable | APIPartialEmoji | APIMessageComponentEmoji | null;
+  emoji?:
+    | EmojiIdentifierResolvable
+    | APIPartialEmoji
+    | APIMessageComponentEmoji
+    | null;
   url?: string | null;
   disabled?: boolean;
-};
+}
 
 class MessageButton extends BaseMessageComponent {
   declare customId: string | null;
@@ -29,11 +39,17 @@ class MessageButton extends BaseMessageComponent {
   declare emoji: APIPartialEmoji | null;
   declare label: string | null;
   declare style: MessageButtonStyle | null;
-  declare type: 'BUTTON';
+  declare type: "BUTTON";
   declare url: string | null;
 
-  constructor(data: MessageButton | MessageButtonOptions | APIButtonComponent | MessageButtonInput = {}) {
-    super({ type: 'BUTTON' });
+  constructor(
+    data:
+      | MessageButton
+      | MessageButtonOptions
+      | APIButtonComponent
+      | MessageButtonInput = {}
+  ) {
+    super({ type: "BUTTON" });
 
     this.setup(data);
   }
@@ -54,7 +70,7 @@ class MessageButton extends BaseMessageComponent {
   }
 
   setCustomId(customId: string) {
-    this.customId = Util.verifyString(customId, RangeError, 'BUTTON_CUSTOM_ID');
+    this.customId = Util.verifyString(customId, RangeError, "BUTTON_CUSTOM_ID");
     return this;
   }
 
@@ -69,7 +85,7 @@ class MessageButton extends BaseMessageComponent {
   }
 
   setLabel(label: string) {
-    this.label = Util.verifyString(label, RangeError, 'BUTTON_LABEL');
+    this.label = Util.verifyString(label, RangeError, "BUTTON_LABEL");
     return this;
   }
 
@@ -79,7 +95,7 @@ class MessageButton extends BaseMessageComponent {
   }
 
   setURL(url: string) {
-    this.url = Util.verifyString(url, RangeError, 'BUTTON_URL');
+    this.url = Util.verifyString(url, RangeError, "BUTTON_URL");
     return this;
   }
 
@@ -92,23 +108,31 @@ class MessageButton extends BaseMessageComponent {
     } = {
       disabled: this.disabled,
       emoji: this.emoji
-        ? { id: this.emoji.id ?? undefined, name: this.emoji.name ?? undefined, animated: this.emoji.animated }
+        ? {
+            animated: this.emoji.animated,
+            id: this.emoji.id ?? undefined,
+            name: this.emoji.name ?? undefined,
+          }
         : undefined,
       label: this.label ?? undefined,
       type: ComponentType.Button,
     };
-    if (this.style === 'LINK') {
-      return { ...base, style: ButtonStyle.Link, url: this.url ?? '' };
+    if (this.style === "LINK") {
+      return { ...base, style: ButtonStyle.Link, url: this.url ?? "" };
     }
     return {
       ...base,
-      style: this.style ? MessageButtonStyles[this.style] : ButtonStyle.Secondary,
-      custom_id: this.customId ?? '',
+      custom_id: this.customId ?? "",
+      style: this.style
+        ? MessageButtonStyles[this.style]
+        : ButtonStyle.Secondary,
     };
   }
 
-  static resolveStyle(style: MessageButtonStyleResolvable | ButtonStyle): MessageButtonStyle {
-    return typeof style === 'string' ? style : MessageButtonStyles[style];
+  static resolveStyle(
+    style: MessageButtonStyleResolvable | ButtonStyle
+  ): MessageButtonStyle {
+    return typeof style === "string" ? style : MessageButtonStyles[style];
   }
 }
 

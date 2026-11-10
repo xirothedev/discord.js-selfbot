@@ -1,5 +1,5 @@
-import type { APIApplication } from 'discord-api-types/v10';
-import type { ApplicationType } from '../../../typings/enums';
+import type { APIApplication } from "discord-api-types/v10";
+import type { ApplicationType } from "../../../typings/enums";
 
 export interface ApplicationPatch extends Partial<APIApplication> {
   type?: ApplicationType | null;
@@ -9,7 +9,9 @@ export interface ApplicationPatch extends Partial<APIApplication> {
   description_localized?: string | null;
   aliases?: string[];
   executables?: { os: string; name: string; is_launcher: boolean }[] | null;
-  third_party_skus?: { id: string | null; sku: string | null; distributor: string }[] | null;
+  third_party_skus?:
+    | { id: string | null; sku: string | null; distributor: string }[]
+    | null;
   hook?: boolean | null;
   overlay?: boolean | null;
   overlay_methods?: number | null;

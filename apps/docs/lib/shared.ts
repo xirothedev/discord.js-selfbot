@@ -1,22 +1,22 @@
-import { createGetUrl } from 'fumadocs-core/source';
+import { createGetUrl } from "fumadocs-core/source";
 
-export const appName = 'discord-ts-selfbot';
-export const appVersion = '14.0.0';
-export const siteUrl = 'https://xirothedev.github.io/discord.js-selfbot';
-export const docsRoute = '/docs';
-export const docsImageRoute = '/og/docs';
-export const docsContentRoute = '/llms.mdx/docs';
+export const appName = "discord-ts-selfbot";
+export const appVersion = "14.0.0";
+export const siteUrl = "https://xirothedev.github.io/discord.js-selfbot";
+export const docsRoute = "/docs";
+export const docsImageRoute = "/og/docs";
+export const docsContentRoute = "/llms.mdx/docs";
 
 export const gitConfig = {
-  user: 'xirothedev',
-  repo: 'discord.js-selfbot',
-  branch: 'main',
+  branch: "main",
+  repo: "discord.js-selfbot",
+  user: "xirothedev",
 };
 
 const getContentUrl = createGetUrl(docsContentRoute);
 
 export function getPageMarkdownUrl(page: { slugs: string[]; locale?: string }) {
-  const segments = [...page.slugs, 'content.md'];
+  const segments = [...page.slugs, "content.md"];
 
   return { segments, url: getContentUrl(segments, page.locale) };
 }
@@ -24,7 +24,7 @@ export function getPageMarkdownUrl(page: { slugs: string[]; locale?: string }) {
 const getImageUrl = createGetUrl(docsImageRoute);
 
 export function getPageImageUrl(page: { slugs: string[]; locale?: string }) {
-  const segments = [...page.slugs, 'image.png'];
+  const segments = [...page.slugs, "image.png"];
 
   return { segments, url: getImageUrl(segments, page.locale) };
 }

@@ -1,10 +1,31 @@
 {
-  "singleQuote": true,
-  "printWidth": 120,
-  "semi": true,
-  "trailingComma": "all",
-  "arrowParens": "avoid",
+  "arrowParens": "always",
+  "bracketSameLine": false,
+  "bracketSpacing": true,
   "endOfLine": "lf",
-  "sortPackageJson": false,
-  "ignorePatterns": ["*.md", "*.mdx", "**/next-env.d.ts"]
+  "ignorePatterns": [
+    "*.md",
+    "*.mdx",
+    "**/next-env.d.ts",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.next/**",
+    "**/out/**",
+    "**/.turbo/**",
+    "**/coverage/**",
+    "apps/docs/.source/**"
+  ],
+  "jsxSingleQuote": false,
+  "printWidth": 80,
+  "proseWrap": "never",
+  "quoteProps": "as-needed",
+  "semi": true,
+  "singleQuote": false,
+  "sortPackageJson": true,
+  "sortTailwindcss": {
+    "functions": ["clsx", "cva", "tw", "twMerge", "cn", "twJoin", "tv"]
+  },
+  "tabWidth": 2,
+  "trailingComma": "es5",
+  "useTabs": false
 }

@@ -62,37 +62,41 @@ export interface FakeDiscord {
 }
 
 const DEFAULT_READY = {
-  user: {
-    id: '123',
-    username: 'test',
-    discriminator: '0',
-    avatar: null,
-    bot: false,
-    flags: 0,
-  },
-  private_channels: [],
+  auth_session_id_hash: "hash",
   guilds: [],
   notes: [],
+  private_channels: [],
   relationships: [],
-  user_settings: {},
+  user: {
+    avatar: null,
+    bot: false,
+    discriminator: "0",
+    flags: 0,
+    id: "123",
+    username: "test",
+  },
   user_guild_settings: [],
-  auth_session_id_hash: 'hash',
+  user_settings: {},
 };
 
-export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord {
+export function startFakeDiscord(
+  options: FakeDiscordOptions = {}
+): FakeDiscord {
   const apiVersion = options.apiVersion ?? 9;
   const readyPayload = options.readyPayload ?? DEFAULT_READY;
-  const onIdentify = options.onIdentify;
+  const { onIdentify } = options;
   const apiResponses = { ...options.responses, ...options.apiResponses };
   const routes = options.routes ?? {};
-  const respond = options.respond;
+  const { respond } = options;
 
   let lastRequest: FakeRequest | null = null;
   const requests: FakeRequest[] = [];
 
   let lastIdentify: Record<string, unknown> | null = null;
 
-  type GatewaySocket = { send(data: string): unknown };
+  interface GatewaySocket {
+    send(data: string): unknown;
+  }
 
   const sockets = new Set<GatewaySocket>();
   const shardWaiters = new Set<{
@@ -109,15 +113,19 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
   }
 
   const server = Bun.serve({
-    port: 0,
     fetch: async (req, srv) => {
-      if (srv.upgrade(req)) return;
+      if (srv.upgrade(req)) {
+        return;
+      }
       const url = new URL(req.url);
       if (url.pathname === `/v${apiVersion}/gateway`) {
         return Response.json({ url: `ws://localhost:${srv.port}` });
       }
       if (url.pathname.startsWith(`/v${apiVersion}/`)) {
-        const bodyText = req.method === 'GET' || req.method === 'HEAD' ? null : await req.text();
+        const bodyText =
+          req.method === "GET" || req.method === "HEAD"
+            ? null
+            : await req.text();
         let body: unknown = null;
         if (bodyText) {
           try {
@@ -128,90 +136,110 @@ export function startFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord 
         }
         const headers = Object.fromEntries(req.headers.entries());
         const request: FakeRequest = {
+          body,
+          bodyText,
+          headers,
           method: req.method,
           path: url.pathname,
           query: url.search,
-          headers,
-          body,
-          bodyText,
         };
         lastRequest = request;
         requests.push(request);
 
         const custom = respond?.({ ...request, url });
-        if (custom instanceof Response) return custom;
-        if (custom !== undefined) return Response.json(custom);
+        if (custom instanceof Response) {
+          return custom;
+        }
+        if (custom !== undefined) {
+          return Response.json(custom);
+        }
 
         const override = routes[`${req.method.toUpperCase()} ${url.pathname}`];
         if (override) {
           return Response.json(override.body ?? null, {
-            status: override.status ?? 200,
             headers: override.headers,
+            status: override.status ?? 200,
           });
         }
 
         const methodKey = `${req.method} ${url.pathname}`;
-        if (Object.hasOwn(apiResponses, methodKey)) return Response.json(apiResponses[methodKey]);
-        if (Object.hasOwn(apiResponses, url.pathname)) return Response.json(apiResponses[url.pathname]);
+        if (Object.hasOwn(apiResponses, methodKey)) {
+          return Response.json(apiResponses[methodKey]);
+        }
+        if (Object.hasOwn(apiResponses, url.pathname)) {
+          return Response.json(apiResponses[url.pathname]);
+        }
         return Response.json({
-          id: '123',
-          username: 'test',
-          discriminator: '0',
+          discriminator: "0",
+          id: "123",
+          username: "test",
         });
       }
-      return new Response('Not found', { status: 404 });
+      return new Response("Not found", { status: 404 });
     },
+    port: 0,
     websocket: {
-      open(ws) {
-        sockets.add(ws);
-        notifyShardConnected();
-        ws.send(JSON.stringify({ op: 10, d: { heartbeat_interval: 45000 } }));
+      close(ws) {
+        sockets.delete(ws);
       },
       message(ws, msg) {
         try {
-          const text = typeof msg === 'string' ? msg : new TextDecoder().decode(msg);
+          const text =
+            typeof msg === "string" ? msg : new TextDecoder().decode(msg);
           const data = JSON.parse(text);
           if (data && data.op === 2) {
             lastIdentify = (data.d ?? null) as Record<string, unknown> | null;
-            if (onIdentify && lastIdentify) onIdentify(lastIdentify);
-            ws.send(JSON.stringify({ op: 0, t: 'READY', d: readyPayload }));
+            if (onIdentify && lastIdentify) {
+              onIdentify(lastIdentify);
+            }
+            ws.send(JSON.stringify({ d: readyPayload, op: 0, t: "READY" }));
           }
         } catch {
           // ignore non-JSON frames
         }
       },
-      close(ws) {
-        sockets.delete(ws);
+      open(ws) {
+        sockets.add(ws);
+        notifyShardConnected();
+        ws.send(JSON.stringify({ d: { heartbeat_interval: 45000 }, op: 10 }));
       },
     },
   });
 
   return {
-    server,
-    url: `http://localhost:${server.port}`,
-    port: server.port as number,
+    getIdentifyPayload: () => lastIdentify,
     getLastRequest: () => lastRequest,
     getRequests: () => requests,
-    getIdentifyPayload: () => lastIdentify,
+    port: server.port as number,
     sendGatewayPacket(packet) {
-      if (!sockets.size) throw new Error('No gateway shard is connected');
+      if (!sockets.size) {
+        throw new Error("No gateway shard is connected");
+      }
       const payload = JSON.stringify(packet);
-      for (const socket of sockets) socket.send(payload);
+      for (const socket of sockets) {
+        socket.send(payload);
+      }
     },
+    server,
+    stop: () => server.stop(true),
+    url: `http://localhost:${server.port}`,
     waitForShard(timeoutMs = 10_000) {
-      if (sockets.size) return Promise.resolve();
+      if (sockets.size) {
+        return Promise.resolve();
+      }
       return new Promise<void>((resolve, reject) => {
         const waiter = {
           resolve: () => resolve(),
           timer: setTimeout(() => {
             shardWaiters.delete(waiter);
-            reject(new Error('Timed out waiting for a gateway shard connection'));
+            reject(
+              new Error("Timed out waiting for a gateway shard connection")
+            );
           }, timeoutMs),
         };
         shardWaiters.add(waiter);
       });
     },
-    stop: () => server.stop(true),
   };
 }
 
