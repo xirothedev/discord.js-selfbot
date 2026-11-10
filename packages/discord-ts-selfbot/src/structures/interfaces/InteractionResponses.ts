@@ -4,10 +4,22 @@ import _ConstantsModule from '../../util/Constants';
 const { InteractionResponseTypes, InteractionTypes } = _ConstantsModule;
 import MessageFlags from '../../util/MessageFlags';
 import InteractionCollector from '../InteractionCollector';
-import MessagePayload from '../MessagePayload';
+import MessagePayload, { type MessagePayloadOptions } from '../MessagePayload';
 import Modal from '../Modal';
 import type { Snowflake } from 'discord-api-types/v10';
+import type { Collection } from '@discordjs/collection';
 import type InteractionWebhook from '../InteractionWebhook';
+import type {
+  AwaitModalSubmitOptions,
+  InteractionDeferReplyOptions,
+  InteractionDeferUpdateOptions,
+  InteractionEditReplyOptions,
+  ModalOptions,
+  ModalSubmitInteraction,
+} from '../../../typings';
+
+type InteractionReplySourceOptions = MessagePayloadOptions & { ephemeral?: boolean; fetchReply?: boolean };
+type InteractionUpdateSourceOptions = MessagePayloadOptions & { fetchReply?: boolean };
 
 /**
  * Interface for classes that support shared interaction response types.
@@ -64,7 +76,7 @@ class InteractionResponses {
    *   .then(console.log)
    *   .catch(console.error);
    */
-  async deferReply(options: any = {}) {
+  async deferReply(options: InteractionDeferReplyOptions = {}) {
     if (this.deferred || this.replied) throw new Error('INTERACTION_ALREADY_REPLIED');
     this.ephemeral = options.ephemeral ?? false;
     await this.client.api.interactions(this.id, this.token).callback.post({
@@ -99,9 +111,10 @@ class InteractionResponses {
    *   .then(() => console.log('Reply sent.'))
    *   .catch(console.error);
    */
-  async reply(options: any) {
+  async reply(options: string | MessagePayload | InteractionReplySourceOptions) {
     if (this.deferred || this.replied) throw new Error('INTERACTION_ALREADY_REPLIED');
-    this.ephemeral = options.ephemeral ?? false;
+    const replyOptions = typeof options === 'string' || options instanceof MessagePayload ? {} : options;
+    this.ephemeral = replyOptions.ephemeral ?? false;
 
     let messagePayload;
     if (options instanceof MessagePayload) messagePayload = options;
@@ -119,7 +132,7 @@ class InteractionResponses {
     });
     this.replied = true;
 
-    return options.fetchReply ? this.fetchReply() : undefined;
+    return replyOptions.fetchReply ? this.fetchReply() : undefined;
   }
 
   /**
@@ -154,9 +167,11 @@ class InteractionResponses {
    *   .then(console.log)
    *   .catch(console.error);
    */
-  async editReply(options: any) {
+  async editReply(options: string | MessagePayload | InteractionEditReplyOptions) {
     if (!this.deferred && !this.replied) throw new Error('INTERACTION_NOT_REPLIED');
-    const message = await this.webhook.editMessage(options.message ?? '@original', options);
+    const messageId =
+      typeof options === 'string' || options instanceof MessagePayload ? '@original' : (options.message ?? '@original');
+    const message = await this.webhook.editMessage(messageId, options);
     this.replied = true;
     return message;
   }
@@ -181,7 +196,7 @@ class InteractionResponses {
    * @param {string|MessagePayload|InteractionReplyOptions} options The options for the reply
    * @returns {Promise<Message|APIMessage>}
    */
-  async followUp(options: any) {
+  async followUp(options: string | MessagePayload | InteractionReplySourceOptions) {
     if (!this.deferred && !this.replied) throw new Error('INTERACTION_NOT_REPLIED');
     return this.webhook.send(options);
   }
@@ -196,7 +211,7 @@ class InteractionResponses {
    *   .then(console.log)
    *   .catch(console.error);
    */
-  async deferUpdate(options: any = {}) {
+  async deferUpdate(options: InteractionDeferUpdateOptions = {}) {
     if (this.deferred || this.replied) throw new Error('INTERACTION_ALREADY_REPLIED');
     await this.client.api.interactions(this.id, this.token).callback.post({
       data: {
@@ -222,8 +237,9 @@ class InteractionResponses {
    *   .then(console.log)
    *   .catch(console.error);
    */
-  async update(options: any) {
+  async update(options: string | MessagePayload | InteractionUpdateSourceOptions) {
     if (this.deferred || this.replied) throw new Error('INTERACTION_ALREADY_REPLIED');
+    const updateOptions = typeof options === 'string' || options instanceof MessagePayload ? {} : options;
 
     let messagePayload;
     if (options instanceof MessagePayload) messagePayload = options;
@@ -241,7 +257,7 @@ class InteractionResponses {
     });
     this.replied = true;
 
-    return options.fetchReply ? this.fetchReply() : undefined;
+    return updateOptions.fetchReply ? this.fetchReply() : undefined;
   }
 
   /**
@@ -249,7 +265,7 @@ class InteractionResponses {
    * @param {Modal|ModalOptions} modal The modal to show
    * @returns {Promise<void>}
    */
-  async showModal(modal: any) {
+  async showModal(modal: Modal | ModalOptions) {
     if (this.deferred || this.replied) throw new Error('INTERACTION_ALREADY_REPLIED');
 
     const _modal = modal instanceof Modal ? modal : new Modal(modal);
@@ -281,12 +297,12 @@ class InteractionResponses {
    *   .then(interaction => console.log(`${interaction.customId} was submitted!`))
    *   .catch(console.error);
    */
-  awaitModalSubmit(options: any) {
+  awaitModalSubmit(options: AwaitModalSubmitOptions<ModalSubmitInteraction>): Promise<ModalSubmitInteraction> {
     if (typeof options.time !== 'number') throw new Error('INVALID_TYPE', 'time', 'number');
     const _options = { ...options, max: 1, interactionType: InteractionTypes.MODAL_SUBMIT };
-    return new Promise((resolve: any, reject: any) => {
-      const collector = new InteractionCollector(this.client, _options);
-      collector.once('end', (interactions: any, reason: any) => {
+    return new Promise<ModalSubmitInteraction>((resolve, reject) => {
+      const collector = new InteractionCollector<ModalSubmitInteraction>(this.client, _options);
+      collector.once('end', (interactions: Collection<Snowflake, ModalSubmitInteraction>, reason: string) => {
         const interaction = interactions.first();
         if (interaction) resolve(interaction);
         else reject(new Error('INTERACTION_COLLECTOR_ERROR', reason));
@@ -294,7 +310,7 @@ class InteractionResponses {
     });
   }
 
-  static applyToClass(structure: any, ignore: any = []) {
+  static applyToClass(structure: { prototype: object }, ignore: string[] = []) {
     const props = [
       'deferReply',
       'reply',
@@ -310,11 +326,8 @@ class InteractionResponses {
 
     for (const prop of props) {
       if (ignore.includes(prop)) continue;
-      Object.defineProperty(
-        structure.prototype,
-        prop,
-        Object.getOwnPropertyDescriptor(InteractionResponses.prototype, prop) as any,
-      );
+      const descriptor = Object.getOwnPropertyDescriptor(InteractionResponses.prototype, prop);
+      if (descriptor) Object.defineProperty(structure.prototype, prop, descriptor);
     }
   }
 }
