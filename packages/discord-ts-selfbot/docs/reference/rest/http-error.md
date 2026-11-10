@@ -12,8 +12,6 @@ class HTTPError extends Error
 
 ### `cause`
 
-The cause of the error.
-
 **Type:** `unknown`
 
 ### `code`
@@ -127,19 +125,6 @@ static captureStackTrace(targetObject: object, constructorOpt?: Function): void
 
 **Returns:** `void`
 
-Create .stack property on a target object
-
-```ts
-
-static captureStackTrace(targetObject: object, constructorOpt?: Function): void
-
-```
-
-- `targetObject: object`
-- `constructorOpt?: Function`
-
-**Returns:** `void`
-
 ### `isError`
 
 Indicates whether the argument provided is a built-in Error instance or not.
@@ -153,18 +138,6 @@ static isError(error: unknown): error
 - `error: unknown`
 
 **Returns:** `error`
-
-Check if a value is an instance of Error
-
-```ts
-
-static isError(value: unknown): value
-
-```
-
-- `value: unknown` — The value to check
-
-**Returns:** `value`
 
 ### `prepareStackTrace`
 
