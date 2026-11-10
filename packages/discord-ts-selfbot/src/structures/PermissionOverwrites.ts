@@ -7,7 +7,7 @@ import _ConstantsModule from '../util/Constants';
 const { OverwriteTypes } = _ConstantsModule;
 import Permissions from '../util/Permissions';
 import type { Snowflake } from 'discord-api-types/v10';
-import type { OverwriteType, PermissionOverwriteOptions, PermissionResolvable } from '../../typings';
+import type { OverwriteType, PermissionOverwriteOptions } from '../../typings';
 import type GuildChannel from './GuildChannel';
 
 /**
@@ -130,7 +130,7 @@ class PermissionOverwrites extends Base {
    */
   static resolveOverwriteOptions(
     options: PermissionOverwriteOptions,
-    { allow, deny }: { allow?: PermissionResolvable; deny?: PermissionResolvable } = {},
+    { allow, deny }: { allow?: unknown; deny?: unknown } = {},
   ) {
     const allowPermissions = new Permissions(allow);
     const denyPermissions = new Permissions(deny);

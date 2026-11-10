@@ -26,7 +26,6 @@ import type {
   GuildChannelCreateOptions,
   GuildChannelResolvable,
   OverwriteResolvable,
-  PermissionResolvable,
   SetChannelPositionOptions,
   ThreadAutoArchiveDuration,
   VideoQualityMode,
@@ -40,10 +39,10 @@ type GuildChannelResolvableSource = GuildChannel | ThreadChannel | GuildChannelR
 type CategoryChannelResolvableSource = CategoryChannel | CategoryChannelResolvable;
 
 interface OverwriteDataSource {
-  id: string;
+  id: unknown;
   type?: string | number;
-  allow?: BitFieldResolvable | PermissionResolvable;
-  deny?: BitFieldResolvable | PermissionResolvable;
+  allow?: unknown;
+  deny?: unknown;
 }
 
 type OverwriteResolvableSource = PermissionOverwritesType | OverwriteDataSource;
