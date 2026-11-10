@@ -3,8 +3,15 @@ import CachedManager from './CachedManager';
 import { isGuildBasedChannel, isThreadChannel, isThreadParentChannel } from '../types/channels';
 import _ChannelModule from '../structures/Channel';
 const { Channel } = _ChannelModule;
+import GuildChannel from '../structures/GuildChannel';
 import _ConstantsModule from '../util/Constants';
 const { Events, RelationshipTypes } = _ConstantsModule;
+import type { Snowflake } from 'discord-api-types/v10';
+import type { RawChannelData } from '../../typings/rawDataTypes';
+import type { FetchChannelOptions, UserResolvable } from '../../typings';
+import type { Client } from '../client/Client';
+import type { Guild } from '../structures/Guild';
+import GroupDMChannel from '../structures/GroupDMChannel';
 
 let cacheWarningEmitted = false;
 
@@ -13,7 +20,7 @@ let cacheWarningEmitted = false;
  * @extends {CachedManager}
  */
 class ChannelManager extends CachedManager<import('../structures/Channel').Channel> {
-  constructor(client: any, iterable?: any) {
+  constructor(client: Client, iterable?: Iterable<import('../structures/Channel').Channel>) {
     super(client, Channel, iterable);
     const defaultCaching =
       this._cache.constructor.name === 'Collection' ||
@@ -35,14 +42,22 @@ class ChannelManager extends CachedManager<import('../structures/Channel').Chann
    */
 
   _add(
-    data: any,
-    guild: any,
-    { cache = true, allowUnknownGuild = false }: any = {},
+    data: RawChannelData | import('../structures/Channel').Channel,
+    guildOrCache?: Guild | null | boolean,
+    options: { cache?: boolean; allowUnknownGuild?: boolean } | { id?: string; extras?: unknown[] } = {},
   ): import('../structures/Channel').Channel | null {
+    const guild = typeof guildOrCache === 'object' ? guildOrCache : null;
+    const cache =
+      typeof guildOrCache === 'boolean'
+        ? guildOrCache
+        : 'cache' in options && typeof options.cache === 'boolean'
+          ? options.cache
+          : true;
+    const allowUnknownGuild = 'allowUnknownGuild' in options ? Boolean(options.allowUnknownGuild) : false;
     const existing = this.cache.get(data.id);
     if (existing) {
-      if (cache) existing._patch(data);
-      guild?.channels?._add(existing);
+      if (cache && !(data instanceof Channel)) existing._patch(data);
+      if (existing instanceof GuildChannel) existing.guild.channels._add(existing);
       if (isThreadChannel(existing)) {
         const parent = existing.parent;
         if (parent && isThreadParentChannel(parent)) parent.threads._add(existing);
@@ -50,7 +65,7 @@ class ChannelManager extends CachedManager<import('../structures/Channel').Chann
       return existing;
     }
 
-    const channel = Channel.create(this.client, data, guild, { allowUnknownGuild });
+    const channel = data instanceof Channel ? data : Channel.create(this.client, data, guild, { allowUnknownGuild });
 
     if (!channel) {
       this.client.emit(Events.DEBUG, `Failed to find guild, or unknown type for channel ${data.id} ${data.type}`);
@@ -127,15 +142,15 @@ class ChannelManager extends CachedManager<import('../structures/Channel').Chann
    *   .catch(console.error);
    */
   async fetch(
-    id: any,
-    { allowUnknownGuild = false, cache = true, force = false }: any = {},
+    id: Snowflake,
+    { allowUnknownGuild = false, cache = true, force = false }: FetchChannelOptions = {},
   ): Promise<import('../structures/Channel').Channel | null> {
     if (!force) {
       const existing = this.cache.get(id);
       if (existing && !existing.partial) return existing;
     }
 
-    const data = await this.client.api.channels(id).get();
+    const data: RawChannelData = await this.client.api.channels(id).get();
     return this._add(data, null, { cache, allowUnknownGuild });
   }
 
@@ -146,24 +161,34 @@ class ChannelManager extends CachedManager<import('../structures/Channel').Chann
    * @example
    * client.channels.createGroupDM();
    */
-  async createGroupDM(recipients: any = []) {
+  async createGroupDM(recipients: UserResolvable[] = []): Promise<GroupDMChannel> {
     if (!Array.isArray(recipients)) throw new Error(`Expected an array of recipients (got ${typeof recipients})`);
-    recipients = recipients
-      .map((r: any) => this.client.users.resolveId(r))
-      .filter((r: any) => r && this.client.relationships.cache.get(r) == RelationshipTypes.FRIEND);
-    if (recipients.length == 1 || recipients.length > 9) throw new Error('Invalid Users length (max=9)');
-    const data = await this.client.api.users['@me'].channels.post({
-      data: { recipients },
+    const resolvedRecipients = recipients
+      .map(r => this.client.users.resolveId(r))
+      .filter(
+        (r): r is Snowflake =>
+          typeof r === 'string' && this.client.relationships.cache.get(r) === RelationshipTypes.FRIEND,
+      );
+    if (resolvedRecipients.length == 1 || resolvedRecipients.length > 9) {
+      throw new Error('Invalid Users length (max=9)');
+    }
+    const data: RawChannelData = await this.client.api.users['@me'].channels.post({
+      data: { recipients: resolvedRecipients },
     });
-    return this._add(data, null, { cache: true, allowUnknownGuild: true });
+    const channel = this._add(data, null, { cache: true, allowUnknownGuild: true });
+    if (!(channel instanceof GroupDMChannel)) throw new Error('INVALID_TYPE: channel is not a GroupDMChannel');
+    return channel;
   }
 }
 
 // `CachedManager#_add` takes `(data, cache, options)`, but this manager takes
 // `(data, guild, options)`. The merged overloads keep the class assignable to
 // its base while callers keep the real channel signature.
+// `CachedManager#_add` takes `(data, cache, options)`, but this manager takes
+// `(data, guild, options)`. The merged overloads keep the class assignable to
+// its base while callers keep the real channel signature.
 interface ChannelManager {
-  _add(data: unknown, guild: unknown, options?: unknown): import('../structures/Channel').Channel | null;
+  _add(data: unknown, guild?: unknown, options?: unknown): import('../structures/Channel').Channel | null;
   _add(
     data: unknown,
     cache?: boolean,
