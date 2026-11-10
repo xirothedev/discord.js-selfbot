@@ -9,11 +9,68 @@ import Util from '../../util/Util';
 const STATUS_KEYS = Object.keys(Status);
 const CONNECTION_STATE = Object.keys(WebSocket.WebSocket);
 
-let zlib: any;
+interface ZlibStream {
+  Inflate: new (options: { chunkSize: number; flush: number; to: string }) => {
+    push(data: Uint8Array | Buffer, flush?: number): void;
+    result: string;
+  };
+  Z_SYNC_FLUSH: number;
+}
+
+interface CloseEventLike {
+  code?: number;
+  reason?: string;
+  wasClean?: boolean;
+}
+
+interface DestroyOptions {
+  closeCode?: number;
+  reset?: boolean;
+  emit?: boolean;
+  log?: boolean;
+}
+
+interface GatewayPacket {
+  op?: number;
+  t?: string;
+  s?: number;
+  d?: unknown;
+}
+
+interface UnavailableGuild {
+  id: string;
+  unavailable?: boolean;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isZlibStream(value: unknown): value is ZlibStream {
+  return (
+    isRecord(value) &&
+    'Inflate' in value &&
+    typeof value.Inflate === 'function' &&
+    'Z_SYNC_FLUSH' in value &&
+    typeof value.Z_SYNC_FLUSH === 'number'
+  );
+}
+
+function isGatewayPacket(value: unknown): value is GatewayPacket {
+  return isRecord(value);
+}
+
+function isUnavailableGuild(value: unknown): value is UnavailableGuild {
+  return isRecord(value) && 'id' in value && typeof value.id === 'string';
+}
+
+let zlib: ZlibStream | null = null;
 
 try {
   const _zs = 'zlib-sync';
-  zlib = (await import(_zs)).default ?? (await import(_zs));
+  const loaded: unknown = await import(_zs);
+  const candidate = isRecord(loaded) && 'default' in loaded ? loaded.default : loaded;
+  zlib = isZlibStream(candidate) ? candidate : isZlibStream(loaded) ? loaded : null;
 } catch {} // eslint-disable-line no-empty
 
 /**
@@ -40,7 +97,7 @@ class WebSocketShard extends EventEmitter {
     timer: NodeJS.Timeout | null;
   };
   declare connection: import('ws').WebSocket | null;
-  declare inflate: { push(data: Buffer, flush?: number): void; result: string } | null;
+  declare inflate: { push(data: Uint8Array | Buffer, flush?: number): void; result: string } | null;
   declare helloTimeout: NodeJS.Timeout | null;
   declare wsCloseTimeout: NodeJS.Timeout | null;
   declare eventsAttached: boolean;
@@ -216,7 +273,7 @@ class WebSocketShard extends EventEmitter {
    * @param {string} message The debug message
    * @private
    */
-  debug(message: any) {
+  debug(message: string) {
     this.manager.debug(message, this);
   }
 
@@ -254,7 +311,7 @@ class WebSocketShard extends EventEmitter {
         resolve();
       };
 
-      const onClose = (event: any) => {
+      const onClose = (event: unknown) => {
         cleanup();
         reject(event);
       };
@@ -283,7 +340,7 @@ class WebSocketShard extends EventEmitter {
         this.destroy({ emit: false });
       }
 
-      const wsQuery: any = { v: client.options.ws.version };
+      const wsQuery: Record<string, unknown> = { v: client.options.ws.version };
 
       if (zlib) {
         this.inflate = new zlib.Inflate({
@@ -334,21 +391,22 @@ class WebSocketShard extends EventEmitter {
    * @param {MessageEvent} event Event received
    * @private
    */
-  onMessage({ data }: any) {
-    let raw;
+  onMessage({ data }: { data: Uint8Array | ArrayBuffer | Buffer | string }) {
+    let raw: unknown;
     if (data instanceof ArrayBuffer) data = new Uint8Array(data);
     if (zlib) {
       const l = data.length;
       const flush =
         l >= 4 && data[l - 4] === 0x00 && data[l - 3] === 0x00 && data[l - 2] === 0xff && data[l - 1] === 0xff;
 
-      this.inflate!.push(data, flush && zlib.Z_SYNC_FLUSH);
+      const chunk = typeof data === 'string' ? Buffer.from(data) : data;
+      this.inflate!.push(chunk, flush ? zlib.Z_SYNC_FLUSH : undefined);
       if (!flush) return;
       raw = this.inflate!.result;
     } else {
       raw = data;
     }
-    let packet;
+    let packet: unknown;
     try {
       packet = WebSocket.unpack(raw);
     } catch (err) {
@@ -356,7 +414,8 @@ class WebSocketShard extends EventEmitter {
       return;
     }
     this.manager.client.emit(Events.RAW, packet, this.id);
-    if (packet.op === Opcodes.DISPATCH) this.manager.emit(packet.t, packet.d, this.id);
+    if (!isGatewayPacket(packet)) return;
+    if (packet.op === Opcodes.DISPATCH && packet.t) this.manager.emit(packet.t, packet.d, this.id);
     this.onPacket(packet);
   }
 
@@ -365,8 +424,8 @@ class WebSocketShard extends EventEmitter {
    * @param {ErrorEvent} event The error that occurred
    * @private
    */
-  onError(event: any) {
-    const error = event?.error ?? event;
+  onError(event: unknown) {
+    const error = isRecord(event) && 'error' in event ? event.error : event;
     if (!error) return;
 
     /**
@@ -398,7 +457,7 @@ class WebSocketShard extends EventEmitter {
    * @param {CloseEvent} event Close event that was received
    * @private
    */
-  onClose(event: any) {
+  onClose(event: CloseEventLike) {
     this.closeEmitted = true;
     if (this.sequence !== -1) this.closeSequence = this.sequence;
     this.sequence = -1;
@@ -422,9 +481,9 @@ class WebSocketShard extends EventEmitter {
    * @param {CloseEvent} [event] Close event that was received
    */
   emitClose(
-    event: any = {
+    event: CloseEventLike = {
       code: 1011,
-      reason: WSCodes[1011],
+      reason: String(WSCodes[1011] ?? 'Unknown error'),
       wasClean: false,
     },
   ) {
@@ -446,7 +505,7 @@ class WebSocketShard extends EventEmitter {
    * @param {Object} packet The received packet
    * @private
    */
-  onPacket(packet: any) {
+  onPacket(packet: GatewayPacket) {
     if (!packet) {
       this.debug(`Received broken packet: '${packet}'.`);
       return;
@@ -460,9 +519,16 @@ class WebSocketShard extends EventEmitter {
          */
         this.emit(ShardEvents.READY);
 
-        this.resumeURL = packet.d.resume_gateway_url;
-        this.sessionId = packet.d.session_id;
-        this.expectedGuilds = new Set(packet.d.guilds.filter((d: any) => d?.unavailable == true).map((d: any) => d.id));
+        const ready = isRecord(packet.d) ? packet.d : {};
+        this.resumeURL = typeof ready.resume_gateway_url === 'string' ? ready.resume_gateway_url : null;
+        this.sessionId = typeof ready.session_id === 'string' ? ready.session_id : null;
+        const guilds = Array.isArray(ready.guilds) ? ready.guilds : [];
+        this.expectedGuilds = new Set(
+          guilds
+            .filter(isUnavailableGuild)
+            .filter(guild => guild.unavailable)
+            .map(guild => guild.id),
+        );
         this.status = Status.WAITING_FOR_GUILDS;
         this.debug(`[READY] Session ${this.sessionId} | Resume url ${this.resumeURL}.`);
         this.lastHeartbeatAcked = true;
@@ -476,7 +542,7 @@ class WebSocketShard extends EventEmitter {
         this.emit(ShardEvents.RESUMED);
 
         this.status = Status.READY;
-        const replayed = packet.s - this.closeSequence;
+        const replayed = (packet.s ?? this.sequence) - this.closeSequence;
         this.debug(`[RESUMED] Session ${this.sessionId} | Replayed ${replayed} events.`);
         this.lastHeartbeatAcked = true;
         this.sendHeartbeat('ResumeHeartbeat');
@@ -484,12 +550,14 @@ class WebSocketShard extends EventEmitter {
       }
     }
 
-    if (packet.s > this.sequence) this.sequence = packet.s;
+    if (typeof packet.s === 'number' && packet.s > this.sequence) this.sequence = packet.s;
 
     switch (packet.op) {
       case Opcodes.HELLO:
         this.setHelloTimeout(-1);
-        this.setHeartbeatTimer(packet.d.heartbeat_interval);
+        if (isRecord(packet.d) && typeof packet.d.heartbeat_interval === 'number') {
+          this.setHeartbeatTimer(packet.d.heartbeat_interval);
+        }
         this.identify();
         break;
       case Opcodes.RECONNECT:
@@ -525,7 +593,7 @@ class WebSocketShard extends EventEmitter {
       default:
         this.manager.handlePacket(packet, this);
         if (this.status === Status.WAITING_FOR_GUILDS && packet.t === WSEvents.GUILD_CREATE) {
-          this.expectedGuilds?.delete(packet.d.id);
+          if (isRecord(packet.d) && typeof packet.d.id === 'string') this.expectedGuilds?.delete(packet.d.id);
           this.checkReady();
         }
     }
@@ -589,7 +657,7 @@ class WebSocketShard extends EventEmitter {
    * @param {number} [time] If set to -1, it will clear the hello timeout
    * @private
    */
-  setHelloTimeout(time?: any) {
+  setHelloTimeout(time?: number) {
     if (time === -1) {
       if (this.helloTimeout) {
         this.debug('Clearing the HELLO timeout.');
@@ -611,7 +679,7 @@ class WebSocketShard extends EventEmitter {
    * @param {number} [time] If set to -1, it will clear the timeout
    * @private
    */
-  setWsCloseTimeout(time?: any) {
+  setWsCloseTimeout(time?: number) {
     if (this.wsCloseTimeout) {
       this.debug('[WebSocket] Clearing the close timeout.');
       clearTimeout(this.wsCloseTimeout);
@@ -651,7 +719,7 @@ class WebSocketShard extends EventEmitter {
    * @param {number} time If -1, clears the interval, any other number sets an interval
    * @private
    */
-  setHeartbeatTimer(time: any) {
+  setHeartbeatTimer(time: number) {
     if (time === -1) {
       if (this.heartbeatInterval) {
         this.debug('Clearing the heartbeat interval.');
@@ -782,7 +850,7 @@ class WebSocketShard extends EventEmitter {
    * @param {Object} data The full packet to send
    * @param {boolean} [important=false] If this packet should be added first in queue
    */
-  send(data: any, important = false) {
+  send(data: unknown, important = false) {
     this.ratelimit.queue[important ? 'unshift' : 'push'](data);
     this.processQueue();
   }
@@ -793,7 +861,7 @@ class WebSocketShard extends EventEmitter {
    * @returns {void}
    * @private
    */
-  _send(data: any) {
+  _send(data: unknown) {
     if (this.connection?.readyState !== WebSocket.OPEN) {
       this.debug(`Tried to send packet '${JSON.stringify(data)}' but no WebSocket is available!`);
       this.destroy({ closeCode: 4_000 });
@@ -801,7 +869,7 @@ class WebSocketShard extends EventEmitter {
     }
 
     this.debug(`[WebSocketShard] send packet '${JSON.stringify(data)}'`);
-    this.connection!.send(WebSocket.pack(data), (err: any) => {
+    this.connection!.send(WebSocket.pack(data), (err?: Error) => {
       if (err) this.manager.client.emit(Events.SHARD_ERROR, err, this.id);
     });
   }
@@ -833,7 +901,7 @@ class WebSocketShard extends EventEmitter {
    * @param {Object} [options={ closeCode: 1000, reset: false, emit: true, log: true }] Options for destroying the shard
    * @private
    */
-  destroy({ closeCode = 1_000, reset = false, emit = true, log = true }: any = {}) {
+  destroy({ closeCode = 1_000, reset = false, emit = true, log = true }: DestroyOptions = {}) {
     if (log) {
       this.debug(`[DESTROY]
     Close Code    : ${closeCode}
@@ -862,10 +930,10 @@ class WebSocketShard extends EventEmitter {
         // Attempt to close the connection just in case
         try {
           this.connection.close(closeCode);
-        } catch (err: any) {
+        } catch (err: unknown) {
           this.debug(
             `[WebSocket] Close: Something went wrong while closing the WebSocket: ${
-              err.message || err
+              err instanceof Error ? err.message : String(err)
             }. Forcefully terminating the connection | WS State: ${CONNECTION_STATE[this.connection.readyState]}`,
           );
           this.connection.terminate();
