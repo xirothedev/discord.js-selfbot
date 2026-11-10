@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { ActivityFlags as APIActivityFlags } from 'discord-api-types/v10';
 import type { APIPartialEmoji, Snowflake } from 'discord-api-types/v10';
 import Base from './Base';
-import type { RawActivityData, RawPresenceData, RawRichPresenceAssets } from '../../typings/rawDataTypes';
+import type { RawActivityData, RawRichPresenceAssets } from '../../typings/rawDataTypes';
 import type {
   ActivityOptions,
   ActivityPlatform,
@@ -47,6 +47,17 @@ import Util from '../util/Util';
  * Represents a user's presence.
  * @extends {Base}
  */
+interface PresencePatch {
+  status?: PresenceStatus;
+  activities?: Partial<RawActivityData>[];
+  client_status?: Partial<Record<'web' | 'mobile' | 'desktop', string>> | null;
+  last_modified?: number;
+  afk?: boolean;
+  since?: number;
+  user?: { id?: string | null };
+  guild?: Guild | null;
+}
+
 class Presence extends Base {
   declare userId: Snowflake;
   declare guild: Guild | null;
@@ -57,7 +68,7 @@ class Presence extends Base {
   declare afk: boolean;
   declare since: number;
 
-  constructor(client: Client, data: Partial<RawPresenceData> & { guild?: Guild | null } = { user: { id: '' } }) {
+  constructor(client: Client, data: PresencePatch = { user: { id: '' } }) {
     super(client);
 
     /**
@@ -93,7 +104,7 @@ class Presence extends Base {
     return this.guild?.members.resolve(this.userId) ?? null;
   }
 
-  _patch(data: Partial<RawPresenceData> & { guild?: Guild | null }) {
+  _patch(data: PresencePatch) {
     if (typeof data.status === 'string') {
       /**
        * The status of this presence
@@ -109,7 +120,7 @@ class Presence extends Base {
        * The activities of this presence (Always `Activity[]` if not ClientUser)
        * @type {CustomStatus[]|RichPresence[]|SpotifyRPC[]|Activity[]}
        */
-      this.activities = data.activities.map((activity: RawActivityData) => {
+      this.activities = data.activities.map(activity => {
         if (this.userId === this.client.user?.id) {
           if ([ActivityTypes.CUSTOM, 'CUSTOM'].includes(activity.type)) {
             return new CustomStatus(this.client, activity);
@@ -216,7 +227,7 @@ class Presence extends Base {
 /**
  * Represents an activity that is part of a user's presence.
  */
-type ActivityPatch = RawActivityData & {
+type ActivityPatch = Partial<RawActivityData> & {
   createdTimestamp?: number;
   applicationId?: Snowflake;
   syncId?: string;
@@ -293,7 +304,7 @@ class Activity {
   declare type: ActivityType;
   declare url: string | null;
 
-  constructor(presence: Presence, data: RawActivityData) {
+  constructor(presence: Presence, data: Partial<RawActivityData>) {
     if (!(presence instanceof Presence)) {
       throw new Error("Class constructor Activity cannot be invoked without 'presence'");
     }
@@ -309,7 +320,7 @@ class Activity {
   }
 
   _patch(data: ActivityPatch) {
-    if ('id' in data) {
+    if (typeof data.id === 'string') {
       /**
        * The activity's id
        * @type {string}
@@ -317,7 +328,7 @@ class Activity {
       this.id = data.id;
     }
 
-    if ('name' in data) {
+    if (typeof data.name === 'string') {
       /**
        * The activity's name
        * @type {string}
@@ -755,7 +766,7 @@ class CustomStatus extends Activity {
    * @param {Client} client Discord Client
    * @param {CustomStatus|CustomStatusOptions} [data={}] CustomStatus to clone or raw data
    */
-  constructor(client: Client | Presence | Activity, data: RawActivityData | CustomStatusOptions = {}) {
+  constructor(client: Client | Presence | Activity, data: Partial<RawActivityData> | CustomStatusOptions = {}) {
     if (!client) throw new Error("Class constructor CustomStatus cannot be invoked without 'client'");
     const { emoji, ...rest } = data;
     const raw: RawActivityData = {

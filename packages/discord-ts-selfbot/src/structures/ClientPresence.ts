@@ -4,16 +4,64 @@ import _errorsModule from '../errors';
 const { TypeError } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
 const { ActivityTypes, Opcodes } = _ConstantsModule;
+import { ActivityType, type GatewayActivityUpdateData } from 'discord-api-types/v10';
+import type { Client } from '../client/Client';
+import type { PresenceData, PresenceStatus } from '../../typings';
+import type { RawActivityData } from '../../typings/rawDataTypes';
 
 const CustomStatusActivityTypes = [ActivityTypes.CUSTOM, ActivityTypes[ActivityTypes.CUSTOM]];
+
+interface PresenceActivitySource {
+  name?: string;
+  type?: string | number;
+  state?: string | null;
+  url?: string | null;
+  toJSON?: () => unknown;
+}
+
+interface PresenceDataSource extends Omit<PresenceData, 'activities'> {
+  since?: number;
+  activities?: PresenceActivitySource[];
+}
+
+interface ClientPresencePacket {
+  activities: GatewayActivityUpdateData[];
+  afk: boolean;
+  since: number;
+  status: PresenceStatus;
+}
+
+function isActivityType(value: unknown): value is ActivityType {
+  return typeof value === 'number' && value in ActivityType;
+}
+
+function toActivityPatch(activity: PresenceActivitySource): Partial<RawActivityData> {
+  return {
+    name: activity.name,
+    type: resolveActivityType(activity.type),
+    state: activity.state ?? undefined,
+    url: activity.url ?? undefined,
+  };
+}
+
+function resolveActivityType(type: string | number | undefined): ActivityType {
+  if (typeof type === 'number') return isActivityType(type) ? type : ActivityType.Playing;
+  if (typeof type === 'string') {
+    const resolved = ActivityTypes[type];
+    return typeof resolved === 'number' && isActivityType(resolved) ? resolved : ActivityType.Playing;
+  }
+  return ActivityType.Playing;
+}
 
 /**
  * Represents the client's presence.
  * @extends {Presence}
  */
 class ClientPresence extends Presence {
-  constructor(client: any, data: any = {}) {
-    super(client, Object.assign(data, { status: data.status ?? 'online', user: { id: null } }));
+  constructor(client: Client, data: PresenceDataSource = {}) {
+    const { activities, ...rest } = data;
+    super(client, Object.assign(rest, { status: data.status ?? 'online', user: { id: null } }));
+    if (activities) this._patch({ activities: activities.map(toActivityPatch) });
   }
 
   /**
@@ -21,10 +69,15 @@ class ClientPresence extends Presence {
    * @param {PresenceData} presence The data to set the presence to
    * @returns {ClientPresence}
    */
-  set(presence: any) {
+  set(presence: PresenceDataSource) {
     const packet = this._parse(presence);
     this._patch(packet);
-    packet.activities = this.activities.map((a: any) => a.toJSON());
+    packet.activities = this.activities.map(activity => ({
+      name: activity.name,
+      state: activity.state ?? undefined,
+      type: resolveActivityType(activity.type),
+      url: activity.url ?? undefined,
+    }));
     this.client.ws.broadcast({ op: Opcodes.STATUS_UPDATE, d: packet });
     return this;
   }
@@ -35,8 +88,8 @@ class ClientPresence extends Presence {
    * @returns {APIPresence}
    * @private
    */
-  _parse({ status, since, afk, activities }: any) {
-    const data: any = {
+  _parse({ status, since, afk, activities }: PresenceDataSource): ClientPresencePacket {
+    const data: ClientPresencePacket = {
       activities: [],
       afk: typeof afk === 'boolean' ? afk : this.afk,
       since: typeof since === 'number' && !Number.isNaN(since) ? this.since : 0,
@@ -54,14 +107,21 @@ class ClientPresence extends Presence {
           activity.name = 'Custom Status';
         }
 
-        data.activities.push(activity);
+        data.activities.push({
+          name: activity.name,
+          state: activity.state ?? undefined,
+          type: resolveActivityType(activity.type),
+          url: activity.url ?? undefined,
+        });
       }
     } else if (!activities && (status || afk || since) && this.activities.length) {
       data.activities.push(
-        ...this.activities.map((a: any) => {
-          if (typeof a.type === 'string') a.type = ActivityTypes[a.type];
-          return a;
-        }),
+        ...this.activities.map(activity => ({
+          name: activity.name,
+          state: activity.state ?? undefined,
+          type: resolveActivityType(activity.type),
+          url: activity.url ?? undefined,
+        })),
       );
     }
 

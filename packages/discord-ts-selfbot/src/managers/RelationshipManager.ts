@@ -15,7 +15,7 @@ import type { Client } from '../client/Client';
 type UserResolvableSource =
   User | InstanceType<typeof GuildMember> | InstanceType<typeof Message> | ThreadMember | Snowflake;
 
-interface RelationshipData {
+export interface RelationshipData {
   id: Snowflake;
   type: number;
   nickname: string | null;

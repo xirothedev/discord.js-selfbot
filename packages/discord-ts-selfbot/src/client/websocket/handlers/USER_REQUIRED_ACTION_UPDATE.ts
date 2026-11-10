@@ -1,5 +1,11 @@
-export default (client: any, { d: data }: any) => {
-  let msg;
+import type { Client } from '../../Client';
+
+export interface UserRequiredActionData {
+  required_action?: string | null;
+}
+
+export default (client: Client, { d: data }: { d: UserRequiredActionData }) => {
+  let msg: string;
   switch (data.required_action) {
     case undefined:
     case null: {
@@ -23,10 +29,10 @@ export default (client: any, { d: data }: any) => {
             '[USER_REQUIRED_ACTION] Successfully accepted the new Terms of Service and Privacy Policy.',
           );
         })
-        .catch((e: any) => {
+        .catch((e: unknown) => {
           client.emit(
             'debug',
-            `[USER_REQUIRED_ACTION] Failed to accept the new Terms of Service and Privacy Policy: ${e}`,
+            `[USER_REQUIRED_ACTION] Failed to accept the new Terms of Service and Privacy Policy: ${String(e)}`,
           );
         });
       break;
