@@ -1,5 +1,4 @@
 import Util from './Util';
-import { randomUUID } from 'node:crypto';
 import _ConstantsModule from './Constants';
 const { UserAgent } = _ConstantsModule;
 import Intents from './Intents';
@@ -114,15 +113,15 @@ class Options extends null {
           app_arch: 'x64',
           system_locale: 'en-US',
           has_client_mods: false,
-          client_launch_id: randomUUID(),
+          client_launch_id: crypto.randomUUID(),
           browser_user_agent: UserAgent,
           browser_version: '35.3.0',
           os_sdk_version: '19044',
           client_build_number: 455964,
           native_build_number: 69976,
           client_event_source: null,
-          launch_signature: randomUUID(),
-          client_heartbeat_session_id: randomUUID(),
+          launch_signature: crypto.randomUUID(),
+          client_heartbeat_session_id: crypto.randomUUID(),
           client_app_state: 'focused',
         },
         compress: false,

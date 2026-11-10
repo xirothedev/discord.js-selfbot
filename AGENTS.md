@@ -45,6 +45,7 @@ The corpus source is `apps/docs/scripts/agent/api.json` plus the Markdown under 
 - `bun run docs:agent:check` — check the committed agent docs corpus
 - `bun run docs:snippets` — type-check the full example snippets
 - `bun run lint:boundaries` — deep-module boundary check
+- `bun run bench` — Node API vs Bun API benchmarks; see `tools/bench/README.md`
 
 ## Issue tracker
 

@@ -2,7 +2,6 @@ import EventEmitter from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
-import { setTimeout as sleep } from 'node:timers/promises';
 import { Collection } from '@discordjs/collection';
 import Shard from './Shard';
 import _errorsModule from '../errors';
@@ -153,7 +152,7 @@ class ShardingManager extends EventEmitter {
       const promises: Promise<unknown>[] = [];
       const shard = this.createShard(shardId);
       promises.push(shard.spawn(timeout));
-      if (delay > 0 && this.shards.size !== this.shardList.length) promises.push(sleep(delay));
+      if (delay > 0 && this.shards.size !== this.shardList.length) promises.push(Bun.sleep(delay));
       await Promise.all(promises); // eslint-disable-line no-await-in-loop
     }
 
@@ -214,8 +213,8 @@ class ShardingManager extends EventEmitter {
   }: MultipleShardRespawnOptions = {}): Promise<Collection<number, Shard>> {
     let s = 0;
     for (const shard of this.shards.values()) {
-      const promises = [shard.respawn({ delay: respawnDelay, timeout })];
-      if (++s < this.shards.size && shardDelay > 0) promises.push(sleep(shardDelay));
+      const promises: Promise<unknown>[] = [shard.respawn({ delay: respawnDelay, timeout })];
+      if (++s < this.shards.size && shardDelay > 0) promises.push(Bun.sleep(shardDelay));
       await Promise.all(promises); // eslint-disable-line no-await-in-loop
     }
     return this.shards;

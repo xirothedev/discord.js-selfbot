@@ -23,6 +23,7 @@ export function runTypeDoc(options: RunTypeDocOptions): Project {
           module: 'CommonJS',
           moduleResolution: 'node',
           noEmit: true,
+          types: ['node'],
         },
         include: ['../../../typings/**/*.ts'],
       },

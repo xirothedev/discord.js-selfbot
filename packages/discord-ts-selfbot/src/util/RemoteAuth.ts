@@ -4,7 +4,6 @@ const qrcode = require('qrcode');
 import { Buffer } from 'node:buffer';
 import crypto from 'node:crypto';
 import EventEmitter from 'node:events';
-import { StringDecoder } from 'node:string_decoder';
 import { setTimeout } from 'node:timers';
 import { fetch } from 'undici';
 import WebSocket from 'ws';
@@ -181,8 +180,7 @@ class DiscordAuthWebsocket extends EventEmitter {
   }
 
   #encodePublicKey() {
-    const decoder = new StringDecoder('utf-8');
-    let pub_key = decoder.write(this.#publicKey);
+    let pub_key = this.#publicKey;
     pub_key = pub_key.split('\n').slice(1, -2).join('');
     return pub_key;
   }
@@ -195,11 +193,7 @@ class DiscordAuthWebsocket extends EventEmitter {
   #receiveNonceProof(data: Record<string, unknown>) {
     const nonce = data.encrypted_nonce;
     const decrypted_nonce = this.#decryptPayload(nonce);
-    const proof = crypto
-      .createHash('sha256')
-      .update(decrypted_nonce)
-      .digest()
-      .toString('base64')
+    const proof = Bun.CryptoHasher.hash('sha256', decrypted_nonce, 'base64')
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=+/, '')
@@ -209,8 +203,7 @@ class DiscordAuthWebsocket extends EventEmitter {
 
   #decryptPayload(encrypted_payload: unknown) {
     const payload = Buffer.from(String(encrypted_payload), 'base64');
-    const decoder = new StringDecoder('utf-8');
-    const private_key = decoder.write(this.#privateKey);
+    const private_key = this.#privateKey;
     const data = crypto.privateDecrypt(
       {
         key: private_key,

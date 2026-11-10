@@ -1,4 +1,4 @@
-import { Stream } from 'node:stream';
+import type { Stream } from 'node:stream';
 import AttachmentFlags from '../util/AttachmentFlags';
 import Util from '../util/Util';
 import type { Snowflake } from 'discord-api-types/v10';

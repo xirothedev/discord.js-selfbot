@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { ActivityFlags as APIActivityFlags } from 'discord-api-types/v10';
 import type { APIPartialEmoji, Snowflake } from 'discord-api-types/v10';
 import Base from './Base';
@@ -617,7 +616,7 @@ class RichPresence extends Activity {
       if (!party.max || typeof party.max != 'number') throw new Error('Party must have max number');
       if (!party.current || typeof party.current != 'number') throw new Error('Party must have current');
       if (party.current > party.max) throw new Error('Party current must be less than max number');
-      if (!party.id || typeof party.id != 'string') party.id = randomUUID();
+      if (!party.id || typeof party.id != 'string') party.id = crypto.randomUUID();
       this.party = {
         size: [party.current, party.max],
         id: party.id,
