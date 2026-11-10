@@ -8,6 +8,24 @@ import Permissions from '../util/Permissions';
 import type { Snowflake } from 'discord-api-types/v10';
 import type { GuildMember } from './GuildMember';
 import type { VideoQualityMode } from '../../typings';
+import type { RawGuildChannelData, RawMessageData } from '../../typings/rawDataTypes';
+import type { PatchOf } from '../types/schema';
+import type { Guild } from './Guild';
+import type { Client } from '../client/Client';
+import type { Message } from './Message';
+import type { CreateInviteOptionsSource } from '../managers/GuildInviteManager';
+
+type BaseGuildVoiceChannelPatch = PatchOf<'GuildChannel'> & {
+  bitrate?: number;
+  rtc_region?: string | null;
+  user_limit?: number;
+  video_quality_mode?: number;
+  last_message_id?: Snowflake | null;
+  messages?: RawMessageData[];
+  rate_limit_per_user?: number;
+  nsfw?: boolean;
+  status?: string;
+};
 
 /**
  * Represents a voice-based guild channel on Discord.
@@ -24,7 +42,7 @@ class BaseGuildVoiceChannel extends GuildChannel {
   declare lastMessageId: Snowflake | null;
   declare rateLimitPerUser: number | null;
   declare status?: string;
-  constructor(guild: any, data: any, client: any) {
+  constructor(guild: Guild, data: BaseGuildVoiceChannelPatch & RawGuildChannelData, client?: Client) {
     super(guild, data, client, false);
     /**
      * A manager of the messages sent to this channel
@@ -41,7 +59,7 @@ class BaseGuildVoiceChannel extends GuildChannel {
     this._patch(data);
   }
 
-  _patch(data: any) {
+  _patch(data: BaseGuildVoiceChannelPatch) {
     super._patch(data);
 
     if ('bitrate' in data) {
@@ -49,7 +67,7 @@ class BaseGuildVoiceChannel extends GuildChannel {
        * The bitrate of this voice-based channel
        * @type {number}
        */
-      this.bitrate = data.bitrate;
+      this.bitrate = data.bitrate ?? 0;
     }
 
     if ('rtc_region' in data) {
@@ -57,7 +75,7 @@ class BaseGuildVoiceChannel extends GuildChannel {
        * The RTC region for this voice-based channel. This region is automatically selected if `null`.
        * @type {?string}
        */
-      this.rtcRegion = data.rtc_region;
+      this.rtcRegion = data.rtc_region ?? null;
     }
 
     if ('user_limit' in data) {
@@ -65,7 +83,7 @@ class BaseGuildVoiceChannel extends GuildChannel {
        * The maximum amount of users allowed in this channel.
        * @type {number}
        */
-      this.userLimit = data.user_limit;
+      this.userLimit = data.user_limit ?? 0;
     }
 
     if ('video_quality_mode' in data) {
@@ -73,7 +91,7 @@ class BaseGuildVoiceChannel extends GuildChannel {
        * The camera video quality mode of the channel.
        * @type {?VideoQualityMode}
        */
-      this.videoQualityMode = VideoQualityModes[data.video_quality_mode];
+      this.videoQualityMode = data.video_quality_mode !== undefined ? VideoQualityModes[data.video_quality_mode] : null;
     } else {
       this.videoQualityMode ??= null;
     }
@@ -83,10 +101,10 @@ class BaseGuildVoiceChannel extends GuildChannel {
        * The last message id sent in the channel, if one was sent
        * @type {?Snowflake}
        */
-      this.lastMessageId = data.last_message_id;
+      this.lastMessageId = data.last_message_id ?? null;
     }
 
-    if ('messages' in data) {
+    if (data.messages) {
       for (const message of data.messages) this.messages._add(message);
     }
 
@@ -95,11 +113,11 @@ class BaseGuildVoiceChannel extends GuildChannel {
        * The rate limit per user (slowmode) for this channel in seconds
        * @type {number}
        */
-      this.rateLimitPerUser = data.rate_limit_per_user;
+      this.rateLimitPerUser = data.rate_limit_per_user ?? null;
     }
 
     if ('nsfw' in data) {
-      this.nsfw = data.nsfw;
+      this.nsfw = data.nsfw ?? false;
     }
 
     if ('status' in data) {
@@ -167,7 +185,7 @@ class BaseGuildVoiceChannel extends GuildChannel {
    *   .then(invite => console.log(`Created an invite with a code of ${invite.code}`))
    *   .catch(console.error);
    */
-  createInvite(options: any) {
+  createInvite(options: CreateInviteOptionsSource) {
     return this.guild.invites.create(this.id, options);
   }
 
@@ -177,7 +195,7 @@ class BaseGuildVoiceChannel extends GuildChannel {
    * @param {boolean} [cache=true] Whether or not to cache the fetched invites
    * @returns {Promise<Collection<string, Invite>>}
    */
-  fetchInvites(cache: any = true) {
+  fetchInvites(cache = true) {
     return this.guild.invites.fetch({ channelId: this.id, cache });
   }
 
@@ -192,7 +210,7 @@ class BaseGuildVoiceChannel extends GuildChannel {
    *   .then(channel => console.log(`Set bitrate to ${channel.bitrate}bps for ${channel.name}`))
    *   .catch(console.error);
    */
-  setBitrate(bitrate: any, reason: any) {
+  setBitrate(bitrate: number, reason?: string) {
     return this.edit({ bitrate }, reason);
   }
 
@@ -208,7 +226,7 @@ class BaseGuildVoiceChannel extends GuildChannel {
    * // Remove a fixed region for this channel - let Discord decide automatically
    * channel.setRTCRegion(null, 'We want to let Discord decide.');
    */
-  setRTCRegion(rtcRegion: any, reason: any) {
+  setRTCRegion(rtcRegion: string | null, reason?: string) {
     return this.edit({ rtcRegion }, reason);
   }
 
@@ -223,7 +241,7 @@ class BaseGuildVoiceChannel extends GuildChannel {
    *   .then(channel => console.log(`Set user limit to ${channel.userLimit} for ${channel.name}`))
    *   .catch(console.error);
    */
-  setUserLimit(userLimit: any, reason: any) {
+  setUserLimit(userLimit: number, reason?: string) {
     return this.edit({ userLimit }, reason);
   }
 
@@ -233,14 +251,14 @@ class BaseGuildVoiceChannel extends GuildChannel {
    * @param {string} [reason] Reason for changing the camera video quality mode.
    * @returns {Promise<BaseGuildVoiceChannel>}
    */
-  setVideoQualityMode(videoQualityMode: any, reason: any) {
+  setVideoQualityMode(videoQualityMode: VideoQualityMode | number, reason?: string) {
     return this.edit({ videoQualityMode }, reason);
   }
 
   // These are here only for documentation purposes - they are implemented by TextBasedChannel
   /* eslint-disable no-empty-function */
-  get lastMessage(): any {
-    return undefined;
+  get lastMessage(): Message | null {
+    return null;
   }
   declare send: (options: import('../types/channels').SendOptions) => import('../types/channels').SendResult;
   sendTyping() {}

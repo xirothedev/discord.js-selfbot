@@ -343,7 +343,12 @@ class GuildChannel extends Channel implements GuildChannelEntity {
    *   .then(console.log)
    *   .catch(console.error);
    */
-  edit(data: ChannelData, reason?: string): Promise<this> {
+  edit(data: ChannelData, reason?: string): Promise<this>;
+  edit(data: import('../managers/GuildChannelManager').ChannelDataSource, reason?: string): Promise<this>;
+  edit(
+    data: ChannelData | import('../managers/GuildChannelManager').ChannelDataSource,
+    reason?: string,
+  ): Promise<this> {
     return this.guild.channels.edit<this>(this, data, reason);
   }
 

@@ -5,6 +5,24 @@ import TextBasedChannel from './interfaces/TextBasedChannel';
 import MessageManager from '../managers/MessageManager';
 import type { Snowflake } from 'discord-api-types/v10';
 import type { User } from './User';
+import type { RawChannelData } from '../../typings/rawDataTypes';
+import type { PatchOf } from '../types/schema';
+import type { Client } from '../client/Client';
+import type { Message } from './Message';
+
+type DMChannelPatch = PatchOf<'Channel'> & {
+  recipients?: import('discord-api-types/v10').APIUser[];
+  last_message_id?: Snowflake | null;
+  last_pin_timestamp?: string | null;
+  is_message_request?: boolean;
+  is_message_request_timestamp?: string | null;
+};
+
+type VoiceAdapter = {
+  destroy(): void;
+  onVoiceServerUpdate(payload: unknown): void;
+  onVoiceStateUpdate(payload: unknown): void;
+};
 import _ConstantsModule from '../util/Constants';
 const { Opcodes, Status } = _ConstantsModule;
 
@@ -20,7 +38,7 @@ class DMChannel extends Channel {
   declare lastPinTimestamp: number | null;
   declare messageRequest?: boolean;
   declare messageRequestTimestamp?: number | null;
-  constructor(client: any, data: any) {
+  constructor(client: Client, data: RawChannelData) {
     super(client, data);
 
     // Override the channel type so partials have a known type
@@ -33,7 +51,7 @@ class DMChannel extends Channel {
     this.messages = new MessageManager(this);
   }
 
-  _patch(data: any) {
+  _patch(data: DMChannelPatch) {
     super._patch(data);
 
     if (data.recipients) {
@@ -49,7 +67,7 @@ class DMChannel extends Channel {
        * The channel's last message id, if one was sent
        * @type {?Snowflake}
        */
-      this.lastMessageId = data.last_message_id;
+      this.lastMessageId = data.last_message_id ?? null;
     }
 
     if ('last_pin_timestamp' in data) {
@@ -87,7 +105,7 @@ class DMChannel extends Channel {
    */
   async acceptMessageRequest() {
     if (!this.messageRequest) {
-      throw new Error('NOT_MESSAGE_REQUEST', 'This channel is not a message request' as any);
+      throw new Error('NOT_MESSAGE_REQUEST: This channel is not a message request');
     }
     const c = await this.client.api.channels[this.id].recipients['@me'].put({
       data: {
@@ -104,7 +122,7 @@ class DMChannel extends Channel {
    */
   async cancelMessageRequest() {
     if (!this.messageRequest) {
-      throw new Error('NOT_MESSAGE_REQUEST', 'This channel is not a message request' as any);
+      throw new Error('NOT_MESSAGE_REQUEST: This channel is not a message request');
     }
     await this.client.api.channels[this.id].recipients['@me'].delete();
     return this;
@@ -124,7 +142,7 @@ class DMChannel extends Channel {
    * @param {boolean} [force=true] Whether to skip the cache check and request the API
    * @returns {Promise<DMChannel>}
    */
-  fetch(force: any = true) {
+  fetch(force = true) {
     return this.recipient.createDM(force);
   }
 
@@ -195,10 +213,10 @@ class DMChannel extends Channel {
    * @readonly
    */
   get voiceAdapterCreator() {
-    return (methods: any) => {
+    return (methods: VoiceAdapter) => {
       this.client.voice.adapters.set(this.id, methods);
       return {
-        sendPayload: (data: any) => {
+        sendPayload: (data: unknown) => {
           if (!this.shard || this.shard.status !== Status.READY) return false;
           this.shard!.send(data);
           return true;
@@ -212,11 +230,11 @@ class DMChannel extends Channel {
 
   // These are here only for documentation purposes - they are implemented by TextBasedChannel
   /* eslint-disable no-empty-function */
-  get lastMessage(): any {
-    return undefined;
+  get lastMessage(): Message | null {
+    return null;
   }
-  get lastPinAt(): any {
-    return undefined;
+  get lastPinAt(): Date | null {
+    return null;
   }
   declare send: (options: import('../types/channels').SendOptions) => import('../types/channels').SendResult;
   sendTyping() {}

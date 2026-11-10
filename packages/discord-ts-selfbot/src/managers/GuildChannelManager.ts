@@ -29,6 +29,7 @@ import type {
   PermissionResolvable,
   SetChannelPositionOptions,
   ThreadAutoArchiveDuration,
+  VideoQualityMode,
 } from '../../typings';
 import type { BitFieldResolvable } from '../util/BitField';
 import type CategoryChannel from '../structures/CategoryChannel';
@@ -47,12 +48,15 @@ interface OverwriteDataSource {
 
 type OverwriteResolvableSource = PermissionOverwritesType | OverwriteDataSource;
 
-type ChannelDataSource =
+export type ChannelDataSource =
   | ChannelData
-  | (Omit<ChannelData, 'parent' | 'permissionOverwrites' | 'flags'> & {
+  | (Omit<ChannelData, 'parent' | 'permissionOverwrites' | 'flags' | 'type' | 'topic' | 'videoQualityMode'> & {
       parent?: CategoryChannelResolvableSource | null;
       permissionOverwrites?: readonly OverwriteResolvableSource[] | Collection<Snowflake, OverwriteResolvableSource>;
       flags?: BitFieldResolvable | ChannelFlagsResolvable;
+      type?: string | number;
+      topic?: string | null;
+      videoQualityMode?: VideoQualityMode | number | null;
     });
 
 type GuildChannelCreateOptionsSource = Omit<

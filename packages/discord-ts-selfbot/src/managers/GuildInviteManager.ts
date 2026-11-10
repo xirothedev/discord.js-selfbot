@@ -39,7 +39,7 @@ interface FetchInvitesOptionsSource {
   cache?: boolean;
 }
 
-type CreateInviteOptionsSource = Omit<CreateInviteOptions, 'targetUser' | 'targetApplication'> & {
+export type CreateInviteOptionsSource = Omit<CreateInviteOptions, 'targetUser' | 'targetApplication'> & {
   targetUser?: UserResolvableSource;
   targetApplication?: ApplicationResolvableSource | ApplicationResolvable;
 };
