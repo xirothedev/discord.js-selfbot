@@ -6,6 +6,23 @@ import _PresenceModule from '../structures/Presence';
 const { CustomStatus } = _PresenceModule;
 import _ConstantsModule from '../util/Constants';
 const { ActivityTypes } = _ConstantsModule;
+import type { RawUserSettingsData, CustomStatusOption, GuildResolvable } from '../../typings';
+import type { Client } from '../client/Client';
+import type { ActivityOptions } from '../../typings';
+
+type CustomStatusOptionSource = CustomStatusOption & { expires?: number };
+type CustomStatusJSON = ActivityOptions & { emoji?: { id?: string | null; name?: string | null } | null };
+
+interface CustomStatusData {
+  text?: string | null;
+  emoji_name?: string | null;
+  emoji_id?: string | null;
+  expires_at?: string | null;
+}
+
+type UserSettingsPatch = Omit<Partial<RawUserSettingsData>, 'custom_status'> & {
+  custom_status?: CustomStatusData | null;
+};
 
 /**
  * Manages API methods for users and stores their cache.
@@ -15,27 +32,27 @@ const { ActivityTypes } = _ConstantsModule;
 class ClientUserSettingManager extends BaseManager {
   #rawSetting = {};
   declare addFriendFrom: { all: boolean | null; mutual_friends: boolean | null; mutual_guilds: boolean | null };
-  declare locale: string;
-  declare activityDisplay: boolean;
-  declare allowDMsFromGuild: boolean;
-  declare displayImage: boolean;
-  declare linkedImageDisplay: boolean;
-  declare autoplayGIF: boolean;
-  declare previewLink: boolean;
-  declare animatedEmoji: boolean;
-  declare allowTTS: boolean;
-  declare compactMode: boolean;
-  declare convertEmoticons: boolean;
-  declare DMScanLevel: number;
-  declare theme: string;
-  declare developerMode: boolean;
-  declare afkTimeout: number;
-  declare stickerAnimationMode: number;
-  declare showEmojiReactions: boolean;
-  declare customStatus: Record<string, unknown> | null;
+  declare locale?: string;
+  declare activityDisplay?: boolean;
+  declare allowDMsFromGuild?: boolean;
+  declare displayImage?: boolean;
+  declare linkedImageDisplay?: boolean;
+  declare autoplayGIF?: boolean;
+  declare previewLink?: boolean;
+  declare animatedEmoji?: boolean;
+  declare allowTTS?: boolean;
+  declare compactMode?: boolean;
+  declare convertEmoticons?: boolean;
+  declare DMScanLevel?: number;
+  declare theme?: string;
+  declare developerMode?: boolean;
+  declare afkTimeout?: number;
+  declare stickerAnimationMode?: number;
+  declare showEmojiReactions?: boolean;
+  declare customStatus: CustomStatusData | null;
   declare disableDMfromGuilds: Collection<string, import('../structures/Guild').Guild | undefined>;
   declare disableDMfromServer: Collection<string, import('../structures/Guild').Guild | undefined>;
-  constructor(client: any) {
+  constructor(client: Client) {
     super(client);
     /**
      * WHO CAN ADD YOU AS A FRIEND ?
@@ -54,7 +71,7 @@ class ClientUserSettingManager extends BaseManager {
    * @private
    * @param {Object} data Raw Data to patch
    */
-  _patch(data: any = {}) {
+  _patch(data: Partial<RawUserSettingsData> = {}) {
     this.#rawSetting = Object.assign(this.#rawSetting, data);
     this.client.emit('debug', `[SETTING > ClientUser] Sync setting`);
     if ('locale' in data) {
@@ -199,20 +216,20 @@ class ClientUserSettingManager extends BaseManager {
       this.showEmojiReactions = data.render_reactions;
     }
     if ('status' in data) {
-      this.client.presence.status = data.status;
+      this.client.presence.status = data.status ?? 'offline';
       if (!('custom_status' in data)) {
         this.client.emit('debug', '[SETTING > ClientUser] Sync status');
-        this.client.user!.setStatus(data.status);
+        if (typeof data.status === 'string') this.client.user!.setStatus(data.status);
       }
     }
     if ('custom_status' in data) {
-      this.customStatus = data.custom_status;
+      this.customStatus = data.custom_status ?? null;
       const activities = this.client.presence.activities.filter(
-        (a: any) => ![ActivityTypes.CUSTOM, 'CUSTOM'].includes(a.type),
+        a => ![ActivityTypes.CUSTOM, 'CUSTOM'].includes(a.type),
       );
       if (data.custom_status) {
         const custom = new CustomStatus(this.client);
-        custom.setState(data.custom_status.text);
+        custom.setState(data.custom_status.text ?? null);
         let emoji;
         if (data.custom_status.emoji_id) {
           emoji = this.client.emojis.cache.get(data.custom_status.emoji_id);
@@ -234,7 +251,7 @@ class ClientUserSettingManager extends BaseManager {
        * @type {Collection<Snowflake, Guild>}
        */
       this.disableDMfromGuilds = new Collection(
-        data.restricted_guilds.map((guildId: any) => [guildId, this.client.guilds.cache.get(guildId)]),
+        (data.restricted_guilds ?? []).map(guildId => [guildId, this.client.guilds.cache.get(guildId)]),
       );
     }
   }
@@ -257,7 +274,7 @@ class ClientUserSettingManager extends BaseManager {
    * Edit data
    * @param {any} data Data to edit
    */
-  async edit(data: any) {
+  async edit(data: UserSettingsPatch) {
     const res = await this.client.api.users('@me').settings.patch({ data });
     this._patch(res);
     return this;
@@ -275,7 +292,7 @@ class ClientUserSettingManager extends BaseManager {
    * @param {string} value Theme to set (dark | light)
    * @returns {Promise<this>}
    */
-  setTheme(value: any) {
+  setTheme(value: 'dark' | 'light') {
     const validValues = ['dark', 'light'];
     if (!validValues.includes(value)) {
       throw new TypeError('INVALID_TYPE', 'value', 'dark | light', true);
@@ -297,30 +314,30 @@ class ClientUserSettingManager extends BaseManager {
    * @param {?CustomStatus | CustomStatusOption} options CustomStatus
    * @returns {Promise<this>}
    */
-  setCustomStatus(options: any) {
-    if (typeof options !== 'object') {
+  setCustomStatus(options?: CustomStatusOptionSource | InstanceType<typeof CustomStatus>) {
+    if (typeof options !== 'object' || options === null) {
       return this.edit({ custom_status: null });
     } else if (options instanceof CustomStatus) {
-      options = options.toJSON();
-      let data: any = {
+      const status: CustomStatusJSON = options.toJSON();
+      const data: CustomStatusData = {
         emoji_name: null,
         expires_at: null,
         text: null,
       };
-      if (typeof options.state === 'string') {
-        data.text = options.state;
+      if (typeof status.state === 'string') {
+        data.text = status.state;
       }
-      if (options.emoji) {
-        if (options.emoji?.id) {
-          data.emoji_name = options.emoji?.name;
-          data.emoji_id = options.emoji?.id;
+      if (status.emoji) {
+        if (status.emoji.id) {
+          data.emoji_name = status.emoji.name ?? null;
+          data.emoji_id = status.emoji.id;
         } else {
-          data.emoji_name = typeof options.emoji?.name === 'string' ? options.emoji?.name : null;
+          data.emoji_name = typeof status.emoji.name === 'string' ? status.emoji.name : null;
         }
       }
       return this.edit({ custom_status: data });
     } else {
-      let data: any = {
+      const data: CustomStatusData = {
         emoji_name: null,
         expires_at: null,
         text: null,
@@ -346,7 +363,9 @@ class ClientUserSettingManager extends BaseManager {
         }
         data.expires_at = new Date(options.expires).toISOString();
       }
-      if (['online', 'idle', 'dnd', 'invisible'].includes(options.status)) this.edit({ status: options.status });
+      if (typeof options.status === 'string' && ['online', 'idle', 'dnd', 'invisible'].includes(options.status)) {
+        this.edit({ status: options.status });
+      }
       return this.edit({ custom_status: data });
     }
   }
@@ -356,13 +375,13 @@ class ClientUserSettingManager extends BaseManager {
    * @param {boolean} status Restricted status
    * @returns {Promise}
    */
-  restrictedGuilds(status: any) {
+  restrictedGuilds(status: boolean) {
     if (typeof status !== 'boolean') {
       throw new TypeError('INVALID_TYPE', 'status', 'boolean', true);
     }
     return this.edit({
       default_guilds_restricted: status,
-      restricted_guilds: status ? this.client.guilds.cache.map((v: any) => v.id) : [],
+      restricted_guilds: status ? this.client.guilds.cache.map(v => v.id) : [],
     });
   }
   /**
@@ -370,13 +389,12 @@ class ClientUserSettingManager extends BaseManager {
    * @param {GuildIDResolve} guildId The guild to add
    * @returns {Promise}
    */
-  addRestrictedGuild(guildId: any) {
-    const temp = Object.assign(
-      [],
-      this.disableDMfromServer.map((_v: any, k: any) => k),
-    );
-    if (temp.includes(guildId)) throw new Error('Guild is already restricted');
-    temp.push(guildId);
+  addRestrictedGuild(guildId: GuildResolvable) {
+    const id = this.client.guilds.resolveId(guildId);
+    if (!id) throw new TypeError('INVALID_TYPE', 'guildId', 'GuildResolvable');
+    const temp = [...this.disableDMfromServer.keys()];
+    if (temp.includes(id)) throw new Error('Guild is already restricted');
+    temp.push(id);
     return this.edit({ restricted_guilds: temp });
   }
 
@@ -385,9 +403,11 @@ class ClientUserSettingManager extends BaseManager {
    * @param {GuildIDResolve} guildId The guild to remove
    * @returns {Promise}
    */
-  removeRestrictedGuild(guildId: any) {
-    if (!this.disableDMfromServer.delete(guildId)) throw new Error('Guild is already restricted');
-    return this.edit({ restricted_guilds: this.disableDMfromServer.map((_v: any, k: any) => k) });
+  removeRestrictedGuild(guildId: GuildResolvable) {
+    const id = this.client.guilds.resolveId(guildId);
+    if (!id) throw new TypeError('INVALID_TYPE', 'guildId', 'GuildResolvable');
+    if (!this.disableDMfromServer.delete(id)) throw new Error('Guild is already restricted');
+    return this.edit({ restricted_guilds: [...this.disableDMfromServer.keys()] });
   }
 }
 
