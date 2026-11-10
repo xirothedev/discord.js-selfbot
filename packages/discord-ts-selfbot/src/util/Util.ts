@@ -545,7 +545,7 @@ class Util extends null {
    */
   static verifyString(
     data: unknown,
-    error: ErrorConstructor = Error,
+    error: new (message: string) => Error = Error,
     errorMessage = `Expected a string, got ${data} instead.`,
     allowEmpty = true,
   ) {
@@ -954,7 +954,7 @@ class Util extends null {
    * @param {Object} object any
    * @returns {boolean}
    */
-  static verifyProxyAgent(object: unknown) {
+  static verifyProxyAgent(object: unknown): object is Agent {
     const o = object as { httpAgent?: unknown; httpsAgent?: unknown };
     return typeof object == 'object' && o.httpAgent instanceof Agent && o.httpsAgent instanceof Agent;
   }

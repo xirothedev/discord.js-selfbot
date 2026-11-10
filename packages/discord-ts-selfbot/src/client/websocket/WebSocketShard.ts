@@ -814,7 +814,7 @@ class WebSocketShard extends EventEmitter {
       });
 
     // Clone the identify payload and assign the token and shard info
-    const d = {
+    const d: Record<string, unknown> = {
       ...client.options.ws,
       token: client.token,
     };

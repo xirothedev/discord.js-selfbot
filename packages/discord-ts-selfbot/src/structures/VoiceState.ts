@@ -44,14 +44,6 @@ class VoiceState extends Base implements VoiceStateEntity {
   }
 
   _patch(data: PatchOf<'VoiceState'>) {
-    if (data.user_id !== undefined) {
-      /**
-       * The id of the member of this voice state
-       * @type {Snowflake}
-       */
-      this.id = data.user_id;
-    }
-
     if (data.deaf !== undefined) {
       /**
        * Whether this member is deafened server-wide

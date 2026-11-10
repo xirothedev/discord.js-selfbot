@@ -36,6 +36,7 @@ import _ConstantsModule from '../util/Constants';
 const { Events, Status } = _ConstantsModule;
 import DataResolver from '../util/DataResolver';
 import Intents from '../util/Intents';
+import type { ResolvedClientOptions } from '../util/Options';
 import Permissions from '../util/Permissions';
 import DiscordAuthWebsocket from '../util/RemoteAuth';
 import Sweepers from '../util/Sweepers';
@@ -1063,7 +1064,7 @@ class Client extends BaseClient {
    * @param {ClientOptions} [options=this.options] Options to validate
    * @private
    */
-  _validateOptions(options: ClientOptions = this.options) {
+  _validateOptions(options: ResolvedClientOptions = this.options) {
     if (typeof options.makeCache !== 'function') {
       throw new TypeError('CLIENT_INVALID_OPTION', 'makeCache', 'a function');
     }

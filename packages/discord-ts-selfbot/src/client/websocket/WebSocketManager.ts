@@ -88,7 +88,11 @@ class WebSocketManager extends EventEmitter {
      * @type {number}
      */
     this.totalShards =
-      this.client.options.shards === 'auto' ? this.client.options.shardCount : this.client.options.shards.length;
+      this.client.options.shards === 'auto'
+        ? this.client.options.shardCount
+        : Array.isArray(this.client.options.shards)
+          ? this.client.options.shards.length
+          : this.client.options.shardCount;
 
     /**
      * A collection of all shards this manager handles
@@ -184,6 +188,10 @@ class WebSocketManager extends EventEmitter {
       this.debug(`Using the recommended shard count provided by Discord: ${recommendedShards}`);
       this.totalShards = this.client.options.shardCount = recommendedShards;
       shards = this.client.options.shards = Array.from({ length: recommendedShards }, (_, i) => i);
+    }
+
+    if (!Array.isArray(shards)) {
+      shards = this.client.options.shards = Array.from({ length: this.client.options.shardCount }, (_, i) => i);
     }
 
     this.totalShards = shards.length;

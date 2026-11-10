@@ -1,19 +1,20 @@
 import EventEmitter from 'node:events';
 import process from 'node:process';
 import RESTManager from '../rest/RESTManager';
-import Options from '../util/Options';
+import Options, { type ResolvedClientOptions } from '../util/Options';
 import Util from '../util/Util';
+import type { ClientOptions } from '../../typings';
 
 /**
  * The base class for all clients.
  * @extends {EventEmitter}
  */
 class BaseClient extends EventEmitter {
-  declare options: any;
+  declare options: ResolvedClientOptions;
   declare authenticator: typeof import('otplib').authenticator;
   declare rest: any;
 
-  constructor(options: any = {}) {
+  constructor(options: ClientOptions = {}) {
     super({ captureRejections: true });
 
     if (options.intents) {

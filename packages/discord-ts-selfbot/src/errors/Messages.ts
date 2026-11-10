@@ -1,11 +1,13 @@
 import _DJSErrorModule from './DJSError';
 const { register } = _DJSErrorModule;
 
-const Messages: Record<string, string | ((...args: any[]) => string)> = {
-  CLIENT_INVALID_OPTION: (prop, must) => `The ${prop} option must be ${must}`,
+type MessageBuilder = (...args: never[]) => string;
+
+const Messages: Record<string, string | MessageBuilder> = {
+  CLIENT_INVALID_OPTION: (prop: string, must: string) => `The ${prop} option must be ${must}`,
   CLIENT_INVALID_PROVIDED_SHARDS: 'None of the provided shards were valid.',
   CLIENT_MISSING_INTENTS: 'Valid intents must be provided for the Client.',
-  CLIENT_NOT_READY: action => `The client needs to be logged in to ${action}.`,
+  CLIENT_NOT_READY: (action: string) => `The client needs to be logged in to ${action}.`,
 
   TOKEN_INVALID: 'An invalid token was provided.',
   TOKEN_MISSING: 'Request to use token, but token was unavailable to the client.',
@@ -16,7 +18,7 @@ const Messages: Record<string, string | ((...args: any[]) => string)> = {
   WS_NOT_OPEN: (data = 'data') => `WebSocket not open to send ${data}`,
   MANAGER_DESTROYED: 'Manager was destroyed.',
 
-  BITFIELD_INVALID: bit => `Invalid bitfield flag or number: ${bit}.`,
+  BITFIELD_INVALID: (bit: unknown) => `Invalid bitfield flag or number: ${bit}.`,
 
   SHARDING_INVALID: '[Bot Token] Invalid shard settings were provided.',
   SHARDING_REQUIRED: '[Bot Token] This session would have handled too many guilds - Sharding is required.',
@@ -25,15 +27,15 @@ const Messages: Record<string, string | ((...args: any[]) => string)> = {
   SHARDING_NO_SHARDS: 'No shards have been spawned.',
   SHARDING_IN_PROCESS: 'Shards are still being spawned.',
   SHARDING_INVALID_EVAL_BROADCAST: 'Script to evaluate must be a function',
-  SHARDING_SHARD_NOT_FOUND: id => `Shard ${id} could not be found.`,
-  SHARDING_ALREADY_SPAWNED: count => `Already spawned ${count} shards.`,
-  SHARDING_PROCESS_EXISTS: id => `Shard ${id} already has an active process.`,
-  SHARDING_WORKER_EXISTS: id => `Shard ${id} already has an active worker.`,
-  SHARDING_READY_TIMEOUT: id => `Shard ${id}'s Client took too long to become ready.`,
-  SHARDING_READY_DISCONNECTED: id => `Shard ${id}'s Client disconnected before becoming ready.`,
-  SHARDING_READY_DIED: id => `Shard ${id}'s process exited before its Client became ready.`,
-  SHARDING_NO_CHILD_EXISTS: id => `Shard ${id} has no active process or worker.`,
-  SHARDING_SHARD_MISCALCULATION: (shard, guild, count) =>
+  SHARDING_SHARD_NOT_FOUND: (id: string) => `Shard ${id} could not be found.`,
+  SHARDING_ALREADY_SPAWNED: (count: number) => `Already spawned ${count} shards.`,
+  SHARDING_PROCESS_EXISTS: (id: string) => `Shard ${id} already has an active process.`,
+  SHARDING_WORKER_EXISTS: (id: string) => `Shard ${id} already has an active worker.`,
+  SHARDING_READY_TIMEOUT: (id: string) => `Shard ${id}'s Client took too long to become ready.`,
+  SHARDING_READY_DISCONNECTED: (id: string) => `Shard ${id}'s Client disconnected before becoming ready.`,
+  SHARDING_READY_DIED: (id: string) => `Shard ${id}'s process exited before its Client became ready.`,
+  SHARDING_NO_CHILD_EXISTS: (id: string) => `Shard ${id} has no active process or worker.`,
+  SHARDING_SHARD_MISCALCULATION: (shard: number, guild: string, count: number) =>
     `Calculated invalid shard ${shard} for guild ${guild} with ${count} shards.`,
 
   COLOR_RANGE: 'Color must be within the range 0 - 16777215 (0xFFFFFF).',
@@ -66,9 +68,10 @@ const Messages: Record<string, string | ((...args: any[]) => string)> = {
   MODAL_CUSTOM_ID: 'Modal customId must be a string',
   MODAL_TITLE: 'Modal title must be a string',
 
-  INTERACTION_COLLECTOR_ERROR: reason => `Collector received no interactions before ending with reason: ${reason}`,
+  INTERACTION_COLLECTOR_ERROR: (reason: string) =>
+    `Collector received no interactions before ending with reason: ${reason}`,
 
-  FILE_NOT_FOUND: file => `File could not be found: ${file}`,
+  FILE_NOT_FOUND: (file: string) => `File could not be found: ${file}`,
 
   USER_BANNER_NOT_FETCHED: "You must fetch this user's banner before trying to generate its URL!",
   USER_NO_DM_CHANNEL: 'No DM Channel exists!',
@@ -77,12 +80,12 @@ const Messages: Record<string, string | ((...args: any[]) => string)> = {
 
   VOICE_STATE_NOT_OWN:
     'You cannot self-deafen/mute/request to speak on VoiceStates that do not belong to the ClientUser.',
-  VOICE_STATE_INVALID_TYPE: name => `${name} must be a boolean.`,
+  VOICE_STATE_INVALID_TYPE: (name: string) => `${name} must be a boolean.`,
 
   REQ_RESOURCE_TYPE: 'The resource must be a string, Buffer or a valid file stream.',
 
-  IMAGE_FORMAT: format => `Invalid image format: ${format}`,
-  IMAGE_SIZE: size => `Invalid image size: ${size}`,
+  IMAGE_FORMAT: (format: string) => `Invalid image format: ${format}`,
+  IMAGE_SIZE: (size: number) => `Invalid image size: ${size}`,
 
   MESSAGE_BULK_DELETE_TYPE: 'The messages must be an Array, Collection, or number.',
   MESSAGE_NONCE_TYPE: 'Message nonce must be an integer or a string.',
@@ -106,12 +109,14 @@ const Messages: Record<string, string | ((...args: any[]) => string)> = {
   STAGE_CHANNEL_RESOLVE: 'Could not resolve channel to a stage channel.',
   GUILD_SCHEDULED_EVENT_RESOLVE: 'Could not resolve the guild scheduled event.',
 
-  INVALID_TYPE: (name, expected, an = false) => `Supplied ${name} is not a${an ? 'n' : ''} ${expected}.`,
-  INVALID_ELEMENT: (type, name, elem) => `Supplied ${type} ${name} includes an invalid element: ${elem}`,
+  INVALID_TYPE: (name: string, expected: string, an = false) =>
+    `Supplied ${name} is not a${an ? 'n' : ''} ${expected}.`,
+  INVALID_ELEMENT: (type: string, name: string, elem: unknown) =>
+    `Supplied ${type} ${name} includes an invalid element: ${elem}`,
 
   MESSAGE_THREAD_PARENT: 'The message was not sent in a guild text or news channel',
   MESSAGE_EXISTING_THREAD: 'The message already has a thread',
-  THREAD_INVITABLE_TYPE: type => `Invitable cannot be edited on ${type}`,
+  THREAD_INVITABLE_TYPE: (type: string) => `Invitable cannot be edited on ${type}`,
 
   WEBHOOK_MESSAGE: 'The message was not sent by a webhook.',
   WEBHOOK_TOKEN_UNAVAILABLE: 'This action requires a webhook token, but none is available.',
@@ -121,7 +126,7 @@ const Messages: Record<string, string | ((...args: any[]) => string)> = {
 
   EMOJI_TYPE: 'Emoji must be a string or GuildEmoji/ReactionEmoji',
   EMOJI_MANAGED: 'Emoji is managed and has no Author.',
-  MISSING_MANAGE_EMOJIS_AND_STICKERS_PERMISSION: guild =>
+  MISSING_MANAGE_EMOJIS_AND_STICKERS_PERMISSION: (guild: string) =>
     `Client must have Manage Emojis and Stickers permission in guild ${guild} to see emoji authors.`,
   NOT_GUILD_STICKER: 'Sticker is a standard (non-guild) sticker and has no author.',
 
@@ -146,22 +151,23 @@ const Messages: Record<string, string | ((...args: any[]) => string)> = {
   INTERACTION_ALREADY_REPLIED: 'The reply to this interaction has already been sent or deferred.',
   INTERACTION_NOT_REPLIED: 'The reply to this interaction has not been sent or deferred.',
 
-  COMMAND_INTERACTION_OPTION_NOT_FOUND: name => `Required option "${name}" not found.`,
-  COMMAND_INTERACTION_OPTION_TYPE: (name, type, expected) =>
+  COMMAND_INTERACTION_OPTION_NOT_FOUND: (name: string) => `Required option "${name}" not found.`,
+  COMMAND_INTERACTION_OPTION_TYPE: (name: string, type: string, expected: string) =>
     `Option "${name}" is of type: ${type}; expected ${expected}.`,
-  COMMAND_INTERACTION_OPTION_EMPTY: (name, type) =>
+  COMMAND_INTERACTION_OPTION_EMPTY: (name: string, type: string) =>
     `Required option "${name}" is of type: ${type}; expected a non-empty value.`,
   COMMAND_INTERACTION_OPTION_NO_SUB_COMMAND: 'No subcommand specified for interaction.',
   COMMAND_INTERACTION_OPTION_NO_SUB_COMMAND_GROUP: 'No subcommand group specified for interaction.',
   AUTOCOMPLETE_INTERACTION_OPTION_NO_FOCUSED_OPTION: 'No focused option for autocomplete interaction.',
 
-  MODAL_SUBMIT_INTERACTION_FIELD_NOT_FOUND: customId => `Required field with custom id "${customId}" not found.`,
-  MODAL_SUBMIT_INTERACTION_FIELD_TYPE: (customId, type, expected) =>
+  MODAL_SUBMIT_INTERACTION_FIELD_NOT_FOUND: (customId: string) =>
+    `Required field with custom id "${customId}" not found.`,
+  MODAL_SUBMIT_INTERACTION_FIELD_TYPE: (customId: string, type: string, expected: string) =>
     `Field with custom id "${customId}" is of type: ${type}; expected ${expected}.`,
 
   INVITE_MISSING_SCOPES: 'At least one valid scope must be provided for the invite',
 
-  NOT_IMPLEMENTED: (what, name) => `Method ${what} not implemented on ${name}.`,
+  NOT_IMPLEMENTED: (what: string, name: string) => `Method ${what} not implemented on ${name}.`,
 
   SWEEP_FILTER_RETURN: 'The return value of the sweepFilter function was not false or a Function',
 
@@ -169,13 +175,15 @@ const Messages: Record<string, string | ((...args: any[]) => string)> = {
 
   // Selfbot
   INVALID_USER_API: 'User accounts cannot use this endpoint',
-  INVALID_APPLICATION_COMMAND: id => `Could not find a valid command for this bot: ${id}`,
-  INVALID_COMMAND_NAME: allCMD => `Could not parse subGroupCommand and subCommand due to too long: ${allCMD.join(' ')}`,
-  INVALID_SLASH_COMMAND_CHOICES: (parentOptions, value) =>
+  INVALID_APPLICATION_COMMAND: (id: string) => `Could not find a valid command for this bot: ${id}`,
+  INVALID_COMMAND_NAME: (allCMD: string[]) =>
+    `Could not parse subGroupCommand and subCommand due to too long: ${allCMD.join(' ')}`,
+  INVALID_SLASH_COMMAND_CHOICES: (parentOptions: string, value: string) =>
     `${value} is not a valid choice for this option (${parentOptions})`,
-  SLASH_COMMAND_REQUIRED_OPTIONS_MISSING: (req, opt) => `Value required (${req}) missing (Options: ${opt})`,
-  SLASH_COMMAND_SUB_COMMAND_GROUP_INVALID: n => `${n} is not a valid sub command group`,
-  SLASH_COMMAND_SUB_COMMAND_INVALID: n => `${n} is not a valid sub command`,
+  SLASH_COMMAND_REQUIRED_OPTIONS_MISSING: (req: string, opt: string) =>
+    `Value required (${req}) missing (Options: ${opt})`,
+  SLASH_COMMAND_SUB_COMMAND_GROUP_INVALID: (n: string) => `${n} is not a valid sub command group`,
+  SLASH_COMMAND_SUB_COMMAND_INVALID: (n: string) => `${n} is not a valid sub command`,
   INTERACTION_FAILED: 'No responsed from Application',
   USER_NOT_STREAMING: 'User is not streaming',
   BULK_BAN_USERS_OPTION_EMPTY: 'Option "users" array or collection is empty',
@@ -190,7 +198,7 @@ const Messages: Record<string, string | ((...args: any[]) => string)> = {
   VOICE_SESSION_ABSENT: 'Session ID not supplied.',
   VOICE_INVALID_ENDPOINT: 'Invalid endpoint received.',
   VOICE_NO_BROWSER: 'Voice connections are not available in browsers.',
-  VOICE_CONNECTION_ATTEMPTS_EXCEEDED: attempts => `Too many connection attempts (${attempts}).`,
+  VOICE_CONNECTION_ATTEMPTS_EXCEEDED: (attempts: number) => `Too many connection attempts (${attempts}).`,
   VOICE_JOIN_SOCKET_CLOSED: 'Tried to send join packet, but the WebSocket is not open.',
   VOICE_PLAY_INTERFACE_NO_BROADCAST: 'A broadcast cannot be played in this context.',
   VOICE_PLAY_INTERFACE_BAD_TYPE: 'Unknown stream type',
@@ -203,7 +211,7 @@ const Messages: Record<string, string | ((...args: any[]) => string)> = {
   UDP_CONNECTION_EXISTS: 'There is already an existing UDP connection.',
   UDP_WRONG_HANDSHAKE: 'Wrong handshake packet for UDP',
 
-  INVALID_VIDEO_CODEC: codecs => `Only these codecs are supported: ${codecs.join(', ')}`,
+  INVALID_VIDEO_CODEC: (codecs: string[]) => `Only these codecs are supported: ${codecs.join(', ')}`,
 
   STREAM_CONNECTION_READONLY: 'Cannot send data to a read-only stream',
   STREAM_CANNOT_JOIN: 'Cannot join a stream to itself',

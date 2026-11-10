@@ -5,6 +5,16 @@ const { UserAgent } = _ConstantsModule;
 import Intents from './Intents';
 import { Collection } from '@discordjs/collection';
 import LimitedCollection from './LimitedCollection';
+import type {
+  BitFieldResolvable,
+  ClientOptions,
+  HTTPOptions,
+  IntentsString,
+  PartialTypes,
+  PresenceData,
+  SweeperOptions,
+  WebSocketOptions,
+} from '../../typings';
 ('use strict');
 
 /**
@@ -164,6 +174,70 @@ import LimitedCollection from './LimitedCollection';
  */
 
 /**
+ * WebSocket options after defaults are merged.
+ * @private
+ */
+export interface ResolvedWebSocketOptions extends Omit<WebSocketOptions, 'agent'> {
+  agent: unknown;
+  compress: boolean;
+  properties: NonNullable<WebSocketOptions['properties']> & Record<string, unknown>;
+  capabilities: number;
+  client_state: { guild_versions: Record<string, unknown> };
+  version: number;
+  presence?: unknown;
+}
+
+/**
+ * HTTP options after defaults are merged.
+ * @private
+ */
+export interface ResolvedHTTPOptions extends Omit<HTTPOptions, 'agent'> {
+  agent: unknown;
+  headers: Record<string, string>;
+  version: number;
+  api: string;
+  cdn: string;
+  invite: string;
+  template: string;
+  scheduledEvent: string;
+}
+
+/**
+ * Client options after defaults are merged.
+ * @private
+ */
+export interface ResolvedClientOptions extends Omit<
+  ClientOptions,
+  'TOTPKey' | 'shards' | 'ws' | 'http' | 'presence' | 'makeCache'
+> {
+  TOTPKey: string | null;
+  shards?: number[] | 'auto';
+  makeCache: (manager: { name: string }, holds: { name: string }) => Collection<unknown, unknown>;
+  presence: PresenceData & { since?: number };
+  sweepers: SweeperOptions;
+  partials: PartialTypes[];
+  intents: BitFieldResolvable<IntentsString, number>;
+  DMChannelVoiceStatusSync: number;
+  captchaRetryLimit: number;
+  captchaSolver: NonNullable<ClientOptions['captchaSolver']>;
+  closeTimeout: number;
+  messageCacheLifetime: number;
+  messageSweepInterval: number;
+  invalidRequestWarningInterval: number;
+  restWsBridgeTimeout: number;
+  restTimeOffset: number;
+  restRequestTimeout: number;
+  restSweepInterval: number;
+  restGlobalRateLimit: number;
+  retryLimit: number;
+  failIfNotExists: boolean;
+  waitGuildTimeout: number;
+  shardCount: number;
+  ws: ResolvedWebSocketOptions;
+  http: ResolvedHTTPOptions;
+}
+
+/**
  * Contains various utilities for client options.
  */
 class Options extends null {
@@ -172,7 +246,7 @@ class Options extends null {
    * The default client options.
    * @returns {ClientOptions}
    */
-  static createDefault() {
+  static createDefault(): ResolvedClientOptions {
     return {
       DMChannelVoiceStatusSync: 0,
       captchaRetryLimit: 3,

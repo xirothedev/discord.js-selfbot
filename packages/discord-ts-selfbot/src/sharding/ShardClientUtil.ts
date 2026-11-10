@@ -108,7 +108,8 @@ class ShardClientUtil {
    * @readonly
    */
   get ids(): number[] {
-    return this.client.options.shards;
+    const { shards } = this.client.options;
+    return Array.isArray(shards) ? shards : [];
   }
 
   /**

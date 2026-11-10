@@ -6,6 +6,7 @@ import APIRequest from './APIRequest';
 import HTTPError from './HTTPError';
 import RateLimitError from './RateLimitError';
 import Constants from '../util/Constants';
+import type { Captcha } from '../../typings';
 const { Events } = Constants;
 const { DEBUG, RATE_LIMIT, INVALID_REQUEST_WARNING, API_RESPONSE, API_REQUEST } = Events;
 
@@ -34,6 +35,19 @@ function parseResponse(res: unknown): Promise<Record<string, unknown>> {
 
 function getAPIOffset(serverDate: unknown): number {
   return new Date(serverDate as string | number | Date).getTime() - Date.now();
+}
+
+function readCaptcha(data: Record<string, unknown>): Captcha | null {
+  const key = data.captcha_key;
+  const sitekey = data.captcha_sitekey;
+  if (data.captcha_service !== 'hcaptcha' || !Array.isArray(key) || typeof sitekey !== 'string') return null;
+  return {
+    captcha_key: key.filter((value): value is string => typeof value === 'string'),
+    captcha_sitekey: sitekey,
+    captcha_service: 'hcaptcha',
+    captcha_rqdata: typeof data.captcha_rqdata === 'string' ? data.captcha_rqdata : undefined,
+    captcha_rqtoken: typeof data.captcha_rqtoken === 'string' ? data.captcha_rqtoken : undefined,
+  };
 }
 
 function calculateReset(reset: unknown, resetAfter: unknown, serverDate: unknown): number {
@@ -141,7 +155,7 @@ class RequestHandler {
       if (isGlobal) {
         // Set the variables based on the global rate limit
         limit = this.manager.globalLimit;
-        timeout = this.manager.globalReset + this.manager.client.options.restTimeOffset - Date.now();
+        timeout = (this.manager.globalReset ?? Date.now()) + this.manager.client.options.restTimeOffset - Date.now();
       } else {
         // Set the variables based on the route-specific rate limit
         limit = this.limit;
@@ -347,7 +361,7 @@ class RequestHandler {
         if (isGlobal) {
           // Set the variables based on the global rate limit
           limit = this.manager.globalLimit;
-          timeout = this.manager.globalReset + this.manager.client.options.restTimeOffset - Date.now();
+          timeout = (this.manager.globalReset ?? Date.now()) + this.manager.client.options.restTimeOffset - Date.now();
         } else {
           // Set the variables based on the route-specific rate limit
           limit = this.limit;
@@ -380,35 +394,35 @@ class RequestHandler {
       try {
         data = await parseResponse(res);
         // Captcha
-        const d = data as { captcha_service?: unknown; captcha_key?: string[]; captcha_sitekey?: string };
+        const captcha = readCaptcha(data);
         if (
-          d.captcha_service &&
+          captcha &&
           typeof this.manager.client.options.captchaSolver == 'function' &&
           request.retries < this.manager.client.options.captchaRetryLimit &&
-          captchaMessage.some(s => d.captcha_key?.[0]?.includes(s))
+          captchaMessage.some(s => captcha.captcha_key[0]?.includes(s))
         ) {
           // Retry the request after a captcha is solved
           this.manager.client.emit(
             DEBUG,
-            `[Request Handler] Hit a captcha while executing a request (${d.captcha_key?.join(', ')})
+            `[Request Handler] Hit a captcha while executing a request (${captcha.captcha_key.join(', ')})
     Method  : ${request.method}
     Path    : ${request.path}
     Route   : ${request.route}
-    Sitekey : ${d.captcha_sitekey}
+    Sitekey : ${captcha.captcha_sitekey}
     rqToken : ${data.captcha_rqtoken}`,
           );
-          const captcha = await this.manager.client.options.captchaSolver(data, request.fullUserAgent);
+          const captchaSolution = await this.manager.client.options.captchaSolver(captcha, request.fullUserAgent);
           this.manager.client.emit(
             DEBUG,
             `[Request Handler] Captcha details:
     Method  : ${request.method}
     Path    : ${request.path}
     Route   : ${request.route}
-    Key     : ${captcha ? `${captcha.slice(0, 120)}...` : '[Captcha not solved]'}
+    Key     : ${captchaSolution ? `${captchaSolution.slice(0, 120)}...` : '[Captcha not solved]'}
     rqToken : ${data.captcha_rqtoken}`,
           );
           request.retries++;
-          return this.execute(request, captcha, data.captcha_rqtoken);
+          return this.execute(request, captchaSolution, data.captcha_rqtoken);
         }
         // Two factor handling
         if (data?.code && data.code == 60003 && request.options.auth !== false && request.retries < 1) {

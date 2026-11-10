@@ -1,5 +1,5 @@
 import _ConstantsModule from '../../util/Constants';
-const { PartialTypes } = _ConstantsModule;
+const { PartialTypes: PartialTypeValues } = _ConstantsModule;
 import _ChannelModule from '../../structures/Channel';
 const { Channel } = _ChannelModule;
 import _MessageModule from '../../structures/Message';
@@ -7,6 +7,7 @@ const { Message } = _MessageModule;
 import MessageReaction from '../../structures/MessageReaction';
 import User from '../../structures/User';
 import type { Client } from '../Client';
+import type { PartialTypes } from '../../../typings';
 
 /*
 
@@ -79,7 +80,7 @@ class GenericAction {
     data: unknown,
     manager: ActionManager<Holds>,
     id: string,
-    partialType: string,
+    partialType: PartialTypes,
     cache?: boolean,
   ): Holds | undefined {
     const existing = manager.cache.get(id);
@@ -105,7 +106,7 @@ class GenericAction {
     const injected = source[this.client.actions.injectedChannel];
     if (injected instanceof Channel) return injected;
 
-    return this.getPayload({ ...source, ...payloadData }, this.client.channels, id ?? '', PartialTypes.CHANNEL);
+    return this.getPayload({ ...source, ...payloadData }, this.client.channels, id ?? '', PartialTypeValues.CHANNEL);
   }
 
   getMessage(data: unknown, channel: ActionChannel, cache?: boolean): InstanceType<typeof Message> | null | undefined {
@@ -122,7 +123,7 @@ class GenericAction {
       },
       channel.messages,
       id ?? '',
-      PartialTypes.MESSAGE,
+      PartialTypeValues.MESSAGE,
       cache,
     );
   }
@@ -146,7 +147,7 @@ class GenericAction {
       },
       message.reactions,
       id,
-      PartialTypes.REACTION,
+      PartialTypeValues.REACTION,
     );
   }
 
@@ -159,7 +160,7 @@ class GenericAction {
     if (!member || !isGuildMemberData(member)) return null;
     const userId = readString(member.user, 'id');
     if (!userId) return null;
-    return this.getPayload(member, guild.members, userId, PartialTypes.GUILD_MEMBER);
+    return this.getPayload(member, guild.members, userId, PartialTypeValues.GUILD_MEMBER);
   }
 
   getUser(data: unknown): InstanceType<typeof User> | null | undefined {
@@ -168,7 +169,7 @@ class GenericAction {
     const injected = source[this.client.actions.injectedUser];
     if (injected instanceof User) return injected;
     if (!id) return null;
-    return this.getPayload({ id }, this.client.users, id, PartialTypes.USER);
+    return this.getPayload({ id }, this.client.users, id, PartialTypeValues.USER);
   }
 
   getUserFromMember(data: unknown): InstanceType<typeof User> | null | undefined {
@@ -197,7 +198,7 @@ class GenericAction {
       { id, guild_id: readString(source, 'guild_id') ?? guild.id },
       guild.scheduledEvents,
       id,
-      PartialTypes.GUILD_SCHEDULED_EVENT,
+      PartialTypeValues.GUILD_SCHEDULED_EVENT,
     );
   }
 }

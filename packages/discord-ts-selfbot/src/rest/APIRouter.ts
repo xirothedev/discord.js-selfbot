@@ -9,7 +9,15 @@ const reflectors: (string | symbol)[] = [
   Symbol.for('nodejs.util.inspect.custom'),
 ];
 
-export type ApiRouter = { [key: string]: ApiRouter | ((options?: unknown) => Promise<unknown>) };
+export type ApiRouter = ((options?: unknown) => ApiRouter) & {
+  [key: string]: ApiRouter;
+} & {
+  get(options?: unknown): Promise<unknown>;
+  post(options?: unknown): Promise<unknown>;
+  delete(options?: unknown): Promise<unknown>;
+  patch(options?: unknown): Promise<unknown>;
+  put(options?: unknown): Promise<unknown>;
+};
 
 function buildRoute(manager: {
   request: (name: string, route: string, options?: Record<string, unknown>) => unknown;
