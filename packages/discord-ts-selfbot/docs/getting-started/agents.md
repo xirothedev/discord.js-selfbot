@@ -10,14 +10,14 @@ The reference is generated from the public typings. Exact types stay in `typings
 
 ## Connect the MCP gateway
 
-The gateway exposes one tool, `selfbot_docs`. It does not fetch documentation. It resolves the installed package and returns the absolute docs path with reading instructions.
+The gateway ships in the same package as the `discord-ts-selfbot-mcp` bin. You do not install a second package. It exposes one tool, `selfbot_docs`. The tool does not fetch documentation. It resolves the installed package and returns the absolute docs path with reading instructions.
 
 ```json title=".mcp.json"
 {
   "mcpServers": {
     "discord-ts-selfbot": {
       "command": "npx",
-      "args": ["-y", "discord-ts-selfbot-mcp@latest"]
+      "args": ["--no-install", "discord-ts-selfbot-mcp"]
     }
   }
 }

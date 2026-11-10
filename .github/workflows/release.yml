@@ -42,20 +42,8 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Check package versions match
-        run: |
-          library=$(bun -e "console.log(require('./packages/discord-ts-selfbot/package.json').version)")
-          gateway=$(bun -e "console.log(require('./packages/discord-ts-selfbot-mcp/package.json').version)")
-          test "$library" = "$gateway" || { echo "Version mismatch: $library != $gateway"; exit 1; }
-
       - name: Publish to NPM
         working-directory: packages/discord-ts-selfbot
-        run: bun publish --access public
-        env:
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish MCP gateway to NPM
-        working-directory: packages/discord-ts-selfbot-mcp
         run: bun publish --access public
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}

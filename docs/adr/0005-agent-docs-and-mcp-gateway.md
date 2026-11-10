@@ -19,7 +19,7 @@ Two constraints shaped the decision:
 2. **Delete the source JSDoc.** `apps/docs/scripts/agent/strip-source-jsdoc.ts` removed 3,256 blocks from 291 files, keeping blocks with `@deprecated` or `@internal`. The docgen dependency, `docgen.yml`, and the `util-shim.cjs` mirror are gone.
 3. **Generate the reference from the store and the public typings.** The site API generator and the agent generator both read `api.json` and TypeDoc over `typings/index.d.ts`. The site and the package use the same descriptions.
 4. **Ship plain Markdown in the package.** `apps/docs/scripts/agent/generate.ts` writes `packages/discord-ts-selfbot/docs/`: `llms.txt`, getting-started pages, guides, examples with their full source, an event catalog, and one reference page per runtime export. The generated tree is committed and guarded by `docs:check`.
-5. **Add one gateway tool, not a content server.** `packages/discord-ts-selfbot-mcp` exposes `selfbot_docs`. It resolves the installed `discord-ts-selfbot`, checks `docs/llms.txt`, and returns the path with reading instructions. It does not serve documentation content. The package version is locked to the library version.
+5. **Add one gateway tool, not a content server.** The gateway ships in the main package as the `discord-ts-selfbot-mcp` bin. It exposes `selfbot_docs`, resolves the installed `discord-ts-selfbot`, checks `docs/llms.txt`, and returns the path with reading instructions. It does not serve documentation content. No second package is needed.
 6. **Point agents at the files.** The root `AGENTS.md`, the package README, and the site's coding-agents page tell agents to read `docs/llms.txt` first.
 
 The site keeps its Fumadocs UI. It is the human renderer over the same prose store and typings.
@@ -37,5 +37,5 @@ The site keeps its Fumadocs UI. It is the human renderer over the same prose sto
 - The docs app is the source of truth for guides, examples, and prose. The package receives a generated copy.
 - The API reference covers runtime exports. Type-only exports stay in `typings/index.d.ts`; `WebSocket` is a runtime shim with no typings and is listed under known gaps.
 - The site and the agent docs share prose but not presentation. The site's MDX pages and the package's plain Markdown are generated from the same data.
-- The gateway is a second published package. Its version must match the library; the release workflow checks this before publishing.
+- The main package gains `@modelcontextprotocol/sdk` and `zod` as dependencies. The gateway bin is built from `src/mcp/index.ts` by `prepack`.
 - Source-level hover in `src` loses the deleted prose. The public typings keep their existing blocks, and the generated reference is the replacement for contributors and agents.

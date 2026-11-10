@@ -39,14 +39,14 @@ Read [Token safety](https://xirothedev.github.io/discord.js-selfbot/docs/getting
 
 The package ships version-matched docs at `docs/llms.txt`. Read that file first, then open the page for the task. The reference is generated from the public typings; exact types stay in `typings/index.d.ts`.
 
-To expose the docs path through MCP, install the gateway:
+The MCP gateway ships in this package as the `discord-ts-selfbot-mcp` bin. No extra package is needed:
 
 ```json
 {
   "mcpServers": {
     "discord-ts-selfbot": {
       "command": "npx",
-      "args": ["-y", "discord-ts-selfbot-mcp@latest"]
+      "args": ["--no-install", "discord-ts-selfbot-mcp"]
     }
   }
 }

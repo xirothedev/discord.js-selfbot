@@ -61,9 +61,13 @@
     "packages/discord-ts-selfbot": {
       "name": "discord-ts-selfbot",
       "version": "14.0.0",
+      "bin": {
+        "discord-ts-selfbot-mcp": "./dist/mcp/index.js",
+      },
       "dependencies": {
         "@discordjs/builders": "^1.6.3",
         "@discordjs/collection": "^2.1.1",
+        "@modelcontextprotocol/sdk": "^1.32.2",
         "@sapphire/async-queue": "^1.5.5",
         "@sapphire/shapeshift": "^4.0.0",
         "discord-api-types": "^0.38.15",
@@ -77,6 +81,7 @@
         "undici": "^7.11.0",
         "werift-rtp": "^0.8.4",
         "ws": "^8.16.0",
+        "zod": "^4.6.7",
       },
       "devDependencies": {
         "@discord-ts-selfbot/test-harness": "workspace:*",
@@ -93,22 +98,6 @@
         "tsd": "^0.32.0",
         "tslib": "^2.9.1",
         "typedoc": "^0.28.20",
-        "typescript": "^5.5.4",
-      },
-    },
-    "packages/discord-ts-selfbot-mcp": {
-      "name": "discord-ts-selfbot-mcp",
-      "version": "14.0.0",
-      "bin": {
-        "discord-ts-selfbot-mcp": "./dist/index.js",
-      },
-      "dependencies": {
-        "@modelcontextprotocol/sdk": "^1.32.2",
-        "zod": "^4.6.7",
-      },
-      "devDependencies": {
-        "@types/bun": "^1.4.0",
-        "@types/node": "^22.10.7",
         "typescript": "^5.5.4",
       },
     },
@@ -770,8 +759,6 @@
     "discord-api-types": ["discord-api-types@0.38.58", "", {}, "sha512-6utghVho47hBzmx8nIp+pKEDDNIlVk6On/J5Y1Q529payNLZjBsrw+mt+G5Y3NYRE3kgta6eBx5hRYVyfHGdOA=="],
 
     "discord-ts-selfbot": ["discord-ts-selfbot@workspace:packages/discord-ts-selfbot"],
-
-    "discord-ts-selfbot-mcp": ["discord-ts-selfbot-mcp@workspace:packages/discord-ts-selfbot-mcp"],
 
     "discord.js": ["discord.js@14.28.1", "", { "dependencies": { "@discordjs/builders": "^1.15.0", "@discordjs/collection": "1.5.3", "@discordjs/formatters": "^0.6.2", "@discordjs/rest": "^2.6.3", "@discordjs/util": "^1.2.0", "@discordjs/ws": "^1.2.3", "@sapphire/snowflake": "3.5.5", "discord-api-types": "^0.38.50", "fast-deep-equal": "3.1.3", "lodash.snakecase": "4.1.1", "magic-bytes.js": "^1.13.0", "tslib": "^2.6.3", "undici": "^6.27.0" } }, "sha512-Je5OcqgurnIUQK4vR+gQnmzOf/lNQsD6d/UkV8ZOj+bFa5zJXPyiGXlbywp2EagwshVT18y7YNQNSRd3FjYkDw=="],
 
@@ -2049,8 +2036,6 @@
 
     "discord-ts-selfbot/@types/node": ["@types/node@22.20.5", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-U2+DNr+wSjpsTS/wZGYHq7GcwfuSmKiKvoPvK22zwTlRhU91yOniN4qRR5KhIjvif7ysw/dz/hKmfDH0Ris4aA=="],
 
-    "discord-ts-selfbot-mcp/@types/node": ["@types/node@22.20.5", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-U2+DNr+wSjpsTS/wZGYHq7GcwfuSmKiKvoPvK22zwTlRhU91yOniN4qRR5KhIjvif7ysw/dz/hKmfDH0Ris4aA=="],
-
     "discord.js/@discordjs/collection": ["@discordjs/collection@1.5.3", "", {}, "sha512-SVb428OMd3WO1paV3rm6tSjM4wC+Kecaa1EUGX7vc6/fddvw/6lg90z4QtCqm21zvVe92vMMDt9+DkIvjXImQQ=="],
 
     "discord.js/undici": ["undici@6.29.1", "", {}, "sha512-EvRlUt/QqAEvXdQeRMYUfwOQsfzpDztykrG2owGEE/rBOBoYv9uF39ZzsNDh4lTFHhTr2XOZjKkYgueD12ZmGA=="],
@@ -2274,8 +2259,6 @@
     "compression/debug/ms": ["ms@2.0.0", "", {}, "sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A=="],
 
     "cross-spawn/which/isexe": ["isexe@2.0.0", "", {}, "sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw=="],
-
-    "discord-ts-selfbot-mcp/@types/node/undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
 
     "discord-ts-selfbot/@types/node/undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
 

@@ -80,7 +80,7 @@ The plain-Markdown documentation corpus that ships with the package, written for
 
 ## Gateway tool
 
-The MCP tool that returns the installed **Agent docs** path and reading instructions. It does not serve documentation content.
+The MCP tool that returns the installed **Agent docs** path and reading instructions. It does not serve documentation content. It ships as the `discord-ts-selfbot-mcp` bin inside the main package.
 
 ## Raw data
 

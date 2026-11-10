@@ -1,12 +1,12 @@
-import { afterEach, describe, expect, test } from 'bun:test';
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { resolveDocs } from './resolve';
+import { afterEach, describe, expect, test } from 'bun:test';
+import { resolveDocs } from '../../src/mcp/resolve';
 
-const roots: string[] = [];
+const roots = [];
 
-function tempProject(): { root: string; project: string } {
+function tempProject() {
   const root = mkdtempSync(path.join(os.tmpdir(), 'discord-ts-selfbot-mcp-'));
   roots.push(root);
   const project = path.join(root, 'packages/app');
@@ -18,7 +18,7 @@ function tempProject(): { root: string; project: string } {
   return { root, project };
 }
 
-function install(root: string, version = '14.0.0', withDocs = true): string {
+function install(root, version = '14.0.0', withDocs = true) {
   const packageDir = path.join(root, 'node_modules/discord-ts-selfbot');
   mkdirSync(packageDir, { recursive: true });
   writeFileSync(path.join(packageDir, 'package.json'), JSON.stringify({ name: 'discord-ts-selfbot', version }));
