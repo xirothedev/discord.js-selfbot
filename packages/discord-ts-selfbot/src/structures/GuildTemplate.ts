@@ -6,6 +6,9 @@ import DataResolver from '../util/DataResolver';
 import type { RawGuildTemplateData } from '../../typings/rawDataTypes';
 import type { GuildTemplateEntity } from '../types/entities/guild-template';
 import type { PatchOf } from '../types/schema';
+import type { RawGuildData } from '../../typings/rawDataTypes';
+import type { Base64Resolvable, BufferResolvable, EditGuildTemplateOptions } from '../../typings';
+import type { Guild } from './Guild';
 
 /**
  * Represents the template for a guild.
@@ -126,25 +129,26 @@ class GuildTemplate extends Base implements GuildTemplateEntity {
    * @param {BufferResolvable|Base64Resolvable} [icon] The icon for the guild
    * @returns {Promise<Guild>}
    */
-  async createGuild(name: any, icon: any) {
+  async createGuild(name: string, icon?: BufferResolvable | Base64Resolvable): Promise<Guild> {
     const { client } = this;
-    const data = await client.api.guilds.templates(this.code).post({
+    const data: RawGuildData = await client.api.guilds.templates(this.code).post({
       data: {
         name,
         icon: await DataResolver.resolveImage(icon),
       },
     });
 
-    if (client.guilds.cache.has(data.id)) return client.guilds.cache.get(data.id);
+    const existing = client.guilds.cache.get(data.id);
+    if (existing) return existing;
 
-    return new Promise((resolve: any) => {
-      const resolveGuild = (guild: any) => {
+    return new Promise<Guild>(resolve => {
+      const resolveGuild = (guild: Guild) => {
         client.off(Events.GUILD_CREATE, handleGuild);
         client.decrementMaxListeners();
         resolve(guild);
       };
 
-      const handleGuild = (guild: any) => {
+      const handleGuild = (guild: Guild) => {
         if (guild.id === data.id) {
           clearTimeout(timeout);
           resolveGuild(guild);
@@ -170,7 +174,7 @@ class GuildTemplate extends Base implements GuildTemplateEntity {
    * @param {EditGuildTemplateOptions} [options] Options for editing the template
    * @returns {Promise<GuildTemplate>}
    */
-  async edit({ name, description }: any = {}) {
+  async edit({ name, description }: EditGuildTemplateOptions = {}) {
     const data = await this.client.api.guilds(this.guildId).templates(this.code).patch({ data: { name, description } });
     return this._patch(data);
   }

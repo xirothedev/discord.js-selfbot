@@ -6,7 +6,8 @@ import _ConstantsModule from '../util/Constants';
 const { StickerFormatTypes, StickerTypes } = _ConstantsModule;
 import SnowflakeUtil from '../util/SnowflakeUtil';
 import type { Snowflake } from 'discord-api-types/v10';
-import type { StickerFormatType, StickerType } from '../../typings';
+import type { APISticker } from 'discord-api-types/v10';
+import type { GuildStickerEditData, StickerFormatType, StickerType } from '../../typings';
 import type { RawStickerData } from '../../typings/rawDataTypes';
 import type User from './User';
 
@@ -41,7 +42,7 @@ class Sticker extends Base {
     this._patch(sticker);
   }
 
-  _patch(sticker: any) {
+  _patch(sticker: Partial<RawStickerData> & { id: Snowflake }) {
     /**
      * The sticker's id
      * @type {Snowflake}
@@ -53,7 +54,7 @@ class Sticker extends Base {
        * The description of the sticker
        * @type {?string}
        */
-      this.description = sticker.description;
+      this.description = sticker.description ?? null;
     } else {
       this.description ??= null;
     }
@@ -63,7 +64,7 @@ class Sticker extends Base {
        * The type of the sticker
        * @type {?StickerType}
        */
-      this.type = StickerTypes[sticker.type];
+      if (typeof sticker.type === 'number') this.type = StickerTypes[sticker.type];
     } else {
       this.type ??= null;
     }
@@ -73,7 +74,7 @@ class Sticker extends Base {
        * The format of the sticker
        * @type {StickerFormatType}
        */
-      this.format = StickerFormatTypes[sticker.format_type];
+      if (typeof sticker.format_type === 'number') this.format = StickerFormatTypes[sticker.format_type];
     }
 
     if ('name' in sticker) {
@@ -81,7 +82,7 @@ class Sticker extends Base {
        * The name of the sticker
        * @type {string}
        */
-      this.name = sticker.name;
+      if (typeof sticker.name === 'string') this.name = sticker.name;
     }
 
     if ('pack_id' in sticker) {
@@ -89,7 +90,7 @@ class Sticker extends Base {
        * The id of the pack the sticker is from, for standard stickers
        * @type {?Snowflake}
        */
-      this.packId = sticker.pack_id;
+      this.packId = sticker.pack_id ?? null;
     } else {
       this.packId ??= null;
     }
@@ -99,7 +100,7 @@ class Sticker extends Base {
        * An array of tags for the sticker
        * @type {?string[]}
        */
-      this.tags = sticker.tags.split(', ');
+      if (typeof sticker.tags === 'string') this.tags = sticker.tags.split(', ');
     } else {
       this.tags ??= null;
     }
@@ -109,7 +110,7 @@ class Sticker extends Base {
        * Whether or not the guild sticker is available
        * @type {?boolean}
        */
-      this.available = sticker.available;
+      this.available = sticker.available ?? null;
     } else {
       this.available ??= null;
     }
@@ -119,7 +120,7 @@ class Sticker extends Base {
        * The id of the guild that owns this sticker
        * @type {?Snowflake}
        */
-      this.guildId = sticker.guild_id;
+      this.guildId = sticker.guild_id ?? null;
     } else {
       this.guildId ??= null;
     }
@@ -129,7 +130,7 @@ class Sticker extends Base {
        * The user that uploaded the guild sticker
        * @type {?User}
        */
-      this.user = this.client.users._add(sticker.user);
+      this.user = sticker.user ? this.client.users._add(sticker.user) : null;
     } else {
       this.user ??= null;
     }
@@ -139,7 +140,7 @@ class Sticker extends Base {
        * The standard sticker's sort order within its pack
        * @type {?number}
        */
-      this.sortValue = sticker.sort_value;
+      this.sortValue = sticker.sort_value ?? null;
     } else {
       this.sortValue ??= null;
     }
@@ -180,7 +181,7 @@ class Sticker extends Base {
     return deletedStickers.has(this);
   }
 
-  set deleted(value: any) {
+  set deleted(value: boolean) {
     if (!deprecationEmittedForDeleted) {
       deprecationEmittedForDeleted = true;
       process.emitWarning(
@@ -269,7 +270,7 @@ class Sticker extends Base {
    *   .then(s => console.log(`Updated the name of the sticker to ${s.name}`))
    *   .catch(console.error);
    */
-  edit(data: any, reason: any) {
+  edit(data: GuildStickerEditData, reason?: string) {
     const guild = this.guild;
     if (!guild) throw new Error('INVALID_TYPE', 'guildId', 'Guild');
     return guild.stickers.edit(this, data, reason);
@@ -285,7 +286,7 @@ class Sticker extends Base {
    *   .then(s => console.log(`Deleted sticker ${s.name}`))
    *   .catch(console.error);
    */
-  async delete(reason: any) {
+  async delete(reason?: string) {
     const guild = this.guild;
     if (!guild) throw new Error('INVALID_TYPE', 'guildId', 'Guild');
     await guild.stickers.delete(this, reason);
@@ -297,7 +298,7 @@ class Sticker extends Base {
    * @param {Sticker|APISticker} other The sticker to compare it to
    * @returns {boolean}
    */
-  equals(other: any) {
+  equals(other: Sticker | APISticker): boolean {
     if (other instanceof Sticker) {
       return (
         other.id === this.id &&
