@@ -2492,6 +2492,39 @@ export class Guild extends AnonymousGuild {
   public createJoinRequest(): Promise<Record<string, unknown>>;
   public resetJoinRequest(): Promise<Record<string, unknown>>;
   public deleteJoinRequest(): Promise<unknown>;
+  public fetchSoundboardSounds(): Promise<unknown[]>;
+  public fetchSoundboardSound(
+    soundId: Snowflake
+  ): Promise<Record<string, unknown>>;
+  public createSoundboardSound(
+    data?: Record<string, unknown>
+  ): Promise<unknown>;
+  public editSoundboardSound(
+    soundId: Snowflake,
+    data?: Record<string, unknown>
+  ): Promise<Record<string, unknown>>;
+  public deleteSoundboardSound(soundId: Snowflake): Promise<unknown>;
+  public sendSoundboardSound(
+    channelId: Snowflake,
+    soundId: Snowflake
+  ): Promise<unknown>;
+  public fetchSoundboardSoundGuild(
+    soundId: Snowflake
+  ): Promise<Record<string, unknown>>;
+  public validateAutoModerationRule(
+    data?: Record<string, unknown>
+  ): Promise<Record<string, unknown>>;
+  public executeAutoModerationAlertAction(
+    data?: Record<string, unknown>
+  ): Promise<unknown>;
+  public resolveAutoModerationFalseAlarm(
+    data?: Record<string, unknown>
+  ): Promise<unknown>;
+  public reportAutoModerationRaid(
+    data?: Record<string, unknown>
+  ): Promise<unknown>;
+  public clearAutoModerationMentionRaid(): Promise<unknown>;
+  public fetchDefaultSoundboardSounds(): Promise<unknown[]>;
   public fetchWidget(): Promise<Widget>;
   public fetchWidgetSettings(): Promise<GuildWidgetSettings>;
   /** Returns the guild's widget image URL. */
