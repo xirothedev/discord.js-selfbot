@@ -2524,7 +2524,8 @@ export class Guild extends AnonymousGuild {
   public deleteSoundboardSound(soundId: Snowflake): Promise<unknown>;
   public sendSoundboardSound(
     channelId: Snowflake,
-    soundId: Snowflake
+    soundId: Snowflake,
+    options?: { sourceGuildId?: Snowflake | null }
   ): Promise<unknown>;
   public fetchSoundboardSoundGuild(
     soundId: Snowflake

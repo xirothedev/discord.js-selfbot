@@ -817,9 +817,17 @@ class Guild extends AnonymousGuild implements GuildEntity {
       .delete();
   }
 
-  sendSoundboardSound(channelId: Snowflake, soundId: Snowflake) {
+  sendSoundboardSound(
+    channelId: Snowflake,
+    soundId: Snowflake,
+    options: { sourceGuildId?: Snowflake | null } = {}
+  ) {
+    const data: Record<string, unknown> = { sound_id: soundId };
+    if (options.sourceGuildId !== undefined) {
+      data.source_guild_id = options.sourceGuildId;
+    }
     return this.client.api.channels(channelId)['send-soundboard-sound'].post({
-      data: { sound_id: soundId },
+      data,
     });
   }
 
