@@ -446,12 +446,15 @@ class GuildChannel extends Channel implements GuildChannelEntity {
     });
   }
 
-  createForumTag(data: Record<string, unknown> = {}) {
-    return this.client.api.channels(this.id).tags.post<unknown>({ data });
+  createForumTag(data: Partial<ForumTag> = {}) {
+    return this.client.api.channels(this.id).tags.post<ForumTag>({ data });
   }
 
-  modifyForumTag(tagId: Snowflake, data: Record<string, unknown> = {}) {
-    return this.client.api.channels(this.id).tags(tagId).put<unknown>({ data });
+  modifyForumTag(tagId: Snowflake, data: Partial<ForumTag> = {}) {
+    return this.client.api
+      .channels(this.id)
+      .tags(tagId)
+      .put<ForumTag>({ data });
   }
 
   deleteForumTag(tagId: Snowflake) {

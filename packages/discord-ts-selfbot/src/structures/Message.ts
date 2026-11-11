@@ -1165,7 +1165,7 @@ class Message extends Base {
     return this.client.api
       .channels(this.channelId)
       .messages(this.id)
-      ['interaction-data'].get<Record<string, unknown>>();
+      ['interaction-data'].get<InteractionData>();
   }
 
   hideFromGuildFeed() {

@@ -530,11 +530,11 @@ fetch(force?: boolean): Promise<Message<boolean>>
 
 ```ts
 
-fetchInteractionData(): Promise<Record<string, unknown>>
+fetchInteractionData(): Promise<InteractionData>
 
 ```
 
-**Returns:** `Promise<Record<string, unknown>>`
+**Returns:** `Promise<InteractionData>`
 
 ### `fetchPollAnswerVoters`
 

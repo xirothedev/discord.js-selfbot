@@ -347,7 +347,7 @@ class GuildManager extends CachedManager<InstanceType<typeof Guild>> {
     }
     return this.client.api
       .guilds(id)
-      ['discovery-metadata'].patch<Record<string, unknown>>({ data });
+      ['discovery-metadata'].patch<DiscoveryMetadata>({ data });
   }
 
   async fetchDiscoveryRequirements(guild: GuildResolvableSource) {

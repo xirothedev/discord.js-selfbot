@@ -276,7 +276,7 @@ class RelationshipManager extends BaseManager {
   }
 
   async fetchFriendSuggestions() {
-    return this.client.api['friend-suggestions'].get<unknown[]>();
+    return this.client.api['friend-suggestions'].get<FriendSuggestion[]>();
   }
 
   removeFriendSuggestion(userId: Snowflake) {
@@ -284,7 +284,9 @@ class RelationshipManager extends BaseManager {
   }
 
   async fetchGameRelationships() {
-    return this.client.api.users['@me']['game-relationships'].get<unknown[]>();
+    return this.client.api.users['@me']['game-relationships'].get<
+      GameRelationship[]
+    >();
   }
 
   sendGameFriendRequest(userId: Snowflake) {

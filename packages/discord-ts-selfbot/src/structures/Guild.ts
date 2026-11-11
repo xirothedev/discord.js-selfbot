@@ -713,23 +713,19 @@ class Guild extends AnonymousGuild implements GuildEntity {
   async fetchOnboardingAllowedApplications() {
     return this.client.api
       .guilds(this.id)
-      .onboarding['allowed-applications'].get<unknown[]>();
+      .onboarding['allowed-applications'].get<OnboardingAllowedApplication[]>();
   }
 
   async fetchTopGames() {
-    return this.client.api.guilds(this.id)['top-games'].get<unknown[]>();
+    return this.client.api.guilds(this.id)['top-games'].get<TopGame[]>();
   }
 
   async fetchGuildProfile() {
-    return this.client.api
-      .guilds(this.id)
-      .profile.get<Record<string, unknown>>();
+    return this.client.api.guilds(this.id).profile.get<UserProfile>();
   }
 
   async editGuildProfile(data: Partial<UserProfile> = {}) {
-    return this.client.api
-      .guilds(this.id)
-      .profile.patch<Record<string, unknown>>({ data });
+    return this.client.api.guilds(this.id).profile.patch<UserProfile>({ data });
   }
 
   async fetchRoleMemberCounts() {
@@ -739,7 +735,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
   }
 
   async searchBans(query: string) {
-    return this.client.api.guilds(this.id).bans.search.get<unknown[]>({
+    return this.client.api.guilds(this.id).bans.search.get<BanSearchResult[]>({
       query: { query },
     });
   }
@@ -761,7 +757,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
   async fetchCurrentJoinRequest() {
     return this.client.api
       .guilds(this.id)
-      .requests['@me'].get<Record<string, unknown>>();
+      .requests['@me'].get<GuildJoinRequest>();
   }
 
   async fetchJoinRequestCooldown() {
@@ -773,13 +769,13 @@ class Guild extends AnonymousGuild implements GuildEntity {
   async createJoinRequest() {
     return this.client.api
       .guilds(this.id)
-      .requests['@me'].put<Record<string, unknown>>({ data: {} });
+      .requests['@me'].put<GuildJoinRequest>({ data: {} });
   }
 
   async resetJoinRequest() {
     return this.client.api
       .guilds(this.id)
-      .requests['@me'].post<Record<string, unknown>>({ data: {} });
+      .requests['@me'].post<GuildJoinRequest>({ data: {} });
   }
 
   async deleteJoinRequest() {
@@ -789,27 +785,29 @@ class Guild extends AnonymousGuild implements GuildEntity {
   async fetchSoundboardSounds() {
     return this.client.api
       .guilds(this.id)
-      ['soundboard-sounds'].get<unknown[]>();
+      ['soundboard-sounds'].get<SoundboardSound[]>();
   }
 
   async fetchSoundboardSound(soundId: Snowflake) {
     return this.client.api
       .guilds(this.id)
       ['soundboard-sounds'](soundId)
-      .get<Record<string, unknown>>();
+      .get<SoundboardSound>();
   }
 
   createSoundboardSound(data: Partial<SoundboardSound> = {}) {
-    return this.client.api.guilds(this.id)['soundboard-sounds'].post<unknown>({
-      data,
-    });
+    return this.client.api
+      .guilds(this.id)
+      ['soundboard-sounds'].post<SoundboardSound>({
+        data,
+      });
   }
 
   editSoundboardSound(soundId: Snowflake, data: Partial<SoundboardSound> = {}) {
     return this.client.api
       .guilds(this.id)
       ['soundboard-sounds'](soundId)
-      .patch<Record<string, unknown>>({ data });
+      .patch<SoundboardSound>({ data });
   }
 
   deleteSoundboardSound(soundId: Snowflake) {
@@ -828,13 +826,13 @@ class Guild extends AnonymousGuild implements GuildEntity {
   async fetchSoundboardSoundGuild(soundId: Snowflake) {
     return this.client.api['soundboard-sounds'](soundId)
       .guild(this.id)
-      .get<Record<string, unknown>>();
+      .get<SoundboardSound>();
   }
 
   validateAutoModerationRule(data: Record<string, unknown> = {}) {
     return this.client.api
       .guilds(this.id)
-      ['auto-moderation'].rules.validate.post<Record<string, unknown>>({
+      ['auto-moderation'].rules.validate.post<AutoModerationValidationResult>({
         data,
       });
   }

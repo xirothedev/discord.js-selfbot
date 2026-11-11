@@ -51,8 +51,17 @@ interface ChannelAffinity {
 }
 
 interface UserConnection {
-  id?: string;
+  id: string;
   type?: string;
+  name?: string;
+  verified?: boolean;
+  friend_sync?: boolean;
+  show_activity?: boolean;
+  visibility?: number;
+  metadata_visibility?: number;
+  revoked?: boolean;
+  integrations?: unknown[];
+  two_way_link?: boolean;
   name?: string;
   verified?: boolean;
   friend_sync?: boolean;
@@ -119,6 +128,51 @@ interface SoundboardSound {
 }
 
 interface DiscoveryMetadata {
+  [key: string]: unknown;
+}
+
+interface OnboardingAllowedApplication {
+  id?: string;
+  type?: number;
+  [key: string]: unknown;
+}
+
+interface TopGame {
+  application_id?: string;
+  name?: string;
+  count?: number;
+  [key: string]: unknown;
+}
+
+interface BanSearchResult {
+  user?: unknown;
+  reason?: string | null;
+  [key: string]: unknown;
+}
+
+interface FriendSuggestion {
+  suggested_user?: unknown;
+  reasons?: unknown[];
+  [key: string]: unknown;
+}
+
+interface GameRelationship {
+  user_id?: string;
+  application_id?: string;
+  type?: number;
+  [key: string]: unknown;
+}
+
+interface ForumTag {
+  id?: string;
+  name?: string;
+  moderated?: boolean;
+  emoji_id?: string | null;
+  emoji_name?: string | null;
+  [key: string]: unknown;
+}
+
+interface InteractionData {
   [key: string]: unknown;
 }
 
