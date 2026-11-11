@@ -100,7 +100,7 @@ class Options extends null {
         invite: 'https://discord.gg',
         scheduledEvent: 'https://discord.com/events',
         template: 'https://discord.new',
-        version: 9,
+        version: 10,
       },
       intents: Intents.ALL,
       invalidRequestWarningInterval: 0,
@@ -157,7 +157,7 @@ class Options extends null {
           release_channel: 'stable',
           system_locale: 'en-US',
         },
-        version: 9,
+        version: 10,
       },
     };
   }
