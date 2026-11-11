@@ -271,6 +271,18 @@ clone(options?: GuildChannelCloneOptions): Promise<NewsChannel>
 
 **Returns:** `Promise<NewsChannel>`
 
+### `createForumTag`
+
+```ts
+
+createForumTag(data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
+
 ### `createInvite`
 
 Creates an invite to this guild channel.
@@ -360,6 +372,18 @@ channel.delete('making room for new channels')
   .catch(console.error);
 ```
 
+### `deleteForumTag`
+
+```ts
+
+deleteForumTag(tagId: string): Promise<unknown>
+
+```
+
+- `tagId: string`
+
+**Returns:** `Promise<unknown>`
+
 ### `edit`
 
 ```ts
@@ -436,6 +460,18 @@ channel.fetchWebhooks()
   .catch(console.error);
 ```
 
+### `followAnnouncementChannel`
+
+```ts
+
+followAnnouncementChannel(targetChannelId: string): Promise<unknown>
+
+```
+
+- `targetChannelId: string`
+
+**Returns:** `Promise<unknown>`
+
 ### `isDirectory`
 
 Indicates whether this channel is a DirectoryChannel
@@ -508,6 +544,19 @@ lockPermissions(): Promise<NewsChannel>
 
 **Returns:** `Promise<NewsChannel>`
 
+### `modifyForumTag`
+
+```ts
+
+modifyForumTag(tagId: string, data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `tagId: string`
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
+
 ### `permissionsFor`
 
 Gets the overall set of permissions for a member or role in this channel, taking into account channel overwrites.
@@ -535,6 +584,29 @@ permissionsFor(memberOrRole: string | GuildMember | Role | User | Message<boolea
 - `checkAdmin?: boolean` — Whether having `ADMINISTRATOR` will return all permissions
 
 **Returns:** `Readonly<Permissions> | null`
+
+### `removeLobbyLink`
+
+```ts
+
+removeLobbyLink(): Promise<unknown>
+
+```
+
+**Returns:** `Promise<unknown>`
+
+### `searchThreads`
+
+```ts
+
+searchThreads(query: string, options?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `query: string`
+- `options?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
 
 ### `send`
 

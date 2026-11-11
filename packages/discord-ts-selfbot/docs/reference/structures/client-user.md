@@ -651,6 +651,19 @@ guildTagBadgeURL(options?: ImageURLOptions): string | null
 
 **Returns:** `string | null`
 
+### `matchVoicePublicKey`
+
+```ts
+
+matchVoicePublicKey(userId: string, data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `userId: string`
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
+
 ### `modifyAgreements`
 
 ```ts
@@ -660,6 +673,31 @@ modifyAgreements(data?: Record<string, unknown>): Promise<unknown>
 ```
 
 - `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
+
+### `modifyStream`
+
+```ts
+
+modifyStream(streamKey: string, data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `streamKey: string`
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
+
+### `notifyStream`
+
+```ts
+
+notifyStream(streamKey: string): Promise<unknown>
+
+```
+
+- `streamKey: string`
 
 **Returns:** `Promise<unknown>`
 
@@ -719,6 +757,19 @@ user.send('Hello!')
   .catch(console.error);
 ```
 
+### `sendCustomCallSound`
+
+```ts
+
+sendCustomCallSound(channelId: string, data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `channelId: string`
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
+
 ### `sendFriendRequest`
 
 Send Friend Request to the user
@@ -730,6 +781,19 @@ sendFriendRequest(): Promise<boolean>
 ```
 
 **Returns:** `Promise<boolean>`
+
+### `sendVoiceChannelEffect`
+
+```ts
+
+sendVoiceChannelEffect(channelId: string, data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `channelId: string`
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
 
 ### `setAboutMe`
 
@@ -1084,6 +1148,18 @@ unsaveMessage(channelId: string, messageId: string): Promise<unknown>
 
 - `channelId: string`
 - `messageId: string`
+
+**Returns:** `Promise<unknown>`
+
+### `uploadVoicePublicKey`
+
+```ts
+
+uploadVoicePublicKey(data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `data?: Record<string, unknown>`
 
 **Returns:** `Promise<unknown>`
 

@@ -380,6 +380,44 @@ class ClientUser extends User implements ClientUserEntity {
   createHarvest() {
     return this.client.api.users['@me'].harvest.post({ data: {} });
   }
+
+  sendVoiceChannelEffect(
+    channelId: Snowflake,
+    data: Record<string, unknown> = {}
+  ) {
+    return this.client.api.channels(channelId)['voice-channel-effects'].post({
+      data,
+    });
+  }
+
+  sendCustomCallSound(
+    channelId: Snowflake,
+    data: Record<string, unknown> = {}
+  ) {
+    return this.client.api.channels(channelId)['custom-call-sounds'].post({
+      data,
+    });
+  }
+
+  modifyStream(streamKey: string, data: Record<string, unknown> = {}) {
+    return this.client.api.streams[encodeURIComponent(streamKey)].stream.patch({
+      data,
+    });
+  }
+
+  notifyStream(streamKey: string) {
+    return this.client.api.streams[encodeURIComponent(streamKey)].notify.post({
+      data: {},
+    });
+  }
+
+  uploadVoicePublicKey(data: Record<string, unknown> = {}) {
+    return this.client.api.voice['public-keys'].put({ data });
+  }
+
+  matchVoicePublicKey(userId: Snowflake, data: Record<string, unknown> = {}) {
+    return this.client.api.voice(userId)['match-public-key'].post({ data });
+  }
 }
 
 export default ClientUser;

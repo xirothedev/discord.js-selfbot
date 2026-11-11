@@ -1161,6 +1161,48 @@ class Message extends Base {
     return this.channel.messages.fetch(this.id, { force });
   }
 
+  async fetchInteractionData() {
+    return this.client.api
+      .channels(this.channelId)
+      .messages(this.id)
+      ['interaction-data'].get<Record<string, unknown>>();
+  }
+
+  hideFromGuildFeed() {
+    return this.client.api
+      .channels(this.channelId)
+      .messages(this.id)
+      ['hide-guild-feed'].post({ data: {} });
+  }
+
+  unhideFromGuildFeed() {
+    return this.client.api
+      .channels(this.channelId)
+      .messages(this.id)
+      ['hide-guild-feed'].delete();
+  }
+
+  endPoll() {
+    return this.client.api.channels(this.channelId).polls(this.id).expire.post({
+      data: {},
+    });
+  }
+
+  fetchPollAnswerVoters(answerId: string) {
+    return this.client.api
+      .channels(this.channelId)
+      .polls(this.id)
+      .answers(answerId)
+      .get<unknown>();
+  }
+
+  votePoll(answerIds: string[]) {
+    return this.client.api
+      .channels(this.channelId)
+      .polls(this.id)
+      .answers['@me'].put({ data: { answer_ids: answerIds } });
+  }
+
   async fetchWebhook() {
     if (!this.webhookId) {
       throw new Error('WEBHOOK_MESSAGE');
