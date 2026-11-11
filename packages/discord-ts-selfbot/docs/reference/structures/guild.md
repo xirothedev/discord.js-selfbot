@@ -626,13 +626,13 @@ guild.edit({
 
 ```ts
 
-editGuildProfile(data?: Record<string, unknown>): Promise<Record<string, unknown>>
+editGuildProfile(data?: Partial<UserProfile>): Promise<UserProfile>
 
 ```
 
-- `data?: Record<string, unknown>`
+- `data?: Partial<UserProfile>`
 
-**Returns:** `Promise<Record<string, unknown>>`
+**Returns:** `Promise<UserProfile>`
 
 ### `editMemberVerification`
 
@@ -662,14 +662,14 @@ editOnboarding(data: Record<string, unknown>): Promise<APIGuildOnboarding>
 
 ```ts
 
-editSoundboardSound(soundId: string, data?: Record<string, unknown>): Promise<Record<string, unknown>>
+editSoundboardSound(soundId: string, data?: Partial<SoundboardSound>): Promise<SoundboardSound>
 
 ```
 
 - `soundId: string`
-- `data?: Record<string, unknown>`
+- `data?: Partial<SoundboardSound>`
 
-**Returns:** `Promise<Record<string, unknown>>`
+**Returns:** `Promise<SoundboardSound>`
 
 ### `editWelcomeScreen`
 
@@ -773,11 +773,11 @@ guild.fetchAuditLogs()
 
 ```ts
 
-fetchBasic(): Promise<Record<string, unknown>>
+fetchBasic(): Promise<GuildBasic>
 
 ```
 
-**Returns:** `Promise<Record<string, unknown>>`
+**Returns:** `Promise<GuildBasic>`
 
 ### `fetchCurrentJoinRequest`
 
@@ -793,21 +793,21 @@ fetchCurrentJoinRequest(): Promise<Record<string, unknown>>
 
 ```ts
 
-fetchDefaultSoundboardSounds(): Promise<unknown[]>
+fetchDefaultSoundboardSounds(): Promise<SoundboardSound[]>
 
 ```
 
-**Returns:** `Promise<unknown[]>`
+**Returns:** `Promise<SoundboardSound[]>`
 
 ### `fetchGuildProfile`
 
 ```ts
 
-fetchGuildProfile(): Promise<Record<string, unknown>>
+fetchGuildProfile(): Promise<UserProfile>
 
 ```
 
-**Returns:** `Promise<Record<string, unknown>>`
+**Returns:** `Promise<UserProfile>`
 
 ### `fetchIntegrations`
 
@@ -956,23 +956,23 @@ fetchSoundboardSound(soundId: string): Promise<Record<string, unknown>>
 
 ```ts
 
-fetchSoundboardSoundGuild(soundId: string): Promise<Record<string, unknown>>
+fetchSoundboardSoundGuild(soundId: string): Promise<SoundboardSound>
 
 ```
 
 - `soundId: string`
 
-**Returns:** `Promise<Record<string, unknown>>`
+**Returns:** `Promise<SoundboardSound>`
 
 ### `fetchSoundboardSounds`
 
 ```ts
 
-fetchSoundboardSounds(): Promise<unknown[]>
+fetchSoundboardSounds(): Promise<SoundboardSound[]>
 
 ```
 
-**Returns:** `Promise<unknown[]>`
+**Returns:** `Promise<SoundboardSound[]>`
 
 ### `fetchTemplates`
 
@@ -1744,13 +1744,13 @@ toString(): string
 
 ```ts
 
-validateAutoModerationRule(data?: Record<string, unknown>): Promise<Record<string, unknown>>
+validateAutoModerationRule(data?: Record<string, unknown>): Promise<AutoModerationValidationResult>
 
 ```
 
 - `data?: Record<string, unknown>`
 
-**Returns:** `Promise<Record<string, unknown>>`
+**Returns:** `Promise<AutoModerationValidationResult>`
 
 ### `valueOf`
 

@@ -1532,13 +1532,13 @@ export class ClientUser extends User {
   ): Promise<void>;
   public setPronouns(pronouns?: string | null): Promise<this>;
   public setGlobalName(globalName?: string | null): Promise<this>;
-  public fetchProfile(userId?: Snowflake): Promise<Record<string, unknown>>;
+  public fetchProfile(userId?: Snowflake): Promise<UserProfile>;
   public editProfile(
     data?: Record<string, unknown>
   ): Promise<Record<string, unknown>>;
-  public fetchMentions(): Promise<unknown[]>;
+  public fetchMentions(): Promise<RecentMention[]>;
   public deleteMention(messageId: Snowflake): Promise<unknown>;
-  public fetchSavedMessages(): Promise<unknown[]>;
+  public fetchSavedMessages(): Promise<SavedMessage[]>;
   public saveMessage(
     channelId: Snowflake,
     messageId: Snowflake
@@ -1547,16 +1547,16 @@ export class ClientUser extends User {
     channelId: Snowflake,
     messageId: Snowflake
   ): Promise<unknown>;
-  public fetchUserAffinities(): Promise<unknown>;
-  public fetchGuildAffinities(): Promise<unknown>;
-  public fetchChannelAffinities(): Promise<unknown>;
+  public fetchUserAffinities: Promise<UserAffinity>;
+  public fetchGuildAffinities(): Promise<GuildAffinity>;
+  public fetchChannelAffinities(): Promise<ChannelAffinity>;
   public reportMeaningfullyOnline(): Promise<unknown>;
-  public fetchRecentAvatars(): Promise<unknown[]>;
+  public fetchRecentAvatars(): Promise<RecentAvatar[]>;
   public deleteRecentAvatar(avatarId: Snowflake): Promise<unknown>;
   public modifyAgreements(data?: Record<string, unknown>): Promise<unknown>;
   public setClan(guildId: Snowflake | null): Promise<unknown>;
-  public fetchHarvest(): Promise<unknown>;
-  public createHarvest(): Promise<unknown>;
+  public fetchHarvest(): Promise<UserHarvest>;
+  public createHarvest(): Promise<UserHarvest>;
   public modifyConnection(
     type: string,
     id: string,
@@ -1567,10 +1567,10 @@ export class ClientUser extends User {
   public fetchConnectionAccessToken(
     type: string,
     id: string
-  ): Promise<Record<string, unknown>>;
-  public fetchConsents(): Promise<unknown>;
+  ): Promise<UserConnection>;
+  public fetchConsents(): Promise<UserConsent>;
   public modifyConsents(data?: Record<string, unknown>): Promise<unknown>;
-  public fetchEmailSettings(): Promise<Record<string, unknown>>;
+  public fetchEmailSettings(): Promise<EmailSettings>;
   public modifyEmailSettings(data?: Record<string, unknown>): Promise<unknown>;
   public modifyNotificationSettings(
     data?: Record<string, unknown>
@@ -2471,7 +2471,7 @@ export class Guild extends AnonymousGuild {
     includeRoles?: Snowflake[];
     reason?: string;
   }): Promise<RESTPostAPIGuildPruneResult>;
-  public fetchBasic(): Promise<Record<string, unknown>>;
+  public fetchBasic(): Promise<GuildBasic>;
 
   public fetchPruneCount(options?: {
     days?: number;
@@ -2483,10 +2483,8 @@ export class Guild extends AnonymousGuild {
   ): Promise<RESTPatchAPIGuildMemberVerificationResult>;
   public fetchOnboardingAllowedApplications(): Promise<unknown[]>;
   public fetchTopGames(): Promise<unknown[]>;
-  public fetchGuildProfile(): Promise<Record<string, unknown>>;
-  public editGuildProfile(
-    data?: Record<string, unknown>
-  ): Promise<Record<string, unknown>>;
+  public fetchGuildProfile(): Promise<UserProfile>;
+  public editGuildProfile(data?: Partial<UserProfile>): Promise<UserProfile>;
   public fetchRoleMemberCounts(): Promise<Record<string, number>>;
   public searchBans(query: string): Promise<unknown[]>;
   public bulkBanV2(
@@ -2501,7 +2499,7 @@ export class Guild extends AnonymousGuild {
   public createJoinRequest(): Promise<Record<string, unknown>>;
   public resetJoinRequest(): Promise<Record<string, unknown>>;
   public deleteJoinRequest(): Promise<unknown>;
-  public fetchSoundboardSounds(): Promise<unknown[]>;
+  public fetchSoundboardSounds(): Promise<SoundboardSound[]>;
   public fetchSoundboardSound(
     soundId: Snowflake
   ): Promise<Record<string, unknown>>;
@@ -2510,8 +2508,8 @@ export class Guild extends AnonymousGuild {
   ): Promise<unknown>;
   public editSoundboardSound(
     soundId: Snowflake,
-    data?: Record<string, unknown>
-  ): Promise<Record<string, unknown>>;
+    data?: Partial<SoundboardSound>
+  ): Promise<SoundboardSound>;
   public deleteSoundboardSound(soundId: Snowflake): Promise<unknown>;
   public sendSoundboardSound(
     channelId: Snowflake,
@@ -2519,10 +2517,10 @@ export class Guild extends AnonymousGuild {
   ): Promise<unknown>;
   public fetchSoundboardSoundGuild(
     soundId: Snowflake
-  ): Promise<Record<string, unknown>>;
+  ): Promise<SoundboardSound>;
   public validateAutoModerationRule(
     data?: Record<string, unknown>
-  ): Promise<Record<string, unknown>>;
+  ): Promise<AutoModerationValidationResult>;
   public executeAutoModerationAlertAction(
     data?: Record<string, unknown>
   ): Promise<unknown>;
@@ -2533,7 +2531,7 @@ export class Guild extends AnonymousGuild {
     data?: Record<string, unknown>
   ): Promise<unknown>;
   public clearAutoModerationMentionRaid(): Promise<unknown>;
-  public fetchDefaultSoundboardSounds(): Promise<unknown[]>;
+  public fetchDefaultSoundboardSounds(): Promise<SoundboardSound[]>;
   public fetchWidget(): Promise<Widget>;
   public fetchWidgetSettings(): Promise<GuildWidgetSettings>;
   /** Returns the guild's widget image URL. */
@@ -6759,14 +6757,14 @@ export class GuildManager extends CachedManager<
   ): string;
   public fetchDiscoveryMetadata(
     guild: GuildResolvable
-  ): Promise<Record<string, unknown>>;
+  ): Promise<DiscoveryMetadata>;
   public editDiscoveryMetadata(
     guild: GuildResolvable,
-    data?: Record<string, unknown>
-  ): Promise<Record<string, unknown>>;
+    data?: Partial<DiscoveryMetadata>
+  ): Promise<DiscoveryMetadata>;
   public fetchDiscoveryRequirements(
     guild: GuildResolvable
-  ): Promise<Record<string, unknown>>;
+  ): Promise<DiscoveryMetadata>;
   public addDiscoverySubcategory(
     guild: GuildResolvable,
     categoryId: Snowflake
