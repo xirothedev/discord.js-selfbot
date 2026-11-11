@@ -777,6 +777,87 @@ class Guild extends AnonymousGuild implements GuildEntity {
     return this.client.api.guilds(this.id).requests['@me'].delete();
   }
 
+  async fetchSoundboardSounds() {
+    return this.client.api
+      .guilds(this.id)
+      ['soundboard-sounds'].get<unknown[]>();
+  }
+
+  async fetchSoundboardSound(soundId: Snowflake) {
+    return this.client.api
+      .guilds(this.id)
+      ['soundboard-sounds'](soundId)
+      .get<Record<string, unknown>>();
+  }
+
+  createSoundboardSound(data: Record<string, unknown> = {}) {
+    return this.client.api.guilds(this.id)['soundboard-sounds'].post<unknown>({
+      data,
+    });
+  }
+
+  editSoundboardSound(soundId: Snowflake, data: Record<string, unknown> = {}) {
+    return this.client.api
+      .guilds(this.id)
+      ['soundboard-sounds'](soundId)
+      .patch<Record<string, unknown>>({ data });
+  }
+
+  deleteSoundboardSound(soundId: Snowflake) {
+    return this.client.api
+      .guilds(this.id)
+      ['soundboard-sounds'](soundId)
+      .delete();
+  }
+
+  sendSoundboardSound(channelId: Snowflake, soundId: Snowflake) {
+    return this.client.api.channels(channelId)['send-soundboard-sound'].post({
+      data: { sound_id: soundId },
+    });
+  }
+
+  async fetchSoundboardSoundGuild(soundId: Snowflake) {
+    return this.client.api['soundboard-sounds'](soundId)
+      .guild(this.id)
+      .get<Record<string, unknown>>();
+  }
+
+  validateAutoModerationRule(data: Record<string, unknown> = {}) {
+    return this.client.api
+      .guilds(this.id)
+      ['auto-moderation'].rules.validate.post<Record<string, unknown>>({
+        data,
+      });
+  }
+
+  executeAutoModerationAlertAction(data: Record<string, unknown> = {}) {
+    return this.client.api
+      .guilds(this.id)
+      ['auto-moderation']['alert-action'].post({ data });
+  }
+
+  resolveAutoModerationFalseAlarm(data: Record<string, unknown> = {}) {
+    return this.client.api
+      .guilds(this.id)
+      ['auto-moderation']['false-alarm'].post({ data });
+  }
+
+  reportAutoModerationRaid(data: Record<string, unknown> = {}) {
+    return this.client.api
+      .guilds(this.id)
+      ['auto-moderation']['report-raid'].post({ data });
+  }
+
+  clearAutoModerationMentionRaid() {
+    return this.client.api
+      .guilds(this.id)
+      ['auto-moderation']['clear-mention-raid'].post({ data: {} });
+  }
+
+  async fetchDefaultSoundboardSounds() {
+    return this.client.api['soundboard-default-sounds'].get<unknown[]>();
+  }
+
   async fetchVanityData() {
     const data = await this.client.api
       .guilds(this.id, 'vanity-url')

@@ -482,6 +482,16 @@ bulkBanV2(data?: Record<string, unknown>): Promise<unknown>
 
 **Returns:** `Promise<unknown>`
 
+### `clearAutoModerationMentionRaid`
+
+```ts
+
+clearAutoModerationMentionRaid(): Promise<unknown>
+
+```
+
+**Returns:** `Promise<unknown>`
+
 ### `createJoinRequest`
 
 ```ts
@@ -491,6 +501,18 @@ createJoinRequest(): Promise<Record<string, unknown>>
 ```
 
 **Returns:** `Promise<Record<string, unknown>>`
+
+### `createSoundboardSound`
+
+```ts
+
+createSoundboardSound(data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
 
 ### `createTemplate`
 
@@ -533,6 +555,18 @@ guild.delete()
 deleteJoinRequest(): Promise<unknown>
 
 ```
+
+**Returns:** `Promise<unknown>`
+
+### `deleteSoundboardSound`
+
+```ts
+
+deleteSoundboardSound(soundId: string): Promise<unknown>
+
+```
+
+- `soundId: string`
 
 **Returns:** `Promise<unknown>`
 
@@ -624,6 +658,19 @@ editOnboarding(data: Record<string, unknown>): Promise<APIGuildOnboarding>
 
 **Returns:** `Promise<APIGuildOnboarding>`
 
+### `editSoundboardSound`
+
+```ts
+
+editSoundboardSound(soundId: string, data?: Record<string, unknown>): Promise<Record<string, unknown>>
+
+```
+
+- `soundId: string`
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<Record<string, unknown>>`
+
 ### `editWelcomeScreen`
 
 Updates the guild's welcome screen
@@ -666,6 +713,18 @@ equals(guild: Guild): boolean
 - `guild: Guild` — The guild to compare with
 
 **Returns:** `boolean`
+
+### `executeAutoModerationAlertAction`
+
+```ts
+
+executeAutoModerationAlertAction(data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
 
 ### `fetch`
 
@@ -729,6 +788,16 @@ fetchCurrentJoinRequest(): Promise<Record<string, unknown>>
 ```
 
 **Returns:** `Promise<Record<string, unknown>>`
+
+### `fetchDefaultSoundboardSounds`
+
+```ts
+
+fetchDefaultSoundboardSounds(): Promise<unknown[]>
+
+```
+
+**Returns:** `Promise<unknown[]>`
 
 ### `fetchGuildProfile`
 
@@ -870,6 +939,40 @@ fetchRoleMemberCounts(): Promise<Record<string, number>>
 ```
 
 **Returns:** `Promise<Record<string, number>>`
+
+### `fetchSoundboardSound`
+
+```ts
+
+fetchSoundboardSound(soundId: string): Promise<Record<string, unknown>>
+
+```
+
+- `soundId: string`
+
+**Returns:** `Promise<Record<string, unknown>>`
+
+### `fetchSoundboardSoundGuild`
+
+```ts
+
+fetchSoundboardSoundGuild(soundId: string): Promise<Record<string, unknown>>
+
+```
+
+- `soundId: string`
+
+**Returns:** `Promise<Record<string, unknown>>`
+
+### `fetchSoundboardSounds`
+
+```ts
+
+fetchSoundboardSounds(): Promise<unknown[]>
+
+```
+
+**Returns:** `Promise<unknown[]>`
 
 ### `fetchTemplates`
 
@@ -1047,6 +1150,18 @@ pruneMembers(options?: { computePruneCount?: boolean; days?: number; includeRole
 
 **Returns:** `Promise<RESTPostAPIGuildPruneResult>`
 
+### `reportAutoModerationRaid`
+
+```ts
+
+reportAutoModerationRaid(data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
+
 ### `resetJoinRequest`
 
 ```ts
@@ -1056,6 +1171,18 @@ resetJoinRequest(): Promise<Record<string, unknown>>
 ```
 
 **Returns:** `Promise<Record<string, unknown>>`
+
+### `resolveAutoModerationFalseAlarm`
+
+```ts
+
+resolveAutoModerationFalseAlarm(data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
 
 ### `searchBans`
 
@@ -1068,6 +1195,19 @@ searchBans(query: string): Promise<unknown[]>
 - `query: string`
 
 **Returns:** `Promise<unknown[]>`
+
+### `sendSoundboardSound`
+
+```ts
+
+sendSoundboardSound(channelId: string, soundId: string): Promise<unknown>
+
+```
+
+- `channelId: string`
+- `soundId: string`
+
+**Returns:** `Promise<unknown>`
 
 ### `setAFKChannel`
 
@@ -1599,6 +1739,18 @@ toString(): string
 ```
 
 **Returns:** `string`
+
+### `validateAutoModerationRule`
+
+```ts
+
+validateAutoModerationRule(data?: Record<string, unknown>): Promise<Record<string, unknown>>
+
+```
+
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<Record<string, unknown>>`
 
 ### `valueOf`
 
