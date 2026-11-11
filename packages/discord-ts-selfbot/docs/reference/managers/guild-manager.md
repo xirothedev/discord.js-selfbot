@@ -28,6 +28,19 @@ The client that instantiated this Manager
 
 ## Methods
 
+### `addDiscoverySubcategory`
+
+```ts
+
+addDiscoverySubcategory(guild: GuildResolvable, categoryId: string): Promise<unknown>
+
+```
+
+- `guild: GuildResolvable`
+- `categoryId: string`
+
+**Returns:** `Promise<unknown>`
+
 ### `create`
 
 Creates a guild.
@@ -42,6 +55,19 @@ create(name: string, options?: GuildCreateOptions): Promise<Guild>
 - `options?: GuildCreateOptions` — Options for creating the guild
 
 **Returns:** `Promise<Guild>`
+
+### `editDiscoveryMetadata`
+
+```ts
+
+editDiscoveryMetadata(guild: GuildResolvable, data?: Record<string, unknown>): Promise<Record<string, unknown>>
+
+```
+
+- `guild: GuildResolvable`
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<Record<string, unknown>>`
 
 ### `fetch`
 
@@ -64,6 +90,77 @@ fetch(options?: FetchGuildsOptions): Promise<Collection<string, OAuth2Guild>>
 - `options?: FetchGuildsOptions`
 
 **Returns:** `Promise<Collection<string, OAuth2Guild>>`
+
+### `fetchDiscoverableGuilds`
+
+```ts
+
+fetchDiscoverableGuilds(query?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `query?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
+
+### `fetchDiscoveryCategories`
+
+```ts
+
+fetchDiscoveryCategories(): Promise<unknown[]>
+
+```
+
+**Returns:** `Promise<unknown[]>`
+
+### `fetchDiscoveryMetadata`
+
+```ts
+
+fetchDiscoveryMetadata(guild: GuildResolvable): Promise<Record<string, unknown>>
+
+```
+
+- `guild: GuildResolvable`
+
+**Returns:** `Promise<Record<string, unknown>>`
+
+### `fetchDiscoveryRequirements`
+
+```ts
+
+fetchDiscoveryRequirements(guild: GuildResolvable): Promise<Record<string, unknown>>
+
+```
+
+- `guild: GuildResolvable`
+
+**Returns:** `Promise<Record<string, unknown>>`
+
+### `fetchDiscoverySlug`
+
+```ts
+
+fetchDiscoverySlug(guildId: string): Promise<Record<string, unknown>>
+
+```
+
+- `guildId: string`
+
+**Returns:** `Promise<Record<string, unknown>>`
+
+### `removeDiscoverySubcategory`
+
+```ts
+
+removeDiscoverySubcategory(guild: GuildResolvable, categoryId: string): Promise<unknown>
+
+```
+
+- `guild: GuildResolvable`
+- `categoryId: string`
+
+**Returns:** `Promise<unknown>`
 
 ### `resolve`
 
@@ -116,6 +213,30 @@ resolveId(resolvable: GuildResolvable): string | null
 - `resolvable: GuildResolvable`
 
 **Returns:** `string | null`
+
+### `searchDiscoverableGuilds`
+
+```ts
+
+searchDiscoverableGuilds(query: string): Promise<unknown>
+
+```
+
+- `query: string`
+
+**Returns:** `Promise<unknown>`
+
+### `searchPublishedGuilds`
+
+```ts
+
+searchPublishedGuilds(query: string): Promise<unknown>
+
+```
+
+- `query: string`
+
+**Returns:** `Promise<unknown>`
 
 ### `setIncidentActions`
 

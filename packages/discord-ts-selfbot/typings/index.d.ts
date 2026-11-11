@@ -1551,6 +1551,24 @@ export class ClientUser extends User {
   public setClan(guildId: Snowflake | null): Promise<unknown>;
   public fetchHarvest(): Promise<unknown>;
   public createHarvest(): Promise<unknown>;
+  public modifyConnection(
+    type: string,
+    id: string,
+    data?: Record<string, unknown>
+  ): Promise<unknown>;
+  public deleteConnection(type: string, id: string): Promise<unknown>;
+  public refreshConnection(type: string, id: string): Promise<unknown>;
+  public fetchConnectionAccessToken(
+    type: string,
+    id: string
+  ): Promise<Record<string, unknown>>;
+  public fetchConsents(): Promise<unknown>;
+  public modifyConsents(data?: Record<string, unknown>): Promise<unknown>;
+  public fetchEmailSettings(): Promise<Record<string, unknown>>;
+  public modifyEmailSettings(data?: Record<string, unknown>): Promise<unknown>;
+  public modifyNotificationSettings(
+    data?: Record<string, unknown>
+  ): Promise<unknown>;
   public sendVoiceChannelEffect(
     channelId: Snowflake,
     data?: Record<string, unknown>
@@ -6697,6 +6715,33 @@ export class GuildManager extends CachedManager<
     guild: GuildResolvable,
     style?: GuildWidgetStyle
   ): string;
+  public fetchDiscoveryMetadata(
+    guild: GuildResolvable
+  ): Promise<Record<string, unknown>>;
+  public editDiscoveryMetadata(
+    guild: GuildResolvable,
+    data?: Record<string, unknown>
+  ): Promise<Record<string, unknown>>;
+  public fetchDiscoveryRequirements(
+    guild: GuildResolvable
+  ): Promise<Record<string, unknown>>;
+  public addDiscoverySubcategory(
+    guild: GuildResolvable,
+    categoryId: Snowflake
+  ): Promise<unknown>;
+  public removeDiscoverySubcategory(
+    guild: GuildResolvable,
+    categoryId: Snowflake
+  ): Promise<unknown>;
+  public fetchDiscoverableGuilds(
+    query?: Record<string, unknown>
+  ): Promise<unknown>;
+  public searchDiscoverableGuilds(query: string): Promise<unknown>;
+  public searchPublishedGuilds(query: string): Promise<unknown>;
+  public fetchDiscoverySlug(
+    guildId: Snowflake
+  ): Promise<Record<string, unknown>>;
+  public fetchDiscoveryCategories(): Promise<unknown[]>;
 }
 
 export class GuildMemberManager extends CachedManager<

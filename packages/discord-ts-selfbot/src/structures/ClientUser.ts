@@ -381,6 +381,54 @@ class ClientUser extends User implements ClientUserEntity {
     return this.client.api.users['@me'].harvest.post({ data: {} });
   }
 
+  modifyConnection(
+    type: string,
+    id: string,
+    data: Record<string, unknown> = {}
+  ) {
+    return this.client.api.users['@me'].connections[type][id].patch({ data });
+  }
+
+  deleteConnection(type: string, id: string) {
+    return this.client.api.users['@me'].connections[type][id].delete();
+  }
+
+  refreshConnection(type: string, id: string) {
+    return this.client.api.users['@me'].connections[type][id].refresh.post({
+      data: {},
+    });
+  }
+
+  fetchConnectionAccessToken(type: string, id: string) {
+    return this.client.api.users['@me'].connections[type][id][
+      'access-token'
+    ].get<Record<string, unknown>>();
+  }
+
+  fetchConsents() {
+    return this.client.api.users['@me'].consent.get<unknown>();
+  }
+
+  modifyConsents(data: Record<string, unknown> = {}) {
+    return this.client.api.users['@me'].consent.post({ data });
+  }
+
+  fetchEmailSettings() {
+    return this.client.api.users['@me']['email-settings'].get<
+      Record<string, unknown>
+    >();
+  }
+
+  modifyEmailSettings(data: Record<string, unknown> = {}) {
+    return this.client.api.users['@me']['email-settings'].patch({ data });
+  }
+
+  modifyNotificationSettings(data: Record<string, unknown> = {}) {
+    return this.client.api.users['@me']['notification-settings'].patch({
+      data,
+    });
+  }
+
   sendVoiceChannelEffect(
     channelId: Snowflake,
     data: Record<string, unknown> = {}

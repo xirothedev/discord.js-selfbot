@@ -327,6 +327,88 @@ class GuildManager extends CachedManager<InstanceType<typeof Guild>> {
     return `${this.client.options.http.api}/guilds/${id}/widget.png?style=${style}`;
   }
 
+  async fetchDiscoveryMetadata(guild: GuildResolvableSource) {
+    const id = this.resolveId(guild);
+    if (!id) {
+      throw new TypeError('INVALID_TYPE', 'guild', 'GuildResolvable');
+    }
+    return this.client.api
+      .guilds(id)
+      ['discovery-metadata'].get<Record<string, unknown>>();
+  }
+
+  async editDiscoveryMetadata(
+    guild: GuildResolvableSource,
+    data: Record<string, unknown> = {}
+  ) {
+    const id = this.resolveId(guild);
+    if (!id) {
+      throw new TypeError('INVALID_TYPE', 'guild', 'GuildResolvable');
+    }
+    return this.client.api
+      .guilds(id)
+      ['discovery-metadata'].patch<Record<string, unknown>>({ data });
+  }
+
+  async fetchDiscoveryRequirements(guild: GuildResolvableSource) {
+    const id = this.resolveId(guild);
+    if (!id) {
+      throw new TypeError('INVALID_TYPE', 'guild', 'GuildResolvable');
+    }
+    return this.client.api
+      .guilds(id)
+      ['discovery-requirements'].get<Record<string, unknown>>();
+  }
+
+  async addDiscoverySubcategory(
+    guild: GuildResolvableSource,
+    categoryId: Snowflake
+  ) {
+    const id = this.resolveId(guild);
+    if (!id) {
+      throw new TypeError('INVALID_TYPE', 'guild', 'GuildResolvable');
+    }
+    return this.client.api.guilds(id)['discovery-categories'](categoryId).put({
+      data: {},
+    });
+  }
+
+  async removeDiscoverySubcategory(
+    guild: GuildResolvableSource,
+    categoryId: Snowflake
+  ) {
+    const id = this.resolveId(guild);
+    if (!id) {
+      throw new TypeError('INVALID_TYPE', 'guild', 'GuildResolvable');
+    }
+    return this.client.api
+      .guilds(id)
+      ['discovery-categories'](categoryId)
+      .delete();
+  }
+
+  async fetchDiscoverableGuilds(query: Record<string, unknown> = {}) {
+    return this.client.api['discoverable-guilds'].get<unknown>({ query });
+  }
+
+  async searchDiscoverableGuilds(query: string) {
+    return this.client.api['discoverable-guilds'].search.get<unknown>({
+      query: { query },
+    });
+  }
+
+  async searchPublishedGuilds(query: string) {
+    return this.client.api.discovery.search.get<unknown>({ query: { query } });
+  }
+
+  async fetchDiscoverySlug(guildId: Snowflake) {
+    return this.client.api.discovery(guildId).get<Record<string, unknown>>();
+  }
+
+  async fetchDiscoveryCategories() {
+    return this.client.api.discovery.categories.get<unknown[]>();
+  }
+
   async setIncidentActions(
     guild: GuildResolvableSource,
     { invitesDisabledUntil, dmsDisabledUntil }: IncidentActionsEditOptions

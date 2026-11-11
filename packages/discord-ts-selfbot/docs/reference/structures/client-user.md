@@ -366,6 +366,19 @@ createHarvest(): Promise<unknown>
 
 **Returns:** `Promise<unknown>`
 
+### `deleteConnection`
+
+```ts
+
+deleteConnection(type: string, id: string): Promise<unknown>
+
+```
+
+- `type: string`
+- `id: string`
+
+**Returns:** `Promise<unknown>`
+
 ### `deleteDM`
 
 Deletes a DM channel (if one exists) between the client and the user. Resolves with the channel if successful.
@@ -521,6 +534,19 @@ fetchChannelAffinities(): Promise<unknown>
 
 **Returns:** `Promise<unknown>`
 
+### `fetchConnectionAccessToken`
+
+```ts
+
+fetchConnectionAccessToken(type: string, id: string): Promise<Record<string, unknown>>
+
+```
+
+- `type: string`
+- `id: string`
+
+**Returns:** `Promise<Record<string, unknown>>`
+
 ### `fetchConnections`
 
 Fetches the current user's connected third-party accounts, keyed by connection id.
@@ -532,6 +558,26 @@ fetchConnections(): Promise<Collection<string, Connection>>
 ```
 
 **Returns:** `Promise<Collection<string, Connection>>`
+
+### `fetchConsents`
+
+```ts
+
+fetchConsents(): Promise<unknown>
+
+```
+
+**Returns:** `Promise<unknown>`
+
+### `fetchEmailSettings`
+
+```ts
+
+fetchEmailSettings(): Promise<Record<string, unknown>>
+
+```
+
+**Returns:** `Promise<Record<string, unknown>>`
 
 ### `fetchGuildAffinities`
 
@@ -676,6 +722,56 @@ modifyAgreements(data?: Record<string, unknown>): Promise<unknown>
 
 **Returns:** `Promise<unknown>`
 
+### `modifyConnection`
+
+```ts
+
+modifyConnection(type: string, id: string, data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `type: string`
+- `id: string`
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
+
+### `modifyConsents`
+
+```ts
+
+modifyConsents(data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
+
+### `modifyEmailSettings`
+
+```ts
+
+modifyEmailSettings(data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
+
+### `modifyNotificationSettings`
+
+```ts
+
+modifyNotificationSettings(data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
+
 ### `modifyStream`
 
 ```ts
@@ -698,6 +794,19 @@ notifyStream(streamKey: string): Promise<unknown>
 ```
 
 - `streamKey: string`
+
+**Returns:** `Promise<unknown>`
+
+### `refreshConnection`
+
+```ts
+
+refreshConnection(type: string, id: string): Promise<unknown>
+
+```
+
+- `type: string`
+- `id: string`
 
 **Returns:** `Promise<unknown>`
 
