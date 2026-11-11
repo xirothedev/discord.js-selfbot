@@ -141,13 +141,13 @@ fetchDiscoveryRequirements(guild: GuildResolvable): Promise<DiscoveryMetadata>
 
 ```ts
 
-fetchDiscoverySlug(guildId: string): Promise<Record<string, unknown>>
+fetchDiscoverySlug(guildId: string): Promise<DiscoverySlug>
 
 ```
 
 - `guildId: string`
 
-**Returns:** `Promise<Record<string, unknown>>`
+**Returns:** `Promise<DiscoverySlug>`
 
 ### `removeDiscoverySubcategory`
 
@@ -218,25 +218,25 @@ resolveId(resolvable: GuildResolvable): string | null
 
 ```ts
 
-searchDiscoverableGuilds(query: string): Promise<unknown>
+searchDiscoverableGuilds(query: string): Promise<DiscoverableGuild[]>
 
 ```
 
 - `query: string`
 
-**Returns:** `Promise<unknown>`
+**Returns:** `Promise<DiscoverableGuild[]>`
 
 ### `searchPublishedGuilds`
 
 ```ts
 
-searchPublishedGuilds(query: string): Promise<unknown>
+searchPublishedGuilds(query: string): Promise<DiscoverableGuild[]>
 
 ```
 
 - `query: string`
 
-**Returns:** `Promise<unknown>`
+**Returns:** `Promise<DiscoverableGuild[]>`
 
 ### `setIncidentActions`
 

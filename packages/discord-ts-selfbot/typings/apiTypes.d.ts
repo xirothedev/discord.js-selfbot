@@ -237,6 +237,13 @@ interface DiscoverableGuildsResult {
   [key: string]: unknown;
 }
 
+interface DiscoverySlug {
+  slug?: string;
+  guild?: DiscoverableGuild;
+  store_page?: unknown;
+  [key: string]: unknown;
+}
+
 interface AutoModerationValidationResult {
   [key: string]: unknown;
 }

@@ -396,17 +396,21 @@ class GuildManager extends CachedManager<InstanceType<typeof Guild>> {
   }
 
   async searchDiscoverableGuilds(query: string) {
-    return this.client.api['discoverable-guilds'].search.get<unknown>({
+    return this.client.api['discoverable-guilds'].search.get<
+      DiscoverableGuild[]
+    >({
       query: { query },
     });
   }
 
   async searchPublishedGuilds(query: string) {
-    return this.client.api.discovery.search.get<unknown>({ query: { query } });
+    return this.client.api.discovery.search.get<DiscoverableGuild[]>({
+      query: { query },
+    });
   }
 
   async fetchDiscoverySlug(guildId: Snowflake) {
-    return this.client.api.discovery(guildId).get<DiscoveryMetadata>();
+    return this.client.api.discovery(guildId).get<DiscoverySlug>();
   }
 
   async fetchDiscoveryCategories() {
