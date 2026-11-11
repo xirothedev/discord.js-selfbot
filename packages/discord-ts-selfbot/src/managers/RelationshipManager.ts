@@ -252,6 +252,74 @@ class RelationshipManager extends BaseManager {
   async addBlocked(_user: UserResolvableSource): Promise<boolean> {
     throw new Error('Risky action, not finished yet.');
   }
+
+  ignoreUser(userId: Snowflake) {
+    return this.client.api.users['@me'].relationships[userId].ignore.put({
+      data: {},
+    });
+  }
+
+  unignoreUser(userId: Snowflake) {
+    return this.client.api.users['@me'].relationships[userId].ignore.delete();
+  }
+
+  bulkRemoveRelationships(userIds: Snowflake[]) {
+    return this.client.api.users['@me'].relationships.delete({
+      data: { user_ids: userIds },
+    });
+  }
+
+  bulkAddRelationships(userIds: Snowflake[]) {
+    return this.client.api.users['@me'].relationships.bulk.post({
+      data: { user_ids: userIds },
+    });
+  }
+
+  async fetchFriendSuggestions() {
+    return this.client.api['friend-suggestions'].get<unknown[]>();
+  }
+
+  removeFriendSuggestion(userId: Snowflake) {
+    return this.client.api['friend-suggestions'](userId).delete();
+  }
+
+  async fetchGameRelationships() {
+    return this.client.api.users['@me']['game-relationships'].get<unknown[]>();
+  }
+
+  sendGameFriendRequest(userId: Snowflake) {
+    return this.client.api.users['@me']['game-relationships'].post({
+      data: { user_id: userId },
+    });
+  }
+
+  createGameRelationship(userId: Snowflake) {
+    return this.client.api.users['@me']['game-relationships'](userId).put({
+      data: {},
+    });
+  }
+
+  createGameRelationshipByApplication(
+    userId: Snowflake,
+    applicationId: Snowflake
+  ) {
+    return this.client.api.users['@me']
+      ['game-relationships'](userId)(applicationId)
+      .put({ data: {} });
+  }
+
+  removeGameRelationship(userId: Snowflake) {
+    return this.client.api.users['@me']['game-relationships'](userId).delete();
+  }
+
+  removeGameRelationshipByApplication(
+    userId: Snowflake,
+    applicationId: Snowflake
+  ) {
+    return this.client.api.users['@me']
+      ['game-relationships'](userId)(applicationId)
+      .delete();
+  }
 }
 
 export default RelationshipManager;
