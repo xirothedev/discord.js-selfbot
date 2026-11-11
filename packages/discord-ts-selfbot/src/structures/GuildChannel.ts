@@ -446,15 +446,42 @@ class GuildChannel extends Channel implements GuildChannelEntity {
     });
   }
 
-  createForumTag(data: Partial<ForumTag> = {}) {
-    return this.client.api.channels(this.id).tags.post<ForumTag>({ data });
+  createForumTag(data: {
+    name: string;
+    moderated?: boolean;
+    emojiId?: Snowflake | null;
+    emojiName?: string | null;
+  }) {
+    return this.client.api.channels(this.id).tags.post({
+      data: {
+        emoji_id: data.emojiId,
+        emoji_name: data.emojiName,
+        moderated: data.moderated,
+        name: data.name,
+      },
+    });
   }
 
-  modifyForumTag(tagId: Snowflake, data: Partial<ForumTag> = {}) {
+  modifyForumTag(
+    tagId: Snowflake,
+    data: {
+      name: string;
+      moderated?: boolean;
+      emojiId?: Snowflake | null;
+      emojiName?: string | null;
+    }
+  ) {
     return this.client.api
       .channels(this.id)
       .tags(tagId)
-      .put<ForumTag>({ data });
+      .put({
+        data: {
+          emoji_id: data.emojiId,
+          emoji_name: data.emojiName,
+          moderated: data.moderated,
+          name: data.name,
+        },
+      });
   }
 
   deleteForumTag(tagId: Snowflake) {

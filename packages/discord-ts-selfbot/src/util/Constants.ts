@@ -44,7 +44,7 @@ const Constants: ConstantsShape = Object.create(Object.prototype);
 Constants.MaxBulkDeletableMessageAge = 1_209_600_000;
 
 Constants.UserAgent =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) discord/1.0.9210 Chrome/134.0.6998.205 Electron/35.3.0 Safari/537.36';
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) discord/1.0.9267 Chrome/152.0.7977.169 Electron/44.10.0 Safari/537.36';
 
 Constants.ciphers = [
   'TLS_AES_128_GCM_SHA256',

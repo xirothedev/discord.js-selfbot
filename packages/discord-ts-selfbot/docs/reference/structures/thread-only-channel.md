@@ -239,13 +239,13 @@ clone(options?: GuildChannelCloneOptions): Promise<ThreadOnlyChannel>
 
 ```ts
 
-createForumTag(data?: Partial<ForumTag>): Promise<ForumTag>
+createForumTag(data: { emojiId?: string | null; emojiName?: string | null; moderated?: boolean; name: string }): Promise<unknown>
 
 ```
 
-- `data?: Partial<ForumTag>`
+- `data: { emojiId?: string | null; emojiName?: string | null; moderated?: boolean; name: string }`
 
-**Returns:** `Promise<ForumTag>`
+**Returns:** `Promise<unknown>`
 
 ### `createInvite`
 
@@ -490,12 +490,12 @@ lockPermissions(): Promise<ThreadOnlyChannel>
 
 ```ts
 
-modifyForumTag(tagId: string, data?: Record<string, unknown>): Promise<unknown>
+modifyForumTag(tagId: string, data: { emojiId?: string | null; emojiName?: string | null; moderated?: boolean; name: string }): Promise<unknown>
 
 ```
 
 - `tagId: string`
-- `data?: Record<string, unknown>`
+- `data: { emojiId?: string | null; emojiName?: string | null; moderated?: boolean; name: string }`
 
 **Returns:** `Promise<unknown>`
 
