@@ -84,6 +84,12 @@ import type {
   APIConnection,
   GuildWidgetStyle,
   RESTGetAPIGuildOnboardingResult,
+  RESTGetAPIGuildPruneCountResult,
+  RESTGetAPIGuildMemberVerificationResult,
+  RESTPatchAPIGuildMemberVerificationJSONBody,
+  RESTPatchAPIGuildMemberVerificationResult,
+  RESTPostAPIGuildBulkBanJSONBody,
+  RESTPostAPIGuildBulkBanResult,
   RESTPostAPIGuildPruneResult,
   RESTPutAPIGuildOnboardingResult,
 } from 'discord-api-types/v10';
@@ -2466,14 +2472,15 @@ export class Guild extends AnonymousGuild {
     reason?: string;
   }): Promise<RESTPostAPIGuildPruneResult>;
   public fetchBasic(): Promise<Record<string, unknown>>;
+
   public fetchPruneCount(options?: {
     days?: number;
     includeRoles?: Snowflake[];
-  }): Promise<{ pruned: number }>;
-  public fetchMemberVerification(): Promise<Record<string, unknown>>;
+  }): Promise<RESTGetAPIGuildPruneCountResult>;
+  public fetchMemberVerification(): Promise<RESTGetAPIGuildMemberVerificationResult>;
   public editMemberVerification(
-    data?: Record<string, unknown>
-  ): Promise<Record<string, unknown>>;
+    data?: RESTPatchAPIGuildMemberVerificationJSONBody
+  ): Promise<RESTPatchAPIGuildMemberVerificationResult>;
   public fetchOnboardingAllowedApplications(): Promise<unknown[]>;
   public fetchTopGames(): Promise<unknown[]>;
   public fetchGuildProfile(): Promise<Record<string, unknown>>;
@@ -2482,7 +2489,9 @@ export class Guild extends AnonymousGuild {
   ): Promise<Record<string, unknown>>;
   public fetchRoleMemberCounts(): Promise<Record<string, number>>;
   public searchBans(query: string): Promise<unknown[]>;
-  public bulkBanV2(data?: Record<string, unknown>): Promise<unknown>;
+  public bulkBanV2(
+    data?: Partial<RESTPostAPIGuildBulkBanJSONBody>
+  ): Promise<RESTPostAPIGuildBulkBanResult>;
   public fetchJoinRequests(): Promise<unknown[]>;
   public fetchJoinRequest(
     requestId: Snowflake
