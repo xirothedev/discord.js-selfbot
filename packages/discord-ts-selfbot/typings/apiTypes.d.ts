@@ -187,6 +187,56 @@ interface DiscoveryCategory {
   [key: string]: unknown;
 }
 
+interface DiscoverableGuild {
+  id?: string;
+  name?: string;
+  icon?: string | null;
+  description?: string | null;
+  banner?: string | null;
+  splash?: string | null;
+  discovery_splash?: string | null;
+  features?: string[];
+  vanity_url_code?: string | null;
+  preferred_locale?: string;
+  premium_subscription_count?: number;
+  approximate_member_count?: number;
+  approximate_presence_count?: number;
+  emojis?: unknown[];
+  emoji_count?: number;
+  stickers?: unknown[];
+  sticker_count?: number;
+  auto_removed?: boolean;
+  primary_category_id?: number;
+  primary_category?: DiscoveryCategory;
+  keywords?: string[] | null;
+  is_published?: boolean;
+  reasons_to_join?: unknown[];
+  social_links?: string[] | null;
+  about?: string | null;
+  category_ids?: string[];
+  categories?: DiscoveryCategory[];
+  created_at?: string;
+  nsfw_properties?: unknown;
+  [key: string]: unknown;
+}
+
+interface DiscoverableGuildsQuery {
+  guild_ids?: string[];
+  application_ids?: string[];
+  categories?: number[];
+  limit?: number;
+  offset?: number;
+  [key: string]: unknown;
+}
+
+interface DiscoverableGuildsResult {
+  guilds?: DiscoverableGuild[];
+  total?: number;
+  limit?: number;
+  offset?: number;
+  [key: string]: unknown;
+}
+
 interface AutoModerationValidationResult {
   [key: string]: unknown;
 }

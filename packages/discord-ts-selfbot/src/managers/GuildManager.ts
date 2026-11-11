@@ -387,8 +387,12 @@ class GuildManager extends CachedManager<InstanceType<typeof Guild>> {
       .delete();
   }
 
-  async fetchDiscoverableGuilds(query: Record<string, unknown> = {}) {
-    return this.client.api['discoverable-guilds'].get<unknown>({ query });
+  async fetchDiscoverableGuilds(query: DiscoverableGuildsQuery = {}) {
+    return this.client.api['discoverable-guilds'].get<DiscoverableGuildsResult>(
+      {
+        query,
+      }
+    );
   }
 
   async searchDiscoverableGuilds(query: string) {
