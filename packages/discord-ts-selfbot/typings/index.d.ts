@@ -6774,8 +6774,8 @@ export class GuildManager extends CachedManager<
     categoryId: Snowflake
   ): Promise<unknown>;
   public fetchDiscoverableGuilds(
-    query?: Record<string, unknown>
-  ): Promise<unknown>;
+    query?: DiscoverableGuildsQuery
+  ): Promise<DiscoverableGuildsResult>;
   public searchDiscoverableGuilds(query: string): Promise<unknown>;
   public searchPublishedGuilds(query: string): Promise<unknown>;
   public fetchDiscoverySlug(

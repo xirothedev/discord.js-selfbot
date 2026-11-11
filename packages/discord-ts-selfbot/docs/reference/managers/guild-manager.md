@@ -95,13 +95,13 @@ fetch(options?: FetchGuildsOptions): Promise<Collection<string, OAuth2Guild>>
 
 ```ts
 
-fetchDiscoverableGuilds(query?: Record<string, unknown>): Promise<unknown>
+fetchDiscoverableGuilds(query?: DiscoverableGuildsQuery): Promise<DiscoverableGuildsResult>
 
 ```
 
-- `query?: Record<string, unknown>`
+- `query?: DiscoverableGuildsQuery`
 
-**Returns:** `Promise<unknown>`
+**Returns:** `Promise<DiscoverableGuildsResult>`
 
 ### `fetchDiscoveryCategories`
 
