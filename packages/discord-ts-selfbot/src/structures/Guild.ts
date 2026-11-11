@@ -42,6 +42,11 @@ import type {
   RESTGetAPIAuditLogResult,
   RESTGetAPIGuildIntegrationsResult,
   RESTGetAPIGuildOnboardingResult,
+  RESTGetAPIGuildPruneCountQuery,
+  RESTGetAPIGuildPruneCountResult,
+  RESTGetAPIGuildMemberVerificationResult,
+  RESTPatchAPIGuildMemberVerificationJSONBody,
+  RESTPatchAPIGuildMemberVerificationResult,
   RESTGetAPIGuildPreviewResult,
   RESTGetAPIGuildTemplatesResult,
   RESTGetAPIGuildThreadsResult,
@@ -51,6 +56,8 @@ import type {
   RESTPatchAPIGuildResult,
   RESTPatchAPIGuildWelcomeScreenResult,
   RESTPostAPIGuildPruneResult,
+  RESTPostAPIGuildBulkBanJSONBody,
+  RESTPostAPIGuildBulkBanResult,
   RESTPostAPIGuildTemplatesResult,
   RESTPutAPIGuildOnboardingJSONBody,
   RESTPutAPIGuildOnboardingResult,
@@ -678,25 +685,29 @@ class Guild extends AnonymousGuild implements GuildEntity {
     days = 7,
     includeRoles,
   }: { days?: number; includeRoles?: Snowflake[] } = {}) {
-    const query: Record<string, unknown> = { days };
+    const query: RESTGetAPIGuildPruneCountQuery = { days };
     if (includeRoles) {
       query.include_roles = includeRoles.join(',');
     }
-    return this.client.api.guilds(this.id).prune.get<{
-      pruned: number;
-    }>({ query });
+    return this.client.api
+      .guilds(this.id)
+      .prune.get<RESTGetAPIGuildPruneCountResult>({ query });
   }
 
   async fetchMemberVerification() {
     return this.client.api
       .guilds(this.id)
-      ['member-verification'].get<Record<string, unknown>>();
+      ['member-verification'].get<RESTGetAPIGuildMemberVerificationResult>();
   }
 
-  async editMemberVerification(data: Record<string, unknown> = {}) {
+  async editMemberVerification(
+    data: RESTPatchAPIGuildMemberVerificationJSONBody = {}
+  ) {
     return this.client.api
       .guilds(this.id)
-      ['member-verification'].patch<Record<string, unknown>>({ data });
+      ['member-verification'].patch<RESTPatchAPIGuildMemberVerificationResult>({
+        data,
+      });
   }
 
   async fetchOnboardingAllowedApplications() {
@@ -733,10 +744,10 @@ class Guild extends AnonymousGuild implements GuildEntity {
     });
   }
 
-  async bulkBanV2(data: Record<string, unknown> = {}) {
-    return this.client.api.guilds(this.id)['bulk-ban'].v2.post<unknown>({
-      data,
-    });
+  async bulkBanV2(data: Partial<RESTPostAPIGuildBulkBanJSONBody> = {}) {
+    return this.client.api
+      .guilds(this.id)
+      ['bulk-ban'].v2.post<RESTPostAPIGuildBulkBanResult>({ data });
   }
 
   async fetchJoinRequests() {

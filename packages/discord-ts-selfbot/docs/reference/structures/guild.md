@@ -474,13 +474,13 @@ bannerURL(options?: StaticImageURLOptions): string | null
 
 ```ts
 
-bulkBanV2(data?: Record<string, unknown>): Promise<unknown>
+bulkBanV2(data?: Partial<RESTPostAPIGuildBulkBanJSONBody>): Promise<RESTPostAPIGuildBulkBanResult>
 
 ```
 
-- `data?: Record<string, unknown>`
+- `data?: Partial<RESTPostAPIGuildBulkBanJSONBody>`
 
-**Returns:** `Promise<unknown>`
+**Returns:** `Promise<RESTPostAPIGuildBulkBanResult>`
 
 ### `clearAutoModerationMentionRaid`
 
@@ -638,13 +638,13 @@ editGuildProfile(data?: Record<string, unknown>): Promise<Record<string, unknown
 
 ```ts
 
-editMemberVerification(data?: Record<string, unknown>): Promise<Record<string, unknown>>
+editMemberVerification(data?: RESTPatchAPIGuildMemberVerificationJSONBody): Promise<APIGuildMembershipScreening>
 
 ```
 
-- `data?: Record<string, unknown>`
+- `data?: RESTPatchAPIGuildMemberVerificationJSONBody`
 
-**Returns:** `Promise<Record<string, unknown>>`
+**Returns:** `Promise<APIGuildMembershipScreening>`
 
 ### `editOnboarding`
 
@@ -865,11 +865,11 @@ fetchJoinRequests(): Promise<unknown[]>
 
 ```ts
 
-fetchMemberVerification(): Promise<Record<string, unknown>>
+fetchMemberVerification(): Promise<APIGuildMembershipScreening>
 
 ```
 
-**Returns:** `Promise<Record<string, unknown>>`
+**Returns:** `Promise<APIGuildMembershipScreening>`
 
 ### `fetchOnboarding`
 
@@ -922,13 +922,13 @@ fetchPreview(): Promise<GuildPreview>
 
 ```ts
 
-fetchPruneCount(options?: { days?: number; includeRoles?: string[] }): Promise<{ pruned: number }>
+fetchPruneCount(options?: { days?: number; includeRoles?: string[] }): Promise<RESTGetAPIGuildPruneCountResult>
 
 ```
 
 - `options?: { days?: number; includeRoles?: string[] }`
 
-**Returns:** `Promise<{ pruned: number }>`
+**Returns:** `Promise<RESTGetAPIGuildPruneCountResult>`
 
 ### `fetchRoleMemberCounts`
 
