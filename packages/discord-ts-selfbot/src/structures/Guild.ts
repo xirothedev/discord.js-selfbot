@@ -678,7 +678,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
   }
 
   async fetchBasic() {
-    return this.client.api.guilds(this.id).basic.get<Record<string, unknown>>();
+    return this.client.api.guilds(this.id).basic.get<GuildBasic>();
   }
 
   async fetchPruneCount({
@@ -726,7 +726,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
       .profile.get<Record<string, unknown>>();
   }
 
-  async editGuildProfile(data: Record<string, unknown> = {}) {
+  async editGuildProfile(data: Partial<UserProfile> = {}) {
     return this.client.api
       .guilds(this.id)
       .profile.patch<Record<string, unknown>>({ data });
@@ -751,13 +751,11 @@ class Guild extends AnonymousGuild implements GuildEntity {
   }
 
   async fetchJoinRequests() {
-    return this.client.api.guilds(this.id).requests.get<unknown[]>();
+    return this.client.api.guilds(this.id).requests.get<GuildJoinRequest[]>();
   }
 
   async fetchJoinRequest(requestId: Snowflake) {
-    return this.client.api['join-requests'](requestId).get<
-      Record<string, unknown>
-    >();
+    return this.client.api['join-requests'](requestId).get<GuildJoinRequest>();
   }
 
   async fetchCurrentJoinRequest() {
@@ -801,13 +799,13 @@ class Guild extends AnonymousGuild implements GuildEntity {
       .get<Record<string, unknown>>();
   }
 
-  createSoundboardSound(data: Record<string, unknown> = {}) {
+  createSoundboardSound(data: Partial<SoundboardSound> = {}) {
     return this.client.api.guilds(this.id)['soundboard-sounds'].post<unknown>({
       data,
     });
   }
 
-  editSoundboardSound(soundId: Snowflake, data: Record<string, unknown> = {}) {
+  editSoundboardSound(soundId: Snowflake, data: Partial<SoundboardSound> = {}) {
     return this.client.api
       .guilds(this.id)
       ['soundboard-sounds'](soundId)
@@ -866,7 +864,9 @@ class Guild extends AnonymousGuild implements GuildEntity {
   }
 
   async fetchDefaultSoundboardSounds() {
-    return this.client.api['soundboard-default-sounds'].get<unknown[]>();
+    return this.client.api['soundboard-default-sounds'].get<
+      SoundboardSound[]
+    >();
   }
 
   async fetchVanityData() {

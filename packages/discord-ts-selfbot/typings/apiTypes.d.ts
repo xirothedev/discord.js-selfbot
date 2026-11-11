@@ -1,0 +1,127 @@
+// Loose-but-structured interfaces for selfbot-only endpoints documented on
+// https://docs.discord.food/ that have no official discord-api-types equivalent.
+// Field names follow the discord.food documentation; all fields optional.
+
+interface UserProfile {
+  bio?: string | null;
+  banner?: string | null;
+  accent_color?: number | null;
+  pronouns?: string | null;
+  theme_colors?: number[] | null;
+  popout_animation_particle_type?: number | null;
+  emoji?: unknown;
+  [key: string]: unknown;
+}
+
+interface RecentMention {
+  id?: string;
+  channel_id?: string;
+  guild_id?: string;
+  author?: unknown;
+  content?: string;
+  timestamp?: string;
+  [key: string]: unknown;
+}
+
+interface SavedMessage {
+  channel_id?: string;
+  message_id?: string;
+  saved_at?: string;
+  notes?: string;
+  [key: string]: unknown;
+}
+
+interface UserAffinity {
+  user_id?: string;
+  affinity?: number;
+  communication_disabled_until?: string | null;
+  [key: string]: unknown;
+}
+
+interface GuildAffinity {
+  guild_id?: string;
+  affinity?: number;
+  [key: string]: unknown;
+}
+
+interface ChannelAffinity {
+  channel_id?: string;
+  affinity?: number;
+  [key: string]: unknown;
+}
+
+interface UserConnection {
+  id?: string;
+  type?: string;
+  name?: string;
+  verified?: boolean;
+  friend_sync?: boolean;
+  show_activity?: boolean;
+  visibility?: number;
+  metadata_visibility?: number;
+  revoked?: boolean;
+  integrations?: unknown[];
+  [key: string]: unknown;
+}
+
+interface UserConsent {
+  [key: string]: unknown;
+}
+
+interface EmailSettings {
+  email?: string | null;
+  verified?: boolean;
+  [key: string]: unknown;
+}
+
+interface NotificationSettings {
+  [key: string]: unknown;
+}
+
+interface UserHarvest {
+  request_id?: string;
+  status?: string;
+  created_at?: string;
+  [key: string]: unknown;
+}
+
+interface RecentAvatar {
+  avatar?: string;
+  uploaded_at?: string;
+  [key: string]: unknown;
+}
+
+interface GuildBasic {
+  id?: string;
+  name?: string;
+  icon?: string | null;
+  [key: string]: unknown;
+}
+
+interface GuildJoinRequest {
+  id?: string;
+  user_id?: string;
+  guild_id?: string;
+  status?: number;
+  created_at?: string;
+  [key: string]: unknown;
+}
+
+interface SoundboardSound {
+  sound_id?: string;
+  name?: string;
+  volume?: number;
+  emoji_id?: string | null;
+  emoji_name?: string | null;
+  guild_id?: string;
+  available?: boolean;
+  [key: string]: unknown;
+}
+
+interface DiscoveryMetadata {
+  [key: string]: unknown;
+}
+
+interface AutoModerationValidationResult {
+  [key: string]: unknown;
+}

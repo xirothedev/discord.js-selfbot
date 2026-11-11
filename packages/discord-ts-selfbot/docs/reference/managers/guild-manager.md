@@ -60,14 +60,14 @@ create(name: string, options?: GuildCreateOptions): Promise<Guild>
 
 ```ts
 
-editDiscoveryMetadata(guild: GuildResolvable, data?: Record<string, unknown>): Promise<Record<string, unknown>>
+editDiscoveryMetadata(guild: GuildResolvable, data?: Partial<DiscoveryMetadata>): Promise<DiscoveryMetadata>
 
 ```
 
 - `guild: GuildResolvable`
-- `data?: Record<string, unknown>`
+- `data?: Partial<DiscoveryMetadata>`
 
-**Returns:** `Promise<Record<string, unknown>>`
+**Returns:** `Promise<DiscoveryMetadata>`
 
 ### `fetch`
 
@@ -117,25 +117,25 @@ fetchDiscoveryCategories(): Promise<unknown[]>
 
 ```ts
 
-fetchDiscoveryMetadata(guild: GuildResolvable): Promise<Record<string, unknown>>
+fetchDiscoveryMetadata(guild: GuildResolvable): Promise<DiscoveryMetadata>
 
 ```
 
 - `guild: GuildResolvable`
 
-**Returns:** `Promise<Record<string, unknown>>`
+**Returns:** `Promise<DiscoveryMetadata>`
 
 ### `fetchDiscoveryRequirements`
 
 ```ts
 
-fetchDiscoveryRequirements(guild: GuildResolvable): Promise<Record<string, unknown>>
+fetchDiscoveryRequirements(guild: GuildResolvable): Promise<DiscoveryMetadata>
 
 ```
 
 - `guild: GuildResolvable`
 
-**Returns:** `Promise<Record<string, unknown>>`
+**Returns:** `Promise<DiscoveryMetadata>`
 
 ### `fetchDiscoverySlug`
 

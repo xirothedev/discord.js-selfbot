@@ -304,17 +304,17 @@ class ClientUser extends User implements ClientUserEntity {
 
   async fetchProfile(userId?: Snowflake) {
     const id = userId ?? this.id;
-    return this.client.api.users(id).profile.get<Record<string, unknown>>();
+    return this.client.api.users(id).profile.get<UserProfile>();
   }
 
-  async editProfile(data: Record<string, unknown> = {}) {
-    return this.client.api.users('@me').profile.patch<Record<string, unknown>>({
+  async editProfile(data: Partial<UserProfile> = {}) {
+    return this.client.api.users('@me').profile.patch<UserProfile>({
       data,
     });
   }
 
   async fetchMentions() {
-    return this.client.api.users['@me'].mentions.get<unknown[]>();
+    return this.client.api.users['@me'].mentions.get<RecentMention[]>();
   }
 
   deleteMention(messageId: Snowflake) {
@@ -322,7 +322,7 @@ class ClientUser extends User implements ClientUserEntity {
   }
 
   async fetchSavedMessages() {
-    return this.client.api.users['@me']['saved-messages'].get<unknown[]>();
+    return this.client.api.users['@me']['saved-messages'].get<SavedMessage[]>();
   }
 
   saveMessage(channelId: Snowflake, messageId: Snowflake) {
@@ -338,15 +338,17 @@ class ClientUser extends User implements ClientUserEntity {
   }
 
   async fetchUserAffinities() {
-    return this.client.api.users['@me'].affinities.users.get<unknown>();
+    return this.client.api.users['@me'].affinities.users.get<UserAffinity>();
   }
 
   async fetchGuildAffinities() {
-    return this.client.api.users['@me'].affinities.guilds.get<unknown>();
+    return this.client.api.users['@me'].affinities.guilds.get<GuildAffinity>();
   }
 
   async fetchChannelAffinities() {
-    return this.client.api.users['@me'].affinities.channels.get<unknown>();
+    return this.client.api.users[
+      '@me'
+    ].affinities.channels.get<ChannelAffinity>();
   }
 
   reportMeaningfullyOnline() {
@@ -356,7 +358,7 @@ class ClientUser extends User implements ClientUserEntity {
   }
 
   async fetchRecentAvatars() {
-    return this.client.api.users['@me'].avatars.get<unknown[]>();
+    return this.client.api.users['@me'].avatars.get<RecentAvatar[]>();
   }
 
   deleteRecentAvatar(avatarId: Snowflake) {
@@ -374,7 +376,7 @@ class ClientUser extends User implements ClientUserEntity {
   }
 
   async fetchHarvest() {
-    return this.client.api.users['@me'].harvest.get<unknown>();
+    return this.client.api.users['@me'].harvest.get<UserHarvest>();
   }
 
   createHarvest() {
@@ -402,11 +404,11 @@ class ClientUser extends User implements ClientUserEntity {
   fetchConnectionAccessToken(type: string, id: string) {
     return this.client.api.users['@me'].connections[type][id][
       'access-token'
-    ].get<Record<string, unknown>>();
+    ].get<UserConnection>();
   }
 
   fetchConsents() {
-    return this.client.api.users['@me'].consent.get<unknown>();
+    return this.client.api.users['@me'].consent.get<UserConsent>();
   }
 
   modifyConsents(data: Record<string, unknown> = {}) {
@@ -414,9 +416,7 @@ class ClientUser extends User implements ClientUserEntity {
   }
 
   fetchEmailSettings() {
-    return this.client.api.users['@me']['email-settings'].get<
-      Record<string, unknown>
-    >();
+    return this.client.api.users['@me']['email-settings'].get<EmailSettings>();
   }
 
   modifyEmailSettings(data: Record<string, unknown> = {}) {

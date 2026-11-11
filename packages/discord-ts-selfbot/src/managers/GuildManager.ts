@@ -334,12 +334,12 @@ class GuildManager extends CachedManager<InstanceType<typeof Guild>> {
     }
     return this.client.api
       .guilds(id)
-      ['discovery-metadata'].get<Record<string, unknown>>();
+      ['discovery-metadata'].get<DiscoveryMetadata>();
   }
 
   async editDiscoveryMetadata(
     guild: GuildResolvableSource,
-    data: Record<string, unknown> = {}
+    data: Partial<DiscoveryMetadata> = {}
   ) {
     const id = this.resolveId(guild);
     if (!id) {
@@ -357,7 +357,7 @@ class GuildManager extends CachedManager<InstanceType<typeof Guild>> {
     }
     return this.client.api
       .guilds(id)
-      ['discovery-requirements'].get<Record<string, unknown>>();
+      ['discovery-requirements'].get<DiscoveryMetadata>();
   }
 
   async addDiscoverySubcategory(
@@ -402,7 +402,7 @@ class GuildManager extends CachedManager<InstanceType<typeof Guild>> {
   }
 
   async fetchDiscoverySlug(guildId: Snowflake) {
-    return this.client.api.discovery(guildId).get<Record<string, unknown>>();
+    return this.client.api.discovery(guildId).get<DiscoveryMetadata>();
   }
 
   async fetchDiscoveryCategories() {

@@ -123,6 +123,10 @@ Email address of the client user.
 
 **Type:** `string | null`
 
+### `fetchUserAffinities`
+
+**Type:** `Promise<UserAffinity>`
+
 ### `flags`
 
 The flags for this user
@@ -360,11 +364,11 @@ client.user!.createFriendInvite()
 
 ```ts
 
-createHarvest(): Promise<unknown>
+createHarvest(): Promise<UserHarvest>
 
 ```
 
-**Returns:** `Promise<unknown>`
+**Returns:** `Promise<UserHarvest>`
 
 ### `deleteConnection`
 
@@ -528,24 +532,24 @@ fetchBurstCredit(): Promise<number>
 
 ```ts
 
-fetchChannelAffinities(): Promise<unknown>
+fetchChannelAffinities(): Promise<ChannelAffinity>
 
 ```
 
-**Returns:** `Promise<unknown>`
+**Returns:** `Promise<ChannelAffinity>`
 
 ### `fetchConnectionAccessToken`
 
 ```ts
 
-fetchConnectionAccessToken(type: string, id: string): Promise<Record<string, unknown>>
+fetchConnectionAccessToken(type: string, id: string): Promise<UserConnection>
 
 ```
 
 - `type: string`
 - `id: string`
 
-**Returns:** `Promise<Record<string, unknown>>`
+**Returns:** `Promise<UserConnection>`
 
 ### `fetchConnections`
 
@@ -563,93 +567,83 @@ fetchConnections(): Promise<Collection<string, Connection>>
 
 ```ts
 
-fetchConsents(): Promise<unknown>
+fetchConsents(): Promise<UserConsent>
 
 ```
 
-**Returns:** `Promise<unknown>`
+**Returns:** `Promise<UserConsent>`
 
 ### `fetchEmailSettings`
 
 ```ts
 
-fetchEmailSettings(): Promise<Record<string, unknown>>
+fetchEmailSettings(): Promise<EmailSettings>
 
 ```
 
-**Returns:** `Promise<Record<string, unknown>>`
+**Returns:** `Promise<EmailSettings>`
 
 ### `fetchGuildAffinities`
 
 ```ts
 
-fetchGuildAffinities(): Promise<unknown>
+fetchGuildAffinities(): Promise<GuildAffinity>
 
 ```
 
-**Returns:** `Promise<unknown>`
+**Returns:** `Promise<GuildAffinity>`
 
 ### `fetchHarvest`
 
 ```ts
 
-fetchHarvest(): Promise<unknown>
+fetchHarvest(): Promise<UserHarvest>
 
 ```
 
-**Returns:** `Promise<unknown>`
+**Returns:** `Promise<UserHarvest>`
 
 ### `fetchMentions`
 
 ```ts
 
-fetchMentions(): Promise<unknown[]>
+fetchMentions(): Promise<RecentMention[]>
 
 ```
 
-**Returns:** `Promise<unknown[]>`
+**Returns:** `Promise<RecentMention[]>`
 
 ### `fetchProfile`
 
 ```ts
 
-fetchProfile(userId?: string): Promise<Record<string, unknown>>
+fetchProfile(userId?: string): Promise<UserProfile>
 
 ```
 
 - `userId?: string`
 
-**Returns:** `Promise<Record<string, unknown>>`
+**Returns:** `Promise<UserProfile>`
 
 ### `fetchRecentAvatars`
 
 ```ts
 
-fetchRecentAvatars(): Promise<unknown[]>
+fetchRecentAvatars(): Promise<RecentAvatar[]>
 
 ```
 
-**Returns:** `Promise<unknown[]>`
+**Returns:** `Promise<RecentAvatar[]>`
 
 ### `fetchSavedMessages`
 
 ```ts
 
-fetchSavedMessages(): Promise<unknown[]>
+fetchSavedMessages(): Promise<SavedMessage[]>
 
 ```
 
-**Returns:** `Promise<unknown[]>`
-
-### `fetchUserAffinities`
-
-```ts
-
-fetchUserAffinities(): Promise<unknown>
-
-```
-
-**Returns:** `Promise<unknown>`
+**Returns:** `Promise<SavedMessage[]>`
 
 ### `getAllFriendInvites`
 
