@@ -55,11 +55,11 @@ Verdicts: `covered`, `missing`, `not applicable`.
 
 ## Likely missing (verified)
 
-- `GET /guilds/{id}/threads/active` — no helper on Guild (threads are channel-level; could add `Guild#fetchActiveThreads`).
-- `GET /guilds/{id}/onboarding` + `PUT` — no onboarding manager on Guild.
+- `GET /guilds/{id}/threads/active` — **covered**: `Guild#fetchActiveThreads()`.
+- `GET /guilds/{id}/onboarding` + `PUT` — **covered**: `Guild#fetchOnboarding()` / `Guild#editOnboarding()`.
 - `GET /guilds/{id}/invites` is covered via `Guild#invites` manager.
-- `GET /guilds/{id}/widget.png` image URL — partially covered by widget image helpers (prior audit).
-- `POST /guilds/{id}/prune` — no `pruneMembers` helper on Guild.
+- `GET /guilds/{id}/widget.png` image URL — covered by widget image helpers (prior audit).
+- `POST /guilds/{id}/prune` — **covered**: `Guild#pruneMembers()`.
 - `GET /guilds/{id}/member-verification` — docs removed; verify before adding.
 - `GET /guilds/{id}/regions` (deprecated) — skip.
 
