@@ -32,6 +32,25 @@ test('default REST and gateway versions are v9', async () => {
   }
 }, 15_000);
 
+test('v10 remains available as an explicit option', async () => {
+  const fake = startFakeDiscord({ apiVersion: 10 });
+  const client = new Client({ http: { api: fake.url, version: 10 } });
+
+  try {
+    await client.login('fake-token');
+    await client.api.users('@me').get();
+
+    const req = fake.getLastRequest();
+    if (!req) {
+      throw new Error('No REST request captured');
+    }
+    expect(req.path).toBe('/v10/users/@me');
+  } finally {
+    client.destroy();
+    fake.stop();
+  }
+}, 15_000);
+
 test('existing client properties match the captured desktop client', async () => {
   const fake = startFakeDiscord();
   const client = new Client({ http: { api: fake.url } });
