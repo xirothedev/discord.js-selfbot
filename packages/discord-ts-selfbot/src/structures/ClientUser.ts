@@ -331,9 +331,9 @@ class ClientUser extends User implements ClientUserEntity {
         guild_id: opts?.guildId,
         join_request_id: opts?.joinRequestId,
         type: opts?.type,
-        with_mutual_friends: opts?.withMutualFriends,
-        with_mutual_friends_count: opts?.withMutualFriendsCount,
-        with_mutual_guilds: opts?.withMutualGuilds,
+        with_mutual_friends: opts?.withMutualFriends ?? true,
+        with_mutual_friends_count: opts?.withMutualFriendsCount ?? true,
+        with_mutual_guilds: opts?.withMutualGuilds ?? true,
       },
     });
   }
@@ -380,9 +380,13 @@ class ClientUser extends User implements ClientUserEntity {
     messageId: Snowflake,
     options: { dueAt?: string | null } = {}
   ) {
+    const data: Record<string, unknown> = {};
+    if (options.dueAt !== undefined) {
+      data.due_at = options.dueAt;
+    }
     return this.client.api.users['@me']
       ['saved-messages'](channelId)(messageId)
-      .put({ data: { due_at: options.dueAt } });
+      .put({ data });
   }
 
   unsaveMessage(channelId: Snowflake, messageId: Snowflake) {

@@ -401,8 +401,8 @@ class User extends Base implements UserEntity {
         guild_id: settings.guildId,
         join_request_id: settings.joinRequestId,
         type: settings.type,
-        with_mutual_friends: settings.withMutualFriends ?? false,
-        with_mutual_friends_count: settings.withMutualFriendsCount ?? false,
+        with_mutual_friends: settings.withMutualFriends ?? true,
+        with_mutual_friends_count: settings.withMutualFriendsCount ?? true,
         with_mutual_guilds: settings.withMutualGuilds ?? true,
       },
     });
