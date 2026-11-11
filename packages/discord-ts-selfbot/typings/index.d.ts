@@ -2767,7 +2767,7 @@ export abstract class GuildChannel extends Channel {
     query: string,
     options?: Record<string, unknown>
   ): Promise<unknown>;
-  public createForumTag(data?: Record<string, unknown>): Promise<unknown>;
+  public createForumTag(data?: Partial<ForumTag>): Promise<ForumTag>;
   public modifyForumTag(
     tagId: Snowflake,
     data?: Record<string, unknown>
@@ -3416,7 +3416,7 @@ export class Message<Cached extends boolean = boolean> extends Base {
   public equals(message: Message, rawData: unknown): boolean;
   public fetchReference(): Promise<Message>;
   public fetchWebhook(): Promise<Webhook>;
-  public fetchInteractionData(): Promise<Record<string, unknown>>;
+  public fetchInteractionData(): Promise<InteractionData>;
   public hideFromGuildFeed(): Promise<unknown>;
   public unhideFromGuildFeed(): Promise<unknown>;
   public endPoll(): Promise<unknown>;

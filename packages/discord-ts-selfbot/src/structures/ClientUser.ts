@@ -8,11 +8,13 @@ import PremiumUsageFlags from '../util/PremiumUsageFlags';
 import PurchasedFlags from '../util/PurchasedFlags';
 import Util from '../util/Util';
 import type { SelfbotClientUserData } from '../types/selfbot/user';
-import type { APIUser, Snowflake } from 'discord-api-types/v10';
 import type {
-  RawConnectionData,
-  RawInviteData,
-} from '../../typings/rawDataTypes';
+  APIConnection,
+  APIGuildIntegration,
+  APIUser,
+  Snowflake,
+} from 'discord-api-types/v10';
+import type { RawInviteData } from '../../typings/rawDataTypes';
 import type { ClientUserEntity } from '../types/entities/client-user';
 import type { PatchOf } from '../types/schema';
 import type Client from '../client/Client';
@@ -262,21 +264,22 @@ class ClientUser extends User implements ClientUserEntity {
 
   async fetchConnections(): Promise<Collection<string, Connection>> {
     const data =
-      await this.client.api.users['@me'].connections.get<RawConnectionData[]>();
+      await this.client.api.users['@me'].connections.get<UserConnection[]>();
     const connections = new Collection<string, Connection>();
     for (const connection of data) {
       connections.set(connection.id, {
-        friendSync: connection.friend_sync,
+        friendSync: connection.friend_sync ?? false,
         id: connection.id,
-        integrations: connection.integrations ?? [],
+        integrations: (connection.integrations ??
+          []) as Partial<APIGuildIntegration>[],
         metadataVisibility: connection.metadata_visibility ?? 0,
-        name: connection.name,
+        name: connection.name ?? '',
         revoked: connection.revoked ?? false,
-        showActivity: connection.show_activity,
-        twoWayLink: connection.two_way_link,
-        type: connection.type,
-        verified: connection.verified,
-        visibility: connection.visibility,
+        showActivity: connection.show_activity ?? false,
+        twoWayLink: connection.two_way_link ?? false,
+        type: (connection.type ?? '') as APIConnection['type'],
+        verified: connection.verified ?? false,
+        visibility: connection.visibility ?? 0,
       });
     }
     return connections;
@@ -411,7 +414,7 @@ class ClientUser extends User implements ClientUserEntity {
     return this.client.api.users['@me'].consent.get<UserConsent>();
   }
 
-  modifyConsents(data: Record<string, unknown> = {}) {
+  modifyConsents(data: Partial<UserConsent> = {}) {
     return this.client.api.users['@me'].consent.post({ data });
   }
 
@@ -419,11 +422,11 @@ class ClientUser extends User implements ClientUserEntity {
     return this.client.api.users['@me']['email-settings'].get<EmailSettings>();
   }
 
-  modifyEmailSettings(data: Record<string, unknown> = {}) {
+  modifyEmailSettings(data: Partial<EmailSettings> = {}) {
     return this.client.api.users['@me']['email-settings'].patch({ data });
   }
 
-  modifyNotificationSettings(data: Record<string, unknown> = {}) {
+  modifyNotificationSettings(data: Partial<NotificationSettings> = {}) {
     return this.client.api.users['@me']['notification-settings'].patch({
       data,
     });

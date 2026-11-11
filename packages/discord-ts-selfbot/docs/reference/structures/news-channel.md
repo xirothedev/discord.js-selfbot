@@ -275,13 +275,13 @@ clone(options?: GuildChannelCloneOptions): Promise<NewsChannel>
 
 ```ts
 
-createForumTag(data?: Record<string, unknown>): Promise<unknown>
+createForumTag(data?: Partial<ForumTag>): Promise<ForumTag>
 
 ```
 
-- `data?: Record<string, unknown>`
+- `data?: Partial<ForumTag>`
 
-**Returns:** `Promise<unknown>`
+**Returns:** `Promise<ForumTag>`
 
 ### `createInvite`
 
