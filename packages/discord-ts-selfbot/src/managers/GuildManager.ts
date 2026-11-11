@@ -406,7 +406,7 @@ class GuildManager extends CachedManager<InstanceType<typeof Guild>> {
   }
 
   async fetchDiscoveryCategories() {
-    return this.client.api.discovery.categories.get<unknown[]>();
+    return this.client.api.discovery.categories.get<DiscoveryCategory[]>();
   }
 
   async setIncidentActions(

@@ -763,7 +763,7 @@ class Guild extends AnonymousGuild implements GuildEntity {
   async fetchJoinRequestCooldown() {
     return this.client.api
       .guilds(this.id)
-      .requests['@me'].cooldown.get<Record<string, unknown>>();
+      .requests['@me'].cooldown.get<JoinRequestCooldown>();
   }
 
   async createJoinRequest() {
