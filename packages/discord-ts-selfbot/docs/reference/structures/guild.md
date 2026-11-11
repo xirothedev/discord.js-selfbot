@@ -556,6 +556,18 @@ guild.edit({
   .catch(console.error);
 ```
 
+### `editOnboarding`
+
+```ts
+
+editOnboarding(data: Record<string, unknown>): Promise<APIGuildOnboarding>
+
+```
+
+- `data: Record<string, unknown>`
+
+**Returns:** `Promise<APIGuildOnboarding>`
+
 ### `editWelcomeScreen`
 
 Updates the guild's welcome screen
@@ -611,6 +623,16 @@ fetch(): Promise<Guild>
 
 **Returns:** `Promise<Guild>`
 
+### `fetchActiveThreads`
+
+```ts
+
+fetchActiveThreads(): Promise<{ members: unknown[]; threads: Collection<string, ThreadChannel> }>
+
+```
+
+**Returns:** `Promise<{ members: unknown[]; threads: Collection<string, ThreadChannel> }>`
+
 ### `fetchAuditLogs`
 
 Fetches audit logs for this guild.
@@ -651,6 +673,16 @@ guild.fetchIntegrations()
   .then(integrations => console.log(`Fetched ${integrations.size} integrations`))
   .catch(console.error);
 ```
+
+### `fetchOnboarding`
+
+```ts
+
+fetchOnboarding(): Promise<APIGuildOnboarding>
+
+```
+
+**Returns:** `Promise<APIGuildOnboarding>`
 
 ### `fetchOwner`
 
@@ -832,6 +864,18 @@ markAsRead(): Promise<void>
 const guild = client.guilds.cache.get('id');
 guild.markAsRead();
 ```
+
+### `pruneMembers`
+
+```ts
+
+pruneMembers(options?: { computePruneCount?: boolean; days?: number; includeRoles?: string[]; reason?: string }): Promise<RESTPostAPIGuildPruneResult>
+
+```
+
+- `options?: { computePruneCount?: boolean; days?: number; includeRoles?: string[]; reason?: string }`
+
+**Returns:** `Promise<RESTPostAPIGuildPruneResult>`
 
 ### `setAFKChannel`
 

@@ -41,14 +41,19 @@ import { GuildFeature, GuildWidgetStyle } from 'discord-api-types/v10';
 import type {
   RESTGetAPIAuditLogResult,
   RESTGetAPIGuildIntegrationsResult,
+  RESTGetAPIGuildOnboardingResult,
   RESTGetAPIGuildPreviewResult,
   RESTGetAPIGuildTemplatesResult,
+  RESTGetAPIGuildThreadsResult,
   RESTGetAPIGuildWebhooksResult,
   RESTGetAPIGuildWelcomeScreenResult,
   RESTGetAPIGuildWidgetSettingsResult,
   RESTPatchAPIGuildResult,
   RESTPatchAPIGuildWelcomeScreenResult,
+  RESTPostAPIGuildPruneResult,
   RESTPostAPIGuildTemplatesResult,
+  RESTPutAPIGuildOnboardingJSONBody,
+  RESTPutAPIGuildOnboardingResult,
   Snowflake,
 } from 'discord-api-types/v10';
 import type { RawGuildData } from '../../typings/rawDataTypes';
@@ -84,6 +89,7 @@ import type { GuildChannel } from './GuildChannel';
 import type { GuildEntity } from '../types/entities/guild';
 import type { PatchOf } from '../types/schema';
 import type { GuildEmoji } from './GuildEmoji';
+import type { ThreadChannel } from './ThreadChannel';
 import type Client from '../client/Client';
 
 let deprecationEmittedForSetChannelPositions = false;
@@ -601,6 +607,67 @@ class Guild extends AnonymousGuild implements GuildEntity {
       .guilds(this.id)
       .preview.get<RESTGetAPIGuildPreviewResult>();
     return new GuildPreview(this.client, data);
+  }
+
+  async fetchActiveThreads() {
+    const data = await this.client.api
+      .guilds(this.id)
+      .threads.active.get<RESTGetAPIGuildThreadsResult>();
+    const threads = new Collection<Snowflake, ThreadChannel>();
+    for (const thread of data.threads) {
+      const channel = this.client.channels._add(
+        thread,
+        this
+      ) as ThreadChannel | null;
+      if (channel) {
+        threads.set(channel.id, channel);
+      }
+    }
+    return { members: data.members, threads };
+  }
+
+  async pruneMembers({
+    days = 7,
+    computePruneCount = true,
+    includeRoles,
+    reason,
+  }: {
+    days?: number;
+    computePruneCount?: boolean;
+    includeRoles?: Snowflake[];
+    reason?: string;
+  } = {}) {
+    const data = await this.client.api
+      .guilds(this.id)
+      .prune.post<RESTPostAPIGuildPruneResult>({
+        data: {
+          compute_prune_count: computePruneCount,
+          days,
+          include_roles: includeRoles,
+        },
+        reason,
+      });
+    return data;
+  }
+
+  async fetchOnboarding() {
+    const data = await this.client.api
+      .guilds(this.id)
+      .onboarding.get<RESTGetAPIGuildOnboardingResult>();
+    return data;
+  }
+
+  async editOnboarding(
+    data: RESTPutAPIGuildOnboardingJSONBody,
+    reason?: string
+  ) {
+    const patchData = await this.client.api
+      .guilds(this.id)
+      .onboarding.put<RESTPutAPIGuildOnboardingResult>({
+        data,
+        reason,
+      });
+    return patchData;
   }
 
   async fetchVanityData() {

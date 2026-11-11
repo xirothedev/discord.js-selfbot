@@ -83,6 +83,9 @@ import type {
   GuildFeature,
   APIConnection,
   GuildWidgetStyle,
+  RESTGetAPIGuildOnboardingResult,
+  RESTPostAPIGuildPruneResult,
+  RESTPutAPIGuildOnboardingResult,
 } from 'discord-api-types/v10';
 import { Snowflake } from 'discord-api-types/v10';
 import type {
@@ -2387,6 +2390,20 @@ export class Guild extends AnonymousGuild {
   public fetchVanityData(): Promise<Vanity>;
   public fetchWebhooks(): Promise<Collection<Snowflake, Webhook>>;
   public fetchWelcomeScreen(): Promise<WelcomeScreen>;
+  public fetchActiveThreads(): Promise<{
+    threads: Collection<Snowflake, ThreadChannel>;
+    members: unknown[];
+  }>;
+  public fetchOnboarding(): Promise<RESTGetAPIGuildOnboardingResult>;
+  public editOnboarding(
+    data: Record<string, unknown>
+  ): Promise<RESTPutAPIGuildOnboardingResult>;
+  public pruneMembers(options?: {
+    days?: number;
+    computePruneCount?: boolean;
+    includeRoles?: Snowflake[];
+    reason?: string;
+  }): Promise<RESTPostAPIGuildPruneResult>;
   public fetchWidget(): Promise<Widget>;
   public fetchWidgetSettings(): Promise<GuildWidgetSettings>;
   /** Returns the guild's widget image URL. */
