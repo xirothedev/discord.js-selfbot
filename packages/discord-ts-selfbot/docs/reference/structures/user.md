@@ -59,7 +59,7 @@ Whether or not the user is a bot
 
 The primary clan the user is in
 
-**Type:** `any`
+**Type:** `UserPrimaryGuild | null`
 
 ### `client`
 
@@ -151,7 +151,7 @@ The function returns the note associated with a specific client ID from a cache.
 
 Whether this User is a partial
 
-**Type:** `false` · **Modifiers:** readonly
+**Type:** `boolean` · **Modifiers:** readonly
 
 ### `primaryGuild`
 
@@ -332,6 +332,20 @@ fetch(force?: boolean): Promise<User>
 
 **Returns:** `Promise<User>`
 
+### `fetchApplicationIdentities`
+
+Fetches this user's application identities.
+
+```ts
+
+fetchApplicationIdentities(options?: { withProfiles?: boolean }): Promise<RawUserApplicationIdentityData[]>
+
+```
+
+- `options?: { withProfiles?: boolean }` — Additional options for this fetch
+
+**Returns:** `Promise<RawUserApplicationIdentityData[]>`
+
 ### `getProfile`
 
 Returns a user profile object for a given user ID.
@@ -344,13 +358,13 @@ This endpoint requires one of the following:
 
 ```ts
 
-getProfile(guildId?: string): Promise<any>
+getProfile(options?: string | UserProfileOptions): Promise<RawUserProfileData>
 
 ```
 
-- `guildId?: string` — The guild ID to get the user's member profile in
+- `options?: string | UserProfileOptions`
 
-**Returns:** `Promise<any>`
+**Returns:** `Promise<RawUserProfileData>`
 
 ### `guildTagBadgeURL`
 

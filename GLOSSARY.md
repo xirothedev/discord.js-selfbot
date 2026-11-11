@@ -14,6 +14,22 @@ A full-access credential for a Discord user account. It authenticates the selfbo
 
 A credential for a Discord application bot. This library does not accept bot tokens.
 
+## Connection
+
+A third-party account linked to a user, such as GitHub or Spotify. The API type is `Connection`. Not a **voice connection**.
+
+## Application role connection
+
+Per-user, per-application metadata used for linked roles. It belongs to an OAuth2 application, not to the **user token**.
+
+## Profile widget
+
+A game widget on a user profile. It lists games or shows application-specific stats.
+
+## Widget config
+
+An application's layout and field configuration for a **profile widget**.
+
 ## Client
 
 The `Client` instance that owns the gateway connection, REST manager, caches, and voice manager.

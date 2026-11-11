@@ -8,12 +8,15 @@ import PremiumUsageFlags from '../util/PremiumUsageFlags';
 import PurchasedFlags from '../util/PurchasedFlags';
 import Util from '../util/Util';
 import type { SelfbotClientUserData } from '../types/selfbot/user';
-import type { APIUser } from 'discord-api-types/v10';
-import type { RawInviteData } from '../../typings/rawDataTypes';
+import type { APIUser, Snowflake } from 'discord-api-types/v10';
+import type {
+  RawConnectionData,
+  RawInviteData,
+} from '../../typings/rawDataTypes';
 import type { ClientUserEntity } from '../types/entities/client-user';
 import type { PatchOf } from '../types/schema';
 import type Client from '../client/Client';
-import type { PresenceStatusData } from '../../typings';
+import type { Connection, PresenceStatusData } from '../../typings';
 
 class ClientUser extends User implements ClientUserEntity {
   declare mfaEnabled: ClientUserEntity['mfaEnabled'];
@@ -26,6 +29,7 @@ class ClientUser extends User implements ClientUserEntity {
   declare bio: ClientUserEntity['bio'];
   declare pronouns: ClientUserEntity['pronouns'];
   declare premiumType: ClientUserEntity['premiumType'];
+  declare locale: ClientUserEntity['locale'];
   #packageName: string | null = null;
 
   constructor(client: Client, data: SelfbotClientUserData) {
@@ -96,6 +100,12 @@ class ClientUser extends User implements ClientUserEntity {
       this.premiumType ??= 0;
     } else {
       this.premiumType = data.premium_type;
+    }
+
+    if (data.locale === undefined) {
+      this.locale ??= null;
+    } else {
+      this.locale = data.locale;
     }
   }
 
@@ -248,6 +258,40 @@ class ClientUser extends User implements ClientUserEntity {
     return this.client.api.users['@me']['burst-credits']
       .get<{ amount: number }>()
       .then((data) => data.amount);
+  }
+
+  async fetchConnections(): Promise<Collection<string, Connection>> {
+    const data =
+      await this.client.api.users['@me'].connections.get<RawConnectionData[]>();
+    const connections = new Collection<string, Connection>();
+    for (const connection of data) {
+      connections.set(connection.id, {
+        friendSync: connection.friend_sync,
+        id: connection.id,
+        integrations: connection.integrations ?? [],
+        metadataVisibility: connection.metadata_visibility ?? 0,
+        name: connection.name,
+        revoked: connection.revoked ?? false,
+        showActivity: connection.show_activity,
+        twoWayLink: connection.two_way_link,
+        type: connection.type,
+        verified: connection.verified,
+        visibility: connection.visibility,
+      });
+    }
+    return connections;
+  }
+
+  async setApplicationIdentityConfig(
+    applicationId: Snowflake,
+    externalUserId: string,
+    options: { connectionVisible?: string } = {}
+  ): Promise<void> {
+    await this.client.api.users['@me']
+      ['application-identities'](applicationId)(externalUserId)('config')
+      .patch({
+        data: { connection_visible: options.connectionVisible },
+      });
   }
 
   setGlobalName(globalName: string | null = '') {

@@ -11,7 +11,11 @@ import SnowflakeUtil from '../util/SnowflakeUtil';
 import UserFlags from '../util/UserFlags';
 import Util from '../util/Util';
 import type { APIUser } from 'discord-api-types/v10';
-import type { ImageURLOptions } from '../../typings';
+import type { ImageURLOptions, UserProfileOptions } from '../../typings';
+import type {
+  RawUserApplicationIdentityData,
+  RawUserProfileData,
+} from '../../typings/rawDataTypes';
 import type { SelfbotUserData } from '../types/selfbot/user';
 import type { UserEntity } from '../types/entities/user';
 import type { PatchOf } from '../types/schema';
@@ -383,15 +387,33 @@ class User extends Base implements UserEntity {
     return this.client.users.fetch(this.id, { force });
   }
 
-  getProfile(guildId?: string) {
-    return this.client.api.users(this.id).profile.get({
+  getProfile(options: string | UserProfileOptions = {}) {
+    const settings =
+      typeof options === 'string' ? { guildId: options } : options;
+    return this.client.api.users(this.id).profile.get<RawUserProfileData>({
       query: {
-        guild_id: guildId,
-        with_mutual_friends: true,
-        with_mutual_friends_count: true,
-        with_mutual_guilds: true,
+        connections_role_id: settings.connectionsRoleId,
+        guild_id: settings.guildId,
+        join_request_id: settings.joinRequestId,
+        type: settings.type,
+        with_mutual_friends: settings.withMutualFriends ?? true,
+        with_mutual_friends_count: settings.withMutualFriendsCount ?? true,
+        with_mutual_guilds: settings.withMutualGuilds ?? true,
       },
     });
+  }
+
+  async fetchApplicationIdentities(
+    options: { withProfiles?: boolean } = {}
+  ): Promise<RawUserApplicationIdentityData[]> {
+    const data = await this.client.api
+      .users(this.id)
+      ['application-identities'].get<{
+        identities: RawUserApplicationIdentityData[];
+      }>({
+        query: { with_profiles: options.withProfiles },
+      });
+    return data.identities;
   }
 
   toString() {

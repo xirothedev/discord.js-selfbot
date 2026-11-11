@@ -65,6 +65,20 @@ fetch(): Promise<Widget>
 
 **Returns:** `Promise<Widget>`
 
+### `imageURL`
+
+Returns the guild's widget image URL.
+
+```ts
+
+imageURL(style?: GuildWidgetStyle): string
+
+```
+
+- `style?: GuildWidgetStyle`
+
+**Returns:** `string`
+
 ### `toJSON`
 
 ```ts

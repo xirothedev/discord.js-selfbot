@@ -200,6 +200,7 @@ const Messages: Record<string, string | MessageBuilder> = {
     "You must fetch this user's banner before trying to generate its URL!",
   USER_NOT_STREAMING: 'User is not streaming',
   USER_NO_DM_CHANNEL: 'No DM Channel exists!',
+  USER_RESOLVE_ID: "Couldn't resolve the user id.",
   VANITY_URL: 'This guild does not have the VANITY_URL feature enabled.',
   VOICE_CONNECTION_ATTEMPTS_EXCEEDED: (attempts: number) =>
     `Too many connection attempts (${attempts}).`,

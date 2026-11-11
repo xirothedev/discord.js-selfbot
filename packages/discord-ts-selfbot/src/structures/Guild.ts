@@ -37,7 +37,7 @@ import DataResolver from '../util/DataResolver';
 import { patchValue } from './Base';
 import SystemChannelFlags from '../util/SystemChannelFlags';
 import Util from '../util/Util';
-import { GuildFeature } from 'discord-api-types/v10';
+import { GuildFeature, GuildWidgetStyle } from 'discord-api-types/v10';
 import type {
   RESTGetAPIAuditLogResult,
   RESTGetAPIGuildIntegrationsResult,
@@ -640,6 +640,10 @@ class Guild extends AnonymousGuild implements GuildEntity {
         : null,
       enabled: data.enabled,
     };
+  }
+
+  widgetImageURL(style: GuildWidgetStyle = GuildWidgetStyle.Shield) {
+    return `${this.client.options.http.api}/guilds/${this.id}/widget.png?style=${style}`;
   }
 
   async fetchAuditLogs<TResolvable extends GuildAuditLogsResolvable = 'ALL'>({

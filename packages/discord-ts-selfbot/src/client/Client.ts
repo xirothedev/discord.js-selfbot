@@ -20,6 +20,7 @@ import SessionManager from '../managers/SessionManager';
 import UserManager from '../managers/UserManager';
 import UserNoteManager from '../managers/UserNoteManager';
 import VoiceStateManager from '../managers/VoiceStateManager';
+import WidgetManager from '../managers/WidgetManager';
 import ShardClientUtil from '../sharding/ShardClientUtil';
 import ClientPresence from '../structures/ClientPresence';
 import GuildPreview from '../structures/GuildPreview';
@@ -325,6 +326,7 @@ class Client extends BaseClient {
   declare billing: BillingManager;
   declare sessions: SessionManager;
   declare settings: ClientUserSettingManager;
+  declare widgets: WidgetManager;
   declare token: string | null;
   declare user: ClientUser | null;
   declare application: Application | null;
@@ -378,6 +380,8 @@ class Client extends BaseClient {
     this.sessions = new SessionManager(this);
 
     this.settings = new ClientUserSettingManager(this);
+
+    this.widgets = new WidgetManager(this);
 
     Object.defineProperty(this, 'token', { writable: true });
     this.token =

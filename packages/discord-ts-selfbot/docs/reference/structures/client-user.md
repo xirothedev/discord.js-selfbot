@@ -66,7 +66,7 @@ Whether or not the user is a bot
 
 The primary clan the user is in
 
-**Type:** `any`
+**Type:** `UserPrimaryGuild | null`
 
 ### `client`
 
@@ -154,6 +154,12 @@ The user's id
 
 **Type:** `string`
 
+### `locale`
+
+The current user's chosen locale, when the payload includes it.
+
+**Type:** `string | null`
+
 ### `mfaEnabled`
 
 If the bot's Application#owner Owner has MFA enabled on their account
@@ -176,7 +182,7 @@ Whether or not the client user is allowed to send NSFW messages [iOS device].
 
 Whether this User is a partial
 
-**Type:** `false` · **Modifiers:** readonly
+**Type:** `boolean` · **Modifiers:** readonly
 
 ### `phone`
 
@@ -188,7 +194,7 @@ Phone number of the client user.
 
 Premium types denote the level of premium a user has.
 
-**Type:** `number`
+**Type:** `0 | 1 | 2 | 3`
 
 ### `premiumUsageFlags`
 
@@ -433,6 +439,20 @@ fetch(force?: boolean): Promise<User>
 
 **Returns:** `Promise<User>`
 
+### `fetchApplicationIdentities`
+
+Fetches this user's application identities.
+
+```ts
+
+fetchApplicationIdentities(options?: { withProfiles?: boolean }): Promise<RawUserApplicationIdentityData[]>
+
+```
+
+- `options?: { withProfiles?: boolean }` — Additional options for this fetch
+
+**Returns:** `Promise<RawUserApplicationIdentityData[]>`
+
 ### `fetchBurstCredit`
 
 Super Reactions
@@ -444,6 +464,18 @@ fetchBurstCredit(): Promise<number>
 ```
 
 **Returns:** `Promise<number>`
+
+### `fetchConnections`
+
+Fetches the current user's connected third-party accounts, keyed by connection id.
+
+```ts
+
+fetchConnections(): Promise<Collection<string, Connection>>
+
+```
+
+**Returns:** `Promise<Collection<string, Connection>>`
 
 ### `getAllFriendInvites`
 
@@ -469,13 +501,13 @@ This endpoint requires one of the following:
 
 ```ts
 
-getProfile(guildId?: string): Promise<any>
+getProfile(options?: string | UserProfileOptions): Promise<RawUserProfileData>
 
 ```
 
-- `guildId?: string` — The guild ID to get the user's member profile in
+- `options?: string | UserProfileOptions`
 
-**Returns:** `Promise<any>`
+**Returns:** `Promise<RawUserProfileData>`
 
 ### `guildTagBadgeURL`
 
@@ -615,6 +647,22 @@ setAFK(afk?: boolean, shardId?: number | number[]): ClientPresence
 - `shardId?: number | number[]` — Shard Id(s) to have the AFK flag set on
 
 **Returns:** `ClientPresence`
+
+### `setApplicationIdentityConfig`
+
+Sets the visibility of an application identity profile for the current user.
+
+```ts
+
+setApplicationIdentityConfig(applicationId: string, externalUserId: string, options?: { connectionVisible?: string }): Promise<void>
+
+```
+
+- `applicationId: string`
+- `externalUserId: string`
+- `options?: { connectionVisible?: string }`
+
+**Returns:** `Promise<void>`
 
 ### `setAvatar`
 
