@@ -144,6 +144,21 @@ valueOf(): Collection<string, Guild>
 
 **Returns:** `Collection<string, Guild>`
 
+### `widgetImageURL`
+
+Returns the widget image URL for a guild.
+
+```ts
+
+widgetImageURL(guild: GuildResolvable, style?: GuildWidgetStyle): string
+
+```
+
+- `guild: GuildResolvable`
+- `style?: GuildWidgetStyle`
+
+**Returns:** `string`
+
 ---
 
 Source: https://github.com/xirothedev/discord.js-selfbot/blob/main/packages/discord-ts-selfbot/src/managers/GuildManager.ts#L35

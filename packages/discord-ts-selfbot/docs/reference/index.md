@@ -156,11 +156,13 @@ Type-only exports stay in `typings/index.d.ts`; this reference does not repeat t
 - [UserManager](./managers/user-manager.md): Manages API methods for users and stores their cache.
 - [UserNoteManager](./managers/user-note-manager.md): Manages API methods for Client and stores their cache.
 - [VoiceStateManager](./managers/voice-state-manager.md): Manages API methods for VoiceStates and stores their cache.
+- [WidgetManager](./managers/widget-manager.md): Manages profile widgets and widget configuration reads for the current user.
 
 ### REST
 
 - [DiscordAPIError](./rest/discord-api-error.md): Represents an error from the Discord API.
 - [HTTPError](./rest/http-error.md): Represents an HTTP error from a request.
+- [OAuth2RoleConnection](./rest/o-auth2-role-connection.md): Reads and writes application role connections with an OAuth2 access token.
 - [RateLimitError](./rest/rate-limit-error.md): Represents a RateLimit error from a request.
 
 ### Voice

@@ -81,6 +81,14 @@ await guild.markAsRead();
 
 Marks the guild&apos;s channels as read. This is a selfbot convenience; it does not delete messages.
 
+## Widget image
+
+```ts
+const url = guild.widgetImageURL('banner1');
+```
+
+`widgetImageURL()` returns the PNG URL for the guild widget. The default style is `shield`. The URL needs no authentication. `client.guilds.widgetImageURL(guild)` and `guild.fetchWidget().imageURL()` return the same URL.
+
 ## Leaving and deleting
 
 ```ts

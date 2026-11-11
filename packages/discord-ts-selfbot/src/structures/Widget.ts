@@ -1,4 +1,5 @@
 import { Collection } from '@discordjs/collection';
+import { GuildWidgetStyle } from 'discord-api-types/v10';
 import Base from './Base';
 import WidgetMember from './WidgetMember';
 import type { RawWidgetData } from '../../typings/rawDataTypes';
@@ -54,6 +55,10 @@ class Widget extends Base implements WidgetEntity {
       .get<RawWidgetData>();
     this._patch(data);
     return this;
+  }
+
+  imageURL(style: GuildWidgetStyle = GuildWidgetStyle.Shield) {
+    return `${this.client.options.http.api}/guilds/${this.id}/widget.png?style=${style}`;
   }
 }
 

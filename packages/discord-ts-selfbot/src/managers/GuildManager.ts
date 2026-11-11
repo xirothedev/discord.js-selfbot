@@ -2,6 +2,9 @@ import process from 'node:process';
 import { setTimeout } from 'node:timers';
 import { Collection } from '@discordjs/collection';
 import CachedManager from './CachedManager';
+import _errorsModule from '../errors';
+
+const { TypeError } = _errorsModule;
 import _GuildModule from '../structures/Guild';
 
 const { Guild } = _GuildModule;
@@ -33,6 +36,7 @@ import Util from '../util/Util';
 
 const { resolveColor } = Util;
 import type { APIIncidentsData, Snowflake } from 'discord-api-types/v10';
+import { GuildWidgetStyle } from 'discord-api-types/v10';
 import type {
   RawGuildData,
   RawOAuth2GuildData,
@@ -310,6 +314,17 @@ class GuildManager extends CachedManager<InstanceType<typeof Guild>> {
       guilds.set(guild.id, new OAuth2Guild(this.client, guild));
     }
     return guilds;
+  }
+
+  widgetImageURL(
+    guild: GuildResolvableSource,
+    style: GuildWidgetStyle = GuildWidgetStyle.Shield
+  ) {
+    const id = this.resolveId(guild);
+    if (!id) {
+      throw new TypeError('INVALID_TYPE', 'guild', 'GuildResolvable');
+    }
+    return `${this.client.options.http.api}/guilds/${id}/widget.png?style=${style}`;
   }
 
   async setIncidentActions(

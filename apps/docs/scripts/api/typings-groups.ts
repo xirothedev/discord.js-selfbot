@@ -14,6 +14,10 @@ export type TypingsGroupId = (typeof TYPINGS_GROUPS)[number]['id'];
 
 const RULES: { id: TypingsGroupId; pattern: RegExp }[] = [
   {
+    id: 'users',
+    pattern: /^Connection$/u,
+  },
+  {
     id: 'voice',
     pattern:
       /^(?:Voice|Audio|Recorder|Stream|Play|Video|Receiver|Dispatcher|Connection|UDP)/u,

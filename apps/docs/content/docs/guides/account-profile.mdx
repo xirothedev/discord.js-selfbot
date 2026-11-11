@@ -71,6 +71,72 @@ await client.user.stopRinging(channel);
 
 Stops an outgoing call ring for a DM or group DM channel.
 
+## Connections
+
+```ts
+const connections = await client.user.fetchConnections();
+
+for (const connection of connections.values()) {
+  console.log(connection.type, connection.name, connection.verified);
+}
+```
+
+`fetchConnections()` returns a collection keyed by connection id. It removes the `access_token` field on purpose. Do not request or log that field.
+
+## Application role connections
+
+```ts
+import { OAuth2RoleConnection } from 'discord-ts-selfbot';
+
+const roleConnection = new OAuth2RoleConnection(client, oauthToken);
+await roleConnection.fetch(applicationId);
+await roleConnection.update(applicationId, {
+  platformName: 'Steam',
+  platformUsername: 'octocat',
+  metadata: { level: '10' },
+});
+```
+
+The helper takes an OAuth2 access token with the `role_connections.write` scope. The normal client token does not work. Keep the token in memory and never log it.
+
+## Profile badges and widgets
+
+```ts
+const profile = await client.user.getProfile({ guildId: guild.id });
+
+for (const badge of profile.badges ?? []) {
+  console.log(badge.id, badge.description);
+}
+```
+
+`getProfile()` returns the raw profile payload, including `badges`, `guild_badges`, `widgets`, and `user_profile`. The shape is undocumented and can change. The method accepts a guild id or a `UserProfileOptions` object.
+
+## Profile widgets
+
+```ts
+await client.widgets.setProfileWidgets([
+  { data: { type: 'favorite_games', games: [{ game_id: '123' }] } },
+]);
+
+const suggested = await client.widgets.fetchSuggestedGames();
+const featured = await client.widgets.fetchFeaturedConfigs();
+```
+
+`setProfileWidgets()` replaces the full list. It rejects duplicate widget types and ignores `updated_at`. An empty array clears the list.
+
+## User application identities
+
+```ts
+const identities = await client.user.fetchApplicationIdentities({
+  withProfiles: true,
+});
+await client.user.setApplicationIdentityConfig(applicationId, externalUserId, {
+  connectionVisible: '1',
+});
+```
+
+These routes are undocumented. `connection_visible` is a string.
+
 ## Risky mutations are stubbed
 
 These methods exist in the typings but reject without making a request:

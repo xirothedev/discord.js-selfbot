@@ -161,6 +161,10 @@ A manager of the voice states of this client (Support DM / Group DM)
 
 **Type:** `VoiceStateManager`
 
+### `widgets`
+
+**Type:** `WidgetManager`
+
 ### `ws`
 
 The WebSocket manager of the client

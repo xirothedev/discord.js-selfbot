@@ -81,6 +81,8 @@ import type {
   VoiceChannelEffectSendAnimationType,
   GatewayVoiceChannelEffectSendDispatchData,
   GuildFeature,
+  APIConnection,
+  GuildWidgetStyle,
 } from 'discord-api-types/v10';
 import { Snowflake } from 'discord-api-types/v10';
 import type {
@@ -213,6 +215,14 @@ import type {
   APITextDisplayComponent,
   APIMediaGalleryComponent,
   APIMediaGalleryItem,
+  RawDeveloperWidgetConfigsData,
+  RawFeaturedWidgetConfigsData,
+  RawGameWidgetData,
+  RawProfileWidgetsData,
+  RawSuggestedWidgetGamesData,
+  RawUserApplicationIdentityData,
+  RawUserProfileData,
+  RawWidgetLayoutDefinitionsData,
 } from './rawDataTypes';
 import type { Socket } from 'node:dgram';
 import type { ReadableStream } from 'node:stream/web';
@@ -1310,6 +1320,7 @@ export class Client<Ready extends boolean = boolean> extends BaseClient {
   public presences: PresenceManager;
   public billing: BillingManager;
   public settings: ClientUserSettingManager;
+  public widgets: WidgetManager;
   public readonly sessionId: If<Ready, string, undefined>;
   public destroy(): void;
   public fetchGuildPreview(guild: GuildResolvable): Promise<GuildPreview>;
@@ -1473,7 +1484,7 @@ export class ClientUser extends User {
   public email: string | null;
   public bio?: string;
   public pronouns?: string;
-  public premiumType: number;
+  public premiumType: 0 | 1 | 2 | 3;
   public setBanner(
     banner: BufferResolvable | Base64Resolvable | null
   ): Promise<this>;
@@ -1502,8 +1513,18 @@ export class ClientUser extends User {
   ): Promise<this>;
   public stopRinging(channel: ChannelResolvable): Promise<void>;
   public fetchBurstCredit(): Promise<number>;
+  /** Fetches the current user's connected third-party accounts, keyed by connection id. */
+  public fetchConnections(): Promise<Collection<string, Connection>>;
+  /** Sets the visibility of an application identity profile for the current user. */
+  public setApplicationIdentityConfig(
+    applicationId: Snowflake,
+    externalUserId: string,
+    options?: { connectionVisible?: string }
+  ): Promise<void>;
   public setPronouns(pronouns?: string | null): Promise<this>;
   public setGlobalName(globalName?: string | null): Promise<this>;
+  /** The current user's chosen locale, when the payload includes it. */
+  public locale: string | null;
 }
 
 export class Options extends null {
@@ -2368,6 +2389,8 @@ export class Guild extends AnonymousGuild {
   public fetchWelcomeScreen(): Promise<WelcomeScreen>;
   public fetchWidget(): Promise<Widget>;
   public fetchWidgetSettings(): Promise<GuildWidgetSettings>;
+  /** Returns the guild's widget image URL. */
+  public widgetImageURL(style?: GuildWidgetStyle): string;
   public leave(): Promise<Guild>;
   public disableInvites(disabled?: boolean): Promise<Guild>;
   public setIncidentActions(
@@ -5202,6 +5225,70 @@ export interface Collectibles {
   nameplate: NameplateData | null;
 }
 
+/** A third-party account connected to the current user. */
+export interface Connection {
+  /** The connection account id. */
+  id: string;
+  /** The username on the connected service. */
+  name: string;
+  /** The connected service. */
+  type: APIConnection['type'];
+  /** Whether the connection was revoked. */
+  revoked: boolean;
+  /** Partial guild integrations for this connection. */
+  integrations: Partial<RawIntegrationData>[];
+  /** Whether the connection is verified. */
+  verified: boolean;
+  /** Whether friend sync is enabled. */
+  friendSync: boolean;
+  /** Whether activity from this connection appears in presence updates. */
+  showActivity: boolean;
+  /** Whether a matching third-party OAuth2 token exists. */
+  twoWayLink: boolean;
+  /** Visibility of the connection. */
+  visibility: APIConnection['visibility'];
+  /** Visibility of the connection metadata. */
+  metadataVisibility: number;
+}
+
+/** The application role connection for the current user. */
+export interface ApplicationRoleConnection {
+  /** The vanity name of the connected platform. */
+  platformName: string | null;
+  /** The username on the connected platform. */
+  platformUsername: string | null;
+  /** Metadata keys mapped to their string values. */
+  metadata: Record<string, string>;
+}
+
+/** The editable fields of an application role connection. */
+export interface ApplicationRoleConnectionEditData {
+  /** The vanity name of the connected platform. */
+  platformName?: string;
+  /** The username on the connected platform. */
+  platformUsername?: string;
+  /** Metadata keys mapped to their string values. */
+  metadata?: Record<string, string>;
+}
+
+/** Options for {@link User.getProfile}. */
+export interface UserProfileOptions {
+  /** The guild to read the member profile for. */
+  guildId?: Snowflake;
+  /** Include mutual guilds. Defaults to true. */
+  withMutualGuilds?: boolean;
+  /** Include mutual friends. Defaults to true. */
+  withMutualFriends?: boolean;
+  /** Include the mutual friend count. Defaults to true. */
+  withMutualFriendsCount?: boolean;
+  /** The role id used to read application role connection metadata. */
+  connectionsRoleId?: Snowflake;
+  /** The join request id to use for the request. */
+  joinRequestId?: Snowflake;
+  /** The profile analytics location. */
+  type?: string;
+}
+
 export class User extends PartialTextBasedChannel(Base) {
   protected constructor(client: Client, data: RawUserData);
   private _equals(user: APIUser): boolean;
@@ -5225,7 +5312,7 @@ export class User extends PartialTextBasedChannel(Base) {
   public globalName: string | null;
   public readonly hexAccentColor: HexColorString | null | undefined;
   public id: Snowflake;
-  public readonly partial: false;
+  public readonly partial: boolean;
   public system: boolean;
   public readonly tag: string;
   public username: string;
@@ -5235,7 +5322,7 @@ export class User extends PartialTextBasedChannel(Base) {
   public readonly friendNickname: string | null | undefined;
   public primaryGuild: UserPrimaryGuild | null;
   /** @deprecated Use {@link User.primaryGuild} instead */
-  public clan: PrimaryGuild | null;
+  public clan: UserPrimaryGuild | null;
   public avatarURL(options?: ImageURLOptions): string | null;
   public avatarDecorationURL(): string | null;
   public bannerURL(options?: ImageURLOptions): string | null;
@@ -5249,7 +5336,16 @@ export class User extends PartialTextBasedChannel(Base) {
   public fetch(force?: boolean): Promise<User>;
   public setNote(note: string | null | undefined): Promise<this>;
   public toString(): UserMention;
-  public getProfile(guildId?: Snowflake): Promise<any>;
+  public getProfile(
+    options?: Snowflake | UserProfileOptions
+  ): Promise<RawUserProfileData>;
+  /**
+   * Fetches this user's application identities.
+   * @param options Additional options for this fetch
+   */
+  public fetchApplicationIdentities(options?: {
+    withProfiles?: boolean;
+  }): Promise<RawUserApplicationIdentityData[]>;
   public sendFriendRequest(): Promise<boolean>;
   public deleteRelationship(): Promise<boolean>;
 }
@@ -5633,6 +5729,8 @@ export class Widget extends Base {
   private constructor(client: Client, data: RawWidgetData);
   private _patch(data: RawWidgetData): void;
   public fetch(): Promise<Widget>;
+  /** Returns the guild's widget image URL. */
+  public imageURL(style?: GuildWidgetStyle): string;
   public id: Snowflake;
   public name: string;
   public instantInvite?: string;
@@ -6469,6 +6567,11 @@ export class GuildManager extends CachedManager<
     guild: GuildResolvable,
     incidentActions: IncidentActionsEditOptions
   ): Promise<IncidentActions>;
+  /** Returns the widget image URL for a guild. */
+  public widgetImageURL(
+    guild: GuildResolvable,
+    style?: GuildWidgetStyle
+  ): string;
 }
 
 export class GuildMemberManager extends CachedManager<
@@ -6958,6 +7061,41 @@ export class ThreadMemberManager extends CachedManager<
 
   public fetchMe(options?: BaseFetchOptions): Promise<ThreadMember>;
   public remove(id: Snowflake | '@me', reason?: string): Promise<Snowflake>;
+}
+
+/** Manages profile widgets and widget configuration reads for the current user. */
+export class WidgetManager extends BaseManager {
+  private constructor(client: Client);
+  /** Replaces the current user's profile widgets. */
+  public setProfileWidgets(
+    widgets: RawGameWidgetData[]
+  ): Promise<RawProfileWidgetsData>;
+  /** Fetches suggested games for the current user's profile widgets. */
+  public fetchSuggestedGames(): Promise<RawSuggestedWidgetGamesData>;
+  /** Fetches featured application widget configs. */
+  public fetchFeaturedConfigs(): Promise<RawFeaturedWidgetConfigsData>;
+  /** Fetches widget configs for applications the user can access. */
+  public fetchDeveloperConfigs(): Promise<RawDeveloperWidgetConfigsData>;
+  /** Fetches the widget layout definitions. */
+  public fetchLayoutDefinitions(): Promise<RawWidgetLayoutDefinitionsData>;
+}
+
+/** Reads and writes application role connections with an OAuth2 access token. */
+export class OAuth2RoleConnection {
+  /**
+   * @param client The client that owns the REST manager
+   * @param token An OAuth2 access token with the `role_connections.write` scope
+   */
+  public constructor(client: Client, token: string);
+  /** Fetches the role connection for an application. */
+  public fetch(applicationId: Snowflake): Promise<ApplicationRoleConnection>;
+  /** Updates the role connection for an application. */
+  public update(
+    applicationId: Snowflake,
+    data: ApplicationRoleConnectionEditData
+  ): Promise<ApplicationRoleConnection>;
+  /** Deletes the role connection for an application. */
+  public delete(applicationId: Snowflake): Promise<void>;
 }
 
 export class UserManager extends CachedManager<

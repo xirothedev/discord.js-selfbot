@@ -1374,6 +1374,20 @@ valueOf(): string
 
 **Returns:** `string`
 
+### `widgetImageURL`
+
+Returns the guild's widget image URL.
+
+```ts
+
+widgetImageURL(style?: GuildWidgetStyle): string
+
+```
+
+- `style?: GuildWidgetStyle`
+
+**Returns:** `string`
+
 ---
 
 Source: https://github.com/xirothedev/discord.js-selfbot/blob/main/packages/discord-ts-selfbot/src/structures/Guild.ts#L52

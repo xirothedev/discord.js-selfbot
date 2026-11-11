@@ -87,10 +87,10 @@ class UserManager extends CachedManager<User> {
   async fetch(
     user: UserResolvableSource,
     { cache = true, force = false }: BaseFetchOptions = {}
-  ): Promise<User | null> {
+  ): Promise<User> {
     const id = this.resolveId(user);
     if (!id) {
-      return null;
+      throw new Error('USER_RESOLVE_ID');
     }
     if (!force) {
       const existing = this.cache.get(id);

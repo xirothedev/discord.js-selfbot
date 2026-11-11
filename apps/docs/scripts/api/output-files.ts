@@ -41,12 +41,16 @@ function collectFiles(root: string, current = root): Map<string, string> {
 }
 
 export function compareOutputs(outputs: Map<string, string>): GenerateResult {
-  const existing = collectFiles(apiDir);
+  const existing = new Map(
+    [...collectFiles(apiDir)].map(([file, content]) => [`api/${file}`, content])
+  );
   const missing = [...outputs.keys()].filter((file) => !existing.has(file));
   const extra = [...existing.keys()].filter((file) => !outputs.has(file));
-  const changed = [...outputs.keys()].filter(
-    (file) => existing.has(file) && existing.get(file) !== outputs.get(file)
-  );
+  const changed = [...outputs.keys()].filter((file) => {
+    const expected = outputs.get(file) ?? '';
+    const normalized = expected.endsWith('\n') ? expected : `${expected}\n`;
+    return existing.has(file) && existing.get(file) !== normalized;
+  });
 
   if (missing.length || extra.length || changed.length) {
     console.error('API reference is stale.');

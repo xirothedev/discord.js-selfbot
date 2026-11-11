@@ -21,5 +21,6 @@ export interface ClientUserEntity extends UserEntity {
   email: string | null;
   bio?: string;
   pronouns?: string;
-  premiumType: number;
+  premiumType: 0 | 1 | 2 | 3;
+  locale: string | null;
 }

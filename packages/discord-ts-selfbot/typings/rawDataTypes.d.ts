@@ -89,6 +89,8 @@ import type {
   LocalizationMap,
   APIActionRowComponent,
   APIActionRowComponentTypes,
+  APIConnection,
+  APIUserApplicationIdentity,
 } from 'discord-api-types/v10';
 import type { GuildChannel, Guild, PermissionOverwrites } from '.';
 import type {
@@ -420,3 +422,191 @@ export interface APIContainerComponent extends APIBaseComponent<MessageComponent
   accent_color: number;
   spoiler: boolean;
 }
+
+export type RawConnectionData = APIConnection & {
+  access_token?: string;
+  metadata?: Record<string, unknown>;
+  metadata_visibility?: number;
+};
+
+export interface RawProfileBadgeData {
+  id: string;
+  description: string;
+  icon: string;
+  link?: string;
+}
+
+export interface RawGameWidgetGameData {
+  game_id: Snowflake;
+  comment?: string | null;
+  tags?: string[];
+}
+
+export interface RawGameWidgetContentData {
+  type: string;
+  games?: RawGameWidgetGameData[];
+  application_id?: Snowflake;
+}
+
+export interface RawGameWidgetData {
+  id?: Snowflake;
+  updated_at?: string;
+  data: RawGameWidgetContentData;
+}
+
+export interface RawProfileWidgetsData {
+  widgets: RawGameWidgetData[];
+}
+
+export interface RawSuggestedWidgetGamesData {
+  suggested_games: Snowflake[];
+  suggested_wishlist_games: Snowflake[];
+}
+
+export interface RawProfileEffectData {
+  id: Snowflake;
+  expires_at?: number;
+}
+
+export interface RawUserProfileMetadataData {
+  guild_id?: Snowflake;
+  pronouns: string;
+  bio?: string;
+  banner?: string | null;
+  accent_color?: number | null;
+  theme_colors?: [number, number] | null;
+  popout_animation_particle_type?: Snowflake | null;
+  emoji?: APIEmoji | null;
+  profile_effect?: RawProfileEffectData | null;
+  collectibles?: Record<string, unknown>[];
+}
+
+export type RawUserProfilePartialUserData = RawUserData & {
+  bio?: string;
+  clan?: APIUser['primary_guild'];
+  banner_color?: string | null;
+  display_name_styles?: unknown | null;
+};
+
+export interface RawMutualGuildData {
+  id: Snowflake;
+  nick: string | null;
+}
+
+export interface RawWishlistSettingData {
+  visibility: number;
+  updated_at: string;
+}
+
+export type RawConnectedAccountData = APIConnection & {
+  metadata?: Record<string, unknown>;
+  metadata_visibility?: number;
+};
+
+export interface RawUserProfileData {
+  application?: RawApplicationData;
+  user: RawUserProfilePartialUserData;
+  user_profile?: RawUserProfileMetadataData;
+  badges?: RawProfileBadgeData[];
+  guild_member?: RawGuildMemberData;
+  guild_member_profile?: RawUserProfileMetadataData;
+  guild_badges?: RawProfileBadgeData[];
+  widgets?: RawGameWidgetData[];
+  legacy_username?: string | null;
+  mutual_guilds?: RawMutualGuildData[];
+  mutual_friends?: RawUserData[];
+  mutual_friends_count?: number;
+  connected_accounts?: RawConnectedAccountData[];
+  premium_since?: string | null;
+  premium_type?: number | null;
+  premium_guild_since?: string | null;
+  wishlist_settings?: Record<string, RawWishlistSettingData>;
+  profile_themes_experiment_bucket?: number;
+}
+
+export interface RawApplicationIdentityProfileData {
+  primary?: Record<string, unknown>;
+  dynamic?: Record<string, unknown>[];
+}
+
+export interface RawUserApplicationProfileData {
+  username?: string | null;
+  metadata?: string;
+  data?: RawApplicationIdentityProfileData;
+  data_trusted?: boolean;
+  connection_visible?: boolean;
+}
+
+export type RawUserApplicationIdentityData = Omit<
+  APIUserApplicationIdentity,
+  'user_id'
+> & {
+  user_id?: Snowflake;
+  application_id?: Snowflake;
+  profile?: RawUserApplicationProfileData;
+  profiles?: RawUserApplicationProfileData[];
+  data?: RawApplicationIdentityProfileData;
+  data_trusted?: boolean;
+  connection_visible?: string;
+};
+
+export interface RawWidgetComponentFieldData {
+  value_type: string;
+  presentation_type: string;
+  value: string;
+  fallback?: RawWidgetComponentFieldData;
+}
+
+export interface RawWidgetComponentData {
+  fields: Record<string, RawWidgetComponentFieldData>;
+}
+
+export interface RawWidgetSurfaceData {
+  layout: string;
+  components: Record<string, RawWidgetComponentData>;
+}
+
+export interface RawWidgetConfigData {
+  application_id: Snowflake;
+  config_id: Snowflake;
+  display_name: string;
+  status: string;
+  surfaces: Record<string, RawWidgetSurfaceData>;
+  resolved_assets?: Record<string, unknown>[];
+  published_at?: string | null;
+  updated_at: string;
+}
+
+export interface RawFeaturedWidgetConfigsData {
+  applications: RawApplicationData[];
+  configs: Record<string, RawWidgetConfigData[]>;
+}
+
+export interface RawDeveloperWidgetConfigsData {
+  applications: RawApplicationData[];
+  configs: Record<string, RawWidgetConfigData[]>;
+}
+
+export interface RawWidgetLayoutFieldData {
+  display_name: string;
+  required: boolean;
+  allowed_presentation_types: string[];
+}
+
+export interface RawWidgetLayoutComponentData {
+  display_name: string;
+  required: boolean;
+  fields: Record<string, RawWidgetLayoutFieldData>;
+}
+
+export interface RawWidgetLayoutDefinitionData {
+  key: string;
+  display_name: string;
+  surface: string;
+  components: Record<string, RawWidgetLayoutComponentData>;
+}
+
+export type RawWidgetLayoutDefinitionsData = Record<
+  string,
+  RawWidgetLayoutDefinitionData
+>;
