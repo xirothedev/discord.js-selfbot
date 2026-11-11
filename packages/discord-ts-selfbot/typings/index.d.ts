@@ -8613,6 +8613,8 @@ export interface ClientEvents extends BaseClientEvents {
 
 export interface ClientFetchInviteOptions {
   guildScheduledEventId?: Snowflake;
+  withCounts?: boolean;
+  withPermissions?: boolean;
 }
 
 export interface InviteGenerationOptions {
