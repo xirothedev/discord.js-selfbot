@@ -1526,6 +1526,31 @@ export class ClientUser extends User {
   ): Promise<void>;
   public setPronouns(pronouns?: string | null): Promise<this>;
   public setGlobalName(globalName?: string | null): Promise<this>;
+  public fetchProfile(userId?: Snowflake): Promise<Record<string, unknown>>;
+  public editProfile(
+    data?: Record<string, unknown>
+  ): Promise<Record<string, unknown>>;
+  public fetchMentions(): Promise<unknown[]>;
+  public deleteMention(messageId: Snowflake): Promise<unknown>;
+  public fetchSavedMessages(): Promise<unknown[]>;
+  public saveMessage(
+    channelId: Snowflake,
+    messageId: Snowflake
+  ): Promise<unknown>;
+  public unsaveMessage(
+    channelId: Snowflake,
+    messageId: Snowflake
+  ): Promise<unknown>;
+  public fetchUserAffinities(): Promise<unknown>;
+  public fetchGuildAffinities(): Promise<unknown>;
+  public fetchChannelAffinities(): Promise<unknown>;
+  public reportMeaningfullyOnline(): Promise<unknown>;
+  public fetchRecentAvatars(): Promise<unknown[]>;
+  public deleteRecentAvatar(avatarId: Snowflake): Promise<unknown>;
+  public modifyAgreements(data?: Record<string, unknown>): Promise<unknown>;
+  public setClan(guildId: Snowflake | null): Promise<unknown>;
+  public fetchHarvest(): Promise<unknown>;
+  public createHarvest(): Promise<unknown>;
   /** The current user's chosen locale, when the payload includes it. */
   public locale: string | null;
 }

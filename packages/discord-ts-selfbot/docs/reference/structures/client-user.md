@@ -356,6 +356,16 @@ client.user!.createFriendInvite()
   .catch(console.error);
 ```
 
+### `createHarvest`
+
+```ts
+
+createHarvest(): Promise<unknown>
+
+```
+
+**Returns:** `Promise<unknown>`
+
 ### `deleteDM`
 
 Deletes a DM channel (if one exists) between the client and the user. Resolves with the channel if successful.
@@ -367,6 +377,30 @@ deleteDM(): Promise<DMChannel>
 ```
 
 **Returns:** `Promise<DMChannel>`
+
+### `deleteMention`
+
+```ts
+
+deleteMention(messageId: string): Promise<unknown>
+
+```
+
+- `messageId: string`
+
+**Returns:** `Promise<unknown>`
+
+### `deleteRecentAvatar`
+
+```ts
+
+deleteRecentAvatar(avatarId: string): Promise<unknown>
+
+```
+
+- `avatarId: string`
+
+**Returns:** `Promise<unknown>`
 
 ### `deleteRelationship`
 
@@ -408,6 +442,18 @@ edit(data: ClientUserEditData): Promise<ClientUser>
 - `data: ClientUserEditData`
 
 **Returns:** `Promise<ClientUser>`
+
+### `editProfile`
+
+```ts
+
+editProfile(data?: Record<string, unknown>): Promise<Record<string, unknown>>
+
+```
+
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<Record<string, unknown>>`
 
 ### `equals`
 
@@ -465,6 +511,16 @@ fetchBurstCredit(): Promise<number>
 
 **Returns:** `Promise<number>`
 
+### `fetchChannelAffinities`
+
+```ts
+
+fetchChannelAffinities(): Promise<unknown>
+
+```
+
+**Returns:** `Promise<unknown>`
+
 ### `fetchConnections`
 
 Fetches the current user's connected third-party accounts, keyed by connection id.
@@ -476,6 +532,78 @@ fetchConnections(): Promise<Collection<string, Connection>>
 ```
 
 **Returns:** `Promise<Collection<string, Connection>>`
+
+### `fetchGuildAffinities`
+
+```ts
+
+fetchGuildAffinities(): Promise<unknown>
+
+```
+
+**Returns:** `Promise<unknown>`
+
+### `fetchHarvest`
+
+```ts
+
+fetchHarvest(): Promise<unknown>
+
+```
+
+**Returns:** `Promise<unknown>`
+
+### `fetchMentions`
+
+```ts
+
+fetchMentions(): Promise<unknown[]>
+
+```
+
+**Returns:** `Promise<unknown[]>`
+
+### `fetchProfile`
+
+```ts
+
+fetchProfile(userId?: string): Promise<Record<string, unknown>>
+
+```
+
+- `userId?: string`
+
+**Returns:** `Promise<Record<string, unknown>>`
+
+### `fetchRecentAvatars`
+
+```ts
+
+fetchRecentAvatars(): Promise<unknown[]>
+
+```
+
+**Returns:** `Promise<unknown[]>`
+
+### `fetchSavedMessages`
+
+```ts
+
+fetchSavedMessages(): Promise<unknown[]>
+
+```
+
+**Returns:** `Promise<unknown[]>`
+
+### `fetchUserAffinities`
+
+```ts
+
+fetchUserAffinities(): Promise<unknown>
+
+```
+
+**Returns:** `Promise<unknown>`
 
 ### `getAllFriendInvites`
 
@@ -523,6 +651,28 @@ guildTagBadgeURL(options?: ImageURLOptions): string | null
 
 **Returns:** `string | null`
 
+### `modifyAgreements`
+
+```ts
+
+modifyAgreements(data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
+
+### `reportMeaningfullyOnline`
+
+```ts
+
+reportMeaningfullyOnline(): Promise<unknown>
+
+```
+
+**Returns:** `Promise<unknown>`
+
 ### `revokeAllFriendInvites`
 
 Revokes every active friend invite.
@@ -534,6 +684,19 @@ revokeAllFriendInvites(): Promise<void>
 ```
 
 **Returns:** `Promise<void>`
+
+### `saveMessage`
+
+```ts
+
+saveMessage(channelId: string, messageId: string): Promise<unknown>
+
+```
+
+- `channelId: string`
+- `messageId: string`
+
+**Returns:** `Promise<unknown>`
 
 ### `send`
 
@@ -705,6 +868,18 @@ client.user!.setBanner('./banner.png')
   .then(user => console.log(`New banner set!`))
   .catch(console.error);
 ```
+
+### `setClan`
+
+```ts
+
+setClan(guildId: string | null): Promise<unknown>
+
+```
+
+- `guildId: string | null`
+
+**Returns:** `Promise<unknown>`
 
 ### `setGlobalName`
 
@@ -898,6 +1073,19 @@ toString(): `${string}`
 // Logs: Hello from <@123456789012345678>!
 console.log(`Hello from ${user}!`);
 ```
+
+### `unsaveMessage`
+
+```ts
+
+unsaveMessage(channelId: string, messageId: string): Promise<unknown>
+
+```
+
+- `channelId: string`
+- `messageId: string`
+
+**Returns:** `Promise<unknown>`
 
 ### `valueOf`
 
