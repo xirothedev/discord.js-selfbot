@@ -82,6 +82,10 @@ The stage instance's id
 
 **Type:** `string`
 
+### `inviteCode`
+
+**Type:** `string | null`
+
 ### `privacyLevel`
 
 The privacy level of the stage instance
