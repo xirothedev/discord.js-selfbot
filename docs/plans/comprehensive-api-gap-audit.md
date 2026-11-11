@@ -46,12 +46,12 @@ Verdicts: `covered` (library exposes a method for this route), `partial` (relate
 | GET | /users/@me | user/bot/oauth | covered (ClientUser) |
 | PATCH | /users/@me | user/bot | covered (ClientUser#edit) |
 | PATCH | /users/@me/account | user/oauth | missing |
-| POST | /users/@me/meaningfully-online | user | missing |
-| GET | /users/@me/avatars | user | missing |
-| DELETE | /users/@me/avatars/{avatar.id} | user | missing |
+| POST | /users/@me/meaningfully-online | user | covered (reportMeaningfullyOnline) |
+| GET | /users/@me/avatars | user | covered (fetchRecentAvatars) |
+| DELETE | /users/@me/avatars/{avatar.id} | user | covered (deleteRecentAvatar) |
 | GET | /users/{user.id} | user/bot | covered (UserManager#fetch) |
-| GET | /users/{user.id}/profile | user | missing (profile fetch?) partial |
-| PATCH | /users/@me/profile | user | missing |
+| GET | /users/{user.id}/profile | user | covered (fetchProfile) |
+| PATCH | /users/@me/profile | user | covered (editProfile) |
 | GET | /users/{user.id}/relationships | user | missing (mutual) |
 | POST | /users/@me/mfa/totp/enable | user | missing |
 | POST | /users/@me/mfa/totp/disable | user (MFA) | missing |
@@ -66,24 +66,24 @@ Verdicts: `covered` (library exposes a method for this route), `partial` (relate
 | POST | /users/@me/disable | user (MFA) | missing |
 | POST | /users/@me/delete | user (MFA) | missing |
 | POST | /users/@me/captcha/verify | user (deprecated) | missing |
-| PATCH | /users/@me/agreements | user | missing |
+| PATCH | /users/@me/agreements | user | covered (modifyAgreements) |
 | GET | /users/@me/pomelo-suggestions | user (deprecated) | missing |
 | POST | /users/@me/pomelo-attempt | user | missing |
 | POST | /users/@me/pomelo | user (deprecated) | missing |
-| PUT | /users/@me/clan | user | missing (primary guild?) partial |
-| GET | /users/@me/mentions | user | missing |
-| DELETE | /users/@me/mentions/{message.id} | user | missing |
-| GET | /users/@me/harvest | user/oauth | missing |
-| POST | /users/@me/harvest | user/oauth | missing |
+| PUT | /users/@me/clan | user | covered (setClan) |
+| GET | /users/@me/mentions | user | covered (fetchMentions) |
+| DELETE | /users/@me/mentions/{message.id} | user | covered (deleteMention) |
+| GET | /users/@me/harvest | user/oauth | covered (fetchHarvest) |
+| POST | /users/@me/harvest | user/oauth | covered (createHarvest) |
 | GET | /users/@me/survey | user | missing |
 | POST | /users/@me/survey/{survey.id}/seen | user | missing |
 | GET | /users/@me/notes | user | missing |
 | GET | /users/@me/notes/{user.id} | user | covered (UserNoteManager#get) |
 | PUT | /users/@me/notes/{user.id} | user | covered (UserNoteManager#set) |
-| GET | /users/@me/affinities/users | user | missing |
+| GET | /users/@me/affinities/users | user | covered (fetchUserAffinities) |
 | GET | /users/@me/affinities/v2/users | user | missing |
-| GET | /users/@me/affinities/guilds | user | missing |
-| GET | /users/@me/affinities/channels | user | missing |
+| GET | /users/@me/affinities/guilds | user | covered (fetchGuildAffinities) |
+| GET | /users/@me/affinities/channels | user | covered (fetchChannelAffinities) |
 | GET | /tutorial | user | missing |
 | PUT | /tutorial/indicators/{indicator} | user | missing |
 | POST | /tutorial/indicators/suppress | user | missing |
@@ -91,9 +91,9 @@ Verdicts: `covered` (library exposes a method for this route), `partial` (relate
 | DELETE | /hypesquad/online | user | covered |
 | POST | /dev-portal-csat-survey-response | user | missing |
 | GET | /users/@me/premium-usage | user | missing |
-| GET | /users/@me/saved-messages | user | missing |
-| PUT | /users/@me/saved-messages/{channel.id}/{message.id} | user | missing |
-| DELETE | /users/@me/saved-messages/{channel.id}/{message.id} | user | missing |
+| GET | /users/@me/saved-messages | user | covered (fetchSavedMessages) |
+| PUT | /users/@me/saved-messages/{channel.id}/{message.id} | user | covered (saveMessage) |
+| DELETE | /users/@me/saved-messages/{channel.id}/{message.id} | user | covered (unsaveMessage) |
 | POST | /age-verification/verify | user | missing |
 | POST | /users/@me/identity/verification | user (deprecated) | missing |
 | GET | /users/@me/identity/verification | user (deprecated) | missing |
