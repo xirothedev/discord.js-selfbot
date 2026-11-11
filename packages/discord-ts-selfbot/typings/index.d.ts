@@ -2429,6 +2429,33 @@ export class Guild extends AnonymousGuild {
     includeRoles?: Snowflake[];
     reason?: string;
   }): Promise<RESTPostAPIGuildPruneResult>;
+  public fetchBasic(): Promise<Record<string, unknown>>;
+  public fetchPruneCount(options?: {
+    days?: number;
+    includeRoles?: Snowflake[];
+  }): Promise<{ pruned: number }>;
+  public fetchMemberVerification(): Promise<Record<string, unknown>>;
+  public editMemberVerification(
+    data?: Record<string, unknown>
+  ): Promise<Record<string, unknown>>;
+  public fetchOnboardingAllowedApplications(): Promise<unknown[]>;
+  public fetchTopGames(): Promise<unknown[]>;
+  public fetchGuildProfile(): Promise<Record<string, unknown>>;
+  public editGuildProfile(
+    data?: Record<string, unknown>
+  ): Promise<Record<string, unknown>>;
+  public fetchRoleMemberCounts(): Promise<Record<string, number>>;
+  public searchBans(query: string): Promise<unknown[]>;
+  public bulkBanV2(data?: Record<string, unknown>): Promise<unknown>;
+  public fetchJoinRequests(): Promise<unknown[]>;
+  public fetchJoinRequest(
+    requestId: Snowflake
+  ): Promise<Record<string, unknown>>;
+  public fetchCurrentJoinRequest(): Promise<Record<string, unknown>>;
+  public fetchJoinRequestCooldown(): Promise<Record<string, unknown>>;
+  public createJoinRequest(): Promise<Record<string, unknown>>;
+  public resetJoinRequest(): Promise<Record<string, unknown>>;
+  public deleteJoinRequest(): Promise<unknown>;
   public fetchWidget(): Promise<Widget>;
   public fetchWidgetSettings(): Promise<GuildWidgetSettings>;
   /** Returns the guild's widget image URL. */

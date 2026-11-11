@@ -470,6 +470,28 @@ bannerURL(options?: StaticImageURLOptions): string | null
 
 **Returns:** `string | null`
 
+### `bulkBanV2`
+
+```ts
+
+bulkBanV2(data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
+
+### `createJoinRequest`
+
+```ts
+
+createJoinRequest(): Promise<Record<string, unknown>>
+
+```
+
+**Returns:** `Promise<Record<string, unknown>>`
+
 ### `createTemplate`
 
 Creates a template for the guild.
@@ -503,6 +525,16 @@ guild.delete()
   .then(g => console.log(`Deleted the guild ${g}`))
   .catch(console.error);
 ```
+
+### `deleteJoinRequest`
+
+```ts
+
+deleteJoinRequest(): Promise<unknown>
+
+```
+
+**Returns:** `Promise<unknown>`
 
 ### `disableInvites`
 
@@ -555,6 +587,30 @@ guild.edit({
   .then(updated => console.log(`New guild name ${updated}`))
   .catch(console.error);
 ```
+
+### `editGuildProfile`
+
+```ts
+
+editGuildProfile(data?: Record<string, unknown>): Promise<Record<string, unknown>>
+
+```
+
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<Record<string, unknown>>`
+
+### `editMemberVerification`
+
+```ts
+
+editMemberVerification(data?: Record<string, unknown>): Promise<Record<string, unknown>>
+
+```
+
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<Record<string, unknown>>`
 
 ### `editOnboarding`
 
@@ -654,6 +710,36 @@ guild.fetchAuditLogs()
   .catch(console.error);
 ```
 
+### `fetchBasic`
+
+```ts
+
+fetchBasic(): Promise<Record<string, unknown>>
+
+```
+
+**Returns:** `Promise<Record<string, unknown>>`
+
+### `fetchCurrentJoinRequest`
+
+```ts
+
+fetchCurrentJoinRequest(): Promise<Record<string, unknown>>
+
+```
+
+**Returns:** `Promise<Record<string, unknown>>`
+
+### `fetchGuildProfile`
+
+```ts
+
+fetchGuildProfile(): Promise<Record<string, unknown>>
+
+```
+
+**Returns:** `Promise<Record<string, unknown>>`
+
 ### `fetchIntegrations`
 
 Fetches a collection of integrations to this guild.
@@ -674,6 +760,48 @@ guild.fetchIntegrations()
   .catch(console.error);
 ```
 
+### `fetchJoinRequest`
+
+```ts
+
+fetchJoinRequest(requestId: string): Promise<Record<string, unknown>>
+
+```
+
+- `requestId: string`
+
+**Returns:** `Promise<Record<string, unknown>>`
+
+### `fetchJoinRequestCooldown`
+
+```ts
+
+fetchJoinRequestCooldown(): Promise<Record<string, unknown>>
+
+```
+
+**Returns:** `Promise<Record<string, unknown>>`
+
+### `fetchJoinRequests`
+
+```ts
+
+fetchJoinRequests(): Promise<unknown[]>
+
+```
+
+**Returns:** `Promise<unknown[]>`
+
+### `fetchMemberVerification`
+
+```ts
+
+fetchMemberVerification(): Promise<Record<string, unknown>>
+
+```
+
+**Returns:** `Promise<Record<string, unknown>>`
+
 ### `fetchOnboarding`
 
 ```ts
@@ -683,6 +811,16 @@ fetchOnboarding(): Promise<APIGuildOnboarding>
 ```
 
 **Returns:** `Promise<APIGuildOnboarding>`
+
+### `fetchOnboardingAllowedApplications`
+
+```ts
+
+fetchOnboardingAllowedApplications(): Promise<unknown[]>
+
+```
+
+**Returns:** `Promise<unknown[]>`
 
 ### `fetchOwner`
 
@@ -711,6 +849,28 @@ fetchPreview(): Promise<GuildPreview>
 
 **Returns:** `Promise<GuildPreview>`
 
+### `fetchPruneCount`
+
+```ts
+
+fetchPruneCount(options?: { days?: number; includeRoles?: string[] }): Promise<{ pruned: number }>
+
+```
+
+- `options?: { days?: number; includeRoles?: string[] }`
+
+**Returns:** `Promise<{ pruned: number }>`
+
+### `fetchRoleMemberCounts`
+
+```ts
+
+fetchRoleMemberCounts(): Promise<Record<string, number>>
+
+```
+
+**Returns:** `Promise<Record<string, number>>`
+
 ### `fetchTemplates`
 
 Fetches a collection of templates from this guild.
@@ -723,6 +883,16 @@ fetchTemplates(): Promise<Collection<string, GuildTemplate>>
 ```
 
 **Returns:** `Promise<Collection<string, GuildTemplate>>`
+
+### `fetchTopGames`
+
+```ts
+
+fetchTopGames(): Promise<unknown[]>
+
+```
+
+**Returns:** `Promise<unknown[]>`
 
 ### `fetchVanityData`
 
@@ -876,6 +1046,28 @@ pruneMembers(options?: { computePruneCount?: boolean; days?: number; includeRole
 - `options?: { computePruneCount?: boolean; days?: number; includeRoles?: string[]; reason?: string }`
 
 **Returns:** `Promise<RESTPostAPIGuildPruneResult>`
+
+### `resetJoinRequest`
+
+```ts
+
+resetJoinRequest(): Promise<Record<string, unknown>>
+
+```
+
+**Returns:** `Promise<Record<string, unknown>>`
+
+### `searchBans`
+
+```ts
+
+searchBans(query: string): Promise<unknown[]>
+
+```
+
+- `query: string`
+
+**Returns:** `Promise<unknown[]>`
 
 ### `setAFKChannel`
 
