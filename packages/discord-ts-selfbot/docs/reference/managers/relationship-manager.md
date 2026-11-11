@@ -103,6 +103,55 @@ addFriend(user: UserResolvable): Promise<boolean>
 
 **Returns:** `Promise<boolean>`
 
+### `bulkAddRelationships`
+
+```ts
+
+bulkAddRelationships(userIds: string[]): Promise<unknown>
+
+```
+
+- `userIds: string[]`
+
+**Returns:** `Promise<unknown>`
+
+### `bulkRemoveRelationships`
+
+```ts
+
+bulkRemoveRelationships(userIds: string[]): Promise<unknown>
+
+```
+
+- `userIds: string[]`
+
+**Returns:** `Promise<unknown>`
+
+### `createGameRelationship`
+
+```ts
+
+createGameRelationship(userId: string): Promise<unknown>
+
+```
+
+- `userId: string`
+
+**Returns:** `Promise<unknown>`
+
+### `createGameRelationshipByApplication`
+
+```ts
+
+createGameRelationshipByApplication(userId: string, applicationId: string): Promise<unknown>
+
+```
+
+- `userId: string`
+- `applicationId: string`
+
+**Returns:** `Promise<unknown>`
+
 ### `deleteRelationship`
 
 Deletes a friend / blocked relationship with a client user or cancels a friend request.
@@ -135,6 +184,75 @@ fetch(user?: UserResolvable, options?: BaseFetchOptions): Promise<RelationshipMa
 
 **Returns:** `Promise<RelationshipManager | RelationshipTypes>`
 
+### `fetchFriendSuggestions`
+
+```ts
+
+fetchFriendSuggestions(): Promise<unknown[]>
+
+```
+
+**Returns:** `Promise<unknown[]>`
+
+### `fetchGameRelationships`
+
+```ts
+
+fetchGameRelationships(): Promise<unknown[]>
+
+```
+
+**Returns:** `Promise<unknown[]>`
+
+### `ignoreUser`
+
+```ts
+
+ignoreUser(userId: string): Promise<unknown>
+
+```
+
+- `userId: string`
+
+**Returns:** `Promise<unknown>`
+
+### `removeFriendSuggestion`
+
+```ts
+
+removeFriendSuggestion(userId: string): Promise<unknown>
+
+```
+
+- `userId: string`
+
+**Returns:** `Promise<unknown>`
+
+### `removeGameRelationship`
+
+```ts
+
+removeGameRelationship(userId: string): Promise<unknown>
+
+```
+
+- `userId: string`
+
+**Returns:** `Promise<unknown>`
+
+### `removeGameRelationshipByApplication`
+
+```ts
+
+removeGameRelationshipByApplication(userId: string, applicationId: string): Promise<unknown>
+
+```
+
+- `userId: string`
+- `applicationId: string`
+
+**Returns:** `Promise<unknown>`
+
 ### `resolveId`
 
 Resolves a UserResolvable to a User id.
@@ -166,6 +284,18 @@ sendFriendRequest(options: UserResolvable): Promise<boolean>
 
 **Returns:** `Promise<boolean>`
 
+### `sendGameFriendRequest`
+
+```ts
+
+sendGameFriendRequest(userId: string): Promise<unknown>
+
+```
+
+- `userId: string`
+
+**Returns:** `Promise<unknown>`
+
 ### `setNickname`
 
 Changes the nickname of a friend.
@@ -192,6 +322,18 @@ toJSON(): { id: string; nickname: string | null | undefined; since: string; type
 ```
 
 **Returns:** `{ id: string; nickname: string | null | undefined; since: string; type: RelationshipTypes }[]`
+
+### `unignoreUser`
+
+```ts
+
+unignoreUser(userId: string): Promise<unknown>
+
+```
+
+- `userId: string`
+
+**Returns:** `Promise<unknown>`
 
 ---
 

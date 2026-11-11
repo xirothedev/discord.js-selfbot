@@ -6362,6 +6362,24 @@ export class RelationshipManager extends BaseManager {
    * @experimental Placeholder kept for a future opt-in design; do not use.
    */
   public addBlocked(user: UserResolvable): Promise<boolean>;
+  public ignoreUser(userId: Snowflake): Promise<unknown>;
+  public unignoreUser(userId: Snowflake): Promise<unknown>;
+  public bulkRemoveRelationships(userIds: Snowflake[]): Promise<unknown>;
+  public bulkAddRelationships(userIds: Snowflake[]): Promise<unknown>;
+  public fetchFriendSuggestions(): Promise<unknown[]>;
+  public removeFriendSuggestion(userId: Snowflake): Promise<unknown>;
+  public fetchGameRelationships(): Promise<unknown[]>;
+  public sendGameFriendRequest(userId: Snowflake): Promise<unknown>;
+  public createGameRelationship(userId: Snowflake): Promise<unknown>;
+  public createGameRelationshipByApplication(
+    userId: Snowflake,
+    applicationId: Snowflake
+  ): Promise<unknown>;
+  public removeGameRelationship(userId: Snowflake): Promise<unknown>;
+  public removeGameRelationshipByApplication(
+    userId: Snowflake,
+    applicationId: Snowflake
+  ): Promise<unknown>;
 }
 
 export class UserNoteManager extends BaseManager {
