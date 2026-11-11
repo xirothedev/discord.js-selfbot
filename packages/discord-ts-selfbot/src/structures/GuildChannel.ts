@@ -433,6 +433,34 @@ class GuildChannel extends Channel implements GuildChannelEntity {
     await this.guild.channels.delete(this.id, reason);
     return this;
   }
+
+  followAnnouncementChannel(targetChannelId: Snowflake) {
+    return this.client.api.channels(this.id).followers.post({
+      data: { webhook_channel_id: targetChannelId },
+    });
+  }
+
+  searchThreads(query: string, options: Record<string, unknown> = {}) {
+    return this.client.api.channels(this.id).threads.search.get<unknown>({
+      query: { query, ...options },
+    });
+  }
+
+  createForumTag(data: Record<string, unknown> = {}) {
+    return this.client.api.channels(this.id).tags.post<unknown>({ data });
+  }
+
+  modifyForumTag(tagId: Snowflake, data: Record<string, unknown> = {}) {
+    return this.client.api.channels(this.id).tags(tagId).put<unknown>({ data });
+  }
+
+  deleteForumTag(tagId: Snowflake) {
+    return this.client.api.channels(this.id).tags(tagId).delete();
+  }
+
+  removeLobbyLink() {
+    return this.client.api.channels(this.id)['linked-lobby'].delete();
+  }
 }
 
 export default GuildChannel;

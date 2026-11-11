@@ -485,6 +485,16 @@ message.edit('This is my new content!')
   .catch(console.error);
 ```
 
+### `endPoll`
+
+```ts
+
+endPoll(): Promise<unknown>
+
+```
+
+**Returns:** `Promise<unknown>`
+
 ### `equals`
 
 Used mainly internally. Whether two messages are identical in properties. If you want to compare messages
@@ -515,6 +525,28 @@ fetch(force?: boolean): Promise<Message<boolean>>
 - `force?: boolean` — Whether to skip the cache check and request the API
 
 **Returns:** `Promise<Message<boolean>>`
+
+### `fetchInteractionData`
+
+```ts
+
+fetchInteractionData(): Promise<Record<string, unknown>>
+
+```
+
+**Returns:** `Promise<Record<string, unknown>>`
+
+### `fetchPollAnswerVoters`
+
+```ts
+
+fetchPollAnswerVoters(answerId: string): Promise<unknown>
+
+```
+
+- `answerId: string`
+
+**Returns:** `Promise<unknown>`
 
 ### `fetchReference`
 
@@ -553,6 +585,16 @@ forward(channel: TextBasedChannelResolvable): Promise<Message<boolean>>
 - `channel: TextBasedChannelResolvable` — The channel to forward this message to.
 
 **Returns:** `Promise<Message<boolean>>`
+
+### `hideFromGuildFeed`
+
+```ts
+
+hideFromGuildFeed(): Promise<unknown>
+
+```
+
+**Returns:** `Promise<unknown>`
 
 ### `inGuild`
 
@@ -782,6 +824,16 @@ toString(): string
 console.log(`Message: ${message}`);
 ```
 
+### `unhideFromGuildFeed`
+
+```ts
+
+unhideFromGuildFeed(): Promise<unknown>
+
+```
+
+**Returns:** `Promise<unknown>`
+
 ### `unpin`
 
 Unpins this message from the channel's pinned messages.
@@ -833,6 +885,18 @@ message.vote(1,2);
 // Remove vote
 message.vote();
 ```
+
+### `votePoll`
+
+```ts
+
+votePoll(answerIds: string[]): Promise<unknown>
+
+```
+
+- `answerIds: string[]`
+
+**Returns:** `Promise<unknown>`
 
 ---
 

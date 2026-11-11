@@ -226,6 +226,18 @@ createChannel(name: string, options?: CategoryCreateChannelOptions): Promise<Tex
 
 **Returns:** `Promise<TextChannel>`
 
+### `createForumTag`
+
+```ts
+
+createForumTag(data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
+
 ### `delete`
 
 Deletes this channel.
@@ -246,6 +258,18 @@ channel.delete('making room for new channels')
   .then(console.log)
   .catch(console.error);
 ```
+
+### `deleteForumTag`
+
+```ts
+
+deleteForumTag(tagId: string): Promise<unknown>
+
+```
+
+- `tagId: string`
+
+**Returns:** `Promise<unknown>`
 
 ### `edit`
 
@@ -288,6 +312,18 @@ fetch(force?: boolean): Promise<CategoryChannel>
 - `force?: boolean` — Whether to skip the cache check and request the API
 
 **Returns:** `Promise<CategoryChannel>`
+
+### `followAnnouncementChannel`
+
+```ts
+
+followAnnouncementChannel(targetChannelId: string): Promise<unknown>
+
+```
+
+- `targetChannelId: string`
+
+**Returns:** `Promise<unknown>`
 
 ### `isDirectory`
 
@@ -361,6 +397,19 @@ lockPermissions(): Promise<CategoryChannel>
 
 **Returns:** `Promise<CategoryChannel>`
 
+### `modifyForumTag`
+
+```ts
+
+modifyForumTag(tagId: string, data?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `tagId: string`
+- `data?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
+
 ### `permissionsFor`
 
 Gets the overall set of permissions for a member or role in this channel, taking into account channel overwrites.
@@ -388,6 +437,29 @@ permissionsFor(memberOrRole: string | GuildMember | Role | User | Message<boolea
 - `checkAdmin?: boolean` — Whether having `ADMINISTRATOR` will return all permissions
 
 **Returns:** `Readonly<Permissions> | null`
+
+### `removeLobbyLink`
+
+```ts
+
+removeLobbyLink(): Promise<unknown>
+
+```
+
+**Returns:** `Promise<unknown>`
+
+### `searchThreads`
+
+```ts
+
+searchThreads(query: string, options?: Record<string, unknown>): Promise<unknown>
+
+```
+
+- `query: string`
+- `options?: Record<string, unknown>`
+
+**Returns:** `Promise<unknown>`
 
 ### `setName`
 

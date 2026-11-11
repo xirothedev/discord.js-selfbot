@@ -1551,6 +1551,24 @@ export class ClientUser extends User {
   public setClan(guildId: Snowflake | null): Promise<unknown>;
   public fetchHarvest(): Promise<unknown>;
   public createHarvest(): Promise<unknown>;
+  public sendVoiceChannelEffect(
+    channelId: Snowflake,
+    data?: Record<string, unknown>
+  ): Promise<unknown>;
+  public sendCustomCallSound(
+    channelId: Snowflake,
+    data?: Record<string, unknown>
+  ): Promise<unknown>;
+  public modifyStream(
+    streamKey: string,
+    data?: Record<string, unknown>
+  ): Promise<unknown>;
+  public notifyStream(streamKey: string): Promise<unknown>;
+  public uploadVoicePublicKey(data?: Record<string, unknown>): Promise<unknown>;
+  public matchVoicePublicKey(
+    userId: Snowflake,
+    data?: Record<string, unknown>
+  ): Promise<unknown>;
   /** The current user's chosen locale, when the payload includes it. */
   public locale: string | null;
 }
@@ -2684,6 +2702,20 @@ export abstract class GuildChannel extends Channel {
     options?: SetChannelPositionOptions
   ): Promise<this>;
   public isText(): this is GuildTextBasedChannel;
+  public followAnnouncementChannel(
+    targetChannelId: Snowflake
+  ): Promise<unknown>;
+  public searchThreads(
+    query: string,
+    options?: Record<string, unknown>
+  ): Promise<unknown>;
+  public createForumTag(data?: Record<string, unknown>): Promise<unknown>;
+  public modifyForumTag(
+    tagId: Snowflake,
+    data?: Record<string, unknown>
+  ): Promise<unknown>;
+  public deleteForumTag(tagId: Snowflake): Promise<unknown>;
+  public removeLobbyLink(): Promise<unknown>;
 }
 
 export class GuildEmoji extends BaseGuildEmoji {
@@ -3326,6 +3358,12 @@ export class Message<Cached extends boolean = boolean> extends Base {
   public equals(message: Message, rawData: unknown): boolean;
   public fetchReference(): Promise<Message>;
   public fetchWebhook(): Promise<Webhook>;
+  public fetchInteractionData(): Promise<Record<string, unknown>>;
+  public hideFromGuildFeed(): Promise<unknown>;
+  public unhideFromGuildFeed(): Promise<unknown>;
+  public endPoll(): Promise<unknown>;
+  public fetchPollAnswerVoters(answerId: string): Promise<unknown>;
+  public votePoll(answerIds: string[]): Promise<unknown>;
   public crosspost(): Promise<Message>;
   public fetch(force?: boolean): Promise<Message>;
   public pin(reason?: string): Promise<Message>;
