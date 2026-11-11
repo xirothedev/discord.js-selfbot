@@ -64,6 +64,7 @@ export default defineConfig({
         'packages/discord-ts-selfbot/src/structures/Presence.ts',
         'packages/discord-ts-selfbot/src/structures/ThreadChannel.ts',
         'packages/discord-ts-selfbot/src/structures/User.ts',
+        'packages/discord-ts-selfbot/src/structures/ClientUser.ts',
         'packages/discord-ts-selfbot/src/structures/Webhook.ts',
         'packages/discord-ts-selfbot/src/structures/interfaces/Application.ts',
         'packages/discord-ts-selfbot/src/structures/interfaces/TextBasedChannel.ts',

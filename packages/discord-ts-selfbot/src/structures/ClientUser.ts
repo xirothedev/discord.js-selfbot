@@ -301,6 +301,85 @@ class ClientUser extends User implements ClientUserEntity {
   setPronouns(pronouns: string | null = '') {
     return this.edit({ pronouns });
   }
+
+  async fetchProfile(userId?: Snowflake) {
+    const id = userId ?? this.id;
+    return this.client.api.users(id).profile.get<Record<string, unknown>>();
+  }
+
+  async editProfile(data: Record<string, unknown> = {}) {
+    return this.client.api.users('@me').profile.patch<Record<string, unknown>>({
+      data,
+    });
+  }
+
+  async fetchMentions() {
+    return this.client.api.users['@me'].mentions.get<unknown[]>();
+  }
+
+  deleteMention(messageId: Snowflake) {
+    return this.client.api.users['@me'].mentions[messageId].delete();
+  }
+
+  async fetchSavedMessages() {
+    return this.client.api.users['@me']['saved-messages'].get<unknown[]>();
+  }
+
+  saveMessage(channelId: Snowflake, messageId: Snowflake) {
+    return this.client.api.users['@me']
+      ['saved-messages'](channelId)(messageId)
+      .put({ data: {} });
+  }
+
+  unsaveMessage(channelId: Snowflake, messageId: Snowflake) {
+    return this.client.api.users['@me']
+      ['saved-messages'](channelId)(messageId)
+      .delete();
+  }
+
+  async fetchUserAffinities() {
+    return this.client.api.users['@me'].affinities.users.get<unknown>();
+  }
+
+  async fetchGuildAffinities() {
+    return this.client.api.users['@me'].affinities.guilds.get<unknown>();
+  }
+
+  async fetchChannelAffinities() {
+    return this.client.api.users['@me'].affinities.channels.get<unknown>();
+  }
+
+  reportMeaningfullyOnline() {
+    return this.client.api.users['@me']['meaningfully-online'].post({
+      data: {},
+    });
+  }
+
+  async fetchRecentAvatars() {
+    return this.client.api.users['@me'].avatars.get<unknown[]>();
+  }
+
+  deleteRecentAvatar(avatarId: Snowflake) {
+    return this.client.api.users['@me'].avatars[avatarId].delete();
+  }
+
+  modifyAgreements(data: Record<string, unknown> = {}) {
+    return this.client.api.users['@me'].agreements.patch({ data });
+  }
+
+  setClan(guildId: Snowflake | null) {
+    return this.client.api.users['@me'].clan.put({
+      data: { identity_guild_id: guildId },
+    });
+  }
+
+  async fetchHarvest() {
+    return this.client.api.users['@me'].harvest.get<unknown>();
+  }
+
+  createHarvest() {
+    return this.client.api.users['@me'].harvest.post({ data: {} });
+  }
 }
 
 export default ClientUser;
