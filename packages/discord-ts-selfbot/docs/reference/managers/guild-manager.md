@@ -107,11 +107,11 @@ fetchDiscoverableGuilds(query?: Record<string, unknown>): Promise<unknown>
 
 ```ts
 
-fetchDiscoveryCategories(): Promise<unknown[]>
+fetchDiscoveryCategories(): Promise<DiscoveryCategory[]>
 
 ```
 
-**Returns:** `Promise<unknown[]>`
+**Returns:** `Promise<DiscoveryCategory[]>`
 
 ### `fetchDiscoveryMetadata`
 

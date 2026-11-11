@@ -845,11 +845,11 @@ fetchJoinRequest(requestId: string): Promise<Record<string, unknown>>
 
 ```ts
 
-fetchJoinRequestCooldown(): Promise<Record<string, unknown>>
+fetchJoinRequestCooldown(): Promise<JoinRequestCooldown>
 
 ```
 
-**Returns:** `Promise<Record<string, unknown>>`
+**Returns:** `Promise<JoinRequestCooldown>`
 
 ### `fetchJoinRequests`
 

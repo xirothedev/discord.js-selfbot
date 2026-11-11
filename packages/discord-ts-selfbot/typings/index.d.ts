@@ -2495,7 +2495,7 @@ export class Guild extends AnonymousGuild {
     requestId: Snowflake
   ): Promise<Record<string, unknown>>;
   public fetchCurrentJoinRequest(): Promise<Record<string, unknown>>;
-  public fetchJoinRequestCooldown(): Promise<Record<string, unknown>>;
+  public fetchJoinRequestCooldown(): Promise<JoinRequestCooldown>;
   public createJoinRequest(): Promise<Record<string, unknown>>;
   public resetJoinRequest(): Promise<Record<string, unknown>>;
   public deleteJoinRequest(): Promise<unknown>;
@@ -6781,7 +6781,7 @@ export class GuildManager extends CachedManager<
   public fetchDiscoverySlug(
     guildId: Snowflake
   ): Promise<Record<string, unknown>>;
-  public fetchDiscoveryCategories(): Promise<unknown[]>;
+  public fetchDiscoveryCategories(): Promise<DiscoveryCategory[]>;
 }
 
 export class GuildMemberManager extends CachedManager<

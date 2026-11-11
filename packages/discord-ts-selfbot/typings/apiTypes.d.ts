@@ -176,6 +176,17 @@ interface InteractionData {
   [key: string]: unknown;
 }
 
+interface JoinRequestCooldown {
+  retry_after?: number;
+  [key: string]: unknown;
+}
+
+interface DiscoveryCategory {
+  id?: number;
+  name?: string;
+  [key: string]: unknown;
+}
+
 interface AutoModerationValidationResult {
   [key: string]: unknown;
 }
