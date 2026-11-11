@@ -670,6 +670,113 @@ class Guild extends AnonymousGuild implements GuildEntity {
     return patchData;
   }
 
+  async fetchBasic() {
+    return this.client.api.guilds(this.id).basic.get<Record<string, unknown>>();
+  }
+
+  async fetchPruneCount({
+    days = 7,
+    includeRoles,
+  }: { days?: number; includeRoles?: Snowflake[] } = {}) {
+    const query: Record<string, unknown> = { days };
+    if (includeRoles) {
+      query.include_roles = includeRoles.join(',');
+    }
+    return this.client.api.guilds(this.id).prune.get<{
+      pruned: number;
+    }>({ query });
+  }
+
+  async fetchMemberVerification() {
+    return this.client.api
+      .guilds(this.id)
+      ['member-verification'].get<Record<string, unknown>>();
+  }
+
+  async editMemberVerification(data: Record<string, unknown> = {}) {
+    return this.client.api
+      .guilds(this.id)
+      ['member-verification'].patch<Record<string, unknown>>({ data });
+  }
+
+  async fetchOnboardingAllowedApplications() {
+    return this.client.api
+      .guilds(this.id)
+      .onboarding['allowed-applications'].get<unknown[]>();
+  }
+
+  async fetchTopGames() {
+    return this.client.api.guilds(this.id)['top-games'].get<unknown[]>();
+  }
+
+  async fetchGuildProfile() {
+    return this.client.api
+      .guilds(this.id)
+      .profile.get<Record<string, unknown>>();
+  }
+
+  async editGuildProfile(data: Record<string, unknown> = {}) {
+    return this.client.api
+      .guilds(this.id)
+      .profile.patch<Record<string, unknown>>({ data });
+  }
+
+  async fetchRoleMemberCounts() {
+    return this.client.api
+      .guilds(this.id)
+      .roles['member-counts'].get<Record<string, number>>();
+  }
+
+  async searchBans(query: string) {
+    return this.client.api.guilds(this.id).bans.search.get<unknown[]>({
+      query: { query },
+    });
+  }
+
+  async bulkBanV2(data: Record<string, unknown> = {}) {
+    return this.client.api.guilds(this.id)['bulk-ban'].v2.post<unknown>({
+      data,
+    });
+  }
+
+  async fetchJoinRequests() {
+    return this.client.api.guilds(this.id).requests.get<unknown[]>();
+  }
+
+  async fetchJoinRequest(requestId: Snowflake) {
+    return this.client.api['join-requests'](requestId).get<
+      Record<string, unknown>
+    >();
+  }
+
+  async fetchCurrentJoinRequest() {
+    return this.client.api
+      .guilds(this.id)
+      .requests['@me'].get<Record<string, unknown>>();
+  }
+
+  async fetchJoinRequestCooldown() {
+    return this.client.api
+      .guilds(this.id)
+      .requests['@me'].cooldown.get<Record<string, unknown>>();
+  }
+
+  async createJoinRequest() {
+    return this.client.api
+      .guilds(this.id)
+      .requests['@me'].put<Record<string, unknown>>({ data: {} });
+  }
+
+  async resetJoinRequest() {
+    return this.client.api
+      .guilds(this.id)
+      .requests['@me'].post<Record<string, unknown>>({ data: {} });
+  }
+
+  async deleteJoinRequest() {
+    return this.client.api.guilds(this.id).requests['@me'].delete();
+  }
+
   async fetchVanityData() {
     const data = await this.client.api
       .guilds(this.id, 'vanity-url')
