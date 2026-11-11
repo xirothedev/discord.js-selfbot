@@ -1,0 +1,12 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      "discord-userdoccers": {
+        "type": "remote",
+        "url": "https://docs.discord.food/mcp",
+        "enabled": true
+      }
+    }
+  }
+}
