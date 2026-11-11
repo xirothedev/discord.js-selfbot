@@ -14,6 +14,7 @@ import type { APIUser } from 'discord-api-types/v10';
 import type { ImageURLOptions, UserProfileOptions } from '../../typings';
 import type {
   RawUserApplicationIdentityData,
+  RawUserData,
   RawUserProfileData,
 } from '../../typings/rawDataTypes';
 import type { SelfbotUserData } from '../types/selfbot/user';
@@ -387,6 +388,10 @@ class User extends Base implements UserEntity {
     return this.client.users.fetch(this.id, { force });
   }
 
+  async fetchMutualRelationships(): Promise<RawUserData[]> {
+    return this.client.api.users(this.id).relationships.get<RawUserData[]>();
+  }
+
   getProfile(options: string | UserProfileOptions = {}) {
     const settings =
       typeof options === 'string' ? { guildId: options } : options;
@@ -396,8 +401,8 @@ class User extends Base implements UserEntity {
         guild_id: settings.guildId,
         join_request_id: settings.joinRequestId,
         type: settings.type,
-        with_mutual_friends: settings.withMutualFriends ?? true,
-        with_mutual_friends_count: settings.withMutualFriendsCount ?? true,
+        with_mutual_friends: settings.withMutualFriends ?? false,
+        with_mutual_friends_count: settings.withMutualFriendsCount ?? false,
         with_mutual_guilds: settings.withMutualGuilds ?? true,
       },
     });

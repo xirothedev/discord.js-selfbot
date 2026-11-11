@@ -24,10 +24,18 @@ interface RecentMention {
 }
 
 interface SavedMessage {
-  channel_id?: string;
-  message_id?: string;
-  saved_at?: string;
-  notes?: string;
+  message?: unknown;
+  save_data?: {
+    channel_id?: string;
+    message_id?: string;
+    guild_id?: string;
+    saved_at?: string;
+    author_summary?: string;
+    channel_summary?: string;
+    message_summary?: string;
+    notes?: string;
+    due_at?: string | null;
+  };
   [key: string]: unknown;
 }
 

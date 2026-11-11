@@ -1532,16 +1532,27 @@ export class ClientUser extends User {
   ): Promise<void>;
   public setPronouns(pronouns?: string | null): Promise<this>;
   public setGlobalName(globalName?: string | null): Promise<this>;
-  public fetchProfile(userId?: Snowflake): Promise<UserProfile>;
+  /** @deprecated Use {@link User.getProfile} instead. */
+  public fetchProfile(
+    userIdOrOptions?: Snowflake | UserProfileOptions,
+    options?: UserProfileOptions
+  ): Promise<RawUserProfileData>;
   public editProfile(
     data?: Record<string, unknown>
   ): Promise<Record<string, unknown>>;
-  public fetchMentions(): Promise<RecentMention[]>;
+  public fetchMentions(options?: {
+    before?: Snowflake;
+    limit?: number;
+    guildId?: Snowflake;
+    roles?: boolean;
+    everyone?: boolean;
+  }): Promise<RecentMention[]>;
   public deleteMention(messageId: Snowflake): Promise<unknown>;
   public fetchSavedMessages(): Promise<SavedMessage[]>;
   public saveMessage(
     channelId: Snowflake,
-    messageId: Snowflake
+    messageId: Snowflake,
+    options?: { dueAt?: string | null }
   ): Promise<unknown>;
   public unsaveMessage(
     channelId: Snowflake,
@@ -5504,6 +5515,10 @@ export class User extends PartialTextBasedChannel(Base) {
   public getProfile(
     options?: Snowflake | UserProfileOptions
   ): Promise<RawUserProfileData>;
+  /**
+   * Fetches the mutual relationships (friends) between this user and the current user.
+   */
+  public fetchMutualRelationships(): Promise<RawUserData[]>;
   /**
    * Fetches this user's application identities.
    * @param options Additional options for this fetch

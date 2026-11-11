@@ -145,7 +145,7 @@ test('User#getProfile accepts a guild id and explicit mutual flags', async () =>
   expect(fake.getLastRequest().query).toContain('guild_id=g1');
   expect(fake.getLastRequest().query).toContain('with_mutual_friends=false');
   expect(fake.getLastRequest().query).toContain(
-    'with_mutual_friends_count=true'
+    'with_mutual_friends_count=false'
   );
 });
 

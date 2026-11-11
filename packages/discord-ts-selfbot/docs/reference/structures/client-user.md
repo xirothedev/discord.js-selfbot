@@ -607,23 +607,40 @@ fetchHarvest(): Promise<UserHarvest>
 
 ```ts
 
-fetchMentions(): Promise<RecentMention[]>
+fetchMentions(options?: { before?: string; everyone?: boolean; guildId?: string; limit?: number; roles?: boolean }): Promise<RecentMention[]>
 
 ```
+
+- `options?: { before?: string; everyone?: boolean; guildId?: string; limit?: number; roles?: boolean }`
 
 **Returns:** `Promise<RecentMention[]>`
 
-### `fetchProfile`
+### `fetchMutualRelationships`
+
+Fetches the mutual relationships (friends) between this user and the current user.
 
 ```ts
 
-fetchProfile(userId?: string): Promise<UserProfile>
+fetchMutualRelationships(): Promise<RawUserData[]>
 
 ```
 
-- `userId?: string`
+**Returns:** `Promise<RawUserData[]>`
 
-**Returns:** `Promise<UserProfile>`
+### `fetchProfile`
+
+> **Deprecated.** Use User.getProfile instead.
+
+```ts
+
+fetchProfile(userIdOrOptions?: string | UserProfileOptions, options?: UserProfileOptions): Promise<RawUserProfileData>
+
+```
+
+- `userIdOrOptions?: string | UserProfileOptions`
+- `options?: UserProfileOptions`
+
+**Returns:** `Promise<RawUserProfileData>`
 
 ### `fetchRecentAvatars`
 
@@ -830,12 +847,13 @@ revokeAllFriendInvites(): Promise<void>
 
 ```ts
 
-saveMessage(channelId: string, messageId: string): Promise<unknown>
+saveMessage(channelId: string, messageId: string, options?: { dueAt?: string | null }): Promise<unknown>
 
 ```
 
 - `channelId: string`
 - `messageId: string`
+- `options?: { dueAt?: string | null }`
 
 **Returns:** `Promise<unknown>`
 

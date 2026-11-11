@@ -346,6 +346,18 @@ fetchApplicationIdentities(options?: { withProfiles?: boolean }): Promise<RawUse
 
 **Returns:** `Promise<RawUserApplicationIdentityData[]>`
 
+### `fetchMutualRelationships`
+
+Fetches the mutual relationships (friends) between this user and the current user.
+
+```ts
+
+fetchMutualRelationships(): Promise<RawUserData[]>
+
+```
+
+**Returns:** `Promise<RawUserData[]>`
+
 ### `getProfile`
 
 Returns a user profile object for a given user ID.
