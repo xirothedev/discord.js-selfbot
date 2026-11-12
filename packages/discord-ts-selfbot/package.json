@@ -1,6 +1,6 @@
 {
   "name": "discord-ts-selfbot",
-  "version": "14.0.0",
+  "version": "14.0.1",
   "description": "An unofficial discord.js fork for creating selfbots, migrated to TypeScript and ESM",
   "keywords": [
     "api",
