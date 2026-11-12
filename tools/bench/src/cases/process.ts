@@ -25,9 +25,10 @@ export function createProcessCases(): BenchCase[] {
       label: 'spawn process async',
       node: async () => {
         const child = spawn(TRUE);
-        const [code] = (await once(child as EventEmitter, 'exit')) as [
-          number | null,
-        ];
+        const [code] = (await once(
+          child as unknown as EventEmitter,
+          'exit'
+        )) as [number | null];
         return code ?? 0;
       },
     },
