@@ -24,8 +24,8 @@ export function createProcessCases(): BenchCase[] {
       node: () => {
         const { promise, reject, resolve } = Promise.withResolvers<number>();
         const child = spawn(TRUE);
-        child.on('exit', (code) => resolve(code ?? 0));
-        child.on('error', reject);
+        child.on('exit', (code: number | null) => resolve(code ?? 0));
+        child.on('error', (error: Error) => reject(error));
         return promise;
       },
     },
