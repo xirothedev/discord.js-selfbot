@@ -3234,6 +3234,8 @@ export class Invite extends Base {
   public readonly url: string;
   public uses: number | null;
   public delete(reason?: string): Promise<Invite>;
+  public fetchFriendMembers(): Promise<{ friend_member_ids: Snowflake[] }>;
+  public fetchTargetUsersJobStatus(): Promise<unknown>;
   public toJSON(): unknown;
   public toString(): string;
   public static INVITES_PATTERN: RegExp;

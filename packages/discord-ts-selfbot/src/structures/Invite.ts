@@ -276,6 +276,18 @@ class Invite extends Base implements InviteEntity {
     return this;
   }
 
+  async fetchFriendMembers(): Promise<{ friend_member_ids: string[] }> {
+    return this.client.api.invites[this.code]['friend-members'].get<{
+      friend_member_ids: string[];
+    }>();
+  }
+
+  async fetchTargetUsersJobStatus(): Promise<unknown> {
+    return this.client.api.invites[this.code]['target-users'][
+      'job-status'
+    ].get<unknown>();
+  }
+
   toString() {
     return this.url;
   }
