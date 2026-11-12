@@ -18,4 +18,5 @@ export interface StageInstanceEntity {
   privacyLevel: PrivacyLevel;
   discoverableDisabled: boolean | null;
   guildScheduledEventId?: Snowflake;
+  inviteCode: string | null;
 }

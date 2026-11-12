@@ -4886,6 +4886,7 @@ export class StageInstance extends Base {
   public privacyLevel: PrivacyLevel;
   public discoverableDisabled: boolean | null;
   public guildScheduledEventId?: Snowflake;
+  public inviteCode: string | null;
   public readonly channel: StageChannel | null;
   public readonly guild: Guild | null;
   public get guildScheduledEvent(): GuildScheduledEvent | null;

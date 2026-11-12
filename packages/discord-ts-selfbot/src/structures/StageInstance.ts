@@ -27,6 +27,7 @@ class StageInstance extends Base implements StageInstanceEntity {
   declare privacyLevel: StageInstanceEntity['privacyLevel'];
   declare discoverableDisabled: StageInstanceEntity['discoverableDisabled'];
   declare guildScheduledEventId: StageInstanceEntity['guildScheduledEventId'];
+  declare inviteCode: StageInstanceEntity['inviteCode'];
 
   constructor(client: Client, data: RawStageInstanceData) {
     super(client);
@@ -61,6 +62,12 @@ class StageInstance extends Base implements StageInstanceEntity {
 
     if (data.guild_scheduled_event_id !== undefined) {
       this.guildScheduledEventId = data.guild_scheduled_event_id;
+    }
+
+    if (data.invite_code === undefined) {
+      this.inviteCode ??= null;
+    } else {
+      this.inviteCode = data.invite_code;
     }
   }
 

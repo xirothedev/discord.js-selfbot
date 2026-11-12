@@ -231,9 +231,11 @@ export type RawRoleData = APIRole;
 export type RawRichPresenceAssets = GatewayActivityAssets;
 
 export type RawStageInstanceData =
-  | APIStageInstance
+  | (APIStageInstance & { invite_code?: string | null })
   | (Partial<APIStageInstance> &
-      Pick<APIStageInstance, 'id' | 'channel_id' | 'guild_id'>);
+      Pick<APIStageInstance, 'id' | 'channel_id' | 'guild_id'> & {
+        invite_code?: string | null;
+      });
 
 export type RawStickerData = APISticker | APIStickerItem;
 
