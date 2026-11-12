@@ -4919,6 +4919,7 @@ export class Sticker extends Base {
   public fetch(): Promise<Sticker>;
   public fetchPack(): Promise<StickerPack | null>;
   public fetchUser(): Promise<User | null>;
+  public fetchGuild(): Promise<DiscoverableGuild>;
   public edit(data?: GuildStickerEditData, reason?: string): Promise<Sticker>;
   public delete(reason?: string): Promise<Sticker>;
   public equals(other: Sticker | unknown): boolean;

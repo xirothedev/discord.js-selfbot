@@ -228,6 +228,10 @@ class Sticker extends Base {
       (left ?? []).every((tag) => (right ?? []).includes(tag))
     );
   }
+
+  async fetchGuild(): Promise<DiscoverableGuild> {
+    return this.client.api.stickers(this.id).guild.get<DiscoverableGuild>();
+  }
 }
 
 export { Sticker, deletedStickers };
