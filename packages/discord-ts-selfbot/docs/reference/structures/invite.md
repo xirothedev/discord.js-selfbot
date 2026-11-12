@@ -192,6 +192,26 @@ delete(reason?: string): Promise<Invite>
 
 **Returns:** `Promise<Invite>`
 
+### `fetchFriendMembers`
+
+```ts
+
+fetchFriendMembers(): Promise<{ friend_member_ids: string[] }>
+
+```
+
+**Returns:** `Promise<{ friend_member_ids: string[] }>`
+
+### `fetchTargetUsersJobStatus`
+
+```ts
+
+fetchTargetUsersJobStatus(): Promise<unknown>
+
+```
+
+**Returns:** `Promise<unknown>`
+
 ### `toJSON`
 
 ```ts
