@@ -570,7 +570,8 @@ class Client extends BaseClient {
     const data = await this.api.invites(code).get<RawInviteDataSource>({
       query: {
         guild_scheduled_event_id: options?.guildScheduledEventId,
-        with_counts: true,
+        with_counts: options?.withCounts ?? true,
+        with_permissions: options?.withPermissions,
       },
     });
     return new Invite(this, data);
