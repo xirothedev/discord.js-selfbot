@@ -1,14 +1,8 @@
 import { Buffer } from 'node:buffer';
 import { setTimeout } from 'node:timers';
-import { FormData, buildConnector, Client, ProxyAgent } from 'undici';
-import _ConstantsModule from '../util/Constants';
-
-const { ciphers } = _ConstantsModule;
-import Util from '../util/Util';
+import { FormData } from 'undici';
 import type RESTManager from '../rest/RESTManager';
 import type { BaseClient } from '../client/BaseClient';
-
-let agent: unknown = null;
 
 class APIRequest {
   rest: RESTManager;
@@ -37,10 +31,6 @@ class APIRequest {
       this.client.options as { http: { headers: Record<string, string> } }
     ).http.headers['User-Agent'];
 
-    (
-      this.client.options as { ws: { properties: Record<string, string> } }
-    ).ws.properties.browser_user_agent = this.fullUserAgent;
-
     let queryString = '';
     if (options.query) {
       const queryOptions = options.query as Record<string, unknown>;
@@ -57,7 +47,7 @@ class APIRequest {
   }
 
   make(captchaKey?: unknown, captchaRqToken?: unknown): Promise<unknown> {
-    this.ensureAgent();
+    const dispatcher = this.rest.getDispatcher() as never;
 
     const API =
       this.options.versioned === false
@@ -77,31 +67,13 @@ class APIRequest {
       .fetch(url, {
         body,
         credentials: 'include',
-        dispatcher: agent as never,
+        dispatcher,
         headers: headers as never,
         method: this.method.toUpperCase(),
-        // Undici doesn't normalize "patch" into "PATCH" (which surprisingly follows the spec).
         redirect: 'follow',
         signal: controller.signal,
       })
       .finally(() => clearTimeout(timeout));
-  }
-
-  private ensureAgent(): void {
-    if (agent) {
-      return;
-    }
-    const proxyAgent = Util.checkUndiciProxyAgent(
-      this.client.options.http.agent
-    );
-    agent = proxyAgent
-      ? new ProxyAgent({
-          ...proxyAgent,
-          ciphers: ciphers.join(':'),
-        } as never)
-      : new Client('https://discord.com', {
-          connect: buildConnector({ ciphers: ciphers.join(':') }),
-        });
   }
 
   private buildHeaders(

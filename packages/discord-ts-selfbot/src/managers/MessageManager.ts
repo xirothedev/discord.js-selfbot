@@ -9,6 +9,7 @@ const { Message } = _MessageModule;
 import MessagePayload from '../structures/MessagePayload';
 import type { MessagePayloadOptions } from '../structures/MessagePayload';
 import Util from '../util/Util';
+import { uploadMessageAttachments } from '../util/OutboundMessagePipeline';
 import type { Snowflake } from 'discord-api-types/v10';
 import type {
   BaseFetchOptions,
@@ -22,7 +23,6 @@ import type {
 import type { RawMessageData, RawUserData } from '../../typings/rawDataTypes';
 import type { Message as SourceMessage } from '../structures/Message';
 import type { User } from '../structures/User';
-import type { UploadAttachment } from '../types/uploads';
 import type { Client } from '../client/Client';
 import type { Guild } from '../structures/Guild';
 
@@ -184,35 +184,10 @@ class MessageManager extends CachedManager<SourceMessage> {
       .resolveData()
       .resolveFiles();
 
-    const fileList = files ?? [];
-
-    // New API
-    const attachments = await Util.getUploadURL(
+    const attachmentsData = await uploadMessageAttachments(
       this.client,
       this.channel.id,
-      fileList
-    );
-    const requestPromises = attachments.map(
-      async (attachment: UploadAttachment) => {
-        const file = fileList[Number(attachment.id)];
-        if (!file) {
-          throw new TypeError('INVALID_TYPE', 'attachment', 'FileOptions');
-        }
-        await Util.uploadFile(file.file, attachment.upload_url);
-        return {
-          description: file.description,
-          duration_secs: file.duration_secs,
-          filename: file.name,
-          id: attachment.id,
-          uploaded_filename: attachment.upload_filename,
-          waveform: file.waveform,
-        };
-      }
-    );
-    const attachmentsData = await Promise.all(requestPromises);
-    attachmentsData.sort(
-      (left, right) =>
-        Math.trunc(Number(left.id)) - Math.trunc(Number(right.id))
+      files ?? []
     );
     if (data) {
       Object.assign(data, { attachments: attachmentsData });

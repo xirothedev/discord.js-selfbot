@@ -4,8 +4,9 @@ import _errorsModule from '../errors';
 const { TypeError } = _errorsModule;
 import MessagePayload from '../structures/MessagePayload';
 import _UtilModule from '../util/Util';
+import { uploadMessageAttachments } from '../util/OutboundMessagePipeline';
 
-const { resolveAutoArchiveMaxLimit, getUploadURL, uploadFile } = _UtilModule;
+const { resolveAutoArchiveMaxLimit } = _UtilModule;
 import type { RESTPostAPIChannelThreadsResult } from 'discord-api-types/v10';
 import type { GuildForumThreadCreateOptions } from '../../typings';
 import type { MessagePayloadOptions } from '../structures/MessagePayload';
@@ -36,34 +37,10 @@ class GuildForumThreadManager extends ThreadManager {
         : MessagePayload.create(this, message).resolveData();
 
     const { data: body, files } = await messagePayload.resolveFiles();
-    const fileList = files ?? [];
-
-    // New API
-    const attachments = await getUploadURL(
+    const attachmentsData = await uploadMessageAttachments(
       this.client,
       this.channel.id,
-      fileList
-    );
-    const requestPromises = attachments.map(async (attachment) => {
-      const index = Number(attachment.id);
-      const file = fileList[index];
-      if (!file) {
-        throw new TypeError('GUILD_FORUM_ATTACHMENT_MISSING');
-      }
-      await uploadFile(file.file, attachment.upload_url);
-      return {
-        description: file.description,
-        duration_secs: file.duration_secs,
-        filename: file.name,
-        id: attachment.id,
-        uploaded_filename: attachment.upload_filename,
-        waveform: file.waveform,
-      };
-    });
-    const attachmentsData = await Promise.all(requestPromises);
-    attachmentsData.sort(
-      (left, right) =>
-        Math.trunc(Number(left.id)) - Math.trunc(Number(right.id))
+      files ?? []
     );
 
     let archiveDuration = autoArchiveDuration;
