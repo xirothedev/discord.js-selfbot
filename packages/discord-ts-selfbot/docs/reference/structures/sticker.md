@@ -182,6 +182,16 @@ fetch(): Promise<Sticker>
 
 **Returns:** `Promise<Sticker>`
 
+### `fetchGuild`
+
+```ts
+
+fetchGuild(): Promise<DiscoverableGuild>
+
+```
+
+**Returns:** `Promise<DiscoverableGuild>`
+
 ### `fetchPack`
 
 Fetches the pack this sticker is part of from Discord, if this is a Nitro sticker.
