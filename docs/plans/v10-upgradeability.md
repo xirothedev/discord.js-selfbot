@@ -1,6 +1,8 @@
 # v9 → v10 REST and gateway upgradeability
 
-Status: research complete 2026-11-11.
+> **Status:** superseded by [ADR 0008](../adr/0008-api-v9-default.md) on 2026-11-12. The default is API v9 again. Keep this document as the live-test evidence for the v9/v10 comparison.
+
+Status: research complete 2026-11-11. Recommendation superseded 2026-11-12.
 Source: live tests on a disposable user token against `https://discord.com/api/v9` and `v10`, plus gateway `wss://gateway.discord.gg/?v=9|10`.
 
 ## Summary
@@ -71,6 +73,8 @@ The REST manager keys buckets by route template (`src/rest/RESTManager`), not by
 No field present on v10 and absent on v9 was observed in the sampled payloads, including `metadata_visibility` on connections. New fields added in later Discord releases (e.g. profile fields) appear on both versions.
 
 ## Recommendation
+
+> Historical recommendation. The default is v9 again. See [ADR 0008](../adr/0008-api-v9-default.md).
 
 Bump the default REST and gateway version from 9 to 10:
 

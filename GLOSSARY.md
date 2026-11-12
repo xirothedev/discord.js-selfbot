@@ -54,6 +54,22 @@ A cache-backed collection with fetch and mutation methods, such as `GuildManager
 
 The HTTP API at `discord.com/api`. The `RESTManager` and request handlers own rate limits, retries, and authentication.
 
+## API version
+
+The version segment in the REST and gateway URLs, such as `v9` or `v10`. It is not the version of the `discord-api-types` package.
+
+## Client properties
+
+The values that describe the client build and host to Discord. They travel in the `X-Super-Properties` header and in the gateway identify payload. Also called "super properties".
+
+## Client signature
+
+The observable set of values that identify a client to Discord: API version, request headers, client properties, gateway identify fields, and transport behavior. It is not a single header.
+
+## Installation ID
+
+A stable identifier for one installation of a client. Discord sends it in `X-Installation-ID` and the gateway `installation_id` field. It is not the user ID or the token.
+
 ## Gateway
 
 The Discord WebSocket connection. It delivers events such as `MESSAGE_CREATE`, `READY`, and `CALL_CREATE`. The client maps them to `Events` names.

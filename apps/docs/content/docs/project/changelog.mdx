@@ -3,6 +3,18 @@ title: Changelog
 description: Release notes for discord-ts-selfbot.
 ---
 
+## Unreleased
+
+### Changed
+
+- REST and gateway default to API v9, which is the version the official Discord client uses. `http.version` and `ws.version` stay configurable.
+- Existing client property values now match Discord desktop `1.0.9267` (build `667580`). No new client property fields were added.
+- The package version does not change for this update.
+
+### Notes
+
+- This improves request parity with the official client. It does not guarantee that Discord will not detect automation.
+
 ## 14.0.0 — 2026-11-08
 
 The first release of the Bun + Turborepo monorepo.

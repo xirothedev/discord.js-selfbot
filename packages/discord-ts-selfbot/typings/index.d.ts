@@ -2767,10 +2767,20 @@ export abstract class GuildChannel extends Channel {
     query: string,
     options?: Record<string, unknown>
   ): Promise<unknown>;
-  public createForumTag(data?: Partial<ForumTag>): Promise<ForumTag>;
+  public createForumTag(data: {
+    name: string;
+    moderated?: boolean;
+    emojiId?: Snowflake | null;
+    emojiName?: string | null;
+  }): Promise<unknown>;
   public modifyForumTag(
     tagId: Snowflake,
-    data?: Record<string, unknown>
+    data: {
+      name: string;
+      moderated?: boolean;
+      emojiId?: Snowflake | null;
+      emojiName?: string | null;
+    }
   ): Promise<unknown>;
   public deleteForumTag(tagId: Snowflake): Promise<unknown>;
   public removeLobbyLink(): Promise<unknown>;

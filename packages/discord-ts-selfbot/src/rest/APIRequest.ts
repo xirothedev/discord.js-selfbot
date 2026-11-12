@@ -114,7 +114,7 @@ class APIRequest {
       origin: 'https://discord.com',
       priority: 'u=1, i',
       referer: 'https://discord.com/channels/@me',
-      'sec-ch-ua': '"Not:A-Brand";v="24", "Chromium";v="134"',
+      'sec-ch-ua': '"Not?A_Brand";v="24", "Chromium";v="152"',
       'sec-ch-ua-mobile': '?0',
       'sec-ch-ua-platform': '"Windows"',
       'sec-fetch-dest': 'empty',
