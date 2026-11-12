@@ -2,6 +2,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { once } from 'node:events';
 import { setTimeout as sleep } from 'node:timers/promises';
 
+import type { EventEmitter } from 'node:events';
 import type { BenchCase } from '../types';
 
 const TRUE = '/usr/bin/true';
@@ -24,7 +25,9 @@ export function createProcessCases(): BenchCase[] {
       label: 'spawn process async',
       node: async () => {
         const child = spawn(TRUE);
-        const [code] = (await once(child, 'exit')) as [number | null];
+        const [code] = (await once(child as EventEmitter, 'exit')) as [
+          number | null,
+        ];
         return code ?? 0;
       },
     },
