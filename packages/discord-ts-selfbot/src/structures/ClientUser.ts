@@ -14,11 +14,18 @@ import type {
   APIUser,
   Snowflake,
 } from 'discord-api-types/v10';
-import type { RawInviteData } from '../../typings/rawDataTypes';
+import type {
+  RawInviteData,
+  RawUserProfileData,
+} from '../../typings/rawDataTypes';
 import type { ClientUserEntity } from '../types/entities/client-user';
 import type { PatchOf } from '../types/schema';
 import type Client from '../client/Client';
-import type { Connection, PresenceStatusData } from '../../typings';
+import type {
+  Connection,
+  PresenceStatusData,
+  UserProfileOptions,
+} from '../../typings';
 
 class ClientUser extends User implements ClientUserEntity {
   declare mfaEnabled: ClientUserEntity['mfaEnabled'];
@@ -305,9 +312,30 @@ class ClientUser extends User implements ClientUserEntity {
     return this.edit({ pronouns });
   }
 
-  async fetchProfile(userId?: Snowflake) {
+  async fetchProfile(
+    userIdOrOptions?: Snowflake | UserProfileOptions,
+    options?: UserProfileOptions
+  ): Promise<RawUserProfileData> {
+    let userId: Snowflake | undefined;
+    let opts: UserProfileOptions | undefined;
+    if (typeof userIdOrOptions === 'string') {
+      userId = userIdOrOptions;
+      opts = options;
+    } else {
+      opts = userIdOrOptions;
+    }
     const id = userId ?? this.id;
-    return this.client.api.users(id).profile.get<UserProfile>();
+    return this.client.api.users(id).profile.get<RawUserProfileData>({
+      query: {
+        connections_role_id: opts?.connectionsRoleId,
+        guild_id: opts?.guildId,
+        join_request_id: opts?.joinRequestId,
+        type: opts?.type,
+        with_mutual_friends: opts?.withMutualFriends ?? true,
+        with_mutual_friends_count: opts?.withMutualFriendsCount ?? true,
+        with_mutual_guilds: opts?.withMutualGuilds ?? true,
+      },
+    });
   }
 
   async editProfile(data: Partial<UserProfile> = {}) {
@@ -316,8 +344,24 @@ class ClientUser extends User implements ClientUserEntity {
     });
   }
 
-  async fetchMentions() {
-    return this.client.api.users['@me'].mentions.get<RecentMention[]>();
+  async fetchMentions(
+    options: {
+      before?: Snowflake;
+      limit?: number;
+      guildId?: Snowflake;
+      roles?: boolean;
+      everyone?: boolean;
+    } = {}
+  ) {
+    return this.client.api.users['@me'].mentions.get<RecentMention[]>({
+      query: {
+        before: options.before,
+        everyone: options.everyone,
+        guild_id: options.guildId,
+        limit: options.limit,
+        roles: options.roles,
+      },
+    });
   }
 
   deleteMention(messageId: Snowflake) {
@@ -325,13 +369,24 @@ class ClientUser extends User implements ClientUserEntity {
   }
 
   async fetchSavedMessages() {
-    return this.client.api.users['@me']['saved-messages'].get<SavedMessage[]>();
+    const data = await this.client.api.users['@me']['saved-messages'].get<{
+      results: SavedMessage[];
+    }>();
+    return data.results ?? [];
   }
 
-  saveMessage(channelId: Snowflake, messageId: Snowflake) {
+  saveMessage(
+    channelId: Snowflake,
+    messageId: Snowflake,
+    options: { dueAt?: string | null } = {}
+  ) {
+    const data: Record<string, unknown> = {};
+    if (options.dueAt !== undefined) {
+      data.due_at = options.dueAt;
+    }
     return this.client.api.users['@me']
       ['saved-messages'](channelId)(messageId)
-      .put({ data: {} });
+      .put({ data });
   }
 
   unsaveMessage(channelId: Snowflake, messageId: Snowflake) {

@@ -14,6 +14,7 @@ import type { APIUser } from 'discord-api-types/v10';
 import type { ImageURLOptions, UserProfileOptions } from '../../typings';
 import type {
   RawUserApplicationIdentityData,
+  RawUserData,
   RawUserProfileData,
 } from '../../typings/rawDataTypes';
 import type { SelfbotUserData } from '../types/selfbot/user';
@@ -385,6 +386,10 @@ class User extends Base implements UserEntity {
 
   fetch(force = true) {
     return this.client.users.fetch(this.id, { force });
+  }
+
+  async fetchMutualRelationships(): Promise<RawUserData[]> {
+    return this.client.api.users(this.id).relationships.get<RawUserData[]>();
   }
 
   getProfile(options: string | UserProfileOptions = {}) {
