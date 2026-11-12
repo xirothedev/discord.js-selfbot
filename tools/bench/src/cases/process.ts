@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
+import type { ChildProcess } from 'node:child_process';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 import type { BenchCase } from '../types';
@@ -23,7 +24,7 @@ export function createProcessCases(): BenchCase[] {
       label: 'spawn process async',
       node: () => {
         const { promise, reject, resolve } = Promise.withResolvers<number>();
-        const child = spawn(TRUE);
+        const child: ChildProcess = spawn(TRUE);
         child.on('exit', (code: number | null) => resolve(code ?? 0));
         child.on('error', (error: Error) => reject(error));
         return promise;
