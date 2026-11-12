@@ -7,14 +7,14 @@
  * Set DISCORD_TOKEN in the environment before you start the example.
  */
 
-import { Client, CustomStatus, Events } from 'discord-ts-selfbot';
+import { Client, CustomStatus, Events } from '@discord-selfbot/core';
 
 const client = new Client();
 
 client.once(Events.CLIENT_READY, (readyClient) => {
   const customStatus = new CustomStatus(readyClient)
     .setEmoji('🎮')
-    .setState('discord-ts-selfbot v14 example');
+    .setState('@discord-selfbot/core v14 example');
 
   readyClient.user.setPresence({
     activities: [customStatus],

@@ -2,7 +2,7 @@
 
 Status: audit 2026-11-11 (research only; no code changes).
 Source: `https://docs.discord.food/` (discord-userdoccers), fetched via MCP `discord-userdoccers`.
-Snapshot: `discord-ts-selfbot@14.x` (post v10 bump, post guild gap batch).
+Snapshot: `@discord-selfbot/core@14.x` (post v10 bump, post guild gap batch).
 
 Scope: every REST endpoint documented under `/resources/*` and `/topics/*` on discord.food, compared to the library's managers/structures. Auth column retained (user / bot / OAuth2 / none) per user request to include all routes; implementation of bot-only and OAuth2-only routes remains excluded from the selfbot surface per project policy.
 

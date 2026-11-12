@@ -2,7 +2,7 @@
   "name": "@discord-ts-selfbot/examples-js",
   "version": "0.0.0",
   "private": true,
-  "description": "JavaScript examples for discord-ts-selfbot",
+  "description": "JavaScript examples for @discord-selfbot/core",
   "type": "module",
   "scripts": {
     "check": "bun check",
@@ -15,7 +15,7 @@
     "slash-commands": "bun run slash-commands.js"
   },
   "dependencies": {
-    "discord-ts-selfbot": "workspace:*"
+    "@discord-selfbot/core": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest"

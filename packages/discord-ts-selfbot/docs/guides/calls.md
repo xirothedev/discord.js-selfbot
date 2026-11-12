@@ -3,7 +3,7 @@
 ## Ring a DM
 
 ```ts
-import { Events } from 'discord-ts-selfbot';
+import { Events } from '@discord-selfbot/core';
 
 const channel = client.channels.cache.get('dm-channel-id');
 if (channel?.type !== 'DM') throw new Error('Not a DM channel.');

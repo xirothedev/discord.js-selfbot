@@ -2,7 +2,7 @@
   "name": "@discord-ts-selfbot/parity",
   "version": "0.0.0",
   "private": true,
-  "description": "Private differential test harness: runs the same fixtures through discord-ts-selfbot and discord.js@14.28.1",
+  "description": "Private differential test harness: runs the same fixtures through @discord-selfbot/core and discord.js@14.28.1",
   "type": "module",
   "main": "./src/index.ts",
   "scripts": {
@@ -14,7 +14,7 @@
     "test": "bun test --pass-with-no-tests"
   },
   "dependencies": {
-    "discord-ts-selfbot": "workspace:*",
+    "@discord-selfbot/core": "workspace:*",
     "discord.js": "14.28.1"
   },
   "devDependencies": {

@@ -3,29 +3,29 @@ title: Migrating from v13
 description: Rename the package, update the runtime, and move to the v14 names.
 ---
 
-This fork started as `discord.js-selfbot-v13`. The new package is `discord-ts-selfbot@14`, with a discord.js v14-compatible surface and a Bun-only runtime.
+This fork started as `discord.js-selfbot-v13`. The new package is `@discord-selfbot/core@14`, with a discord.js v14-compatible surface and a Bun-only runtime.
 
 ## 1. Rename the package
 
 ```diff
 - "discord.js-selfbot-v13": "^3.7.0"
-+ "discord-ts-selfbot": "^14.0.0"
++ "@discord-selfbot/core": "^14.0.0"
 ```
 
 ```diff
 - const { Client } = require('discord.js-selfbot-v13');
-+ import { Client } from 'discord-ts-selfbot';
++ import { Client } from '@discord-selfbot/core';
 ```
 
 The old package remains on npm under its original owner. It is not replaced by this package.
 
 ## 2. Switch the runtime to Bun
 
-`discord-ts-selfbot` declares `engines.bun >= 1.4.4` and uses Bun for install, tests, type checking, formatting, and build. Node.js is not supported.
+`@discord-selfbot/core` declares `engines.bun >= 1.4.4` and uses Bun for install, tests, type checking, formatting, and build. Node.js is not supported.
 
 ```diff
 - npm install discord.js-selfbot-v13
-+ bun add discord-ts-selfbot
++ bun add @discord-selfbot/core
 ```
 
 If your project still uses `require`, the package source still uses CommonJS internally, but new code should use `import`.
@@ -64,7 +64,7 @@ The `Events` object is still the source of event names. v14 adds `Events.ClientR
 ```
 
 ```ts
-import { Events, Status } from 'discord-ts-selfbot';
+import { Events, Status } from '@discord-selfbot/core';
 
 client.once(Events.CLIENT_READY, (readyClient) => {
   console.log(Status[readyClient.ws.status]);
@@ -76,8 +76,8 @@ client.once(Events.CLIENT_READY, (readyClient) => {
 The runtime `Partials` enum is numeric. The public `ClientOptions.partials` type uses the v14 string union. The events example casts the array until the two representations agree:
 
 ```ts
-import { Partials } from 'discord-ts-selfbot';
-import type { PartialTypes } from 'discord-ts-selfbot';
+import { Partials } from '@discord-selfbot/core';
+import type { PartialTypes } from '@discord-selfbot/core';
 
 const partials = [Partials.Channel, Partials.Message, Partials.Reaction] as unknown as PartialTypes[];
 const client = new Client({ partials });

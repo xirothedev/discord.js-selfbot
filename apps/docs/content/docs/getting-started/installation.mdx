@@ -1,6 +1,6 @@
 ---
 title: Installation
-description: Install discord-ts-selfbot with Bun and confirm the runtime version.
+description: Install @discord-selfbot/core with Bun and confirm the runtime version.
 ---
 
 ## Requirements
@@ -17,17 +17,17 @@ description: Install discord-ts-selfbot with Bun and confirm the runtime version
 ## Install
 
 ```sh
-bun add discord-ts-selfbot
+bun add @discord-selfbot/core
 ```
 
-The package name is `discord-ts-selfbot`, not the old `discord.js-selfbot-v13`. The published major is `14`, which tracks the `discord.js@14.28.1` API baseline.
+The package name is `@discord-selfbot/core`, not the old `discord.js-selfbot-v13`. The published major is `14`, which tracks the `discord.js@14.28.1` API baseline.
 
 ## Import
 
 The package is ESM-first. Import the classes and enums by name:
 
 ```ts
-import { Client, Events } from 'discord-ts-selfbot';
+import { Client, Events } from '@discord-selfbot/core';
 ```
 
 The source is TypeScript. It uses CommonJS `require` calls internally for compatibility with the original fork, but new code should use `import`.
@@ -37,9 +37,9 @@ The source is TypeScript. It uses CommonJS `require` calls internally for compat
 Create a small file and run it with Bun:
 
 ```ts
-import { Client, version } from 'discord-ts-selfbot';
+import { Client, version } from '@discord-selfbot/core';
 
-console.log(`discord-ts-selfbot ${version}`);
+console.log(`@discord-selfbot/core ${version}`);
 console.log(typeof Client);
 ```
 

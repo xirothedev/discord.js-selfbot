@@ -119,7 +119,7 @@ function addTypingsGroups(input: {
 
 export function generateApi(options: { check?: boolean } = {}): GenerateResult {
   const tempDir = mkdtempSync(
-    path.join(os.tmpdir(), 'discord-ts-selfbot-api-')
+    path.join(os.tmpdir(), 'discord-selfbot-core-api-')
   );
   const typingsProject = runTypeDoc({
     entryPointStrategy: 'resolve',

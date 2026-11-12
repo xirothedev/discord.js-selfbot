@@ -1,7 +1,7 @@
 # Guild (server) API gap audit
 
 Status: audit 2026-11-11 (research only; no code changes yet).
-Source: `discord/discord-api-docs` Guild resource + `docs.discord.food`. Snapshot: `discord-ts-selfbot@14.1.0`.
+Source: `discord/discord-api-docs` Guild resource + `docs.discord.food`. Snapshot: `@discord-selfbot/core@14.1.0`.
 
 Scope: REST endpoints under `/guilds/{id}` that a **user token** (guild owner or admin) can call, compared to the library's `Guild` / `GuildManager` / related managers. Bot-token-only and privileged-intent endpoints are listed as N/A.
 

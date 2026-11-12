@@ -3,7 +3,7 @@
 Status: implemented 2026-11-11 — one route unverified on a live account
 Source: `discord/discord-api-docs@36adecb` (`main`, 2026-11-11). The User page `developers/resources/user.mdx` last changed at `e230236` (2026-10-31).
 Community source: `docs.discord.food` for the undocumented profile and widget payloads.
-Snapshot: `discord-ts-selfbot@14.0.0`, `discord-api-types@0.38.58`.
+Snapshot: `@discord-selfbot/core@14.0.0`, `discord-api-types@0.38.58`.
 
 `discord-api-types@0.38.58` is the latest release (2026-11-07). `bun.lock:759` already resolves it. `package.json` keeps the `^0.38.15` floor because this work uses no type added after `.15`.
 

@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 
-The fork was a single npm package: JavaScript source, hand-written `.d.ts`, no build, no tests. We are re-platforming it as a Bun-workspaces + Turborepo monorepo, with TypeScript modules as the source of truth (the original `.js` files stay as the runtime/reference pair), `discord-ts-selfbot@14` as the package identity, and Bun-only runtime (`engines: bun >=1.4.4`). The reason is the v14 port: v14 parity, the selfbot features, and a TDD harness are too large for a single flat package with no test seam.
+The fork was a single npm package: JavaScript source, hand-written `.d.ts`, no build, no tests. We are re-platforming it as a Bun-workspaces + Turborepo monorepo, with TypeScript modules as the source of truth (the original `.js` files stay as the runtime/reference pair), `@discord-selfbot/core@14` as the package identity, and Bun-only runtime (`engines: bun >=1.4.4`). The reason is the v14 port: v14 parity, the selfbot features, and a TDD harness are too large for a single flat package with no test seam.
 
 ## Considered options
 

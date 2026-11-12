@@ -94,7 +94,7 @@ const HomePage = () => (
           <div className="border-fd-border bg-fd-card mt-8 flex max-w-md items-center gap-3 rounded-lg border px-4 py-3 font-mono text-sm">
             <span className="text-discord-green">$</span>
             <code className="text-fd-foreground">
-              bun add discord-ts-selfbot
+              bun add @discord-selfbot/core
             </code>
           </div>
         </div>
@@ -109,7 +109,7 @@ const HomePage = () => (
             </span>
           </div>
           <pre className="overflow-x-auto p-4 font-mono text-xs leading-5">
-            <code>{`import { Client, Events } from 'discord-ts-selfbot';
+            <code>{`import { Client, Events } from '@discord-selfbot/core';
 
 const client = new Client();
 

@@ -7,7 +7,7 @@
  * Set DISCORD_TOKEN in the environment before you start the example.
  */
 
-import { Client, Events, Partials, Status } from 'discord-ts-selfbot';
+import { Client, Events, Partials, Status } from '@discord-selfbot/core';
 
 const client = new Client({
   partials: [Partials.Channel, Partials.Message, Partials.Reaction],

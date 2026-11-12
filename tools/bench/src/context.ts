@@ -8,7 +8,7 @@ const ONE_K = 1024;
 const ONE_M = 1024 * 1024;
 
 export function createContext(): BenchContext {
-  const dir = mkdtempSync(path.join(tmpdir(), 'discord-ts-selfbot-bench-'));
+  const dir = mkdtempSync(path.join(tmpdir(), '@discord-selfbot/core-bench-'));
   const repoRoot = path.join(import.meta.dir, '..', '..', '..');
   const small = Buffer.alloc(ONE_K, 1);
   const medium = Buffer.alloc(64 * ONE_K, 2);

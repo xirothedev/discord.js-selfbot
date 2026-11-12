@@ -38,7 +38,7 @@ await message.reactions.cache.get('✅')?.users.remove(client.user);
 ## Attachments
 
 ```ts
-import { AttachmentBuilder } from 'discord-ts-selfbot';
+import { AttachmentBuilder } from '@discord-selfbot/core';
 
 const file = new AttachmentBuilder(Buffer.from('hello'), { name: 'hello.txt' });
 await message.reply({ content: 'File attached.', files: [file] });

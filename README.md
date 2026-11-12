@@ -1,4 +1,4 @@
-# discord-ts-selfbot
+# @discord-selfbot/core
 
 > A Bun-first, TypeScript selfbot library with a discord.js v14-compatible API.
 
@@ -12,7 +12,7 @@
 
 ## About
 
-`discord-ts-selfbot@14` is a fork of `discord.js-selfbot-v13`, re-platformed as a Bun + Turborepo monorepo. It tracks the `discord.js@14.28.1` public surface and keeps the selfbot-only features: presence, account edits, friend invites, search, guild settings, billing, voice, calls, and recording.
+`@discord-selfbot/core@14` is a fork of `discord.js-selfbot-v13`, re-platformed as a Bun + Turborepo monorepo. It tracks the `discord.js@14.28.1` public surface and keeps the selfbot-only features: presence, account edits, friend invites, search, guild settings, billing, voice, calls, and recording.
 
 - **Runtime:** Bun 1.4.4 or newer. Node.js is not supported.
 - **Source:** TypeScript only. Bun runs the `.ts` source directly.
@@ -23,13 +23,13 @@
 ## Install
 
 ```sh
-bun add discord-ts-selfbot
+bun add @discord-selfbot/core
 ```
 
 ## Quickstart
 
 ```ts
-import { Client, Events } from 'discord-ts-selfbot';
+import { Client, Events } from '@discord-selfbot/core';
 
 const client = new Client();
 

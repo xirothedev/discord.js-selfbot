@@ -91,7 +91,7 @@ function main(): void {
         moduleResolution: 'bundler',
         noEmit: true,
         paths: {
-          'discord-ts-selfbot': ['typings/index.d.ts'],
+          '@discord-selfbot/core': ['typings/index.d.ts'],
         },
         skipLibCheck: true,
         strict: true,

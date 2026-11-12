@@ -1,6 +1,6 @@
 # JavaScript examples
 
-Runnable JavaScript examples for `discord-ts-selfbot`, executed with Bun.
+Runnable JavaScript examples for `@discord-selfbot/core`, executed with Bun.
 
 ## Setup
 

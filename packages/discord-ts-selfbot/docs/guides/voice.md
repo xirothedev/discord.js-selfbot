@@ -3,7 +3,7 @@
 ## Join a channel
 
 ```ts
-import { Events } from 'discord-ts-selfbot';
+import { Events } from '@discord-selfbot/core';
 
 const channel = client.channels.cache.get('voice-channel-id');
 if (!channel) throw new Error('Channel not found.');

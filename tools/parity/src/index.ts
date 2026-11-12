@@ -1,3 +1,3 @@
-// Placeholder: differential test harness (discord-ts-selfbot vs discord.js@14.28.1).
+// Placeholder: differential test harness (@discord-selfbot/core vs discord.js@14.28.1).
 // Implemented in a later slice.
 export const parityHarnessReady = false;

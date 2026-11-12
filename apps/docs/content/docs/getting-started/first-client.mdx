@@ -8,8 +8,8 @@ description: Connect with a user token, listen for events, and shut down cleanly
 <Tabs items={['TypeScript', 'JavaScript']}>
   <Tab value="TypeScript">
     ```ts
-    import { Client, Events } from 'discord-ts-selfbot';
-    import type { Message } from 'discord-ts-selfbot';
+    import { Client, Events } from '@discord-selfbot/core';
+    import type { Message } from '@discord-selfbot/core';
 
     const token = process.env.DISCORD_TOKEN;
     if (!token) throw new Error('Set DISCORD_TOKEN.');
@@ -37,7 +37,7 @@ description: Connect with a user token, listen for events, and shut down cleanly
   </Tab>
   <Tab value="JavaScript">
     ```js
-    import { Client, Events } from 'discord-ts-selfbot';
+    import { Client, Events } from '@discord-selfbot/core';
 
     const token = process.env.DISCORD_TOKEN;
     if (!token) throw new Error('Set DISCORD_TOKEN.');

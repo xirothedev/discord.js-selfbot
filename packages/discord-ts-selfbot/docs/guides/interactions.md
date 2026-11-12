@@ -3,8 +3,8 @@
 ## Register slash commands
 
 ```ts
-import { Client, Events } from 'discord-ts-selfbot';
-import type { ApplicationCommandData } from 'discord-ts-selfbot';
+import { Client, Events } from '@discord-selfbot/core';
+import type { ApplicationCommandData } from '@discord-selfbot/core';
 
 const commands: ApplicationCommandData[] = [
   { name: 'ping', description: 'Replies with Pong!' },
@@ -44,7 +44,7 @@ await interaction.editReply(result);
 Build a row with the v14 builders:
 
 ```ts
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord-ts-selfbot';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from '@discord-selfbot/core';
 
 const row = new ActionRowBuilder().addComponents(
   new ButtonBuilder().setCustomId('confirm').setLabel('Confirm').setStyle(ButtonStyle.Primary),
@@ -92,7 +92,7 @@ The collector returns an `InteractionCollector`. It listens to `INTERACTION_CREA
 ## Modals
 
 ```ts
-import { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord-ts-selfbot';
+import { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } from '@discord-selfbot/core';
 
 const modal = new ModalBuilder().setCustomId('feedback').setTitle('Feedback').addComponents(
   new ActionRowBuilder().addComponents(

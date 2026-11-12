@@ -6,7 +6,7 @@ description: Join a voice channel, play media, and clean up the connection.
 ## Join a channel
 
 ```ts
-import { Events } from 'discord-ts-selfbot';
+import { Events } from '@discord-selfbot/core';
 
 const channel = client.channels.cache.get('voice-channel-id');
 if (!channel) throw new Error('Channel not found.');

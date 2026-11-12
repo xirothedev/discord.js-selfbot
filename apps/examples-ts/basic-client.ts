@@ -7,8 +7,8 @@
  * Set DISCORD_TOKEN in the environment before you start the example.
  */
 
-import { Client, Events } from 'discord-ts-selfbot';
-import type { Message } from 'discord-ts-selfbot';
+import { Client, Events } from '@discord-selfbot/core';
+import type { Message } from '@discord-selfbot/core';
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) {

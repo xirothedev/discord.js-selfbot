@@ -1,6 +1,6 @@
 import { createGetUrl } from 'fumadocs-core/source';
 
-export const appName = 'discord-ts-selfbot';
+export const appName = '@discord-selfbot/core';
 export const appVersion = '14.0.0';
 export const siteUrl = 'https://xirothedev.github.io/discord.js-selfbot';
 export const docsRoute = '/docs';

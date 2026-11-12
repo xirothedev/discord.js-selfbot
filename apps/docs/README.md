@@ -1,6 +1,6 @@
 # @discord-ts-selfbot/docs
 
-The Fumadocs documentation site for `discord-ts-selfbot`.
+The Fumadocs documentation site for `@discord-selfbot/core`.
 
 ## Commands
 

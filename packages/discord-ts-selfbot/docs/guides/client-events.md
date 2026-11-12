@@ -3,8 +3,8 @@
 ## Create a client
 
 ```ts
-import { Client, Events, Partials } from 'discord-ts-selfbot';
-import type { PartialTypes } from 'discord-ts-selfbot';
+import { Client, Events, Partials } from '@discord-selfbot/core';
+import type { PartialTypes } from '@discord-selfbot/core';
 
 const partials = [Partials.Channel, Partials.Message, Partials.Reaction] as unknown as PartialTypes[];
 
@@ -12,7 +12,7 @@ const client = new Client({
   partials,
   presence: {
     status: 'online',
-    activities: [{ name: 'discord-ts-selfbot', type: 'WATCHING' }],
+    activities: [{ name: '@discord-selfbot/core', type: 'WATCHING' }],
   },
 });
 ```
@@ -69,7 +69,7 @@ client.on(Events.MessageCreate, async (message) => {
 `client.ws.status` is a numeric `Status` value:
 
 ```ts
-import { Status } from 'discord-ts-selfbot';
+import { Status } from '@discord-selfbot/core';
 
 const label = Status[client.ws.status] ?? 'unknown';
 console.log(`Gateway: ${label}`);

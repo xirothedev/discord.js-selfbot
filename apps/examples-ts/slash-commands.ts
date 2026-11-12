@@ -7,11 +7,11 @@
  * Set DISCORD_TOKEN in the environment before you start the example.
  */
 
-import { Client, Events } from 'discord-ts-selfbot';
+import { Client, Events } from '@discord-selfbot/core';
 import type {
   ApplicationCommandData,
   ApplicationCommandManager,
-} from 'discord-ts-selfbot';
+} from '@discord-selfbot/core';
 
 const commands: ApplicationCommandData[] = [
   {

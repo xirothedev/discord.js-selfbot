@@ -6,8 +6,8 @@
   ### TypeScript
 
 ```ts
-import { Client, Events } from 'discord-ts-selfbot';
-import type { Message } from 'discord-ts-selfbot';
+import { Client, Events } from '@discord-selfbot/core';
+import type { Message } from '@discord-selfbot/core';
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) throw new Error('Set DISCORD_TOKEN.');
@@ -36,7 +36,7 @@ await client.login(token);
   ### JavaScript
 
 ```js
-import { Client, Events } from 'discord-ts-selfbot';
+import { Client, Events } from '@discord-selfbot/core';
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) throw new Error('Set DISCORD_TOKEN.');

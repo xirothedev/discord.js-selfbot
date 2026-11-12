@@ -2,7 +2,7 @@
   "name": "@discord-ts-selfbot/docs",
   "version": "0.0.0",
   "private": true,
-  "description": "Documentation site for discord-ts-selfbot",
+  "description": "Documentation site for @discord-selfbot/core",
   "type": "module",
   "scripts": {
     "dev": "bun run api && next dev",

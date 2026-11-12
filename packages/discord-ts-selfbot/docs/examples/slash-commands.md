@@ -21,11 +21,11 @@ DISCORD_TOKEN=your-token bun run --cwd apps/examples-ts slash-commands
  * Set DISCORD_TOKEN in the environment before you start the example.
  */
 
-import { Client, Events } from 'discord-ts-selfbot';
+import { Client, Events } from '@discord-selfbot/core';
 import type {
   ApplicationCommandData,
   ApplicationCommandManager,
-} from 'discord-ts-selfbot';
+} from '@discord-selfbot/core';
 
 const commands: ApplicationCommandData[] = [
   {
@@ -71,7 +71,7 @@ await client.login(token);
  * Set DISCORD_TOKEN in the environment before you start the example.
  */
 
-import { Client, Events } from 'discord-ts-selfbot';
+import { Client, Events } from '@discord-selfbot/core';
 
 const commands = [
   {
@@ -87,7 +87,7 @@ const commands = [
 const client = new Client();
 
 client.once(Events.CLIENT_READY, async (readyClient) => {
-  /** @type {import('discord-ts-selfbot').ApplicationCommandManager} */
+  /** @type {import('@discord-selfbot/core').ApplicationCommandManager} */
   const manager = readyClient.application.commands;
   const registered = await manager.set(commands);
 

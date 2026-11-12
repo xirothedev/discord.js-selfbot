@@ -21,8 +21,8 @@ DISCORD_TOKEN=your-token bun run --cwd apps/examples-ts events
  * Set DISCORD_TOKEN in the environment before you start the example.
  */
 
-import { Client, Events, Partials, Status } from 'discord-ts-selfbot';
-import type { Message, PartialTypes } from 'discord-ts-selfbot';
+import { Client, Events, Partials, Status } from '@discord-selfbot/core';
+import type { Message, PartialTypes } from '@discord-selfbot/core';
 
 // The runtime Partials enum is numeric, while ClientOptions.partials uses the
 // v14 string union. Cast until the package typings and enum agree.
@@ -80,7 +80,7 @@ await client.login(token);
  * Set DISCORD_TOKEN in the environment before you start the example.
  */
 
-import { Client, Events, Partials, Status } from 'discord-ts-selfbot';
+import { Client, Events, Partials, Status } from '@discord-selfbot/core';
 
 const client = new Client({
   partials: [Partials.Channel, Partials.Message, Partials.Reaction],

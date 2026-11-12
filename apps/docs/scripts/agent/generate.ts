@@ -81,7 +81,7 @@ export function generateAgentDocs(options: { outputDir: string }): {
     version: string;
   };
   const tempDir = mkdtempSync(
-    path.join(os.tmpdir(), 'discord-ts-selfbot-agent-')
+    path.join(os.tmpdir(), 'discord-selfbot-core-agent-')
   );
   const project = runTypeDoc({
     entryPointStrategy: 'resolve',
@@ -224,7 +224,7 @@ function main(): void {
 
   if (check) {
     const temp = mkdtempSync(
-      path.join(os.tmpdir(), 'discord-ts-selfbot-agent-check-')
+      path.join(os.tmpdir(), 'discord-selfbot-core-agent-check-')
     );
     try {
       const result = generateAgentDocs({ outputDir: temp });

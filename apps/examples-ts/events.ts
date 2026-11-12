@@ -7,8 +7,8 @@
  * Set DISCORD_TOKEN in the environment before you start the example.
  */
 
-import { Client, Events, Partials, Status } from 'discord-ts-selfbot';
-import type { Message, PartialTypes } from 'discord-ts-selfbot';
+import { Client, Events, Partials, Status } from '@discord-selfbot/core';
+import type { Message, PartialTypes } from '@discord-selfbot/core';
 
 // The runtime Partials enum is numeric, while ClientOptions.partials uses the
 // v14 string union. Cast until the package typings and enum agree.

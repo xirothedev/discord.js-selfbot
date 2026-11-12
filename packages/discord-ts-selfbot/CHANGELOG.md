@@ -1,4 +1,4 @@
-# discord-ts-selfbot
+# @discord-selfbot/core
 
 ## 14.0.1
 

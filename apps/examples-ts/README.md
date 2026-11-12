@@ -1,6 +1,6 @@
 # TypeScript examples
 
-Runnable TypeScript examples for `discord-ts-selfbot`, executed with Bun.
+Runnable TypeScript examples for `@discord-selfbot/core`, executed with Bun.
 
 ## Setup
 

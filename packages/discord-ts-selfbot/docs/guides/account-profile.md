@@ -3,13 +3,13 @@
 ## Presence and status
 
 ```ts
-import { CustomStatus, Events } from 'discord-ts-selfbot';
+import { CustomStatus, Events } from '@discord-selfbot/core';
 
 client.once(Events.CLIENT_READY, (readyClient) => {
   readyClient.user.setPresence({
     status: 'online',
     afk: false,
-    activities: [new CustomStatus(readyClient).setEmoji('🎮').setState('discord-ts-selfbot')],
+    activities: [new CustomStatus(readyClient).setEmoji('🎮').setState('@discord-selfbot/core')],
   });
 });
 ```
@@ -83,7 +83,7 @@ for (const connection of connections.values()) {
 ## Application role connections
 
 ```ts
-import { OAuth2RoleConnection } from 'discord-ts-selfbot';
+import { OAuth2RoleConnection } from '@discord-selfbot/core';
 
 const roleConnection = new OAuth2RoleConnection(client, oauthToken);
 await roleConnection.fetch(applicationId);

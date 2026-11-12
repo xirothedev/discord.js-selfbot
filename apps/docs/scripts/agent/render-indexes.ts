@@ -36,7 +36,7 @@ export function renderReferenceIndex(
     )
     .join('\n');
 
-  return `# API reference\n\nPublic runtime surface of \`discord-ts-selfbot@${version}\`. Every page is generated from \`typings/index.d.ts\`.\n\nType-only exports stay in \`typings/index.d.ts\`; this reference does not repeat them.\n\n${sections.filter(Boolean).join('\n\n')}${gaps ? `\n\n## Known gaps\n\n${gaps}` : ''}\n`;
+  return `# API reference\n\nPublic runtime surface of \`@discord-selfbot/core@${version}\`. Every page is generated from \`typings/index.d.ts\`.\n\nType-only exports stay in \`typings/index.d.ts\`; this reference does not repeat them.\n\n${sections.filter(Boolean).join('\n\n')}${gaps ? `\n\n## Known gaps\n\n${gaps}` : ''}\n`;
 }
 
 export function renderEventsIndex(
@@ -131,7 +131,7 @@ export function renderIndex(input: {
     return `### ${area.title}\n\n${lines.join('\n')}`;
   }).filter(Boolean);
 
-  return `# discord-ts-selfbot ${version} — Agent docs
+  return `# @discord-selfbot/core ${version} — Agent docs
 
 Version-matched documentation for coding agents. Read this file first, then open the page for the task. The reference is generated from the public typings; exact types stay in \`typings/index.d.ts\`.
 
@@ -157,9 +157,9 @@ ${[
 }
 
 export function renderReadme(version: string): string {
-  return `# Agent docs\n\nVersion-matched documentation for \`discord-ts-selfbot@${version}\`.\n\nStart at [\`llms.txt\`](./llms.txt). The \`reference/\` tree is generated from the public typings and the API prose store; the guides and examples are generated from \`apps/docs/content/docs\`. Do not edit this tree by hand.\n\nCopy [\`AGENTS.md\`](./AGENTS.md) into the project \`AGENTS.md\` so coding agents read these docs before they write code.\n`;
+  return `# Agent docs\n\nVersion-matched documentation for \`@discord-selfbot/core@${version}\`.\n\nStart at [\`llms.txt\`](./llms.txt). The \`reference/\` tree is generated from the public typings and the API prose store; the guides and examples are generated from \`apps/docs/content/docs\`. Do not edit this tree by hand.\n\nCopy [\`AGENTS.md\`](./AGENTS.md) into the project \`AGENTS.md\` so coding agents read these docs before they write code.\n`;
 }
 
 export function renderAgentsMd(): string {
-  return `<!-- BEGIN:discord-ts-selfbot-agent-rules -->\n\n# discord-ts-selfbot: read docs before coding\n\nBefore any discord-ts-selfbot work, read \`node_modules/discord-ts-selfbot/docs/llms.txt\` and the page for the task. The bundled docs match the installed version; do not rely on training data for the public API.\n\nThe reference is generated from the public typings. Exact types stay in \`node_modules/discord-ts-selfbot/typings/index.d.ts\`.\n\n<!-- END:discord-ts-selfbot-agent-rules -->\n`;
+  return `<!-- BEGIN:discord-selfbot-core-agent-rules -->\n\n# @discord-selfbot/core: read docs before coding\n\nBefore any @discord-selfbot/core work, read \`node_modules/@discord-selfbot/core/docs/llms.txt\` and the page for the task. The bundled docs match the installed version; do not rely on training data for the public API.\n\nThe reference is generated from the public typings. Exact types stay in \`node_modules/@discord-selfbot/core/typings/index.d.ts\`.\n\n<!-- END:discord-selfbot-core-agent-rules -->\n`;
 }
