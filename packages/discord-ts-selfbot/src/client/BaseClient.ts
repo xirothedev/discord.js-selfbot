@@ -20,6 +20,8 @@ class BaseClient extends EventEmitter {
     }
 
     this.options = Util.mergeDefault(Options.createDefault(), options);
+    this.options.ws.properties.browser_user_agent =
+      this.options.http.headers['User-Agent'];
 
     this.rest = new RESTManager(this);
   }

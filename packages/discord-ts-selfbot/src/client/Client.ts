@@ -347,6 +347,7 @@ class Client extends BaseClient {
     this.ws = new WebSocketManager(this);
 
     this.actions = new ActionsManager(this);
+    this.ws.dispatch.registerDefaults(this.actions);
 
     this.voice = new ClientVoiceManager(this);
 

@@ -1,33 +1,16 @@
 import EventEmitter from 'node:events';
-import { setImmediate } from 'node:timers';
 import { Collection } from '@discordjs/collection';
 import { RPCErrorCodes } from 'discord-api-types/v10';
 import WebSocketShard from './WebSocketShard';
-import PacketHandlers from './handlers';
+import GatewayDispatch from './GatewayDispatch';
+import type { GatewayPacket } from './GatewayDispatch';
 import _errorsModule from '../../errors';
 
 const { Error } = _errorsModule;
 import _ConstantsModule from '../../util/Constants';
 import type Client from '../Client';
 
-const { Events, ShardEvents, Status, WSCodes, WSEvents } = _ConstantsModule;
-
-const BeforeReadyWhitelist: readonly string[] = [
-  WSEvents.READY,
-  WSEvents.RESUMED,
-  WSEvents.GUILD_CREATE,
-  WSEvents.GUILD_DELETE,
-  WSEvents.GUILD_MEMBERS_CHUNK,
-  WSEvents.GUILD_MEMBER_ADD,
-  WSEvents.GUILD_MEMBER_REMOVE,
-];
-
-interface GatewayPacket {
-  ['t']?: string;
-  d?: unknown;
-  op?: number;
-  s?: number;
-}
+const { Events, ShardEvents, Status, WSCodes } = _ConstantsModule;
 
 interface GatewayInfo {
   url: string;
@@ -56,7 +39,7 @@ class WebSocketManager extends EventEmitter {
   declare totalShards: number;
   declare shards: Collection<number, WebSocketShard>;
   declare shardQueue: Set<WebSocketShard>;
-  declare packetQueue: { packet: GatewayPacket; shard?: WebSocketShard }[];
+  declare dispatch: GatewayDispatch;
   declare status: number;
   declare destroyed: boolean;
   declare reconnecting: boolean;
@@ -79,7 +62,7 @@ class WebSocketManager extends EventEmitter {
       writable: true,
     });
 
-    Object.defineProperty(this, 'packetQueue', { value: [] });
+    this.dispatch = new GatewayDispatch(client);
 
     this.status = Status.IDLE;
 
@@ -319,45 +302,7 @@ class WebSocketManager extends EventEmitter {
   }
 
   handlePacket(packet?: GatewayPacket, shard?: WebSocketShard) {
-    if (
-      packet &&
-      this.status !== Status.READY &&
-      !BeforeReadyWhitelist.includes(packet.t ?? '')
-    ) {
-      this.packetQueue.push({ packet, shard });
-      return false;
-    }
-
-    if (this.packetQueue.length) {
-      const item = this.packetQueue.shift();
-      if (item) {
-        setImmediate(() => {
-          this.handlePacket(item.packet, item.shard);
-        }).unref();
-      }
-    }
-
-    if (packet?.t && PacketHandlers[packet.t]) {
-      PacketHandlers[packet.t](this.client, packet, shard);
-    } else if (packet) {
-      const actionName = String(packet.t || '')
-        .split('_')
-        .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
-        .join('');
-      const action = Reflect.get(this.client.actions, actionName);
-      if (
-        action &&
-        typeof action === 'object' &&
-        'handle' in action &&
-        typeof action.handle === 'function'
-      ) {
-        Reflect.apply(action.handle, action, [packet.d, shard]);
-        return true;
-      }
-      this.client.emit(Events.UNHANDLED_PACKET, packet, shard);
-    }
-
-    return true;
+    return this.dispatch.handle(packet, shard);
   }
 
   checkShardsReady() {

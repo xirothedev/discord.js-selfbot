@@ -11,6 +11,7 @@ import SnowflakeUtil from '../../util/SnowflakeUtil';
 import { setTimeout } from 'node:timers';
 import { s } from '@sapphire/shapeshift';
 import Util from '../../util/Util';
+import { uploadMessageAttachments } from '../../util/OutboundMessagePipeline';
 import User from '../User';
 import _GuildMemberModule from '../GuildMember';
 
@@ -27,7 +28,6 @@ import type {
 } from '../../../typings';
 import type { SendOptions } from '../../types/channels';
 import type { RawMessageData } from '../../../typings/rawDataTypes';
-import type { UploadAttachment } from '../../types/uploads';
 import type ClientType from '../../client/Client';
 import type { Guild } from '../Guild';
 
@@ -615,30 +615,10 @@ class TextBasedChannel {
         : MessagePayload.create(this, options).resolveData();
 
     const { data, files } = await messagePayload.resolveFiles();
-    const fileList = files ?? [];
-    // New API
-    const attachments = await Util.getUploadURL(this.client, this.id, fileList);
-    const requestPromises = attachments.map(
-      async (attachment: UploadAttachment) => {
-        const file = fileList[Number(attachment.id)];
-        if (!file) {
-          throw new Error('INVALID_TYPE', 'attachment', 'FileOptions');
-        }
-        await Util.uploadFile(file.file, attachment.upload_url);
-        return {
-          description: file.description,
-          duration_secs: file.duration_secs,
-          filename: file.name,
-          id: attachment.id,
-          uploaded_filename: attachment.upload_filename,
-          waveform: file.waveform,
-        };
-      }
-    );
-    const attachmentsData = await Promise.all(requestPromises);
-    attachmentsData.sort(
-      (left, right) =>
-        Math.trunc(Number(left.id)) - Math.trunc(Number(right.id))
+    const attachmentsData = await uploadMessageAttachments(
+      this.client,
+      this.id,
+      files ?? []
     );
     if (data) {
       Object.assign(data, { attachments: attachmentsData });

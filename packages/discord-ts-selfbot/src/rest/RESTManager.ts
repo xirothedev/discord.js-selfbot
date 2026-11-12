@@ -2,7 +2,12 @@ import { setInterval } from 'node:timers';
 import { Collection } from '@discordjs/collection';
 import makeFetchCookie from 'fetch-cookie';
 import { CookieJar } from 'tough-cookie';
-import { fetch as fetchOriginal } from 'undici';
+import {
+  Client as UndiciClient,
+  ProxyAgent,
+  buildConnector,
+  fetch as fetchOriginal,
+} from 'undici';
 import APIRequest from './APIRequest';
 import type { ApiRouter } from './APIRouter';
 import routeBuilder from './APIRouter';
@@ -11,9 +16,10 @@ import _errorsModule from '../errors';
 
 const { Error } = _errorsModule;
 import _ConstantsModule from '../util/Constants';
+import Util from '../util/Util';
 import type { BaseClient } from '../client/BaseClient';
 
-const { Endpoints } = _ConstantsModule;
+const { Endpoints, ciphers } = _ConstantsModule;
 
 class RESTManager {
   client: BaseClient;
@@ -26,6 +32,9 @@ class RESTManager {
   cookieJar: CookieJar;
   fetch: typeof fetchOriginal;
   sweepInterval?: ReturnType<typeof setInterval>;
+  agent: unknown;
+  invalidCount: number;
+  invalidCountResetTime: number | null;
 
   constructor(client: BaseClient) {
     this.client = client;
@@ -40,11 +49,32 @@ class RESTManager {
     this.globalDelay = null;
     this.cookieJar = new CookieJar();
     this.fetch = makeFetchCookie(fetchOriginal, this.cookieJar);
+    this.agent = null;
+    this.invalidCount = 0;
+    this.invalidCountResetTime = null;
     if (client.options.restSweepInterval > 0) {
       this.sweepInterval = setInterval(() => {
         this.handlers.sweep((handler: RequestHandler) => handler._inactive);
       }, client.options.restSweepInterval * 1000).unref();
     }
+  }
+
+  getDispatcher(): unknown {
+    if (this.agent) {
+      return this.agent;
+    }
+    const proxyAgent = Util.checkUndiciProxyAgent(
+      this.client.options.http.agent
+    );
+    this.agent = proxyAgent
+      ? new ProxyAgent({
+          ...proxyAgent,
+          ciphers: ciphers.join(':'),
+        } as never)
+      : new UndiciClient('https://discord.com', {
+          connect: buildConnector({ ciphers: ciphers.join(':') }),
+        });
+    return this.agent;
   }
 
   get api(): ApiRouter {

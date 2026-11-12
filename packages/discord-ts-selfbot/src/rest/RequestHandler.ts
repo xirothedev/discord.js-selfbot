@@ -93,14 +93,7 @@ function calculateReset(
   return new Date(Number(reset) * 1000).getTime() - getAPIOffset(serverDate);
 }
 
-/* Invalid request limiting is done on a per-IP basis, not a per-token basis.
- * The best we can do is track invalid counts process-wide (on the theory that
- * users could have multiple bots run from one process) rather than per-bot.
- * Therefore, store these at file scope here rather than in the client's
- * RESTManager object.
- */
-let invalidCount = 0;
-let invalidCountResetTime: number | null = null;
+/* Invalid request limiting is tracked on the REST manager to keep state local to the client/module seam. */
 
 class RequestHandler {
   manager: RESTManager;
@@ -385,22 +378,26 @@ class RequestHandler {
 
   private trackInvalidRequest(res: RestResponse): void {
     if (res.status === 401 || res.status === 403 || res.status === 429) {
-      if (!invalidCountResetTime || invalidCountResetTime < Date.now()) {
-        invalidCountResetTime = Date.now() + 1000 * 60 * 10;
-        invalidCount = 0;
+      if (
+        !this.manager.invalidCountResetTime ||
+        this.manager.invalidCountResetTime < Date.now()
+      ) {
+        this.manager.invalidCountResetTime = Date.now() + 1000 * 60 * 10;
+        this.manager.invalidCount = 0;
       }
-      invalidCount++;
+      this.manager.invalidCount++;
 
       const emitInvalid =
         this.manager.client.listenerCount(INVALID_REQUEST_WARNING) &&
         this.manager.client.options.invalidRequestWarningInterval > 0 &&
-        invalidCount %
+        this.manager.invalidCount %
           this.manager.client.options.invalidRequestWarningInterval ===
           0;
       if (emitInvalid) {
         this.manager.client.emit(INVALID_REQUEST_WARNING, {
-          count: invalidCount,
-          remainingTime: invalidCountResetTime - Date.now(),
+          count: this.manager.invalidCount,
+          remainingTime:
+            (this.manager.invalidCountResetTime ?? Date.now()) - Date.now(),
         });
       }
     }
