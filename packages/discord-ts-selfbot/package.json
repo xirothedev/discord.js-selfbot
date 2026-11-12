@@ -1,5 +1,5 @@
 {
-  "name": "discord-ts-selfbot",
+  "name": "discord.ts-selfhost",
   "version": "14.0.1",
   "description": "An unofficial discord.js fork for creating selfbots, migrated to TypeScript and ESM",
   "keywords": [
