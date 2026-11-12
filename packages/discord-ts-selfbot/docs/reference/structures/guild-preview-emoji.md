@@ -96,6 +96,26 @@ The URL to the emoji file if it's a custom emoji
 
 ## Methods
 
+### `fetchGuild`
+
+```ts
+
+fetchGuild(): Promise<DiscoverableGuild>
+
+```
+
+**Returns:** `Promise<DiscoverableGuild>`
+
+### `fetchSource`
+
+```ts
+
+fetchSource(): Promise<unknown>
+
+```
+
+**Returns:** `Promise<unknown>`
+
 ### `toJSON`
 
 ```ts

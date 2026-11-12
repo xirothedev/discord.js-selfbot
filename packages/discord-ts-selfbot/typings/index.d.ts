@@ -1081,6 +1081,8 @@ export class BaseGuildEmoji extends Emoji {
   public id: Snowflake;
   public managed: boolean | null;
   public requiresColons: boolean | null;
+  public fetchGuild(): Promise<DiscoverableGuild>;
+  public fetchSource(): Promise<unknown>;
 }
 
 export class BaseGuildTextChannel extends TextBasedChannelMixin(GuildChannel) {

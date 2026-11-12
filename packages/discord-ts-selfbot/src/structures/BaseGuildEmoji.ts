@@ -46,6 +46,14 @@ class BaseGuildEmoji extends Emoji implements BaseGuildEmojiEntity {
       this.available = data.available ?? null;
     }
   }
+
+  fetchGuild() {
+    return this.client.api.emojis(String(this.id)).guild.get();
+  }
+
+  fetchSource() {
+    return this.client.api.emojis(String(this.id)).source.get();
+  }
 }
 
 export default BaseGuildEmoji;

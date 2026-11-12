@@ -170,6 +170,26 @@ fetchAuthor(): Promise<User>
 
 **Returns:** `Promise<User>`
 
+### `fetchGuild`
+
+```ts
+
+fetchGuild(): Promise<DiscoverableGuild>
+
+```
+
+**Returns:** `Promise<DiscoverableGuild>`
+
+### `fetchSource`
+
+```ts
+
+fetchSource(): Promise<unknown>
+
+```
+
+**Returns:** `Promise<unknown>`
+
 ### `setName`
 
 Sets the name of the emoji.
