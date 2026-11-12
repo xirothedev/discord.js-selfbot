@@ -29,9 +29,13 @@
     "docs:api": "bun run --cwd apps/docs api",
     "docs:agent": "bun run --cwd packages/discord-ts-selfbot docs:generate",
     "docs:agent:check": "bun run --cwd packages/discord-ts-selfbot docs:check",
-    "docs:snippets": "bun run --cwd apps/docs snippets"
+    "docs:snippets": "bun run --cwd apps/docs snippets",
+    "changeset": "changeset",
+    "changeset:version": "changeset version",
+    "changeset:publish": "changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^3.0.3",
     "lint-staged": "^15.2.0",
     "oxlint": "1.90.0",
     "turbo": "^2.11.10",

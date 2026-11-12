@@ -2,15 +2,17 @@ name: Release
 
 on:
   push:
-    tags:
-      - '14*' # Trigger on version 14.x.x tags
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
+  id-token: write
 
 concurrency:
-  group: release-deploy
-  queue: max
+  group: release
   cancel-in-progress: false
 
 jobs:
@@ -21,13 +23,13 @@ jobs:
       run_check: true
       run_lint: true
       run_test: true
-      run_docs: false
+      run_docs: true
 
   release:
-    name: Publish to NPM
+    name: Version or Publish
     needs: ci
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -39,11 +41,30 @@ jobs:
         with:
           bun-version-file: package.json
 
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Publish to NPM
-        working-directory: packages/discord-ts-selfbot
-        run: bun publish --access public
+      - name: Build
         env:
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+          TURBO_UI: '0'
+        run: bun run build
+
+      - name: Create Release Pull Request or Publish
+        id: changesets
+        uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
+        with:
+          version: bun run changeset:version
+          publish: bun run changeset:publish
+          commit: 'chore: version packages'
+          title: 'chore: version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
