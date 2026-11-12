@@ -11,7 +11,6 @@ permissions:
 
 concurrency:
   group: docs-deploy
-  queue: max
   cancel-in-progress: false
 
 jobs:
