@@ -1200,12 +1200,13 @@ searchBans(query: string): Promise<unknown[]>
 
 ```ts
 
-sendSoundboardSound(channelId: string, soundId: string): Promise<unknown>
+sendSoundboardSound(channelId: string, soundId: string, options?: { sourceGuildId?: string | null }): Promise<unknown>
 
 ```
 
 - `channelId: string`
 - `soundId: string`
+- `options?: { sourceGuildId?: string | null }`
 
 **Returns:** `Promise<unknown>`
 
