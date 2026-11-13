@@ -1,6 +1,6 @@
 # @discord-selfbot/core
 
-> A Bun-first, TypeScript selfbot library with a discord.js v14-compatible API.
+> A Bun-first, TypeScript selfbot library with a discord.js v14-compatible API. The `v14` name refers to the local discord.js-compatible surface; the official Discord HTTP and gateway API used by default is v9.
 
 [![npm version](https://img.shields.io/npm/v/@discord-selfbot/core.svg)](https://www.npmjs.com/package/@discord-selfbot/core)
 [![CI](https://github.com/xirothedev/discord.js-selfbot/actions/workflows/ci.yml/badge.svg)](https://github.com/xirothedev/discord.js-selfbot/actions/workflows/ci.yml)

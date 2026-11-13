@@ -1,6 +1,6 @@
 # @discord-selfbot/core
 
-> A Bun-first, TypeScript selfbot library with a discord.js v14-compatible API.
+> A Bun-first, TypeScript selfbot library with a discord.js v14-compatible API. The `v14` name refers to the local discord.js-compatible surface; the official Discord HTTP and gateway API used by default is v9.
 
 > **Warning:** Selfbots carry account risk. Using a user account with the Discord API is against Discord's Terms of Service.
 > The library is provided for educational use. Do not run it on an account you cannot afford to lose.
