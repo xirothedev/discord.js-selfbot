@@ -4,6 +4,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@discord-selfbot/core.svg)](https://www.npmjs.com/package/@discord-selfbot/core)
 [![CI](https://github.com/xirothedev/discord.js-selfbot/actions/workflows/ci.yml/badge.svg)](https://github.com/xirothedev/discord.js-selfbot/actions/workflows/ci.yml)
+[![Socket Security](https://socket.dev/api/badge/npm/package/@discord-selfbot/core)](https://socket.dev/npm/package/@discord-selfbot/core)
 [![docs](https://img.shields.io/badge/docs-xirothedev.github.io-5865F2)](https://xirothedev.github.io/discord.js-selfbot/)
 
 > **Warning:** Selfbots carry account risk. Using a user account with the Discord API is against Discord's Terms of Service.

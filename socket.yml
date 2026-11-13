@@ -1,0 +1,21 @@
+version: 2
+
+projectIgnorePaths:
+  - 'node_modules'
+  - '.turbo'
+  - 'apps/docs/.next'
+  - 'apps/docs/out'
+
+triggerPaths:
+  - 'package.json'
+  - 'bun.lock'
+  - 'packages/**/package.json'
+
+issueRules:
+  telemetry: false
+
+githubApp:
+  enabled: true
+  pullRequestAlertsEnabled: true
+  dependencyOverviewEnabled: true
+  projectReportsEnabled: true
