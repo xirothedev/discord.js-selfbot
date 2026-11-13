@@ -22,8 +22,8 @@ on:
 
 # Reusable callee: keep its own group distinct from callers (rules/github-actions.md #3).
 concurrency:
-  group: ci-reusable-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-reusable-${{ github.run_id }}
+  cancel-in-progress: false
 
 jobs:
   check:
