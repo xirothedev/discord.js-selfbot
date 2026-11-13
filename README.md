@@ -2,12 +2,11 @@
 
 > A Bun-first, TypeScript selfbot library with a discord.js v14-compatible API.
 
-[![npm version](https://img.shields.io/npm/v/discord-ts-selfbot.svg)](https://www.npmjs.com/package/discord-ts-selfbot)
-[![CI](https://github.com/xirothedev/discord.js-selfbot/actions/workflows/lint.yml/badge.svg)](https://github.com/xirothedev/discord.js-selfbot/actions/workflows/lint.yml)
+[![npm version](https://img.shields.io/npm/v/@discord-selfbot/core.svg)](https://www.npmjs.com/package/@discord-selfbot/core)
+[![CI](https://github.com/xirothedev/discord.js-selfbot/actions/workflows/ci.yml/badge.svg)](https://github.com/xirothedev/discord.js-selfbot/actions/workflows/ci.yml)
 [![docs](https://img.shields.io/badge/docs-xirothedev.github.io-5865F2)](https://xirothedev.github.io/discord.js-selfbot/)
 
-> [!WARNING]
-> **Selfbots carry account risk.** Using a user account with the Discord API is against Discord's Terms of Service.
+> **Warning:** Selfbots carry account risk. Using a user account with the Discord API is against Discord's Terms of Service.
 > The library is provided for educational use. Do not run it on an account you cannot afford to lose.
 
 ## About
