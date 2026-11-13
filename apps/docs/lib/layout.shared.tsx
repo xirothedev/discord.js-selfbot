@@ -14,16 +14,18 @@ export function baseOptions(): BaseLayoutProps {
     ],
     nav: {
       title: (
-        <span className="flex items-center gap-3">
+        <span className="flex flex-col items-start gap-1">
           <Image
             src={`${basePath}/logo.png`}
             alt="discord.ts"
-            width={86}
-            height={48}
+            width={1288}
+            height={217}
             className="h-6 w-auto"
             priority
           />
-          <PackageSelector />
+          <span className="border-fd-border border-t pt-1">
+            <PackageSelector />
+          </span>
         </span>
       ),
     },
