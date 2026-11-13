@@ -1,7 +1,31 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 
 import { Icon, ICON } from '@/components/icons';
-import { appVersion } from '@/lib/shared';
+import { appVersion, appName, siteUrl } from '@/lib/shared';
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+  description:
+    'A Bun-first, TypeScript selfbot library with a discord.js v14-compatible API, voice, calls, recording, and a fake Discord test server.',
+  openGraph: {
+    description:
+      'A Bun-first, TypeScript selfbot library with a discord.js v14-compatible API, voice, calls, recording, and a fake Discord test server.',
+    images: [`${siteUrl}/opengraph-image`],
+    siteName: appName,
+    title: `${appName} ${appVersion}`,
+    type: 'website',
+    url: '/',
+  },
+  title: `${appName} ${appVersion}`,
+  twitter: {
+    card: 'summary_large_image',
+    description:
+      'A Bun-first, TypeScript selfbot library with a discord.js v14-compatible API, voice, calls, recording, and a fake Discord test server.',
+    images: [`${siteUrl}/opengraph-image`],
+    title: `${appName} ${appVersion}`,
+  },
+};
 
 const features = [
   {
