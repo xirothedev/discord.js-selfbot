@@ -8,6 +8,11 @@ export const docsRoute = '/docs';
 export const docsImageRoute = '/og/docs';
 export const docsContentRoute = '/llms.mdx/docs';
 
+// Bump this whenever the OG image design changes. The version query forces
+// link-preview crawlers (Discord, X, Facebook) to refetch the image instead
+// of serving their cached copy, since the og:image URL changes.
+export const ogImageVersion = '2';
+
 export const gitConfig = {
   branch: 'main',
   repo: 'discord.js-selfbot',
