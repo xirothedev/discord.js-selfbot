@@ -292,6 +292,25 @@ class Util extends null {
     return text.replaceAll('```', '\\`\\`\\`');
   }
 
+  /**
+   * Redact secrets (Discord user/bot tokens, passwords, API keys) from a string.
+   * Use before logging or including a value in an error message.
+   */
+  static redact(text: unknown): string {
+    if (typeof text !== 'string') {
+      return String(text ?? '');
+    }
+    return text
+      .replaceAll(
+        /[A-Za-z0-9_-]{24,}\.[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{27,}/gu,
+        '[REDACTED_TOKEN]'
+      )
+      .replaceAll(
+        /(?<key>token|authorization|password|secret|api[_-]?key)\s*[:=]\s*["']?[^"'\s,}]+/giu,
+        '$<key>=[REDACTED]'
+      );
+  }
+
   static escapeInlineCode(text: string) {
     return text.replaceAll(/(?<=^|[^`])``?(?=[^`]|$)/gu, (match) =>
       match.length === 2 ? '\\`\\`' : '\\`'

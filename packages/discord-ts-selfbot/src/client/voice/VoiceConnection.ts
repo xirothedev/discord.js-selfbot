@@ -18,6 +18,7 @@ import _ConstantsModule from '../../util/Constants';
 
 const { Opcodes, VoiceOpcodes, VoiceStatus, Events } = _ConstantsModule;
 import Speaking from '../../util/Speaking';
+import Util from '../../util/Util';
 import type { Snowflake } from 'discord-api-types/v10';
 import type {
   BitFieldResolvable,
@@ -442,7 +443,10 @@ class VoiceConnection extends EventEmitter {
   }
 
   setTokenAndEndpoint(token: string | null, endpoint: string | null) {
-    this.emit('debug', `Token "${token}" and endpoint "${endpoint}"`);
+    this.emit(
+      'debug',
+      `Token "${Util.redact(token)}" and endpoint "${endpoint}"`
+    );
     if (!endpoint) {
       // Signifies awaiting endpoint stage
       return;
