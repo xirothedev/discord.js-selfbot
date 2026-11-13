@@ -2,7 +2,13 @@ import type { Metadata } from 'next';
 import { Geist, JetBrains_Mono } from 'next/font/google';
 
 import { Provider } from '@/components/provider';
-import { appName, appVersion, basePath, siteUrl } from '@/lib/shared';
+import {
+  appName,
+  appVersion,
+  basePath,
+  ogImageVersion,
+  siteUrl,
+} from '@/lib/shared';
 
 import './global.css';
 
@@ -37,7 +43,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   openGraph: {
     description,
-    images: [`${siteUrl}/opengraph-image`],
+    images: [`${siteUrl}/opengraph-image?v=${ogImageVersion}`],
     siteName: appName,
     title: `${appName} ${appVersion}`,
     type: 'website',
@@ -50,7 +56,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     description,
-    images: [`${siteUrl}/opengraph-image`],
+    images: [`${siteUrl}/opengraph-image?v=${ogImageVersion}`],
     title: `${appName} ${appVersion}`,
   },
 };

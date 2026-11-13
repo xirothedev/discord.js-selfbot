@@ -17,6 +17,7 @@ import {
   getGitHubUrl,
   getPageImageUrl,
   getPageMarkdownUrl,
+  ogImageVersion,
   siteUrl,
 } from '@/lib/shared';
 import { source } from '@/lib/source';
@@ -115,7 +116,7 @@ export async function generateMetadata(
 
   const { description, title } = page.data;
   const pageUrl = `${page.url}/`;
-  const ogImage = getPageImageUrl(page).url;
+  const ogImage = `${getPageImageUrl(page).url}?v=${ogImageVersion}`;
 
   return {
     alternates: {

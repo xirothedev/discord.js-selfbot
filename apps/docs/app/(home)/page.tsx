@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 import { Icon, ICON } from '@/components/icons';
-import { appVersion, appName, siteUrl } from '@/lib/shared';
+import { appVersion, appName, ogImageVersion, siteUrl } from '@/lib/shared';
 
 export const metadata: Metadata = {
   alternates: { canonical: '/' },
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   openGraph: {
     description:
       'A Bun-first, TypeScript selfbot library with a discord.js v14-compatible API, voice, calls, recording, and a fake Discord test server.',
-    images: [`${siteUrl}/opengraph-image`],
+    images: [`${siteUrl}/opengraph-image?v=${ogImageVersion}`],
     siteName: appName,
     title: `${appName} ${appVersion}`,
     type: 'website',
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     description:
       'A Bun-first, TypeScript selfbot library with a discord.js v14-compatible API, voice, calls, recording, and a fake Discord test server.',
-    images: [`${siteUrl}/opengraph-image`],
+    images: [`${siteUrl}/opengraph-image?v=${ogImageVersion}`],
     title: `${appName} ${appVersion}`,
   },
 };
