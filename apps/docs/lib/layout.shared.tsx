@@ -1,7 +1,8 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 import Image from 'next/image';
 
-import { appName, basePath, gitConfig } from './shared';
+import { basePath, gitConfig } from './shared';
+import { PackageSelector } from '@/components/package-selector';
 
 export function baseOptions(): BaseLayoutProps {
   return {
@@ -13,15 +14,16 @@ export function baseOptions(): BaseLayoutProps {
     ],
     nav: {
       title: (
-        <span className="flex items-center gap-2">
+        <span className="flex items-center gap-3">
           <Image
-            src={`${basePath}/icon.svg`}
-            alt=""
-            width={24}
-            height={24}
-            className="size-6"
+            src={`${basePath}/logo.png`}
+            alt="discord.ts"
+            width={86}
+            height={48}
+            className="h-6 w-auto"
+            priority
           />
-          <span className="font-semibold tracking-tight">{appName}</span>
+          <PackageSelector />
         </span>
       ),
     },
