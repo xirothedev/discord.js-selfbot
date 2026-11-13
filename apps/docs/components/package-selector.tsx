@@ -14,7 +14,7 @@ export const docsPackages = [
 
 export type DocsPackage = (typeof docsPackages)[number];
 
-export const PackageSelector = () => {
+export const PackageSelector = ({ className }: { className?: string }) => {
   const [value, setValue] = useState<string>(docsPackages[0].value);
 
   const handleChange = useCallback(
@@ -31,7 +31,7 @@ export const PackageSelector = () => {
   return (
     <select
       aria-label="Documentation package"
-      className="border-fd-border bg-fd-card hover:bg-fd-accent rounded-md border px-2 py-1 font-mono text-xs transition-colors"
+      className={`border-fd-border bg-fd-card hover:bg-fd-accent w-full rounded-md border px-2 py-1.5 font-mono text-xs transition-colors ${className ?? ''}`}
       onChange={handleChange}
       value={value}
     >
