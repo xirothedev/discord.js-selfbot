@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Geist, JetBrains_Mono } from 'next/font/google';
 
 import { Provider } from '@/components/provider';
-import { appName, appVersion, siteUrl } from '@/lib/shared';
+import { appName, appVersion, basePath, siteUrl } from '@/lib/shared';
 
 import './global.css';
 
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   applicationName: appName,
   description,
   icons: {
-    icon: '/icon.svg',
+    icon: `${basePath}/icon.svg`,
   },
   keywords: [
     'discord.js',
