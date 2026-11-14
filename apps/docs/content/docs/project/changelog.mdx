@@ -5,8 +5,24 @@ description: Release notes for @discord-selfbot/core.
 
 ## Unreleased
 
+### Added
+
+- Typed `RESTManager.request()` and `RequestOptions`. The typed router and `client.rest.request()` return typed promises.
+- `createRestClient({ token })` for gateway-free REST use. Direct `client.token` assignment is documented. `login()` stays gateway-only.
+- `http.fetch` override plus built-in HTTP and SOCKS5 proxy transport. Bun ignores the undici `dispatcher`, so proxying no longer relies on it.
+- `maxRateLimitRetries` (default `2`). `RateLimitError` gains `retryAfter` in ms, `remaining`, `reset`, and `scope`.
+- `MissingTokenError`, thrown before any HTTP when the token is empty or missing. It is terminal and never retried.
+- New guides: rest-only use, proxies, rate limits, errors.
+- `HTTPError.status`, `HTTPError.cause`, and `HTTPError.retryable`.
+
 ### Changed
 
+- `HTTPError.status` now carries the HTTP status; `code` keeps the Discord JSON code or a synthetic `500`. Non-JSON 401 pages no longer look like 500s.
+- 429 retries are bounded. `rejectOnRateLimit` still throws before waiting.
+- `RESTManager.destroy()` closes the dispatcher and clears handlers. `Client#destroy` calls it.
+- One client can mix API versions per request via `options.version`. Routes derive from the path when `options.route` is empty.
+- Package exports carry `types`, `bun`, and `default` conditions. The runtime stays Bun-only.
+- Docs index states version `14.0.2`. The agent docs corpus is regenerated.
 - REST and gateway default to API v9, which is the version the official Discord client uses. `http.version` and `ws.version` stay configurable.
 - Existing client property values now match Discord desktop `1.0.9267` (build `667580`). No new client property fields were added.
 - The package version does not change for this update.
