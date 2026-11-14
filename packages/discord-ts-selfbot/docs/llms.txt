@@ -1,4 +1,4 @@
-# @discord-selfbot/core 14.0.2 — Agent docs
+# @discord-selfbot/core 14.0.3 — Agent docs
 
 Version-matched documentation for coding agents. Read this file first, then open the page for the task. The reference is generated from the public typings; exact types stay in `typings/index.d.ts`.
 
