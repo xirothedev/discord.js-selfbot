@@ -4,6 +4,7 @@ import _GuildAuditLogsModule from './structures/GuildAuditLogs';
 // "Root" classes (starting points)
 export { default as BaseClient } from './client/BaseClient';
 export { default as Client } from './client/Client';
+export { createRestClient } from './client/createRestClient';
 /** @deprecated This will be removed in the next major version */
 export { default as Shard } from './sharding/Shard';
 /** @deprecated This will be removed in the next major version */
@@ -53,6 +54,10 @@ export { default as Constants } from './util/Constants';
 export { default as DataResolver } from './util/DataResolver';
 export { default as DiscordAPIError } from './rest/DiscordAPIError';
 export { OAuth2RoleConnection } from './rest/OAuth2RoleConnection';
+export { MissingTokenError } from './rest/MissingTokenError';
+export type { RequestOptions } from './rest/RequestOptions';
+export { deriveRoute } from './rest/RequestOptions';
+export { createProxyFetch, parseProxyUrl } from './rest/proxyFetch';
 export { default as Events } from './util/Events';
 export { default as Formatters } from './util/Formatters';
 export { default as GuildMemberFlags } from './util/GuildMemberFlags';

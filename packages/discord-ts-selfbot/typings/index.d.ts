@@ -877,15 +877,107 @@ export abstract class Base {
   public valueOf(): string;
 }
 
+export type RateLimitScope = 'global' | 'route' | 'sublimit';
+
+export interface RequestOptions {
+  route?: string;
+  version?: number;
+  versioned?: boolean;
+  auth?: boolean;
+  query?: Record<string, unknown>;
+  data?: unknown;
+  files?: unknown[];
+  headers?: Record<string, string>;
+  reason?: string;
+  webhook?: boolean;
+  usePayloadJSON?: boolean;
+  dontUsePayloadJSON?: boolean;
+  DiscordContext?: unknown;
+  mfaToken?: string;
+}
+
+export type FetchInit = RequestInit & {
+  dispatcher?: unknown;
+  proxy?: string;
+};
+export type FetchFn = (
+  url: string | URL,
+  init?: FetchInit
+) => Promise<globalThis.Response>;
+export interface ParsedProxy {
+  protocol: 'http' | 'https' | 'socks5' | 'socks5h';
+  host: string;
+  port: number;
+  username?: string;
+  password?: string;
+  uri: string;
+}
+
+export function parseProxyUrl(data: unknown): ParsedProxy | false;
+export function createProxyFetch(
+  baseFetch: FetchFn,
+  proxySource: unknown
+): FetchFn;
+export function deriveRoute(path: string): string;
+
+export type ApiRouter = ((
+  ...args: Array<string | null | undefined>
+) => ApiRouter) & {
+  [key: string]: ApiRouter;
+} & {
+  get: <Result = unknown>(options?: RequestOptions) => Promise<Result>;
+  post: <Result = unknown>(options?: RequestOptions) => Promise<Result>;
+  delete: <Result = unknown>(options?: RequestOptions) => Promise<Result>;
+  patch: <Result = unknown>(options?: RequestOptions) => Promise<Result>;
+  put: <Result = unknown>(options?: RequestOptions) => Promise<Result>;
+};
+
+export class RequestHandler {
+  private constructor(manager: RESTManager);
+  public readonly manager: RESTManager;
+  public reset: number;
+  public remaining: number;
+  public limit: number;
+  public readonly globalLimited: boolean;
+  public readonly localLimited: boolean;
+  public readonly limited: boolean;
+}
+
+export class MissingTokenError extends Error {
+  public name: 'MissingTokenError';
+  public code: 'TOKEN_MISSING';
+  public retryable: false;
+}
+
+export function createRestClient(
+  options: ClientOptions & { token: string }
+): Client;
+
 export class RESTManager {
   private constructor(client: Client);
   public readonly client: Client;
-  public handlers: Collection<string, unknown>;
+  public handlers: Collection<string, RequestHandler>;
   public versioned: true;
+  public globalLimit: number;
+  public globalRemaining: number;
+  public globalReset: number | null;
+  public globalDelay: Promise<void> | null;
   public cookieJar: CookieJar;
-  public fetch: typeof globalThis.fetch;
+  public fetch: FetchFn;
+  public agent: unknown;
+  public invalidCount: number;
+  public invalidCountResetTime: number | null;
+  public getDispatcher(): unknown;
+  public getProxyUri(): string | null;
   public getAuth(): string;
-  public readonly api: unknown;
+  public request<T = unknown>(
+    method: string,
+    url: string,
+    options?: RequestOptions
+  ): Promise<T>;
+  public destroy(): void;
+  public endpoint: string;
+  public readonly api: ApiRouter;
   public readonly cdn: unknown;
 }
 
@@ -3051,13 +3143,17 @@ export class HTTPError extends Error {
     message: string,
     name: string,
     code: number,
-    request: unknown
+    request: unknown,
+    details?: { status?: unknown; cause?: unknown; retryable?: boolean }
   );
   public code: number;
+  public status: number;
   public method: string;
   public name: string;
   public path: string;
   public requestData: HTTPErrorData;
+  public cause: unknown;
+  public retryable: boolean;
 }
 
 export interface RateLimitError extends RateLimitData {}
@@ -8694,6 +8790,7 @@ export interface ClientOptions {
   restRequestTimeout?: number;
   restGlobalRateLimit?: number;
   restSweepInterval?: number;
+  maxRateLimitRetries?: number;
   retryLimit?: number;
   failIfNotExists?: boolean;
   presence?: PresenceData;
@@ -9860,7 +9957,12 @@ export interface HTTPErrorData {
 }
 
 export interface HTTPOptions {
-  agent?: Omit<ProxyAgent.Options, 'keepAlive'>;
+  agent?:
+    | string
+    | URL
+    | { uri: string }
+    | Omit<ProxyAgent.Options, 'keepAlive'>;
+  fetch?: FetchFn;
   api?: string;
   version?: number;
   host?: string;
@@ -10644,11 +10746,15 @@ export type PrivacyLevel = keyof typeof PrivacyLevels;
 
 export interface RateLimitData {
   timeout: number;
+  retryAfter: number;
   limit: number;
   method: string;
   path: string;
   route: string;
   global: boolean;
+  remaining?: number;
+  reset?: number;
+  scope: RateLimitScope;
 }
 
 export interface InvalidRequestWarningData {

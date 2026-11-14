@@ -1,0 +1,58 @@
+# Rate limits
+
+The REST layer owns rate limits. One `RequestHandler` serves one route
+bucket. The route comes from `options.route` or is derived from the
+request path. A caller that omits `route` still lands in a path-derived
+bucket, never in one shared queue.
+
+## Bounded 429 retries
+
+A `429` waits out the delay and retries the same request. The retry
+count has a bound:
+
+```ts
+const client = new Client({ maxRateLimitRetries: 2 });
+```
+
+The default is `2`. When the bound is reached, the request throws
+`RateLimitError` instead of waiting again. Set `0` to throw on the
+first `429`.
+
+## Read the exact delay
+
+`RateLimitError` carries the delay in milliseconds:
+
+| Field | Meaning | Unit |
+| --- | --- | --- |
+| `timeout` | Time to wait before retry | ms |
+| `retryAfter` | Exact backoff for this hit | ms |
+| `remaining` | Requests left in the bucket, when known | count |
+| `reset` | Bucket reset time, when known | epoch ms |
+| `scope` | `'global'`, `'route'`, or `'sublimit'` | — |
+| `limit` | Bucket limit, when known | count |
+
+`retryAfter` equals the sublimit delay when the hit is a sublimit, else
+`timeout`. All time fields are milliseconds. `restTimeOffset` (default
+`500`) is added to 429-derived timeouts as clock skew cover.
+
+## Throw instead of waiting
+
+```ts
+const client = new Client({ rejectOnRateLimit: ['/channels'] });
+```
+
+`rejectOnRateLimit` accepts route prefixes or a function. A match throws
+`RateLimitError` before waiting. The `RateLimit` event still fires for
+listeners.
+
+## Global limits
+
+`restGlobalRateLimit: 0` (default) means no client-side global cap. Set
+a positive number to decrement a shared budget per request. Global
+waits are shared across handlers through `manager.globalDelay`.
+
+## Next
+
+- [REST-only use](rest-only.md)
+- [Proxies](proxies.md)
+- [Errors](errors.md)

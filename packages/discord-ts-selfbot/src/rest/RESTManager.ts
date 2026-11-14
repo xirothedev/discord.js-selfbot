@@ -12,14 +12,29 @@ import APIRequest from './APIRequest';
 import type { ApiRouter } from './APIRouter';
 import routeBuilder from './APIRouter';
 import RequestHandler from './RequestHandler';
-import _errorsModule from '../errors';
-
-const { Error } = _errorsModule;
+import MissingTokenError from './MissingTokenError';
+import type { RequestOptions } from './RequestOptions';
+import { createProxyFetch, parseProxyUrl } from './proxyFetch';
+import type { FetchFn } from './proxySocket';
 import _ConstantsModule from '../util/Constants';
 import Util from '../util/Util';
 import type { BaseClient } from '../client/BaseClient';
 
 const { Endpoints, ciphers } = _ConstantsModule;
+
+interface ClosableDispatcher {
+  close: () => unknown;
+}
+
+function isClosable(value: unknown): value is ClosableDispatcher {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  if (!('close' in value)) {
+    return false;
+  }
+  return typeof value.close === 'function';
+}
 
 class RESTManager {
   client: BaseClient;
@@ -30,7 +45,7 @@ class RESTManager {
   globalReset: number | null;
   globalDelay: Promise<void> | null;
   cookieJar: CookieJar;
-  fetch: typeof fetchOriginal;
+  fetch: (url: string, init?: Record<string, unknown>) => Promise<unknown>;
   sweepInterval?: ReturnType<typeof setInterval>;
   agent: unknown;
   invalidCount: number;
@@ -48,7 +63,16 @@ class RESTManager {
     this.globalReset = null;
     this.globalDelay = null;
     this.cookieJar = new CookieJar();
-    this.fetch = makeFetchCookie(fetchOriginal, this.cookieJar);
+    const customFetch = client.options.http.fetch;
+    const baseFetch = customFetch ?? fetchOriginal;
+    const proxyFetch = createProxyFetch(
+      baseFetch as FetchFn,
+      client.options.http.agent
+    );
+    this.fetch = makeFetchCookie(
+      proxyFetch as unknown as typeof fetchOriginal,
+      this.cookieJar
+    ) as (url: string, init?: Record<string, unknown>) => Promise<unknown>;
     this.agent = null;
     this.invalidCount = 0;
     this.invalidCountResetTime = null;
@@ -57,6 +81,11 @@ class RESTManager {
         this.handlers.sweep((handler: RequestHandler) => handler._inactive);
       }, client.options.restSweepInterval * 1000).unref();
     }
+  }
+
+  getProxyUri(): string | null {
+    const parsed = parseProxyUrl(this.client.options.http.agent);
+    return parsed ? parsed.uri : null;
   }
 
   getDispatcher(): unknown {
@@ -88,20 +117,28 @@ class RESTManager {
     };
     const token = authClient.token ?? authClient.accessToken;
     if (token) {
-      return token.replaceAll('Bot ', '');
+      const clean = token.replaceAll('Bot ', '');
+      if (clean.trim().length > 0) {
+        return clean;
+      }
     }
-    throw new Error('TOKEN_MISSING');
+    throw new MissingTokenError();
   }
 
   get cdn(): ReturnType<typeof Endpoints.CDN> {
     return Endpoints.CDN(this.client.options.http.cdn);
   }
 
+  request<Result = unknown>(
+    method: string,
+    url: string,
+    options?: RequestOptions & Record<string, unknown>
+  ): Promise<Result>;
   request(
     method: string,
     url: string,
-    options: Record<string, unknown> = {}
-  ): unknown {
+    options: RequestOptions & Record<string, unknown> = {}
+  ): Promise<unknown> {
     const apiRequest = new APIRequest(this, method, url, options);
     let handler = this.handlers.get(apiRequest.route);
 
@@ -119,6 +156,23 @@ class RESTManager {
 
   set endpoint(endpoint: string) {
     this.client.options.http.api = endpoint;
+  }
+
+  destroy() {
+    if (this.sweepInterval) {
+      clearInterval(this.sweepInterval);
+      this.sweepInterval = undefined;
+    }
+    const { agent } = this;
+    if (isClosable(agent)) {
+      try {
+        agent.close();
+      } catch {
+        // Close is best effort. The socket pool is already gone on Bun.
+      }
+    }
+    this.agent = null;
+    this.handlers.clear();
   }
 }
 

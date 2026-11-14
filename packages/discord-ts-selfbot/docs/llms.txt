@@ -17,10 +17,14 @@ Version-matched documentation for coding agents. Read this file first, then open
 - [Account and profile](./guides/account-profile.md): Change presence, edit the profile, and manage friend invites.
 - [Calls](./guides/calls.md): Ring a DM or group call, follow CallState events, and handle message requests.
 - [Client and events](./guides/client-events.md): Configure the client, listen for gateway events, and read the connection state.
+- [Errors](./guides/errors.md): Tell 401s from 500s. Retry only what is retryable.
 - [Guilds](./guides/guilds.md): Fetch members, search, edit settings, and read guild metadata.
 - [Interactions](./guides/interactions.md): Register slash commands, handle components and modals, and collect responses.
 - [Messages](./guides/messages.md): Send, edit, react, search, and manage message state.
+- [Proxies](./guides/proxies.md): Route REST traffic through HTTP or SOCKS5 proxies on Bun.
+- [Rate limits](./guides/rate-limits.md): Bounded 429 retries and exact backoff fields.
 - [Recording](./guides/recording.md): Record audio and video through ffmpeg without leaking processes.
+- [REST-only use](./guides/rest-only.md): Call the HTTP API with a user token and no gateway connection.
 - [Voice](./guides/voice.md): Join a voice channel, play media, and clean up the connection.
 
 ## Examples
@@ -39,6 +43,7 @@ Version-matched documentation for coding agents. Read this file first, then open
 
 - [BaseClient](./reference/client/base-client.md): The base class for all clients.
 - [Client](./reference/client/client.md): The main hub for interacting with the Discord API, and the starting point for any bot.
+- [createRestClient](./reference/client/create-rest-client.md): createRestClient reference.
 - [WebhookClient](./reference/client/webhook-client.md): The webhook client.
 - [WebSocketManager](./reference/client/web-socket-manager.md): The WebSocket manager for this client. This class forwards raw dispatch events, read more about it here https://discord.com/developers/do...
 - [WebSocketShard](./reference/client/web-socket-shard.md): Represents a Shard's WebSocket connection
@@ -191,9 +196,13 @@ Version-matched documentation for coding agents. Read this file first, then open
 
 ### REST
 
+- [createProxyFetch](./reference/rest/create-proxy-fetch.md): createProxyFetch reference.
+- [deriveRoute](./reference/rest/derive-route.md): deriveRoute reference.
 - [DiscordAPIError](./reference/rest/discord-api-error.md): Represents an error from the Discord API.
 - [HTTPError](./reference/rest/http-error.md): Represents an HTTP error from a request.
+- [MissingTokenError](./reference/rest/missing-token-error.md): Thrown before any HTTP is sent when no usable token is set. Never retried.
 - [OAuth2RoleConnection](./reference/rest/o-auth2-role-connection.md): Reads and writes application role connections with an OAuth2 access token.
+- [parseProxyUrl](./reference/rest/parse-proxy-url.md): parseProxyUrl reference.
 - [RateLimitError](./reference/rest/rate-limit-error.md): Represents a RateLimit error from a request.
 
 ### Voice

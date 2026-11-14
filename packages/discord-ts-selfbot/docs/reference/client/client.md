@@ -26,7 +26,7 @@ constructor<Ready extends boolean = boolean>(options?: ClientOptions): Client<Re
 
 ### `api`
 
-**Type:** `unknown` · **Modifiers:** readonly
+**Type:** `ApiRouter` · **Modifiers:** readonly
 
 ### `application`
 

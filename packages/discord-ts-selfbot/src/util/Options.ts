@@ -15,6 +15,7 @@ import type {
   SweeperOptions,
   WebSocketOptions,
 } from '../../typings';
+import type { FetchFn } from '../rest/proxySocket';
 
 export interface ResolvedWebSocketOptions extends Omit<
   WebSocketOptions,
@@ -32,6 +33,7 @@ export interface ResolvedWebSocketOptions extends Omit<
 
 export interface ResolvedHTTPOptions extends Omit<HTTPOptions, 'agent'> {
   agent: unknown;
+  fetch?: FetchFn;
   headers: Record<string, string>;
   version: number;
   api: string;
@@ -59,6 +61,7 @@ export interface ResolvedClientOptions extends Omit<
   captchaRetryLimit: number;
   captchaSolver: NonNullable<ClientOptions['captchaSolver']>;
   closeTimeout: number;
+  maxRateLimitRetries: number;
   messageCacheLifetime: number;
   messageSweepInterval: number;
   invalidRequestWarningInterval: number;
@@ -105,6 +108,7 @@ class Options extends null {
       intents: Intents.ALL,
       invalidRequestWarningInterval: 0,
       makeCache: this.cacheWithLimits(this.defaultMakeCacheSettings),
+      maxRateLimitRetries: 2,
       messageCacheLifetime: 0,
       messageSweepInterval: 0,
       // Enable the partials

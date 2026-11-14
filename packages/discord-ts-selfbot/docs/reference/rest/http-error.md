@@ -12,7 +12,7 @@ class HTTPError extends Error
 
 ### `code`
 
-HTTP error code returned from the request
+The Discord JSON error code, or a synthetic 500 when no JSON body exists. See status for the HTTP status.
 
 **Type:** `number`
 
@@ -33,6 +33,18 @@ The path of the request relative to the HTTP endpoint
 The data associated with the request that caused this error
 
 **Type:** `HTTPErrorData`
+
+### `retryable`
+
+Whether retrying the request is safe. False for 4xx and parse failures.
+
+**Type:** `boolean`
+
+### `status`
+
+The HTTP status of the response, or 0 when no response arrived.
+
+**Type:** `number`
 
 ---
 

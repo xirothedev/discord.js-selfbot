@@ -26,7 +26,7 @@ constructor(options?: ClientOptions | WebhookClientOptions): BaseClient
 
 ### `api`
 
-**Type:** `unknown` · **Modifiers:** readonly
+**Type:** `ApiRouter` · **Modifiers:** readonly
 
 ### `options`
 
