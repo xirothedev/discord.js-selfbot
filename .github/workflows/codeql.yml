@@ -29,6 +29,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # Full history: CodeQL PR analysis fetches the base ref to
+          # compute the diff range. A shallow checkout makes that
+          # fetch fail with "error processing shallow info".
+          fetch-depth: 0
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@ea9e4e37992a54ee68a9622e985e60c8e8f12d9f # v3.27.4
