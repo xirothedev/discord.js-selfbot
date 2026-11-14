@@ -8,6 +8,10 @@
     "calls",
     "recording",
     "account-profile",
-    "guilds"
+    "guilds",
+    "rest-only",
+    "proxies",
+    "rate-limits",
+    "errors"
   ]
 }

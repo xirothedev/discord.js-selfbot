@@ -27,7 +27,7 @@ constructor(data: WebhookClientData, options?: WebhookClientOptions): WebhookCli
 
 ### `api`
 
-**Type:** `unknown` · **Modifiers:** readonly
+**Type:** `ApiRouter` · **Modifiers:** readonly
 
 ### `client`
 

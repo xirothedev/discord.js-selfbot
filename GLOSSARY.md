@@ -54,6 +54,18 @@ A cache-backed collection with fetch and mutation methods, such as `GuildManager
 
 The HTTP API at `discord.com/api`. The `RESTManager` and request handlers own rate limits, retries, and authentication.
 
+## REST transport
+
+The HTTP path for one `Client`: the `fetch` function, the `REST dispatcher`, the proxy setting, and the cookie jar. Use this term for the whole HTTP path. Do not call it "transport" alone.
+
+## REST dispatcher
+
+The undici dispatcher that carries one REST request. It is owned by `RESTManager`. It is not the voice dispatcher.
+
+## Voice dispatcher
+
+The audio player inside a `VoiceConnection`. Use the full name. Do not call it "dispatcher" alone.
+
 ## API version
 
 The version segment in the REST and gateway URLs, such as `v9` or `v10`. It is not the version of the `discord-api-types` package.

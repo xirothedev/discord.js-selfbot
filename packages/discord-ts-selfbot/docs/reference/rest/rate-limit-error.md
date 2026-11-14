@@ -34,11 +34,35 @@ The path of the request relative to the HTTP endpoint
 
 **Type:** `string`
 
+### `remaining`
+
+Requests left in the bucket, when known.
+
+**Type:** `number`
+
+### `reset`
+
+Bucket reset time in epoch milliseconds, when known.
+
+**Type:** `number`
+
+### `retryAfter`
+
+Exact backoff for this hit, in milliseconds.
+
+**Type:** `number`
+
 ### `route`
 
 The route of the request relative to the HTTP endpoint
 
 **Type:** `string`
+
+### `scope`
+
+Which bucket was hit: global, route, or sublimit.
+
+**Type:** `RateLimitScope`
 
 ### `timeout`
 

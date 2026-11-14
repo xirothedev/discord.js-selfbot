@@ -5883,7 +5883,11 @@
         { "name": "name", "description": "The name of the error" },
         {
           "name": "code",
-          "description": "HTTP error code returned from the request"
+          "description": "The Discord JSON error code, or a synthetic 500 when no JSON body exists. See status for the HTTP status."
+        },
+        {
+          "name": "status",
+          "description": "The HTTP status of the response, or 0 when no response arrived."
         },
         {
           "name": "method",
@@ -5896,6 +5900,14 @@
         {
           "name": "requestData",
           "description": "The data associated with the request that caused this error"
+        },
+        {
+          "name": "cause",
+          "description": "The original network or parse error, when there is one."
+        },
+        {
+          "name": "retryable",
+          "description": "Whether retrying the request is safe. False for 4xx and parse failures."
         }
       ]
     },
@@ -5908,6 +5920,10 @@
         {
           "name": "timeout",
           "description": "Time until this rate limit ends, in milliseconds"
+        },
+        {
+          "name": "retryAfter",
+          "description": "Exact backoff for this hit, in milliseconds."
         },
         {
           "name": "method",
@@ -5928,6 +5944,31 @@
         {
           "name": "limit",
           "description": "The maximum amount of requests of this endpoint"
+        },
+        {
+          "name": "remaining",
+          "description": "Requests left in the bucket, when known."
+        },
+        {
+          "name": "reset",
+          "description": "Bucket reset time in epoch milliseconds, when known."
+        },
+        {
+          "name": "scope",
+          "description": "Which bucket was hit: global, route, or sublimit."
+        }
+      ]
+    },
+    {
+      "name": "MissingTokenError",
+      "description": "Thrown before any HTTP is sent when no usable token is set. Never retried.",
+      "meta": { "line": 1, "file": "MissingTokenError.ts", "path": "src/rest" },
+      "props": [
+        { "name": "name", "description": "The name of the error" },
+        { "name": "code", "description": "Always TOKEN_MISSING" },
+        {
+          "name": "retryable",
+          "description": "Always false. Fix the stored token instead of retrying."
         }
       ]
     },

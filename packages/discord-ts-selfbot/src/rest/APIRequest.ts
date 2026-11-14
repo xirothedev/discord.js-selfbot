@@ -3,14 +3,17 @@ import { setTimeout } from 'node:timers';
 import { FormData } from 'undici';
 import type RESTManager from '../rest/RESTManager';
 import type { BaseClient } from '../client/BaseClient';
+import type { RequestOptions } from './RequestOptions';
+import { deriveRoute } from './RequestOptions';
 
 class APIRequest {
   rest: RESTManager;
   client: BaseClient;
   method: string;
   route: string;
-  options: Record<string, unknown>;
+  options: RequestOptions & Record<string, unknown>;
   retries: number;
+  rateLimitRetries: number;
   fullUserAgent: string;
   path: string;
 
@@ -18,41 +21,43 @@ class APIRequest {
     rest: RESTManager,
     method: string,
     path: string,
-    options: Record<string, unknown>
+    options: RequestOptions & Record<string, unknown>
   ) {
     this.rest = rest;
     this.client = rest.client;
     this.method = method;
-    this.route = (options.route as string) ?? '';
+    this.route = options.route ?? deriveRoute(path);
     this.options = options;
     this.retries = 0;
+    this.rateLimitRetries = 0;
 
-    this.fullUserAgent = (
-      this.client.options as { http: { headers: Record<string, string> } }
-    ).http.headers['User-Agent'];
+    this.fullUserAgent = this.client.options.http.headers['User-Agent'];
 
     let queryString = '';
     if (options.query) {
-      const queryOptions = options.query as Record<string, unknown>;
-      const query = Object.entries(queryOptions)
+      const query = Object.entries(options.query)
         .filter(([, value]) => value !== null && value !== undefined)
-        .flatMap(([key, value]) =>
+        .flatMap(([key, value]): string[][] =>
           Array.isArray(value)
-            ? value.map((item) => [key, item])
-            : [[key, value]]
+            ? value.map((item: unknown): string[] => [key, String(item)])
+            : [[key, String(value)]]
         );
-      queryString = new URLSearchParams(query as string[][]).toString();
+      queryString = new URLSearchParams(query).toString();
     }
     this.path = `${path}${queryString && `?${queryString}`}`;
   }
 
   make(captchaKey?: unknown, captchaRqToken?: unknown): Promise<unknown> {
-    const dispatcher = this.rest.getDispatcher() as never;
+    const dispatcher = this.rest.getDispatcher();
 
+    const version =
+      typeof this.options.version === 'number'
+        ? this.options.version
+        : this.client.options.http.version;
     const API =
       this.options.versioned === false
         ? this.client.options.http.api
-        : `${this.client.options.http.api}/v${this.client.options.http.version}`;
+        : `${this.client.options.http.api}/v${version}`;
     const url = API + this.path;
 
     const headers = this.buildHeaders(captchaKey, captchaRqToken);
@@ -68,7 +73,7 @@ class APIRequest {
         body,
         credentials: 'include',
         dispatcher,
-        headers: headers as never,
+        headers,
         method: this.method.toUpperCase(),
         redirect: 'follow',
         signal: controller.signal,
@@ -79,8 +84,8 @@ class APIRequest {
   private buildHeaders(
     captchaKey?: unknown,
     captchaRqToken?: unknown
-  ): Record<string, unknown> {
-    let headers: Record<string, unknown> = {
+  ): Record<string, string> {
+    let headers: Record<string, string> = {
       accept: '*/*',
       'accept-language': 'en-US',
       origin: 'https://discord.com',

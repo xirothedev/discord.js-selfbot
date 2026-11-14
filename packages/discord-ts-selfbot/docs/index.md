@@ -5,7 +5,7 @@
 > Using a user account with the Discord API is against Discord's Terms of Service. The library is provided
 > for educational use. Do not run it on an account you cannot afford to lose.
 
-This documentation covers `@discord-selfbot/core@14.0.0`, a fork of `discord.js-selfbot-v13` re-platformed on Bun with a TypeScript source of truth and a discord.js v14-compatible public surface.
+This documentation covers `@discord-selfbot/core@14.0.2`, a fork of `discord.js-selfbot-v13` re-platformed on Bun with a TypeScript source of truth and a discord.js v14-compatible public surface.
 
 ## Start here
 

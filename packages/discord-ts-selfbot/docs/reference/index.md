@@ -8,6 +8,7 @@ Type-only exports stay in `typings/index.d.ts`; this reference does not repeat t
 
 - [BaseClient](./client/base-client.md): The base class for all clients.
 - [Client](./client/client.md): The main hub for interacting with the Discord API, and the starting point for any bot.
+- [createRestClient](./client/create-rest-client.md): createRestClient reference.
 - [WebhookClient](./client/webhook-client.md): The webhook client.
 - [WebSocketManager](./client/web-socket-manager.md): The WebSocket manager for this client. This class forwards raw dispatch events, read more about it here https://discord.com/developers/do...
 - [WebSocketShard](./client/web-socket-shard.md): Represents a Shard's WebSocket connection
@@ -160,9 +161,13 @@ Type-only exports stay in `typings/index.d.ts`; this reference does not repeat t
 
 ### REST
 
+- [createProxyFetch](./rest/create-proxy-fetch.md): createProxyFetch reference.
+- [deriveRoute](./rest/derive-route.md): deriveRoute reference.
 - [DiscordAPIError](./rest/discord-api-error.md): Represents an error from the Discord API.
 - [HTTPError](./rest/http-error.md): Represents an HTTP error from a request.
+- [MissingTokenError](./rest/missing-token-error.md): Thrown before any HTTP is sent when no usable token is set. Never retried.
 - [OAuth2RoleConnection](./rest/o-auth2-role-connection.md): Reads and writes application role connections with an OAuth2 access token.
+- [parseProxyUrl](./rest/parse-proxy-url.md): parseProxyUrl reference.
 - [RateLimitError](./rest/rate-limit-error.md): Represents a RateLimit error from a request.
 
 ### Voice

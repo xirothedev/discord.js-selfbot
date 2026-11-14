@@ -34,6 +34,7 @@ class BaseClient extends EventEmitter {
     if (this.rest.sweepInterval) {
       clearInterval(this.rest.sweepInterval);
     }
+    this.rest.destroy();
   }
 
   incrementMaxListeners() {

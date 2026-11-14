@@ -1,0 +1,78 @@
+# Errors
+
+The REST layer throws three error classes. The project glossary fixes
+these names. Do not invent new ones.
+
+## Classes
+
+| Class | When it throws |
+| --- | --- |
+| `DiscordAPIError` | Discord answered with a JSON error. Has both codes. |
+| `HTTPError` | No JSON to parse, or no response at all. |
+| `RateLimitError` | The 429 retry bound was reached, or `rejectOnRateLimit` matched. |
+| `MissingTokenError` | No usable token. Thrown before the HTTP layer. Never retried. |
+
+## Status versus code
+
+`status` is the HTTP status. `code` is the Discord JSON code, or a
+synthetic `500` when no JSON exists. Do not mix them:
+
+```ts
+import { DiscordAPIError, HTTPError } from '@discord-selfbot/core';
+
+try {
+  await client.api.users('@me').get();
+} catch (error) {
+  if (error instanceof DiscordAPIError) {
+    console.log(error.httpStatus, error.code); // 403, 50013
+  }
+  if (error instanceof HTTPError) {
+    console.log(error.status, error.code, error.retryable);
+  }
+}
+```
+
+A non-JSON `401` from a proxy page is an `HTTPError` with
+`status: 401` and `retryable: false`. It never looks like a `500`.
+The parse-fail path keeps `res.status`.
+
+## Retryable
+
+`HTTPError.retryable` is `true` for network failures, timeouts, and
+`5xx`. It is `false` for `4xx` and for body parse failures. Use it to
+decide whether a retry is safe:
+
+| Case | retryable |
+| --- | --- |
+| Timeout or connection reset | `true` |
+| `500`–`599` after `retryLimit` | `true` |
+| `401`, `403`, or proxy HTML error page | `false` |
+| `429` past `maxRateLimitRetries` (throws `RateLimitError`) | n/a |
+
+`cause` holds the original error for network and parse failures.
+
+## Missing token
+
+```ts
+import { MissingTokenError } from '@discord-selfbot/core';
+
+try {
+  await client.api.users('@me').get();
+} catch (error) {
+  if (error instanceof MissingTokenError) {
+    // Fix the stored token. Retrying cannot help.
+  }
+}
+```
+
+An empty or missing token throws `MissingTokenError` (`code:
+'TOKEN_MISSING'`) before any HTTP is sent. It is terminal. Check the
+stored-token path when you see it: an empty unsealed value is the usual
+cause.
+
+## Next
+
+- [REST-only use](rest-only.md)
+- [Rate limits](rate-limits.md)
+- [API: HTTPError](../reference/rest/http-error.md)
+- [API: RateLimitError](../reference/rest/rate-limit-error.md)

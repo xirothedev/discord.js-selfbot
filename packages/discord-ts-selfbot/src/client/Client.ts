@@ -165,6 +165,26 @@ function validateBasicOptions(options: ResolvedClientOptions): void {
   }
 }
 
+function validateRetryOptions(options: ResolvedClientOptions): void {
+  if (
+    typeof options.retryLimit !== 'number' ||
+    Number.isNaN(options.retryLimit)
+  ) {
+    throw new TypeError('CLIENT_INVALID_OPTION', 'retryLimit', 'a number');
+  }
+  if (
+    typeof options.maxRateLimitRetries !== 'number' ||
+    Number.isNaN(options.maxRateLimitRetries) ||
+    options.maxRateLimitRetries < 0
+  ) {
+    throw new TypeError(
+      'CLIENT_INVALID_OPTION',
+      'maxRateLimitRetries',
+      'a number greater than or equal to 0'
+    );
+  }
+}
+
 function validateTimeoutOptions(options: ResolvedClientOptions): void {
   if (
     typeof options.DMChannelVoiceStatusSync !== 'number' ||
@@ -226,12 +246,7 @@ function validateTimeoutOptions(options: ResolvedClientOptions): void {
       'a number'
     );
   }
-  if (
-    typeof options.retryLimit !== 'number' ||
-    Number.isNaN(options.retryLimit)
-  ) {
-    throw new TypeError('CLIENT_INVALID_OPTION', 'retryLimit', 'a number');
-  }
+  validateRetryOptions(options);
   if (typeof options.failIfNotExists !== 'boolean') {
     throw new TypeError(
       'CLIENT_INVALID_OPTION',

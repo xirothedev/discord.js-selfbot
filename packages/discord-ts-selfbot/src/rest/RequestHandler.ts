@@ -3,6 +3,7 @@ import { AsyncQueue } from '@sapphire/async-queue';
 import DiscordAPIError from './DiscordAPIError';
 import type APIRequest from './APIRequest';
 import HTTPError from './HTTPError';
+import MissingTokenError from './MissingTokenError';
 import RateLimitError from './RateLimitError';
 import Constants from '../util/Constants';
 import type { Captcha } from '../../typings';
@@ -145,25 +146,38 @@ class RequestHandler {
   }
 
   /*
-   * Determines whether the request should be queued or whether a RateLimitError should be thrown
+   * Determines whether the request should be queued or whether a RateLimitError should be thrown.
+   * Timeout and retryAfter are in ms.
    */
   async onRateLimit(
     request: APIRequest,
     limit: number,
     timeout: number,
-    isGlobal: boolean
+    isGlobal: boolean,
+    extra?: {
+      retryAfter?: number;
+      remaining?: number;
+      reset?: number;
+      scope?: 'global' | 'route' | 'sublimit';
+    }
   ): Promise<void> {
     const { options } = this.manager.client;
     if (!options.rejectOnRateLimit) {
       return;
     }
 
+    const retryAfter = extra?.retryAfter ?? timeout;
+    const scope = extra?.scope ?? (isGlobal ? 'global' : 'route');
     const rateLimitData = {
       global: isGlobal,
       limit,
       method: request.method,
       path: request.path,
+      remaining: extra?.remaining,
+      reset: extra?.reset,
+      retryAfter,
       route: request.route,
+      scope,
       timeout,
     };
     const shouldThrow =
@@ -202,6 +216,9 @@ class RequestHandler {
     try {
       res = (await request.make(captchaKey, captchaToken)) as RestResponse;
     } catch (error: unknown) {
+      if (error instanceof MissingTokenError) {
+        throw error;
+      }
       // Retry the specified number of times for request abortions
       const e = error as {
         message?: string;
@@ -213,7 +230,8 @@ class RequestHandler {
           e.message ?? 'Unknown error',
           e.constructor?.name ?? 'Error',
           e.status,
-          request
+          request,
+          { cause: error, retryable: true, status: e.status ?? 0 }
         );
       }
 
@@ -466,7 +484,8 @@ class RequestHandler {
         e.message ?? 'Unknown error',
         e.constructor?.name ?? 'Error',
         e.status,
-        request
+        request,
+        { cause: error, retryable: false, status: res.status }
       );
     }
 
@@ -532,11 +551,18 @@ class RequestHandler {
   ): Promise<unknown> {
     const isGlobal = this.globalLimited;
     const { globalLimit, globalReset } = this.manager;
-    const { restTimeOffset } = this.manager.client.options;
+    const { restTimeOffset, maxRateLimitRetries } = this.manager.client.options;
     const limit = isGlobal ? globalLimit : this.limit;
     const timeout = isGlobal
       ? (globalReset ?? Date.now()) + restTimeOffset - Date.now()
       : this.reset + restTimeOffset - Date.now();
+    const retryAfter = sublimitTimeout ?? Math.max(0, timeout);
+    let scope: 'global' | 'route' | 'sublimit' = 'route';
+    if (isGlobal) {
+      scope = 'global';
+    } else if (sublimitTimeout) {
+      scope = 'sublimit';
+    }
 
     this.manager.client.emit(
       DEBUG,
@@ -547,10 +573,34 @@ class RequestHandler {
     Route   : ${request.route}
     Limit   : ${limit}
     Timeout : ${timeout}ms
+    RetryAfter: ${retryAfter}ms
+    Scope   : ${scope}
     Sublimit: ${sublimitTimeout ? `${sublimitTimeout}ms` : 'None'}`
     );
 
-    await this.onRateLimit(request, limit, timeout, isGlobal);
+    await this.onRateLimit(request, limit, timeout, isGlobal, {
+      remaining: isGlobal ? this.manager.globalRemaining : this.remaining,
+      reset: isGlobal ? (globalReset ?? Date.now()) : this.reset,
+      retryAfter,
+      scope,
+    });
+
+    const used = request.rateLimitRetries ?? 0;
+    if (used >= (maxRateLimitRetries ?? 2)) {
+      throw new RateLimitError({
+        global: isGlobal,
+        limit,
+        method: request.method,
+        path: request.path,
+        remaining: isGlobal ? this.manager.globalRemaining : this.remaining,
+        reset: isGlobal ? (globalReset ?? Date.now()) : this.reset,
+        retryAfter,
+        route: request.route,
+        scope,
+        timeout,
+      });
+    }
+    request.rateLimitRetries = used + 1;
 
     // If caused by a sublimit, wait it out here so other requests on the route can be handled
     if (sublimitTimeout) {
@@ -565,7 +615,10 @@ class RequestHandler {
   ): Promise<unknown> {
     // Retry the specified number of times for possible serverside issues
     if (request.retries === this.manager.client.options.retryLimit) {
-      throw new HTTPError(res.statusText, 'HTTPError', res.status, request);
+      throw new HTTPError(res.statusText, 'HTTPError', res.status, request, {
+        retryable: true,
+        status: res.status,
+      });
     }
 
     request.retries++;
