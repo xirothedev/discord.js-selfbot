@@ -8,6 +8,7 @@ Bun workspaces + Turborepo. **Bun-only runtime** (no Node compatibility). The li
 /
 ├── packages/
 │   ├── discord-ts-selfbot/   # published library (src, typings, examples)
+│   ├── codemod/              # @discord-selfbot/codemod: v13→v14 upgrader (jscodeshift)
 │   └── test-harness/        # private fake Discord HTTP + WS server (TDD seam S1)
 ├── apps/
 │   ├── docs/                # Fumadocs documentation site (static Next.js)
@@ -49,6 +50,7 @@ The corpus source is `apps/docs/scripts/agent/api.json` plus the Markdown under 
 - `bun run docs:snippets` — type-check the full example snippets
 - `bun run lint:boundaries` — deep-module boundary check
 - `bun run bench` — Node API vs Bun API benchmarks; see `tools/bench/README.md`
+- `bun run codemod` — run the v13→v14 codemod CLI; see `docs/agents/upgrade-user-project.md`
 
 ## Lint and format
 
@@ -69,5 +71,9 @@ Default canonical triage labels (`needs-triage`, `needs-info`, `ready-for-agent`
 ## Domain docs
 
 Single-context layout (one `GLOSSARY.md` + `DESIGN.md` + `docs/adr/` at repo root). See `docs/agents/domain.md`.
+
+## Upgrading user projects
+
+Migrating a user project from `discord.js-selfbot-v13` goes through the codemod, never hand edits. See `docs/agents/upgrade-user-project.md`.
 
 Packages are deep modules: see `packages/discord-ts-selfbot/src/packages/README.md` before adding or importing one.

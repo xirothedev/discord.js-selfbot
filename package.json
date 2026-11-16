@@ -25,6 +25,7 @@
     "ratchet:write": "bun run --cwd packages/discord-ts-selfbot ratchet:write",
     "lint:boundaries": "bun run --cwd packages/discord-ts-selfbot lint:boundaries",
     "bench": "bun run --cwd tools/bench start",
+    "codemod": "bun packages/codemod/src/cli.ts",
     "docs:dev": "bun run --cwd apps/docs dev",
     "docs:api": "bun run --cwd apps/docs api",
     "docs:agent": "bun run --cwd packages/discord-ts-selfbot docs:generate",

@@ -5,6 +5,17 @@ description: Rename the package, update the runtime, and move to the v14 names.
 
 This fork started as `discord.js-selfbot-v13`. The new package is `@discord-selfbot/core@14`, with a discord.js v14-compatible surface and a Bun-only runtime.
 
+## Run the codemod (for agents)
+
+`@discord-selfbot/codemod` upgrades a user project mechanically. Run it instead of hand-editing, then resolve the reported markers by hand:
+
+```bash
+npx @discord-selfbot/codemod@latest upgrade        # dry run: diff + marker report
+npx @discord-selfbot/codemod@latest upgrade --write # needs a clean git tree (or --force)
+```
+
+The codemod rewrites package specifiers, dependency entries, renamed exports, builder names, event strings, `setStyle` values, and renamed option keys. It never deletes a companion dependency (`@discordjs/opus`, `erlpack`, `zlib-sync`, sodium/`@stablelib/xchacha20poly1305`) and never changes runtime behavior: anything that needs judgment gets a `TODO(codemod:<rule-id>): … [docs anchor]` marker instead. `bun test` after the upgrade run, open every marker, and follow the linked section below. The full agent procedure is `docs/agents/upgrade-user-project.md` in the repository.
+
 ## 1. Rename the package
 
 ```diff

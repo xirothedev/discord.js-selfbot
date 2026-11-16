@@ -141,3 +141,33 @@ The tag on an entity field: `api` (standard Discord bot API), `selfbot` (user-ac
 ## Payload
 
 The outgoing message body assembled by `MessagePayload`. It is not used for inbound JSON; see **Raw data**.
+
+## Codemod
+
+A tool that rewrites a **user project** from the legacy v13 package source to this
+library's source mechanically. It changes only what the **rename map** says it may
+change. Anything that needs judgment gets a **migration marker** instead of a silent
+rewrite.
+
+## User project
+
+A third-party program that depends on the legacy v13 package or on this library. The
+codemod acts on user projects. It is not a repository of this monorepo.
+
+## Rename map
+
+The one machine-readable table of legacy-name and legacy-option changes to this
+library's names and options. The codemod rules and the documentation parity tables
+are both derived from it. No other file lists renames.
+
+## Migration marker
+
+A `TODO(codemod)` comment the codemod leaves where a change needs a person or an
+agent to decide. It names the rule that produced it. It blocks nothing; the upgrade
+report counts them.
+
+## Upgrade run
+
+One execution of the codemod over a user project. It produces a report: files
+changed, per-rule counts, and migration markers left. Running the same upgrade run
+twice changes nothing the second time.
