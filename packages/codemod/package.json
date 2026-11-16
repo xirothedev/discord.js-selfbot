@@ -1,0 +1,36 @@
+{
+  "name": "@discord-selfbot/codemod",
+  "version": "14.0.3",
+  "description": "Upgrade user projects from discord.js-selfbot-v13 to @discord-selfbot/core",
+  "license": "GNU General Public License v3.0",
+  "bin": {
+    "discord-selfbot-codemod": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "type": "module",
+  "scripts": {
+    "build": "bun build src/cli.ts --target=node --format=esm --outdir=dist --packages=external",
+    "generate": "bun scripts/generate-event-map.ts",
+    "generate:check": "bun scripts/generate-event-map.ts --check",
+    "check": "bun check",
+    "lint": "bun lint",
+    "fmt": "bun fmt",
+    "fmt:check": "bun fmt --check",
+    "test": "bun run build && bun test"
+  },
+  "dependencies": {
+    "jscodeshift": "^17.4.0"
+  },
+  "devDependencies": {
+    "@discord-selfbot/core": "workspace:*",
+    "@types/bun": "^1.4.0",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "bun": ">=1.4.4",
+    "node": ">=22"
+  }
+}
