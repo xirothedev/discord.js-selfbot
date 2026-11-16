@@ -32,7 +32,7 @@
     "docs:agent:check": "bun run --cwd packages/discord-ts-selfbot docs:check",
     "docs:snippets": "bun run --cwd apps/docs snippets",
     "changeset": "changeset",
-    "changeset:version": "changeset version",
+    "changeset:version": "changeset version && bun run docs:agent",
     "changeset:publish": "changeset publish"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 # API reference
 
-Public runtime surface of `@discord-selfbot/core@14.0.3`. Every page is generated from `typings/index.d.ts`.
+Public runtime surface of `@discord-selfbot/core@14.1.0`. Every page is generated from `typings/index.d.ts`.
 
 Type-only exports stay in `typings/index.d.ts`; this reference does not repeat them.
 
