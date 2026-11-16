@@ -1,6 +1,8 @@
 # Bun API policy: capability and measured wins, not a blanket rewrite
 
-**Status:** Accepted
+**Status:** Accepted, partially superseded by ADR 0013 — the "Use Bun APIs for
+`Bun.sleep` / `Bun.CryptoHasher`" clauses no longer apply to shared runtime code
+under `src/**`; they stay valid for tools and for the `exports.bun` path.
 
 The runtime is Bun, and ADR 0001 allows Bun APIs. A full audit and benchmark
 showed that most Node APIs already run through Bun's native code. We keep those

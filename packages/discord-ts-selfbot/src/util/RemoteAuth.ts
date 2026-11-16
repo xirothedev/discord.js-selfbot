@@ -1,7 +1,3 @@
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
-const qrcode = require('qrcode');
 import { Buffer } from 'node:buffer';
 import crypto from 'node:crypto';
 import EventEmitter from 'node:events';
@@ -19,6 +15,11 @@ import {
   sendEvent,
   wsURL,
 } from './RemoteAuthGateway';
+
+// Bundler-visible require keeps the untyped 'qrcode' package external. The
+// declare keeps the linter on ES modules; Bun and the node builds resolve it.
+declare const require: NodeRequire;
+const qrcode = require('qrcode');
 
 const defaultClientOptions = Options.createDefault();
 
@@ -177,11 +178,10 @@ class DiscordAuthWebsocket extends EventEmitter {
   #receiveNonceProof(data: Record<string, unknown>) {
     const nonce = data.encrypted_nonce;
     const decrypted_nonce = this.#decryptPayload(nonce);
-    const proof = Bun.CryptoHasher.hash('sha256', decrypted_nonce, 'base64')
-      .replaceAll('+', '-')
-      .replaceAll('/', '_')
-      .replace(/=+/u, '')
-      .replace(/\s+$/u, '');
+    const proof = crypto
+      .createHash('sha256')
+      .update(decrypted_nonce)
+      .digest('base64url');
     this.#send(sendEvent.NONCE_PROOF, { proof });
   }
 

@@ -56,6 +56,9 @@ jobs:
           TURBO_UI: '0'
         run: bun run build
 
+      - name: Smoke Node entries (release gate, ADR 0013)
+        run: bun run --cwd packages/discord-ts-selfbot test:node
+
       - name: Create Release Pull Request or Publish
         id: changesets
         uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2

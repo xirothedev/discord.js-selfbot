@@ -1,4 +1,5 @@
 import EventEmitter from 'node:events';
+import { sleep } from '../../util/sleep';
 import { Collection } from '@discordjs/collection';
 import { RPCErrorCodes } from 'discord-api-types/v10';
 import WebSocketShard from './WebSocketShard';
@@ -239,7 +240,7 @@ class WebSocketManager extends EventEmitter {
       this.debug(
         `Shard Queue Size: ${this.shardQueue.size}; continuing in 5 seconds...`
       );
-      await Bun.sleep(5000);
+      await sleep(5000);
       return this.createShards();
     }
 
@@ -263,7 +264,7 @@ class WebSocketManager extends EventEmitter {
           : undefined;
       if (httpStatus !== 401) {
         this.debug(`Possible network error occurred. Retrying in 5s...`);
-        await Bun.sleep(5000);
+        await sleep(5000);
         this.reconnecting = false;
         return this.reconnect();
       }

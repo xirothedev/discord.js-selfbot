@@ -1,5 +1,6 @@
 import process from 'node:process';
 import { setInterval } from 'node:timers';
+import { sleep } from '../util/sleep';
 import { Collection } from '@discordjs/collection';
 import { authenticator } from 'otplib';
 import BaseClient from './BaseClient';
@@ -820,7 +821,7 @@ class Client extends BaseClient {
   }
 
   sleep(timeout: number): Promise<void> {
-    return Bun.sleep(timeout);
+    return sleep(timeout);
   }
 
   toJSON() {

@@ -2,6 +2,7 @@ import EventEmitter from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import { sleep } from '../util/sleep';
 import { Collection } from '@discordjs/collection';
 import Shard from './Shard';
 import _errorsModule from '../errors';
@@ -260,7 +261,7 @@ class ShardingManager extends EventEmitter {
     const shard = this.createShard(shardId);
     promises.push(shard.spawn(timeout));
     if (delay > 0 && this.shards.size !== this.shardList.length) {
-      promises.push(Bun.sleep(delay));
+      promises.push(sleep(delay));
     }
     await Promise.all(promises);
   }
@@ -398,7 +399,7 @@ class ShardingManager extends EventEmitter {
       shard.respawn({ delay: respawnDelay, timeout }),
     ];
     if (position < this.shards.size && shardDelay > 0) {
-      promises.push(Bun.sleep(shardDelay));
+      promises.push(sleep(shardDelay));
     }
     await Promise.all(promises);
   }

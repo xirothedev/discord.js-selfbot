@@ -18,10 +18,12 @@ const { Error: DiscordError, RangeError, TypeError } = _errorsModule;
 import VoiceCodec from '../client/voice/util/VoiceCodec';
 import type { UploadAttachment } from '../types/uploads';
 import { isGuildBasedChannel } from '../types/channels';
-import { createRequire } from 'node:module';
 import type { Channel } from '../structures/Channel';
 
-const require = createRequire(import.meta.url);
+// Bare require so the bundler inlines relative specifiers into dist (and
+// keeps bare specifiers like 'qrcode' external). Bun provides it at runtime;
+// the node builds rewrite it. The declare keeps the linter on ES modules.
+declare const require: NodeRequire;
 
 const has = (o: unknown, k: unknown) =>
   Object.hasOwn(o as object, k as PropertyKey);

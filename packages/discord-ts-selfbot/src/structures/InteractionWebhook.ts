@@ -1,8 +1,10 @@
-import { createRequire } from 'node:module';
 import type Client from '../client/Client';
 import type { Snowflake } from 'discord-api-types/v10';
 
-const require = createRequire(import.meta.url);
+// Bundler-visible require: relative specifiers get inlined into dist and bare
+// specifiers stay external. Bun provides it at runtime; the node builds
+// rewrite it. The declare keeps the linter on ES modules.
+declare const require: NodeRequire;
 
 class InteractionWebhook {
   declare client: Client;

@@ -18,7 +18,7 @@ This documentation covers `@discord-selfbot/core@14.0.2`, a fork of `discord.js-
 
 - **discord.js v14 surface:** `Events`, `Partials`, `Status`, builders, interaction classes, collectors, and the v14 client methods.
 - **Selfbot features:** presence, account edits, friend invites, message search, guild settings, billing, voice, calls, and recording.
-- **Bun runtime:** `bun install`, `bun test`, `bun check`, and a Bun-native build. Node.js is not supported.
+- **Bun first, Node supported:** the repo develops on Bun (`bun install`, `bun test`, `bun check`, Bun-native build). Published packages run on Bun or Node 22+, with `require()` and `import` entries smoke-tested on plain Node in CI.
 - **Test seam:** a fake Discord HTTP and WebSocket server in `packages/test-harness`, with no real token or network.
 - **TypeScript source:** every module under `src/` is TypeScript, and Bun runs it directly.
 

@@ -1,17 +1,19 @@
 ---
 title: Installation
-description: Install @discord-selfbot/core with Bun and confirm the runtime version.
+description: Install @discord-selfbot/core with Bun or Node and confirm the runtime version.
 ---
 
 ## Requirements
 
-- **Bun 1.4.4 or newer.** The package engines field rejects older Bun versions.
+- **Bun 1.4.4 or newer (recommended).** The package engines field rejects older Bun versions. Under Bun the package resolves to the TypeScript source directly.
+- **Or Node.js 22 or newer.** `require('@discord-selfbot/core')` and `import` both work from the published `dist` builds. The library never needs a bundler.
 - **A Discord user token.** This is a selfbot, not a bot application token. Read [Token safety](/docs/getting-started/token-safety) before you start.
 - **Optional:** TypeScript 5.5 or newer for typed projects.
 
-<Callout type="error" title="Node.js is not supported">
-  The package is Bun-only. It uses Bun for installation, tests, type checking, formatting, and the build. Use Bun
-  for the application that imports it as well.
+<Callout type="info" title="Bun first, Node supported">
+  This repository is developed and tested on Bun: `bun install`, `bun test`, `bun check`, and a Bun-native build.
+  The published package also ships Node-ready ESM and CommonJS entries and is smoke-tested on plain Node 22 in CI
+  (see [Node support](/docs/project/node-support)). Use Bun for new projects when you can.
 </Callout>
 
 ## Install
@@ -19,6 +21,8 @@ description: Install @discord-selfbot/core with Bun and confirm the runtime vers
 ```sh
 bun add @discord-selfbot/core
 ```
+
+On Node, `npm install @discord-selfbot/core` or `pnpm add @discord-selfbot/core` works the same way.
 
 The package name is `@discord-selfbot/core`, not the old `discord.js-selfbot-v13`. The published major is `14`, which tracks the `discord.js@14.28.1` API baseline.
 
@@ -30,7 +34,13 @@ The package is ESM-first. Import the classes and enums by name:
 import { Client, Events } from '@discord-selfbot/core';
 ```
 
-The source is TypeScript. It uses CommonJS `require` calls internally for compatibility with the original fork, but new code should use `import`.
+On Node CommonJS, require works too:
+
+```js
+const { Client, Events } = require('@discord-selfbot/core');
+```
+
+Under Bun the source is TypeScript and it uses CommonJS `require` calls internally for compatibility with the original fork; on Node the built bundles carry the same behavior. New code should use `import`.
 
 ## Verify the install
 

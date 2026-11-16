@@ -19,6 +19,10 @@ on:
         description: Build docs
         type: boolean
         default: true
+      run_node:
+        description: Smoke the published Node dist entries on plain Node
+        type: boolean
+        default: true
 
 # Reusable callee: keep its own group distinct from callers (rules/github-actions.md #3).
 concurrency:
@@ -128,3 +132,36 @@ jobs:
         env:
           TURBO_UI: '0'
         run: bun run docs
+
+  node-dist:
+    name: Node dist smoke
+    if: ${{ inputs.run_node }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # The published package supports Node >= 22 (ADR 0013); the smoke runs
+      # the built entries on plain Node, not Bun.
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          package-manager-cache: false
+
+      - name: Build
+        env:
+          TURBO_UI: '0'
+        run: bun run build
+
+      - name: Smoke Node entries
+        run: bun run --cwd packages/discord-ts-selfbot test:node

@@ -1,6 +1,6 @@
 # Migrating from v13
 
-This fork started as `discord.js-selfbot-v13`. The new package is `@discord-selfbot/core@14`, with a discord.js v14-compatible surface and a Bun-only runtime.
+This fork started as `discord.js-selfbot-v13`. The new package is `@discord-selfbot/core@14`, with a discord.js v14-compatible surface, a Bun-first development flow, and official Node.js 22+ support for consumers.
 
 ## Run the codemod (for agents)
 
@@ -27,16 +27,16 @@ The codemod rewrites package specifiers, dependency entries, renamed exports, bu
 
 The old package remains on npm under its original owner. It is not replaced by this package.
 
-## 2. Switch the runtime to Bun
+## 2. Update the runtime
 
-`@discord-selfbot/core` declares `engines.bun >= 1.4.4` and uses Bun for install, tests, type checking, formatting, and build. Node.js is not supported.
+`@discord-selfbot/core` supports Bun (preferred, `engines.bun >= 1.4.4`) and Node.js 22 or newer (`engines.node >= 22`). Under Bun the package resolves to the TypeScript source; on Node it resolves to prebuilt ESM and CommonJS bundles, so `require()` keeps working with no bundler. See [Node support](https://xirothedev.github.io/discord.js-selfbot/docs/project/node-support) for the guarantees and the loud limits.
 
 ```diff
 - npm install discord.js-selfbot-v13
 + bun add @discord-selfbot/core
 ```
 
-If your project still uses `require`, the package source still uses CommonJS internally, but new code should use `import`.
+On Node, `npm install @discord-selfbot/core` works the same way. If your project still uses `require`, it runs unchanged on the Node entry.
 
 ## 3. Update builders
 
@@ -123,7 +123,7 @@ These have no discord.js v14 equivalent and keep selfbot-specific names:
 
 ## 9. Known differences
 
-- **Bun only.** Node.js consumers are out of scope.
+- **Bun first.** Bun is the development runtime; Node 22+ is supported and CI-smoked, with documented limits in [Node support](https://xirothedev.github.io/discord.js-selfbot/docs/project/node-support).
 - **Voice codecs.** The payload boundary is tested; full media-codec coverage is future work.
 - **v14 star exports.** `discord.js@14` star-exports `discord-api-types`, `@discordjs/builders`, `@discordjs/formatters`, `@discordjs/rest`, `@discordjs/util`, and `@discordjs/ws`. This fork exports the builder classes it supports, but not every star-exported name.
 - **Parity report.** The [v14 parity report](https://xirothedev.github.io/discord.js-selfbot/docs/project/v14-parity) records the audit that drove the work and the current shipped surface.

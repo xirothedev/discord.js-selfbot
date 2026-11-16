@@ -1,6 +1,3 @@
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
 import _errorsModule from '../errors';
 
 const { TypeError } = _errorsModule;
@@ -60,6 +57,11 @@ import {
   isComponentDataSource,
   isMessageComponentType,
 } from './BaseMessageComponent.helpers';
+
+// Bundler-visible require: relative specifiers get inlined into dist and bare
+// specifiers stay external. Bun provides it at runtime; the node builds
+// rewrite it. The declare keeps the linter on ES modules.
+declare const require: NodeRequire;
 
 export {
   isComponentDataSource,

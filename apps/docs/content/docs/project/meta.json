@@ -1,4 +1,11 @@
 {
   "title": "Project",
-  "pages": ["v14-parity", "changelog", "contributing", "safety", "license"]
+  "pages": [
+    "v14-parity",
+    "node-support",
+    "changelog",
+    "contributing",
+    "safety",
+    "license"
+  ]
 }
