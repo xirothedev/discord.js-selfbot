@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { parseCli, USAGE } from './args';
 import type { CliOptions } from './args';
@@ -247,8 +247,20 @@ export function main(argv: readonly string[]): number {
   return 0;
 }
 
-const invoked =
-  process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
-if (invoked) {
+// npm publishes the bin as a symlink in node_modules/.bin, so argv[1] is the
+// symlink path while import.meta.url is the real file: compare realpaths.
+function invokedDirectly(): boolean {
+  const [, entry] = process.argv;
+  if (!entry) {
+    return false;
+  }
+  try {
+    return realpathSync(entry) === import.meta.filename;
+  } catch {
+    return false;
+  }
+}
+
+if (invokedDirectly()) {
   process.exitCode = main(process.argv.slice(2));
 }

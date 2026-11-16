@@ -4,6 +4,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -120,5 +121,17 @@ describe('codemod CLI under Node', () => {
     const report = JSON.parse(result.stdout) as { totals: { changed: number } };
     expect(report.totals.changed).toBe(0);
     expect(readFileSync(path.join(dir, 'src', 'bot.js'), 'utf-8')).toBe(before);
+  });
+
+  test('the published .bin symlink runs the CLI', () => {
+    const bin = path.join(dir, 'discord-selfbot-codemod');
+    symlinkSync(cliPath, bin);
+    const proc = Bun.spawnSync([bin, 'list'], {
+      cwd: dir,
+      stderr: 'pipe',
+      stdout: 'pipe',
+    });
+    expect(proc.exitCode).toBe(0);
+    expect(proc.stdout.toString()).toContain('module-specifier');
   });
 });
