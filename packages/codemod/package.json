@@ -1,6 +1,6 @@
 {
   "name": "@discord-selfbot/codemod",
-  "version": "14.0.3",
+  "version": "14.1.0",
   "description": "Upgrade user projects from discord.js-selfbot-v13 to @discord-selfbot/core",
   "license": "GNU General Public License v3.0",
   "bin": {
