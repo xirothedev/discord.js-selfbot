@@ -1,5 +1,9 @@
 # @discord-selfbot/codemod
 
+## 14.1.3
+
+No changes in this release.
+
 ## 14.1.2
 
 No changes in this release.
