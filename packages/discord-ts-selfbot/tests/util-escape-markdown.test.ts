@@ -19,4 +19,11 @@ test('escapeMaskedLink does not backtrack on adversarial input', () => {
 
   expect(Util.escapeMaskedLink(repeatedBrackets)).toBe(repeatedBrackets);
   expect(Util.escapeMaskedLink(repeatedLinks)).toBe(`\\${repeatedLinks}`);
+
+  // Alert 2: the groups used to be able to consume the "\\[" prefix, so each
+  // start position rescanned the remainder of the string.
+  const repeatedEscapes = '[a'.repeat(100_000);
+  const repeatedPrefixes = `[\\](${'[(\\](('.repeat(100_000)}`;
+  expect(Util.escapeMaskedLink(repeatedEscapes)).toBe(repeatedEscapes);
+  expect(Util.escapeMaskedLink(repeatedPrefixes)).toBe(repeatedPrefixes);
 });

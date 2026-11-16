@@ -391,11 +391,12 @@ class Util extends null {
 
   static escapeMaskedLink(text: string) {
     // A masked link always contains "]("; bail out before the scan when absent.
-    // Disjoint character sets keep the match unambiguous (linear time, no ReDoS).
+    // Both groups exclude "[" so they cannot overlap the "\\[" prefix: every
+    // match has a single decomposition, so the regex runs in linear time.
     if (!text.includes('](')) {
       return text;
     }
-    return text.replaceAll(/\[(?<text>[^\]]+)\]\((?<url>[^)]+)\)/gmu, '\\$&');
+    return text.replaceAll(/\[(?<text>[^[\]]+)\]\((?<url>[^[)]+)\)/gmu, '\\$&');
   }
 
   static fetchRecommendedShards() {
