@@ -10,6 +10,11 @@ import Util from '../../util/Util';
 import type WebSocketManager from './WebSocketManager';
 import type { WebSocket as WebSocketType } from 'ws';
 
+// Bundler-visible require: relative specifiers get inlined into dist and bare
+// specifiers stay external. Bun provides it at runtime; the node builds
+// rewrite it. The declare keeps the linter on ES modules.
+declare const require: NodeRequire;
+
 const STATUS_KEYS = Object.keys(Status);
 const CONNECTION_STATE = Object.keys(WebSocket.WebSocket);
 
@@ -83,9 +88,11 @@ function toChunk(data: unknown): Buffer | Uint8Array | null {
 
 let zlib: ZlibStream | null = null;
 
+// Synchronous optional load (like erlpack in WebSocket.ts): a top-level await
+// here would block the CJS `dist` entry from ever being required on Node.
 try {
   const _zs = 'zlib-sync';
-  const loaded: unknown = await import(_zs);
+  const loaded: unknown = require(_zs);
   const candidate =
     isRecord(loaded) && 'default' in loaded ? loaded.default : loaded;
   if (isZlibStream(candidate)) {

@@ -6,7 +6,7 @@ Version-matched documentation for coding agents. Read this file first, then open
 
 - [AGENTS.md block](./AGENTS.md): Copy this block into the project AGENTS.md before coding.
 - [Introduction](./index.md): A Bun-first, TypeScript selfbot library with a discord.js v14-compatible API.
-- [Installation](./getting-started/installation.md): Install @discord-selfbot/core with Bun and confirm the runtime version.
+- [Installation](./getting-started/installation.md): Install @discord-selfbot/core with Bun or Node and confirm the runtime version.
 - [Token safety](./getting-started/token-safety.md): Treat a user token as a password. Read this before you connect.
 - [First client](./getting-started/first-client.md): Connect with a user token, listen for events, and shut down cleanly.
 - [Coding agents](./getting-started/agents.md): Give coding agents the version-matched @discord-selfbot/core docs.
@@ -21,7 +21,7 @@ Version-matched documentation for coding agents. Read this file first, then open
 - [Guilds](./guides/guilds.md): Fetch members, search, edit settings, and read guild metadata.
 - [Interactions](./guides/interactions.md): Register slash commands, handle components and modals, and collect responses.
 - [Messages](./guides/messages.md): Send, edit, react, search, and manage message state.
-- [Proxies](./guides/proxies.md): Route REST traffic through HTTP or SOCKS5 proxies on Bun.
+- [Proxies](./guides/proxies.md): Route REST traffic through HTTP or SOCKS5 proxies on Bun and Node.
 - [Rate limits](./guides/rate-limits.md): Bounded 429 retries and exact backoff fields.
 - [Recording](./guides/recording.md): Record audio and video through ffmpeg without leaking processes.
 - [REST-only use](./guides/rest-only.md): Call the HTTP API with a user token and no gateway connection.

@@ -4,6 +4,7 @@ import EventEmitter from 'node:events';
 import path from 'node:path';
 import process from 'node:process';
 import { setTimeout } from 'node:timers';
+import { sleep } from '../util/sleep';
 import { promisify } from 'node:util';
 import _errorsModule from '../errors';
 
@@ -218,7 +219,7 @@ class Shard extends EventEmitter {
   > {
     this.kill();
     if (delay > 0) {
-      await Bun.sleep(delay);
+      await sleep(delay);
     }
     return this.spawn(timeout);
   }

@@ -1,6 +1,6 @@
 # @discord-selfbot/core monorepo
 
-Bun workspaces + Turborepo. **Bun-only runtime** (no Node compatibility). The library lives in `packages/discord-ts-selfbot`.
+Bun workspaces + Turborepo. **Bun-first development; the published library supports Bun and Node >= 22** (ADR 0013). The library lives in `packages/discord-ts-selfbot`.
 
 ## Layout
 

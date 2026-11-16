@@ -1,8 +1,4 @@
 import { Collection } from '@discordjs/collection';
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
-const { Channel }: typeof ChannelModule = require('./Channel');
 import Invite from './Invite';
 import type { RawInviteDataSource } from './Invite';
 import TextBasedChannel from './interfaces/TextBasedChannel';
@@ -37,6 +33,11 @@ import type { User } from './User';
 import type { Message } from './Message';
 import type * as ChannelModule from './Channel';
 import type { SendOptions, SendResult } from '../types/channels';
+
+// Bundler-visible require: keeps the Channel cycle lazy while the bundler
+// inlines the specifier into dist. The declare keeps the linter on ES modules.
+declare const require: NodeRequire;
+const { Channel }: typeof ChannelModule = require('./Channel');
 
 interface VoiceAdapter {
   destroy: () => void;

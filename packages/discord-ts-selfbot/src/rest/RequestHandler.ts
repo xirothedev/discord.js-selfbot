@@ -301,7 +301,7 @@ class RequestHandler {
       }
       delayPromise = this.manager.globalDelay;
     } else {
-      delayPromise = Bun.sleep(Math.max(1, timeout));
+      delayPromise = delay(Math.max(1, timeout));
     }
 
     // Determine whether a RateLimitError should be thrown
@@ -604,7 +604,7 @@ class RequestHandler {
 
     // If caused by a sublimit, wait it out here so other requests on the route can be handled
     if (sublimitTimeout) {
-      await Bun.sleep(Math.max(1, sublimitTimeout));
+      await delay(Math.max(1, sublimitTimeout));
     }
     return this.execute(request);
   }

@@ -1,6 +1,3 @@
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
 import process from 'node:process';
 import Base from './Base';
 import VoiceState from './VoiceState';
@@ -19,6 +16,11 @@ import type { Guild } from './Guild';
 import type { Presence } from './Presence';
 import type { Role } from './Role';
 import type { GuildChannel } from './GuildChannel';
+
+// Bundler-visible require: relative specifiers get inlined into dist and bare
+// specifiers stay external. Bun provides it at runtime; the node builds
+// rewrite it. The declare keeps the linter on ES modules.
+declare const require: NodeRequire;
 
 /**
  * @type {WeakSet<GuildMember>}

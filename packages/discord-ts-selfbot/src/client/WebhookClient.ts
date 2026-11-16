@@ -1,9 +1,11 @@
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
 import BaseClient from './BaseClient';
 import _errorsModule from '../errors';
 import type { WebhookClientData, ClientOptions } from '../../typings';
+
+// Bundler-visible require: relative specifiers get inlined into dist and bare
+// specifiers stay external. Bun provides it at runtime; the node builds
+// rewrite it. The declare keeps the linter on ES modules.
+declare const require: NodeRequire;
 
 const { Error } = _errorsModule;
 

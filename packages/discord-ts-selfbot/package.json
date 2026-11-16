@@ -35,22 +35,29 @@
     "docs",
     "README.md"
   ],
-  "main": "./src/index.ts",
+  "main": "./dist/node/index.cjs",
   "types": "./typings/index.d.ts",
   "exports": {
     ".": {
       "types": "./typings/index.d.ts",
       "bun": "./src/index.ts",
-      "default": "./src/index.ts"
+      "node": {
+        "import": "./dist/node/index.mjs",
+        "require": "./dist/node/index.cjs"
+      },
+      "default": "./dist/node/index.mjs"
     }
   },
   "scripts": {
-    "build": "bun build src/index.ts --target=bun --format=esm --outdir=dist --packages=external",
+    "build": "bun run build:bun && bun run build:node",
+    "build:bun": "bun build src/index.ts --target=bun --format=esm --outdir=dist --packages=external",
+    "build:node": "bun build src/index.ts --target=node --format=esm --outfile=dist/node/index.mjs --packages=external && bun build src/index.ts --target=node --format=cjs --outfile=dist/node/index.cjs --packages=external",
     "check": "bun check && bun run schema:check && bun run ratchet:check && bun run docs:check",
     "lint": "bun lint",
     "fmt": "bun fmt",
     "fmt:check": "bun fmt --check",
     "test": "bun test",
+    "test:node": "node scripts/node-smoke.mjs",
     "test:types": "bun x tsc --noEmit -p tsconfig.test.json",
     "test:typescript": "bun check",
     "schema:generate": "bun tools/schema/generate.ts",
@@ -93,7 +100,28 @@
     "typedoc": "^0.28.20",
     "typescript": "^5.5.4"
   },
+  "peerDependencies": {
+    "@stablelib/xchacha20poly1305": "^1.0.1",
+    "erlpack": "*",
+    "libsodium-wrappers": "^0.7.15",
+    "zlib-sync": "^0.1.10"
+  },
+  "peerDependenciesMeta": {
+    "@stablelib/xchacha20poly1305": {
+      "optional": true
+    },
+    "erlpack": {
+      "optional": true
+    },
+    "libsodium-wrappers": {
+      "optional": true
+    },
+    "zlib-sync": {
+      "optional": true
+    }
+  },
   "engines": {
-    "bun": ">=1.4.4"
+    "bun": ">=1.4.4",
+    "node": ">=22"
   }
 }

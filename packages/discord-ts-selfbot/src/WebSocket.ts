@@ -1,8 +1,10 @@
 import { Buffer } from 'node:buffer';
-import { createRequire } from 'node:module';
 import WebSocket from 'ws';
 
-const require = createRequire(import.meta.url);
+// Bundler-visible require: relative specifiers get inlined into dist and bare
+// specifiers stay external. Bun provides it at runtime; the node builds
+// rewrite it. The declare keeps the linter on ES modules.
+declare const require: NodeRequire;
 
 interface ErlpackModule {
   pack: (data: unknown) => Buffer;

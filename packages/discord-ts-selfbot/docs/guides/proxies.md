@@ -25,12 +25,13 @@ Put credentials in the URI when the proxy needs auth:
 http: { agent: 'http://user:pass@proxy.local:8080' },
 ```
 
-## Bun behavior
+## Socket transport (Bun and Node)
 
-Bun ignores the undici `dispatcher` option, and it bypasses its own
-`proxy` option for loopback hosts. The package does not rely on either.
-HTTP and SOCKS5 proxies run on the same built-in socket transport, so
-loopback fakes and real hosts behave the same way.
+HTTP and SOCKS5 proxies run on the package's own socket transport built on
+`node:net` and `node:tls`, on both runtimes. The package never relies on
+undici's `dispatcher` option (which Bun ignores) or on Bun's `proxy` option
+(which Bun bypasses for loopback hosts), so loopback fakes and real hosts
+behave the same way in Bun and on Node 22+.
 
 Limits:
 

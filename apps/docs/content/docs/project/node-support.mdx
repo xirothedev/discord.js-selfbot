@@ -1,0 +1,74 @@
+---
+title: Node support
+description: What works on Node.js 22, which optional peers unlock it, and the loud limits.
+---
+
+`@discord-selfbot/core` is developed on Bun and supports Node.js 22 (LTS) and
+newer as a published runtime (ADR 0013). On Bun the package resolves to the
+TypeScript source; on Node it resolves to prebuilt ESM and CommonJS bundles,
+so `require()` and `import` both work with no bundler and no transpiler.
+
+## Guarantees
+
+- Node 22 LTS is the floor. Stable global `fetch` and `WebSocket` and
+  `node:timers/promises` are assumed.
+- Both published entries (`import` and `require`) are smoke-tested on plain
+  Node in CI and in the release pipeline before every publish.
+- Shared runtime code never calls Bun-only APIs. If a future version needs a
+  Bun-only API on a shared path, it fails loudly in the test suite before
+  release, not silently on your machine.
+- Rate limits, HTTP/SOCKS5 proxies, and the gateway stack run on
+  `node:net`/`node:tls` sockets and `undici` on both runtimes.
+
+## Optional peers
+
+Nothing in this table is required to log in, receive gateway events, or use
+REST. Install the ones that match your feature needs. All are optional;
+absent modules degrade to the pure-JS or JSON path.
+
+| Package                      | Unlocks                                                    | Runtime       |
+| ---------------------------- | ---------------------------------------------------------- | ------------- |
+| `zlib-sync`                  | `zlib-stream` gateway compression                          | Native        |
+| `erlpack`                    | ETF gateway encoding                                       | Native        |
+| `@stablelib/xchacha20poly1305` | Voice encryption without native sodium                  | Pure JS       |
+| `libsodium-wrappers`         | Voice encryption (pure JS, larger than stablelib)          | Pure JS       |
+
+```sh
+bun add zlib-sync @stablelib/xchacha20poly1305
+```
+
+Native modules (`zlib-sync`, `erlpack`) depend on your platform's toolchain.
+When one is missing or fails to load, the package falls back on both runtimes:
+JSON encoding without `erlpack`, uncompressed gateway payloads without
+`zlib-sync`.
+
+## Voice on Node
+
+Voice works on Node with caveats that voice has always had, Bun included:
+
+- Encryption needs one of the optional crypto packages above.
+- Opus encode/decode uses `prism-media`, which shells out to `ffmpeg`; install
+  `ffmpeg` on the host or provide a custom coder.
+- `node:dgram` provides UDP. On hosts that forbid UDP, voice cannot connect on
+  any runtime.
+
+## Loud limits
+
+These are the documented, deliberate exclusions:
+
+- **File upload through a SOCKS5 proxy** throws a clear error. Use direct
+  transport or an `http.fetch` override. (Same limit on Bun.)
+- **Node 20 and older are unsupported.** The package may load; it is not
+  tested, and the seams below cost more to backport.
+- **Bun remains the development runtime.** Repo scripts, tests, lint, format,
+  and build are Bun; `engines.bun >= 1.4.4` applies when you use Bun.
+- **The `bun` condition wins under Bun.** Bun users get the TypeScript source
+  via `exports.bun`, exactly as before.
+
+## How the contract is enforced
+
+- `tests/dual-runtime.test.ts` fails the build if `src/**` gains a `Bun.*`
+  call or a top-level `await`.
+- `bun run test:node` loads both `dist` entries under plain Node, including
+  the lazy seams that used to be `require`-based; CI runs it on a Node 22
+  matrix leg and the release workflow runs it immediately before publish.

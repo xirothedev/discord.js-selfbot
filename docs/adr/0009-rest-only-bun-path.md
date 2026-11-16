@@ -1,6 +1,9 @@
 # Bound REST-only path for Bun
 
-**Status:** Accepted
+**Status:** Accepted, partially superseded by ADR 0013 — the "Keep the Bun-only
+contract … Do not market `dist` as a Node entry" clause is activated and lifted
+by its own unlock condition (`Bun.sleep` removed from `RequestHandler` and
+`Client`). All other clauses stand.
 
 Version review `@discord-selfbot/core 14.0.2` found five gaps at the REST seam.
 Every REST-only consumer wrote the same adapter code for token setup, typed

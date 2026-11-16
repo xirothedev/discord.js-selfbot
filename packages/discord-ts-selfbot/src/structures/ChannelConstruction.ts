@@ -1,12 +1,14 @@
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
 import type { Client } from '../client/Client';
 import type { Guild } from './Guild';
 import type { RawChannelData } from '../../typings/rawDataTypes';
 import _ConstantsModule from '../util/Constants';
 import { isThreadParentChannel } from '../types/channels';
 import type { Channel } from './Channel';
+
+// Bundler-visible require: relative specifiers get inlined into dist and bare
+// specifiers stay external. Bun provides it at runtime; the node builds
+// rewrite it. The declare keeps the linter on ES modules.
+declare const require: NodeRequire;
 
 const { ChannelTypes } = _ConstantsModule;
 
