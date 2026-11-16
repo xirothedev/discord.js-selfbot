@@ -1,5 +1,9 @@
 # @discord-selfbot/core
 
+## 14.1.1
+
+No changes in this release.
+
 ## 14.1.0
 
 ### Minor Changes
